@@ -46,6 +46,8 @@ static pthread_mutex_t nlm_async_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  nlm_async_queue_cond  = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
+cache_inode_client_parameter_t nlm_async_cache_inode_client_param;
+cache_inode_client_t nlm_async_cache_inode_client;
 
 typedef struct
 {
@@ -196,10 +198,49 @@ int nlm_async_callback(nlm_callback_func * func, void *arg)
   return rc;
 }
 
+static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
+{
+  return sprintf(str, "N/A ");
+}                               /* local_lru_inode_entry_to_str */
+
+static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
+{
+  return 0;
+}                               /* lru_clean_entry */
+
 int nlm_async_callback_init()
 {
   init_glist(&nlm_async_queue);
 
+  /* setting the 'nlm_async_cache_inode_client_param' structure */
+  nlm_async_cache_inode_client_param.lru_param.nb_entry_prealloc = 10;
+  nlm_async_cache_inode_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
+  nlm_async_cache_inode_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
+  nlm_async_cache_inode_client_param.nb_prealloc_entry = 0;
+  nlm_async_cache_inode_client_param.nb_pre_dir_data = 0;
+  nlm_async_cache_inode_client_param.nb_pre_parent = 0;
+  nlm_async_cache_inode_client_param.nb_pre_state_v4 = 0;
+  nlm_async_cache_inode_client_param.grace_period_link = 0;
+  nlm_async_cache_inode_client_param.grace_period_attr = 0;
+  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
+  nlm_async_cache_inode_client_param.grace_period_attr   = 0;
+  nlm_async_cache_inode_client_param.grace_period_link   = 0;
+  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
+  nlm_async_cache_inode_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.use_test_access = 1;
+  nlm_async_cache_inode_client_param.attrmask = 0;
+
+  if(cache_inode_client_init(&nlm_async_cache_inode_client,
+                             nlm_async_cache_inode_client_param,
+                             NLM_THREAD_INDEX, NULL))
+    {
+      LogCrit(COMPONENT_NLM,
+              "Could not initialize cache inode client for NLM Async Thread");
+      return -1;
+    }
+  
   return pthread_create(&nlm_async_thread, NULL, nlm_async_func, NULL);
 }
 

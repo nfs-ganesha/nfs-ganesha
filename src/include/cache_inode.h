@@ -494,6 +494,10 @@ typedef struct cache_inode_fsal_data__
   unsigned int cookie;                          /**< Cache inode cookie    */
 } cache_inode_fsal_data_t;
 
+
+#define SMALL_CLIENT_INDEX 0x20000000
+#define NLM_THREAD_INDEX   0x40000000
+
 typedef struct cache_inode_client__
 {
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */

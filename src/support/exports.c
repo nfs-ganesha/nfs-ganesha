@@ -159,12 +159,12 @@ cache_content_client_t recover_datacache_client;
 #define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
-int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
+static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
   return sprintf(str, "N/A ");
 }                               /* local_lru_inode_entry_to_str */
 
-int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
+static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
 }                               /* lru_clean_entry */
@@ -2758,7 +2758,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 
       /* creating the 'small_client' */
-      if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
+      if(cache_inode_client_init(&small_client, small_client_param, SMALL_CLIENT_INDEX, NULL))
         {
           LogFatal(COMPONENT_INIT,
                    "small cache inode client could not be allocated");
