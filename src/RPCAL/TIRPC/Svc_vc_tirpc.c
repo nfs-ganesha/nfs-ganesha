@@ -242,6 +242,7 @@ static bool_t Rendezvous_request(SVCXPRT *xprt, struct rpc_msg *msg)
   r = (struct cf_rendezvous *)xprt->xp_p1;
  again:
   len = sizeof(struct sockaddr_storage);
+  memset(&addr, 0, sizeof(addr));
   if((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
       if(errno == EINTR)

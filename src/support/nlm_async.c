@@ -205,7 +205,6 @@ void *nlm_async_thread(void *argp)
         entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
         glist_del(&entry->nlm_async_glist);
         entry->nlm_async_func(entry);
-        Mem_Free(entry);
       }
     }
 

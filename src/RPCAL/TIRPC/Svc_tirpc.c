@@ -339,9 +339,10 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       xprt_copy->xp_rtaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
       if(!xprt_copy->xp_rtaddr.buf)
         goto fail;
-      xprt_copy->xp_rtaddr.maxlen = xprt_orig->xp_rtaddr.maxlen;
+      memset(xprt_copy->xp_rtaddr.buf, 0, sizeof(struct sockaddr_storage));
+      xprt_copy->xp_rtaddr.maxlen = sizeof(struct sockaddr_storage);
       xprt_copy->xp_rtaddr.len    = xprt_orig->xp_rtaddr.len;
-      memcpy(xprt_copy->xp_rtaddr.buf, xprt_orig->xp_rtaddr.buf, sizeof(struct sockaddr_storage));
+      memcpy(xprt_copy->xp_rtaddr.buf, xprt_orig->xp_rtaddr.buf, xprt_orig->xp_rtaddr.len);
     }
 
   if(xprt_orig->xp_ltaddr.buf)
