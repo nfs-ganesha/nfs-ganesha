@@ -534,6 +534,13 @@ int nfs_dupreq_add_not_finished(long xid,
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
+  memset(pdupreq, 0, sizeof(*pdupreq));
+  if(pthread_mutex_init(&pdupreq->dupreq_mutex, NULL) == -1)
+    {
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
+
   if((pdupkey = (dupreq_key_t *) Mem_Alloc(sizeof(dupreq_key_t))) == NULL)
     {
       ReleaseToPool(pdupreq, dupreq_pool);
