@@ -1055,6 +1055,8 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
       return *pstatus;
     }
 
+  memset(hash_entry, 0, sizeof(*hash_entry));
+
   lock_entry_inc_ref(lock_entry);
 
   if(pthread_mutex_init(&hash_entry->lce_mutex, NULL) == -1)
