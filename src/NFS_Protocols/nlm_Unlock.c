@@ -118,7 +118,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                               pclient,
                               FALSE, /* unlock doesn't care if owner is found */
                               &nlm_client,
-                              &nlm_owner);
+                              &nlm_owner,
+                              NULL);
 
   if(rc >= 0)
     {

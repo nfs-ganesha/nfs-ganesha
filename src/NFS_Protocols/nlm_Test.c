@@ -124,7 +124,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
                               pclient,
                               TRUE,
                               &nlm_client,
-                              &nlm_owner);
+                              &nlm_owner,
+                              NULL);
 
   if(rc >= 0)
     {

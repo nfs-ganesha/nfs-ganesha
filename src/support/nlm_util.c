@@ -406,7 +406,8 @@ int nlm_process_parameters(struct svc_req            * preq,
                            cache_inode_client_t      * pclient,
                            bool_t                      care,
                            cache_inode_nlm_client_t ** ppnlm_client,
-                           cache_lock_owner_t       ** ppowner)
+                           cache_lock_owner_t       ** ppowner,
+                           cache_inode_block_data_t ** ppblock_data)
 {
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t      attr;
@@ -465,6 +466,23 @@ int nlm_process_parameters(struct svc_req            * preq,
         return NLM4_GRANTED;
     }
 
+  if(ppblock_data != NULL)
+    {
+      *ppblock_data = (cache_inode_block_data_t *) Mem_Alloc_Label(sizeof(**ppblock_data),
+                                                                   "NLM_Block_Data");
+      /* Fill in the block data, if we don't get one, we will just proceed
+       * without (which will mean the lock doesn't block.
+       */
+      if(*ppblock_data != NULL)
+        {
+          memset(*ppblock_data, 0, sizeof(**ppblock_data));
+          (*ppblock_data)->cbd_granted_callback = nlm_granted_callback;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh_len = alock->fh.n_len;
+          memcpy((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh,
+                 alock->fh.n_bytes,
+                 alock->fh.n_len);
+        }
+    }
   /* Fill in plock */
   plock->cld_type   = exclusive ? CACHE_INODE_LOCK_W : CACHE_INODE_LOCK_R;
   plock->cld_offset = alock->l_offset;

@@ -1088,6 +1088,8 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
 typedef struct cache_inode_nlm_block_data_t
 {
   netobj cnbd_fh;
+  int                        cbd_nlm_fh_len;
+  char                       cbd_nlm_fh[MAX_NETOBJ_SZ];
 } cache_inode_nlm_block_data_t;
 #endif
 

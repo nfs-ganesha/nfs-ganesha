@@ -82,7 +82,8 @@ int nlm_process_parameters(struct svc_req            * preq,
                            cache_inode_client_t      * pclient,
                            bool_t                      care,
                            cache_inode_nlm_client_t ** ppnlm_client,
-                           cache_lock_owner_t       ** ppowner);
+                           cache_lock_owner_t       ** ppowner,
+                           cache_inode_block_data_t ** ppblock_data);
 
 void nlm_process_conflict(nlm4_holder        * nlm_holder,
                           cache_lock_owner_t * holder,

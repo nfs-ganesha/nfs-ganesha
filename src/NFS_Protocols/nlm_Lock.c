@@ -81,6 +81,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   cache_lock_owner_t       * nlm_owner, * holder;
   cache_lock_desc_t          lock, conflict;
   int                        rc;
+  cache_inode_block_data_t * pblock_data;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -124,7 +125,8 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
                               pclient,
                               TRUE,
                               &nlm_client,
-                              &nlm_owner);
+                              &nlm_owner,
+                              &pblock_data);
 
   if(rc >= 0)
     {
@@ -139,7 +141,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
                       pcontext,
                       nlm_owner,
                       arg->block,
-                      NULL, // TODO FSF: currently we don't support blocked locks
+                      pblock_data,
                       &lock,
                       &holder,
                       &conflict,
@@ -154,6 +156,10 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
                                holder,
                                &conflict);
         }
+
+      /* If we didn't block, release the block data */
+      if(cache_status != CACHE_INODE_LOCK_BLOCKED && pblock_data != NULL)
+        Mem_Free(pblock_data);
     }
   else
     {
