@@ -3641,9 +3641,9 @@ int nfs4_MakeCred(compound_data_t * data)
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
-  if (get_req_uid_gid(data->reqp, &related_client,
-                      data->pexport, &user_credentials)
-      == FALSE)
+  if (get_req_uid_gid(data->reqp,
+                      data->pexport,
+                      &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -3661,9 +3661,10 @@ int nfs4_MakeCred(compound_data_t * data)
      == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if(nfs_build_fsal_context(data->reqp, &related_client, 
-                            data->pexport, data->pcontext, &user_credentials)
-     == FALSE)
+  if(nfs_build_fsal_context(data->reqp,
+                            data->pexport,
+                            data->pcontext,
+                            &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;

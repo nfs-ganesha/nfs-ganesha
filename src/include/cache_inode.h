@@ -420,7 +420,7 @@ typedef struct cache_inode_nlm_client_t
   struct glist_head       clc_lock_list;
   int                     clc_refcount;
   int                     clc_nlm_caller_name_len;
-  char                    clc_nlm_caller_name[LM_MAXSTRLEN];
+  char                    clc_nlm_caller_name[LM_MAXSTRLEN+1];
 } cache_inode_nlm_client_t;
 
 typedef struct cache_inode_nlm_owner_t
@@ -1079,7 +1079,6 @@ typedef struct cache_cookie_entry_t cache_cookie_entry_t;
  * the lock entry if needed.
  */
 typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry,
-                                                   fsal_op_context_t    * pcontext,
                                                    cache_lock_entry_t   * lock_entry,
                                                    cache_inode_client_t * pclient,
                                                    cache_inode_status_t * pstatus);
@@ -1087,9 +1086,13 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
 #ifdef _USE_NLM
 typedef struct cache_inode_nlm_block_data_t
 {
-  netobj cnbd_fh;
-  int                        cbd_nlm_fh_len;
-  char                       cbd_nlm_fh[MAX_NETOBJ_SZ];
+  sockaddr_t                 cbd_nlm_hostaddr;
+  netobj                     cbd_nlm_fh;
+  char                       cbd_nlm_fh_buf[MAX_NETOBJ_SZ];
+  uid_t                      cbd_nlm_caller_uid;
+  gid_t                      cbd_nlm_caller_gid;
+  unsigned int               cbd_nlm_caller_glen;
+  gid_t                      cbd_nlm_caller_garray[NGRPS];
 } cache_inode_nlm_block_data_t;
 #endif
 
@@ -1118,6 +1121,7 @@ struct cache_lock_entry_t
   struct glist_head             cle_all_locks;
 #endif
   int                           cle_ref_count;
+  unsigned long long            cle_fileid;
   cache_entry_t               * cle_pentry;
   cache_blocking_t              cle_blocked;
   cache_inode_block_data_t    * cle_block_data;
@@ -1133,43 +1137,87 @@ cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,
 cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus);
 #endif
 
-void lock_entry_inc_ref(cache_lock_entry_t *lock_entry);
-
-void lock_entry_dec_ref(cache_entry_t      *pentry,
-                        fsal_op_context_t  *pcontext,
-                        cache_lock_entry_t *lock_entry);
-
-void release_lock_owner(cache_lock_owner_t *powner);
-
 #ifdef _USE_NLM
+/*
+ * Management of lce_refcount:
+ *
+ *   cache_inode_add_grant_cookie creates a reference.
+ *   cache_inode_find_grant       gets a reference
+ *   cache_inode_complete_grant   always releases 1 reference
+ *                                it releases a 2nd reference when the call instance
+ *                                is the first to actually try and complete the grant
+ *   cache_inode_release_grant    always releases 1 reference
+ *                                it releases a 2nd reference when the call instance
+ *                                is the first to actually try and release the grant
+ *   cache_inode_cancel_grant     calls cancel_blocked_lock, which will release
+ *                                the initial reference
+ *   cancel_blocked_lock          releases 1 reference if cookie exists
+ *                                called by cache_inode_cancel_grant
+ *                                also called by unlock, cancel, sm_notify
+ */
 struct cache_cookie_entry_t
 {
   pthread_mutex_t     lce_mutex;
   int                 lce_refcount;
   cache_entry_t      *lce_pentry;
-  fsal_op_context_t  *lce_pcontext;
   cache_lock_entry_t *lce_lock_entry;
 };
 
-void cookie_entry_inc_ref(cache_cookie_entry_t * p_cookie_entry);
-void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry);
+/**
+ *
+ * cache_inode_add_grant_cookie: Add a grant cookie to a blocked lock that is
+ *                               pending grant.
+ *
+ * This will attach the cookie to the lock so it can be found later.
+ * It will also acquire the lock from the FSAL (which may not be possible).
+ *
+ * Returns:
+ *
+ * CACHE_INODE_SUCCESS       - Everything ok
+ * CACHE_INODE_LOCK_CONFLICT - FSAL was unable to acquire lock, would have to block
+ * CACHE_INODE_LOCK_BLOCKED  - FSAL is handling a block on the lock (TODO FSF: not implemented yet...)
+ * other errors are possible from FSAL...
+ */
+cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pentry,
+                                                  fsal_op_context_t        * pcontext,
+                                                  void                     * pcookie,
+                                                  int                        cookie_size,
+                                                  cache_lock_entry_t       * lock_entry,
+                                                  cache_cookie_entry_t    ** ppcookie_entry,
+                                                  cache_inode_client_t     * pclient,
+                                                  cache_inode_status_t     * pstatus);
 
-int cache_inode_insert_block(cache_entry_t            * pentry,
-                             fsal_op_context_t        * pcontext,
-                             void                     * pcookie,
-                             int                        cookie_size,
-                             cache_lock_entry_t       * lock_entry,
-                             cache_inode_status_t     * pstatus);
+cache_inode_status_t cache_inode_find_grant(void                  * pcookie,
+                                            int                     cookie_size,
+                                            cache_cookie_entry_t ** ppcookie_entry,
+                                            cache_inode_status_t  * pstatus);
 
-cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
-                                             int                     cookie_size,
-                                             cache_inode_status_t  * pstatus);
+void cache_inode_complete_grant(fsal_op_context_t     * pcontext,
+                                cache_cookie_entry_t  * cookie_entry,
+                                cache_inode_client_t  * pclient);
 
-cache_inode_status_t cache_inode_release_block(void                 * pcookie,
-                                               int                    cookie_size,
-                                               cache_inode_status_t * pstatus,
-                                               cache_inode_client_t * pclient);
+/**
+ *
+ * cache_inode_cancel_grant: Cancel a blocked lock grant
+ *
+ * This function is to be called from the granted_callback_t function.
+ */
+cache_inode_status_t cache_inode_cancel_grant(fsal_op_context_t     * pcontext,
+                                              cache_cookie_entry_t  * cookie_entry,
+                                              cache_inode_client_t  * pclient,
+                                              cache_inode_status_t  * pstatus);
+
+cache_inode_status_t cache_inode_release_grant(fsal_op_context_t     * pcontext,
+                                               cache_cookie_entry_t  * cookie_entry,
+                                               cache_inode_client_t  * pclient,
+                                               cache_inode_status_t  * pstatus);
 #endif
+
+/* Call this to release the lock owner reference resulting from a conflicting
+ * lock holder being returned.
+ */
+ 
+void release_lock_owner(cache_lock_owner_t *powner);
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,

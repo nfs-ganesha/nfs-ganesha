@@ -1012,7 +1012,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     reason = "has invalid export";
                   else
                     reason = "V3 not allowed on this export";
-                  sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+                  sprint_fhandle_nlm(dumpfh, pfh3);
                   LogMajor(COMPONENT_DISPATCH,
                            "NLM4 Request from host %s %s, proc=%d, FH=%s",
                            addrbuf, reason,
@@ -1237,7 +1237,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
-      if(get_req_uid_gid(ptr_req, &related_client, pexport, &user_credentials) == FALSE)
+      if(get_req_uid_gid(ptr_req, pexport, &user_credentials) == FALSE)
         {
           LogInfo(COMPONENT_DISPATCH,
                   "could not get uid and gid, rejecting client");
@@ -1329,7 +1329,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         {
 	  /* Swap the anonymous uid/gid if the user should be anonymous */
           if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
-	     || nfs_build_fsal_context(ptr_req, &related_client, pexport,
+	     || nfs_build_fsal_context(ptr_req,
+	                               pexport,
 				       &pworker_data->thread_fsal_context,
 				       &user_credentials) == FALSE)
             {

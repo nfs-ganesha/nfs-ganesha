@@ -739,6 +739,35 @@ void sprint_fhandle4(char *str, nfs_fh4 *fh)
 
 /**
  *
+ * print_fhandle_nlm
+ *
+ * This routine prints a NFSv3 file handle (for debugging purpose)
+ *
+ * @param fh [IN] file handle to print.
+ * 
+ * @return nothing (void function).
+ *
+ */
+void print_fhandle_nlm(log_components_t component, netobj *fh)
+{
+  if(isFullDebug(component))
+    {
+      char str[LEN_FH_STR];
+
+      sprint_fhandle_nlm(str, fh);
+      LogFullDebug(component, "%s", str);
+    }
+}                               /* print_fhandle_nlm */
+
+void sprint_fhandle_nlm(char *str, netobj *fh)
+{
+  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->n_len);
+
+  sprint_mem(tmp, fh->n_bytes, fh->n_len);
+}                               /* sprint_fhandle_nlm */
+
+/**
+ *
  * print_buff
  *
  * This routine prints the content of a buffer.

@@ -341,12 +341,12 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
 int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           exportlist_t * pexport,
+                           fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials);
 int get_req_uid_gid(struct svc_req *ptr_req,
-                    exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport, struct user_cred *user_credentials);
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials);
 
 
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2);

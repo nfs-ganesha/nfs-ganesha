@@ -130,12 +130,14 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 void print_fhandle2(log_components_t component, fhandle2 *fh);
 void print_fhandle3(log_components_t component, nfs_fh3 *fh);
 void print_fhandle4(log_components_t component, nfs_fh4 *fh);
+void print_fhandle_nlm(log_components_t component, netobj *fh);
 void print_buff(log_components_t component, char *buff, int len);
 void print_compound_fh(log_components_t component, compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 *fh);
 void sprint_fhandle3(char *str, nfs_fh3 *fh);
 void sprint_fhandle4(char *str, nfs_fh4 *fh);
+void sprint_fhandle_nlm(char *str, netobj *fh);
 void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
 
