@@ -1,12 +1,18 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
-test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la
 
 test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
-test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
+test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
 
 
 TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
@@ -79,7 +85,7 @@ test_support_SOURCES    = test_support.c
 test_support_LDADD    	= libsupport.la \
                           ../Log/liblog.la\
                           ../NFS_Protocols/libnfsproto.la\
-                          ../BuddyMalloc/libBuddyMalloc.la\
+                          $(BUDDY_LIB_FLAGS)\
                           ../XDR/libnfs_mnt_xdr.la \
                           ../HashTable/libhashtable.la \
                           ../RW_Lock/librwlock.la

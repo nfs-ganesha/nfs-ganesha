@@ -1,5 +1,11 @@
 noinst_LTLIBRARIES            = liboutils_profiling.la 
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 TESTS = $(check_PROGRAMS)
 
 check_PROGRAMS                = test_anon_support test_access_list_types test_mesure_temps test_glist
@@ -20,7 +26,7 @@ COMMON_LDADD = ../NFS_Protocols/libnfsproto.la                   \
                ../File_Content_Policy/libcache_content_policy.la \
                ../HashTable/libhashtable.la                      \
                ../LRU/liblru.la                                  \
-               ../BuddyMalloc/libBuddyMalloc.la                  \
+               $(BUDDY_LIB_FLAGS)                                \
                ../FSAL/libfsalcommon.la                          \
                $(MFSL_LIB)                                       \
                $(FSAL_LIB)                                       \

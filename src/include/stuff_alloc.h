@@ -439,7 +439,7 @@ typedef struct prealloc_pool
 {
   constructor             pa_constructor;
   constructor             pa_destructor;
-}
+} prealloc_pool;
 
 /* Don't care if pool is pre-allocated */
 #define IsPoolPreallocated(pool) (1)
@@ -453,6 +453,8 @@ do {                                                         \
 #define MakePool(pool, num_alloc, type, ctor, dtor)          \
   InitPool(pool, num_alloc, type, ctor, dtor)
 
+#define NamePool(pool, fmt, args...)
+
 #define GetFromPool(entry, pool, type)                       \
 do {                                                         \
   entry = (type *)Mem_Alloc_Label(sizeof(type), # type);     \
@@ -460,11 +462,11 @@ do {                                                         \
     (pool)->pa_constructor(entry);                           \
 } while (0)
 
-#define ReleaseToPool(entry, pool, type)                     \
+#define ReleaseToPool(entry, pool)                           \
 do {                                                         \
   if ((pool)->pa_destructor != NULL)                         \
     (pool)->pa_destructor(entry);                            \
-  Mem_Free_Label(entry, # type);                             \
+  Mem_Free(entry);                                           \
 } while (0)
 
 #endif                          /* no block preallocation */

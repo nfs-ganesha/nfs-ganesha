@@ -1,5 +1,11 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 noinst_LTLIBRARIES            = libnfsproto.la
 
 check_PROGRAMS                = test_mnt_proto
@@ -145,7 +151,7 @@ endif
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
-test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
+test_mnt_proto_LDADD = libnfsproto.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la
 
 new: clean all
 

@@ -175,7 +175,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "RW_Lock.h"
-#include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"

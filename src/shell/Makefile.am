@@ -6,6 +6,12 @@ endif
 
 AM_CFLAGS                     =   $(DLOPEN_FLAGS) $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 if USE_NFSIDMAP
 NFSIDMAP_LIB_FLAGS = -lnfsidmap
 else
@@ -79,7 +85,7 @@ shell_libs =      ../NFS_Protocols/libnfsproto.la                    \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
-                  ../BuddyMalloc/libBuddyMalloc.la                   \
+                  $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
                   $(MFSL_LIB)                                        \

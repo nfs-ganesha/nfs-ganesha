@@ -25,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include "BuddyMalloc.h"
 #include <pthread.h>
 #include "log_macros.h"
 #include <errno.h>

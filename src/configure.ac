@@ -304,19 +304,19 @@ AC_SUBST(EFENCE)
 
 # Debugging options
 #GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, for debug purpose only],   [-D_NO_BUDDY_SYSTEM] )
-GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
-GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
-GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
+GA_DISABLE_FLAG( [prealloc],             [disable GANESHA's memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
+GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
+GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
+GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
 
-GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],          [-D_DEBUG_MEMLEAKS] )
-GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],           [-D_DEBUG_NFS_SHELL] )
+GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],           [-D_DEBUG_MEMLEAKS] )
+GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],            [-D_DEBUG_NFS_SHELL] )
 
-GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		         [-D_WITH_PLPGSQL])
-GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                 [-D_ENABLE_CACHE_PATH])
-GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	         [-D_HANDLE_MAPPING])
-GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                           [-D_WITH_NFSV4_LOCKS])
-GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                          [-D_WITH_NO_NFSV41_LOCKS])
+GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
+GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
+GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
+GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                            [-D_WITH_NFSV4_LOCKS])
+GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV41_LOCKS])
 
 
 # for using it in makefiles
@@ -383,6 +383,16 @@ if test "$enable_ipv6" == "yes"; then
 		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
 	fi
 fi
+
+# BuddyMalloc
+GA_DISABLE_AM_CONDITION([buddy-malloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
+
+if test "$disable_buddy-malloc" = "no"; then
+        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable GANESHA's memory allocator])
+else
+	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
+fi
+AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$disable_buddy-malloc" = "no")
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
