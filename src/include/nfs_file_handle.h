@@ -44,6 +44,11 @@
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
 #include "log_macros.h"
+#include "nfs23.h"
+#ifdef _USE_NLM
+#include "nlm4.h"
+#endif
+
 /*
  * Structure of the filehandle 
  */
@@ -104,6 +109,10 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 short nfs2_FhandleToExportId(fhandle2 * pfh2);
 short nfs4_FhandleToExportId(nfs_fh4 * pfh4);
 short nfs3_FhandleToExportId(nfs_fh3 * pfh3);
+
+#ifdef _USE_NLM
+short nlm4_FhandleToExportId(netobj * pfh3);
+#endif
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Empty(nfs_fh4 * pfh);

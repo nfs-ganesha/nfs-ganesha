@@ -424,7 +424,7 @@ short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
  */
 short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 {
-  file_handle_v3_t *pfile_handle = NULL;
+  file_handle_v3_t *pfile_handle;
 
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
@@ -435,6 +435,22 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 
   return pfile_handle->exportid;
 }                               /* nfs3_FhandleToExportId */
+
+#ifdef _USE_NLM
+short nlm4_FhandleToExportId(netobj * pfh3)
+{
+  file_handle_v3_t *pfile_handle;
+
+  if(pfh3->n_bytes == NULL || pfh3->n_len < sizeof(file_handle_v3_t))
+    return -1;                  /* Badly formed argument */
+
+  pfile_handle = (file_handle_v3_t *) (pfh3->n_bytes);
+
+  print_buff(COMPONENT_FILEHANDLE, pfh3->n_bytes, pfh3->n_len);
+
+  return pfile_handle->exportid;
+}
+#endif
 
 /**
  *
@@ -449,7 +465,7 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
  */
 short nfs2_FhandleToExportId(fhandle2 * pfh2)
 {
-  file_handle_v2_t *pfile_handle = NULL;
+  file_handle_v2_t *pfile_handle;
 
   pfile_handle = (file_handle_v2_t *) (*pfh2);
 
