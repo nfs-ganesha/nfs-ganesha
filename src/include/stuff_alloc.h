@@ -135,7 +135,7 @@ typedef struct prealloc_pool
   int                     pa_allocated;   // number of entries preallocated
 } prealloc_pool;
 
-#define IsPoolPreallocated(pool) ((pool)->pa_allocated > 0)
+#define IsPoolPreallocated(pool) ((pool)->pa_num == 0 || (pool)->pa_allocated > 0)
 
 /*******************************************
  *
@@ -203,6 +203,7 @@ do {                                                         \
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
   int size;                                                  \
+  memset((pool), 0, sizeof(*(pool)));                        \
   (pool)->pa_free        = NULL;                             \
   (pool)->pa_constructor = ctor;                             \
   (pool)->pa_destructor  = dtor;                             \

@@ -1106,7 +1106,7 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   return 1;
 }
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 int CheckAuth(SVCAUTH *auth)
 {
   int rc;

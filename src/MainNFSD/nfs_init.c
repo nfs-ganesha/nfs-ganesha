@@ -2166,7 +2166,11 @@ void nfs_start(nfs_start_info_t * p_start_info)
        * initialize nlm only in actual server mode.
        * Don't do this in flusher mode
        */
-      nlm_init();
+      if(nlm_init() == -1)
+        {
+          LogFatal(COMPONENT_INIT,
+                   "Could not initialize NLM");
+        }
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */

@@ -16,7 +16,7 @@ extern void Xprt_unregister(SVCXPRT * xprt);
 
 extern void FreeXprt(SVCXPRT *xprt);
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 extern int CheckAuth(SVCAUTH *auth);
 #else
 #define CheckAuth(ptr)

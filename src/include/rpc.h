@@ -60,7 +60,7 @@ extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 extern int CheckXprt(SVCXPRT *xprt);
 #else
 #define CheckXprt(ptr)

@@ -74,7 +74,7 @@
 #include "pnfs_service.h"
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 void nfs_debug_debug_label_info();
 #endif
 
@@ -1505,8 +1505,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   if(nb_iter_memleaks > 1000)
     {
       nb_iter_memleaks = 0;
+
+#ifndef _NO_BUDDY_SYSTEM
       /* BuddyDumpMem( stdout ) ; */
       nfs_debug_debug_label_info();
+#endif
 
       LogFullDebug(COMPONENT_MEMLEAKS,
                    "Stats for thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u",
