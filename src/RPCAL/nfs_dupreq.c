@@ -582,15 +582,14 @@ int nfs_dupreq_add_not_finished(long xid,
           P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
           if ( ((dupreq_entry_t *)buffval.pdata)->processing == 1)
             {
-              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
               status = DUPREQ_BEING_PROCESSED;
             }
           else
             {
               *res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
               status = DUPREQ_ALREADY_EXISTS;
             }
+          V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
         }
       else
         status = DUPREQ_NOT_FOUND;

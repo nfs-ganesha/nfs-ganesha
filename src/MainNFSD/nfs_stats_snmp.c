@@ -1423,7 +1423,7 @@ static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_c
   long j;
 
   *p_dyn_gs_count = COMPONENT_COUNT;
-  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT - 1) * sizeof(register_get_set));
+  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT) * sizeof(register_get_set));
 
   for(j = 0; j < COMPONENT_COUNT; j ++)
     {
