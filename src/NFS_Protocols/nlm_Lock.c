@@ -139,7 +139,7 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
                       pcontext,
                       nlm_owner,
                       arg->block,
-                      nlm_granted_callback,
+                      NULL, // TODO FSF: currently we don't support blocked locks
                       &lock,
                       &holder,
                       &conflict,

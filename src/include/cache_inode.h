@@ -425,10 +425,10 @@ typedef struct cache_inode_nlm_client_t
 
 typedef struct cache_inode_nlm_owner_t
 {
-  cache_inode_nlm_client_t *clo_client;
-  int32_t                   clo_nlm_svid;
-  int                       clo_nlm_oh_len;
-  char                      clo_nlm_oh[MAX_NETOBJ_SZ];
+  cache_inode_nlm_client_t * clo_client;
+  int32_t                    clo_nlm_svid;
+  int                        clo_nlm_oh_len;
+  char                       clo_nlm_oh[MAX_NETOBJ_SZ];
 } cache_inode_nlm_owner_t;
 #endif
 
@@ -1084,6 +1084,26 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
                                                    cache_inode_client_t * pclient,
                                                    cache_inode_status_t * pstatus);
 
+#ifdef _USE_NLM
+typedef struct cache_inode_nlm_block_data_t
+{
+  netobj cnbd_fh;
+} cache_inode_nlm_block_data_t;
+#endif
+
+typedef struct cache_inode_block_data_t
+{
+  granted_callback_t                 cbd_granted_callback;
+  cache_cookie_entry_t             * cbd_blocked_cookie;
+  union
+    {
+#ifdef _USE_NLM
+      cache_inode_nlm_block_data_t   cbd_nlm_block_data;
+#endif
+      void                         * cbd_v4_block_data;
+    } cbd_block_data;
+} cache_inode_block_data_t;
+
 struct cache_lock_entry_t
 {
   struct glist_head             cle_list;
@@ -1098,10 +1118,9 @@ struct cache_lock_entry_t
   int                           cle_ref_count;
   cache_entry_t               * cle_pentry;
   cache_blocking_t              cle_blocked;
+  cache_inode_block_data_t    * cle_block_data;
   cache_lock_owner_t          * cle_owner;
   cache_lock_desc_t             cle_lock;
-  granted_callback_t            cle_granted_callback;
-  cache_cookie_entry_t        * cle_blocked_cookie;
   pthread_mutex_t               cle_mutex;
 };
 
@@ -1159,16 +1178,16 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       cache_inode_client_t * pclient,
                                       cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
-                                      fsal_op_context_t    * pcontext,
-                                      cache_lock_owner_t   * powner,
-                                      cache_blocking_t       blocking,
-                                      granted_callback_t     granted_callback,
-                                      cache_lock_desc_t    * plock,
-                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
-                                      cache_lock_desc_t    * conflict, /* description of conflicting lock */
-                                      cache_inode_client_t * pclient,
-                                      cache_inode_status_t * pstatus);
+cache_inode_status_t cache_inode_lock(cache_entry_t            * pentry,
+                                      fsal_op_context_t        * pcontext,
+                                      cache_lock_owner_t       * powner,
+                                      cache_blocking_t           blocking,
+                                      cache_inode_block_data_t * block_data,
+                                      cache_lock_desc_t        * plock,
+                                      cache_lock_owner_t      ** holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t        * conflict, /* description of conflicting lock */
+                                      cache_inode_client_t     * pclient,
+                                      cache_inode_status_t     * pstatus);
 
 cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                                         fsal_op_context_t    * pcontext,

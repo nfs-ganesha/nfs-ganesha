@@ -453,11 +453,11 @@ void get_lock_owner(cache_lock_owner_t *powner)
 #endif
 }
 
-static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
-                                                   cache_blocking_t     blocked,
-                                                   cache_lock_owner_t * powner,
-                                                   cache_lock_desc_t  * plock,
-                                                   granted_callback_t   granted_callback)
+static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t            * pentry,
+                                                   cache_blocking_t           blocked,
+                                                   cache_lock_owner_t       * powner,
+                                                   cache_lock_desc_t        * plock,
+                                                   cache_inode_block_data_t * block_data)
 {
   cache_lock_entry_t *new_entry;
 
@@ -474,11 +474,11 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
       return NULL;
     }
 
-  new_entry->cle_ref_count        = 0;
-  new_entry->cle_pentry           = pentry;
-  new_entry->cle_blocked          = blocked;
-  new_entry->cle_owner            = powner;
-  new_entry->cle_granted_callback = granted_callback;
+  new_entry->cle_ref_count  = 0;
+  new_entry->cle_pentry     = pentry;
+  new_entry->cle_blocked    = blocked;
+  new_entry->cle_owner      = powner;
+  new_entry->cle_block_data = block_data;
   memcpy(&new_entry->cle_lock, plock, sizeof(new_entry->cle_lock));
 
   /* Add to list of locks owned by powner */
@@ -513,7 +513,7 @@ inline cache_lock_entry_t *cache_lock_entry_t_dup(cache_lock_entry_t * orig_entr
                                  orig_entry->cle_blocked,
                                  orig_entry->cle_owner,
                                  &orig_entry->cle_lock,
-                                 orig_entry->cle_granted_callback);
+                                 orig_entry->cle_block_data);
 }
 
 void lock_entry_inc_ref(cache_lock_entry_t *lock_entry)
@@ -546,8 +546,23 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
 
   if(to_free)
     {
+      cache_cookie_entry_t *pcookie = NULL;
+
       LogEntry("nlm_lock_entry_dec_ref Freeing",
                pentry, pcontext, lock_entry);
+
+      /* Release block data (we really should never have this, but let's not leak memory */
+      if(lock_entry->cle_block_data != NULL)
+        {
+          pcookie = lock_entry->cle_block_data->cbd_blocked_cookie;
+          Mem_Free(lock_entry->cle_block_data);
+          lock_entry->cle_block_data = NULL;
+        }
+
+      /* Don't need reference to cookie entry any more */
+      if(pcookie != NULL)
+        cookie_entry_dec_ref(pcookie);
+
 #ifdef _DEBUG_MEMLEAKS
       P(all_locks_mutex);
       glist_del(&lock_entry->cle_all_locks);
@@ -1027,6 +1042,13 @@ int cache_inode_insert_block(cache_entry_t            * pentry,
   cache_cookie_entry_t *hash_entry;
   char str[HASHTABLE_DISPLAY_STRLEN];
 
+  if(lock_entry->cle_block_data == NULL)
+    {
+      /* Something's wrong with this entry */
+      *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
+      return *pstatus;
+    }
+
   if(isFullDebug(COMPONENT_NLM))
     display_lock_cookie(pcookie, cookie_size, str);
 
@@ -1076,7 +1098,7 @@ int cache_inode_insert_block(cache_entry_t            * pentry,
 
   /* Increment lock entry reference count and link to lock_entry */
   lock_entry_inc_ref(lock_entry);
-  lock_entry->cle_blocked_cookie = hash_entry;
+  lock_entry->cle_block_data->cbd_blocked_cookie = hash_entry;
 
   LogFullDebug(COMPONENT_NLM,
                "cache_inode_insert_block => KEY {%s} SUCCESS",
@@ -1127,20 +1149,22 @@ void grant_blocked_lock(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry)
 {
-#ifdef _USE_NLM
-  cache_cookie_entry_t *pcookie = lock_entry->cle_blocked_cookie;
-#endif
+  cache_cookie_entry_t *pcookie = NULL;
 
   /* Mark lock as granted and detach cookie and granted call back */
-  lock_entry->cle_blocked          = CACHE_NON_BLOCKING;
-  lock_entry->cle_blocked_cookie   = NULL;
-  lock_entry->cle_granted_callback = NULL;
+  lock_entry->cle_blocked = CACHE_NON_BLOCKING;
 
-#ifdef _USE_NLM
+  /* Release block data */
+  if(lock_entry->cle_block_data != NULL)
+    {
+      pcookie = lock_entry->cle_block_data->cbd_blocked_cookie;
+      Mem_Free(lock_entry->cle_block_data);
+      lock_entry->cle_block_data = NULL;
+    }
+
   /* Don't need reference to cookie entry any more */
   if(pcookie != NULL)
     cookie_entry_dec_ref(pcookie);
-#endif
 
   /* Merge any touching or overlapping locks into this one. */
   merge_lock_entry(pentry, pcontext, lock_entry);
@@ -1195,9 +1219,10 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext,
                                 cache_inode_client_t * pclient)
 {
-  cache_lock_entry_t *found_entry;
-  struct glist_head *glist, *glistn;
-  cache_inode_status_t status;
+  cache_lock_entry_t   * found_entry;
+  struct glist_head    * glist, * glistn;
+  cache_inode_status_t   status;
+  granted_callback_t     call_back;
 
   glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
     {
@@ -1214,8 +1239,9 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
                                &found_entry->cle_lock) != NULL)
         continue;
 
-      if(found_entry->cle_granted_callback != NULL)
+      if(found_entry->cle_block_data != NULL)
         {
+          call_back = found_entry->cle_block_data->cbd_granted_callback;
           /*
            * Mark the found_entry as granting and make the granted call back.
            * The granted call back is responsible for acquiring a reference to
@@ -1223,11 +1249,7 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
            */
           found_entry->cle_blocked = CACHE_GRANTING;
 
-          status = found_entry->cle_granted_callback(pentry,
-                                                     pcontext,
-                                                     found_entry,
-                                                     pclient,
-                                                     &status);
+          status = call_back(pentry, pcontext, found_entry, pclient, &status);
 
           if(status == CACHE_INODE_SUCCESS)
             continue;
@@ -1242,9 +1264,7 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
                          fsal_op_context_t    * pcontext,
                          cache_lock_entry_t   * lock_entry)
 {
-#ifdef _USE_NLM
-  cache_cookie_entry_t *pcookie = lock_entry->cle_blocked_cookie;
-#endif
+  cache_cookie_entry_t *pcookie = NULL;
 
   /* Remove the lock from the lock list*/
   LogEntry("cancel_blocked_lock Removing", pentry, pcontext, lock_entry);
@@ -1252,14 +1272,18 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
   
   /* Mark lock as granted and detach cookie and granted call back */
   lock_entry->cle_blocked          = CACHE_CANCELED;
-  lock_entry->cle_blocked_cookie   = NULL;
-  lock_entry->cle_granted_callback = NULL;
 
-#ifdef _USE_NLM
+  /* Release block data */
+  if(lock_entry->cle_block_data != NULL)
+    {
+      pcookie = lock_entry->cle_block_data->cbd_blocked_cookie;
+      Mem_Free(lock_entry->cle_block_data);
+      lock_entry->cle_block_data = NULL;
+    }
+
   /* Don't need reference to cookie entry any more */
   if(pcookie != NULL)
     cookie_entry_dec_ref(pcookie);
-#endif
 }
 
 /**
@@ -1669,16 +1693,16 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
   return *pstatus;
 }
 
-cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
-                                      fsal_op_context_t    * pcontext,
-                                      cache_lock_owner_t   * powner,
-                                      cache_blocking_t       blocking,
-                                      granted_callback_t     granted_callback,
-                                      cache_lock_desc_t    * plock,
-                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
-                                      cache_lock_desc_t    * conflict, /* description of conflicting lock */
-                                      cache_inode_client_t * pclient,
-                                      cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_lock(cache_entry_t            * pentry,
+                                      fsal_op_context_t        * pcontext,
+                                      cache_lock_owner_t       * powner,
+                                      cache_blocking_t           blocking,
+                                      cache_inode_block_data_t * block_data,
+                                      cache_lock_desc_t        * plock,
+                                      cache_lock_owner_t      ** holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t        * conflict, /* description of conflicting lock */
+                                      cache_inode_client_t     * pclient,
+                                      cache_inode_status_t     * pstatus)
 {
   int allow = 1, overlap = 0;
   struct glist_head *glist;
@@ -1798,8 +1822,9 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
     {
       blocked = CACHE_NON_BLOCKING;
     }
-  else if(blocking == CACHE_NON_BLOCKING ||
-          blocking == CACHE_NFSV4_BLOCKING) /* TODO FSF: look into support of NFS v4 blocking locks */
+  else if(blocking == CACHE_NON_BLOCKING   ||
+          blocking == CACHE_NFSV4_BLOCKING || /* TODO FSF: look into support of NFS v4 blocking locks */
+          block_data == NULL)                 /* Can't support blocking locks right now without call back */
     {
       V(pentry->object.file.lock_list_mutex);
       LogEntry("cache_inode_lock conflicts with",
@@ -1824,7 +1849,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                         blocked,
                                         powner,
                                         plock,
-                                        granted_callback);
+                                        block_data);
   if(!found_entry)
     {
       V(pentry->object.file.lock_list_mutex);
