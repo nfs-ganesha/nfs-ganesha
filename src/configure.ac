@@ -385,14 +385,16 @@ if test "$enable_ipv6" == "yes"; then
 fi
 
 # BuddyMalloc
-GA_DISABLE_AM_CONDITION([buddy-malloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
+GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
 
-if test "$disable_buddy-malloc" = "no"; then
+echo "enable_BuddyMalloc=$enable_BuddyMalloc"
+
+if test "$enable_BuddyMalloc" == "yes"; then
         AC_DEFINE(_BUDDY_SYSTEM, 1, [enable GANESHA's memory allocator])
 else
 	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
 fi
-AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$disable_buddy-malloc" = "no")
+AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),

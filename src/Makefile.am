@@ -1,7 +1,14 @@
 ACLOCAL_AMFLAGS = -I m4
 
+if USE_BUDDY_SYSTEM
+BUDDYDIR = BuddyMalloc
+else
+BUDDYDIR =
+endif
+
 SUBDIRS = include             \
           Log 		      \
+          $(BUDDYDIR)         \
           Common              \
           ConfigParsing       \
           RW_Lock             \
@@ -38,10 +45,6 @@ SUBDIRS = include             \
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse
-endif
-
-if USE_BUDDY_SYSTEM
-SUBDIRS += BuddyMalloc
 endif
 
 DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD NFS_Protocols SemN StuffAlloc shell support \
