@@ -150,7 +150,9 @@ int nlm_send_async_res_nlm4test(cache_inode_nlm_client_t * host,
 /* Execute a func from the async queue */
 void *nlm_async_thread(void *argp)
 {
+#ifndef _NO_BUDDY_SYSTEM
   int rc;
+#endif
   nlm_async_queue_t *entry;
   struct timeval now;
   struct timespec timeout;
