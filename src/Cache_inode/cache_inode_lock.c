@@ -1035,7 +1035,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
 
   /* TODO FSF: attempt FSAL lock here */
 
-  if(lock_entry->cle_block_data == NULL)
+  if(lock_entry->cle_block_data == NULL || pcookie == NULL || cookie_size == 0)
     {
       /* Something's wrong with this entry */
       *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
@@ -1057,6 +1057,17 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
 
   memset(hash_entry, 0, sizeof(*hash_entry));
 
+  buffkey.pdata = (caddr_t) Mem_Alloc(cookie_size);
+  if(buffkey.pdata == NULL)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "cache_inode_insert_block => KEY {%s} NO MEMORY",
+                   str);
+      Mem_Free(hash_entry);
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
+      return *pstatus;
+    }
+
   lock_entry_inc_ref(lock_entry);
 
   if(pthread_mutex_init(&hash_entry->lce_mutex, NULL) == -1)
@@ -1073,7 +1084,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
   hash_entry->lce_pentry     = pentry;
   hash_entry->lce_lock_entry = lock_entry;
 
-  buffkey.pdata = pcookie;
+  memcpy(buffkey.pdata, pcookie, cookie_size);
   buffkey.len   = cookie_size;
   buffval.pdata = (void *)hash_entry;
   buffval.len   = sizeof(*hash_entry);
