@@ -1,0 +1,110 @@
+\section{test\_\-cache\_\-inode.c File Reference}
+\label{test__cache__inode_8c}\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+Program for testing cache\_\-inode. 
+
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}err\_\-fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}err\_\-cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf HPSS\_\-SSM}\ \char`\"{}hpss\_\-ssm\char`\"{}
+\item 
+\#define {\bf HPSS\_\-KEYTAB}\ \char`\"{}/krb5/hpssserver.keytab\char`\"{}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf lru\_\-entry\_\-to\_\-str} (LRU\_\-data\_\-t data, char $\ast$str)
+\item 
+int {\bf lru\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\ast$adddata)
+\item 
+{\bf main} (int argc, char $\ast$argv[$\,$])
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Program for testing cache\_\-inode. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:28 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.28 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf test\_\-cache\_\-inode.c}.
+
+\subsection{Define Documentation}
+\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}!HPSS_KEYTAB@{HPSS\_\-KEYTAB}}
+\index{HPSS_KEYTAB@{HPSS\_\-KEYTAB}!test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-KEYTAB\ \char`\"{}/krb5/hpssserver.keytab\char`\"{}}\label{test__cache__inode_8c_a1}
+
+
+
+
+Definition at line 106 of file test\_\-cache\_\-inode.c.
+
+Referenced by main().\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}!HPSS_SSM@{HPSS\_\-SSM}}
+\index{HPSS_SSM@{HPSS\_\-SSM}!test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define HPSS\_\-SSM\ \char`\"{}hpss\_\-ssm\char`\"{}}\label{test__cache__inode_8c_a0}
+
+
+
+
+Definition at line 105 of file test\_\-cache\_\-inode.c.
+
+Referenced by main().
+
+\subsection{Function Documentation}
+\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}!lru_clean_entry@{lru\_\-clean\_\-entry}}
+\index{lru_clean_entry@{lru\_\-clean\_\-entry}!test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, void $\ast$ {\em adddata})}\label{test__cache__inode_8c_a3}
+
+
+
+
+Definition at line 117 of file test\_\-cache\_\-inode.c.\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}!lru_entry_to_str@{lru\_\-entry\_\-to\_\-str}}
+\index{lru_entry_to_str@{lru\_\-entry\_\-to\_\-str}!test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{test__cache__inode_8c_a2}
+
+
+
+
+Definition at line 108 of file test\_\-cache\_\-inode.c.\index{test_cache_inode.c@{test\_\-cache\_\-inode.c}!main@{main}}
+\index{main@{main}!test_cache_inode.c@{test\_\-cache\_\-inode.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}main (int {\em argc}, char $\ast$ {\em argv}[$\,$])}\label{test__cache__inode_8c_a4}
+
+
+main: test main function.
+
+test main function.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em argc}][IN] number of command line arguments. \item[{\em argv}][IN] arguments set on the command line.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]an integer sent back to the calling shell. \end{Desc}
+
+
+Definition at line 135 of file test\_\-cache\_\-inode.c.
+
+References cache\_\-inode\_\-client\_\-init(), cache\_\-inode\_\-fsaldata\_\-2\_\-key(), cache\_\-inode\_\-gc(), cache\_\-inode\_\-init(), cache\_\-inode\_\-lookup(), cache\_\-inode\_\-make\_\-root(), cache\_\-inode\_\-print\_\-dir(), cache\_\-inode\_\-readdir(), cache\_\-inode\_\-set\_\-gc\_\-policy(), HPSS\_\-KEYTAB, and HPSS\_\-SSM.

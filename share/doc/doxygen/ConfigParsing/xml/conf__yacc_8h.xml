@@ -1,0 +1,309 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="conf__yacc_8h" kind="file">
+    <compoundname>conf_yacc.h</compoundname>
+    <includedby refid="conf__lex_8c" local="yes">conf_lex.c</includedby>
+    <invincdepgraph>
+      <node id="27">
+        <label>conf_yacc.h</label>
+        <link refid="conf_yacc.h"/>
+        <childnode refid="28" relation="include">
+        </childnode>
+      </node>
+      <node id="28">
+        <label>conf_lex.c</label>
+        <link refid="conf__lex_8c"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="unionYYSTYPE">YYSTYPE</innerclass>
+      <sectiondef kind="define">
+      <memberdef kind="define" id="conf__yacc_8h_1a0" prot="public" static="no">
+        <name>_ERROR_</name>
+        <initializer>258</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="41" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a1" prot="public" static="no">
+        <name>BEGIN_BLOCK</name>
+        <initializer>259</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="42" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a2" prot="public" static="no">
+        <name>END_BLOCK</name>
+        <initializer>260</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="43" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a3" prot="public" static="no">
+        <name>AFFECTATION</name>
+        <initializer>261</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="44" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a4" prot="public" static="no">
+        <name>END_AFFECT</name>
+        <initializer>262</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="45" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a5" prot="public" static="no">
+        <name>IDENTIFIER</name>
+        <initializer>263</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="46" bodystart="46" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a6" prot="public" static="no">
+        <name>KEYVALUE</name>
+        <initializer>264</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="47" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a7" prot="public" static="no">
+        <name>yystype</name>
+        <initializer><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref></initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="63" bodystart="63" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a8" prot="public" static="no">
+        <name>YYSTYPE_IS_DECLARED</name>
+        <initializer>1</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="64" bodystart="64" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="define" id="conf__yacc_8h_1a9" prot="public" static="no">
+        <name>YYSTYPE_IS_TRIVIAL</name>
+        <initializer>1</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="65" bodystart="65" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="conf__yacc_8h_1a10" prot="public" static="no">
+        <type><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref></type>
+        <definition>typedef union YYSTYPE  YYSTYPE</definition>
+        <argsstring></argsstring>
+        <name>YYSTYPE</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="60"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="enum">
+      <memberdef kind="enum" id="conf__yacc_8h_1a19" prot="public" static="no">
+        <name>yytokentype</name>
+        <enumvalue id="conf__yacc_8h_1a19a12" prot="public">
+          <name>_ERROR_</name>
+          <initializer> 258</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a13" prot="public">
+          <name>BEGIN_BLOCK</name>
+          <initializer> 259</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a14" prot="public">
+          <name>END_BLOCK</name>
+          <initializer> 260</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a15" prot="public">
+          <name>AFFECTATION</name>
+          <initializer> 261</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a16" prot="public">
+          <name>END_AFFECT</name>
+          <initializer> 262</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a17" prot="public">
+          <name>IDENTIFIER</name>
+          <initializer> 263</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="conf__yacc_8h_1a19a18" prot="public">
+          <name>KEYVALUE</name>
+          <initializer> 264</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="31" bodystart="31" bodyend="39"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="conf__yacc_8h_1a11" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref></type>
+        <definition>YYSTYPE yylval</definition>
+        <argsstring></argsstring>
+        <name>yylval</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="68" bodystart="742" bodyend="-1"/>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">/*<sp/>A<sp/>Bison<sp/>parser,<sp/>made<sp/>by<sp/>GNU<sp/>Bison<sp/>1.875c.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Skeleton<sp/>parser<sp/>for<sp/>Yacc-like<sp/>parsing<sp/>with<sp/>Bison,</highlight></codeline>
+<codeline lineno="4"><highlight class="comment"><sp/><sp/><sp/>Copyright<sp/>(C)<sp/>1984,<sp/>1989,<sp/>1990,<sp/>2000,<sp/>2001,<sp/>2002,<sp/>2003<sp/>Free<sp/>Software<sp/>Foundation,<sp/>Inc.</highlight></codeline>
+<codeline lineno="5"><highlight class="comment"></highlight></codeline>
+<codeline lineno="6"><highlight class="comment"><sp/><sp/><sp/>This<sp/>program<sp/>is<sp/>free<sp/>software;<sp/>you<sp/>can<sp/>redistribute<sp/>it<sp/>and/or<sp/>modify</highlight></codeline>
+<codeline lineno="7"><highlight class="comment"><sp/><sp/><sp/>it<sp/>under<sp/>the<sp/>terms<sp/>of<sp/>the<sp/>GNU<sp/>General<sp/>Public<sp/>License<sp/>as<sp/>published<sp/>by</highlight></codeline>
+<codeline lineno="8"><highlight class="comment"><sp/><sp/><sp/>the<sp/>Free<sp/>Software<sp/>Foundation;<sp/>either<sp/>version<sp/>2,<sp/>or<sp/>(at<sp/>your<sp/>option)</highlight></codeline>
+<codeline lineno="9"><highlight class="comment"><sp/><sp/><sp/>any<sp/>later<sp/>version.</highlight></codeline>
+<codeline lineno="10"><highlight class="comment"></highlight></codeline>
+<codeline lineno="11"><highlight class="comment"><sp/><sp/><sp/>This<sp/>program<sp/>is<sp/>distributed<sp/>in<sp/>the<sp/>hope<sp/>that<sp/>it<sp/>will<sp/>be<sp/>useful,</highlight></codeline>
+<codeline lineno="12"><highlight class="comment"><sp/><sp/><sp/>but<sp/>WITHOUT<sp/>ANY<sp/>WARRANTY;<sp/>without<sp/>even<sp/>the<sp/>implied<sp/>warranty<sp/>of</highlight></codeline>
+<codeline lineno="13"><highlight class="comment"><sp/><sp/><sp/>MERCHANTABILITY<sp/>or<sp/>FITNESS<sp/>FOR<sp/>A<sp/>PARTICULAR<sp/>PURPOSE.<sp/><sp/>See<sp/>the</highlight></codeline>
+<codeline lineno="14"><highlight class="comment"><sp/><sp/><sp/>GNU<sp/>General<sp/>Public<sp/>License<sp/>for<sp/>more<sp/>details.</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"></highlight></codeline>
+<codeline lineno="16"><highlight class="comment"><sp/><sp/><sp/>You<sp/>should<sp/>have<sp/>received<sp/>a<sp/>copy<sp/>of<sp/>the<sp/>GNU<sp/>General<sp/>Public<sp/>License</highlight></codeline>
+<codeline lineno="17"><highlight class="comment"><sp/><sp/><sp/>along<sp/>with<sp/>this<sp/>program;<sp/>if<sp/>not,<sp/>write<sp/>to<sp/>the<sp/>Free<sp/>Software</highlight></codeline>
+<codeline lineno="18"><highlight class="comment"><sp/><sp/><sp/>Foundation,<sp/>Inc.,<sp/>59<sp/>Temple<sp/>Place<sp/>-<sp/>Suite<sp/>330,</highlight></codeline>
+<codeline lineno="19"><highlight class="comment"><sp/><sp/><sp/>Boston,<sp/>MA<sp/>02111-1307,<sp/>USA.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>As<sp/>a<sp/>special<sp/>exception,<sp/>when<sp/>this<sp/>file<sp/>is<sp/>copied<sp/>by<sp/>Bison<sp/>into<sp/>a</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/><sp/><sp/>Bison<sp/>output<sp/>file,<sp/>you<sp/>may<sp/>use<sp/>that<sp/>output<sp/>file<sp/>without<sp/>restriction.</highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/><sp/><sp/>This<sp/>special<sp/>exception<sp/>was<sp/>added<sp/>by<sp/>the<sp/>Free<sp/>Software<sp/>Foundation</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/><sp/><sp/>in<sp/>version<sp/>1.24<sp/>of<sp/>Bison.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Tokens.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>YYTOKENTYPE</highlight></codeline>
+<codeline lineno="28"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#<sp/>define<sp/>YYTOKENTYPE</highlight></codeline>
+<codeline lineno="29"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Put<sp/>the<sp/>tokens<sp/>into<sp/>the<sp/>symbol<sp/>table,<sp/>so<sp/>that<sp/>GDB<sp/>and<sp/>other<sp/>debuggers</highlight></codeline>
+<codeline lineno="30"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/>know<sp/>about<sp/>them.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31" refid="conf__yacc_8h_1a19" refkind="member"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/><ref refid="conf__yacc_8c_1a89" kindref="member">yytokentype</ref><sp/>{</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a4" kindref="member">_ERROR_</ref><sp/>=<sp/>258,</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a5" kindref="member">BEGIN_BLOCK</ref><sp/>=<sp/>259,</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a6" kindref="member">END_BLOCK</ref><sp/>=<sp/>260,</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a7" kindref="member">AFFECTATION</ref><sp/>=<sp/>261,</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a8" kindref="member">END_AFFECT</ref><sp/>=<sp/>262,</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a9" kindref="member">IDENTIFIER</ref><sp/>=<sp/>263,</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><ref refid="conf__yacc_8c_1a10" kindref="member">KEYVALUE</ref><sp/>=<sp/>264</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="41" refid="conf__yacc_8h_1a0" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_ERROR_<sp/>258</highlight></codeline>
+<codeline lineno="42" refid="conf__yacc_8h_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>BEGIN_BLOCK<sp/>259</highlight></codeline>
+<codeline lineno="43" refid="conf__yacc_8h_1a2" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>END_BLOCK<sp/>260</highlight></codeline>
+<codeline lineno="44" refid="conf__yacc_8h_1a3" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>AFFECTATION<sp/>261</highlight></codeline>
+<codeline lineno="45" refid="conf__yacc_8h_1a4" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>END_AFFECT<sp/>262</highlight></codeline>
+<codeline lineno="46" refid="conf__yacc_8h_1a5" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>IDENTIFIER<sp/>263</highlight></codeline>
+<codeline lineno="47" refid="conf__yacc_8h_1a6" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>KEYVALUE<sp/>264</highlight></codeline>
+<codeline lineno="48"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>!<sp/>defined<sp/>(YYSTYPE)<sp/>&amp;&amp;<sp/>!<sp/>defined<sp/>(YYSTYPE_IS_DECLARED)</highlight></codeline>
+<codeline lineno="53"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#line<sp/>28<sp/>&quot;conf_yacc.y&quot;</highlight></codeline>
+<codeline lineno="54"><highlight class="preprocessor"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">union<sp/></highlight><highlight class="normal"><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref><sp/>{</highlight></codeline>
+<codeline lineno="55" refid="unionYYSTYPE_1o0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>str_val[MAXSTRLEN];</highlight></codeline>
+<codeline lineno="56" refid="unionYYSTYPE_1o5" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="struct__type__block__" kindref="compound">list_block</ref><sp/>*<sp/><sp/>listbl;</highlight></codeline>
+<codeline lineno="57" refid="unionYYSTYPE_1o6" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="struct__type__block__" kindref="compound">type_block</ref><sp/><sp/>*<sp/><sp/>block;</highlight></codeline>
+<codeline lineno="58" refid="unionYYSTYPE_1o7" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="struct__type__affect__" kindref="compound">list_affect</ref><sp/><sp/>*<sp/><sp/>listaf;</highlight></codeline>
+<codeline lineno="59" refid="unionYYSTYPE_1o8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="struct__type__affect__" kindref="compound">type_affect</ref><sp/>*<sp/>affectation;</highlight></codeline>
+<codeline lineno="60"><highlight class="normal">}<sp/><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref>;</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Line<sp/>1275<sp/>of<sp/>yacc.c.<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight><highlight class="preprocessor">#line<sp/>63<sp/>&quot;conf_yacc.h&quot;</highlight></codeline>
+<codeline lineno="63" refid="conf__yacc_8h_1a7" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#<sp/>define<sp/>yystype<sp/>YYSTYPE<sp/></highlight><highlight class="comment">/*<sp/>obsolescent;<sp/>will<sp/>be<sp/>withdrawn<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="64" refid="conf__yacc_8h_1a8" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>define<sp/>YYSTYPE_IS_DECLARED<sp/>1</highlight></codeline>
+<codeline lineno="65" refid="conf__yacc_8h_1a9" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#<sp/>define<sp/>YYSTYPE_IS_TRIVIAL<sp/>1</highlight></codeline>
+<codeline lineno="66"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="67"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref><sp/>yylval;</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h"/>
+  </compounddef>
+</doxygen>

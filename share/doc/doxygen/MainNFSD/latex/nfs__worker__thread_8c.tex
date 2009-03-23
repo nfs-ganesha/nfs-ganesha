@@ -1,0 +1,365 @@
+\section{nfs\_\-worker\_\-thread.c File Reference}
+\label{nfs__worker__thread_8c}\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+The file that contain the 'worker\_\-thread' routine for the nfsd. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/svc.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-dupreq.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-stat.h\char`\"{}}\par
+{\tt \#include \char`\"{}Sem\-N.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf svc\_\-callout}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf NULL\_\-SVC}\ ((struct svc\_\-callout $\ast$)0)
+\item 
+\#define {\bf SVCAUTH\_\-PRIVATE}(auth)\ ((struct {\bf svc\_\-rpc\_\-gss\_\-data} $\ast$)(auth) $\rightarrow$ svc\_\-ah\_\-private)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+enum auth\_\-stat {\bf \_\-authenticate} (register struct svc\_\-req $\ast$rqst, struct rpc\_\-msg $\ast$msg)
+\item 
+int {\bf nfs\_\-Init\_\-worker\_\-data} (nfs\_\-worker\_\-data\_\-t $\ast$pdata)
+\item 
+void $\ast$ {\bf worker\_\-thread} (void $\ast$Index\-Arg)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+nfs\_\-worker\_\-data\_\-t $\ast$ {\bf workers\_\-data}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\item 
+SVCXPRT $\ast$$\ast$ {\bf Xports}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-dupreq}
+\item 
+unsigned int {\bf nb\_\-current\_\-gc\_\-workers}
+\item 
+pthread\_\-mutex\_\-t {\bf lock\_\-nb\_\-current\_\-gc\_\-workers}
+\item 
+pthread\_\-mutex\_\-t {\bf mutex\_\-cond\_\-xprt} [FD\_\-SETSIZE]
+\item 
+pthread\_\-cond\_\-t {\bf condvar\_\-xprt} [FD\_\-SETSIZE]
+\item 
+int {\bf etat\_\-xprt} [FD\_\-SETSIZE]
+\item 
+const nfs\_\-function\_\-desc\_\-t {\bf nfs2\_\-func\_\-desc} [$\,$]
+\item 
+const nfs\_\-function\_\-desc\_\-t {\bf nfs3\_\-func\_\-desc} [$\,$]
+\item 
+const nfs\_\-function\_\-desc\_\-t {\bf nfs4\_\-func\_\-desc} [$\,$]
+\item 
+const nfs\_\-function\_\-desc\_\-t {\bf mnt1\_\-func\_\-desc} [$\,$]
+\item 
+const nfs\_\-function\_\-desc\_\-t {\bf mnt3\_\-func\_\-desc} [$\,$]
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+The file that contain the 'worker\_\-thread' routine for the nfsd. 
+
+\begin{Desc}
+\item[Author:]\$Author\$ \end{Desc}
+\begin{Desc}
+\item[Date:]\$Date\$ \end{Desc}
+\begin{Desc}
+\item[Version:]\$Revision\$ \end{Desc}
+{\bf nfs\_\-worker\_\-thread.c}{\rm (p.\,\pageref{nfs__worker__thread_8c})} : The file that contain the 'worker\_\-thread' routine for the nfsd (and all the related stuff).
+
+Definition in file {\bf nfs\_\-worker\_\-thread.c}.
+
+\subsection{Define Documentation}
+\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!NULL_SVC@{NULL\_\-SVC}}
+\index{NULL_SVC@{NULL\_\-SVC}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NULL\_\-SVC\ ((struct svc\_\-callout $\ast$)0)}\label{nfs__worker__thread_8c_a0}
+
+
+
+
+Definition at line 127 of file nfs\_\-worker\_\-thread.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!SVCAUTH_PRIVATE@{SVCAUTH\_\-PRIVATE}}
+\index{SVCAUTH_PRIVATE@{SVCAUTH\_\-PRIVATE}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SVCAUTH\_\-PRIVATE(auth)\ ((struct {\bf svc\_\-rpc\_\-gss\_\-data} $\ast$)(auth) $\rightarrow$ svc\_\-ah\_\-private)}\label{nfs__worker__thread_8c_a1}
+
+
+
+
+Definition at line 128 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by Gssrpc\_\-\_\-svcauth\_\-gss(), and Svcauth\_\-gss\_\-get\_\-principal().
+
+\subsection{Function Documentation}
+\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!_authenticate@{\_\-authenticate}}
+\index{_authenticate@{\_\-authenticate}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum auth\_\-stat \_\-authenticate (register struct svc\_\-req $\ast$ {\em rqst}, struct rpc\_\-msg $\ast$ {\em msg})}\label{nfs__worker__thread_8c_a17}
+
+
+
+
+Referenced by Svc\_\-getreqset(), and worker\_\-thread().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nfs_Init_worker_data@{nfs\_\-Init\_\-worker\_\-data}}
+\index{nfs_Init_worker_data@{nfs\_\-Init\_\-worker\_\-data}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-worker\_\-data (nfs\_\-worker\_\-data\_\-t $\ast$ {\em pdata})}\label{nfs__worker__thread_8c_a19}
+
+
+nfs\_\-Init\_\-worker\_\-data: Init the data associated with a worker instance.
+
+This function is used to init the nfs\_\-worker\_\-data for a worker thread. These data are used by the worker for RPC processing.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}]A structure of type nfs\_\-worker\_\-parameter\_\-t with all the necessary information related to a worker \item[{\em pdata}]Pointer to the data to be initialized.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successfull, -1 otherwise. \end{Desc}
+
+
+Definition at line 718 of file nfs\_\-worker\_\-thread.c.
+
+References nfs\_\-param.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!worker_thread@{worker\_\-thread}}
+\index{worker_thread@{worker\_\-thread}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ worker\_\-thread (void $\ast$ {\em Index\-Arg})}\label{nfs__worker__thread_8c_a20}
+
+
+worker\_\-thread: The main function for a worker thread
+
+This is the body of the worker thread. Its starting arguments are located in global array worker\_\-data. The argument is no pointer but the worker's index. It then uses this index to address its own worker data in the array.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Index\-Arg}]the index for the worker thread, in fact an integer cast as a void $\ast$\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the result (but this function will mostly loop forever). \end{Desc}
+
+
+Definition at line 773 of file nfs\_\-worker\_\-thread.c.
+
+References \_\-authenticate(), condvar\_\-xprt, etat\_\-xprt, lock\_\-nb\_\-current\_\-gc\_\-workers, mutex\_\-cond\_\-xprt, nb\_\-current\_\-gc\_\-workers, nfs\_\-dupreq\_\-gc\_\-function(), nfs\_\-param, Rpcsecgss\_\-\_\-authenticate(), and workers\_\-data.
+
+\subsection{Variable Documentation}
+\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!condvar_xprt@{condvar\_\-xprt}}
+\index{condvar_xprt@{condvar\_\-xprt}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf condvar\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__worker__thread_8c_a10}
+
+
+
+
+Definition at line 73 of file Svc\_\-tcp\_\-gssrpc.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!etat_xprt@{etat\_\-xprt}}
+\index{etat_xprt@{etat\_\-xprt}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf etat\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__worker__thread_8c_a11}
+
+
+
+
+Definition at line 74 of file Svc\_\-tcp\_\-gssrpc.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!ht_dupreq@{ht\_\-dupreq}}
+\index{ht_dupreq@{ht\_\-dupreq}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-dupreq}}\label{nfs__worker__thread_8c_a5}
+
+
+
+
+Definition at line 136 of file nfs\_\-dupreq.c.
+
+Referenced by clean\_\-entry\_\-dupreq(), nfs\_\-dupreq\_\-add(), nfs\_\-dupreq\_\-get(), nfs\_\-dupreq\_\-get\_\-stats(), and nfs\_\-Init\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!lock_nb_current_gc_workers@{lock\_\-nb\_\-current\_\-gc\_\-workers}}
+\index{lock_nb_current_gc_workers@{lock\_\-nb\_\-current\_\-gc\_\-workers}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lock\_\-nb\_\-current\_\-gc\_\-workers}}\label{nfs__worker__thread_8c_a7}
+
+
+
+
+Definition at line 160 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-Init\_\-gc\_\-counter(), and worker\_\-thread().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!mnt1_func_desc@{mnt1\_\-func\_\-desc}}
+\index{mnt1_func_desc@{mnt1\_\-func\_\-desc}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const nfs\_\-function\_\-desc\_\-t {\bf mnt1\_\-func\_\-desc}[$\,$]}\label{nfs__worker__thread_8c_a15}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim}
+{
+  {mnt_Null    , mnt_Null_Free,    (xdrproc_t)xdr_void,    (xdrproc_t)xdr_void,      "mnt_Null",    NOTHING_SPECIAL },
+  {mnt_Mnt     , mnt1_Mnt_Free,    (xdrproc_t)xdr_dirpath, (xdrproc_t)xdr_fhstatus2, "mnt_Mnt",     NEEDS_CRED  },
+  {mnt_Dump    , mnt_Dump_Free,    (xdrproc_t)xdr_void,    (xdrproc_t)xdr_mountlist, "mnt_Dump",    NOTHING_SPECIAL },
+  {mnt_Umnt    , mnt_Umnt_Free,    (xdrproc_t)xdr_dirpath, (xdrproc_t)xdr_void,      "mnt_Umnt",    NOTHING_SPECIAL },
+  {mnt_UmntAll , mnt_UmntAll_Free, (xdrproc_t)xdr_void,    (xdrproc_t)xdr_void,      "mnt_UmntAll", NOTHING_SPECIAL },
+  {mnt_Export  ,  mnt_Export_Free, (xdrproc_t)xdr_void,    (xdrproc_t)xdr_exports,   "mnt_Export",  NOTHING_SPECIAL }
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 215 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by clean\_\-entry\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!mnt3_func_desc@{mnt3\_\-func\_\-desc}}
+\index{mnt3_func_desc@{mnt3\_\-func\_\-desc}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const nfs\_\-function\_\-desc\_\-t {\bf mnt3\_\-func\_\-desc}[$\,$]}\label{nfs__worker__thread_8c_a16}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim}
+{
+  {mnt_Null   , mnt_Null_Free,    (xdrproc_t)xdr_void,     (xdrproc_t)xdr_void,      "mnt_Null",    NOTHING_SPECIAL },
+  {mnt_Mnt    , mnt3_Mnt_Free,    (xdrproc_t)xdr_dirpath,  (xdrproc_t)xdr_mountres3, "mnt_Mnt",     NEEDS_CRED  },
+  {mnt_Dump   , mnt_Dump_Free,    (xdrproc_t)xdr_void,     (xdrproc_t)xdr_mountlist, "mnt_Dump",    NOTHING_SPECIAL },
+  {mnt_Umnt   , mnt_Umnt_Free,    (xdrproc_t)xdr_dirpath,  (xdrproc_t)xdr_void,      "mnt_Umnt",    NOTHING_SPECIAL },
+  {mnt_UmntAll, mnt_UmntAll_Free, (xdrproc_t)xdr_void,     (xdrproc_t)xdr_void,      "mnt_UmntAll", NOTHING_SPECIAL },
+  {mnt_Export , mnt_Export_Free,  (xdrproc_t)xdr_void,     (xdrproc_t)xdr_exports,   "mnt_Export",  NOTHING_SPECIAL }
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 225 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by clean\_\-entry\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!mutex_cond_xprt@{mutex\_\-cond\_\-xprt}}
+\index{mutex_cond_xprt@{mutex\_\-cond\_\-xprt}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf mutex\_\-cond\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__worker__thread_8c_a9}
+
+
+
+
+Definition at line 72 of file Svc\_\-tcp\_\-gssrpc.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nb_current_gc_workers@{nb\_\-current\_\-gc\_\-workers}}
+\index{nb_current_gc_workers@{nb\_\-current\_\-gc\_\-workers}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf nb\_\-current\_\-gc\_\-workers}}\label{nfs__worker__thread_8c_a6}
+
+
+
+
+Definition at line 159 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-Init\_\-gc\_\-counter(), and worker\_\-thread().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nfs2_func_desc@{nfs2\_\-func\_\-desc}}
+\index{nfs2_func_desc@{nfs2\_\-func\_\-desc}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const nfs\_\-function\_\-desc\_\-t {\bf nfs2\_\-func\_\-desc}[$\,$]}\label{nfs__worker__thread_8c_a12}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim} 
+{ 
+  {nfs_Null,        nfs_Null_Free,        (xdrproc_t)xdr_void,         (xdrproc_t)xdr_void,         "nfs_Null",       NOTHING_SPECIAL },
+  {nfs_Getattr,     nfs_Getattr_Free,     (xdrproc_t)xdr_fhandle2,     (xdrproc_t)xdr_ATTR2res,     "nfs_Getattr",    NEEDS_CRED  },
+  {nfs_Setattr,     nfs_Setattr_Free,     (xdrproc_t)xdr_SETATTR2args, (xdrproc_t)xdr_ATTR2res,     "nfs_Setattr",    MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs2_Root,       nfs2_Root_Free,       (xdrproc_t)xdr_void,         (xdrproc_t)xdr_void,         "nfs2_Root",      NOTHING_SPECIAL },
+  {nfs_Lookup,      nfs2_Lookup_Free,     (xdrproc_t)xdr_diropargs2,   (xdrproc_t)xdr_DIROP2res,    "nfs_Lookup",     NEEDS_CRED|SUPPORTS_GSS  },
+  {nfs_Readlink,    nfs2_Readlink_Free,   (xdrproc_t)xdr_fhandle2,     (xdrproc_t)xdr_READLINK2res, "nfs_Readlink",   NEEDS_CRED|SUPPORTS_GSS  },
+  {nfs_Read,        nfs2_Read_Free,       (xdrproc_t)xdr_READ2args,    (xdrproc_t)xdr_READ2res,     "nfs_Read",       NEEDS_CRED|SUPPORTS_GSS  },
+  {nfs2_Writecache, nfs2_Writecache_Free, (xdrproc_t)xdr_void,         (xdrproc_t)xdr_void,         "nfs_Writecache", NOTHING_SPECIAL },
+  {nfs_Write,       nfs_Write_Free,       (xdrproc_t)xdr_WRITE2args,   (xdrproc_t)xdr_ATTR2res,     "nfs_Write",      MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Create,      nfs_Create_Free,      (xdrproc_t)xdr_CREATE2args,  (xdrproc_t)xdr_DIROP2res,    "nfs_Create",     MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Remove,      nfs_Remove_Free,      (xdrproc_t)xdr_diropargs2,   (xdrproc_t)xdr_nfsstat2,     "nfs_Remove",     MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Rename,      nfs_Rename_Free,      (xdrproc_t)xdr_RENAME2args,  (xdrproc_t)xdr_nfsstat2,     "nfs_Rename",     MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Link,        nfs_Link_Free,        (xdrproc_t)xdr_LINK2args,    (xdrproc_t)xdr_nfsstat2,     "nfs_Link",       MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Symlink,     nfs_Symlink_Free,     (xdrproc_t)xdr_SYMLINK2args, (xdrproc_t)xdr_nfsstat2,     "nfs_Symlink",    MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Mkdir,       nfs_Mkdir_Free,       (xdrproc_t)xdr_CREATE2args,  (xdrproc_t)xdr_DIROP2res,    "nfs_Mkdir",      MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Rmdir,       nfs_Rmdir_Free,       (xdrproc_t)xdr_diropargs2,   (xdrproc_t)xdr_nfsstat2,     "nfs_Rmdir",      MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS },
+  {nfs_Readdir,     nfs2_Readdir_Free,    (xdrproc_t)xdr_READDIR2args, (xdrproc_t)xdr_READDIR2res,  "nfs_Readdir",    NEEDS_CRED|SUPPORTS_GSS },
+  {nfs_Fsstat,      nfs_Fsstat_Free,      (xdrproc_t)xdr_fhandle2,     (xdrproc_t)xdr_STATFS2res,   "nfs_Fsstat",     NEEDS_CRED  }
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 160 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by clean\_\-entry\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nfs3_func_desc@{nfs3\_\-func\_\-desc}}
+\index{nfs3_func_desc@{nfs3\_\-func\_\-desc}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const nfs\_\-function\_\-desc\_\-t {\bf nfs3\_\-func\_\-desc}[$\,$]}\label{nfs__worker__thread_8c_a13}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim} 
+{
+  {nfs_Null,         nfs_Null_Free,         (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,            "nfs_Null",         NOTHING_SPECIAL  },
+  {nfs_Getattr,      nfs_Getattr_Free,      (xdrproc_t)xdr_GETATTR3args,     (xdrproc_t)xdr_GETATTR3res,     "nfs_Getattr",      NEEDS_CRED|SUPPORTS_GSS },
+  {nfs_Setattr,      nfs_Setattr_Free,      (xdrproc_t)xdr_SETATTR3args,     (xdrproc_t)xdr_SETATTR3res,     "nfs_Setattr",      MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Lookup,       nfs3_Lookup_Free,      (xdrproc_t)xdr_LOOKUP3args,      (xdrproc_t)xdr_LOOKUP3res,      "nfs_Lookup",       NEEDS_CRED|SUPPORTS_GSS },
+  {nfs3_Access,      nfs3_Access_Free,      (xdrproc_t)xdr_ACCESS3args,      (xdrproc_t)xdr_ACCESS3res,      "nfs3_Access",      NEEDS_CRED|SUPPORTS_GSS },
+  {nfs_Readlink,     nfs3_Readlink_Free,    (xdrproc_t)xdr_READLINK3args,    (xdrproc_t)xdr_READLINK3res,    "nfs_Readlink",     NEEDS_CRED|SUPPORTS_GSS },
+  {nfs_Read,         nfs3_Read_Free,        (xdrproc_t)xdr_READ3args,        (xdrproc_t)xdr_READ3res,        "nfs_Read",         NEEDS_CRED|SUPPORTS_GSS },
+  {nfs_Write,        nfs_Write_Free,        (xdrproc_t)xdr_WRITE3args,       (xdrproc_t)xdr_WRITE3res,       "nfs_Write",        MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Create,       nfs_Create_Free,       (xdrproc_t)xdr_CREATE3args,      (xdrproc_t)xdr_CREATE3res,      "nfs_Create",       MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Mkdir,        nfs_Mkdir_Free,        (xdrproc_t)xdr_MKDIR3args,       (xdrproc_t)xdr_MKDIR3res,       "nfs_Mkdir",        MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Symlink,      nfs_Symlink_Free,      (xdrproc_t)xdr_SYMLINK3args,     (xdrproc_t)xdr_SYMLINK3res,     "nfs_Symlink",      MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs3_Mknod,       nfs3_Mknod_Free,       (xdrproc_t)xdr_MKNOD3args,       (xdrproc_t)xdr_MKNOD3res,       "nfs3_Mknod",       MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Remove,       nfs_Remove_Free,       (xdrproc_t)xdr_REMOVE3args,      (xdrproc_t)xdr_REMOVE3res,      "nfs_Remove",       MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Rmdir,        nfs_Rmdir_Free,        (xdrproc_t)xdr_RMDIR3args,       (xdrproc_t)xdr_RMDIR3res,       "nfs_Rmdir",        MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Rename,       nfs_Rename_Free,       (xdrproc_t)xdr_RENAME3args,      (xdrproc_t)xdr_RENAME3res,      "nfs_Rename",       MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Link,         nfs_Link_Free,         (xdrproc_t)xdr_LINK3args,        (xdrproc_t)xdr_LINK3res,        "nfs_Link",         MAKES_WRITE|NEEDS_CRED|CAN_BE_DUP|SUPPORTS_GSS  },
+  {nfs_Readdir,      nfs3_Readdir_Free,     (xdrproc_t)xdr_READDIR3args,     (xdrproc_t)xdr_READDIR3res,     "nfs_Readdir",      NEEDS_CRED|SUPPORTS_GSS },
+  {nfs3_Readdirplus, nfs3_Readdirplus_Free, (xdrproc_t)xdr_READDIRPLUS3args, (xdrproc_t)xdr_READDIRPLUS3res, "nfs3_Readdirplus", NEEDS_CRED|SUPPORTS_GSS }, 
+  {nfs_Fsstat,       nfs_Fsstat_Free,       (xdrproc_t)xdr_FSSTAT3args,      (xdrproc_t)xdr_FSSTAT3res,      "nfs_Fsstat",       NEEDS_CRED|SUPPORTS_GSS }, 
+  {nfs3_Fsinfo,      nfs3_Fsinfo_Free,      (xdrproc_t)xdr_FSINFO3args,      (xdrproc_t)xdr_FSINFO3res,      "nfs3_Fsinfo",      NEEDS_CRED }, 
+  {nfs3_Pathconf,    nfs3_Pathconf_Free,    (xdrproc_t)xdr_PATHCONF3args,    (xdrproc_t)xdr_PATHCONF3res,    "nfs3_Pathconf",    NEEDS_CRED|SUPPORTS_GSS }, 
+  {nfs3_Commit,      nfs3_Commit_Free,      (xdrproc_t)xdr_COMMIT3args,      (xdrproc_t)xdr_COMMIT3res,      "nfs3_Commit",      MAKES_WRITE|NEEDS_CRED|SUPPORTS_GSS }
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 182 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by clean\_\-entry\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nfs4_func_desc@{nfs4\_\-func\_\-desc}}
+\index{nfs4_func_desc@{nfs4\_\-func\_\-desc}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const nfs\_\-function\_\-desc\_\-t {\bf nfs4\_\-func\_\-desc}[$\,$]}\label{nfs__worker__thread_8c_a14}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim} 
+{
+  {nfs_Null,      nfs_Null_Free,      (xdrproc_t)xdr_void,          (xdrproc_t)xdr_void,         "nfs_Null",      NOTHING_SPECIAL },
+  {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t)xdr_COMPOUND4args, (xdrproc_t)xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED|SUPPORTS_GSS }
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 209 of file nfs\_\-worker\_\-thread.c.
+
+Referenced by clean\_\-entry\_\-dupreq().\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__worker__thread_8c_a3}
+
+
+
+
+Definition at line 130 of file nfs\_\-init.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!workers_data@{workers\_\-data}}
+\index{workers_data@{workers\_\-data}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-worker\_\-data\_\-t$\ast$ {\bf workers\_\-data}}\label{nfs__worker__thread_8c_a2}
+
+
+
+
+Definition at line 132 of file nfs\_\-init.c.\index{nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}!Xports@{Xports}}
+\index{Xports@{Xports}!nfs_worker_thread.c@{nfs\_\-worker\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}SVCXPRT$\ast$$\ast$ {\bf Xports}}\label{nfs__worker__thread_8c_a4}
+
+
+
+
+Definition at line 66 of file Svc\_\-gssrpc.c.

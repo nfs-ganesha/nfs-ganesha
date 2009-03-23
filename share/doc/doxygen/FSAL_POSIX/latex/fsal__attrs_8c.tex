@@ -1,0 +1,80 @@
+\section{fsal\_\-attrs.c File Reference}
+\label{fsal__attrs_8c}\index{fsal_attrs.c@{fsal\_\-attrs.c}}
+Attributes functions. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
+{\tt \#include $<$utime.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+fsal\_\-status\_\-t {\bf FSAL\_\-getattrs} (fsal\_\-handle\_\-t $\ast$p\_\-filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)
+\item 
+fsal\_\-status\_\-t {\bf FSAL\_\-setattrs} (fsal\_\-handle\_\-t $\ast$p\_\-filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-attrib\_\-set, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Attributes functions. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/09/09 15:22:49 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.19 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-attrs.c}.
+
+\subsection{Function Documentation}
+\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_getattrs@{FSAL\_\-getattrs}}
+\index{FSAL_getattrs@{FSAL\_\-getattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-getattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_a0}
+
+
+FSAL\_\-getattrs: Get attributes for the object specified by its filehandle.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em filehandle}](input): The handle of the object to get parameters. \item[{\em cred}](input): Authentication context for the operation (user,...). \item[{\em object\_\-attributes}](mandatory input/output): The retrieved attributes for the object. As input, it defines the attributes that the caller wants to retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Major error codes :\begin{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item Another error code if an error occured. \end{itemize}
+\end{Desc}
+
+
+Definition at line 43 of file fsal\_\-attrs.c.
+
+References fsal\_\-internal\_\-get\-Path\-From\-Handle().
+
+Referenced by FSAL\_\-access(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), and FSAL\_\-truncate().\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_setattrs@{FSAL\_\-setattrs}}
+\index{FSAL_setattrs@{FSAL\_\-setattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-setattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-attrib\_\-set}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_a1}
+
+
+FSAL\_\-setattrs: Set attributes for the object specified by its filehandle.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em filehandle}](input): The handle of the object to get parameters. \item[{\em cred}](input): Authentication context for the operation (user,...). \item[{\em attrib\_\-set}](mandatory input): The attributes to be set for the object. It defines the attributes that the caller wants to set and their values. \item[{\em object\_\-attributes}](optionnal input/output): The post operation attributes for the object. As input, it defines the attributes that the caller wants to retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be NULL.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Major error codes :\begin{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item Another error code if an error occured. \end{itemize}
+\end{Desc}
+
+
+Definition at line 107 of file fsal\_\-attrs.c.
+
+References fsal2unix\_\-mode(), FSAL\_\-getattrs(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), posix2fsal\_\-error(), and Take\-Token\-FSCall().

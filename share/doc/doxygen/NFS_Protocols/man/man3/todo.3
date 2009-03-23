@@ -1,0 +1,67 @@
+.TH "todo" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+todo \- Todo List
+ 
+.IP "\fBMember \fBmnt_Export_Free\fP(nfs_res_t *pres) \fP" 1c
+: BUGAZOMEU end this function
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_Compound\fP(nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres) \fP" 1c
+BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_op_close\fP(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) \fP" 1c
+: check seqid mgmt
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_op_open\fP(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) \fP" 1c
+: BUGAZOMEU: remove this line if( arg_OPEN4.openhow.openflag4_u.how.mode != UNCHECKED4 && cache_status != CACHE_INODE_ENTRY_EXISTS )
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_op_write\fP(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) \fP" 1c
+: same stateid should be identify here
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_PseudoToFattr\fP(pseudofs_entry_t *psfsp, fattr4 *Fattr, compound_data_t *data, nfs_fh4 *objFH, bitmap4 *Bitmap) \fP" 1c
+: BUGAZOMEU: Allocation at NULL Adress here.... 
+.PP
+: not the right answer, actual quotas should be implemented 
+.PP
+: not the right answer, actual quotas should be implemented 
+.PP
+: BUGAZOMEU: Allocation at NULL Adress here.... 
+.PP
+: BUGAZOMEU: Allocation at NULL Adress here....
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs2_FSALattr_To_Fattr\fP(exportlist_t *pexport, fsal_attrib_list_t *pFSAL_attr, fattr2 *pFattr) \fP" 1c
+mode mask ? 
+.PP
+mode mask ?
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs3_Errno\fP(cache_inode_status_t error) \fP" 1c
+: Check if this works by making stress tests
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs4_FSALattr_To_Fattr\fP(exportlist_t *pexport, fsal_attrib_list_t *pattr, fattr4 *Fattr, compound_data_t *data, nfs_fh4 *objFH, bitmap4 *Bitmap) \fP" 1c
+: not the right answer, actual quotas should be implemented 
+.PP
+: not the right answer, actual quotas should be implemented
+.PP
+.PP
+ 
+.IP "\fBMember \fBnfs_RetryableError\fP(cache_inode_status_t cache_status) \fP" 1c
+: Not implemented for NOW BUGAZEOMEU 
+.PP
+

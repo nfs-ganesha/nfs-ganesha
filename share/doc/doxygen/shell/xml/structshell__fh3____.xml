@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structshell__fh3____" kind="struct" prot="public">
+    <compoundname>shell_fh3__</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structshell__fh3_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>u_int</type>
+        <definition>u_int shell_fh3__::data_len</definition>
+        <argsstring></argsstring>
+        <name>data_len</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/commands_NFS.c" line="244" bodystart="142" bodyend="-1"/>
+        <referencedby refid="commands__NFS_8c_1a45" compoundref="commands__NFS_8c" startline="2682" endline="2763">fn_nfs_cd</referencedby>
+        <referencedby refid="commands__NFS_8c_1a46" compoundref="commands__NFS_8c" startline="2768" endline="2890">fn_nfs_create</referencedby>
+        <referencedby refid="commands__NFS_8c_1a52" compoundref="commands__NFS_8c" startline="3548" endline="3683">fn_nfs_ln</referencedby>
+        <referencedby refid="commands__NFS_8c_1a44" compoundref="commands__NFS_8c" startline="2341" endline="2677">fn_nfs_ls</referencedby>
+        <referencedby refid="commands__NFS_8c_1a47" compoundref="commands__NFS_8c" startline="2895" endline="3017">fn_nfs_mkdir</referencedby>
+        <referencedby refid="commands__NFS_8c_1a41" compoundref="commands__NFS_8c" startline="2100" endline="2206">fn_nfs_mount</referencedby>
+        <referencedby refid="commands__NFS_8c_1a43" compoundref="commands__NFS_8c" startline="2306" endline="2337">fn_nfs_pwd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a61" compoundref="commands__NFS__remote_8c" startline="2462" endline="2533">fn_nfs_remote_cd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a62" compoundref="commands__NFS__remote_8c" startline="2538" endline="2642">fn_nfs_remote_create</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a68" compoundref="commands__NFS__remote_8c" startline="3244" endline="3368">fn_nfs_remote_ln</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a60" compoundref="commands__NFS__remote_8c" startline="2132" endline="2457">fn_nfs_remote_ls</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a63" compoundref="commands__NFS__remote_8c" startline="2647" endline="2755">fn_nfs_remote_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a57" compoundref="commands__NFS__remote_8c" startline="1985" endline="2026">fn_nfs_remote_mount</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a59" compoundref="commands__NFS__remote_8c" startline="2109" endline="2128">fn_nfs_remote_pwd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a69" compoundref="commands__NFS__remote_8c" startline="3374" endline="3529">fn_nfs_remote_stat</referencedby>
+        <referencedby refid="commands__NFS_8c_1a53" compoundref="commands__NFS_8c" startline="3689" endline="3855">fn_nfs_stat</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structshell__fh3_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>char</type>
+        <definition>char shell_fh3__::data_val</definition>
+        <argsstring>[NFS3_FHSIZE]</argsstring>
+        <name>data_val</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/commands_NFS.c" line="245" bodystart="143" bodyend="-1"/>
+        <referencedby refid="commands__NFS_8c_1a45" compoundref="commands__NFS_8c" startline="2682" endline="2763">fn_nfs_cd</referencedby>
+        <referencedby refid="commands__NFS_8c_1a46" compoundref="commands__NFS_8c" startline="2768" endline="2890">fn_nfs_create</referencedby>
+        <referencedby refid="commands__NFS_8c_1a52" compoundref="commands__NFS_8c" startline="3548" endline="3683">fn_nfs_ln</referencedby>
+        <referencedby refid="commands__NFS_8c_1a44" compoundref="commands__NFS_8c" startline="2341" endline="2677">fn_nfs_ls</referencedby>
+        <referencedby refid="commands__NFS_8c_1a47" compoundref="commands__NFS_8c" startline="2895" endline="3017">fn_nfs_mkdir</referencedby>
+        <referencedby refid="commands__NFS_8c_1a41" compoundref="commands__NFS_8c" startline="2100" endline="2206">fn_nfs_mount</referencedby>
+        <referencedby refid="commands__NFS_8c_1a43" compoundref="commands__NFS_8c" startline="2306" endline="2337">fn_nfs_pwd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a61" compoundref="commands__NFS__remote_8c" startline="2462" endline="2533">fn_nfs_remote_cd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a62" compoundref="commands__NFS__remote_8c" startline="2538" endline="2642">fn_nfs_remote_create</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a68" compoundref="commands__NFS__remote_8c" startline="3244" endline="3368">fn_nfs_remote_ln</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a60" compoundref="commands__NFS__remote_8c" startline="2132" endline="2457">fn_nfs_remote_ls</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a63" compoundref="commands__NFS__remote_8c" startline="2647" endline="2755">fn_nfs_remote_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a57" compoundref="commands__NFS__remote_8c" startline="1985" endline="2026">fn_nfs_remote_mount</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a59" compoundref="commands__NFS__remote_8c" startline="2109" endline="2128">fn_nfs_remote_pwd</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a69" compoundref="commands__NFS__remote_8c" startline="3374" endline="3529">fn_nfs_remote_stat</referencedby>
+        <referencedby refid="commands__NFS_8c_1a53" compoundref="commands__NFS_8c" startline="3689" endline="3855">fn_nfs_stat</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/shell/commands_NFS.c" line="243" bodystart="242" bodyend="246"/>
+    <listofallmembers>
+      <member refid="structshell__fh3_____1o0" prot="public" virt="non-virtual"><scope>shell_fh3__</scope><name>data_len</name></member>
+      <member refid="structshell__fh3_____1o1" prot="public" virt="non-virtual"><scope>shell_fh3__</scope><name>data_val</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

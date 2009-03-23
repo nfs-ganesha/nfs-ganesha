@@ -1,0 +1,353 @@
+/*
+ * vim:expandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * Ce logiciel est un serveur implementant le protocole NFS.
+ *
+ * Ce logiciel est régi par la licence CeCILL soumise au droit français et
+ * respectant les principes de diffusion des logiciels libres. Vous pouvez
+ * utiliser, modifier et/ou redistribuer ce programme sous les conditions
+ * de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA
+ * sur le site "http://www.cecill.info".
+ *
+ * En contrepartie de l'accessibilité au code source et des droits de copie,
+ * de modification et de redistribution accordés par cette licence, il n'est
+ * offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+ * seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+ * titulaire des droits patrimoniaux et les concédants successifs.
+ *
+ * A cet égard  l'attention de l'utilisateur est attirée sur les risques
+ * associés au chargement,  à l'utilisation,  à la modification et/ou au
+ * développement et à la reproduction du logiciel par l'utilisateur étant
+ * donné sa spécificité de logiciel libre, qui peut le rendre complexe à
+ * manipuler et qui le réserve donc à des développeurs et des professionnels
+ * avertis possédant  des  connaissances  informatiques approfondies.  Les
+ * utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+ * logiciel à leurs besoins dans des conditions permettant d'assurer la
+ * sécurité de leurs systèmes et ou de leurs données et, plus généralement,
+ * à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
+ *
+ * Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
+ * pris connaissance de la licence CeCILL, et que vous en avez accepté les
+ * termes.
+ *
+ * ---------------------
+ *
+ * Copyright CEA/DAM/DIF (2005)
+ *  Contributor: Philippe DENIEL  philippe.deniel@cea.fr
+ *               Thomas LEIBOVICI thomas.leibovici@cea.fr
+ *
+ *
+ * This software is a server that implements the NFS protocol.
+ * 
+ *
+ * This software is governed by the CeCILL  license under French law and
+ * abiding by the rules of distribution of free software.  You can  use,
+ * modify and/ or redistribute the software under the terms of the CeCILL
+ * license as circulated by CEA, CNRS and INRIA at the following URL
+ * "http://www.cecill.info".
+ *
+ * As a counterpart to the access to the source code and  rights to copy,
+ * modify and redistribute granted by the license, users are provided only
+ * with a limited warranty  and the software's author,  the holder of the
+ * economic rights,  and the successive licensors  have only  limited
+ * liability.
+ *
+ * In this respect, the user's attention is drawn to the risks associated
+ * with loading,  using,  modifying and/or developing or reproducing the
+ * software by the user in light of its specific status of free software,
+ * that may mean  that it is complicated to manipulate,  and  that  also
+ therefore means  that it is reserved for developers  and  experienced
+ * professionals having in-depth computer knowledge. Users are therefore
+ * encouraged to load and test the software's suitability as regards their
+ * requirements in conditions enabling the security of their systems and/or
+ * data to be ensured and,  more generally, to use and operate it in the
+ * same conditions as regards security.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL license and that you accept its terms.
+ * ---------------------------------------
+ */
+
+/**
+ * \file    mnt_Mnt.c
+ * \author  $Author: leibovic $
+ * \date    $Date: 2006/01/18 07:29:11 $
+ * \version $Revision: 1.18 $
+ * \brief   MOUNTPROC_MNT for Mount protocol v1 and v3.
+ *
+ * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
+ *
+ */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef _SOLARIS
+#include "solaris_port.h"
+#endif
+
+
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>  /* for having FNDELAY */
+#include "HashData.h"
+#include "HashTable.h"
+
+#ifdef _USE_GSSRPC
+#include <gssrpc/types.h>
+#include <gssrpc/rpc.h>
+#include <gssrpc/auth.h>
+#include <gssrpc/pmap_clnt.h>
+#else
+#include <rpc/types.h>
+#include <rpc/rpc.h>
+#include <rpc/auth.h>
+#include <rpc/pmap_clnt.h>
+#endif
+
+#include "log_functions.h"
+#include "stuff_alloc.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "nfs_core.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+#include "nfs_exports.h"
+#include "nfs_creds.h"
+#include "nfs_tools.h"
+#include "mount.h"
+#include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
+
+extern nfs_parameter_t nfs_param ;
+
+/**
+ * mnt_Mnt: The Mount proc mount function, for all versions.
+ * 
+ * The MOUNT proc proc function, for all versions.
+ * 
+ *  @param parg        [IN]    The export path to be mounted.
+ *  @param pexportlist [IN]    The export list.
+ *	@param pcontextp      [IN]    ignored
+ *  @param pclient     [INOUT] ignored
+ *  @param ht          [INOUT] ignored
+ *  @param preq        [IN]    ignored 
+ *	@param pres        [OUT]   Pointer to the result structure.
+ *
+ */
+
+int mnt_Mnt( nfs_arg_t             * parg       /* IN      */,
+             exportlist_t          * pexport    /* IN      */,
+             fsal_op_context_t     * pcontext   /* IN      */,
+             cache_inode_client_t  * pclient    /* IN/OUT  */,
+             hash_table_t          * ht         /* IN/OUT  */, 
+             struct svc_req        * preq       /* IN      */,
+             nfs_res_t             * pres       /* OUT     */ ) 
+{  
+  
+  char    exportPath[MNTPATHLEN + 1];
+  exportlist_t * p_current_item;
+
+  fsal_handle_t     * pfsal_handle = NULL ;
+  
+  int auth_flavor[NB_AUTH_FLAVOR] ;
+  int index_auth = 0 ;
+  int i = 0  ;
+  
+  char                      exported_path[MAXPATHLEN] ;
+  char                    * hostname ;
+  
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers ) ;
+  
+  /* Paranoid command to clean the result struct. */
+  memset( pres, 0, sizeof(nfs_res_t) );
+
+#ifdef _DETECT_MEMCORRUPT
+  if (!BuddyCheck( parg->arg_mnt ))
+  {
+    fprintf( stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt );
+  }       
+#endif  
+  
+  if ( parg->arg_mnt == NULL )
+  {
+    DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT, "/!\\ | MOUNT: NULL path passed as Mount argument !!!") ;    
+    return NFS_REQ_DROP;
+  }
+      
+  /* Retrieving arguments */
+  strncpy( exportPath, parg->arg_mnt, MNTPATHLEN + 1 );
+  
+
+  DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "MOUNT: Asked path=%s", exportPath ) ;
+  
+  
+  /*
+   * Find the export for the dirname (using as well Path or Tag ) 
+   */
+  for(  p_current_item = pexport ; p_current_item != NULL ; p_current_item = p_current_item->next )
+    {  
+      if( exportPath[0] != '/')
+       {
+        /* The input value may be a "Tag" */
+        if( !strcmp( exportPath, p_current_item->FS_tag ) )
+        {
+          strncpy( exported_path, p_current_item->fullpath, MAXPATHLEN ) ;
+          break ;
+        }
+       }
+      else
+       {
+        if( !strncmp(p_current_item->fullpath, exportPath, MAXPATHLEN ) )
+	  {
+	    strncpy( exported_path, p_current_item->fullpath, MAXPATHLEN ) ;
+	    break ;
+	  }
+       }
+    }
+  
+  /* if p_current_item is not null,
+   * it points to the asked export entry.
+   */
+  
+  if ( !p_current_item )
+     {
+      DisplayLogJdLevel( pclient->log_outputs, NIV_CRIT, "MOUNT: Export entry %s not found", exportPath ) ;
+       
+      /* entry not found. */
+      /* @todo : not MNT3ERR_NOENT => ok */
+       switch( preq->rq_vers )
+        {
+        case MOUNT_V1:
+          pres->res_mnt1.status = NFSERR_ACCES ;
+          break ;
+          
+        case MOUNT_V3:
+          pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
+          break ;
+        }
+       return NFS_REQ_OK ;
+    }
+  DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
+                     exported_path, p_current_item->FS_tag, exportPath, p_current_item->id ) ;
+                   
+  /* @todo : check wether mount is allowed.
+   *  to do so, retrieve client identifier from the credential.
+   */
+  
+  /*
+   * retrieve the associated NFS handle
+   */
+  
+  /* Set the FSAL HANDLE (for lighter code) */
+  pfsal_handle =  p_current_item->proot_handle  ;
+
+  /* convert the fsal_handle to a file handle */
+  switch( preq->rq_vers )
+    {
+    case MOUNT_V1:
+      if( !nfs2_FSALToFhandle( &(pres->res_mnt1.fhstatus2_u.directory), 
+                               pfsal_handle, p_current_item ) )
+        {
+          pres->res_mnt1.status = NFSERR_IO ;
+        }
+      else
+        {
+          pres->res_mnt1.status = NFS_OK ;
+        }
+      break ;
+      
+    case MOUNT_V3:
+      if( ( pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val = Mem_Alloc( NFS3_FHSIZE ) ) == NULL )
+        pres->res_mnt3.fhs_status = MNT3ERR_INVAL ; /* BUGAZOMEU: pas forcement le meilleur code retour ... */
+      else
+        {
+          if( !nfs3_FSALToFhandle( (nfs_fh3 *)&(pres->res_mnt3.mountres3_u.mountinfo.fhandle ), 
+                                   pfsal_handle, p_current_item ) )
+            {
+              pres->res_mnt3.fhs_status = MNT3ERR_INVAL ;
+            }
+          else
+            {
+              pres->res_mnt3.fhs_status = MNT3_OK ;
+          
+          /* Auth et nfs_SetPostOpAttr ici */
+            }
+        }
+      
+      break ;
+    }
+
+  /* Return the supported authentication flavor in V3 */
+  if( preq->rq_vers == MOUNT_V3 )
+    {
+      if( p_current_item->options & EXPORT_OPTION_AUTH_NONE ) auth_flavor[index_auth++] = AUTH_NONE ;
+      if( p_current_item->options & EXPORT_OPTION_AUTH_UNIX ) auth_flavor[index_auth++] = AUTH_UNIX ;
+#ifdef _USE_GSSRPC
+      if( nfs_param.krb5_param.active_krb5 == TRUE )
+       {
+         auth_flavor[index_auth++] =  MNT_RPC_GSS_NONE ;
+         auth_flavor[index_auth++] =  MNT_RPC_GSS_INTEGRITY ;
+         auth_flavor[index_auth++] =  MNT_RPC_GSS_PRIVACY ;
+       }
+#endif
+      
+      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: Entry support %d different flavours", index_auth ) ;
+      
+#define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
+      if( ( RES_MOUNTINFO.auth_flavors.auth_flavors_val = (int*)Mem_Alloc( index_auth * sizeof( int ) ) ) == NULL )
+        return NFS_REQ_DROP ;
+  
+      RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth ;
+      for( i = 0 ; i < index_auth ; i++ )
+        RES_MOUNTINFO.auth_flavors.auth_flavors_val[i] = auth_flavor[i] ;
+    }
+  
+  /* Add the client to the mount list */
+  /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
+  hostname= ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname ;
+  
+  
+  if( !nfs_Add_MountList_Entry( hostname, exportPath ) )
+    {
+      DisplayLogJd( pclient->log_outputs,  "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list", hostname, exportPath ) ;
+      DisplayLogJd( pclient->log_outputs, "MOUNT: /!\\ | Mount command will be successfull anyway" ) ;
+    }
+  else
+    DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: mount list entry (%s,%s) added",  hostname, exportPath ) ;
+                  
+  return NFS_REQ_OK ;
+  
+} /* mnt_Mnt */
+
+/**
+ * mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
+ * 
+ * Frees the result structure allocated for mnt_Mnt.
+ * 
+ * @param pres        [INOUT]   Pointer to the result structure.
+ *
+ */
+
+void mnt1_Mnt_Free( nfs_res_t * pres )
+{
+  return ;
+} /* mnt_Mnt_Free */
+
+
+void mnt3_Mnt_Free( nfs_res_t * pres )
+{
+  if( pres->res_mnt3.fhs_status == MNT3_OK )
+    {
+      Mem_Free( (char *)pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val) ;
+      Mem_Free( (char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val) ;
+    }
+  return ;
+} /* mnt_Mnt_Free */

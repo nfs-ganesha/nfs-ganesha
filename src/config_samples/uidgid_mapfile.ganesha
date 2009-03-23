@@ -1,0 +1,24 @@
+# This file is used to specify an alternate uid / gid mapping to passwd and groups tables
+
+#################
+#
+# Alternate user definition
+#
+###############
+
+Users
+{
+   user1 = 111 ;
+   user2 = 222 ;
+}
+
+#################
+#
+# Alternate group user definition
+#
+###############
+Groups
+{	
+   group1 = 111 ;
+   group2 = 222 ;
+}

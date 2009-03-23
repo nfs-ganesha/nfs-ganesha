@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structThreadLogContext__t" kind="struct" prot="public">
+    <compoundname>ThreadLogContext_t</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structThreadLogContext__t_1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char</type>
+        <definition>char ThreadLogContext_t::nom_fonction[STR_LEN]</definition>
+        <argsstring>[STR_LEN]</argsstring>
+        <name>nom_fonction</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/Log/log_functions.c" line="134" bodystart="134" bodyend="-1"/>
+        <referencedby refid="log__functions_8c_1a56" compoundref="log__functions_8c" startline="357" endline="362">ReturnNameFunction</referencedby>
+        <referencedby refid="log__functions_8c_1a52" compoundref="log__functions_8c" startline="311" endline="319">SetNameFunction</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/Log/log_functions.c" line="132" bodystart="132" bodyend="136"/>
+    <listofallmembers>
+      <member refid="structThreadLogContext__t_1o0" prot="public" virt="non-virtual"><scope>ThreadLogContext_t</scope><name>nom_fonction</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

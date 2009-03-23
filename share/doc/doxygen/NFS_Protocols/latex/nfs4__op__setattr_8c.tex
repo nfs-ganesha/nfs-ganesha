@@ -1,0 +1,124 @@
+\section{nfs4\_\-op\_\-setattr.c File Reference}
+\label{nfs4__op__setattr_8c}\index{nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}}
+Routines used for managing the NFS4 COMPOUND functions. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf arg\_\-SETATTR4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opsetattr
+\item 
+\#define {\bf res\_\-SETATTR4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetattr
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf nfs4\_\-op\_\-setattr} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+void {\bf nfs4\_\-op\_\-setattr\_\-Free} (SETATTR4res $\ast$resp)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Routines used for managing the NFS4 COMPOUND functions. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:52 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.15 \end{Desc}
+\end{Desc}
+{\bf nfs4\_\-op\_\-setattr.c}{\rm (p.\,\pageref{nfs4__op__setattr_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+
+Definition in file {\bf nfs4\_\-op\_\-setattr.c}.
+
+\subsection{Define Documentation}
+\index{nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}!arg_SETATTR4@{arg\_\-SETATTR4}}
+\index{arg_SETATTR4@{arg\_\-SETATTR4}!nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-SETATTR4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opsetattr}\label{nfs4__op__setattr_8c_a0}
+
+
+nfs4\_\-op\_\-rename: The NFS4\_\-OP\_\-SETATTR operation.
+
+This functions handles the NFS4\_\-OP\_\-SETATTR operation in NFSv4. This function can be called only from nfs4\_\-Compound
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
+
+
+Definition at line 139 of file nfs4\_\-op\_\-setattr.c.
+
+Referenced by nfs4\_\-op\_\-setattr().\index{nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}!res_SETATTR4@{res\_\-SETATTR4}}
+\index{res_SETATTR4@{res\_\-SETATTR4}!nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-SETATTR4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetattr}\label{nfs4__op__setattr_8c_a1}
+
+
+
+
+Definition at line 140 of file nfs4\_\-op\_\-setattr.c.
+
+Referenced by nfs4\_\-op\_\-setattr().
+
+\subsection{Function Documentation}
+\index{nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}!nfs4_op_setattr@{nfs4\_\-op\_\-setattr}}
+\index{nfs4_op_setattr@{nfs4\_\-op\_\-setattr}!nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-setattr (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__setattr_8c_a2}
+
+
+
+
+Definition at line 142 of file nfs4\_\-op\_\-setattr.c.
+
+References arg\_\-SETATTR4, nfs4\_\-Errno(), nfs4\_\-Fattr\_\-Check\_\-Access(), nfs4\_\-Fattr\_\-Supported(), nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr(), and res\_\-SETATTR4.\index{nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}!nfs4_op_setattr_Free@{nfs4\_\-op\_\-setattr\_\-Free}}
+\index{nfs4_op_setattr_Free@{nfs4\_\-op\_\-setattr\_\-Free}!nfs4_op_setattr.c@{nfs4\_\-op\_\-setattr.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-setattr\_\-Free (SETATTR4res $\ast$ {\em resp})}\label{nfs4__op__setattr_8c_a3}
+
+
+nfs4\_\-op\_\-setattr\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-setattr.
+
+Frees what was allocared to handle nfs4\_\-op\_\-setattr.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em resp}][INOUT] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function ) \end{Desc}
+
+
+Definition at line 327 of file nfs4\_\-op\_\-setattr.c.

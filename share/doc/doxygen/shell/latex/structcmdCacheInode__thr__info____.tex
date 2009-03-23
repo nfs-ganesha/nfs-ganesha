@@ -1,0 +1,112 @@
+\section{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\- Struct Reference}
+\label{structcmdCacheInode__thr__info____}\index{cmdCacheInode_thr_info__@{cmdCacheInode\_\-thr\_\-info\_\-\_\-}}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+int {\bf is\_\-thread\_\-init}
+\item 
+fsal\_\-export\_\-context\_\-t {\bf exp\_\-context}
+\item 
+fsal\_\-op\_\-context\_\-t {\bf context}
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-status}
+\item 
+int {\bf is\_\-client\_\-init}
+\item 
+cache\_\-entry\_\-t $\ast$ {\bf pentry}
+\item 
+char {\bf current\_\-path} [FSAL\_\-MAX\_\-PATH\_\-LEN]
+\item 
+cache\_\-inode\_\-client\_\-t {\bf client}
+\item 
+cache\_\-content\_\-client\_\-t {\bf dc\_\-client}
+\end{CompactItemize}
+
+
+\subsection{Member Data Documentation}
+\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!cache_status@{cache\_\-status}}
+\index{cache_status@{cache\_\-status}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::cache\_\-status}}\label{structcmdCacheInode__thr__info_____o3}
+
+
+Thread specific variable: Last status from cache\_\-inode layer 
+
+Definition at line 365 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cache\_\-solvepath(), cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cd(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-gc(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-pwd(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), and fn\_\-Cache\_\-inode\_\-write().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!client@{client}}
+\index{client@{client}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-t {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::client}}\label{structcmdCacheInode__thr__info_____o7}
+
+
+Thread specific variable : the client for the cache 
+
+Definition at line 377 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cache\_\-solvepath(), cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-callstat(), fn\_\-Cache\_\-inode\_\-cd(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-gc(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-recover\_\-cache(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), and fn\_\-Cache\_\-inode\_\-write().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!context@{context}}
+\index{context@{context}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-op\_\-context\_\-t {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::context}}\label{structcmdCacheInode__thr__info_____o2}
+
+
+context for accessing the filesystem 
+
+Definition at line 362 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cache\_\-solvepath(), cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cd(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-recover\_\-cache(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-su(), fn\_\-Cache\_\-inode\_\-unlink(), and fn\_\-Cache\_\-inode\_\-write().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!current_path@{current\_\-path}}
+\index{current_path@{current\_\-path}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::current\_\-path}[FSAL\_\-MAX\_\-PATH\_\-LEN]}\label{structcmdCacheInode__thr__info_____o6}
+
+
+Thread specific variable : Current path 
+
+Definition at line 373 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cd(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-pwd(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), and fn\_\-Cache\_\-inode\_\-write().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!dc_client@{dc\_\-client}}
+\index{dc_client@{dc\_\-client}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-t {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::dc\_\-client}}\label{structcmdCacheInode__thr__info_____o8}
+
+
+
+
+Definition at line 378 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!exp_context@{exp\_\-context}}
+\index{exp_context@{exp\_\-context}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-export\_\-context\_\-t {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::exp\_\-context}}\label{structcmdCacheInode__thr__info_____o1}
+
+
+
+
+Definition at line 359 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init(), and fn\_\-Cache\_\-inode\_\-su().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!is_client_init@{is\_\-client\_\-init}}
+\index{is_client_init@{is\_\-client\_\-init}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::is\_\-client\_\-init}}\label{structcmdCacheInode__thr__info_____o4}
+
+
+
+
+Definition at line 367 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init(), and Retrieve\-Initialized\-Context().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!is_thread_init@{is\_\-thread\_\-init}}
+\index{is_thread_init@{is\_\-thread\_\-init}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-init}}\label{structcmdCacheInode__thr__info_____o0}
+
+
+
+
+Definition at line 353 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init(), and Retrieve\-Initialized\-Context().\index{cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}!pentry@{pentry}}
+\index{pentry@{pentry}!cmdCacheInode_thr_info__@{cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ {\bf cmd\-Cache\-Inode\_\-thr\_\-info\_\-\_\-::pentry}}\label{structcmdCacheInode__thr__info_____o5}
+
+
+Thread specific variable: current pentry 
+
+Definition at line 370 of file commands\_\-Cache\_\-inode.c.
+
+Referenced by cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cd(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-pwd(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), and fn\_\-Cache\_\-inode\_\-write().
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf commands\_\-Cache\_\-inode.c}\end{CompactItemize}

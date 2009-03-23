@@ -1,0 +1,6 @@
+Hosts
+{
+	localhost = 127.0.0.1;
+	machine1 = 12.13.0.1 ;
+	Machine2 = 12.13.0.2 ;
+}

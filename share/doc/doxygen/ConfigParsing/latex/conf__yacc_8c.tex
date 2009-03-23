@@ -1,0 +1,818 @@
+\section{conf\_\-yacc.c File Reference}
+\label{conf__yacc_8c}\index{conf_yacc.c@{conf\_\-yacc.c}}
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}analyse.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+union {\bf YYSTYPE}
+\item 
+union {\bf yyalloc}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf YYBISON}\ 1
+\item 
+\#define {\bf YYSKELETON\_\-NAME}\ \char`\"{}yacc.c\char`\"{}
+\item 
+\#define {\bf YYPURE}\ 0
+\item 
+\#define {\bf YYLSP\_\-NEEDED}\ 0
+\item 
+\#define {\bf \_\-ERROR\_\-}\ 258
+\item 
+\#define {\bf BEGIN\_\-BLOCK}\ 259
+\item 
+\#define {\bf END\_\-BLOCK}\ 260
+\item 
+\#define {\bf AFFECTATION}\ 261
+\item 
+\#define {\bf END\_\-AFFECT}\ 262
+\item 
+\#define {\bf IDENTIFIER}\ 263
+\item 
+\#define {\bf KEYVALUE}\ 264
+\item 
+\#define {\bf DEBUG\_\-YACK}
+\item 
+\#define {\bf YYDEBUG}\ 0
+\item 
+\#define {\bf YYERROR\_\-VERBOSE}\ 0
+\item 
+\#define {\bf yystype}\ {\bf YYSTYPE}
+\item 
+\#define {\bf YYSTYPE\_\-IS\_\-DECLARED}\ 1
+\item 
+\#define {\bf YYSTYPE\_\-IS\_\-TRIVIAL}\ 1
+\item 
+\#define {\bf YYFREE}\ free
+\item 
+\#define {\bf YYMALLOC}\ malloc
+\item 
+\#define {\bf YYSTACK\_\-ALLOC}\ YYMALLOC
+\item 
+\#define {\bf YYSTACK\_\-FREE}\ YYFREE
+\item 
+\#define {\bf YYSTACK\_\-GAP\_\-MAXIMUM}\ (sizeof (union {\bf yyalloc}) - 1)
+\item 
+\#define {\bf YYSTACK\_\-BYTES}(N)
+\item 
+\#define {\bf YYCOPY}(To, From, Count)
+\item 
+\#define {\bf YYSTACK\_\-RELOCATE}(Stack)
+\item 
+\#define {\bf YYFINAL}\ 6
+\item 
+\#define {\bf YYLAST}\ 10
+\item 
+\#define {\bf YYNTOKENS}\ 10
+\item 
+\#define {\bf YYNNTS}\ 6
+\item 
+\#define {\bf YYNRULES}\ 8
+\item 
+\#define {\bf YYNSTATES}\ 16
+\item 
+\#define {\bf YYUNDEFTOK}\ 2
+\item 
+\#define {\bf YYMAXUTOK}\ 264
+\item 
+\#define {\bf YYTRANSLATE}(YYX)\ ((unsigned int) (YYX) $<$= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+\item 
+\#define {\bf YYPACT\_\-NINF}\ -9
+\item 
+\#define {\bf YYTABLE\_\-NINF}\ -1
+\item 
+\#define {\bf YYSIZE\_\-T}\ unsigned int
+\item 
+\#define {\bf yyerrok}\ (yyerrstatus = 0)
+\item 
+\#define {\bf yyclearin}\ ({\bf yychar} = YYEMPTY)
+\item 
+\#define {\bf YYEMPTY}\ (-2)
+\item 
+\#define {\bf YYEOF}\ 0
+\item 
+\#define {\bf YYACCEPT}\ goto yyacceptlab
+\item 
+\#define {\bf YYABORT}\ goto yyabortlab
+\item 
+\#define {\bf YYERROR}\ goto yyerrorlab
+\item 
+\#define {\bf YYFAIL}\ goto yyerrlab
+\item 
+\#define {\bf YYRECOVERING}()\ (!!yyerrstatus)
+\item 
+\#define {\bf YYBACKUP}(Token, Value)
+\item 
+\#define {\bf YYTERROR}\ 1
+\item 
+\#define {\bf YYERRCODE}\ 256
+\item 
+\#define {\bf YYLLOC\_\-DEFAULT}(Current, Rhs, N)
+\item 
+\#define {\bf YYLEX}\ yylex ()
+\item 
+\#define {\bf YYDPRINTF}(Args)
+\item 
+\#define {\bf YYDSYMPRINT}(Args)
+\item 
+\#define {\bf YYDSYMPRINTF}(Title, Token, Value, Location)
+\item 
+\#define {\bf YY\_\-STACK\_\-PRINT}(Bottom, Top)
+\item 
+\#define {\bf YY\_\-REDUCE\_\-PRINT}(Rule)
+\item 
+\#define {\bf YYINITDEPTH}\ 200
+\item 
+\#define {\bf YYMAXDEPTH}\ 10000
+\item 
+\#define {\bf YYPOPSTACK}\ (yyvsp--, yyssp--)
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf YYSTYPE} {\bf YYSTYPE}
+\item 
+typedef short {\bf yysigned\_\-char}
+\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf yytokentype} \{ \par
+{\bf \_\-ERROR\_\-} =  258, 
+{\bf BEGIN\_\-BLOCK} =  259, 
+{\bf END\_\-BLOCK} =  260, 
+{\bf AFFECTATION} =  261, 
+\par
+{\bf END\_\-AFFECT} =  262, 
+{\bf IDENTIFIER} =  263, 
+{\bf KEYVALUE} =  264
+ \}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf yylex} (void)
+\item 
+void {\bf yyerror} (char $\ast$)
+\item 
+int {\bf yyparse} ()
+\item 
+void {\bf set\_\-error} (char $\ast$s)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+{\bf list\_\-block} $\ast$ {\bf program\_\-result} = NULL
+\item 
+char {\bf local\_\-errormsg} [1024] = \char`\"{}\char`\"{}
+\item 
+char {\bf extern\_\-errormsg} [1024] = \char`\"{}\char`\"{}
+\item 
+int {\bf yychar}
+\item 
+{\bf YYSTYPE} {\bf yylval}
+\item 
+int {\bf yynerrs}
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{conf_yacc.c@{conf\_\-yacc.c}!_ERROR_@{\_\-ERROR\_\-}}
+\index{_ERROR_@{\_\-ERROR\_\-}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define \_\-ERROR\_\-\ 258}\label{conf__yacc_8c_a4}
+
+
+
+
+Definition at line 65 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!AFFECTATION@{AFFECTATION}}
+\index{AFFECTATION@{AFFECTATION}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define AFFECTATION\ 261}\label{conf__yacc_8c_a7}
+
+
+
+
+Definition at line 68 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!BEGIN_BLOCK@{BEGIN\_\-BLOCK}}
+\index{BEGIN_BLOCK@{BEGIN\_\-BLOCK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define BEGIN\_\-BLOCK\ 259}\label{conf__yacc_8c_a5}
+
+
+
+
+Definition at line 66 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!DEBUG_YACK@{DEBUG\_\-YACK}}
+\index{DEBUG_YACK@{DEBUG\_\-YACK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define DEBUG\_\-YACK}\label{conf__yacc_8c_a11}
+
+
+
+
+Definition at line 99 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!END_AFFECT@{END\_\-AFFECT}}
+\index{END_AFFECT@{END\_\-AFFECT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define END\_\-AFFECT\ 262}\label{conf__yacc_8c_a8}
+
+
+
+
+Definition at line 69 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!END_BLOCK@{END\_\-BLOCK}}
+\index{END_BLOCK@{END\_\-BLOCK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define END\_\-BLOCK\ 260}\label{conf__yacc_8c_a6}
+
+
+
+
+Definition at line 67 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!IDENTIFIER@{IDENTIFIER}}
+\index{IDENTIFIER@{IDENTIFIER}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define IDENTIFIER\ 263}\label{conf__yacc_8c_a9}
+
+
+
+
+Definition at line 70 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!KEYVALUE@{KEYVALUE}}
+\index{KEYVALUE@{KEYVALUE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define KEYVALUE\ 264}\label{conf__yacc_8c_a10}
+
+
+
+
+Definition at line 71 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YY_REDUCE_PRINT@{YY\_\-REDUCE\_\-PRINT}}
+\index{YY_REDUCE_PRINT@{YY\_\-REDUCE\_\-PRINT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YY\_\-REDUCE\_\-PRINT(Rule)}\label{conf__yacc_8c_a55}
+
+
+
+
+Definition at line 575 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YY_STACK_PRINT@{YY\_\-STACK\_\-PRINT}}
+\index{YY_STACK_PRINT@{YY\_\-STACK\_\-PRINT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YY\_\-STACK\_\-PRINT(Bottom, Top)}\label{conf__yacc_8c_a54}
+
+
+
+
+Definition at line 574 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYABORT@{YYABORT}}
+\index{YYABORT@{YYABORT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYABORT\ goto yyabortlab}\label{conf__yacc_8c_a42}
+
+
+
+
+Definition at line 428 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYACCEPT@{YYACCEPT}}
+\index{YYACCEPT@{YYACCEPT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYACCEPT\ goto yyacceptlab}\label{conf__yacc_8c_a41}
+
+
+
+
+Definition at line 427 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYBACKUP@{YYBACKUP}}
+\index{YYBACKUP@{YYBACKUP}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYBACKUP(Token, Value)}\label{conf__yacc_8c_a46}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}do                                                              \
+  if (yychar == YYEMPTY && yylen == 1)                          \
+    {                                                           \
+      yychar = (Token);                                         \
+      yylval = (Value);                                         \
+      yytoken = YYTRANSLATE (yychar);                           \
+      YYPOPSTACK;                                               \
+      goto yybackup;                                            \
+    }                                                           \
+  else                                                          \
+    {                                                           \
+      yyerror ("syntax error: cannot back up");\
+      YYERROR;                                                  \
+    }                                                           \
+while (0)
+\end{verbatim}\normalsize 
+
+
+Definition at line 440 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYBISON@{YYBISON}}
+\index{YYBISON@{YYBISON}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYBISON\ 1}\label{conf__yacc_8c_a0}
+
+
+
+
+Definition at line 37 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!yyclearin@{yyclearin}}
+\index{yyclearin@{yyclearin}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define yyclearin\ ({\bf yychar} = YYEMPTY)}\label{conf__yacc_8c_a38}
+
+
+
+
+Definition at line 423 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYCOPY@{YYCOPY}}
+\index{YYCOPY@{YYCOPY}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYCOPY(To, From, Count)}\label{conf__yacc_8c_a23}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}do                                      \
+        {                                       \
+          register YYSIZE_T yyi;                \
+          for (yyi = 0; yyi < (Count); yyi++)   \
+            (To)[yyi] = (From)[yyi];            \
+        }                                       \
+      while (0)
+\end{verbatim}\normalsize 
+
+
+Definition at line 208 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYDEBUG@{YYDEBUG}}
+\index{YYDEBUG@{YYDEBUG}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYDEBUG\ 0}\label{conf__yacc_8c_a12}
+
+
+
+
+Definition at line 107 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYDPRINTF@{YYDPRINTF}}
+\index{YYDPRINTF@{YYDPRINTF}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYDPRINTF(Args)}\label{conf__yacc_8c_a51}
+
+
+
+
+Definition at line 571 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYDSYMPRINT@{YYDSYMPRINT}}
+\index{YYDSYMPRINT@{YYDSYMPRINT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYDSYMPRINT(Args)}\label{conf__yacc_8c_a52}
+
+
+
+
+Definition at line 572 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYDSYMPRINTF@{YYDSYMPRINTF}}
+\index{YYDSYMPRINTF@{YYDSYMPRINTF}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYDSYMPRINTF(Title, Token, Value, Location)}\label{conf__yacc_8c_a53}
+
+
+
+
+Definition at line 573 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYEMPTY@{YYEMPTY}}
+\index{YYEMPTY@{YYEMPTY}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYEMPTY\ (-2)}\label{conf__yacc_8c_a39}
+
+
+
+
+Definition at line 424 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYEOF@{YYEOF}}
+\index{YYEOF@{YYEOF}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYEOF\ 0}\label{conf__yacc_8c_a40}
+
+
+
+
+Definition at line 425 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYERRCODE@{YYERRCODE}}
+\index{YYERRCODE@{YYERRCODE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYERRCODE\ 256}\label{conf__yacc_8c_a48}
+
+
+
+
+Definition at line 458 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!yyerrok@{yyerrok}}
+\index{yyerrok@{yyerrok}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define yyerrok\ (yyerrstatus = 0)}\label{conf__yacc_8c_a37}
+
+
+
+
+Definition at line 422 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYERROR@{YYERROR}}
+\index{YYERROR@{YYERROR}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYERROR\ goto yyerrorlab}\label{conf__yacc_8c_a43}
+
+
+
+
+Definition at line 429 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYERROR_VERBOSE@{YYERROR\_\-VERBOSE}}
+\index{YYERROR_VERBOSE@{YYERROR\_\-VERBOSE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYERROR\_\-VERBOSE\ 0}\label{conf__yacc_8c_a13}
+
+
+
+
+Definition at line 115 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYFAIL@{YYFAIL}}
+\index{YYFAIL@{YYFAIL}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYFAIL\ goto yyerrlab}\label{conf__yacc_8c_a44}
+
+
+
+
+Definition at line 436 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYFINAL@{YYFINAL}}
+\index{YYFINAL@{YYFINAL}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYFINAL\ 6}\label{conf__yacc_8c_a25}
+
+
+
+
+Definition at line 244 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYFREE@{YYFREE}}
+\index{YYFREE@{YYFREE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYFREE\ free}\label{conf__yacc_8c_a17}
+
+
+
+
+Definition at line 145 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYINITDEPTH@{YYINITDEPTH}}
+\index{YYINITDEPTH@{YYINITDEPTH}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYINITDEPTH\ 200}\label{conf__yacc_8c_a56}
+
+
+
+
+Definition at line 581 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYLAST@{YYLAST}}
+\index{YYLAST@{YYLAST}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYLAST\ 10}\label{conf__yacc_8c_a26}
+
+
+
+
+Definition at line 246 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYLEX@{YYLEX}}
+\index{YYLEX@{YYLEX}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYLEX\ yylex ()}\label{conf__yacc_8c_a50}
+
+
+
+
+Definition at line 476 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYLLOC_DEFAULT@{YYLLOC\_\-DEFAULT}}
+\index{YYLLOC_DEFAULT@{YYLLOC\_\-DEFAULT}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYLLOC\_\-DEFAULT(Current, Rhs, N)}\label{conf__yacc_8c_a49}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}((Current).first_line   = (Rhs)[1].first_line,  \
+    (Current).first_column = (Rhs)[1].first_column,     \
+    (Current).last_line    = (Rhs)[N].last_line,        \
+    (Current).last_column  = (Rhs)[N].last_column)
+\end{verbatim}\normalsize 
+
+
+Definition at line 464 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYLSP_NEEDED@{YYLSP\_\-NEEDED}}
+\index{YYLSP_NEEDED@{YYLSP\_\-NEEDED}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYLSP\_\-NEEDED\ 0}\label{conf__yacc_8c_a3}
+
+
+
+
+Definition at line 46 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYMALLOC@{YYMALLOC}}
+\index{YYMALLOC@{YYMALLOC}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYMALLOC\ malloc}\label{conf__yacc_8c_a18}
+
+
+
+
+Definition at line 148 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYMAXDEPTH@{YYMAXDEPTH}}
+\index{YYMAXDEPTH@{YYMAXDEPTH}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYMAXDEPTH\ 10000}\label{conf__yacc_8c_a57}
+
+
+
+
+Definition at line 596 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYMAXUTOK@{YYMAXUTOK}}
+\index{YYMAXUTOK@{YYMAXUTOK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYMAXUTOK\ 264}\label{conf__yacc_8c_a32}
+
+
+
+
+Definition at line 259 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYNNTS@{YYNNTS}}
+\index{YYNNTS@{YYNNTS}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYNNTS\ 6}\label{conf__yacc_8c_a28}
+
+
+
+
+Definition at line 251 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYNRULES@{YYNRULES}}
+\index{YYNRULES@{YYNRULES}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYNRULES\ 8}\label{conf__yacc_8c_a29}
+
+
+
+
+Definition at line 253 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYNSTATES@{YYNSTATES}}
+\index{YYNSTATES@{YYNSTATES}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYNSTATES\ 16}\label{conf__yacc_8c_a30}
+
+
+
+
+Definition at line 255 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYNTOKENS@{YYNTOKENS}}
+\index{YYNTOKENS@{YYNTOKENS}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYNTOKENS\ 10}\label{conf__yacc_8c_a27}
+
+
+
+
+Definition at line 249 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYPACT_NINF@{YYPACT\_\-NINF}}
+\index{YYPACT_NINF@{YYPACT\_\-NINF}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYPACT\_\-NINF\ -9}\label{conf__yacc_8c_a34}
+
+
+
+
+Definition at line 368 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYPOPSTACK@{YYPOPSTACK}}
+\index{YYPOPSTACK@{YYPOPSTACK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYPOPSTACK\ (yyvsp--, yyssp--)}\label{conf__yacc_8c_a58}
+
+
+\index{conf_yacc.c@{conf\_\-yacc.c}!YYPURE@{YYPURE}}
+\index{YYPURE@{YYPURE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYPURE\ 0}\label{conf__yacc_8c_a2}
+
+
+
+
+Definition at line 43 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYRECOVERING@{YYRECOVERING}}
+\index{YYRECOVERING@{YYRECOVERING}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYRECOVERING()\ (!!yyerrstatus)}\label{conf__yacc_8c_a45}
+
+
+
+
+Definition at line 438 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSIZE_T@{YYSIZE\_\-T}}
+\index{YYSIZE_T@{YYSIZE\_\-T}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSIZE\_\-T\ unsigned int}\label{conf__yacc_8c_a36}
+
+
+
+
+Definition at line 419 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYSKELETON_NAME@{YYSKELETON\_\-NAME}}
+\index{YYSKELETON_NAME@{YYSKELETON\_\-NAME}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSKELETON\_\-NAME\ \char`\"{}yacc.c\char`\"{}}\label{conf__yacc_8c_a1}
+
+
+
+
+Definition at line 40 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTACK_ALLOC@{YYSTACK\_\-ALLOC}}
+\index{YYSTACK_ALLOC@{YYSTACK\_\-ALLOC}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTACK\_\-ALLOC\ YYMALLOC}\label{conf__yacc_8c_a19}
+
+
+
+
+Definition at line 175 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTACK_BYTES@{YYSTACK\_\-BYTES}}
+\index{YYSTACK_BYTES@{YYSTACK\_\-BYTES}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTACK\_\-BYTES(N)}\label{conf__yacc_8c_a22}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}((N) * (sizeof (short) + sizeof (YYSTYPE))                              \
+      + YYSTACK_GAP_MAXIMUM)
+\end{verbatim}\normalsize 
+
+
+Definition at line 197 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTACK_FREE@{YYSTACK\_\-FREE}}
+\index{YYSTACK_FREE@{YYSTACK\_\-FREE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTACK\_\-FREE\ YYFREE}\label{conf__yacc_8c_a20}
+
+
+
+
+Definition at line 176 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTACK_GAP_MAXIMUM@{YYSTACK\_\-GAP\_\-MAXIMUM}}
+\index{YYSTACK_GAP_MAXIMUM@{YYSTACK\_\-GAP\_\-MAXIMUM}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTACK\_\-GAP\_\-MAXIMUM\ (sizeof (union {\bf yyalloc}) - 1)}\label{conf__yacc_8c_a21}
+
+
+
+
+Definition at line 193 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTACK_RELOCATE@{YYSTACK\_\-RELOCATE}}
+\index{YYSTACK_RELOCATE@{YYSTACK\_\-RELOCATE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTACK\_\-RELOCATE(Stack)}\label{conf__yacc_8c_a24}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}do                                                                      \
+      {                                                                 \
+        YYSIZE_T yynewbytes;                                            \
+        YYCOPY (&yyptr->Stack, Stack, yysize);                          \
+        Stack = &yyptr->Stack;                                          \
+        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / sizeof (*yyptr);                          \
+      }                                                                 \
+    while (0)
+\end{verbatim}\normalsize 
+
+
+Definition at line 224 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!yystype@{yystype}}
+\index{yystype@{yystype}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define yystype\ {\bf YYSTYPE}}\label{conf__yacc_8c_a14}
+
+
+
+
+Definition at line 129 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTYPE_IS_DECLARED@{YYSTYPE\_\-IS\_\-DECLARED}}
+\index{YYSTYPE_IS_DECLARED@{YYSTYPE\_\-IS\_\-DECLARED}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTYPE\_\-IS\_\-DECLARED\ 1}\label{conf__yacc_8c_a15}
+
+
+
+
+Definition at line 130 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTYPE_IS_TRIVIAL@{YYSTYPE\_\-IS\_\-TRIVIAL}}
+\index{YYSTYPE_IS_TRIVIAL@{YYSTYPE\_\-IS\_\-TRIVIAL}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYSTYPE\_\-IS\_\-TRIVIAL\ 1}\label{conf__yacc_8c_a16}
+
+
+
+
+Definition at line 131 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYTABLE_NINF@{YYTABLE\_\-NINF}}
+\index{YYTABLE_NINF@{YYTABLE\_\-NINF}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYTABLE\_\-NINF\ -1}\label{conf__yacc_8c_a35}
+
+
+
+
+Definition at line 385 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYTERROR@{YYTERROR}}
+\index{YYTERROR@{YYTERROR}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYTERROR\ 1}\label{conf__yacc_8c_a47}
+
+
+
+
+Definition at line 457 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYTRANSLATE@{YYTRANSLATE}}
+\index{YYTRANSLATE@{YYTRANSLATE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYTRANSLATE(YYX)\ ((unsigned int) (YYX) $<$= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)}\label{conf__yacc_8c_a33}
+
+
+
+
+Definition at line 261 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!YYUNDEFTOK@{YYUNDEFTOK}}
+\index{YYUNDEFTOK@{YYUNDEFTOK}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define YYUNDEFTOK\ 2}\label{conf__yacc_8c_a31}
+
+
+
+
+Definition at line 258 of file conf\_\-yacc.c.
+
+\subsection{Typedef Documentation}
+\index{conf_yacc.c@{conf\_\-yacc.c}!yysigned_char@{yysigned\_\-char}}
+\index{yysigned_char@{yysigned\_\-char}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef short {\bf yysigned\_\-char}}\label{conf__yacc_8c_a63}
+
+
+
+
+Definition at line 240 of file conf\_\-yacc.c.\index{conf_yacc.c@{conf\_\-yacc.c}!YYSTYPE@{YYSTYPE}}
+\index{YYSTYPE@{YYSTYPE}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef union {\bf YYSTYPE}  {\bf YYSTYPE}}\label{conf__yacc_8c_a62}
+
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{conf_yacc.c@{conf\_\-yacc.c}!yytokentype@{yytokentype}}
+\index{yytokentype@{yytokentype}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf yytokentype}}\label{conf__yacc_8c_a89}
+
+
+\begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{_ERROR_@{\_\-ERROR\_\-}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!_ERROR_@{\_\-ERROR\_\-}}\item[{\em 
+\_\-ERROR\_\-\label{conf__yacc_8c_a89a77}
+}]\index{BEGIN_BLOCK@{BEGIN\_\-BLOCK}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!BEGIN_BLOCK@{BEGIN\_\-BLOCK}}\item[{\em 
+BEGIN\_\-BLOCK\label{conf__yacc_8c_a89a78}
+}]\index{END_BLOCK@{END\_\-BLOCK}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!END_BLOCK@{END\_\-BLOCK}}\item[{\em 
+END\_\-BLOCK\label{conf__yacc_8c_a89a79}
+}]\index{AFFECTATION@{AFFECTATION}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!AFFECTATION@{AFFECTATION}}\item[{\em 
+AFFECTATION\label{conf__yacc_8c_a89a80}
+}]\index{END_AFFECT@{END\_\-AFFECT}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!END_AFFECT@{END\_\-AFFECT}}\item[{\em 
+END\_\-AFFECT\label{conf__yacc_8c_a89a81}
+}]\index{IDENTIFIER@{IDENTIFIER}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!IDENTIFIER@{IDENTIFIER}}\item[{\em 
+IDENTIFIER\label{conf__yacc_8c_a89a82}
+}]\index{KEYVALUE@{KEYVALUE}!conf_yacc.c@{conf\_\-yacc.c}}\index{conf_yacc.c@{conf\_\-yacc.c}!KEYVALUE@{KEYVALUE}}\item[{\em 
+KEYVALUE\label{conf__yacc_8c_a89a83}
+}]\end{description}
+\end{Desc}
+
+
+
+Definition at line 55 of file conf\_\-yacc.c.
+
+\subsection{Function Documentation}
+\index{conf_yacc.c@{conf\_\-yacc.c}!set_error@{set\_\-error}}
+\index{set_error@{set\_\-error}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void set\_\-error (char $\ast$ {\em s})}\label{conf__yacc_8c_a88}
+
+
+
+
+Definition at line 1287 of file conf\_\-yacc.c.
+
+References local\_\-errormsg.\index{conf_yacc.c@{conf\_\-yacc.c}!yyerror@{yyerror}}
+\index{yyerror@{yyerror}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void yyerror (char $\ast$)}\label{conf__yacc_8c_a85}
+
+
+
+
+Definition at line 1280 of file conf\_\-yacc.c.
+
+References extern\_\-errormsg, and local\_\-errormsg.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!yylex@{yylex}}
+\index{yylex@{yylex}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int yylex (void)}\label{conf__yacc_8c_a84}
+
+
+\index{conf_yacc.c@{conf\_\-yacc.c}!yyparse@{yyparse}}
+\index{yyparse@{yyparse}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int yyparse ()}\label{conf__yacc_8c_a87}
+
+
+
+
+Definition at line 766 of file conf\_\-yacc.c.
+
+References YYSTYPE::affectation, YYSTYPE::block, config\_\-addblock(), config\_\-adddef(), config\_\-createaffect(), config\_\-createblock(), config\_\-createlistaffect(), config\_\-createlistblock(), DEBUG\_\-YACK, YYSTYPE::listaf, YYSTYPE::listbl, program\_\-result, YY\_\-REDUCE\_\-PRINT, YY\_\-STACK\_\-PRINT, yychar, YYDPRINTF, YYDSYMPRINTF, yyerror(), YYLAST, yylval, YYMAXDEPTH, yynerrs, YYNTOKENS, YYPACT\_\-NINF, YYSIZE\_\-T, YYSTACK\_\-ALLOC, YYSTACK\_\-BYTES, YYSTACK\_\-FREE, YYSTACK\_\-RELOCATE, and YYTRANSLATE.
+
+Referenced by config\_\-Parse\-File().
+
+\subsection{Variable Documentation}
+\index{conf_yacc.c@{conf\_\-yacc.c}!extern_errormsg@{extern\_\-errormsg}}
+\index{extern_errormsg@{extern\_\-errormsg}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf extern\_\-errormsg}[1024] = \char`\"{}\char`\"{}}\label{conf__yacc_8c_a61}
+
+
+
+
+Definition at line 94 of file conf\_\-yacc.c.
+
+Referenced by config\_\-Parse\-File(), and yyerror().\index{conf_yacc.c@{conf\_\-yacc.c}!local_errormsg@{local\_\-errormsg}}
+\index{local_errormsg@{local\_\-errormsg}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf local\_\-errormsg}[1024] = \char`\"{}\char`\"{}}\label{conf__yacc_8c_a60}
+
+
+
+
+Definition at line 91 of file conf\_\-yacc.c.
+
+Referenced by set\_\-error(), and yyerror().\index{conf_yacc.c@{conf\_\-yacc.c}!program_result@{program\_\-result}}
+\index{program_result@{program\_\-result}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-block}$\ast$ {\bf program\_\-result} = NULL}\label{conf__yacc_8c_a59}
+
+
+
+
+Definition at line 88 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!yychar@{yychar}}
+\index{yychar@{yychar}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf yychar}}\label{conf__yacc_8c_a74}
+
+
+
+
+Definition at line 739 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!yylval@{yylval}}
+\index{yylval@{yylval}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf YYSTYPE} {\bf yylval}}\label{conf__yacc_8c_a75}
+
+
+
+
+Definition at line 742 of file conf\_\-yacc.c.
+
+Referenced by yyparse().\index{conf_yacc.c@{conf\_\-yacc.c}!yynerrs@{yynerrs}}
+\index{yynerrs@{yynerrs}!conf_yacc.c@{conf\_\-yacc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf yynerrs}}\label{conf__yacc_8c_a76}
+
+
+
+
+Definition at line 745 of file conf\_\-yacc.c.
+
+Referenced by yyparse().

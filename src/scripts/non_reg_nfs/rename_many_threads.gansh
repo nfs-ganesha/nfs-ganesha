@@ -1,0 +1,935 @@
+######### CONFIGURATION #######
+
+set CONFIG_FILE "/tmp/hpss.ganesha.nfsd.conf"
+set DEBUG_LEVEL "NIV_EVENT"
+
+######### INITIALIZATION #######
+
+set LAYER FSAL
+if eq $SHELLID 0 ? init_fs $CONFIG_FILE
+
+set LAYER Cache_inode
+if eq $SHELLID 0 ? init_cache $CONFIG_FILE
+
+set LAYER NFS
+if eq $SHELLID 0 ? nfs_init -v $CONFIG_FILE
+
+####### ALL THREADS CAN START NOW #######
+
+barrier
+
+mount /cea/prot/S/lama/s8/leibovic
+if ne -- $STATUS 0 ? quit : echo "mount OK"
+
+# only master thread creates the path
+mkdir test_rename 0755
+
+barrier
+
+echo "### Thread " $SHELLID " : creating files ###"
+
+set FILE "test_rename/" $SHELLID ".1"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".2"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".3"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".4"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".5"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".6"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".7"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".8"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".9"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".10"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".11"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".12"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".13"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".14"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".15"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".16"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".17"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".18"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".19"
+create $FILE 0755
+
+set FILE "test_rename/" $SHELLID ".20"
+create $FILE 0755
+
+barrier
+
+echo "### Thread " $SHELLID " : listing files ###"
+
+ls -l test_rename
+if ne 0 $STATUS ? echo "****** ERROR LS" : echo "LS OK"
+
+cd test_rename
+
+sleep 1
+
+echo "### Thread " $SHELLID " : renaming files (1) ###"
+
+set FILE1 $SHELLID ".1"
+set FILE2 $SHELLID ".1.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".2"
+set FILE2 $SHELLID ".2.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".3"
+set FILE2 $SHELLID ".3.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".4"
+set FILE2 $SHELLID ".4.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".5"
+set FILE2 $SHELLID ".5.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".6"
+set FILE2 $SHELLID ".6.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".7"
+set FILE2 $SHELLID ".7.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".8"
+set FILE2 $SHELLID ".8.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".9"
+set FILE2 $SHELLID ".9.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".10"
+set FILE2 $SHELLID ".10.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".11"
+set FILE2 $SHELLID ".11.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".12"
+set FILE2 $SHELLID ".12.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".13"
+set FILE2 $SHELLID ".13.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".14"
+set FILE2 $SHELLID ".14.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".15"
+set FILE2 $SHELLID ".15.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".16"
+set FILE2 $SHELLID ".16.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".17"
+set FILE2 $SHELLID ".17.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".18"
+set FILE2 $SHELLID ".18.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".19"
+set FILE2 $SHELLID ".19.new"
+rename $FILE1 $FILE2
+
+set FILE1 $SHELLID ".20"
+set FILE2 $SHELLID ".20.new"
+rename $FILE1 $FILE2
+
+# some tests after rename
+
+set FILE1 $SHELLID ".1"
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+set FILE1 $SHELLID ".1.new"
+stat $FILE1
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+set FILE1 $SHELLID ".20"
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+set FILE1 $SHELLID ".20.new"
+stat $FILE1
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+barrier
+
+echo "### Thread " $SHELLID " : renaming files (2) ###"
+
+
+set FILE2 $SHELLID ".1"
+set FILE1 $SHELLID ".1.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".2"
+set FILE1 $SHELLID ".2.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".3"
+set FILE1 $SHELLID ".3.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".4"
+set FILE1 $SHELLID ".4.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".5"
+set FILE1 $SHELLID ".5.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".6"
+set FILE1 $SHELLID ".6.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".7"
+set FILE1 $SHELLID ".7.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".8"
+set FILE1 $SHELLID ".8.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".9"
+set FILE1 $SHELLID ".9.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".10"
+set FILE1 $SHELLID ".10.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".11"
+set FILE1 $SHELLID ".11.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".12"
+set FILE1 $SHELLID ".12.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".13"
+set FILE1 $SHELLID ".13.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".14"
+set FILE1 $SHELLID ".14.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".15"
+set FILE1 $SHELLID ".15.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".16"
+set FILE1 $SHELLID ".16.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".17"
+set FILE1 $SHELLID ".17.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".18"
+set FILE1 $SHELLID ".18.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".19"
+set FILE1 $SHELLID ".19.new"
+rename $FILE1 $FILE2
+
+set FILE2 $SHELLID ".20"
+set FILE1 $SHELLID ".20.new"
+rename $FILE1 $FILE2
+
+
+# some tests after rename
+
+set FILE1 $SHELLID ".1"
+stat $FILE1
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+set FILE1 $SHELLID ".1.new"
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+set FILE1 $SHELLID ".20"
+stat $FILE1
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+set FILE1 $SHELLID ".20.new"
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+barrier
+
+
+echo "### Thread " $SHELLID " : renaming files (3) ###"
+
+# now rename the same file many times
+
+set FILE1 $SHELLID ".1"
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1"
+rename $FILE1 $FILE2
+
+
+stat $FILE2
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+
+# now rename the same file many times
+
+set FILE1 $SHELLID ".1"
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1"
+rename $FILE1 $FILE2
+
+
+stat $FILE2
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+# now rename the same file many times
+
+set FILE1 $SHELLID ".1"
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.0"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.1"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.2"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.3"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.4"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.5"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.6"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.7"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.8"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.9"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.10"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.11"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.12"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.13"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.14"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.15"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.16"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.17"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.18"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.19"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1.20"
+rename $FILE1 $FILE2
+
+set FILE1 $FILE2
+set FILE2 $SHELLID ".1"
+rename $FILE1 $FILE2
+
+
+ls -l .
+
+stat $FILE2
+if ne 0 $STATUS ? echo "****** ERROR GETATTR" : echo "GETATTR OK"
+
+stat $FILE1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS" : echo "RENAME OK"
+
+
+barrier
+
+echo "### Thread " $SHELLID " : removing files ###"
+
+cd ..
+
+set FILE "test_rename/" $SHELLID ".1"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".2"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".3"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".4"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".5"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".6"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".7"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".8"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".9"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".10"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".11"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".12"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".13"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".14"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".15"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".16"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".17"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".18"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".19"
+unlink $FILE
+
+set FILE "test_rename/" $SHELLID ".20"
+unlink $FILE
+
+barrier
+
+if eq $SHELLID 0 ? unlink test_rename : sleep 1
+if ne $SHELLID 0 ? quit
+
+if ne -- $STATUS 0 ? echo "***** ERROR UNLINK !!! *****" : echo "unlink OK"
+
+set LS_1 `ls test_rename`
+echo "ls test_rename (after unlink) returned :" `chomp $LS_1`
+
+
+

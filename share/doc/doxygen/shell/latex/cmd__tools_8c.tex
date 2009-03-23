@@ -1,0 +1,413 @@
+\section{cmd\_\-tools.c File Reference}
+\label{cmd__tools_8c}\index{cmd_tools.c@{cmd\_\-tools.c}}
+Header file for functions used by several layers. 
+
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$err\_\-ghost\_\-fs.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
+{\tt \#include $<$grp.h$>$}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf TIME\_\-STRLEN}\ 30
+\item 
+\#define {\bf print\_\-mask}(\_\-out, \_\-mode, \_\-mask, \_\-lettre)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+tm $\ast$ {\bf Localtime\_\-r} (const time\_\-t $\ast$p\_\-time, struct tm $\ast$p\_\-tm)
+\item 
+int {\bf my\_\-atoi} (char $\ast$str)
+\item 
+int {\bf atomode} (char $\ast$str)
+\item 
+int {\bf ato64} (char $\ast$str, unsigned long long $\ast$out64)
+\item 
+time\_\-t {\bf atotime} (char $\ast$str)
+\item 
+void {\bf split\_\-path} (char $\ast$in\_\-path, char $\ast$$\ast$p\_\-path, char $\ast$$\ast$p\_\-file)
+\item 
+char $\ast$ {\bf time2str} (time\_\-t time\_\-in, char $\ast$str\_\-out)
+\item 
+void {\bf clean\_\-path} (char $\ast$str, int len)
+\item 
+void {\bf print\_\-fsal\_\-status} (FILE $\ast$output, fsal\_\-status\_\-t status)
+\item 
+void {\bf print\_\-fsal\_\-attrib\_\-mask} (fsal\_\-attrib\_\-mask\_\-t mask, FILE $\ast$output)
+\item 
+char $\ast$ {\bf strtype} (fsal\_\-nodetype\_\-t type)
+\item 
+void {\bf print\_\-fsal\_\-attributes} (fsal\_\-attrib\_\-list\_\-t attrs, FILE $\ast$output)
+\item 
+void {\bf print\_\-item\_\-line} (FILE $\ast$out, fsal\_\-attrib\_\-list\_\-t $\ast$attrib, char $\ast$name, char $\ast$target)
+\item 
+int {\bf Mk\-FSALSet\-Attr\-Struct} (char $\ast$attribute\_\-list, fsal\_\-attrib\_\-list\_\-t $\ast$fsal\_\-set\_\-attr\_\-struct)
+\item 
+timeval {\bf time\_\-diff} (struct timeval time\_\-from, struct timeval time\_\-to)
+\item 
+char $\ast$ {\bf concat} (char $\ast$str1, char $\ast$str2, size\_\-t max\_\-len)
+\item 
+int {\bf getugroups} (int maxcount, gid\_\-t $\ast$grouplist, char $\ast$username, gid\_\-t gid)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Header file for functions used by several layers. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\$Date \$ \end{Desc}
+\begin{Desc}
+\item[Version:]\$Revision \$ \end{Desc}
+\begin{Desc}
+\item[Log]{\bf cmd\_\-tools.c}{\rm (p.\,\pageref{cmd__tools_8c})},v \end{Desc}
+Revision 1.24 2006/01/20 14:44:13 leibovic altgroups support.
+
+Revision 1.23 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.
+
+Revision 1.22 2005/11/28 17:03:00 deniel Added Ce\-CILL headers
+
+Revision 1.21 2005/09/28 09:08:00 leibovic thread-safe version of localtime.
+
+Revision 1.20 2005/09/09 15:23:11 leibovic Adding \char`\"{}cross\char`\"{} command for crossing junctions.
+
+Revision 1.19 2005/08/12 11:21:27 leibovic Now, set cat concatenate strings.
+
+Revision 1.18 2005/07/27 14:19:08 leibovic Changing fsal\_\-time\_\-t printing.
+
+Revision 1.17 2005/05/11 15:53:36 leibovic Adding time function.
+
+Revision 1.16 2005/05/03 09:38:25 leibovic Adding handle adressing support.
+
+Revision 1.15 2005/04/25 15:25:54 leibovic Handling daylight saving.
+
+Revision 1.14 2005/04/25 12:57:48 leibovic Implementing setattr.
+
+Revision 1.13 2005/04/14 11:21:56 leibovic Changing command syntax.
+
+Revision 1.12 2005/04/13 09:28:05 leibovic Adding unlink and mkdir calls.
+
+Revision 1.11 2005/03/15 15:30:07 leibovic localtime\_\-r -$>$ localtime.
+
+Revision 1.10 2005/03/14 10:49:18 leibovic Changing time printing.
+
+Revision 1.9 2005/03/09 15:43:25 leibovic Multi-OS compiling.
+
+Revision 1.8 2005/03/04 08:01:32 leibovic removing snprintmem (moved to FSAL layer)\`{a}.
+
+Revision 1.7 2005/01/31 14:09:03 leibovic Portage to Linux.
+
+Revision 1.6 2005/01/21 13:31:26 leibovic Code clenaning.
+
+Revision 1.5 2005/01/11 08:27:38 leibovic Implementing Cache\_\-inode layer tests.
+
+Revision 1.4 2005/01/07 09:12:13 leibovic Improved Cache\_\-inode shell version.
+
+Revision 1.3 2004/12/17 16:05:27 leibovic Replacing X with snprintmem for handles printing.
+
+Revision 1.2 2004/12/09 15:53:50 leibovic A debug printf had been left.
+
+Revision 1.1 2004/12/09 15:46:22 leibovic Tools externalisation.
+
+Definition in file {\bf cmd\_\-tools.c}.
+
+\subsection{Define Documentation}
+\index{cmd_tools.c@{cmd\_\-tools.c}!print_mask@{print\_\-mask}}
+\index{print_mask@{print\_\-mask}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define print\_\-mask(\_\-out, \_\-mode, \_\-mask, \_\-lettre)}\label{cmd__tools_8c_a1}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}do {    \
+        if (_mode & _mask) fprintf(_out,_lettre);\
+        else fprintf(_out,"-");                  \
+      } while(0)
+\end{verbatim}\normalsize 
+print\_\-item\_\-line: Prints a filesystem element on one line, like the Unix ls command.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 836 of file cmd\_\-tools.c.\index{cmd_tools.c@{cmd\_\-tools.c}!TIME_STRLEN@{TIME\_\-STRLEN}}
+\index{TIME_STRLEN@{TIME\_\-STRLEN}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define TIME\_\-STRLEN\ 30}\label{cmd__tools_8c_a0}
+
+
+
+
+Referenced by time2str().
+
+\subsection{Function Documentation}
+\index{cmd_tools.c@{cmd\_\-tools.c}!ato64@{ato64}}
+\index{ato64@{ato64}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int ato64 (char $\ast$ {\em str}, unsigned long long $\ast$ {\em out64})}\label{cmd__tools_8c_a8}
+
+
+
+
+Definition at line 265 of file cmd\_\-tools.c.
+
+Referenced by cmdnfs\_\-READDIR3args(), cmdnfs\_\-READDIRPLUS3args(), cmdnfs\_\-sattr2(), cmdnfs\_\-sattr3(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-write(), and Mk\-FSALSet\-Attr\-Struct().\index{cmd_tools.c@{cmd\_\-tools.c}!atomode@{atomode}}
+\index{atomode@{atomode}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int atomode (char $\ast$ {\em str})}\label{cmd__tools_8c_a7}
+
+
+atomode: This function converts a string to a unix access mode.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str}](in char $\ast$) The string to be converted.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]A negative value on error. Else, the access mode integer. \end{Desc}
+
+
+Definition at line 242 of file cmd\_\-tools.c.
+
+Referenced by cmdnfs\_\-sattr2(), cmdnfs\_\-sattr3(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-mkdir(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-remote\_\-create(), fn\_\-nfs\_\-remote\_\-mkdir(), and Mk\-FSALSet\-Attr\-Struct().\index{cmd_tools.c@{cmd\_\-tools.c}!atotime@{atotime}}
+\index{atotime@{atotime}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t atotime (char $\ast$ {\em str})}\label{cmd__tools_8c_a9}
+
+
+convert time from \char`\"{}YYYYMMDDHHMMSS\char`\"{} to time\_\-t. 
+
+Definition at line 293 of file cmd\_\-tools.c.
+
+References my\_\-atoi().
+
+Referenced by cmdnfs\_\-sattr2(), cmdnfs\_\-sattr3(), cmdnfs\_\-sattrguard3(), and Mk\-FSALSet\-Attr\-Struct().\index{cmd_tools.c@{cmd\_\-tools.c}!clean_path@{clean\_\-path}}
+\index{clean_path@{clean\_\-path}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void clean\_\-path (char $\ast$ {\em str}, int {\em len})}\label{cmd__tools_8c_a12}
+
+
+clean\_\-path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-like path.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str}](in/out char$\ast$) The path to be transformed. \item[{\em len}](in int) The max path length. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 540 of file cmd\_\-tools.c.
+
+Referenced by cache\_\-solvepath(), nfs\_\-remote\_\-solvepath(), and solvepath().\index{cmd_tools.c@{cmd\_\-tools.c}!concat@{concat}}
+\index{concat@{concat}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ concat (char $\ast$ {\em str1}, char $\ast$ {\em str2}, size\_\-t {\em max\_\-len})}\label{cmd__tools_8c_a20}
+
+
+concat: concatenates 2 strings with a limitation of the size of the destination string.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str1}](in/out char$\ast$) The destination string. \item[{\em str2}](in char$\ast$) The string to be added at the end of str1. \item[{\em max\_\-len}](in int) The max str1 length. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL on error, the destination string, else. \end{Desc}
+
+
+Definition at line 1115 of file cmd\_\-tools.c.
+
+Referenced by shellcmd\_\-set().\index{cmd_tools.c@{cmd\_\-tools.c}!getugroups@{getugroups}}
+\index{getugroups@{getugroups}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int getugroups (int {\em maxcount}, gid\_\-t $\ast$ {\em grouplist}, char $\ast$ {\em username}, gid\_\-t {\em gid})}\label{cmd__tools_8c_a21}
+
+
+
+
+Definition at line 1129 of file cmd\_\-tools.c.
+
+Referenced by fn\_\-Cache\_\-inode\_\-su(), fn\_\-fsal\_\-su(), fn\_\-nfs\_\-remote\_\-su(), fn\_\-nfs\_\-su(), and rpc\_\-init().\index{cmd_tools.c@{cmd\_\-tools.c}!Localtime_r@{Localtime\_\-r}}
+\index{Localtime_r@{Localtime\_\-r}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}struct tm$\ast$ Localtime\_\-r (const time\_\-t $\ast$ {\em p\_\-time}, struct tm $\ast$ {\em p\_\-tm})}\label{cmd__tools_8c_a5}
+
+
+
+
+Definition at line 179 of file cmd\_\-tools.c.
+
+Referenced by cmdnfs\_\-fattr2(), cmdnfs\_\-fattr3(), cmdnfs\_\-preopattr(), and time2str().\index{cmd_tools.c@{cmd\_\-tools.c}!MkFSALSetAttrStruct@{MkFSALSetAttrStruct}}
+\index{MkFSALSetAttrStruct@{MkFSALSetAttrStruct}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Mk\-FSALSet\-Attr\-Struct (char $\ast$ {\em attribute\_\-list}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em fsal\_\-set\_\-attr\_\-struct})}\label{cmd__tools_8c_a18}
+
+
+this function converts peers (attr\_\-name=attr\_\-value,attr\_\-name=attr\_\-value,...) to a fsal\_\-attrib\_\-list\_\-t to be used in the FSAL\_\-setattr call). \begin{Desc}
+\item[Returns:]0 if no error occured, a non null value else. \end{Desc}
+
+
+Definition at line 946 of file cmd\_\-tools.c.
+
+References ato64(), atomode(), atotime(), ATTR\_\-32, ATTR\_\-64, shell\_\-attribute\_\-\_\-::attr\_\-mask, shell\_\-attribute\_\-\_\-::attr\_\-name, ATTR\_\-OCTAL, shell\_\-attribute\_\-\_\-::attr\_\-offset, ATTR\_\-TIME, shell\_\-attribute\_\-\_\-::attr\_\-type, my\_\-atoi(), and shell\_\-attribute\_\-t.
+
+Referenced by fn\_\-Cache\_\-inode\_\-setattr(), and fn\_\-fsal\_\-setattr().\index{cmd_tools.c@{cmd\_\-tools.c}!my_atoi@{my\_\-atoi}}
+\index{my_atoi@{my\_\-atoi}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int my\_\-atoi (char $\ast$ {\em str})}\label{cmd__tools_8c_a6}
+
+
+my\_\-atoi: This function converts a string to an integer.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str}](in char $\ast$) The string to be converted.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]A negative value on error. Else, the converted integer. \end{Desc}
+
+
+Definition at line 211 of file cmd\_\-tools.c.
+
+Referenced by atotime(), cmdnfs\_\-READDIR2args(), cmdnfs\_\-sattr2(), cmdnfs\_\-sattr3(), cmdnfs\_\-sattrguard3(), fn\_\-Cache\_\-inode\_\-su(), fn\_\-fsal\_\-su(), fn\_\-nfs\_\-remote\_\-su(), fn\_\-nfs\_\-su(), Mk\-FSALSet\-Attr\-Struct(), shellcmd\_\-set(), util\_\-cmp(), and util\_\-sleep().\index{cmd_tools.c@{cmd\_\-tools.c}!print_fsal_attrib_mask@{print\_\-fsal\_\-attrib\_\-mask}}
+\index{print_fsal_attrib_mask@{print\_\-fsal\_\-attrib\_\-mask}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attrib\_\-mask (fsal\_\-attrib\_\-mask\_\-t {\em mask}, FILE $\ast$ {\em output})}\label{cmd__tools_8c_a14}
+
+
+print\_\-fsal\_\-attrib\_\-mask: Print an fsal\_\-attrib\_\-mask\_\-t to a given output file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em mask}](in fsal\_\-attrib\_\-mask\_\-t) The mask to be printed. \item[{\em output}](in FILE $\ast$) The output where the mask is to be printed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 707 of file cmd\_\-tools.c.
+
+Referenced by fn\_\-fsal\_\-stat().\index{cmd_tools.c@{cmd\_\-tools.c}!print_fsal_attributes@{print\_\-fsal\_\-attributes}}
+\index{print_fsal_attributes@{print\_\-fsal\_\-attributes}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-attributes (fsal\_\-attrib\_\-list\_\-t {\em attrs}, FILE $\ast$ {\em output})}\label{cmd__tools_8c_a16}
+
+
+print\_\-fsal\_\-attributes: print an fsal\_\-attrib\_\-list\_\-t to a given output file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em attrs}](in fsal\_\-attrib\_\-list\_\-t) The attributes to be printed. \item[{\em output}](in FILE $\ast$) The file where the attributes are to be printed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 784 of file cmd\_\-tools.c.
+
+References strtype().
+
+Referenced by fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-fsal\_\-access(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-setattr(), and fn\_\-fsal\_\-stat().\index{cmd_tools.c@{cmd\_\-tools.c}!print_fsal_status@{print\_\-fsal\_\-status}}
+\index{print_fsal_status@{print\_\-fsal\_\-status}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fsal\_\-status (FILE $\ast$ {\em output}, fsal\_\-status\_\-t {\em status})}\label{cmd__tools_8c_a13}
+
+
+print\_\-fsal\_\-status: this function prints an fsal\_\-status\_\-t to a given output file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output}](in FILE $\ast$) The output where the status is to be printed. \item[{\em status}](in status) The status to be printed.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 677 of file cmd\_\-tools.c.
+
+Referenced by cache\_\-solvepath(), cacheinode\_\-init(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-su(), fn\_\-Cache\_\-inode\_\-unlink(), fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-cd(), fn\_\-fsal\_\-close(), fn\_\-fsal\_\-close\_\-byfileid(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-cross(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-handlecmp(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-su(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fn\_\-nfs\_\-su(), fsal\_\-init(), Init\_\-Thread\_\-Context(), and solvepath().\index{cmd_tools.c@{cmd\_\-tools.c}!print_item_line@{print\_\-item\_\-line}}
+\index{print_item_line@{print\_\-item\_\-line}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-item\_\-line (FILE $\ast$ {\em out}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attrib}, char $\ast$ {\em name}, char $\ast$ {\em target})}\label{cmd__tools_8c_a17}
+
+
+print\_\-item\_\-line: Prints a filesystem element on one line, like the Unix ls command.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}](in FILE$\ast$) The file where the item is to be printed. \item[{\em attrib}](in fsal\_\-attrib\_\-list\_\-t $\ast$) the attributes for the item. \item[{\em name}](in char $\ast$) The name of the item to be printed. \item[{\em target}](in char $\ast$) It the item is a symbolic link, this contains the link target. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 841 of file cmd\_\-tools.c.
+
+References print\_\-mask, and time2str().
+
+Referenced by fn\_\-Cache\_\-inode\_\-ls(), and fn\_\-fsal\_\-ls().\index{cmd_tools.c@{cmd\_\-tools.c}!split_path@{split\_\-path}}
+\index{split_path@{split\_\-path}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void split\_\-path (char $\ast$ {\em in\_\-path}, char $\ast$$\ast$ {\em p\_\-path}, char $\ast$$\ast$ {\em p\_\-file})}\label{cmd__tools_8c_a10}
+
+
+split\_\-path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and 'obj'.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-path}](in/out char $\ast$) \item[{\em p\_\-path}](out char $\ast$$\ast$) \item[{\em p\_\-file}](out char $\ast$$\ast$) \end{description}
+\end{Desc}
+
+
+Definition at line 443 of file cmd\_\-tools.c.
+
+Referenced by fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-unlink(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-unlink(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-remote\_\-create(), fn\_\-nfs\_\-remote\_\-hardlink(), fn\_\-nfs\_\-remote\_\-ln(), fn\_\-nfs\_\-remote\_\-mkdir(), fn\_\-nfs\_\-remote\_\-rename(), fn\_\-nfs\_\-remote\_\-unlink(), fn\_\-nfs\_\-rename(), and fn\_\-nfs\_\-unlink().\index{cmd_tools.c@{cmd\_\-tools.c}!strtype@{strtype}}
+\index{strtype@{strtype}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ strtype (fsal\_\-nodetype\_\-t {\em type})}\label{cmd__tools_8c_a15}
+
+
+strtype: convert an FSAL object type to a string.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em type}](in fsal\_\-nodetype\_\-t) The type to be printed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The name (char $\ast$) for this FSAL object type. \end{Desc}
+
+
+Definition at line 754 of file cmd\_\-tools.c.
+
+Referenced by print\_\-fsal\_\-attributes().\index{cmd_tools.c@{cmd\_\-tools.c}!time2str@{time2str}}
+\index{time2str@{time2str}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ time2str (time\_\-t {\em time\_\-in}, char $\ast$ {\em str\_\-out})}\label{cmd__tools_8c_a11}
+
+
+
+
+Definition at line 501 of file cmd\_\-tools.c.
+
+References Localtime\_\-r(), and TIME\_\-STRLEN.
+
+Referenced by print\_\-item\_\-line(), and print\_\-nfsitem\_\-line().\index{cmd_tools.c@{cmd\_\-tools.c}!time_diff@{time\_\-diff}}
+\index{time_diff@{time\_\-diff}!cmd_tools.c@{cmd\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}struct timeval time\_\-diff (struct timeval {\em time\_\-from}, struct timeval {\em time\_\-to})}\label{cmd__tools_8c_a19}
+
+
+
+
+Definition at line 1095 of file cmd\_\-tools.c.
+
+References time\_\-diff().
+
+Referenced by fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-write(), shellcmd\_\-time(), time\_\-diff(), and util\_\-timer().

@@ -1,0 +1,207 @@
+.TH "config_parsing.c" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+config_parsing.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'config_parsing.h'\fP
+.br
+\fC#include 'analyse.h'\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+\fC#include <errno.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBconfig_struct_t\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBSTRNCMP\fP   strncasecmp"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBconfig_struct_t\fP \fBconfig_struct_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fByyparse\fP ()"
+.br
+.ti -1c
+.RI "config_file_t \fBconfig_ParseFile\fP (char *file_path)"
+.br
+.ti -1c
+.RI "char * \fBconfig_GetErrorMsg\fP ()"
+.br
+.ti -1c
+.RI "void \fBconfig_Print\fP (FILE *output, config_file_t config)"
+.br
+.ti -1c
+.RI "void \fBconfig_Free\fP (config_file_t config)"
+.br
+.ti -1c
+.RI "int \fBconfig_GetNbBlocks\fP (config_file_t config)"
+.br
+.ti -1c
+.RI "int \fBconfig_GetBlockIndexByName\fP (config_file_t config, char *block_name)"
+.br
+.ti -1c
+.RI "char * \fBconfig_GetBlockName\fP (config_file_t config, int block_no)"
+.br
+.ti -1c
+.RI "int \fBconfig_GetNbKeys\fP (config_file_t config, int block_no)"
+.br
+.ti -1c
+.RI "int \fBconfig_GetKeyValue\fP (config_file_t config, int block_no, int key_no, char **var_name, char **var_value)"
+.br
+.ti -1c
+.RI "char * \fBconfig_GetKeyValueByName\fP (config_file_t config, int block_no, char *key_name)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "FILE * \fByyin\fP"
+.br
+.ti -1c
+.RI "\fBlist_block\fP * \fBprogram_result\fP"
+.br
+.ti -1c
+.RI "char \fBextern_errormsg\fP [1024]"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define STRNCMP   strncasecmp"
+.PP
+Definition at line 95 of file config_parsing.c.
+.PP
+Referenced by config_GetBlockIndexByName(), and config_GetKeyValueByName().
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBconfig_struct_t\fP  \fBconfig_struct_t\fP"
+.PP
+.SH "Function Documentation"
+.PP 
+.SS "void config_Free (config_file_t config)"
+.PP
+config_Free: Free the memory structure that store the configuration. 
+.PP
+Definition at line 237 of file config_parsing.c.
+.PP
+References config_free_list(), and config_struct_t::syntax_tree.
+.PP
+Referenced by main().
+.SS "int config_GetBlockIndexByName (config_file_t config, char * block_name)"
+.PP
+config_GetBlockIndexByName: Returns the index of the block with the specified name. 
+.PP
+Definition at line 351 of file config_parsing.c.
+.PP
+References config_struct_t::last_item_index, config_struct_t::last_item_ptr, MAXSTRLEN, _type_block_::name, _type_block_::next, STRNCMP, config_struct_t::syntax_tree, and type_block.
+.SS "char* config_GetBlockName (config_file_t config, int block_no)"
+.PP
+config_GetBlockName: Indicates the name of a block (specified with its index). 
+.PP
+Definition at line 397 of file config_parsing.c.
+.PP
+References config_struct_t::last_item_ptr, and _type_block_::name.
+.PP
+Referenced by main().
+.SS "char* config_GetErrorMsg ()"
+.PP
+Definition at line 203 of file config_parsing.c.
+.PP
+Referenced by main().
+.SS "int config_GetKeyValue (config_file_t config, int block_no, int key_no, char ** var_name, char ** var_value)"
+.PP
+config_GetKeyValue: Retrieves a key-value peer from the block index and the key index. 
+.PP
+Definition at line 453 of file config_parsing.c.
+.PP
+References config_struct_t::last_item_ptr, _type_block_::list_def, _type_affect_::next, type_affect, _type_affect_::varname, and _type_affect_::varvalue.
+.PP
+Referenced by main().
+.SS "char* config_GetKeyValueByName (config_file_t config, int block_no, char * key_name)"
+.PP
+config_GetKeyValueByName: Returns the value of the key with the specified name. 
+.PP
+Definition at line 504 of file config_parsing.c.
+.PP
+References config_struct_t::last_item_ptr, _type_block_::list_def, MAXSTRLEN, _type_affect_::next, STRNCMP, type_affect, _type_affect_::varname, and _type_affect_::varvalue.
+.SS "int config_GetNbBlocks (config_file_t config)"
+.PP
+config_GetNbBlocks: Indicates how many blocks are defined into the config file. 
+.PP
+Definition at line 258 of file config_parsing.c.
+.PP
+References config_struct_t::cache_nb_items, config_struct_t::last_item_index, config_struct_t::last_item_ptr, _type_block_::next, config_struct_t::syntax_tree, and type_block.
+.PP
+Referenced by main().
+.SS "int config_GetNbKeys (config_file_t config, int block_no)"
+.PP
+config_GetNbKeys: Indicates how many peers (key-value) are defined in a block (specified with its index). 
+.PP
+Definition at line 421 of file config_parsing.c.
+.PP
+References config_struct_t::last_item_ptr, _type_block_::list_def, _type_affect_::next, and type_affect.
+.PP
+Referenced by main().
+.SS "config_file_t config_ParseFile (char * file_path)"
+.PP
+\fBTodo\fP
+.RS 4
+: yyparse fait exit en cas d'erreur. Remedier au probleme.
+.RE
+.PP
+
+.PP
+Definition at line 136 of file config_parsing.c.
+.PP
+References config_struct_t::cache_nb_items, extern_errormsg, config_struct_t::last_item_index, config_struct_t::last_item_ptr, config_struct_t::syntax_tree, yyin, and yyparse().
+.PP
+Referenced by main().
+.SS "void config_Print (FILE * output, config_file_t config)"
+.PP
+config_Print: Print the content of the syntax tree to a file. 
+.PP
+Definition at line 217 of file config_parsing.c.
+.PP
+References config_print_list().
+.SS "int yyparse ()"
+.PP
+.SH "Variable Documentation"
+.PP 
+.SS "char \fBextern_errormsg\fP[1024]"
+.PP
+Definition at line 94 of file conf_yacc.c.
+.PP
+Referenced by config_ParseFile(), and yyerror().
+.SS "\fBlist_block\fP* \fBprogram_result\fP"
+.PP
+Definition at line 88 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "FILE* \fByyin\fP"
+.PP
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ConfigParsing from the source code.

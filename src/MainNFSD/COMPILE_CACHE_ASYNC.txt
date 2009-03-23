@@ -1,0 +1,2 @@
+ganemake FS=PROXY CACHE_INODE_DIR=Cache_inode_Async FULL
+ganemake FS=POSIX SEC=GSSRPC_KRB5 FULL

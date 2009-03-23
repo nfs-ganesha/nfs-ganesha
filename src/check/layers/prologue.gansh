@@ -1,0 +1,9 @@
+#set DEBUG_LEVEL "NIV_FULL_DEBUG"
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER FSAL
+
+init_fs -v ../all_fs.ganesha.nfsd.conf
+
+cd /
+
+interactive 

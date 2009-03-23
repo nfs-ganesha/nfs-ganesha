@@ -1,0 +1,196 @@
+\section{fsal\_\-convert.c File Reference}
+\label{fsal__convert_8c}\index{fsal_convert.c@{fsal\_\-convert.c}}
+HPSS-FSAL type translation functions. 
+
+{\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAX\_\-2}(x, y)\ ( (x) $>$ (y) ? (x) : (y) )\label{fsal__convert_8c_a0}
+
+\item 
+\#define {\bf MAX\_\-3}(x, y, z)\ ( (x) $>$ (y) ? MAX\_\-2((x),(z)) : MAX\_\-2((y),(z)) )\label{fsal__convert_8c_a1}
+
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf posix2fsal\_\-error} (int posix\_\-errorcode)
+\item 
+int {\bf fsal2posix\_\-testperm} (fsal\_\-accessflags\_\-t testperm)
+\item 
+int {\bf fsal2posix\_\-openflags} (fsal\_\-openflags\_\-t fsal\_\-flags, char $\ast$p\_\-posix\_\-flags)
+\item 
+mode\_\-t {\bf fsal2unix\_\-mode} (fsal\_\-accessmode\_\-t fsal\_\-mode)
+\item 
+fsal\_\-accessmode\_\-t {\bf unix2fsal\_\-mode} (mode\_\-t unix\_\-mode)
+\item 
+fsal\_\-nodetype\_\-t {\bf posix2fsal\_\-type} (mode\_\-t posix\_\-type\_\-in)
+\item 
+fsal\_\-time\_\-t {\bf posix2fsal\_\-time} (time\_\-t tsec)\label{fsal__convert_8c_a8}
+
+\item 
+fsal\_\-fsid\_\-t {\bf posix2fsal\_\-fsid} (dev\_\-t posix\_\-devid)\label{fsal__convert_8c_a9}
+
+\item 
+fsal\_\-dev\_\-t {\bf posix2fsal\_\-devt} (dev\_\-t posix\_\-devid)\label{fsal__convert_8c_a10}
+
+\item 
+fsal\_\-status\_\-t {\bf posix2fsal\_\-attributes} (struct stat $\ast$p\_\-buffstat, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-fsalattr\_\-out)\label{fsal__convert_8c_a11}
+
+\item 
+fsal\_\-status\_\-t {\bf posixdb2fsal\_\-error} (fsal\_\-posixdb\_\-status\_\-t statusdb)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+HPSS-FSAL type translation functions. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/01/17 15:53:39 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.31 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-convert.c}.
+
+\subsection{Function Documentation}
+\index{fsal_convert.c@{fsal\_\-convert.c}!fsal2posix_openflags@{fsal2posix\_\-openflags}}
+\index{fsal2posix_openflags@{fsal2posix\_\-openflags}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fsal2posix\_\-openflags (fsal\_\-openflags\_\-t {\em fsal\_\-flags}, char $\ast$ {\em p\_\-posix\_\-flags})}\label{fsal__convert_8c_a4}
+
+
+pen\_\-by\_\-n fsal2posix\_\-openflags: Convert FSAL open flags to Posix open flags.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fsal\_\-flags}](input): The FSAL open flags to be translated. \item[{\em p\_\-hpss\_\-flags}](output): Pointer to the POSIX open flags.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]- ERR\_\-FSAL\_\-NO\_\-ERROR (no error).\begin{itemize}
+\item ERR\_\-FSAL\_\-FAULT (p\_\-hpss\_\-flags is a NULL pointer).\item ERR\_\-FSAL\_\-INVAL (invalid or incompatible input flags). \end{itemize}
+\end{Desc}
+
+
+Definition at line 205 of file fsal\_\-convert.c.
+
+Referenced by FSAL\_\-open().\index{fsal_convert.c@{fsal\_\-convert.c}!fsal2posix_testperm@{fsal2posix\_\-testperm}}
+\index{fsal2posix_testperm@{fsal2posix\_\-testperm}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fsal2posix\_\-testperm (fsal\_\-accessflags\_\-t {\em testperm})}\label{fsal__convert_8c_a3}
+
+
+fsal2posix\_\-testperm: Convert FSAL permission flags to Posix permission flags.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em testperm}](input): The FSAL permission flags to be tested.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The POSIX permission flags to be tested. \end{Desc}
+
+
+Definition at line 177 of file fsal\_\-convert.c.\index{fsal_convert.c@{fsal\_\-convert.c}!fsal2unix_mode@{fsal2unix\_\-mode}}
+\index{fsal2unix_mode@{fsal2unix\_\-mode}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}mode\_\-t fsal2unix\_\-mode (fsal\_\-accessmode\_\-t {\em fsal\_\-mode})}\label{fsal__convert_8c_a5}
+
+
+fsal2unix\_\-mode: Convert FSAL mode to posix mode.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fsal\_\-mode}](input): The FSAL mode to be translated.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The posix mode associated to fsal\_\-mode. \end{Desc}
+
+
+Definition at line 263 of file fsal\_\-convert.c.
+
+Referenced by FSAL\_\-create(), FSAL\_\-mkdir(), FSAL\_\-mknode(), and FSAL\_\-setattrs().\index{fsal_convert.c@{fsal\_\-convert.c}!posix2fsal_error@{posix2fsal\_\-error}}
+\index{posix2fsal_error@{posix2fsal\_\-error}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int posix2fsal\_\-error (int {\em posix\_\-errorcode})}\label{fsal__convert_8c_a2}
+
+
+posix2fsal\_\-error : Convert POSIX error codes to FSAL error codes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em posix\_\-errorcode}](input): The error code returned from POSIX.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The FSAL error code associated to posix\_\-errorcode.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: The EBADF error also happens when file is opened for reading, and we try writting in it. In this case, we return ERR\_\-FSAL\_\-NOT\_\-OPENED, but it doesn't seems to be a correct error translation. \end{Desc}
+
+
+\begin{Desc}
+\item[Warning:]AIX returns EEXIST where BSD uses ENOTEMPTY; We want ENOTEMPTY to be interpreted anyway on AIX plateforms. Thus, we explicitely write its value (87). \end{Desc}
+
+
+Definition at line 41 of file fsal\_\-convert.c.
+
+Referenced by FSAL\_\-close(), FSAL\_\-closedir(), FSAL\_\-create(), FSAL\_\-dynamic\_\-fsinfo(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-mkdir(), FSAL\_\-mknode(), FSAL\_\-open(), FSAL\_\-opendir(), FSAL\_\-rcp(), FSAL\_\-read(), FSAL\_\-readdir(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-symlink(), FSAL\_\-truncate(), FSAL\_\-unlink(), and FSAL\_\-write().\index{fsal_convert.c@{fsal\_\-convert.c}!posix2fsal_type@{posix2fsal\_\-type}}
+\index{posix2fsal_type@{posix2fsal\_\-type}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-nodetype\_\-t posix2fsal\_\-type (mode\_\-t {\em posix\_\-type\_\-in})}\label{fsal__convert_8c_a7}
+
+
+posix2fsal\_\-type: Convert posix object type to FSAL node type.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em posix\_\-type\_\-in}](input): The POSIX object type.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]- The FSAL node type associated to posix\_\-type\_\-in.\begin{itemize}
+\item -1 if the input type is unknown. \end{itemize}
+\end{Desc}
+
+
+Definition at line 331 of file fsal\_\-convert.c.
+
+Referenced by fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), and FSAL\_\-lookup().\index{fsal_convert.c@{fsal\_\-convert.c}!posixdb2fsal_error@{posixdb2fsal\_\-error}}
+\index{posixdb2fsal_error@{posixdb2fsal\_\-error}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t posixdb2fsal\_\-error (fsal\_\-posixdb\_\-status\_\-t {\em statusdb})}\label{fsal__convert_8c_a12}
+
+
+Concert fsal\_\-posixdb\_\-status\_\-t to fsal\_\-status\_\-t 
+
+Definition at line 518 of file fsal\_\-convert.c.
+
+Referenced by fsal\_\-internal\_\-get\-Info\-From\-Children\-List(), fsal\_\-internal\_\-get\-Info\-From\-Name(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), FSAL\_\-readdir(), FSAL\_\-rename(), and FSAL\_\-unlink().\index{fsal_convert.c@{fsal\_\-convert.c}!unix2fsal_mode@{unix2fsal\_\-mode}}
+\index{unix2fsal_mode@{unix2fsal\_\-mode}!fsal_convert.c@{fsal\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-accessmode\_\-t unix2fsal\_\-mode (mode\_\-t {\em unix\_\-mode})}\label{fsal__convert_8c_a6}
+
+
+unix2fsal\_\-mode: Convert posix mode to FSAL mode.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em unix\_\-mode}](input): The posix mode to be translated.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The FSAL mode associated to unix\_\-mode. \end{Desc}
+
+
+Definition at line 296 of file fsal\_\-convert.c.

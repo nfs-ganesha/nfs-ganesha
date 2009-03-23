@@ -1,0 +1,384 @@
+/*
+ *
+ *
+ * Copyright CEA/DAM/DIF  (2008)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *
+ * Ce logiciel est un serveur implementant le protocole NFS.
+ *
+ * Ce logiciel est régi par la licence CeCILL soumise au droit français et
+ * respectant les principes de diffusion des logiciels libres. Vous pouvez
+ * utiliser, modifier et/ou redistribuer ce programme sous les conditions
+ * de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA
+ * sur le site "http://www.cecill.info".
+ *
+ * En contrepartie de l'accessibilité au code source et des droits de copie,
+ * de modification et de redistribution accordés par cette licence, il n'est
+ * offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+ * seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+ * titulaire des droits patrimoniaux et les concédants successifs.
+ *
+ * A cet égard  l'attention de l'utilisateur est attirée sur les risques
+ * associés au chargement,  à l'utilisation,  à la modification et/ou au
+ * développement et à la reproduction du logiciel par l'utilisateur étant
+ * donné sa spécificité de logiciel libre, qui peut le rendre complexe à
+ * manipuler et qui le réserve donc à des développeurs et des professionnels
+ * avertis possédant  des  connaissances  informatiques approfondies.  Les
+ * utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+ * logiciel à leurs besoins dans des conditions permettant d'assurer la
+ * sécurité de leurs systèmes et ou de leurs données et, plus généralement,
+ * à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
+ *
+ * Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
+ * pris connaissance de la licence CeCILL, et que vous en avez accepté les
+ * termes.
+ *
+ * ---------------------
+ *
+ * Copyright CEA/DAM/DIF (2005)
+ *  Contributor: Philippe DENIEL  philippe.deniel@cea.fr
+ *               Thomas LEIBOVICI thomas.leibovici@cea.fr
+ *
+ *
+ * This software is a server that implements the NFS protocol.
+ * 
+ *
+ * This software is governed by the CeCILL  license under French law and
+ * abiding by the rules of distribution of free software.  You can  use,
+ * modify and/ or redistribute the software under the terms of the CeCILL
+ * license as circulated by CEA, CNRS and INRIA at the following URL
+ * "http://www.cecill.info".
+ *
+ * As a counterpart to the access to the source code and  rights to copy,
+ * modify and redistribute granted by the license, users are provided only
+ * with a limited warranty  and the software's author,  the holder of the
+ * economic rights,  and the successive licensors  have only  limited
+ * liability.
+ *
+ * In this respect, the user's attention is drawn to the risks associated
+ * with loading,  using,  modifying and/or developing or reproducing the
+ * software by the user in light of its specific status of free software,
+ * that may mean  that it is complicated to manipulate,  and  that  also
+ therefore means  that it is reserved for developers  and  experienced
+ * professionals having in-depth computer knowledge. Users are therefore
+ * encouraged to load and test the software's suitability as regards their
+ * requirements in conditions enabling the security of their systems and/or
+ * data to be ensured and,  more generally, to use and operate it in the
+ * same conditions as regards security.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL license and that you accept its terms.
+ * ---------------------------------------
+ */
+
+/**
+ * \file    nfs_exports.h
+ * \author  $Author: leibovic $
+ * \date    $Date: 2006/01/23 16:15:10 $
+ * \version $Revision: 1.32 $
+ * \brief   Prototypes for what's related to export list management.
+ *
+ * nfs_exports.h : Prototypes for what's related to export list management.
+ *
+ */
+
+
+#ifndef _NFS_EXPORTS_H
+#define _NFS_EXPORTS_H
+
+#include <sys/types.h>
+#include <sys/param.h>
+
+#ifdef _USE_GSSRPC
+#include <gssrpc/rpc.h>
+#include <gssrpc/rpc.h>
+#include <gssrpc/svc.h>
+#else
+#include <rpc/rpc.h>
+#include <rpc/types.h>
+#include <rpc/svc.h>
+#endif
+
+#ifdef _USE_GSSRPC
+#include <gssapi/gssapi.h>
+#include <gssapi/gssapi_krb5.h>
+#endif
+#include <dirent.h> /* for having MAXNAMLEN */
+#include <netdb.h>  /* for having MAXHOSTNAMELEN */
+#include "HashData.h"
+#include "HashTable.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "mount.h"
+#include "nfs_stat.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+#include "nfs_ip_stats.h"
+
+/*
+ * Export List structure 
+ */
+#define EXPORT_KEY_SIZE 8
+#define ANON_UID      -2 
+
+#define EXPORT_LINESIZE 1024
+#define INPUT_SIZE      1024 
+
+typedef struct exportlist_client_hostif__
+{
+  unsigned int clientaddr;       
+  struct in6_addr clientaddr6 ;
+} exportlist_client_hostif_t ;
+
+typedef struct exportlist_client_net__
+{
+  unsigned int    netaddr;     
+  unsigned int    netmask ;
+} exportlist_client_net_t ;
+
+typedef struct exportlist_client_netgrp__
+{
+  char netgroupname[MAXHOSTNAMELEN] ;
+} exportlist_client_netgrp_t ;
+
+typedef struct exportlist_client_wildcard_host__
+{
+  char wildcard[MAXHOSTNAMELEN] ;
+}  exportlist_client_wildcard_host_t ;
+
+#define GSS_DEFINE_LEN_TEMP 255 
+typedef struct exportlist_client_gss__
+{
+  char princname[GSS_DEFINE_LEN_TEMP] ;
+} exportlist_client_gss_t ;
+
+
+typedef enum exportlist_access_type__ 
+{
+  ACCESSTYPE_RW = 1,       /* All operations are allowed                */
+  ACCESSTYPE_RO = 2,       /* Filesystem is readonly (nfs_read allowed) */
+  ACCESSTYPE_MDONLY = 3,   /* Data operations are forbidden             */
+  ACCESSTYPE_MDONLY_RO = 4 /* Data operations are forbidden,
+                              and the filesystem is read-only.          */
+} exportlist_access_type_t ;
+
+
+typedef enum exportlist_client_type__ { HOSTIF_CLIENT       = 1, 
+                                        NETWORK_CLIENT      = 2,
+                                        NETGROUP_CLIENT     = 3,
+                                        WILDCARDHOST_CLIENT = 4, 
+                                        GSSPRINCIPAL_CLIENT = 5,
+                                        HOSTIF_CLIENT_V6    = 6 } exportlist_client_type_t ;
+
+typedef enum exportlist_status__ { EXPORTLIST_OK = 1 , 
+                                   EXPORTLIST_UNAVAILABLE = 2 } exportlist_status_t ;
+
+typedef union exportlist_client_union__
+{
+  exportlist_client_hostif_t        hostif ;
+  exportlist_client_net_t           network ;
+  exportlist_client_netgrp_t        netgroup ;
+  exportlist_client_wildcard_host_t wildcard ;
+  exportlist_client_gss_t           gssprinc ;
+} exportlist_client_union_t ;
+
+typedef struct exportlist_client_entry__
+{
+  exportlist_client_type_t  type ;
+  exportlist_client_union_t client ;
+  unsigned int              options;     /* avail. mnt options */
+} exportlist_client_entry_t ;
+
+#define EXPORTS_NB_MAX_CLIENTS 128
+
+typedef struct exportlist_client__
+{
+  unsigned int                   num_clients;        /* num clients        */
+  exportlist_client_entry_t      clientarray[EXPORTS_NB_MAX_CLIENTS];    /* allowed clients    */
+} exportlist_client_t ;
+
+typedef struct exportlist__
+{
+  unsigned short        id;                      /* entry identifier   */
+  exportlist_status_t   status;                  /* entry's status     */
+  char                  dirname[MAXNAMLEN];      /* path relative to fs root */
+  char                  fullpath[MAXPATHLEN];    /* the path from the root */ 
+  char                  fsname[MAXNAMLEN];       /* File system name, MAXNAMLEN is used for wanting of a better constant */
+  char                  pseudopath[MAXPATHLEN] ; /* nfsv4 pseudo-filesystem 'virtual' path */
+  
+  char                  FS_specific[MAXPATHLEN] ; /* filesystem specific option string */
+  char                  FS_tag[MAXPATHLEN] ;      /* filesystem "tag" string */
+  fsal_export_context_t FS_export_context;        /* the export context associated with this export entry */
+  
+  exportlist_access_type_t  access_type;         /* allowed operations for this export */
+  
+  fsal_fsid_t           filesystem_id;           /* fileset id         */
+  fsal_handle_t       * proot_handle;             /* FSAL handle for the root of the file system */
+
+  uid_t                 anonymous_uid;           /* root uid when no root access is available   */
+  unsigned int          options;                 /* avail. mnt options */
+        
+  unsigned char         seckey[EXPORT_KEY_SIZE]; /* Checksum for FH validity */
+
+  fsal_size_t           MaxRead ;                /* Max Read for this entry                           */
+  fsal_size_t           MaxWrite ;               /* Max Write for this entry                          */
+  fsal_size_t           PrefRead ;               /* Preferred Read size                               */
+  fsal_size_t           PrefWrite ;              /* Preferred Write size                              */         
+  fsal_size_t           PrefReaddir ;            /* Preferred Readdir size                            */
+  fsal_off_t            MaxOffsetWrite ;         /* Maximum Offset allowed for write                  */
+  fsal_off_t            MaxOffsetRead ;          /* Maximum Offset allowed for read                   */
+  fsal_off_t            MaxCacheSize ;           /* Maximum Cache Size allowed                        */
+  fsal_staticfsinfo_t * fs_static_info ;         /* Static FSAL Info                                  */
+  unsigned int          UseCookieVerifier ;      /* Is Cookie verifier to be used ?                   */
+  exportlist_client_t   clients;                 /* allowed clients                                   */
+  struct exportlist__ * next;                    /* next entry                                        */
+
+} exportlist_t;
+
+/* Constant for options masks */
+#define EXPORT_OPTION_NOSUID          0x00000001  /* mask off setuid mode bit            */
+#define EXPORT_OPTION_NOSGID          0x00000002  /* mask off setgid mode bit            */
+#define EXPORT_OPTION_ROOT            0x00000004  /* allow root access as root uid       */
+#define EXPORT_OPTION_NETENT          0x00000008  /* client entry is a network entry     */
+#define EXPORT_OPTION_ACCESS          0x00000010  /* access= option specified            */
+#define EXPORT_OPTION_NETGRP          0x00000020  /* client entry is a netgroup          */
+#define EXPORT_OPTION_WILDCARD        0x00000040  /* client entry is wildcarded          */
+#define EXPORT_OPTION_GSSPRINC        0x00000080  /* client entry is a GSS principal     */
+#define EXPORT_OPTION_PSEUDO          0x00000100  /* pseudopath is provided              */
+#define EXPORT_OPTION_MAXREAD         0x00000200  /* Max read is provided                */
+#define EXPORT_OPTION_MAXWRITE        0x00000400  /* Max write is provided               */
+#define EXPORT_OPTION_PREFREAD        0x00000800  /* Pref read is provided               */
+#define EXPORT_OPTION_PREFWRITE       0x00001000  /* Pref write is provided              */
+#define EXPORT_OPTION_PREFRDDIR       0x00002000  /* Pref readdir size is provided       */
+#define EXPORT_OPTION_PRIVILEGED_PORT 0x00004000  /* clients use only privileged port    */ 
+#define EXPORT_OPTION_USE_DATACACHE   0x00008000  /* Is export entry data cached ?       */
+
+/* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
+
+#define EXPORT_OPTION_AUTH_NONE       0x00010000  /* Auth None authentication supported  */
+#define EXPORT_OPTION_AUTH_UNIX       0x00020000  /* Auth Unix authentication supported  */
+
+#define EXPORT_OPTION_RPCSEC_GSS_NONE 0x00040000  /* RPCSEC_GSS_NONE supported           */
+#define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00080000  /* RPCSEC_GSS INTEGRITY supported      */
+#define EXPORT_OPTION_RPCSEC_GSS_PRIV 0x00100000  /* RPCSEC_GSS PRIVACY supported        */
+
+/* protocol flags */
+#define EXPORT_OPTION_NFSV2           0x00200000  /* NFSv2 operations are supported      */
+#define EXPORT_OPTION_NFSV3           0x00400000  /* NFSv3 operations are supported      */
+#define EXPORT_OPTION_NFSV4           0x00800000  /* NFSv4 operations are supported      */
+#define EXPORT_OPTION_UDP             0x01000000  /* UDP protocol is supported      */
+#define EXPORT_OPTION_TCP             0x02000000  /* TCP protocol is supported      */
+
+
+/* Maximum offset set for R/W */
+#define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000  /* Maximum Offset for write is set */
+#define EXPORT_OPTION_MAXOFFSETREAD   0x08000000  /* Maximum Offset for read is set  */
+#define EXPORT_OPTION_MAXCACHESIZE    0x10000000  /* Maximum Offset for read is set  */
+
+
+
+/* NFS4 specific structures */
+
+/*
+ * PseudoFs Tree
+ */
+typedef struct pseudofs_entry
+{
+  char                    name[MAXNAMLEN] ;     /**< The entry name          */
+  char                    fullname[MAXPATHLEN]; /**< The full path in the pseudo fs */
+  unsigned int            pseudo_id ;           /**< ID within the pseudoFS  */
+  exportlist_t          * junction_export ;     /**< Export list related to the junction, NULL if entry is no junction*/
+  struct pseudofs_entry * sons ;                /**< pointer to a linked list of sons */
+  struct pseudofs_entry * parent ;              /**< reverse pointer (for LOOKUPP)    */
+  struct pseudofs_entry * next ;                /**< pointer to the next entry in a list of sons */
+  struct pseudofs_entry * last ;                /**< pointer to the last entry in a list of sons */
+}  pseudofs_entry_t ;
+
+#define MAX_PSEUDO_ENTRY 100
+typedef struct pseudofs
+{
+  pseudofs_entry_t   root ;
+  unsigned int       last_pseudo_id ;
+  pseudofs_entry_t * reverse_tab[MAX_PSEUDO_ENTRY] ;
+} pseudofs_t ;
+
+
+#define NFS_CLIENT_NAME_LEN 256
+typedef struct nfs_client_cred_gss__
+{
+  unsigned int svc ;
+  unsigned int qop ;
+  unsigned char cname[NFS_CLIENT_NAME_LEN] ;
+  unsigned char stroid[NFS_CLIENT_NAME_LEN] ;
+#ifdef _HAVE_GSSAPI
+  gss_ctx_id_t   gss_context_id ;
+#endif
+} nfs_client_cred_gss_t ;
+
+typedef struct nfs_client_cred__
+{
+  unsigned int flavor ;
+  unsigned int length ;
+  union {
+ 	  struct authunix_parms  auth_unix;
+          nfs_client_cred_gss_t  auth_gss ;
+	} auth_union ;
+} nfs_client_cred_t ;
+
+/*
+ * NFS v4 Compound Data 
+ */
+/* this structure contains the necessary stuff for keeping the state of a V4 compound request */
+typedef struct compoud_data
+{
+  nfs_fh4                    currentFH ;              /**< Current filehandle                                            */
+  nfs_fh4                    rootFH ;                 /**< Root filehandle                                               */
+  nfs_fh4                    savedFH ;                /**< Saved filehandle                                              */
+  nfs_fh4                    publicFH ;               /**< Public filehandle                                             */
+  nfs_fh4                    mounted_on_FH ;          /**< File handle to "mounted on" File System                       */
+  cache_entry_t            * current_entry ;          /**< cache entry related to current filehandle                     */
+  cache_entry_t            * saved_entry ;            /**< cache entry related to saved filehandle                       */
+  cache_inode_file_type_t    current_filetype ;       /**< File type associated with the current filehandle and inode    */
+  cache_inode_file_type_t    saved_filetype ;         /**< File type associated with the saved filehandle and inode      */
+  fsal_op_context_t        * pcontext ;               /**< Credentials related to this filesets                          */
+                                                      /**< (to handle different uid mapping)                             */
+  exportlist_t             * pexport ;                /**< Export entry related to the request                           */
+  exportlist_t             * pfullexportlist ;        /**< Pointer to the whole exportlist                               */
+  pseudofs_t               * pseudofs ;               /**< Pointer to the pseudo filesystem tree                         */
+  char                       MntPath[MAXPATHLEN];     /**< Path (in pseudofs) of the current mounted entry               */
+  struct svc_req           * reqp ;                   /**< Raw RPC credentials                                           */
+  hash_table_t             * ht ;                     /**< hashtable for cache_inode                                     */
+  cache_inode_client_t     * pclient ;                /**< client ressource for the request                              */
+  nfs_client_cred_t          credential;              /**< RPC Request related to the compound                           */
+}  compound_data_t ;
+
+
+/* Export list related functions */
+exportlist_t * nfs_Get_export_by_id( exportlist_t * exportroot, unsigned short exportid ) ;
+int nfs_build_fsal_context( struct svc_req            * ptr_req,
+                            exportlist_client_entry_t * pexport_client,
+                            exportlist_t              * pexport,
+                            fsal_op_context_t         * pcontext ) ;
+
+
+int nfs_compare_clientcred( nfs_client_cred_t * pcred1,  nfs_client_cred_t * pcred2 ) ;
+int nfs_rpc_req2client_cred( struct svc_req * reqp, nfs_client_cred_t * pcred ) ;
+
+cache_content_status_t cache_content_prepare_directories( exportlist_t           * pexportlist, 
+                                                          char                   * cache_dir,
+                                                          cache_content_status_t * pstatus  ) ;
+
+int nfs_export_check_access( struct sockaddr_storage   * pssaddr, 
+                             struct svc_req            * ptr_req,
+                             exportlist_t              * pexport,
+                             unsigned int                nfs_prog,
+                             unsigned int                mnt_prog,
+                             hash_table_t              * ht_ip_stats,
+                             nfs_ip_stats_t            * ip_stats_pool,
+                             exportlist_client_entry_t * pclient_found ) ;
+
+
+#endif /* _NFS_EXPORTS_H */
+ 

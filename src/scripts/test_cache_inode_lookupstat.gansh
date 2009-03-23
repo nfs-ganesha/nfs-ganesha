@@ -1,0 +1,32 @@
+# test des lookups et getattrs
+
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+
+layer set Cache_inode
+init_cache
+
+# on se place dans le repertoire /AIX_5/bin
+
+cd /AIX_5/bin
+
+# on recupere la valeur de retour de stat sur ce repertoire  
+set STAT_ABS stat /AIX_5/bin
+set STAT_REL stat .
+
+# les deux valeurs doivent etre identiques
+
+cmp STAT_ABS STAT_REL
+
+# on effectue l'operation sur d'autres repertoires,
+# avec des operations de lookup diverses
+
+cd .././../././AIX_5/./.././AIX_4/./bin
+set STAT_ABS stat /AIX_4/bin
+set STAT_REL stat .
+cmp STAT_ABS STAT_REL
+
+cd ../../../../
+set STAT_ABS stat /
+set STAT_REL stat .
+cmp STAT_ABS STAT_REL

@@ -1,0 +1,37 @@
+#
+# This script test cache_inode layer caching capabilities.
+#
+# $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/scripts/test_cache_inode_caching.gansh,v 1.1 2005/01/07 14:38:39 leibovic Exp $
+#
+# $Log: test_cache_inode_caching.gansh,v $
+# Revision 1.1  2005/01/07 14:38:39  leibovic
+# Added caching test.
+# Modified print command to print strings.
+#
+#
+
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+layer set Cache_inode
+init_cache
+
+
+# proceed ls -l in root dir
+ls -l
+
+# retrieve FSAL call stat
+layer set FSAL
+set FSAL_CALL_STATS_1 callstat
+
+# proceed another ls -l
+layer set Cache_inode
+ls -l
+
+# retrieve new FSAL stats
+layer set FSAL
+set FSAL_CALL_STATS_2 callstat
+
+# to let cmp show differences, if any.
+set VERBOSE "ON"
+# show differences beetween the two stats :
+cmp FSAL_CALL_STATS_1 FSAL_CALL_STATS_2

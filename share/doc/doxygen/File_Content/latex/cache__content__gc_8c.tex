@@ -1,0 +1,224 @@
+\section{cache\_\-content\_\-gc.c File Reference}
+\label{cache__content__gc_8c}\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+Management of the file content cache: initialisation. 
+
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$sys/vfs.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf cache\_\-content\_\-set\_\-gc\_\-policy} (cache\_\-content\_\-gc\_\-policy\_\-t policy)
+\item 
+cache\_\-content\_\-gc\_\-policy\_\-t {\bf cache\_\-content\_\-get\_\-gc\_\-policy} (void)
+\item 
+int {\bf cache\_\-content\_\-gc\_\-function} (LRU\_\-entry\_\-t $\ast$plru\_\-entry, void $\ast$addparam)
+\item 
+int {\bf cache\_\-content\_\-sync\_\-function} (LRU\_\-entry\_\-t $\ast$plru\_\-entry, void $\ast$addparam)
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-gc} (cache\_\-content\_\-client\_\-t $\ast$pclient, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-sync} (cache\_\-content\_\-client\_\-t $\ast$pclient, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\item 
+int {\bf cache\_\-content\_\-invalidate\_\-flushed} (LRU\_\-entry\_\-t $\ast$plru\_\-entry, void $\ast$addparam)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+cache\_\-content\_\-gc\_\-policy\_\-t {\bf cache\_\-content\_\-gc\_\-policy}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Management of the file content cache: initialisation. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:33 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.8 \end{Desc}
+\end{Desc}
+cache\_\-content.c : Management of the file content cache: initialisation.
+
+Definition in file {\bf cache\_\-content\_\-gc.c}.
+
+\subsection{Function Documentation}
+\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_gc@{cache\_\-content\_\-gc}}
+\index{cache_content_gc@{cache\_\-content\_\-gc}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-gc (cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__gc_8c_a7}
+
+
+cache\_\-content\_\-gc: Perform garbbage collection on the ressources managed by a client.
+
+Perform garbbage collection on the ressources managed by a client.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pclient}][INOUT] ressource allocated by the client for the nfs management. \item[{\em pstatus}][OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS if operation is a success \par
+ 
+
+CACHE\_\-CONTENT\_\-INVALID\_\-ARGUMENT if a null argument is passed \par
+ 
+
+CACHE\_\-CONTENT\_\-LRU\_\-ERROR if allocation error occured when validating the entry\end{Desc}
+\begin{Desc}
+\item[See also:]LRU\_\-invalidate\_\-by\_\-function 
+
+LRU\_\-gc\_\-invalid \end{Desc}
+
+
+Definition at line 308 of file cache\_\-content\_\-gc.c.
+
+References cache\_\-content\_\-gc\_\-function().\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_gc_function@{cache\_\-content\_\-gc\_\-function}}
+\index{cache_content_gc_function@{cache\_\-content\_\-gc\_\-function}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-gc\_\-function (LRU\_\-entry\_\-t $\ast$ {\em plru\_\-entry}, void $\ast$ {\em addparam})}\label{cache__content__gc_8c_a5}
+
+
+cache\_\-content\_\-gc\_\-function: Tests is an entry in the File Content cache is to be set invalid (has expired).
+
+Tests is an entry in cache inode is to be set invalid (has expired). If entry is invalidated, does the cleaning stuff on it.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] pointer to the entry to test\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if entry must be set invalid, 0 if not.\end{Desc}
+\begin{Desc}
+\item[See also:]LRU\_\-invalidate\_\-by\_\-function 
+
+LRU\_\-gc\_\-invalid \end{Desc}
+
+
+Definition at line 219 of file cache\_\-content\_\-gc.c.
+
+References cache\_\-content\_\-gc\_\-policy.
+
+Referenced by cache\_\-content\_\-gc().\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_get_gc_policy@{cache\_\-content\_\-get\_\-gc\_\-policy}}
+\index{cache_content_get_gc_policy@{cache\_\-content\_\-get\_\-gc\_\-policy}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-gc\_\-policy\_\-t cache\_\-content\_\-get\_\-gc\_\-policy (void)}\label{cache__content__gc_8c_a2}
+
+
+cache\_\-content\_\-get\_\-gc\_\-policy: Set the cache\_\-content garbagge collecting policy.
+
+\begin{Desc}
+\item[Returns:]the current policy. \end{Desc}
+
+
+Definition at line 134 of file cache\_\-content\_\-gc.c.\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_invalidate_flushed@{cache\_\-content\_\-invalidate\_\-flushed}}
+\index{cache_content_invalidate_flushed@{cache\_\-content\_\-invalidate\_\-flushed}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-invalidate\_\-flushed (LRU\_\-entry\_\-t $\ast$ {\em plru\_\-entry}, void $\ast$ {\em addparam})}\label{cache__content__gc_8c_a9}
+
+
+
+
+Definition at line 385 of file cache\_\-content\_\-gc.c.\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_set_gc_policy@{cache\_\-content\_\-set\_\-gc\_\-policy}}
+\index{cache_content_set_gc_policy@{cache\_\-content\_\-set\_\-gc\_\-policy}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-content\_\-set\_\-gc\_\-policy (cache\_\-content\_\-gc\_\-policy\_\-t {\em policy})}\label{cache__content__gc_8c_a1}
+
+
+cache\_\-content\_\-set\_\-gc\_\-policy: Set the cache\_\-content garbagge collecting policy.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em policy}][IN] policy to be set.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 121 of file cache\_\-content\_\-gc.c.
+
+References cache\_\-content\_\-gc\_\-policy.\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_sync@{cache\_\-content\_\-sync}}
+\index{cache_content_sync@{cache\_\-content\_\-sync}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-sync (cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__gc_8c_a8}
+
+
+cache\_\-content\_\-sync: Sync the entry on the client
+
+Perform garbbage collection on the ressources managed by a client.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pclient}][INOUT] ressource allocated by the client for the nfs management. \item[{\em pstatus}][OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS if operation is a success \par
+ 
+
+CACHE\_\-CONTENT\_\-INVALID\_\-ARGUMENT if a null argument is passed \par
+ 
+
+CACHE\_\-CONTENT\_\-LRU\_\-ERROR if allocation error occured when validating the entry\end{Desc}
+\begin{Desc}
+\item[See also:]LRU\_\-invalidate\_\-by\_\-function 
+
+LRU\_\-gc\_\-invalid \end{Desc}
+
+
+Definition at line 359 of file cache\_\-content\_\-gc.c.
+
+References cache\_\-content\_\-sync\_\-function().\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_sync_function@{cache\_\-content\_\-sync\_\-function}}
+\index{cache_content_sync_function@{cache\_\-content\_\-sync\_\-function}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-sync\_\-function (LRU\_\-entry\_\-t $\ast$ {\em plru\_\-entry}, void $\ast$ {\em addparam})}\label{cache__content__gc_8c_a6}
+
+
+cache\_\-content\_\-sync\_\-function: Test if a entry is to be synced, and sync it.
+
+Tests is an entry in cache inode is to be set invalid (has expired). If entry is invalidated, does the cleaning stuff on it.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] pointer to the entry to test\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if entry must be set invalid, 0 if not.\end{Desc}
+\begin{Desc}
+\item[See also:]LRU\_\-invalidate\_\-by\_\-function 
+
+LRU\_\-gc\_\-invalid \end{Desc}
+
+
+Definition at line 263 of file cache\_\-content\_\-gc.c.
+
+References cache\_\-content\_\-gc\_\-policy.
+
+Referenced by cache\_\-content\_\-sync().
+
+\subsection{Variable Documentation}
+\index{cache_content_gc.c@{cache\_\-content\_\-gc.c}!cache_content_gc_policy@{cache\_\-content\_\-gc\_\-policy}}
+\index{cache_content_gc_policy@{cache\_\-content\_\-gc\_\-policy}!cache_content_gc.c@{cache\_\-content\_\-gc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-gc\_\-policy\_\-t {\bf cache\_\-content\_\-gc\_\-policy}}\label{cache__content__gc_8c_a0}
+
+
+
+
+Definition at line 109 of file cache\_\-content\_\-gc.c.
+
+Referenced by cache\_\-content\_\-gc\_\-function(), cache\_\-content\_\-set\_\-gc\_\-policy(), and cache\_\-content\_\-sync\_\-function().

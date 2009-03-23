@@ -1,0 +1,3297 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="group__NFSprocs" kind="group">
+    <compoundname>NFSprocs</compoundname>
+    <title>NFS protocols functions.</title>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__NFSprocs_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Null</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Null</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Null: The NFS proc null function, v2.</para><para>The NFS proc null function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="157" bodystart="431" bodyend="444"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Getattr</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Getattr</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Getattr: The NFS proc getattr function, v2.</para><para>The NFS proc getattr function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="161" bodystart="456" bodyend="470"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Setattr</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Setattr</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Setattr: The NFS proc setattr function, v2.</para><para>The NFS proc setattr function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="165" bodystart="482" bodyend="496"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Root</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Root</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Root: The NFS proc root function, v2.</para><para>The NFS proc root function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="169" bodystart="508" bodyend="521"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Lookup</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Lookup</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Lookup: The NFS proc lookup function, v2.</para><para>The NFS proc lookup function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="173" bodystart="533" bodyend="547"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Readlink</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Readlink</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Readlink: The NFS proc readlink function, v2.</para><para>The NFS proc readlink function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="177" bodystart="559" bodyend="573"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Read</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Read</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Read: The NFS proc read function, v2.</para><para>The NFS proc read function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="181" bodystart="585" bodyend="599"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Writecache</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Writecache</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Writecache: The NFS proc writecache function, v2.</para><para>The NFS proc writecache function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="185" bodystart="611" bodyend="624"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Write</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Write</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Write: The NFS proc write function, v2.</para><para>The NFS proc write function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="189" bodystart="636" bodyend="650"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Create</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Create</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Create: The NFS proc create function, v2.</para><para>The NFS proc create function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="193" bodystart="662" bodyend="676"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga10" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Remove</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Remove</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Remove: The NFS proc remove function, v2.</para><para>The NFS proc remove function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="197" bodystart="688" bodyend="702"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Rename</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Rename</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Rename: The NFS proc rename function, v2.</para><para>The NFS proc rename function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="201" bodystart="714" bodyend="728"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Link</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Link</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Link: The NFS proc link function, v2.</para><para>The NFS proc link function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="205" bodystart="740" bodyend="754"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga13" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Symlink</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Symlink</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Symlink: The NFS proc symlink function, v2.</para><para>The NFS proc symlink function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="209" bodystart="766" bodyend="780"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Mkdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Mkdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Mkdir: The NFS proc mkdir function, v2.</para><para>The NFS proc mkdir function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="213" bodystart="792" bodyend="806"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga15" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Rmdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Rmdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Rmdir: The NFS proc rmdir function, v2.</para><para>The NFS proc rmdir function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="217" bodystart="818" bodyend="832"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga16" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Readdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Readdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Readdir: The NFS proc readdir function, v2.</para><para>The NFS proc readdir function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="221" bodystart="844" bodyend="858"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga17" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs2_remote_Fsstat</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Fsstat</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Fsstat: The NFS proc statfs function, v2.</para><para>The NFS proc statfs function, v2.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="225" bodystart="870" bodyend="884"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga18" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Null</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Null</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Null: The NFS proc null function, v3.</para><para>The NFS proc null function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="229" bodystart="896" bodyend="909"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga19" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Getattr</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Getattr</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Getattr: The NFS proc getattr function, v3.</para><para>The NFS proc getattr function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="233" bodystart="921" bodyend="935"/>
+        <referencedby refid="commands__NFS__remote_8c_1a41" compoundref="commands__NFS__remote_8c" startline="1159" endline="1205">nfs_remote_getattr</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga20" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Setattr</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Setattr</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Setattr: The NFS proc setattr function, v3.</para><para>The NFS proc setattr function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="237" bodystart="947" bodyend="961"/>
+        <referencedby refid="commands__NFS__remote_8c_1a52" compoundref="commands__NFS__remote_8c" startline="1702" endline="1748">nfs_remote_setattr</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga21" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Lookup</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Lookup</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Lookup: The NFS proc lookup function, v3.</para><para>The NFS proc lookup function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="241" bodystart="973" bodyend="987"/>
+        <referencedby refid="commands__NFS__remote_8c_1a40" compoundref="commands__NFS__remote_8c" startline="1001" endline="1155">nfs_remote_solvepath</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga22" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Readlink</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Readlink</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readlink: The NFS proc readlink function, v3.</para><para>The NFS proc readlink function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="245" bodystart="999" bodyend="1013"/>
+        <referencedby refid="commands__NFS__remote_8c_1a43" compoundref="commands__NFS__remote_8c" startline="1261" endline="1308">nfs_remote_readlink</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga23" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Read</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Read</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Read: The NFS proc read function, v3.</para><para>The NFS proc read function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="249" bodystart="1025" bodyend="1039"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga24" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Write</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Write</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Write: The NFS proc write function, v3.</para><para>The NFS proc write function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="253" bodystart="1051" bodyend="1065"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga25" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Create</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Create</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Create: The NFS proc create function, v3.</para><para>The NFS proc create function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="257" bodystart="1077" bodyend="1091"/>
+        <referencedby refid="commands__NFS__remote_8c_1a48" compoundref="commands__NFS__remote_8c" startline="1457" endline="1527">nfs_remote_create</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga26" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Remove</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Remove</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Remove: The NFS proc remove function, v3.</para><para>The NFS proc remove function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="261" bodystart="1103" bodyend="1117"/>
+        <referencedby refid="commands__NFS__remote_8c_1a51" compoundref="commands__NFS__remote_8c" startline="1653" endline="1698">nfs_remote_remove</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga27" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Rename</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Rename</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Rename: The NFS proc rename function, v3.</para><para>The NFS proc rename function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="265" bodystart="1129" bodyend="1143"/>
+        <referencedby refid="commands__NFS__remote_8c_1a53" compoundref="commands__NFS__remote_8c" startline="1752" endline="1801">nfs_remote_rename</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga28" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Link</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Link</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Link: The NFS proc link function, v3.</para><para>The NFS proc link function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="269" bodystart="1155" bodyend="1169"/>
+        <referencedby refid="commands__NFS__remote_8c_1a54" compoundref="commands__NFS__remote_8c" startline="1805" endline="1852">nfs_remote_link</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga29" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Symlink</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Symlink</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Symlink: The NFS proc symlink function, v3.</para><para>The NFS proc symlink function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="273" bodystart="1181" bodyend="1195"/>
+        <referencedby refid="commands__NFS__remote_8c_1a55" compoundref="commands__NFS__remote_8c" startline="1856" endline="1918">nfs_remote_symlink</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga30" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Mkdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Mkdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Mkdir: The NFS proc mkdir function, v3.</para><para>The NFS proc mkdir function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="277" bodystart="1207" bodyend="1221"/>
+        <referencedby refid="commands__NFS__remote_8c_1a49" compoundref="commands__NFS__remote_8c" startline="1531" endline="1600">nfs_remote_mkdir</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga31" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Rmdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Rmdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Rmdir: The NFS proc rmdir function, v3.</para><para>The NFS proc rmdir function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="281" bodystart="1233" bodyend="1247"/>
+        <referencedby refid="commands__NFS__remote_8c_1a50" compoundref="commands__NFS__remote_8c" startline="1604" endline="1649">nfs_remote_rmdir</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga32" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Readdir</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Readdir</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readdir: The NFS proc readdir function, v3.</para><para>The NFS proc readdir function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="285" bodystart="1259" bodyend="1273"/>
+        <referencedby refid="commands__NFS__remote_8c_1a46" compoundref="commands__NFS__remote_8c" startline="1385" endline="1443">nfs_remote_readdir</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga33" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Fsstat</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Fsstat</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Fsstat: The NFS proc statfs function, v3.</para><para>The NFS proc statfs function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="289" bodystart="1285" bodyend="1299"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga34" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Access</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Access</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Access: The NFS proc access function, v3.</para><para>The NFS proc access function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="293" bodystart="1311" bodyend="1325"/>
+        <referencedby refid="commands__NFS__remote_8c_1a42" compoundref="commands__NFS__remote_8c" startline="1209" endline="1257">nfs_remote_access</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga35" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Readdirplus</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Readdirplus</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readdirplus: The NFS proc readdirplus function, v3.</para><para>The NFS proc readdirplus function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="297" bodystart="1337" bodyend="1351"/>
+        <referencedby refid="commands__NFS__remote_8c_1a44" compoundref="commands__NFS__remote_8c" startline="1312" endline="1371">nfs_remote_readdirplus</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga36" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Fsinfo</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Fsinfo</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Fsinfo: The NFS proc fsinfo function, v3.</para><para>The NFS proc fsinfo function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="301" bodystart="1363" bodyend="1377"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga37" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Pathconf</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Pathconf</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Pathconf: The NFS proc pathconf function, v3.</para><para>The NFS proc pathconf function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="305" bodystart="1389" bodyend="1403"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga38" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Commit</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Commit</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Commit: The NFS proc commit function, v3.</para><para>The NFS proc commit function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="309" bodystart="1415" bodyend="1429"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga39" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_remote_Mknod</definition>
+        <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Mknod</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Mknod: The NFS proc mknod function, v3.</para><para>The NFS proc mknod function, v3.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="313" bodystart="1441" bodyend="1455"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga40" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs4_remote_COMPOUND</definition>
+        <argsstring>(CLIENT *clnt, COMPOUND4args *parg, COMPOUND4res *pres)</argsstring>
+        <name>nfs4_remote_COMPOUND</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <param>
+          <type>COMPOUND4args *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>COMPOUND4res *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs4_remote_COMPOUND: The NFS proc compound function, v4.</para><para>The NFS proc compound function, v4.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>parg</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[OUT] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="317" bodystart="1490" bodyend="1504"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga41" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs4_remote_Null</definition>
+        <argsstring>(CLIENT *clnt)</argsstring>
+        <name>nfs4_remote_Null</name>
+        <param>
+          <type>CLIENT *</type>
+          <declname>clnt</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs4_remote_Null: The NFS proc null function, v4.</para><para>The NFS proc null function, v4.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>clnt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="319" bodystart="1465" bodyend="1478"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga42" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_Mnt_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_Mnt_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_Mnt_Free: Frees the result structure allocated for mnt1_remote_Mnt.</para><para>Frees the result structure allocated for mnt1_remote_Mnt.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="322" bodystart="1529" bodyend="1532"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_Dump_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_Dump_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_Dump_Free: Frees the result structure allocated for mnt1_remote_Dump.</para><para>Frees the result structure allocated for mnt1_remote_Dump.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="323" bodystart="1542" bodyend="1545"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga44" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_Export_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_Export_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_Export_Free: Frees the result structure allocated for mnt1_remote_Export.</para><para>Frees the result structure allocated for mnt1_remote_Export.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="324" bodystart="1555" bodyend="1558"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga45" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_Null_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_Null_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_Null_Free: Frees the result structure allocated for mnt1_remote_Null</para><para>Frees the result structure allocated for mnt1_remote_Null. Does Nothing in fact.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="325" bodystart="1516" bodyend="1519"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga46" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_Umnt_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_Umnt_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_Umnt_Free: Frees the result structure allocated for mnt1_remote_Umnt.</para><para>Frees the result structure allocated for mnt1_remote_Umnt.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="326" bodystart="1568" bodyend="1571"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga47" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt1_remote_UmntAll_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt1_remote_UmntAll_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt1_remote_UmntAll_Free: Frees the result structure allocated for mnt1_remote_UmntAll.</para><para>Frees the result structure allocated for mnt1_remote_UmntAll.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="327" bodystart="1581" bodyend="1584"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga48" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_Mnt_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_Mnt_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_Mnt_Free: Frees the result structure allocated for mnt3_remote_Mnt.</para><para>Frees the result structure allocated for mnt3_remote_Mnt.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="329" bodystart="1607" bodyend="1610"/>
+        <referencedby refid="commands__NFS__remote_8c_1a56" compoundref="commands__NFS__remote_8c" startline="1922" endline="1978">nfs_remote_mount</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga49" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_Dump_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_Dump_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_Dump_Free: Frees the result structure allocated for mnt3_remote_Dump.</para><para>Frees the result structure allocated for mnt3_remote_Dump.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="330" bodystart="1620" bodyend="1623"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga50" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_Export_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_Export_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_Export_Free: Frees the result structure allocated for mnt3_remote_Export.</para><para>Frees the result structure allocated for mnt3_remote_Export.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="331" bodystart="1633" bodyend="1636"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga51" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_Null_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_Null_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_Null_Free: Frees the result structure allocated for mnt3_remote_Null</para><para>Frees the result structure allocated for mnt3_remote_Null. Does Nothing in fact.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="332" bodystart="1594" bodyend="1597"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga52" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_Umnt_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_Umnt_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_Umnt_Free: Frees the result structure allocated for mnt3_remote_Umnt.</para><para>Frees the result structure allocated for mnt3_remote_Umnt.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="333" bodystart="1646" bodyend="1649"/>
+        <referencedby refid="commands__NFS__remote_8c_1a58" compoundref="commands__NFS__remote_8c" startline="2031" endline="2104">fn_nfs_remote_umount</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga53" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void mnt3_remote_UmntAll_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>mnt3_remote_UmntAll_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>mnt3_remote_UmntAll_Free: Frees the result structure allocated for mnt3_remote_UmntAll.</para><para>Frees the result structure allocated for mnt3_remote_UmntAll.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="334" bodystart="1659" bodyend="1662"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga54" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Null_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Null_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Null_Free: Frees the result structure allocated for nfs2_remote_Null.</para><para>Frees the result structure allocated for nfs2_remote_Null.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="336" bodystart="1672" bodyend="1675"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga55" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Getattr_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Getattr_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Getattr_Free: Frees the result structure allocated for nfs2_remote_Getattr.</para><para>Frees the result structure allocated for nfs2_remote_Getattr.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="337" bodystart="1685" bodyend="1688"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga56" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Setattr_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Setattr_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Setattr_Free: Frees the result structure allocated for nfs2_remote_Setattr.</para><para>Frees the result structure allocated for nfs2_remote_Setattr.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="338" bodystart="1698" bodyend="1701"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga57" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Lookup_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Lookup_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Lookup_Free: Frees the result structure allocated for nfs2_remote_Lookup.</para><para>Frees the result structure allocated for nfs2_remote_Lookup.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="339" bodystart="1711" bodyend="1714"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga58" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Read_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Read_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Read_Free: Frees the result structure allocated for nfs2_remote_Read.</para><para>Frees the result structure allocated for nfs2_remote_Read.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="340" bodystart="1724" bodyend="1727"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga59" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Write_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Write_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Write_Free: Frees the result structure allocated for nfs2_remote_Write.</para><para>Frees the result structure allocated for nfs2_remote_Write.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="341" bodystart="1737" bodyend="1740"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga60" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Create_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Create_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Create_Free: Frees the result structure allocated for nfs2_remote_Create.</para><para>Frees the result structure allocated for nfs2_remote_Create.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="342" bodystart="1750" bodyend="1753"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga61" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Mkdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Mkdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Mkdir_Free: Frees the result structure allocated for nfs2_remote_Mkdir.</para><para>Frees the result structure allocated for nfs2_remote_Mkdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="343" bodystart="1763" bodyend="1766"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga62" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Symlink_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Symlink_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Symlink_Free: Frees the result structure allocated for nfs2_remote_Symlink.</para><para>Frees the result structure allocated for nfs2_remote_Symlink.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="344" bodystart="1776" bodyend="1779"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga63" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Remove_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Remove_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Remove_Free: Frees the result structure allocated for nfs2_remote_Remove.</para><para>Frees the result structure allocated for nfs2_remote_Remove.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="345" bodystart="1789" bodyend="1792"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga64" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Rmdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Rmdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Rmdir_Free: Frees the result structure allocated for nfs2_remote_Rmdir.</para><para>Frees the result structure allocated for nfs2_remote_Rmdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="346" bodystart="1802" bodyend="1805"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga65" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Rename_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Rename_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Rename_Free: Frees the result structure allocated for nfs2_remote_Rename.</para><para>Frees the result structure allocated for nfs2_remote_Rename.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="347" bodystart="1815" bodyend="1818"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga66" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Link_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Link_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Link_Free: Frees the result structure allocated for nfs2_remote_Link.</para><para>Frees the result structure allocated for nfs2_remote_Link.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="348" bodystart="1828" bodyend="1831"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Fsstat_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Fsstat_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Fsstat_Free: Frees the result structure allocated for nfs2_remote_Fsstat.</para><para>Frees the result structure allocated for nfs2_remote_Fsstat.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="349" bodystart="1841" bodyend="1844"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga68" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Root_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Root_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Root_Free: Frees the result structure allocated for nfs2_remote_Root.</para><para>Frees the result structure allocated for nfs2_remote_Root.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="350" bodystart="1854" bodyend="1857"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga69" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Writecache_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs2_remote_Writecache_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Writecache_Free: Frees the result structure allocated for nfs2_remote_Writecache.</para><para>Frees the result structure allocated for nfs2_remote_Writecache.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="351" bodystart="1867" bodyend="1870"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga70" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Readdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Readdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Readdir_Free: Frees the result structure allocated for nfs2_remote_Readdir.</para><para>Frees the result structure allocated for nfs2_remote_Readdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="352" bodystart="1880" bodyend="1883"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga71" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs2_remote_Readlink_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs2_remote_Readlink_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs2_remote_Readlink_Free: Frees the result structure allocated for nfs2_remote_Readlink.</para><para>Frees the result structure allocated for nfs2_remote_Readlink.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="353" bodystart="1893" bodyend="1896"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga72" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Null_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Null_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Null_Free: Frees the result structure allocated for nfs3_remote_Null.</para><para>Frees the result structure allocated for nfs3_remote_Null.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="355" bodystart="1906" bodyend="1909"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga73" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Getattr_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Getattr_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Getattr_Free: Frees the result structure allocated for nfs3_remote_Getattr.</para><para>Frees the result structure allocated for nfs3_remote_Getattr.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="356" bodystart="1919" bodyend="1922"/>
+        <referencedby refid="commands__NFS__remote_8c_1a41" compoundref="commands__NFS__remote_8c" startline="1159" endline="1205">nfs_remote_getattr</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga74" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Setattr_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Setattr_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Setattr_Free: Frees the result structure allocated for nfs3_remote_Setattr.</para><para>Frees the result structure allocated for nfs3_remote_Setattr.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="357" bodystart="1932" bodyend="1935"/>
+        <referencedby refid="commands__NFS__remote_8c_1a52" compoundref="commands__NFS__remote_8c" startline="1702" endline="1748">nfs_remote_setattr</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga75" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Lookup_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Lookup_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Lookup_Free: Frees the result structure allocated for nfs3_remote_Lookup.</para><para>Frees the result structure allocated for nfs3_remote_Lookup.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="358" bodystart="1945" bodyend="1948"/>
+        <referencedby refid="commands__NFS__remote_8c_1a40" compoundref="commands__NFS__remote_8c" startline="1001" endline="1155">nfs_remote_solvepath</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga76" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Access_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Access_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Access_Free: Frees the result structure allocated for nfs3_remote_Access.</para><para>Frees the result structure allocated for nfs3_remote_Access.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="359" bodystart="1958" bodyend="1961"/>
+        <referencedby refid="commands__NFS__remote_8c_1a42" compoundref="commands__NFS__remote_8c" startline="1209" endline="1257">nfs_remote_access</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga77" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Readlink_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Readlink_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readlink_Free: Frees the result structure allocated for nfs3_remote_Readlink.</para><para>Frees the result structure allocated for nfs3_remote_Readlink.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="360" bodystart="1971" bodyend="1974"/>
+        <referencedby refid="commands__NFS__remote_8c_1a43" compoundref="commands__NFS__remote_8c" startline="1261" endline="1308">nfs_remote_readlink</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga78" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Write_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Write_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Write_Free: Frees the result structure allocated for nfs3_remote_Write.</para><para>Frees the result structure allocated for nfs3_remote_Write.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="361" bodystart="1984" bodyend="1987"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga79" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Create_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Create_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Create_Free: Frees the result structure allocated for nfs3_remote_Create.</para><para>Frees the result structure allocated for nfs3_remote_Create.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="362" bodystart="1997" bodyend="2000"/>
+        <referencedby refid="commands__NFS__remote_8c_1a48" compoundref="commands__NFS__remote_8c" startline="1457" endline="1527">nfs_remote_create</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga80" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Mkdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Mkdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Mkdir_Free: Frees the result structure allocated for nfs3_remote_Mkdir.</para><para>Frees the result structure allocated for nfs3_remote_Mkdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="363" bodystart="2010" bodyend="2013"/>
+        <referencedby refid="commands__NFS__remote_8c_1a49" compoundref="commands__NFS__remote_8c" startline="1531" endline="1600">nfs_remote_mkdir</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga81" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Symlink_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Symlink_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Symlink_Free: Frees the result structure allocated for nfs3_remote_Symlink.</para><para>Frees the result structure allocated for nfs3_remote_Symlink.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="364" bodystart="2023" bodyend="2026"/>
+        <referencedby refid="commands__NFS__remote_8c_1a55" compoundref="commands__NFS__remote_8c" startline="1856" endline="1918">nfs_remote_symlink</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga82" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Mknod_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Mknod_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Mknod_Free: Frees the result structure allocated for nfs3_remote_Mknod.</para><para>Frees the result structure allocated for nfs3_remote_Mknod.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="365" bodystart="2036" bodyend="2039"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga83" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Remove_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Remove_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Remove_Free: Frees the result structure allocated for nfs3_remote_Remove.</para><para>Frees the result structure allocated for nfs3_remote_Remove.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="366" bodystart="2049" bodyend="2052"/>
+        <referencedby refid="commands__NFS__remote_8c_1a51" compoundref="commands__NFS__remote_8c" startline="1653" endline="1698">nfs_remote_remove</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga84" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Rmdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Rmdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Rmdir_Free: Frees the result structure allocated for nfs3_remote_Rmdir.</para><para>Frees the result structure allocated for nfs3_remote_Rmdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="367" bodystart="2062" bodyend="2065"/>
+        <referencedby refid="commands__NFS__remote_8c_1a50" compoundref="commands__NFS__remote_8c" startline="1604" endline="1649">nfs_remote_rmdir</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga85" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Rename_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Rename_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Rename_Free: Frees the result structure allocated for nfs3_remote_Rename.</para><para>Frees the result structure allocated for nfs3_remote_Rename.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="368" bodystart="2075" bodyend="2078"/>
+        <referencedby refid="commands__NFS__remote_8c_1a53" compoundref="commands__NFS__remote_8c" startline="1752" endline="1801">nfs_remote_rename</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga86" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Link_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Link_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Link_Free: Frees the result structure allocated for nfs3_remote_Link.</para><para>Frees the result structure allocated for nfs3_remote_Link.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="369" bodystart="2088" bodyend="2091"/>
+        <referencedby refid="commands__NFS__remote_8c_1a54" compoundref="commands__NFS__remote_8c" startline="1805" endline="1852">nfs_remote_link</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga87" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Readdir_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Readdir_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readdir_Free: Frees the result structure allocated for nfs3_remote_Readdir.</para><para>Frees the result structure allocated for nfs3_remote_Readdir.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="370" bodystart="2101" bodyend="2104"/>
+        <referencedby refid="commands__NFS__remote_8c_1a46" compoundref="commands__NFS__remote_8c" startline="1385" endline="1443">nfs_remote_readdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a47" compoundref="commands__NFS__remote_8c" startline="1447" endline="1453">nfs_remote_readdir_free</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga88" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Readdirplus_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Readdirplus_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Readdirplus_Free: Frees the result structure allocated for nfs3_remote_Readdirplus.</para><para>Frees the result structure allocated for nfs3_remote_Readdirplus.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="371" bodystart="2114" bodyend="2117"/>
+        <referencedby refid="commands__NFS__remote_8c_1a44" compoundref="commands__NFS__remote_8c" startline="1312" endline="1371">nfs_remote_readdirplus</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a45" compoundref="commands__NFS__remote_8c" startline="1375" endline="1381">nfs_remote_readdirplus_free</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga89" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Fsstat_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Fsstat_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Fsstat_Free: Frees the result structure allocated for nfs3_remote_Fsstat.</para><para>Frees the result structure allocated for nfs3_remote_Fsstat.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="372" bodystart="2127" bodyend="2130"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga90" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Fsinfo_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Fsinfo_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Fsinfo_Free: Frees the result structure allocated for nfs3_remote_Fsinfo.</para><para>Frees the result structure allocated for nfs3_remote_Fsinfo.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="373" bodystart="2140" bodyend="2143"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga91" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Pathconf_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Pathconf_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Pathconf_Free: Frees the result structure allocated for nfs3_remote_Pathconf.</para><para>Frees the result structure allocated for nfs3_remote_Pathconf.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="374" bodystart="2153" bodyend="2156"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga92" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Commit_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_remote_Commit_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Commit_Free: Frees the result structure allocated for nfs3_remote_Commit.</para><para>Frees the result structure allocated for nfs3_remote_Commit.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="375" bodystart="2166" bodyend="2169"/>
+      </memberdef>
+      <memberdef kind="function" id="group__NFSprocs_1ga93" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_remote_Read_Free</definition>
+        <argsstring>(nfs_res_t *resp)</argsstring>
+        <name>nfs3_remote_Read_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>resp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_remote_Read_Free: Frees the result structure allocated for nfs3_remote_Read.</para><para>Frees the result structure allocated for nfs3_remote_Read.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="376" bodystart="2179" bodyend="2182"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

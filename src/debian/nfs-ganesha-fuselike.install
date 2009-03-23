@@ -1,0 +1,5 @@
+#DOCS#
+usr/lib/libganeshaNFS.la
+usr/lib/libganeshaNFS.a
+usr/lib/libganeshaNFS.so.*
+usr/bin/fuse.ganesha.convertFH

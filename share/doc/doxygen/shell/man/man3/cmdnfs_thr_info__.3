@@ -1,0 +1,110 @@
+.TH "cmdnfs_thr_info__" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cmdnfs_thr_info__ \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBis_thread_init\fP"
+.br
+.ti -1c
+.RI "fsal_export_context_t \fBexp_context\fP"
+.br
+.ti -1c
+.RI "fsal_op_context_t \fBcontext\fP"
+.br
+.ti -1c
+.RI "authunix_parms \fBauthunix_struct\fP"
+.br
+.ti -1c
+.RI "cache_inode_client_t \fBclient\fP"
+.br
+.ti -1c
+.RI "cache_content_client_t \fBdc_client\fP"
+.br
+.ti -1c
+.RI "int \fBis_mounted_path\fP"
+.br
+.ti -1c
+.RI "\fBshell_fh3_t\fP \fBmounted_path_hdl\fP"
+.br
+.ti -1c
+.RI "char \fBmounted_path\fP [NFS2_MAXPATHLEN]"
+.br
+.ti -1c
+.RI "\fBshell_fh3_t\fP \fBcurrent_path_hdl\fP"
+.br
+.ti -1c
+.RI "char \fBcurrent_path\fP [NFS2_MAXPATHLEN]"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "struct authunix_parms \fBcmdnfs_thr_info__::authunix_struct\fP"
+.PP
+Definition at line 296 of file commands_NFS.c.
+.PP
+Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and InitNFSClient().
+.SS "cache_inode_client_t \fBcmdnfs_thr_info__::client\fP"
+.PP
+Thread specific variable : the client for the cache 
+.PP
+Definition at line 299 of file commands_NFS.c.
+.PP
+Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and InitNFSClient().
+.SS "fsal_op_context_t \fBcmdnfs_thr_info__::context\fP"
+.PP
+context for accessing the filesystem 
+.PP
+Definition at line 293 of file commands_NFS.c.
+.PP
+Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_id(), fn_nfs_mount(), fn_nfs_su(), fn_nfs_umount(), and InitNFSClient().
+.SS "char \fBcmdnfs_thr_info__::current_path\fP[NFS2_MAXPATHLEN]"
+.PP
+Definition at line 310 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), and fn_nfs_unlink().
+.SS "\fBshell_fh3_t\fP \fBcmdnfs_thr_info__::current_path_hdl\fP"
+.PP
+Definition at line 309 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), and fn_nfs_unlink().
+.SS "cache_content_client_t \fBcmdnfs_thr_info__::dc_client\fP"
+.PP
+Definition at line 300 of file commands_NFS.c.
+.PP
+Referenced by InitNFSClient().
+.SS "fsal_export_context_t \fBcmdnfs_thr_info__::exp_context\fP"
+.PP
+Definition at line 290 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_su(), and InitNFSClient().
+.SS "int \fBcmdnfs_thr_info__::is_mounted_path\fP"
+.PP
+Definition at line 304 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_umount(), fn_nfs_unlink(), and GetNFSClient().
+.SS "int \fBcmdnfs_thr_info__::is_thread_init\fP"
+.PP
+Definition at line 284 of file commands_NFS.c.
+.PP
+Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_id(), fn_nfs_mount(), fn_nfs_su(), fn_nfs_umount(), GetNFSClient(), and InitNFSClient().
+.SS "char \fBcmdnfs_thr_info__::mounted_path\fP[NFS2_MAXPATHLEN]"
+.PP
+Definition at line 307 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_mount(), and fn_nfs_umount().
+.SS "\fBshell_fh3_t\fP \fBcmdnfs_thr_info__::mounted_path_hdl\fP"
+.PP
+Definition at line 306 of file commands_NFS.c.
+.PP
+Referenced by fn_nfs_mount().
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

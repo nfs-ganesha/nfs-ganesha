@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structprog__vers__def____" kind="struct" prot="public">
+    <compoundname>prog_vers_def__</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structprog__vers__def_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* prog_vers_def__::name</definition>
+        <argsstring></argsstring>
+        <name>name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/commands_NFS_remote.c" line="166" bodystart="166" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a29" compoundref="commands__NFS__remote_8c" startline="357" endline="483">rpc_init</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structprog__vers__def_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>u_long</type>
+        <definition>u_long prog_vers_def__::prog</definition>
+        <argsstring></argsstring>
+        <name>prog</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/commands_NFS_remote.c" line="167" bodystart="167" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a29" compoundref="commands__NFS__remote_8c" startline="357" endline="483">rpc_init</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structprog__vers__def_____1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>u_long</type>
+        <definition>u_long prog_vers_def__::vers</definition>
+        <argsstring></argsstring>
+        <name>vers</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/commands_NFS_remote.c" line="168" bodystart="168" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a29" compoundref="commands__NFS__remote_8c" startline="357" endline="483">rpc_init</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/shell/commands_NFS_remote.c" line="165" bodystart="165" bodyend="169"/>
+    <listofallmembers>
+      <member refid="structprog__vers__def_____1o0" prot="public" virt="non-virtual"><scope>prog_vers_def__</scope><name>name</name></member>
+      <member refid="structprog__vers__def_____1o1" prot="public" virt="non-virtual"><scope>prog_vers_def__</scope><name>prog</name></member>
+      <member refid="structprog__vers__def_____1o2" prot="public" virt="non-virtual"><scope>prog_vers_def__</scope><name>vers</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

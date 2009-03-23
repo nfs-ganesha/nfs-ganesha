@@ -1,0 +1,27 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/ganesha.hpss.conf"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+cd $TEST_DIR
+
+# statfs command not implemented.
+print "statfs : command not implemented."

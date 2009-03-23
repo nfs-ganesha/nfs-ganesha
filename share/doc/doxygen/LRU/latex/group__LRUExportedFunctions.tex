@@ -1,0 +1,177 @@
+\section{LRUExported\-Functions}
+\label{group__LRUExportedFunctions}\index{LRUExportedFunctions@{LRUExportedFunctions}}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+LRU\_\-list\_\-t $\ast$ {\bf LRU\_\-Init} (LRU\_\-parameter\_\-t lru\_\-param, LRU\_\-status\_\-t $\ast$pstatus)
+\item 
+int {\bf LRU\_\-invalidate} (LRU\_\-list\_\-t $\ast$plru, LRU\_\-entry\_\-t $\ast$pentry)
+\item 
+LRU\_\-entry\_\-t $\ast$ {\bf LRU\_\-new\_\-entry} (LRU\_\-list\_\-t $\ast$plru, LRU\_\-status\_\-t $\ast$pstatus)
+\item 
+int {\bf LRU\_\-gc\_\-invalid} (LRU\_\-list\_\-t $\ast$plru, void $\ast$cleanparam)
+\item 
+int {\bf LRU\_\-invalidate\_\-by\_\-function} (LRU\_\-list\_\-t $\ast$plru, int($\ast$testfunc)(LRU\_\-entry\_\-t $\ast$, void $\ast$addparam), void $\ast$addparam)
+\item 
+int {\bf LRU\_\-apply\_\-function} (LRU\_\-list\_\-t $\ast$plru, int($\ast$myfunc)(LRU\_\-entry\_\-t $\ast$, void $\ast$addparam), void $\ast$addparam)
+\item 
+void {\bf LRU\_\-Print} (LRU\_\-list\_\-t $\ast$plru)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_apply_function@{LRU\_\-apply\_\-function}}
+\index{LRU_apply_function@{LRU\_\-apply\_\-function}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int LRU\_\-apply\_\-function (LRU\_\-list\_\-t $\ast$ {\em plru}, int($\ast$)(LRU\_\-entry\_\-t $\ast$, void $\ast$addparam) {\em myfunc}, void $\ast$ {\em addparam})}\label{group__LRUExportedFunctions_ga5}
+
+
+LRU\_\-apply\_\-function: apply the same function to every LRU entry, but do not change their states.
+
+apply the same function to every LRU entry, but do not change their states.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}][INOUT] LRU list to be managed. \item[{\em myfunc}][IN] function used to be runned on every entry. If this function return FALSE, the loop stops. \item[{\em addparam}][IN] parameter for the input function.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]LRU\_\-LIST\_\-SUCCESS if ok, other values shows an error\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf LRU\_\-invalidate}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga1})} 
+
+{\bf LRU\_\-gc\_\-invalid}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 447 of file LRU\_\-List.c.\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_gc_invalid@{LRU\_\-gc\_\-invalid}}
+\index{LRU_gc_invalid@{LRU\_\-gc\_\-invalid}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int LRU\_\-gc\_\-invalid (LRU\_\-list\_\-t $\ast$ {\em plru}, void $\ast$ {\em cleanparam})}\label{group__LRUExportedFunctions_ga3}
+
+
+LRU\_\-gc\_\-invalid : garbagge collection for invalid entries.
+
+Read the whole LRU list and put the invalid entries back to the pool.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}]Pointer to the list to be managed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]An integer to contain the status for the operation.\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf LRU\_\-invalidate}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga1})} \end{Desc}
+
+
+Definition at line 318 of file LRU\_\-List.c.
+
+Referenced by do\_\-gc(), and main().\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_Init@{LRU\_\-Init}}
+\index{LRU_Init@{LRU\_\-Init}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}LRU\_\-list\_\-t$\ast$ LRU\_\-Init (LRU\_\-parameter\_\-t {\em lru\_\-param}, LRU\_\-status\_\-t $\ast$ {\em pstatus})}\label{group__LRUExportedFunctions_ga0}
+
+
+LRU\_\-Init: Init the LRU list.
+
+Init the Hash Table .
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em lru\_\-param}]A structure of type lru\_\-parameter\_\-t which contains the values used to init the LRU. \item[{\em pstatus}]Pointer to an integer to contain the status for the operation.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL if init failed, the pointeur to the hashtable otherwise.\end{Desc}
+\begin{Desc}
+\item[See also:]Pre\-Alloc\-Entry \end{Desc}
+
+
+Definition at line 180 of file LRU\_\-List.c.
+
+Referenced by main().\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_invalidate@{LRU\_\-invalidate}}
+\index{LRU_invalidate@{LRU\_\-invalidate}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int LRU\_\-invalidate (LRU\_\-list\_\-t $\ast$ {\em plru}, LRU\_\-entry\_\-t $\ast$ {\em pentry})}\label{group__LRUExportedFunctions_ga1}
+
+
+LRU\_\-invalidate: Tag an entry as invalid.
+
+Tag an entry as invalid, this kind of entry will be put off the LRU (and sent back to the pool) when a garbagge collection will be performed.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}]Pointer to the list to be managed. \item[{\em pentry}]Pointer to the entry to be tagged.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]LRU\_\-LIST\_\-SUCCESS if successfull, other values show an error.\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf LRU\_\-gc\_\-invalid}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 236 of file LRU\_\-List.c.
+
+Referenced by do\_\-invalidate(), LRU\_\-invalidate\_\-by\_\-function(), and main().\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_invalidate_by_function@{LRU\_\-invalidate\_\-by\_\-function}}
+\index{LRU_invalidate_by_function@{LRU\_\-invalidate\_\-by\_\-function}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int LRU\_\-invalidate\_\-by\_\-function (LRU\_\-list\_\-t $\ast$ {\em plru}, int($\ast$)(LRU\_\-entry\_\-t $\ast$, void $\ast$addparam) {\em testfunc}, void $\ast$ {\em addparam})}\label{group__LRUExportedFunctions_ga4}
+
+
+LRU\_\-invalidate\_\-by\_\-function: Browse the lru to test if entries should ne invalidated.
+
+Browse the lru to test if entries should ne invalidated. This function is used for garbagge collection
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}][INOUT] LRU list to be managed. \item[{\em testfunc}][IN] function used to identify an entry to be tagged invalid. This function returns TRUE if entry will be tagged invalid \item[{\em addparam}][IN] parameter for the input function.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]LRU\_\-LIST\_\-SUCCESS if ok, other values shows an error\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf LRU\_\-invalidate}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga1})} 
+
+{\bf LRU\_\-gc\_\-invalid}{\rm (p.\,\pageref{group__LRUExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 394 of file LRU\_\-List.c.
+
+References LRU\_\-invalidate().\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_new_entry@{LRU\_\-new\_\-entry}}
+\index{LRU_new_entry@{LRU\_\-new\_\-entry}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}LRU\_\-entry\_\-t$\ast$ LRU\_\-new\_\-entry (LRU\_\-list\_\-t $\ast$ {\em plru}, LRU\_\-status\_\-t $\ast$ {\em pstatus})}\label{group__LRUExportedFunctions_ga2}
+
+
+LRU\_\-new\_\-entry : acquire a new entry from the pool.
+
+acquire a new entry from the pool. If pool is empty, a new chunck is added to complete the operation.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}]Pointer to the list to be managed. \item[{\em pstatus}]Pointer to an integer to contain the status for the operation.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL if init failed, the pointeur to the hashtable otherwise.\end{Desc}
+\begin{Desc}
+\item[See also:]Pre\-Alloc\-Entry \end{Desc}
+
+
+Definition at line 260 of file LRU\_\-List.c.
+
+Referenced by do\_\-new(), and main().\index{LRUExportedFunctions@{LRUExported\-Functions}!LRU_Print@{LRU\_\-Print}}
+\index{LRU_Print@{LRU\_\-Print}!LRUExportedFunctions@{LRUExported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void LRU\_\-Print (LRU\_\-list\_\-t $\ast$ {\em plru})}\label{group__LRUExportedFunctions_ga6}
+
+
+Hash\-Table\_\-Print: Print information about the LRU (mostly for debugging purpose).
+
+Print information about the LRU (mostly for debugging purpose).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em plru}]the LRU to be used.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]none (returns void). \end{Desc}
+
+
+Definition at line 493 of file LRU\_\-List.c.
+
+Referenced by main().

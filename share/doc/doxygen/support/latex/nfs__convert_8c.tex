@@ -1,0 +1,109 @@
+\section{nfs\_\-convert.c File Reference}
+\label{nfs__convert_8c}\index{nfs_convert.c@{nfs\_\-convert.c}}
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$gssapi/gssapi.h$>$}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+char $\ast$ {\bf nfsstat2\_\-to\_\-str} (nfsstat2 code)
+\item 
+char $\ast$ {\bf nfsstat3\_\-to\_\-str} (nfsstat3 code)
+\item 
+char $\ast$ {\bf nfstype2\_\-to\_\-str} (ftype2 code)
+\item 
+char $\ast$ {\bf nfstype3\_\-to\_\-str} (ftype3 code)
+\item 
+uint64\_\-t {\bf nfs\_\-htonl64} (uint64\_\-t arg64)
+\item 
+uint64\_\-t {\bf nfs\_\-ntohl64} (uint64\_\-t arg64)
+\item 
+void {\bf auth\_\-stat2str} (enum auth\_\-stat why, char $\ast$str)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{nfs_convert.c@{nfs\_\-convert.c}!auth_stat2str@{auth\_\-stat2str}}
+\index{auth_stat2str@{auth\_\-stat2str}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void auth\_\-stat2str (enum auth\_\-stat {\em why}, char $\ast$ {\em str})}\label{nfs__convert_8c_a6}
+
+
+auth\_\-stat2str: converts a auth\_\-stat enum to a string
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em why}][IN] the stat to convert \item[{\em out}][IN] output string\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 351 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfs_htonl64@{nfs\_\-htonl64}}
+\index{nfs_htonl64@{nfs\_\-htonl64}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}uint64\_\-t nfs\_\-htonl64 (uint64\_\-t {\em arg64})}\label{nfs__convert_8c_a4}
+
+
+nfs\_\-htonl64: Same as htonl, but on 64 bits.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em arg64}][IN] input value\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]converted value. \end{Desc}
+
+
+Definition at line 247 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfs_ntohl64@{nfs\_\-ntohl64}}
+\index{nfs_ntohl64@{nfs\_\-ntohl64}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}uint64\_\-t nfs\_\-ntohl64 (uint64\_\-t {\em arg64})}\label{nfs__convert_8c_a5}
+
+
+nfs\_\-ntohl64: Same as ntohl, but on 64 bits.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em arg64}][IN] input value\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]converted value. \end{Desc}
+
+
+Definition at line 275 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfsstat2_to_str@{nfsstat2\_\-to\_\-str}}
+\index{nfsstat2_to_str@{nfsstat2\_\-to\_\-str}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ nfsstat2\_\-to\_\-str (nfsstat2 {\em code})}\label{nfs__convert_8c_a0}
+
+
+
+
+Definition at line 122 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfsstat3_to_str@{nfsstat3\_\-to\_\-str}}
+\index{nfsstat3_to_str@{nfsstat3\_\-to\_\-str}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ nfsstat3\_\-to\_\-str (nfsstat3 {\em code})}\label{nfs__convert_8c_a1}
+
+
+
+
+Definition at line 153 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfstype2_to_str@{nfstype2\_\-to\_\-str}}
+\index{nfstype2_to_str@{nfstype2\_\-to\_\-str}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ nfstype2\_\-to\_\-str (ftype2 {\em code})}\label{nfs__convert_8c_a2}
+
+
+
+
+Definition at line 195 of file nfs\_\-convert.c.\index{nfs_convert.c@{nfs\_\-convert.c}!nfstype3_to_str@{nfstype3\_\-to\_\-str}}
+\index{nfstype3_to_str@{nfstype3\_\-to\_\-str}!nfs_convert.c@{nfs\_\-convert.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ nfstype3\_\-to\_\-str (ftype3 {\em code})}\label{nfs__convert_8c_a3}
+
+
+
+
+Definition at line 218 of file nfs\_\-convert.c.

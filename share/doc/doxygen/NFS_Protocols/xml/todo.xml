@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="todo" kind="page">
+    <compoundname>todo</compoundname>
+    <title>Todo List</title>
+    <detaileddescription>
+<para><anchor id="todo_1_todo000001"/> <variablelist>
+<varlistentry><term>Member <ref refid="mnt__Export_8c_1a2" kindref="member">mnt_Export_Free</ref> (nfs_res_t *pres) </term></varlistentry>
+<listitem><para>: BUGAZOMEU end this function</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000002"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs4__Compound_8c_1a4" kindref="member">nfs4_Compound</ref> (nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres) </term></varlistentry>
+<listitem><para>BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000003"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs4__op__close_8c_1a2" kindref="member">nfs4_op_close</ref> (struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) </term></varlistentry>
+<listitem><para>: check seqid mgmt</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000004"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs4__op__open_8c_1a4" kindref="member">nfs4_op_open</ref> (struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) </term></varlistentry>
+<listitem><para>: BUGAZOMEU: remove this line if( arg_OPEN4.openhow.openflag4_u.how.mode != UNCHECKED4 &amp;&amp; cache_status != CACHE_INODE_ENTRY_EXISTS )</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000005"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs4__op__write_8c_1a3" kindref="member">nfs4_op_write</ref> (struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp) </term></varlistentry>
+<listitem><para>: same stateid should be identify here</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000006"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs4__pseudo_8c_1a18" kindref="member">nfs4_PseudoToFattr</ref> (pseudofs_entry_t *psfsp, fattr4 *Fattr, compound_data_t *data, nfs_fh4 *objFH, bitmap4 *Bitmap) </term></varlistentry>
+<listitem><para>: BUGAZOMEU: Allocation at NULL Adress here.... </para><para>: not the right answer, actual quotas should be implemented </para><para>: not the right answer, actual quotas should be implemented </para><para>: BUGAZOMEU: Allocation at NULL Adress here.... </para><para>: BUGAZOMEU: Allocation at NULL Adress here....</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000009"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs__proto__tools_8c_1a9" kindref="member">nfs2_FSALattr_To_Fattr</ref> (exportlist_t *pexport, fsal_attrib_list_t *pFSAL_attr, fattr2 *pFattr) </term></varlistentry>
+<listitem><para>mode mask ? </para><para>mode mask ?</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000010"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs__proto__tools_8c_1a27" kindref="member">nfs3_Errno</ref> (cache_inode_status_t error) </term></varlistentry>
+<listitem><para>: Check if this works by making stress tests</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000008"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs__proto__tools_8c_1a7" kindref="member">nfs4_FSALattr_To_Fattr</ref> (exportlist_t *pexport, fsal_attrib_list_t *pattr, fattr4 *Fattr, compound_data_t *data, nfs_fh4 *objFH, bitmap4 *Bitmap) </term></varlistentry>
+<listitem><para>: not the right answer, actual quotas should be implemented </para><para>: not the right answer, actual quotas should be implemented</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000007"/> <variablelist>
+<varlistentry><term>Member <ref refid="nfs__proto__tools_8c_1a5" kindref="member">nfs_RetryableError</ref> (cache_inode_status_t cache_status) </term></varlistentry>
+<listitem><para>: Not implemented for NOW BUGAZEOMEU </para></listitem>
+</variablelist>
+</para>    </detaileddescription>
+  </compounddef>
+</doxygen>

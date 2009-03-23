@@ -1,0 +1,848 @@
+\section{log\_\-functions.c File Reference}
+\label{log__functions_8c}\index{log_functions.c@{log\_\-functions.c}}
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$ctype.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdarg.h$>$}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$signal.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Thread\-Log\-Context\_\-t}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf STR\_\-LEN\_\-TXT}\ 2048
+\item 
+\#define {\bf PATH\_\-LEN}\ 1024
+\item 
+\#define {\bf MAX\_\-STR\_\-LEN}\ 1024
+\item 
+\#define {\bf MAX\_\-NUM\_\-FAMILY}\ 50
+\item 
+\#define {\bf UNUSED\_\-SLOT}\ -1
+\item 
+\#define {\bf P}(\_\-mutex\_\-)\ pthread\_\-mutex\_\-lock( \&\_\-mutex\_\-)
+\item 
+\#define {\bf V}(\_\-mutex\_\-)\ pthread\_\-mutex\_\-unlock( \&\_\-mutex\_\- )
+\item 
+\#define {\bf Localtime\_\-r}\ localtime\_\-r
+\item 
+\#define {\bf ONE\_\-STEP}\ do \{ iterformat +=1 ; len += 1; \} while(0)
+\item 
+\#define {\bf NO\_\-TYPE}\ 0
+\item 
+\#define {\bf INT\_\-TYPE}\ 1
+\item 
+\#define {\bf LONG\_\-TYPE}\ 2
+\item 
+\#define {\bf CHAR\_\-TYPE}\ 3
+\item 
+\#define {\bf STRING\_\-TYPE}\ 4
+\item 
+\#define {\bf FLOAT\_\-TYPE}\ 5
+\item 
+\#define {\bf DOUBLE\_\-TYPE}\ 6
+\item 
+\#define {\bf POINTEUR\_\-TYPE}\ 7
+\item 
+\#define {\bf EXTENDED\_\-TYPE}\ 8
+\item 
+\#define {\bf STATUS\_\-SHORT}\ 1
+\item 
+\#define {\bf STATUS\_\-LONG}\ 2
+\item 
+\#define {\bf CONTEXTE\_\-SHORT}\ 3
+\item 
+\#define {\bf CONTEXTE\_\-LONG}\ 4
+\item 
+\#define {\bf ERREUR\_\-SHORT}\ 5
+\item 
+\#define {\bf ERREUR\_\-LONG}\ 6
+\item 
+\#define {\bf ERRNUM\_\-SHORT}\ 7
+\item 
+\#define {\bf ERRNUM\_\-LONG}\ 8
+\item 
+\#define {\bf ERRCTX\_\-SHORT}\ 9
+\item 
+\#define {\bf ERRCTX\_\-LONG}\ 10
+\item 
+\#define {\bf CHANGE\_\-ERR\_\-FAMILY}\ 11
+\item 
+\#define {\bf CHANGE\_\-CTX\_\-FAMILY}\ 12
+\item 
+\#define {\bf NO\_\-LONG}\ 0
+\item 
+\#define {\bf SHORT\_\-LG}\ 1
+\item 
+\#define {\bf LONG\_\-LG}\ 2
+\item 
+\#define {\bf LONG\_\-LONG\_\-LG}\ 3
+\item 
+\#define {\bf MAX\_\-STR\_\-TOK}\ 1024
+\item 
+\#define {\bf VA\_\-ARG\_\-ERREUR\_\-T}\ numero = va\_\-arg( arguments, long ) ; label  = va\_\-arg( arguments, char $\ast$ ) ; msg    = va\_\-arg( arguments, char $\ast$)
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Thread\-Log\-Context\_\-t} {\bf Thread\-Log\-Context\_\-t}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf Return\-Level\-Ascii} (char $\ast$Level\-En\-Ascii)
+\item 
+char $\ast$ {\bf Return\-Level\-Int} (int level)
+\item 
+int {\bf Set\-Name\-Pgm} (char $\ast$nom)
+\item 
+int {\bf Set\-Name\-Host} (char $\ast$nom)
+\item 
+int {\bf Set\-Name\-Function} (char $\ast$nom)
+\item 
+int {\bf Set\-Name\-File\-Log} (char $\ast$nom)
+\item 
+char $\ast$ {\bf Return\-Name\-Pgm} ()
+\item 
+char $\ast$ {\bf Return\-Name\-Host} ()
+\item 
+char $\ast$ {\bf Return\-Name\-Function} ()
+\item 
+char $\ast$ {\bf Return\-Name\-File\-Log} ()
+\item 
+int {\bf Return\-Level\-Debug} ()
+\item 
+int {\bf Set\-Level\-Debug} (int level\_\-to\_\-set)
+\item 
+int {\bf Init\-Debug} (int level\_\-to\_\-set)
+\item 
+int {\bf Display\-Log\-String} (char $\ast$chaine, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Fd} (int fd, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Flux} (FILE $\ast$flux, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Path} (char $\ast$path, char $\ast$format,...)
+\item 
+int {\bf Display\-Log} (char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-String\-Level} (char $\ast$tampon, int level, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Flux\-Level} (FILE $\ast$flux, int level, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Fd\-Level} (int fd, int level, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Level} (int level, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Path\-Level} (char $\ast$path, int level, char $\ast$format,...)
+\item 
+int {\bf Add\-Family\-Error} (int num\_\-family, char $\ast$name\_\-family, family\_\-error\_\-t $\ast$tab\_\-err)
+\item 
+int {\bf Remove\-Family\-Error} (int num\_\-family)
+\item 
+char $\ast$ {\bf Return\-Name\-Family\-Error} (int num\_\-family)
+\item 
+int {\bf Display\-Error\-String\-Line} (char $\ast$tampon, int num\_\-family, int num\_\-error, int status, int ma\_\-ligne)
+\item 
+int {\bf Display\-Error\-Flux\-Line} (FILE $\ast$flux, int num\_\-family, int num\_\-error, int status, int ma\_\-ligne)
+\item 
+int {\bf Display\-Error\-Fd\-Line} (int fd, int num\_\-family, int num\_\-error, int status, int ma\_\-ligne)
+\item 
+int {\bf Display\-Error\-Log\-Line} (int num\_\-family, int num\_\-error, int status, int ma\_\-ligne)
+\item 
+int {\bf Add\-Log\-Stream\-Jd} (log\_\-t $\ast$pjd, type\_\-log\_\-stream\_\-t type, desc\_\-log\_\-stream\_\-t desc\_\-voie, niveau\_\-t niveau, aiguillage\_\-t aiguillage)
+\item 
+int {\bf Display\-Log\-Jd\-Level} (log\_\-t jd, int level, char $\ast$format,...)
+\item 
+int {\bf Display\-Log\-Jd} (log\_\-t jd, char $\ast$format,...)
+\item 
+int {\bf Display\-Error\-Jd\-Line} (log\_\-t jd, int num\_\-family, int num\_\-error, int status, int ma\_\-ligne)
+\item 
+int {\bf log\_\-vsnprintf} (char $\ast$out, size\_\-t taille, char $\ast$format, va\_\-list arguments)
+\item 
+int {\bf log\_\-sprintf} (char $\ast$out, char $\ast$format,...)
+\item 
+int {\bf log\_\-snprintf} (char $\ast$out, size\_\-t n, char $\ast$format,...)
+\item 
+int {\bf log\_\-fprintf} (FILE $\ast$file, char $\ast$format,...)
+\item 
+int {\bf log\_\-vfprintf} (FILE $\ast$file, char $\ast$format, va\_\-list arguments)
+\item 
+int {\bf log\_\-printf} (char $\ast$format,...)
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{log_functions.c@{log\_\-functions.c}!CHANGE_CTX_FAMILY@{CHANGE\_\-CTX\_\-FAMILY}}
+\index{CHANGE_CTX_FAMILY@{CHANGE\_\-CTX\_\-FAMILY}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CHANGE\_\-CTX\_\-FAMILY\ 12}\label{log__functions_8c_a29}
+
+
+
+
+Definition at line 1150 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!CHANGE_ERR_FAMILY@{CHANGE\_\-ERR\_\-FAMILY}}
+\index{CHANGE_ERR_FAMILY@{CHANGE\_\-ERR\_\-FAMILY}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CHANGE\_\-ERR\_\-FAMILY\ 11}\label{log__functions_8c_a28}
+
+
+
+
+Definition at line 1149 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!CHAR_TYPE@{CHAR\_\-TYPE}}
+\index{CHAR_TYPE@{CHAR\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CHAR\_\-TYPE\ 3}\label{log__functions_8c_a12}
+
+
+
+
+Definition at line 1130 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!CONTEXTE_LONG@{CONTEXTE\_\-LONG}}
+\index{CONTEXTE_LONG@{CONTEXTE\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONTEXTE\_\-LONG\ 4}\label{log__functions_8c_a21}
+
+
+
+
+Definition at line 1142 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!CONTEXTE_SHORT@{CONTEXTE\_\-SHORT}}
+\index{CONTEXTE_SHORT@{CONTEXTE\_\-SHORT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONTEXTE\_\-SHORT\ 3}\label{log__functions_8c_a20}
+
+
+
+
+Definition at line 1141 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!DOUBLE_TYPE@{DOUBLE\_\-TYPE}}
+\index{DOUBLE_TYPE@{DOUBLE\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define DOUBLE\_\-TYPE\ 6}\label{log__functions_8c_a15}
+
+
+
+
+Definition at line 1133 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERRCTX_LONG@{ERRCTX\_\-LONG}}
+\index{ERRCTX_LONG@{ERRCTX\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERRCTX\_\-LONG\ 10}\label{log__functions_8c_a27}
+
+
+
+
+Definition at line 1148 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERRCTX_SHORT@{ERRCTX\_\-SHORT}}
+\index{ERRCTX_SHORT@{ERRCTX\_\-SHORT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERRCTX\_\-SHORT\ 9}\label{log__functions_8c_a26}
+
+
+
+
+Definition at line 1147 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERREUR_LONG@{ERREUR\_\-LONG}}
+\index{ERREUR_LONG@{ERREUR\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERREUR\_\-LONG\ 6}\label{log__functions_8c_a23}
+
+
+
+
+Definition at line 1144 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERREUR_SHORT@{ERREUR\_\-SHORT}}
+\index{ERREUR_SHORT@{ERREUR\_\-SHORT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERREUR\_\-SHORT\ 5}\label{log__functions_8c_a22}
+
+
+
+
+Definition at line 1143 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERRNUM_LONG@{ERRNUM\_\-LONG}}
+\index{ERRNUM_LONG@{ERRNUM\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERRNUM\_\-LONG\ 8}\label{log__functions_8c_a25}
+
+
+
+
+Definition at line 1146 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!ERRNUM_SHORT@{ERRNUM\_\-SHORT}}
+\index{ERRNUM_SHORT@{ERRNUM\_\-SHORT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ERRNUM\_\-SHORT\ 7}\label{log__functions_8c_a24}
+
+
+
+
+Definition at line 1145 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!EXTENDED_TYPE@{EXTENDED\_\-TYPE}}
+\index{EXTENDED_TYPE@{EXTENDED\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define EXTENDED\_\-TYPE\ 8}\label{log__functions_8c_a17}
+
+
+
+
+Definition at line 1137 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!FLOAT_TYPE@{FLOAT\_\-TYPE}}
+\index{FLOAT_TYPE@{FLOAT\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLOAT\_\-TYPE\ 5}\label{log__functions_8c_a14}
+
+
+
+
+Definition at line 1132 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!INT_TYPE@{INT\_\-TYPE}}
+\index{INT_TYPE@{INT\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define INT\_\-TYPE\ 1}\label{log__functions_8c_a10}
+
+
+
+
+Definition at line 1128 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!Localtime_r@{Localtime\_\-r}}
+\index{Localtime_r@{Localtime\_\-r}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Localtime\_\-r\ localtime\_\-r}\label{log__functions_8c_a7}
+
+
+
+
+Definition at line 176 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!LONG_LG@{LONG\_\-LG}}
+\index{LONG_LG@{LONG\_\-LG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define LONG\_\-LG\ 2}\label{log__functions_8c_a32}
+
+
+
+
+Definition at line 1155 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!LONG_LONG_LG@{LONG\_\-LONG\_\-LG}}
+\index{LONG_LONG_LG@{LONG\_\-LONG\_\-LG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define LONG\_\-LONG\_\-LG\ 3}\label{log__functions_8c_a33}
+
+
+
+
+Definition at line 1156 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!LONG_TYPE@{LONG\_\-TYPE}}
+\index{LONG_TYPE@{LONG\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define LONG\_\-TYPE\ 2}\label{log__functions_8c_a11}
+
+
+
+
+Definition at line 1129 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!MAX_NUM_FAMILY@{MAX\_\-NUM\_\-FAMILY}}
+\index{MAX_NUM_FAMILY@{MAX\_\-NUM\_\-FAMILY}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-NUM\_\-FAMILY\ 50}\label{log__functions_8c_a3}
+
+
+
+
+Definition at line 104 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!MAX_STR_LEN@{MAX\_\-STR\_\-LEN}}
+\index{MAX_STR_LEN@{MAX\_\-STR\_\-LEN}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-STR\_\-LEN\ 1024}\label{log__functions_8c_a2}
+
+
+
+
+Definition at line 103 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!MAX_STR_TOK@{MAX\_\-STR\_\-TOK}}
+\index{MAX_STR_TOK@{MAX\_\-STR\_\-TOK}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-STR\_\-TOK\ 1024}\label{log__functions_8c_a34}
+
+
+
+
+Definition at line 1158 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!NO_LONG@{NO\_\-LONG}}
+\index{NO_LONG@{NO\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NO\_\-LONG\ 0}\label{log__functions_8c_a30}
+
+
+
+
+Definition at line 1153 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!NO_TYPE@{NO\_\-TYPE}}
+\index{NO_TYPE@{NO\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NO\_\-TYPE\ 0}\label{log__functions_8c_a9}
+
+
+
+
+Definition at line 1127 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ONE_STEP@{ONE\_\-STEP}}
+\index{ONE_STEP@{ONE\_\-STEP}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ONE\_\-STEP\ do \{ iterformat +=1 ; len += 1; \} while(0)}\label{log__functions_8c_a8}
+
+
+
+
+Definition at line 1125 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!P@{P}}
+\index{P@{P}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define P(\_\-mutex\_\-)\ pthread\_\-mutex\_\-lock( \&\_\-mutex\_\-)}\label{log__functions_8c_a5}
+
+
+
+
+Definition at line 108 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!PATH_LEN@{PATH\_\-LEN}}
+\index{PATH_LEN@{PATH\_\-LEN}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define PATH\_\-LEN\ 1024}\label{log__functions_8c_a1}
+
+
+
+
+Definition at line 102 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!POINTEUR_TYPE@{POINTEUR\_\-TYPE}}
+\index{POINTEUR_TYPE@{POINTEUR\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define POINTEUR\_\-TYPE\ 7}\label{log__functions_8c_a16}
+
+
+
+
+Definition at line 1134 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!SHORT_LG@{SHORT\_\-LG}}
+\index{SHORT_LG@{SHORT\_\-LG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SHORT\_\-LG\ 1}\label{log__functions_8c_a31}
+
+
+
+
+Definition at line 1154 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!STATUS_LONG@{STATUS\_\-LONG}}
+\index{STATUS_LONG@{STATUS\_\-LONG}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STATUS\_\-LONG\ 2}\label{log__functions_8c_a19}
+
+
+
+
+Definition at line 1140 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!STATUS_SHORT@{STATUS\_\-SHORT}}
+\index{STATUS_SHORT@{STATUS\_\-SHORT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STATUS\_\-SHORT\ 1}\label{log__functions_8c_a18}
+
+
+
+
+Definition at line 1139 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!STR_LEN_TXT@{STR\_\-LEN\_\-TXT}}
+\index{STR_LEN_TXT@{STR\_\-LEN\_\-TXT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STR\_\-LEN\_\-TXT\ 2048}\label{log__functions_8c_a0}
+
+
+
+
+Definition at line 101 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!STRING_TYPE@{STRING\_\-TYPE}}
+\index{STRING_TYPE@{STRING\_\-TYPE}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STRING\_\-TYPE\ 4}\label{log__functions_8c_a13}
+
+
+
+
+Definition at line 1131 of file log\_\-functions.c.
+
+Referenced by log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!UNUSED_SLOT@{UNUSED\_\-SLOT}}
+\index{UNUSED_SLOT@{UNUSED\_\-SLOT}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define UNUSED\_\-SLOT\ -1}\label{log__functions_8c_a4}
+
+
+
+
+Definition at line 105 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!V@{V}}
+\index{V@{V}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define V(\_\-mutex\_\-)\ pthread\_\-mutex\_\-unlock( \&\_\-mutex\_\- )}\label{log__functions_8c_a6}
+
+
+
+
+Definition at line 109 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!VA_ARG_ERREUR_T@{VA\_\-ARG\_\-ERREUR\_\-T}}
+\index{VA_ARG_ERREUR_T@{VA\_\-ARG\_\-ERREUR\_\-T}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VA\_\-ARG\_\-ERREUR\_\-T\ numero = va\_\-arg( arguments, long ) ; label  = va\_\-arg( arguments, char $\ast$ ) ; msg    = va\_\-arg( arguments, char $\ast$)}\label{log__functions_8c_a35}
+
+
+
+
+\subsection{Typedef Documentation}
+\index{log_functions.c@{log\_\-functions.c}!ThreadLogContext_t@{ThreadLogContext\_\-t}}
+\index{ThreadLogContext_t@{ThreadLogContext\_\-t}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf Thread\-Log\-Context\_\-t}  {\bf Thread\-Log\-Context\_\-t}}\label{log__functions_8c_a42}
+
+
+
+
+\subsection{Function Documentation}
+\index{log_functions.c@{log\_\-functions.c}!AddFamilyError@{AddFamilyError}}
+\index{AddFamilyError@{AddFamilyError}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Add\-Family\-Error (int {\em num\_\-family}, char $\ast$ {\em name\_\-family}, family\_\-error\_\-t $\ast$ {\em tab\_\-err})}\label{log__functions_8c_a80}
+
+
+
+
+Definition at line 794 of file log\_\-functions.c.
+
+Referenced by main().\index{log_functions.c@{log\_\-functions.c}!AddLogStreamJd@{AddLogStreamJd}}
+\index{AddLogStreamJd@{AddLogStreamJd}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Add\-Log\-Stream\-Jd (log\_\-t $\ast$ {\em pjd}, type\_\-log\_\-stream\_\-t {\em type}, desc\_\-log\_\-stream\_\-t {\em desc\_\-voie}, niveau\_\-t {\em niveau}, aiguillage\_\-t {\em aiguillage})}\label{log__functions_8c_a90}
+
+
+
+
+Definition at line 966 of file log\_\-functions.c.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayErrorFdLine@{DisplayErrorFdLine}}
+\index{DisplayErrorFdLine@{DisplayErrorFdLine}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Error\-Fd\-Line (int {\em fd}, int {\em num\_\-family}, int {\em num\_\-error}, int {\em status}, int {\em ma\_\-ligne})}\label{log__functions_8c_a88}
+
+
+
+
+Definition at line 943 of file log\_\-functions.c.
+
+References Display\-Log\-Fd().\index{log_functions.c@{log\_\-functions.c}!DisplayErrorFluxLine@{DisplayErrorFluxLine}}
+\index{DisplayErrorFluxLine@{DisplayErrorFluxLine}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Error\-Flux\-Line (FILE $\ast$ {\em flux}, int {\em num\_\-family}, int {\em num\_\-error}, int {\em status}, int {\em ma\_\-ligne})}\label{log__functions_8c_a87}
+
+
+
+
+Definition at line 933 of file log\_\-functions.c.
+
+References Display\-Log\-Flux().\index{log_functions.c@{log\_\-functions.c}!DisplayErrorJdLine@{DisplayErrorJdLine}}
+\index{DisplayErrorJdLine@{DisplayErrorJdLine}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Error\-Jd\-Line (log\_\-t {\em jd}, int {\em num\_\-family}, int {\em num\_\-error}, int {\em status}, int {\em ma\_\-ligne})}\label{log__functions_8c_a93}
+
+
+
+
+Definition at line 1113 of file log\_\-functions.c.
+
+References Display\-Log\-Jd().\index{log_functions.c@{log\_\-functions.c}!DisplayErrorLogLine@{DisplayErrorLogLine}}
+\index{DisplayErrorLogLine@{DisplayErrorLogLine}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Error\-Log\-Line (int {\em num\_\-family}, int {\em num\_\-error}, int {\em status}, int {\em ma\_\-ligne})}\label{log__functions_8c_a89}
+
+
+
+
+Definition at line 953 of file log\_\-functions.c.
+
+References Display\-Log().\index{log_functions.c@{log\_\-functions.c}!DisplayErrorStringLine@{DisplayErrorStringLine}}
+\index{DisplayErrorStringLine@{DisplayErrorStringLine}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Error\-String\-Line (char $\ast$ {\em tampon}, int {\em num\_\-family}, int {\em num\_\-error}, int {\em status}, int {\em ma\_\-ligne})}\label{log__functions_8c_a86}
+
+
+
+
+Definition at line 923 of file log\_\-functions.c.
+
+References Display\-Log\-String().
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLog@{DisplayLog}}
+\index{DisplayLog@{DisplayLog}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log (char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a74}
+
+
+
+
+Definition at line 672 of file log\_\-functions.c.
+
+Referenced by Display\-Error\-Log\-Line(), and Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogFd@{DisplayLogFd}}
+\index{DisplayLogFd@{DisplayLogFd}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Fd (int {\em fd}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a68}
+
+
+
+
+Definition at line 545 of file log\_\-functions.c.
+
+Referenced by Display\-Error\-Fd\-Line(), and Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogFdLevel@{DisplayLogFdLevel}}
+\index{DisplayLogFdLevel@{DisplayLogFdLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Fd\-Level (int {\em fd}, int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a77}
+
+
+
+
+Definition at line 733 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!DisplayLogFlux@{DisplayLogFlux}}
+\index{DisplayLogFlux@{DisplayLogFlux}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Flux (FILE $\ast$ {\em flux}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a70}
+
+
+
+
+Definition at line 569 of file log\_\-functions.c.
+
+Referenced by Display\-Error\-Flux\-Line(), and Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogFluxLevel@{DisplayLogFluxLevel}}
+\index{DisplayLogFluxLevel@{DisplayLogFluxLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Flux\-Level (FILE $\ast$ {\em flux}, int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a76}
+
+
+
+
+Definition at line 714 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!DisplayLogJd@{DisplayLogJd}}
+\index{DisplayLogJd@{DisplayLogJd}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Jd (log\_\-t {\em jd}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a92}
+
+
+
+
+Definition at line 1071 of file log\_\-functions.c.
+
+Referenced by Display\-Error\-Jd\-Line().\index{log_functions.c@{log\_\-functions.c}!DisplayLogJdLevel@{DisplayLogJdLevel}}
+\index{DisplayLogJdLevel@{DisplayLogJdLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Jd\-Level (log\_\-t {\em jd}, int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a91}
+
+
+
+
+Definition at line 997 of file log\_\-functions.c.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogLevel@{DisplayLogLevel}}
+\index{DisplayLogLevel@{DisplayLogLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Level (int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a78}
+
+
+
+
+Definition at line 751 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!DisplayLogPath@{DisplayLogPath}}
+\index{DisplayLogPath@{DisplayLogPath}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Path (char $\ast$ {\em path}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a72}
+
+
+
+
+Definition at line 654 of file log\_\-functions.c.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogPathLevel@{DisplayLogPathLevel}}
+\index{DisplayLogPathLevel@{DisplayLogPathLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-Path\-Level (char $\ast$ {\em path}, int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a79}
+
+
+
+
+Definition at line 770 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!DisplayLogString@{DisplayLogString}}
+\index{DisplayLogString@{DisplayLogString}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-String (char $\ast$ {\em chaine}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a66}
+
+
+
+
+Definition at line 523 of file log\_\-functions.c.
+
+Referenced by Display\-Error\-String\-Line(), and Test1().\index{log_functions.c@{log\_\-functions.c}!DisplayLogStringLevel@{DisplayLogStringLevel}}
+\index{DisplayLogStringLevel@{DisplayLogStringLevel}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Display\-Log\-String\-Level (char $\ast$ {\em tampon}, int {\em level}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a75}
+
+
+
+
+Definition at line 693 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!InitDebug@{InitDebug}}
+\index{InitDebug@{InitDebug}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Init\-Debug (int {\em level\_\-to\_\-set})}\label{log__functions_8c_a63}
+
+
+
+
+Definition at line 456 of file log\_\-functions.c.
+
+References Set\-Level\-Debug().
+
+Referenced by main().\index{log_functions.c@{log\_\-functions.c}!log_fprintf@{log\_\-fprintf}}
+\index{log_fprintf@{log\_\-fprintf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-fprintf (FILE $\ast$ {\em file}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a97}
+
+
+
+
+Definition at line 1755 of file log\_\-functions.c.
+
+References log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!log_printf@{log\_\-printf}}
+\index{log_printf@{log\_\-printf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-printf (char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a99}
+
+
+
+
+Definition at line 1780 of file log\_\-functions.c.
+
+References log\_\-vfprintf().\index{log_functions.c@{log\_\-functions.c}!log_snprintf@{log\_\-snprintf}}
+\index{log_snprintf@{log\_\-snprintf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-snprintf (char $\ast$ {\em out}, size\_\-t {\em n}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a96}
+
+
+
+
+Definition at line 1743 of file log\_\-functions.c.
+
+References log\_\-vsnprintf().\index{log_functions.c@{log\_\-functions.c}!log_sprintf@{log\_\-sprintf}}
+\index{log_sprintf@{log\_\-sprintf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-sprintf (char $\ast$ {\em out}, char $\ast$ {\em format},  {\em ...})}\label{log__functions_8c_a95}
+
+
+
+
+Definition at line 1731 of file log\_\-functions.c.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!log_vfprintf@{log\_\-vfprintf}}
+\index{log_vfprintf@{log\_\-vfprintf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-vfprintf (FILE $\ast$ {\em file}, char $\ast$ {\em format}, va\_\-list {\em arguments})}\label{log__functions_8c_a98}
+
+
+
+
+Definition at line 1769 of file log\_\-functions.c.
+
+References log\_\-vsnprintf().
+
+Referenced by log\_\-printf().\index{log_functions.c@{log\_\-functions.c}!log_vsnprintf@{log\_\-vsnprintf}}
+\index{log_vsnprintf@{log\_\-vsnprintf}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int log\_\-vsnprintf (char $\ast$ {\em out}, size\_\-t {\em taille}, char $\ast$ {\em format}, va\_\-list {\em arguments})}\label{log__functions_8c_a94}
+
+
+
+
+Definition at line 1161 of file log\_\-functions.c.
+
+References CHANGE\_\-CTX\_\-FAMILY, CHANGE\_\-ERR\_\-FAMILY, CHAR\_\-TYPE, CONTEXTE\_\-LONG, CONTEXTE\_\-SHORT, DOUBLE\_\-TYPE, ERRCTX\_\-LONG, ERRCTX\_\-SHORT, ERREUR\_\-LONG, ERREUR\_\-SHORT, ERRNUM\_\-LONG, ERRNUM\_\-SHORT, FLOAT\_\-TYPE, INT\_\-TYPE, LONG\_\-LG, LONG\_\-LONG\_\-LG, LONG\_\-TYPE, MAX\_\-STR\_\-TOK, NO\_\-LONG, POINTEUR\_\-TYPE, SHORT\_\-LG, STATUS\_\-LONG, STATUS\_\-SHORT, and STRING\_\-TYPE.
+
+Referenced by log\_\-fprintf(), log\_\-snprintf(), and log\_\-vfprintf().\index{log_functions.c@{log\_\-functions.c}!RemoveFamilyError@{RemoveFamilyError}}
+\index{RemoveFamilyError@{RemoveFamilyError}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Remove\-Family\-Error (int {\em num\_\-family})}\label{log__functions_8c_a81}
+
+
+
+
+Definition at line 822 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ReturnLevelAscii@{ReturnLevelAscii}}
+\index{ReturnLevelAscii@{ReturnLevelAscii}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Return\-Level\-Ascii (char $\ast$ {\em Level\-En\-Ascii})}\label{log__functions_8c_a48}
+
+
+
+
+Definition at line 258 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ReturnLevelDebug@{ReturnLevelDebug}}
+\index{ReturnLevelDebug@{ReturnLevelDebug}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Return\-Level\-Debug ()}\label{log__functions_8c_a59}
+
+
+
+
+Definition at line 410 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ReturnLevelInt@{ReturnLevelInt}}
+\index{ReturnLevelInt@{ReturnLevelInt}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Level\-Int (int {\em level})}\label{log__functions_8c_a49}
+
+
+
+
+Definition at line 270 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ReturnNameFamilyError@{ReturnNameFamilyError}}
+\index{ReturnNameFamilyError@{ReturnNameFamilyError}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Name\-Family\-Error (int {\em num\_\-family})}\label{log__functions_8c_a82}
+
+
+
+
+Definition at line 837 of file log\_\-functions.c.
+
+Referenced by main().\index{log_functions.c@{log\_\-functions.c}!ReturnNameFileLog@{ReturnNameFileLog}}
+\index{ReturnNameFileLog@{ReturnNameFileLog}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Name\-File\-Log ()}\label{log__functions_8c_a57}
+
+
+
+
+Definition at line 368 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!ReturnNameFunction@{ReturnNameFunction}}
+\index{ReturnNameFunction@{ReturnNameFunction}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Name\-Function ()}\label{log__functions_8c_a56}
+
+
+
+
+Definition at line 357 of file log\_\-functions.c.
+
+References Thread\-Log\-Context\_\-t::nom\_\-fonction.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!ReturnNameHost@{ReturnNameHost}}
+\index{ReturnNameHost@{ReturnNameHost}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Name\-Host ()}\label{log__functions_8c_a55}
+
+
+
+
+Definition at line 347 of file log\_\-functions.c.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!ReturnNamePgm@{ReturnNamePgm}}
+\index{ReturnNamePgm@{ReturnNamePgm}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ Return\-Name\-Pgm ()}\label{log__functions_8c_a54}
+
+
+
+
+Definition at line 338 of file log\_\-functions.c.\index{log_functions.c@{log\_\-functions.c}!SetLevelDebug@{SetLevelDebug}}
+\index{SetLevelDebug@{SetLevelDebug}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Set\-Level\-Debug (int {\em level\_\-to\_\-set})}\label{log__functions_8c_a60}
+
+
+
+
+Definition at line 415 of file log\_\-functions.c.
+
+Referenced by Init\-Debug().\index{log_functions.c@{log\_\-functions.c}!SetNameFileLog@{SetNameFileLog}}
+\index{SetNameFileLog@{SetNameFileLog}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Set\-Name\-File\-Log (char $\ast$ {\em nom})}\label{log__functions_8c_a53}
+
+
+
+
+Definition at line 325 of file log\_\-functions.c.
+
+Referenced by main().\index{log_functions.c@{log\_\-functions.c}!SetNameFunction@{SetNameFunction}}
+\index{SetNameFunction@{SetNameFunction}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Set\-Name\-Function (char $\ast$ {\em nom})}\label{log__functions_8c_a52}
+
+
+
+
+Definition at line 311 of file log\_\-functions.c.
+
+References Thread\-Log\-Context\_\-t::nom\_\-fonction.
+
+Referenced by Test1().\index{log_functions.c@{log\_\-functions.c}!SetNameHost@{SetNameHost}}
+\index{SetNameHost@{SetNameHost}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Set\-Name\-Host (char $\ast$ {\em nom})}\label{log__functions_8c_a51}
+
+
+
+
+Definition at line 300 of file log\_\-functions.c.
+
+Referenced by main().\index{log_functions.c@{log\_\-functions.c}!SetNamePgm@{SetNamePgm}}
+\index{SetNamePgm@{SetNamePgm}!log_functions.c@{log\_\-functions.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Set\-Name\-Pgm (char $\ast$ {\em nom})}\label{log__functions_8c_a50}
+
+
+
+
+Definition at line 286 of file log\_\-functions.c.
+
+Referenced by main().

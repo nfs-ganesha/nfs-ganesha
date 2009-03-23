@@ -1,0 +1,81 @@
+\section{cache\_\-content\_\-emergency\_\-flush.c File Reference}
+\label{cache__content__emergency__flush_8c}\index{cache_content_emergency_flush.c@{cache\_\-content\_\-emergency\_\-flush.c}}
+Emergency flush for forcing flush of data cached files to FSAL. 
+
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$dirent.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-emergency\_\-flush} (char $\ast$cachedir, cache\_\-content\_\-flush\_\-behaviour\_\-t flushhow, time\_\-t grace\_\-period, unsigned int index, unsigned int mod, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+unsigned int {\bf cache\_\-content\_\-dir\_\-errno}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Emergency flush for forcing flush of data cached files to FSAL. 
+
+\begin{Desc}
+\item[Author:]\$Author\$ \end{Desc}
+\begin{Desc}
+\item[Date:]\$Date\$ \end{Desc}
+\begin{Desc}
+\item[Version:]\$Revision\$ \end{Desc}
+{\bf cache\_\-content\_\-emergency\_\-flush.c}{\rm (p.\,\pageref{cache__content__emergency__flush_8c})} : Emergency flush for forcing flush of data cached files to FSAL.
+
+Definition in file {\bf cache\_\-content\_\-emergency\_\-flush.c}.
+
+\subsection{Function Documentation}
+\index{cache_content_emergency_flush.c@{cache\_\-content\_\-emergency\_\-flush.c}!cache_content_emergency_flush@{cache\_\-content\_\-emergency\_\-flush}}
+\index{cache_content_emergency_flush@{cache\_\-content\_\-emergency\_\-flush}!cache_content_emergency_flush.c@{cache\_\-content\_\-emergency\_\-flush.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-emergency\_\-flush (char $\ast$ {\em cachedir}, cache\_\-content\_\-flush\_\-behaviour\_\-t {\em flushhow}, time\_\-t {\em grace\_\-period}, unsigned int {\em index}, unsigned int {\em mod}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__emergency__flush_8c_a1}
+
+
+cache\_\-content\_\-emergency\_\-flush: Flushes the content of a file in the local cache to the FSAL data.
+
+Flushes the content of a file in the local cache to the FSAL data. This routine should be called only from the cache\_\-inode layer.
+
+No lock management is done in this layer: the related pentry in the cache inode layer is locked and will prevent from concurent accesses.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em cachedir}][IN] cachedir the filesystem where the cache resides \item[{\em flushhow}][IN] should we delete local files or not ? \item[{\em grace\_\-period}][IN] grace\_\-period The grace period for a file before being considered for deletion \item[{\em pcontext}][INOUT] pcontext the FSAL context for this operation \item[{\em pstatys}][OUT] the status of the operation.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS if successful, an error otherwise. \end{Desc}
+
+
+Definition at line 135 of file cache\_\-content\_\-emergency\_\-flush.c.
+
+References cache\_\-content\_\-dir\_\-errno, cache\_\-content\_\-get\_\-datapath(), cache\_\-content\_\-get\_\-inum(), cache\_\-content\_\-local\_\-cache\_\-closedir(), cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter(), and cache\_\-content\_\-local\_\-cache\_\-opendir().
+
+\subsection{Variable Documentation}
+\index{cache_content_emergency_flush.c@{cache\_\-content\_\-emergency\_\-flush.c}!cache_content_dir_errno@{cache\_\-content\_\-dir\_\-errno}}
+\index{cache_content_dir_errno@{cache\_\-content\_\-dir\_\-errno}!cache_content_emergency_flush.c@{cache\_\-content\_\-emergency\_\-flush.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf cache\_\-content\_\-dir\_\-errno}}\label{cache__content__emergency__flush_8c_a0}
+
+
+
+
+Definition at line 111 of file cache\_\-content\_\-misc.c.
+
+Referenced by cache\_\-content\_\-emergency\_\-flush(), cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter(), and cache\_\-content\_\-local\_\-cache\_\-opendir().

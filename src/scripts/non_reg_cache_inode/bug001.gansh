@@ -1,0 +1,40 @@
+set VERBOSE "OFF"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs /tmp/hpss.ganesha.conf
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v /tmp/hpss.ganesha.conf
+
+# je deviens leibovic
+su 3733
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+
+mkdir -v test_non_reg 700
+mkdir -v test_non_reg/test1 700
+
+cd test_non_reg
+ls
+
+cd test1
+ls
+
+cd ../..
+ls
+
+# error : non empty
+unlink -v ./test_non_reg
+
+echo "After 'unlink -v ./test_non_reg'"
+
+unlink -v test_non_reg/test1 
+
+echo "After 'unlink -v test_non_reg/test1 '"
+
+unlink -v ./test_non_reg
+
+echo "After 'unlink -v ./test_non_reg' (last unlink)"
+
+ls

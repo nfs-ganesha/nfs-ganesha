@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="struct__type__affect__" kind="struct" prot="public">
+    <compoundname>_type_affect_</compoundname>
+    <includes refid="analyse_8h" local="no">analyse.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct__type__affect___1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char</type>
+        <definition>char _type_affect_::varname[MAXSTRLEN]</definition>
+        <argsstring>[MAXSTRLEN]</argsstring>
+        <name>varname</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="36" bodystart="36" bodyend="-1"/>
+        <referencedby refid="config__parsing_8c_1a15" compoundref="config__parsing_8c" startline="453" endline="494">config_GetKeyValue</referencedby>
+        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="struct__type__affect___1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>char</type>
+        <definition>char _type_affect_::varvalue[MAXSTRLEN]</definition>
+        <argsstring>[MAXSTRLEN]</argsstring>
+        <name>varvalue</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="37" bodystart="37" bodyend="-1"/>
+        <referencedby refid="config__parsing_8c_1a15" compoundref="config__parsing_8c" startline="453" endline="494">config_GetKeyValue</referencedby>
+        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="struct__type__affect___1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">_type_affect_</ref> *</type>
+        <definition>struct _type_affect_* _type_affect_::next</definition>
+        <argsstring></argsstring>
+        <name>next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="38" bodystart="38" bodyend="-1"/>
+        <referencedby refid="analyse_8h_1a10" compoundref="analyse_8c" startline="164" endline="172">config_adddef</referencedby>
+        <referencedby refid="analyse_8h_1a9" compoundref="analyse_8c" startline="149" endline="158">config_createaffect</referencedby>
+        <referencedby refid="analyse_8h_1a6" compoundref="analyse_8c" startline="109" endline="118">config_createblock</referencedby>
+        <referencedby refid="config__parsing_8c_1a15" compoundref="config__parsing_8c" startline="453" endline="494">config_GetKeyValue</referencedby>
+        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
+        <referencedby refid="config__parsing_8c_1a14" compoundref="config__parsing_8c" startline="421" endline="443">config_GetNbKeys</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="1">
+        <label>_type_affect_</label>
+        <link refid="struct__type__affect__"/>
+        <childnode refid="1" relation="usage">
+          <edgelabel>next</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="35" bodystart="35" bodyend="39"/>
+    <listofallmembers>
+      <member refid="struct__type__affect___1o2" prot="public" virt="non-virtual"><scope>_type_affect_</scope><name>next</name></member>
+      <member refid="struct__type__affect___1o0" prot="public" virt="non-virtual"><scope>_type_affect_</scope><name>varname</name></member>
+      <member refid="struct__type__affect___1o1" prot="public" virt="non-virtual"><scope>_type_affect_</scope><name>varvalue</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
