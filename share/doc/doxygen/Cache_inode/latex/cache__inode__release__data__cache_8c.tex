@@ -1,0 +1,51 @@
+\section{cache\_\-inode\_\-release\_\-data\_\-cache.c File Reference}
+\label{cache__inode__release__data__cache_8c}\index{cache_inode_release_data_cache.c@{cache\_\-inode\_\-release\_\-data\_\-cache.c}}
+Associates a File Content cache entry to a pentry of type REGULAR FILE. 
+
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-release\_\-data\_\-cache} (cache\_\-entry\_\-t $\ast$pentry, hash\_\-table\_\-t $\ast$ht, cache\_\-inode\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Associates a File Content cache entry to a pentry of type REGULAR FILE. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:27 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.4 \end{Desc}
+\end{Desc}
+{\bf cache\_\-inode\_\-release\_\-data\_\-cache.c}{\rm (p.\,\pageref{cache__inode__release__data__cache_8c})} : Associates a File Content cache entry to a pentry of type REGULAR FILE.
+
+Definition in file {\bf cache\_\-inode\_\-release\_\-data\_\-cache.c}.
+
+\subsection{Function Documentation}
+\index{cache_inode_release_data_cache.c@{cache\_\-inode\_\-release\_\-data\_\-cache.c}!cache_inode_release_data_cache@{cache\_\-inode\_\-release\_\-data\_\-cache}}
+\index{cache_inode_release_data_cache@{cache\_\-inode\_\-release\_\-data\_\-cache}!cache_inode_release_data_cache.c@{cache\_\-inode\_\-release\_\-data\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-release\_\-data\_\-cache (cache\_\-entry\_\-t $\ast$ {\em pentry}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__release__data__cache_8c_a0}
+
+
+
+
+Definition at line 107 of file cache\_\-inode\_\-release\_\-data\_\-cache.c.

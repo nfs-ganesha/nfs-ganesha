@@ -1,0 +1,128 @@
+\section{test\_\-configurable\_\-lru.c File Reference}
+\label{test__configurable__lru_8c}\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf LENBUF}\ 256
+\item 
+\#define {\bf STRSIZE}\ 10
+\item 
+\#define {\bf PREALLOC}\ 1000000
+\item 
+\#define {\bf MAXTEST}\ 1000000
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf do\_\-invalidate} (LRU\_\-list\_\-t $\ast$plru, int key)
+\item 
+int {\bf do\_\-new} (LRU\_\-list\_\-t $\ast$plru, int key)
+\item 
+int {\bf do\_\-gc} (LRU\_\-list\_\-t $\ast$plru)
+\item 
+int {\bf main} (int argc, char $\ast$argv[$\,$])
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+LRU\_\-entry\_\-t $\ast$ {\bf tabentry} [MAXTEST]
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!LENBUF@{LENBUF}}
+\index{LENBUF@{LENBUF}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define LENBUF\ 256}\label{test__configurable__lru_8c_a0}
+
+
+
+
+Definition at line 117 of file test\_\-configurable\_\-lru.c.
+
+Referenced by main().\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!MAXTEST@{MAXTEST}}
+\index{MAXTEST@{MAXTEST}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXTEST\ 1000000}\label{test__configurable__lru_8c_a3}
+
+
+
+
+Definition at line 120 of file test\_\-configurable\_\-lru.c.\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!PREALLOC@{PREALLOC}}
+\index{PREALLOC@{PREALLOC}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define PREALLOC\ 1000000}\label{test__configurable__lru_8c_a2}
+
+
+
+
+Definition at line 119 of file test\_\-configurable\_\-lru.c.\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!STRSIZE@{STRSIZE}}
+\index{STRSIZE@{STRSIZE}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STRSIZE\ 10}\label{test__configurable__lru_8c_a1}
+
+
+
+
+Definition at line 118 of file test\_\-configurable\_\-lru.c.
+
+Referenced by do\_\-new().
+
+\subsection{Function Documentation}
+\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!do_gc@{do\_\-gc}}
+\index{do_gc@{do\_\-gc}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int do\_\-gc (LRU\_\-list\_\-t $\ast$ {\em plru})}\label{test__configurable__lru_8c_a9}
+
+
+
+
+Definition at line 166 of file test\_\-configurable\_\-lru.c.
+
+References LRU\_\-gc\_\-invalid().
+
+Referenced by main().\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!do_invalidate@{do\_\-invalidate}}
+\index{do_invalidate@{do\_\-invalidate}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int do\_\-invalidate (LRU\_\-list\_\-t $\ast$ {\em plru}, int {\em key})}\label{test__configurable__lru_8c_a7}
+
+
+
+
+Definition at line 134 of file test\_\-configurable\_\-lru.c.
+
+References LRU\_\-invalidate(), and tabentry.
+
+Referenced by main().\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!do_new@{do\_\-new}}
+\index{do_new@{do\_\-new}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int do\_\-new (LRU\_\-list\_\-t $\ast$ {\em plru}, int {\em key})}\label{test__configurable__lru_8c_a8}
+
+
+
+
+Definition at line 143 of file test\_\-configurable\_\-lru.c.
+
+References LRU\_\-new\_\-entry(), STRSIZE, and tabentry.
+
+Referenced by main().\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!main@{main}}
+\index{main@{main}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, char $\ast$ {\em argv}[$\,$])}\label{test__configurable__lru_8c_a10}
+
+
+
+
+Definition at line 172 of file test\_\-configurable\_\-lru.c.
+
+References do\_\-gc(), do\_\-invalidate(), do\_\-new(), LENBUF, LRU\_\-Init(), and LRU\_\-Print().
+
+\subsection{Variable Documentation}
+\index{test_configurable_lru.c@{test\_\-configurable\_\-lru.c}!tabentry@{tabentry}}
+\index{tabentry@{tabentry}!test_configurable_lru.c@{test\_\-configurable\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}LRU\_\-entry\_\-t$\ast$ {\bf tabentry}[MAXTEST]}\label{test__configurable__lru_8c_a4}
+
+
+
+
+Definition at line 122 of file test\_\-configurable\_\-lru.c.
+
+Referenced by do\_\-invalidate(), and do\_\-new().

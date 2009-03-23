@@ -1,0 +1,443 @@
+.TH "commands_FSAL.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+commands_FSAL.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <strings.h>\fP
+.br
+\fC#include <errno.h>\fP
+.br
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <sys/stat.h>\fP
+.br
+\fC#include <sys/time.h>\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <time.h>\fP
+.br
+\fC#include <ctype.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include <pwd.h>\fP
+.br
+\fC#include 'fsal.h'\fP
+.br
+\fC#include 'log_functions.h'\fP
+.br
+\fC#include 'err_ghost_fs.h'\fP
+.br
+\fC#include 'config_parsing.h'\fP
+.br
+\fC#include 'cmd_tools.h'\fP
+.br
+\fC#include 'commands.h'\fP
+.br
+\fC#include 'Getopt.h'\fP
+.br
+\fC#include 'stuff_alloc.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBcmdfsal_thr_info__\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBREADDIR_SIZE\fP   FSAL_READDIR_SIZE"
+.br
+.ti -1c
+.RI "#define \fBMAX_GRPS\fP   128"
+.br
+.ti -1c
+.RI "#define \fBMAX_CAT_SIZE\fP   (1024*1024)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBcmdfsal_thr_info__\fP \fBcmdfsal_thr_info_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBcmdfsal_thr_info_t\fP * \fBGetFSALCmdContext\fP ()"
+.br
+.ti -1c
+.RI "int \fBInit_Thread_Context\fP (FILE *output, \fBcmdfsal_thr_info_t\fP *context, int flag_v)"
+.br
+.ti -1c
+.RI "void \fBfsal_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfsal_init\fP (char *filename, int flag_v, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_init_fs\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBsolvepath\fP (char *io_global_path, int size_global_path, char *i_spec_path, fsal_handle_t i_current_handle, fsal_handle_t *new_handle, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_lsxattrs\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_getxattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_callstat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_hardlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_access\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_truncate\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open_byname\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open_byfileid\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_read\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_write\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_close\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_close_byfileid\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_rcp\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cross\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_handlecmp\fP (int argc, char **argv, FILE *output)"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define MAX_CAT_SIZE   (1024*1024)"
+.PP
+.SS "#define MAX_GRPS   128"
+.PP
+.SS "#define READDIR_SIZE   FSAL_READDIR_SIZE"
+.PP
+Referenced by fn_fsal_ls().
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBcmdfsal_thr_info__\fP  \fBcmdfsal_thr_info_t\fP"
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fsal_init(), GetFSALCmdContext(), Init_Thread_Context(), and solvepath().
+.SH "Function Documentation"
+.PP 
+.SS "int fn_fsal_access (int argc, char ** argv, FILE * output)"
+.PP
+perform an access command. syntax: access [-A] [F][R][W][X] <file> example: access toto FRX 
+.PP
+Definition at line 3125 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), and solvepath().
+.SS "int fn_fsal_callstat (int argc, char ** argv, FILE * output)"
+.PP
+display statistics about FSAL calls. 
+.PP
+Definition at line 1810 of file commands_FSAL.c.
+.SS "int fn_fsal_cat (int argc, char ** argv, FILE * output)"
+.PP
+Command that prints a file to screen. cat [-f] <path> 
+.PP
+Definition at line 5103 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 919 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_close (int argc, char ** argv, FILE * output)"
+.PP
+Command that closes a file. close 
+.PP
+Definition at line 4974 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, cmdfsal_thr_info__::opened, and print_fsal_status().
+.SS "int fn_fsal_close_byfileid (int argc, char ** argv, FILE * output)"
+.PP
+Command that closes a file. close 
+.PP
+Definition at line 5038 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, cmdfsal_thr_info__::opened, and print_fsal_status().
+.SS "int fn_fsal_create (int argc, char ** argv, FILE * output)"
+.PP
+proceed an create command. 
+.PP
+Definition at line 2758 of file commands_FSAL.c.
+.PP
+References atomode(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_cross (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 5472 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_getxattr (int argc, char ** argv, FILE * output)"
+.PP
+display an extended attribute. 
+.PP
+Definition at line 1280 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_handlecmp (int argc, char ** argv, FILE * output)"
+.PP
+compare 2 handles. 
+.PP
+Definition at line 5564 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_hardlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed a hardlink command. 
+.PP
+Definition at line 2598 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_init_fs (int argc, char ** argv, FILE * output)"
+.PP
+proceed an init_fs command. 
+.PP
+Definition at line 639 of file commands_FSAL.c.
+.PP
+References fsal_init(), Getopt(), Optind, and Optopt.
+.SS "int fn_fsal_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln command. 
+.PP
+Definition at line 2430 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command. 
+.PP
+Definition at line 1522 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), print_item_line(), READDIR_SIZE, and solvepath().
+.SS "int fn_fsal_lsxattrs (int argc, char ** argv, FILE * output)"
+.PP
+list extended attributes. 
+.PP
+Definition at line 1146 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+proceed an mkdir command. 
+.PP
+Definition at line 2086 of file commands_FSAL.c.
+.PP
+References atomode(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_open (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags. open <path> [ rwat ] 
+.PP
+Definition at line 3693 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_open_byfileid (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags. open <path> [ rwat ] 
+.PP
+Definition at line 3884 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_open_byname (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags, but using FSAL_open_by_name. open <path> [ rwat ] 
+.PP
+Definition at line 3498 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, and print_fsal_status().
+.SS "int fn_fsal_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 713 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), and cmdfsal_thr_info__::is_thread_ok.
+.SS "int fn_fsal_rcp (int argc, char ** argv, FILE * output)"
+.PP
+Command that copy a file from/to the local filesystem. rcp [-h] -r|-w <fsal_path> <local_path> 
+.PP
+Definition at line 5269 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_read (int argc, char ** argv, FILE * output)"
+.PP
+Command that reads data from an opened file. 
+.PP
+Definition at line 4081 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), NULL, Optarg, Optind, Optopt, print_fsal_status(), print_timeval, and time_diff().
+.SS "int fn_fsal_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 2255 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_setattr (int argc, char ** argv, FILE * output)"
+.PP
+change file attributes. 
+.PP
+Definition at line 2939 of file commands_FSAL.c.
+.PP
+References ATTR_32, ATTR_64, shell_attribute__::attr_name, ATTR_OCTAL, ATTR_TIME, shell_attribute__::attr_type, cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, MkFSALSetAttrStruct(), NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), shell_attribute_t, and solvepath().
+.SS "int fn_fsal_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed a stat command. 
+.PP
+Definition at line 1019 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_attrib_mask(), print_fsal_attributes(), print_fsal_status(), and solvepath().
+.SS "int fn_fsal_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread contexte. 
+.PP
+Definition at line 1854 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::exp_context, GetFSALCmdContext(), getugroups(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, MAX_GRPS, my_atoi(), and print_fsal_status().
+.SS "int fn_fsal_truncate (int argc, char ** argv, FILE * output)"
+.PP
+proceed a truncate command. 
+.PP
+Definition at line 3370 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_unlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed an unlink command. 
+.PP
+Definition at line 1960 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_write (int argc, char ** argv, FILE * output)"
+.PP
+Command that writes data to an opened file.
+.PP
+Usage: write [-h][-v] [ -s <seek_type>,<offset> ] [-N <nb_times>] -A <ascii_string> write [-h][-v] [ -s <seek_type>,<offset> ] [-N <nb_times>] -X <hexa_data> Where: <seek_type> can be: SET, CUR, END <offset> is a signed number of bytes. <nb_times> is the number of times we write the expression into the file.
+.PP
+<ascii_string> is a string to be written to file. Note that the null terminating character of is also written to file. or <hexa_data> is a data represented in hexadecimal format, that is to be written to file.
+.PP
+Examples:
+.PP
+For writing 10 times the null terminated string 'hello world' at the end of the file: write -s END,0 -N 10 -A 'hello world'
+.PP
+For overwriting the beginning of the file with the pattern 0xA1267AEF31254ADE repeated twice: write -s SET,0 -N 2 -X 'A1267AEF31254ADE' 
+.PP
+Definition at line 4525 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), NULL, Optarg, Optind, Optopt, print_fsal_status(), print_timeval, and time_diff().
+.SS "int fsal_init (char * filename, int flag_v, FILE * output)"
+.PP
+Definition at line 507 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, and print_fsal_status().
+.PP
+Referenced by fn_fsal_init_fs().
+.SS "void fsal_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 473 of file commands_FSAL.c.
+.SS "\fBcmdfsal_thr_info_t\fP* GetFSALCmdContext ()"
+.PP
+GetFSALCmdContext : manages pthread_keys. 
+.PP
+Definition at line 347 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_path, cmdfsal_thr_info__::is_thread_ok, and cmdfsal_thr_info__::opened.
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fsal_init(), and solvepath().
+.SS "int Init_Thread_Context (FILE * output, \fBcmdfsal_thr_info_t\fP * context, int flag_v)"
+.PP
+Initialize thread specific FSAL environment. 
+.PP
+Definition at line 395 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, cmdfsal_thr_info__::exp_context, cmdfsal_thr_info__::is_thread_ok, NULL, and print_fsal_status().
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fsal_init(), and solvepath().
+.SS "int solvepath (char * io_global_path, int size_global_path, char * i_spec_path, fsal_handle_t i_current_handle, fsal_handle_t * new_handle, FILE * output)"
+.PP
+Definition at line 757 of file commands_FSAL.c.
+.PP
+References clean_path(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, and print_fsal_status().
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_rcp(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), and fn_fsal_unlink().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

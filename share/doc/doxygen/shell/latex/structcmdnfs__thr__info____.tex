@@ -1,0 +1,134 @@
+\section{cmdnfs\_\-thr\_\-info\_\-\_\- Struct Reference}
+\label{structcmdnfs__thr__info____}\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+int {\bf is\_\-thread\_\-init}
+\item 
+fsal\_\-export\_\-context\_\-t {\bf exp\_\-context}
+\item 
+fsal\_\-op\_\-context\_\-t {\bf context}
+\item 
+authunix\_\-parms {\bf authunix\_\-struct}
+\item 
+cache\_\-inode\_\-client\_\-t {\bf client}
+\item 
+cache\_\-content\_\-client\_\-t {\bf dc\_\-client}
+\item 
+int {\bf is\_\-mounted\_\-path}
+\item 
+{\bf shell\_\-fh3\_\-t} {\bf mounted\_\-path\_\-hdl}
+\item 
+char {\bf mounted\_\-path} [NFS2\_\-MAXPATHLEN]
+\item 
+{\bf shell\_\-fh3\_\-t} {\bf current\_\-path\_\-hdl}
+\item 
+char {\bf current\_\-path} [NFS2\_\-MAXPATHLEN]
+\end{CompactItemize}
+
+
+\subsection{Member Data Documentation}
+\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!authunix_struct@{authunix\_\-struct}}
+\index{authunix_struct@{authunix\_\-struct}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}struct authunix\_\-parms {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::authunix\_\-struct}}\label{structcmdnfs__thr__info_____o3}
+
+
+
+
+Definition at line 296 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-MNT1\_\-command(), fn\_\-MNT3\_\-command(), fn\_\-NFS2\_\-command(), fn\_\-NFS3\_\-command(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-umount(), and Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!client@{client}}
+\index{client@{client}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-t {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::client}}\label{structcmdnfs__thr__info_____o4}
+
+
+Thread specific variable : the client for the cache 
+
+Definition at line 299 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-MNT1\_\-command(), fn\_\-MNT3\_\-command(), fn\_\-NFS2\_\-command(), fn\_\-NFS3\_\-command(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-umount(), and Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!context@{context}}
+\index{context@{context}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-op\_\-context\_\-t {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::context}}\label{structcmdnfs__thr__info_____o2}
+
+
+context for accessing the filesystem 
+
+Definition at line 293 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-MNT1\_\-command(), fn\_\-MNT3\_\-command(), fn\_\-NFS2\_\-command(), fn\_\-NFS3\_\-command(), fn\_\-nfs\_\-id(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-su(), fn\_\-nfs\_\-umount(), and Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!current_path@{current\_\-path}}
+\index{current_path@{current\_\-path}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::current\_\-path}[NFS2\_\-MAXPATHLEN]}\label{structcmdnfs__thr__info_____o10}
+
+
+
+
+Definition at line 310 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-cd(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-pwd(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), and fn\_\-nfs\_\-unlink().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!current_path_hdl@{current\_\-path\_\-hdl}}
+\index{current_path_hdl@{current\_\-path\_\-hdl}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf shell\_\-fh3\_\-t} {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::current\_\-path\_\-hdl}}\label{structcmdnfs__thr__info_____o9}
+
+
+
+
+Definition at line 309 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-cd(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-pwd(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), and fn\_\-nfs\_\-unlink().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!dc_client@{dc\_\-client}}
+\index{dc_client@{dc\_\-client}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-t {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::dc\_\-client}}\label{structcmdnfs__thr__info_____o5}
+
+
+
+
+Definition at line 300 of file commands\_\-NFS.c.
+
+Referenced by Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!exp_context@{exp\_\-context}}
+\index{exp_context@{exp\_\-context}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-export\_\-context\_\-t {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::exp\_\-context}}\label{structcmdnfs__thr__info_____o1}
+
+
+
+
+Definition at line 290 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-su(), and Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!is_mounted_path@{is\_\-mounted\_\-path}}
+\index{is_mounted_path@{is\_\-mounted\_\-path}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::is\_\-mounted\_\-path}}\label{structcmdnfs__thr__info_____o6}
+
+
+
+
+Definition at line 304 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-cd(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-pwd(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), fn\_\-nfs\_\-umount(), fn\_\-nfs\_\-unlink(), and Get\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!is_thread_init@{is\_\-thread\_\-init}}
+\index{is_thread_init@{is\_\-thread\_\-init}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-init}}\label{structcmdnfs__thr__info_____o0}
+
+
+
+
+Definition at line 284 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-MNT1\_\-command(), fn\_\-MNT3\_\-command(), fn\_\-NFS2\_\-command(), fn\_\-NFS3\_\-command(), fn\_\-nfs\_\-id(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-su(), fn\_\-nfs\_\-umount(), Get\-NFSClient(), and Init\-NFSClient().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!mounted_path@{mounted\_\-path}}
+\index{mounted_path@{mounted\_\-path}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::mounted\_\-path}[NFS2\_\-MAXPATHLEN]}\label{structcmdnfs__thr__info_____o8}
+
+
+
+
+Definition at line 307 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-mount(), and fn\_\-nfs\_\-umount().\index{cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}!mounted_path_hdl@{mounted\_\-path\_\-hdl}}
+\index{mounted_path_hdl@{mounted\_\-path\_\-hdl}!cmdnfs_thr_info__@{cmdnfs\_\-thr\_\-info\_\-\_\-}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf shell\_\-fh3\_\-t} {\bf cmdnfs\_\-thr\_\-info\_\-\_\-::mounted\_\-path\_\-hdl}}\label{structcmdnfs__thr__info_____o7}
+
+
+
+
+Definition at line 306 of file commands\_\-NFS.c.
+
+Referenced by fn\_\-nfs\_\-mount().
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf commands\_\-NFS.c}\end{CompactItemize}

@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="todo" kind="page">
+    <compoundname>todo</compoundname>
+    <title>Todo List</title>
+    <detaileddescription>
+<para><anchor id="todo_1_todo000002"/> <variablelist>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a69" kindref="member">cmdnfs_fattr2</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
+<listitem><para></para><para></para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000003"/> <variablelist>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a82" kindref="member">cmdnfs_fattr3</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
+<listitem><para></para><para></para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000001"/> <variablelist>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a67" kindref="member">cmdnfs_mountres3</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
+<listitem><para>Convert status to error code</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000004"/> <variablelist>
+<varlistentry><term>Member <ref refid="commands__NFS_8c_1a18" kindref="member">InitNFSClient</ref> (cmdnfs_thr_info_t *p_thr_info) </term></varlistentry>
+<listitem><para>No secondary groups support.</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000005"/> <variablelist>
+<varlistentry><term>Member <ref refid="commands__NFS_8c_1a21" kindref="member">nfs_init</ref> (char *filename, int flag_v, FILE *output) </term></varlistentry>
+<listitem><para>Are there other things to initialize ?</para></listitem>
+</variablelist>
+</para>    </detaileddescription>
+  </compounddef>
+</doxygen>

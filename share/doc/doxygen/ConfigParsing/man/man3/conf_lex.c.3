@@ -1,0 +1,682 @@
+.TH "conf_lex.c" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+conf_lex.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio.h>\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include 'analyse.h'\fP
+.br
+\fC#include 'conf_yacc.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fByy_buffer_state\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBFLEX_SCANNER\fP"
+.br
+.ti -1c
+.RI "#define \fBYY_FLEX_MAJOR_VERSION\fP   2"
+.br
+.ti -1c
+.RI "#define \fBYY_FLEX_MINOR_VERSION\fP   5"
+.br
+.ti -1c
+.RI "#define \fByyconst\fP"
+.br
+.ti -1c
+.RI "#define \fBYY_PROTO\fP(proto)   ()"
+.br
+.ti -1c
+.RI "#define \fBYY_NULL\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYY_SC_TO_UI\fP(c)   ((unsigned int) (unsigned char) c)"
+.br
+.ti -1c
+.RI "#define \fBBEGIN\fP   yy_start = 1 + 2 *"
+.br
+.ti -1c
+.RI "#define \fBYY_START\fP   ((yy_start - 1) / 2)"
+.br
+.ti -1c
+.RI "#define \fBYYSTATE\fP   YY_START"
+.br
+.ti -1c
+.RI "#define \fBYY_STATE_EOF\fP(state)   (YY_END_OF_BUFFER + state + 1)"
+.br
+.ti -1c
+.RI "#define \fBYY_NEW_FILE\fP   yyrestart( \fByyin\fP )"
+.br
+.ti -1c
+.RI "#define \fBYY_END_OF_BUFFER_CHAR\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYY_BUF_SIZE\fP   16384"
+.br
+.ti -1c
+.RI "#define \fBEOB_ACT_CONTINUE_SCAN\fP   0"
+.br
+.ti -1c
+.RI "#define \fBEOB_ACT_END_OF_FILE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBEOB_ACT_LAST_MATCH\fP   2"
+.br
+.ti -1c
+.RI "#define \fByyless\fP(n)"
+.br
+.ti -1c
+.RI "#define \fBunput\fP(c)   yyunput( c, yytext_ptr )"
+.br
+.ti -1c
+.RI "#define \fBYY_BUFFER_NEW\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYY_BUFFER_NORMAL\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYY_BUFFER_EOF_PENDING\fP   2"
+.br
+.ti -1c
+.RI "#define \fBYY_CURRENT_BUFFER\fP   yy_current_buffer"
+.br
+.ti -1c
+.RI "#define \fBYY_FLUSH_BUFFER\fP   yy_flush_buffer( yy_current_buffer )"
+.br
+.ti -1c
+.RI "#define \fByy_new_buffer\fP   yy_create_buffer"
+.br
+.ti -1c
+.RI "#define \fByy_set_interactive\fP(is_interactive)"
+.br
+.ti -1c
+.RI "#define \fByy_set_bol\fP(at_bol)"
+.br
+.ti -1c
+.RI "#define \fBYY_AT_BOL\fP()   (yy_current_buffer->yy_at_bol)"
+.br
+.ti -1c
+.RI "#define \fByytext_ptr\fP   \fByytext\fP"
+.br
+.ti -1c
+.RI "#define \fBYY_DO_BEFORE_ACTION\fP"
+.br
+.ti -1c
+.RI "#define \fBYY_NUM_RULES\fP   23"
+.br
+.ti -1c
+.RI "#define \fBYY_END_OF_BUFFER\fP   24"
+.br
+.ti -1c
+.RI "#define \fBREJECT\fP   reject_used_but_not_detected"
+.br
+.ti -1c
+.RI "#define \fByymore\fP()   yymore_used_but_not_detected"
+.br
+.ti -1c
+.RI "#define \fBYY_MORE_ADJ\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYY_RESTORE_YY_MORE_OFFSET\fP"
+.br
+.ti -1c
+.RI "#define \fBINITIAL\fP   0"
+.br
+.ti -1c
+.RI "#define \fBERRLEN\fP   1024"
+.br
+.ti -1c
+.RI "#define \fBYY_USER_INIT\fP"
+.br
+.ti -1c
+.RI "#define \fBDEBUG_LEX\fP"
+.br
+.ti -1c
+.RI "#define \fBYY_INIT\fP   1"
+.br
+.ti -1c
+.RI "#define \fBBLOC\fP   2"
+.br
+.ti -1c
+.RI "#define \fBINBLOC\fP   3"
+.br
+.ti -1c
+.RI "#define \fBAFFECT\fP   4"
+.br
+.ti -1c
+.RI "#define \fBVALUE\fP   5"
+.br
+.ti -1c
+.RI "#define \fBENDVALUE\fP   6"
+.br
+.ti -1c
+.RI "#define \fBSTRING1\fP   7"
+.br
+.ti -1c
+.RI "#define \fBSTRING2\fP   8"
+.br
+.ti -1c
+.RI "#define \fBESC1\fP   9"
+.br
+.ti -1c
+.RI "#define \fBYY_NO_PUSH_STATE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYY_NO_POP_STATE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYY_NO_TOP_STATE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYY_READ_BUF_SIZE\fP   8192"
+.br
+.ti -1c
+.RI "#define \fBECHO\fP   (void) fwrite( \fByytext\fP, \fByyleng\fP, 1, \fByyout\fP )"
+.br
+.ti -1c
+.RI "#define \fBYY_INPUT\fP(buf, result, max_size)"
+.br
+.ti -1c
+.RI "#define \fByyterminate\fP()   return YY_NULL"
+.br
+.ti -1c
+.RI "#define \fBYY_START_STACK_INCR\fP   25"
+.br
+.ti -1c
+.RI "#define \fBYY_FATAL_ERROR\fP(msg)   yy_fatal_error( msg )"
+.br
+.ti -1c
+.RI "#define \fBYY_DECL\fP   int yylex YY_PROTO(( void ))"
+.br
+.ti -1c
+.RI "#define \fBYY_BREAK\fP   break;"
+.br
+.ti -1c
+.RI "#define \fBYY_RULE_SETUP\fP   YY_USER_ACTION"
+.br
+.ti -1c
+.RI "#define \fBYY_EXIT_FAILURE\fP   2"
+.br
+.ti -1c
+.RI "#define \fByyless\fP(n)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fByy_buffer_state\fP * \fBYY_BUFFER_STATE\fP"
+.br
+.ti -1c
+.RI "typedef unsigned int \fByy_size_t\fP"
+.br
+.ti -1c
+.RI "typedef unsigned char \fBYY_CHAR\fP"
+.br
+.ti -1c
+.RI "typedef int \fByy_state_type\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void yyrestart \fBYY_PROTO\fP ((FILE *input_file))"
+.br
+.ti -1c
+.RI "void yy_switch_to_buffer \fBYY_PROTO\fP ((\fBYY_BUFFER_STATE\fP new_buffer))"
+.br
+.ti -1c
+.RI "void yy_load_buffer_state \fBYY_PROTO\fP ((void))"
+.br
+.ti -1c
+.RI "\fBYY_BUFFER_STATE\fP yy_create_buffer \fBYY_PROTO\fP ((FILE *\fBfile\fP, int \fBsize\fP))"
+.br
+.ti -1c
+.RI "void yy_delete_buffer \fBYY_PROTO\fP ((\fBYY_BUFFER_STATE\fP b))"
+.br
+.ti -1c
+.RI "void yy_init_buffer \fBYY_PROTO\fP ((\fBYY_BUFFER_STATE\fP b, FILE *\fBfile\fP))"
+.br
+.ti -1c
+.RI "\fBYY_BUFFER_STATE\fP yy_scan_buffer \fBYY_PROTO\fP ((char *base, \fByy_size_t\fP \fBsize\fP))"
+.br
+.ti -1c
+.RI "\fBYY_BUFFER_STATE\fP yy_scan_string \fBYY_PROTO\fP ((yyconst char *yy_str))"
+.br
+.ti -1c
+.RI "\fBYY_BUFFER_STATE\fP yy_scan_bytes \fBYY_PROTO\fP ((yyconst char *bytes, int \fBlen\fP))"
+.br
+.ti -1c
+.RI "void \fBset_error\fP (char *s)"
+.br
+.ti -1c
+.RI "void \fBYY_BUFFER_APPEND\fP (char *s)"
+.br
+.ti -1c
+.RI "void \fBYY_BUFFER_RESET\fP (void)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fByyleng\fP"
+.br
+.ti -1c
+.RI "FILE * \fByyin\fP = (FILE *) 0 *\fByyout\fP = (FILE *) 0"
+.br
+.ti -1c
+.RI "FILE * \fByyout\fP"
+.br
+.ti -1c
+.RI "char * \fByytext\fP"
+.br
+.ti -1c
+.RI "int \fByylineno\fP"
+.br
+.ti -1c
+.RI "char \fBerr_str\fP [ERRLEN] = ''"
+.br
+.ti -1c
+.RI "char \fBYY_PARSED_STRING\fP [MAXSTRLEN]"
+.br
+.ti -1c
+.RI "register char * \fByy_bp\fP"
+.br
+.ti -1c
+.RI "int \fBsize\fP"
+.br
+.ti -1c
+.RI "FILE * \fBfile\fP"
+.br
+.ti -1c
+.RI "int \fBlen\fP"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define AFFECT   4"
+.PP
+Definition at line 451 of file conf_lex.c.
+.SS "#define BEGIN   yy_start = 1 + 2 *"
+.PP
+Definition at line 79 of file conf_lex.c.
+.SS "#define BLOC   2"
+.PP
+Definition at line 449 of file conf_lex.c.
+.SS "#define DEBUG_LEX"
+.PP
+Definition at line 442 of file conf_lex.c.
+.SS "#define ECHO   (void) fwrite( \fByytext\fP, \fByyleng\fP, 1, \fByyout\fP )"
+.PP
+Definition at line 538 of file conf_lex.c.
+.SS "#define ENDVALUE   6"
+.PP
+Definition at line 453 of file conf_lex.c.
+.SS "#define EOB_ACT_CONTINUE_SCAN   0"
+.PP
+Definition at line 104 of file conf_lex.c.
+.SS "#define EOB_ACT_END_OF_FILE   1"
+.PP
+Definition at line 105 of file conf_lex.c.
+.SS "#define EOB_ACT_LAST_MATCH   2"
+.PP
+Definition at line 106 of file conf_lex.c.
+.SS "#define ERRLEN   1024"
+.PP
+Definition at line 415 of file conf_lex.c.
+.SS "#define ESC1   9"
+.PP
+Definition at line 456 of file conf_lex.c.
+.SS "#define FLEX_SCANNER"
+.PP
+Definition at line 7 of file conf_lex.c.
+.SS "#define INBLOC   3"
+.PP
+Definition at line 450 of file conf_lex.c.
+.SS "#define INITIAL   0"
+.PP
+Definition at line 401 of file conf_lex.c.
+.SS "#define REJECT   reject_used_but_not_detected"
+.PP
+Definition at line 395 of file conf_lex.c.
+.SS "#define STRING1   7"
+.PP
+Definition at line 454 of file conf_lex.c.
+.SS "#define STRING2   8"
+.PP
+Definition at line 455 of file conf_lex.c.
+.SS "#define unput(c)   yyunput( c, yytext_ptr )"
+.PP
+Definition at line 135 of file conf_lex.c.
+.SS "#define VALUE   5"
+.PP
+Definition at line 452 of file conf_lex.c.
+.SS "#define YY_AT_BOL()   (yy_current_buffer->yy_at_bol)"
+.PP
+Definition at line 262 of file conf_lex.c.
+.SS "#define YY_BREAK   break;"
+.PP
+Definition at line 597 of file conf_lex.c.
+.SS "#define YY_BUF_SIZE   16384"
+.PP
+Definition at line 97 of file conf_lex.c.
+.SS "#define YY_BUFFER_EOF_PENDING   2"
+.PP
+Definition at line 198 of file conf_lex.c.
+.SS "#define YY_BUFFER_NEW   0"
+.PP
+Definition at line 186 of file conf_lex.c.
+.SS "#define YY_BUFFER_NORMAL   1"
+.PP
+Definition at line 187 of file conf_lex.c.
+.SS "#define YY_CURRENT_BUFFER   yy_current_buffer"
+.PP
+Definition at line 207 of file conf_lex.c.
+.SS "#define YY_DECL   int yylex YY_PROTO(( void ))"
+.PP
+Definition at line 585 of file conf_lex.c.
+.SS "#define YY_DO_BEFORE_ACTION"
+.PP
+\fBValue:\fP
+.PP
+.nf
+yytext_ptr = yy_bp; \
+        yyleng = (int) (yy_cp - yy_bp); \
+        yy_hold_char = *yy_cp; \
+        *yy_cp = '\0'; \
+        yy_c_buf_p = yy_cp;
+.fi
+.PP
+Definition at line 278 of file conf_lex.c.
+.SS "#define YY_END_OF_BUFFER   24"
+.PP
+Definition at line 286 of file conf_lex.c.
+.SS "#define YY_END_OF_BUFFER_CHAR   0"
+.PP
+Definition at line 94 of file conf_lex.c.
+.SS "#define YY_EXIT_FAILURE   2"
+.PP
+.SS "#define YY_FATAL_ERROR(msg)   yy_fatal_error( msg )"
+.PP
+Definition at line 578 of file conf_lex.c.
+.SS "#define YY_FLEX_MAJOR_VERSION   2"
+.PP
+Definition at line 8 of file conf_lex.c.
+.SS "#define YY_FLEX_MINOR_VERSION   5"
+.PP
+Definition at line 9 of file conf_lex.c.
+.SS "#define YY_FLUSH_BUFFER   yy_flush_buffer( yy_current_buffer )"
+.PP
+Definition at line 236 of file conf_lex.c.
+.SS "#define YY_INIT   1"
+.PP
+Definition at line 448 of file conf_lex.c.
+.SS "#define YY_INPUT(buf, result, max_size)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+if ( yy_current_buffer->yy_is_interactive ) \
+                { \
+                int c = '*', n; \
+                for ( n = 0; n < max_size && \
+                             (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
+                        buf[n] = (char) c; \
+                if ( c == '\n' ) \
+                        buf[n++] = (char) c; \
+                if ( c == EOF && ferror( yyin ) ) \
+                        YY_FATAL_ERROR( 'input in flex scanner failed' ); \
+                result = n; \
+                } \
+        else if ( ((result = fread( buf, 1, max_size, yyin )) == 0) \
+                  && ferror( yyin ) ) \
+                YY_FATAL_ERROR( 'input in flex scanner failed' );
+.fi
+.PP
+Definition at line 545 of file conf_lex.c.
+.SS "#define YY_MORE_ADJ   0"
+.PP
+Definition at line 397 of file conf_lex.c.
+.SS "#define yy_new_buffer   yy_create_buffer"
+.PP
+Definition at line 246 of file conf_lex.c.
+.SS "#define YY_NEW_FILE   yyrestart( \fByyin\fP )"
+.PP
+Definition at line 92 of file conf_lex.c.
+.SS "#define YY_NO_POP_STATE   1"
+.PP
+Definition at line 508 of file conf_lex.c.
+.SS "#define YY_NO_PUSH_STATE   1"
+.PP
+Definition at line 507 of file conf_lex.c.
+.SS "#define YY_NO_TOP_STATE   1"
+.PP
+Definition at line 509 of file conf_lex.c.
+.SS "#define YY_NULL   0"
+.PP
+Definition at line 66 of file conf_lex.c.
+.SS "#define YY_NUM_RULES   23"
+.PP
+Definition at line 285 of file conf_lex.c.
+.SS "#define YY_PROTO(proto)   ()"
+.PP
+Definition at line 62 of file conf_lex.c.
+.SS "#define YY_READ_BUF_SIZE   8192"
+.PP
+Definition at line 529 of file conf_lex.c.
+.SS "#define YY_RESTORE_YY_MORE_OFFSET"
+.PP
+Definition at line 398 of file conf_lex.c.
+.SS "#define YY_RULE_SETUP   YY_USER_ACTION"
+.PP
+Definition at line 600 of file conf_lex.c.
+.SS "#define YY_SC_TO_UI(c)   ((unsigned int) (unsigned char) c)"
+.PP
+Definition at line 73 of file conf_lex.c.
+.SS "#define yy_set_bol(at_bol)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+{ \
+        if ( ! yy_current_buffer ) \
+                yy_current_buffer = yy_create_buffer( yyin, YY_BUF_SIZE ); \
+        yy_current_buffer->yy_at_bol = at_bol; \
+        }
+.fi
+.PP
+Definition at line 255 of file conf_lex.c.
+.SS "#define yy_set_interactive(is_interactive)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+{ \
+        if ( ! yy_current_buffer ) \
+                yy_current_buffer = yy_create_buffer( yyin, YY_BUF_SIZE ); \
+        yy_current_buffer->yy_is_interactive = is_interactive; \
+        }
+.fi
+.PP
+Definition at line 248 of file conf_lex.c.
+.SS "#define YY_START   ((yy_start - 1) / 2)"
+.PP
+Definition at line 85 of file conf_lex.c.
+.SS "#define YY_START_STACK_INCR   25"
+.PP
+Definition at line 573 of file conf_lex.c.
+.SS "#define YY_STATE_EOF(state)   (YY_END_OF_BUFFER + state + 1)"
+.PP
+Definition at line 89 of file conf_lex.c.
+.SS "#define YY_USER_INIT"
+.PP
+\fBValue:\fP
+.PP
+.nf
+{\
+    yylineno=1;\
+    BEGIN YY_INIT;\
+}
+.fi
+.PP
+Definition at line 434 of file conf_lex.c.
+.SS "#define yyconst"
+.PP
+Definition at line 55 of file conf_lex.c.
+.SS "#define yyless(n)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+do \
+                { \
+                /* Undo effects of setting up yytext. */ \
+                yytext[yyleng] = yy_hold_char; \
+                yy_c_buf_p = yytext + n; \
+                yy_hold_char = *yy_c_buf_p; \
+                *yy_c_buf_p = '\0'; \
+                yyleng = n; \
+                } \
+        while ( 0 )
+.fi
+.PP
+Definition at line 124 of file conf_lex.c.
+.SS "#define yyless(n)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+do \
+                { \
+                /* Undo effects of setting up yytext. */ \
+                *yy_cp = yy_hold_char; \
+                YY_RESTORE_YY_MORE_OFFSET \
+                yy_c_buf_p = yy_cp = yy_bp + n - YY_MORE_ADJ; \
+                YY_DO_BEFORE_ACTION; /* set up yytext again */ \
+                } \
+        while ( 0 )
+.fi
+.PP
+Definition at line 124 of file conf_lex.c.
+.SS "#define yymore()   yymore_used_but_not_detected"
+.PP
+Definition at line 396 of file conf_lex.c.
+.SS "#define YYSTATE   YY_START"
+.PP
+Definition at line 86 of file conf_lex.c.
+.SS "#define yyterminate()   return YY_NULL"
+.PP
+Definition at line 568 of file conf_lex.c.
+.SS "#define yytext_ptr   \fByytext\fP"
+.PP
+Definition at line 268 of file conf_lex.c.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fByy_buffer_state\fP* \fBYY_BUFFER_STATE\fP"
+.PP
+Definition at line 99 of file conf_lex.c.
+.SS "typedef unsigned char \fBYY_CHAR\fP"
+.PP
+Definition at line 264 of file conf_lex.c.
+.SS "typedef unsigned int \fByy_size_t\fP"
+.PP
+Definition at line 141 of file conf_lex.c.
+.SS "typedef int \fByy_state_type\fP"
+.PP
+Definition at line 266 of file conf_lex.c.
+.SH "Function Documentation"
+.PP 
+.SS "void set_error (char * s)"
+.PP
+Definition at line 1287 of file conf_yacc.c.
+.PP
+References local_errormsg.
+.SS "void YY_BUFFER_APPEND (char * s)"
+.PP
+Definition at line 421 of file conf_lex.c.
+.PP
+References MAXSTRLEN, and YY_PARSED_STRING.
+.SS "void YY_BUFFER_RESET (void)"
+.PP
+Definition at line 425 of file conf_lex.c.
+.PP
+References YY_PARSED_STRING.
+.SS "\fBYY_BUFFER_STATE\fP yy_scan_bytes YY_PROTO ((yyconst char *bytes, int \fBlen\fP))"
+.PP
+.SS "\fBYY_BUFFER_STATE\fP yy_scan_string YY_PROTO ((yyconst char *yy_str))"
+.PP
+.SS "\fBYY_BUFFER_STATE\fP yy_scan_buffer YY_PROTO ((char *base, \fByy_size_t\fP \fBsize\fP))"
+.PP
+.SS "void yy_init_buffer YY_PROTO ((\fBYY_BUFFER_STATE\fP b, FILE *\fBfile\fP))"
+.PP
+.SS "void yy_flush_buffer YY_PROTO ((\fBYY_BUFFER_STATE\fP b))"
+.PP
+.SS "\fBYY_BUFFER_STATE\fP yy_create_buffer YY_PROTO ((FILE *\fBfile\fP, int \fBsize\fP))"
+.PP
+.SS "int input YY_PROTO ((void))"
+.PP
+.SS "void yy_switch_to_buffer YY_PROTO ((\fBYY_BUFFER_STATE\fP new_buffer))"
+.PP
+.SS "void yyrestart YY_PROTO ((FILE *input_file))"
+.PP
+.SH "Variable Documentation"
+.PP 
+.SS "char \fBerr_str\fP[ERRLEN] = ''"
+.PP
+Definition at line 416 of file conf_lex.c.
+.SS "FILE* \fBfile\fP"
+.PP
+Definition at line 1395 of file conf_lex.c.
+.SS "int \fBlen\fP"
+.PP
+Definition at line 1508 of file conf_lex.c.
+.SS "\fByy_size_t\fP \fBsize\fP"
+.PP
+Definition at line 1676 of file conf_lex.c.
+.SS "register char* \fByy_bp\fP"
+.PP
+Definition at line 1167 of file conf_lex.c.
+.SS "char \fBYY_PARSED_STRING\fP[MAXSTRLEN]"
+.PP
+Definition at line 419 of file conf_lex.c.
+.PP
+Referenced by YY_BUFFER_APPEND(), and YY_BUFFER_RESET().
+.SS "FILE * \fByyin\fP = (FILE *) 0 *\fByyout\fP = (FILE *) 0"
+.PP
+Definition at line 265 of file conf_lex.c.
+.PP
+Referenced by config_ParseFile().
+.SS "int \fByyleng\fP"
+.PP
+Definition at line 216 of file conf_lex.c.
+.SS "int \fByylineno\fP"
+.PP
+Definition at line 410 of file conf_lex.c.
+.SS "FILE * \fByyout\fP"
+.PP
+.SS "char * \fByytext\fP"
+.PP
+Definition at line 399 of file conf_lex.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ConfigParsing from the source code.

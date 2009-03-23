@@ -1,0 +1,77 @@
+\section{test\_\-lru.c File Reference}
+\label{test__lru_8c}\index{test_lru.c@{test\_\-lru.c}}
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf PREALLOC}\ 10000
+\item 
+\#define {\bf MAXTEST}\ 10
+\item 
+\#define {\bf KEPT\_\-ENTRY}\ 5
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf print\_\-entry} (LRU\_\-data\_\-t data, char $\ast$str)
+\item 
+int {\bf clean\_\-entry} (LRU\_\-entry\_\-t $\ast$pentry, void $\ast$addparam)
+\item 
+int {\bf main} (int argc, char $\ast$argv[$\,$])
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{test_lru.c@{test\_\-lru.c}!KEPT_ENTRY@{KEPT\_\-ENTRY}}
+\index{KEPT_ENTRY@{KEPT\_\-ENTRY}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define KEPT\_\-ENTRY\ 5}\label{test__lru_8c_a2}
+
+
+
+
+Definition at line 123 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!MAXTEST@{MAXTEST}}
+\index{MAXTEST@{MAXTEST}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXTEST\ 10}\label{test__lru_8c_a1}
+
+
+
+
+Definition at line 122 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!PREALLOC@{PREALLOC}}
+\index{PREALLOC@{PREALLOC}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define PREALLOC\ 10000}\label{test__lru_8c_a0}
+
+
+
+
+Definition at line 121 of file test\_\-lru.c.
+
+\subsection{Function Documentation}
+\index{test_lru.c@{test\_\-lru.c}!clean_entry@{clean\_\-entry}}
+\index{clean_entry@{clean\_\-entry}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em pentry}, void $\ast$ {\em addparam})}\label{test__lru_8c_a4}
+
+
+
+
+Definition at line 130 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!main@{main}}
+\index{main@{main}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, char $\ast$ {\em argv}[$\,$])}\label{test__lru_8c_a5}
+
+
+
+
+Definition at line 135 of file test\_\-lru.c.
+
+References LRU\_\-gc\_\-invalid(), LRU\_\-Init(), LRU\_\-invalidate(), LRU\_\-new\_\-entry(), and LRU\_\-Print().\index{test_lru.c@{test\_\-lru.c}!print_entry@{print\_\-entry}}
+\index{print_entry@{print\_\-entry}!test_lru.c@{test\_\-lru.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int print\_\-entry (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{test__lru_8c_a3}
+
+
+
+
+Definition at line 125 of file test\_\-lru.c.

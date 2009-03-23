@@ -1,0 +1,466 @@
+\section{nfs4\_\-pseudo.c File Reference}
+\label{nfs4__pseudo_8c}\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+Routines used for managing the NFS4 pseudo file system. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf NB\_\-TOK\_\-ARG}\ 10
+\item 
+\#define {\bf NB\_\-OPT\_\-TOK}\ 10
+\item 
+\#define {\bf NB\_\-TOK\_\-PATH}\ 20
+\item 
+\#define {\bf arg\_\-GETATTR4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opgetattr
+\item 
+\#define {\bf res\_\-GETATTR4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opgetattr
+\item 
+\#define {\bf res\_\-ACCESS4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opaccess
+\item 
+\#define {\bf arg\_\-ACCESS4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opaccess
+\item 
+\#define {\bf arg\_\-LOOKUP4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplookup
+\item 
+\#define {\bf res\_\-LOOKUP4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplookup
+\item 
+\#define {\bf arg\_\-LOOKUPP4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplookupp
+\item 
+\#define {\bf res\_\-LOOKUPP4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplookupp
+\item 
+\#define {\bf arg\_\-READDIR4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opreaddir
+\item 
+\#define {\bf res\_\-READDIR4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opreaddir
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+uint64\_\-t {\bf nfs4\_\-Pseudo\-To\-Id} (nfs\_\-fh4 $\ast$fh4p)
+\item 
+pseudofs\_\-t $\ast$ {\bf nfs4\_\-Get\-Pseudo\-Fs} (void)
+\item 
+int {\bf nfs4\_\-Export\-To\-Pseudo\-FS} (exportlist\_\-t $\ast$pexportlist)
+\item 
+int {\bf nfs4\_\-Pseudo\-To\-Fattr} (pseudofs\_\-entry\_\-t $\ast$psfsp, fattr4 $\ast$Fattr, compound\_\-data\_\-t $\ast$data, nfs\_\-fh4 $\ast$obj\-FH, bitmap4 $\ast$Bitmap)
+\item 
+int {\bf nfs4\_\-Fhandle\-To\-Pseudo} (nfs\_\-fh4 $\ast$fh4p, pseudofs\_\-t $\ast$psfstree, pseudofs\_\-entry\_\-t $\ast$psfsentry)
+\item 
+int {\bf nfs4\_\-Pseudo\-To\-Fhandle} (nfs\_\-fh4 $\ast$fh4p, pseudofs\_\-entry\_\-t $\ast$psfsentry)
+\item 
+int {\bf nfs4\_\-Create\-ROOTFH4} (nfs\_\-fh4 $\ast$fh4p, compound\_\-data\_\-t $\ast$data)
+\item 
+int {\bf nfs4\_\-op\_\-getattr\_\-pseudo} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+int {\bf nfs4\_\-op\_\-access\_\-pseudo} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+int {\bf nfs4\_\-op\_\-lookup\_\-pseudo} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+int {\bf nfs4\_\-op\_\-lookupp\_\-pseudo} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+int {\bf nfs4\_\-op\_\-readdir\_\-pseudo} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+time\_\-t {\bf Server\-Boot\-Time}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Routines used for managing the NFS4 pseudo file system. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/08 12:49:32 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.24 \end{Desc}
+\end{Desc}
+{\bf nfs4\_\-pseudo.c}{\rm (p.\,\pageref{nfs4__pseudo_8c})}: Routines used for managing the NFS4 pseudo file system.
+
+Definition in file {\bf nfs4\_\-pseudo.c}.
+
+\subsection{Define Documentation}
+\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!arg_ACCESS4@{arg\_\-ACCESS4}}
+\index{arg_ACCESS4@{arg\_\-ACCESS4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-ACCESS4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opaccess}\label{nfs4__pseudo_8c_a6}
+
+
+
+
+Definition at line 1397 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!arg_GETATTR4@{arg\_\-GETATTR4}}
+\index{arg_GETATTR4@{arg\_\-GETATTR4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-GETATTR4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opgetattr}\label{nfs4__pseudo_8c_a3}
+
+
+nfs4\_\-op\_\-getattr\_\-pseudo: Gets attributes for directory in pseudo fs
+
+Gets attributes for directory in pseudo fs. These are hardcoded constants.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK \end{Desc}
+
+
+Definition at line 1341 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!arg_LOOKUP4@{arg\_\-LOOKUP4}}
+\index{arg_LOOKUP4@{arg\_\-LOOKUP4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-LOOKUP4\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplookup}\label{nfs4__pseudo_8c_a7}
+
+
+nfs4\_\-op\_\-lookup\_\-pseudo: looks up into the pseudo fs.
+
+looks up into the pseudo fs. If a junction traversal is detected, does the necessary stuff for correcting traverse.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
+
+
+Definition at line 1430 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!arg_LOOKUPP4@{arg\_\-LOOKUPP4}}
+\index{arg_LOOKUPP4@{arg\_\-LOOKUPP4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-LOOKUPP4\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplookupp}\label{nfs4__pseudo_8c_a9}
+
+
+nfs4\_\-op\_\-lookupp\_\-pseudo: looks up into the pseudo fs for the parent directory
+
+looks up into the pseudo fs for the parent directory of the current file handle.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
+
+
+Definition at line 1629 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!arg_READDIR4@{arg\_\-READDIR4}}
+\index{arg_READDIR4@{arg\_\-READDIR4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-READDIR4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opreaddir}\label{nfs4__pseudo_8c_a11}
+
+
+nfs4\_\-op\_\-readdir\_\-pseudo: Reads a directory in the pseudo fs
+
+Reads a directory in the pseudo fs.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
+
+
+Definition at line 1688 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!NB_OPT_TOK@{NB\_\-OPT\_\-TOK}}
+\index{NB_OPT_TOK@{NB\_\-OPT\_\-TOK}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NB\_\-OPT\_\-TOK\ 10}\label{nfs4__pseudo_8c_a1}
+
+
+
+
+Definition at line 123 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!NB_TOK_ARG@{NB\_\-TOK\_\-ARG}}
+\index{NB_TOK_ARG@{NB\_\-TOK\_\-ARG}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NB\_\-TOK\_\-ARG\ 10}\label{nfs4__pseudo_8c_a0}
+
+
+
+
+Definition at line 122 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!NB_TOK_PATH@{NB\_\-TOK\_\-PATH}}
+\index{NB_TOK_PATH@{NB\_\-TOK\_\-PATH}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NB\_\-TOK\_\-PATH\ 20}\label{nfs4__pseudo_8c_a2}
+
+
+
+
+Definition at line 124 of file nfs4\_\-pseudo.c.
+
+Referenced by nfs4\_\-Export\-To\-Pseudo\-FS().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!res_ACCESS4@{res\_\-ACCESS4}}
+\index{res_ACCESS4@{res\_\-ACCESS4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-ACCESS4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opaccess}\label{nfs4__pseudo_8c_a5}
+
+
+nfs4\_\-op\_\-access\_\-pseudo: Checks for object accessibility in pseudo fs.
+
+Checks for object accessibility in pseudo fs. All entries in pseudo fs return can't be accessed as ACCESS4\_\-MODIFY$|$ACCESS4\_\-EXTEND$|$ACCESS4\_\-DELETE because pseudo fs is behaving as a read-only fs.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK \end{Desc}
+
+
+Definition at line 1396 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!res_GETATTR4@{res\_\-GETATTR4}}
+\index{res_GETATTR4@{res\_\-GETATTR4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-GETATTR4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opgetattr}\label{nfs4__pseudo_8c_a4}
+
+
+
+
+Definition at line 1342 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!res_LOOKUP4@{res\_\-LOOKUP4}}
+\index{res_LOOKUP4@{res\_\-LOOKUP4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-LOOKUP4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplookup}\label{nfs4__pseudo_8c_a8}
+
+
+
+
+Definition at line 1431 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!res_LOOKUPP4@{res\_\-LOOKUPP4}}
+\index{res_LOOKUPP4@{res\_\-LOOKUPP4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-LOOKUPP4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplookupp}\label{nfs4__pseudo_8c_a10}
+
+
+
+
+Definition at line 1630 of file nfs4\_\-pseudo.c.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!res_READDIR4@{res\_\-READDIR4}}
+\index{res_READDIR4@{res\_\-READDIR4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-READDIR4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opreaddir}\label{nfs4__pseudo_8c_a12}
+
+
+
+
+Definition at line 1689 of file nfs4\_\-pseudo.c.
+
+\subsection{Function Documentation}
+\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_CreateROOTFH4@{nfs4\_\-CreateROOTFH4}}
+\index{nfs4_CreateROOTFH4@{nfs4\_\-CreateROOTFH4}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Create\-ROOTFH4 (nfs\_\-fh4 $\ast$ {\em fh4p}, compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs4__pseudo_8c_a21}
+
+
+nfs4\_\-Create\-ROOTFH: Creates the file handle for the \char`\"{}/\char`\"{} of the pseudo file system
+
+Creates the file handle for the \char`\"{}/\char`\"{} of the pseudo file syste.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh4p}][OUT] pointer to the file handle to be allocated \item[{\em data}][INOUT] pointer to the compound request's data\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, NFS4ERR\_\-BADHANDLE if an error occured when creating the file handle. \end{Desc}
+
+
+Definition at line 1297 of file nfs4\_\-pseudo.c.
+
+References nfs4\_\-Allocate\-FH(), and nfs4\_\-Pseudo\-To\-Fhandle().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_ExportToPseudoFS@{nfs4\_\-ExportToPseudoFS}}
+\index{nfs4_ExportToPseudoFS@{nfs4\_\-ExportToPseudoFS}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Export\-To\-Pseudo\-FS (exportlist\_\-t $\ast$ {\em pexportlist})}\label{nfs4__pseudo_8c_a17}
+
+
+nfs4\_\-Export\-To\-Pseudo\-FS: Build a pseudo fs from an exportlist
+
+Build a pseudo fs from an exportlist. This export list itself is obtained by reading the configuration file.
+
+\begin{Desc}
+\item[Returns:]the pseudo fs root \end{Desc}
+
+
+Definition at line 180 of file nfs4\_\-pseudo.c.
+
+References NB\_\-TOK\_\-PATH.\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_FhandleToPseudo@{nfs4\_\-FhandleToPseudo}}
+\index{nfs4_FhandleToPseudo@{nfs4\_\-FhandleToPseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fhandle\-To\-Pseudo (nfs\_\-fh4 $\ast$ {\em fh4p}, pseudofs\_\-t $\ast$ {\em psfstree}, pseudofs\_\-entry\_\-t $\ast$ {\em psfsentry})}\label{nfs4__pseudo_8c_a19}
+
+
+nfs4\_\-Fhandle\-To\-Pseudo: converts a NFSv4 file handle fs to an id in the pseudo
+
+Converts a NFSv4 file handle fs to an id in the pseudo, and check if the fh is related to a pseudo entry
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh4p}][IN] pointer to nfsv4 filehandle \item[{\em psfsentry}][OUT] pointer to pseudofs entry\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if successfull, FALSE if an error occured (this means the fh4 was not related to a pseudo entry) \end{Desc}
+
+
+Definition at line 1237 of file nfs4\_\-pseudo.c.
+
+Referenced by nfs4\_\-op\_\-getattr\_\-pseudo(), nfs4\_\-op\_\-lookup\_\-pseudo(), nfs4\_\-op\_\-lookupp\_\-pseudo(), and nfs4\_\-op\_\-readdir\_\-pseudo().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_GetPseudoFs@{nfs4\_\-GetPseudoFs}}
+\index{nfs4_GetPseudoFs@{nfs4\_\-GetPseudoFs}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pseudofs\_\-t$\ast$ nfs4\_\-Get\-Pseudo\-Fs (void)}\label{nfs4__pseudo_8c_a16}
+
+
+nfs4\_\-Get\-Pseudo\-Fs: Gets the root of the pseudo file system.
+
+Gets the root of the pseudo file system. This is only a wrapper to static variable g\-Pseudo\-Fs.
+
+\begin{Desc}
+\item[Returns:]the pseudo fs root \end{Desc}
+
+
+Definition at line 166 of file nfs4\_\-pseudo.c.
+
+Referenced by nfs4\_\-Compound().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_op_access_pseudo@{nfs4\_\-op\_\-access\_\-pseudo}}
+\index{nfs4_op_access_pseudo@{nfs4\_\-op\_\-access\_\-pseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-access\_\-pseudo (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__pseudo_8c_a23}
+
+
+
+
+Definition at line 1399 of file nfs4\_\-pseudo.c.
+
+References arg\_\-ACCESS4, and res\_\-ACCESS4.
+
+Referenced by nfs4\_\-op\_\-access().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_op_getattr_pseudo@{nfs4\_\-op\_\-getattr\_\-pseudo}}
+\index{nfs4_op_getattr_pseudo@{nfs4\_\-op\_\-getattr\_\-pseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-getattr\_\-pseudo (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__pseudo_8c_a22}
+
+
+
+
+Definition at line 1344 of file nfs4\_\-pseudo.c.
+
+References arg\_\-GETATTR4, nfs4\_\-Fhandle\-To\-Pseudo(), nfs4\_\-Pseudo\-To\-Fattr(), and res\_\-GETATTR4.
+
+Referenced by nfs4\_\-op\_\-getattr().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_op_lookup_pseudo@{nfs4\_\-op\_\-lookup\_\-pseudo}}
+\index{nfs4_op_lookup_pseudo@{nfs4\_\-op\_\-lookup\_\-pseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-lookup\_\-pseudo (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__pseudo_8c_a24}
+
+
+
+
+Definition at line 1433 of file nfs4\_\-pseudo.c.
+
+References arg\_\-LOOKUP4, nfs4\_\-Allocate\-FH(), nfs4\_\-Fhandle\-To\-Pseudo(), nfs4\_\-Make\-Cred(), nfs4\_\-Pseudo\-To\-Fhandle(), and res\_\-LOOKUP4.
+
+Referenced by nfs4\_\-op\_\-lookup().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_op_lookupp_pseudo@{nfs4\_\-op\_\-lookupp\_\-pseudo}}
+\index{nfs4_op_lookupp_pseudo@{nfs4\_\-op\_\-lookupp\_\-pseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-lookupp\_\-pseudo (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__pseudo_8c_a25}
+
+
+
+
+Definition at line 1633 of file nfs4\_\-pseudo.c.
+
+References nfs4\_\-Fhandle\-To\-Pseudo(), nfs4\_\-Pseudo\-To\-Fhandle(), and res\_\-LOOKUPP4.
+
+Referenced by nfs4\_\-op\_\-lookupp().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_op_readdir_pseudo@{nfs4\_\-op\_\-readdir\_\-pseudo}}
+\index{nfs4_op_readdir_pseudo@{nfs4\_\-op\_\-readdir\_\-pseudo}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-readdir\_\-pseudo (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__pseudo_8c_a26}
+
+
+
+
+Definition at line 1691 of file nfs4\_\-pseudo.c.
+
+References arg\_\-READDIR4, nfs4\_\-Allocate\-FH(), nfs4\_\-Fhandle\-To\-Pseudo(), nfs4\_\-Make\-Cred(), nfs4\_\-op\_\-readdir(), nfs4\_\-Pseudo\-To\-Fattr(), nfs4\_\-Pseudo\-To\-Fhandle(), res\_\-READDIR4, and Server\-Boot\-Time.
+
+Referenced by nfs4\_\-op\_\-readdir().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_PseudoToFattr@{nfs4\_\-PseudoToFattr}}
+\index{nfs4_PseudoToFattr@{nfs4\_\-PseudoToFattr}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Pseudo\-To\-Fattr (pseudofs\_\-entry\_\-t $\ast$ {\em psfsp}, fattr4 $\ast$ {\em Fattr}, compound\_\-data\_\-t $\ast$ {\em data}, nfs\_\-fh4 $\ast$ {\em obj\-FH}, bitmap4 $\ast$ {\em Bitmap})}\label{nfs4__pseudo_8c_a18}
+
+
+nfs4\_\-Pseudo\-To\-Fattr: Gets the attributes for an entry in the pseudofs
+
+Gets the attributes for an entry in the pseudofs. Because pseudo fs structure is very simple (it is read-only and contains only directory that belongs to root), a set of standardized values is returned
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em psfp}][IN] pointer to the pseudo fs entry on which attributes are queried \item[{\em Fattr}][OUT] Pointer to the buffer that will contain the queried attributes \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em Bitmap}][IN] Pointer to a bitmap that describes the attributes to be returned\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successfull, -1 if something wrong occured. In this case, the reason is that too many attributes were asked.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: BUGAZOMEU: Allocation at NULL Adress here.... 
+
+: not the right answer, actual quotas should be implemented 
+
+: not the right answer, actual quotas should be implemented 
+
+: BUGAZOMEU: Allocation at NULL Adress here.... 
+
+: BUGAZOMEU: Allocation at NULL Adress here....\end{Desc}
+
+
+Definition at line 341 of file nfs4\_\-pseudo.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list(), nfs4\_\-list\_\-to\_\-bitmap4(), and Server\-Boot\-Time.
+
+Referenced by nfs4\_\-op\_\-getattr\_\-pseudo(), and nfs4\_\-op\_\-readdir\_\-pseudo().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_PseudoToFhandle@{nfs4\_\-PseudoToFhandle}}
+\index{nfs4_PseudoToFhandle@{nfs4\_\-PseudoToFhandle}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Pseudo\-To\-Fhandle (nfs\_\-fh4 $\ast$ {\em fh4p}, pseudofs\_\-entry\_\-t $\ast$ {\em psfsentry})}\label{nfs4__pseudo_8c_a20}
+
+
+nfs4\_\-Pseudo\-To\-Fhandle: converts an id in the pseudo fs to a NFSv4 file handle
+
+Converts an id in the pseudo fs to a NFSv4 file handle.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh4p}][OUT] pointer to nfsv4 filehandle \item[{\em psfsentry}][IN] pointer to pseudofs entry\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
+
+
+Definition at line 1266 of file nfs4\_\-pseudo.c.
+
+Referenced by Create\-PUBFH4(), Create\-ROOTFH4(), nfs4\_\-Create\-ROOTFH4(), nfs4\_\-op\_\-lookup\_\-pseudo(), nfs4\_\-op\_\-lookupp\_\-pseudo(), and nfs4\_\-op\_\-readdir\_\-pseudo().\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!nfs4_PseudoToId@{nfs4\_\-PseudoToId}}
+\index{nfs4_PseudoToId@{nfs4\_\-PseudoToId}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}uint64\_\-t nfs4\_\-Pseudo\-To\-Id (nfs\_\-fh4 $\ast$ {\em fh4p})}\label{nfs4__pseudo_8c_a15}
+
+
+nfs4\_\-Pseudo\-To\-Id: TConverts a file handle (to a pseudo object) to the id of this pseudo object in the pseudofs
+
+This routine merely extracts a field from the file handle which is not seen as opaque in this case. Because file handle are opaque structure, it is prefered to have a dedicated function for this and so hiding the file handle internal structure.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh4p}][IN] pointer to the file handle to process.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the pseudo id found \end{Desc}
+\begin{Desc}
+\item[See also:]nfs\_\-Get\-Pseudo\-Fs \end{Desc}
+
+
+Definition at line 145 of file nfs4\_\-pseudo.c.
+
+\subsection{Variable Documentation}
+\index{nfs4_pseudo.c@{nfs4\_\-pseudo.c}!ServerBootTime@{ServerBootTime}}
+\index{ServerBootTime@{ServerBootTime}!nfs4_pseudo.c@{nfs4\_\-pseudo.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Server\-Boot\-Time}}\label{nfs4__pseudo_8c_a13}
+
+

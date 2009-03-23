@@ -1,0 +1,1761 @@
+\section{NFS protocols functions.}
+\label{group__NFSprocs}\index{NFS protocols functions.@{NFS protocols functions.}}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf nfs2\_\-remote\_\-Null} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Getattr} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Setattr} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Root} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Lookup} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Readlink} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Read} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Writecache} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Write} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Create} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Remove} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Rename} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Link} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Symlink} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Mkdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Rmdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Readdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs2\_\-remote\_\-Fsstat} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Null} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Getattr} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Setattr} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Lookup} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Readlink} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Read} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Write} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Create} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Remove} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Rename} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Link} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Symlink} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Mkdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Rmdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Readdir} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Fsstat} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Access} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Readdirplus} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Fsinfo} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Pathconf} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Commit} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs3\_\-remote\_\-Mknod} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf nfs4\_\-remote\_\-COMPOUND} (CLIENT $\ast$clnt, COMPOUND4args $\ast$parg, COMPOUND4res $\ast$pres)
+\item 
+int {\bf nfs4\_\-remote\_\-Null} (CLIENT $\ast$clnt)
+\item 
+void {\bf mnt1\_\-remote\_\-Mnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt1\_\-remote\_\-Dump\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt1\_\-remote\_\-Export\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt1\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt1\_\-remote\_\-Umnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt1\_\-remote\_\-Umnt\-All\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Mnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Dump\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Export\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Umnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt3\_\-remote\_\-Umnt\-All\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs2\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Getattr\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Setattr\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Lookup\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Read\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Write\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Create\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Mkdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Symlink\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Remove\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Rmdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Rename\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Link\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Fsstat\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Root\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs2\_\-remote\_\-Writecache\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs2\_\-remote\_\-Readdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs2\_\-remote\_\-Readlink\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Getattr\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Setattr\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Lookup\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Access\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs3\_\-remote\_\-Readlink\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Write\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Create\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Mkdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Symlink\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Mknod\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs3\_\-remote\_\-Remove\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Rmdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Rename\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Link\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Readdir\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Readdirplus\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Fsstat\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\item 
+void {\bf nfs3\_\-remote\_\-Fsinfo\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs3\_\-remote\_\-Pathconf\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs3\_\-remote\_\-Commit\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf nfs3\_\-remote\_\-Read\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{NFSprocs@{NFSprocs}!mnt1_remote_Dump_Free@{mnt1\_\-remote\_\-Dump\_\-Free}}
+\index{mnt1_remote_Dump_Free@{mnt1\_\-remote\_\-Dump\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Dump\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga43}
+
+
+mnt1\_\-remote\_\-Dump\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Dump.
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Dump.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1542 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt1_remote_Export_Free@{mnt1\_\-remote\_\-Export\_\-Free}}
+\index{mnt1_remote_Export_Free@{mnt1\_\-remote\_\-Export\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Export\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga44}
+
+
+mnt1\_\-remote\_\-Export\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Export.
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Export.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1555 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt1_remote_Mnt_Free@{mnt1\_\-remote\_\-Mnt\_\-Free}}
+\index{mnt1_remote_Mnt_Free@{mnt1\_\-remote\_\-Mnt\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Mnt\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga42}
+
+
+mnt1\_\-remote\_\-Mnt\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Mnt.
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Mnt.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1529 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt1_remote_Null_Free@{mnt1\_\-remote\_\-Null\_\-Free}}
+\index{mnt1_remote_Null_Free@{mnt1\_\-remote\_\-Null\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Null\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga45}
+
+
+mnt1\_\-remote\_\-Null\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Null
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Null. Does Nothing in fact.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1516 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt1_remote_Umnt_Free@{mnt1\_\-remote\_\-Umnt\_\-Free}}
+\index{mnt1_remote_Umnt_Free@{mnt1\_\-remote\_\-Umnt\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Umnt\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga46}
+
+
+mnt1\_\-remote\_\-Umnt\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Umnt.
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Umnt.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1568 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt1_remote_UmntAll_Free@{mnt1\_\-remote\_\-UmntAll\_\-Free}}
+\index{mnt1_remote_UmntAll_Free@{mnt1\_\-remote\_\-UmntAll\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt1\_\-remote\_\-Umnt\-All\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga47}
+
+
+mnt1\_\-remote\_\-Umnt\-All\_\-Free: Frees the result structure allocated for mnt1\_\-remote\_\-Umnt\-All.
+
+Frees the result structure allocated for mnt1\_\-remote\_\-Umnt\-All.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1581 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt3_remote_Dump_Free@{mnt3\_\-remote\_\-Dump\_\-Free}}
+\index{mnt3_remote_Dump_Free@{mnt3\_\-remote\_\-Dump\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Dump\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga49}
+
+
+mnt3\_\-remote\_\-Dump\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Dump.
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Dump.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1620 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt3_remote_Export_Free@{mnt3\_\-remote\_\-Export\_\-Free}}
+\index{mnt3_remote_Export_Free@{mnt3\_\-remote\_\-Export\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Export\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga50}
+
+
+mnt3\_\-remote\_\-Export\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Export.
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Export.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1633 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt3_remote_Mnt_Free@{mnt3\_\-remote\_\-Mnt\_\-Free}}
+\index{mnt3_remote_Mnt_Free@{mnt3\_\-remote\_\-Mnt\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Mnt\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga48}
+
+
+mnt3\_\-remote\_\-Mnt\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Mnt.
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Mnt.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1607 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-mount().\index{NFSprocs@{NFSprocs}!mnt3_remote_Null_Free@{mnt3\_\-remote\_\-Null\_\-Free}}
+\index{mnt3_remote_Null_Free@{mnt3\_\-remote\_\-Null\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Null\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga51}
+
+
+mnt3\_\-remote\_\-Null\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Null
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Null. Does Nothing in fact.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1594 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!mnt3_remote_Umnt_Free@{mnt3\_\-remote\_\-Umnt\_\-Free}}
+\index{mnt3_remote_Umnt_Free@{mnt3\_\-remote\_\-Umnt\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Umnt\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga52}
+
+
+mnt3\_\-remote\_\-Umnt\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Umnt.
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Umnt.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1646 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by fn\_\-nfs\_\-remote\_\-umount().\index{NFSprocs@{NFSprocs}!mnt3_remote_UmntAll_Free@{mnt3\_\-remote\_\-UmntAll\_\-Free}}
+\index{mnt3_remote_UmntAll_Free@{mnt3\_\-remote\_\-UmntAll\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt3\_\-remote\_\-Umnt\-All\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga53}
+
+
+mnt3\_\-remote\_\-Umnt\-All\_\-Free: Frees the result structure allocated for mnt3\_\-remote\_\-Umnt\-All.
+
+Frees the result structure allocated for mnt3\_\-remote\_\-Umnt\-All.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1659 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Create@{nfs2\_\-remote\_\-Create}}
+\index{nfs2_remote_Create@{nfs2\_\-remote\_\-Create}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Create (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga9}
+
+
+nfs2\_\-remote\_\-Create: The NFS proc create function, v2.
+
+The NFS proc create function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 662 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Create_Free@{nfs2\_\-remote\_\-Create\_\-Free}}
+\index{nfs2_remote_Create_Free@{nfs2\_\-remote\_\-Create\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Create\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga60}
+
+
+nfs2\_\-remote\_\-Create\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Create.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Create.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1750 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Fsstat@{nfs2\_\-remote\_\-Fsstat}}
+\index{nfs2_remote_Fsstat@{nfs2\_\-remote\_\-Fsstat}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Fsstat (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga17}
+
+
+nfs2\_\-remote\_\-Fsstat: The NFS proc statfs function, v2.
+
+The NFS proc statfs function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 870 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Fsstat_Free@{nfs2\_\-remote\_\-Fsstat\_\-Free}}
+\index{nfs2_remote_Fsstat_Free@{nfs2\_\-remote\_\-Fsstat\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Fsstat\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga67}
+
+
+nfs2\_\-remote\_\-Fsstat\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Fsstat.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Fsstat.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1841 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Getattr@{nfs2\_\-remote\_\-Getattr}}
+\index{nfs2_remote_Getattr@{nfs2\_\-remote\_\-Getattr}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Getattr (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga1}
+
+
+nfs2\_\-remote\_\-Getattr: The NFS proc getattr function, v2.
+
+The NFS proc getattr function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 456 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Getattr_Free@{nfs2\_\-remote\_\-Getattr\_\-Free}}
+\index{nfs2_remote_Getattr_Free@{nfs2\_\-remote\_\-Getattr\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Getattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga55}
+
+
+nfs2\_\-remote\_\-Getattr\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Getattr.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Getattr.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1685 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Link@{nfs2\_\-remote\_\-Link}}
+\index{nfs2_remote_Link@{nfs2\_\-remote\_\-Link}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Link (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga12}
+
+
+nfs2\_\-remote\_\-Link: The NFS proc link function, v2.
+
+The NFS proc link function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 740 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Link_Free@{nfs2\_\-remote\_\-Link\_\-Free}}
+\index{nfs2_remote_Link_Free@{nfs2\_\-remote\_\-Link\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Link\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga66}
+
+
+nfs2\_\-remote\_\-Link\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Link.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Link.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1828 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Lookup@{nfs2\_\-remote\_\-Lookup}}
+\index{nfs2_remote_Lookup@{nfs2\_\-remote\_\-Lookup}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Lookup (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga4}
+
+
+nfs2\_\-remote\_\-Lookup: The NFS proc lookup function, v2.
+
+The NFS proc lookup function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 533 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Lookup_Free@{nfs2\_\-remote\_\-Lookup\_\-Free}}
+\index{nfs2_remote_Lookup_Free@{nfs2\_\-remote\_\-Lookup\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Lookup\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga57}
+
+
+nfs2\_\-remote\_\-Lookup\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Lookup.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Lookup.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1711 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Mkdir@{nfs2\_\-remote\_\-Mkdir}}
+\index{nfs2_remote_Mkdir@{nfs2\_\-remote\_\-Mkdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Mkdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga14}
+
+
+nfs2\_\-remote\_\-Mkdir: The NFS proc mkdir function, v2.
+
+The NFS proc mkdir function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 792 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Mkdir_Free@{nfs2\_\-remote\_\-Mkdir\_\-Free}}
+\index{nfs2_remote_Mkdir_Free@{nfs2\_\-remote\_\-Mkdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Mkdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga61}
+
+
+nfs2\_\-remote\_\-Mkdir\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Mkdir.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Mkdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1763 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Null@{nfs2\_\-remote\_\-Null}}
+\index{nfs2_remote_Null@{nfs2\_\-remote\_\-Null}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Null (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga0}
+
+
+nfs2\_\-remote\_\-Null: The NFS proc null function, v2.
+
+The NFS proc null function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 431 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Null_Free@{nfs2\_\-remote\_\-Null\_\-Free}}
+\index{nfs2_remote_Null_Free@{nfs2\_\-remote\_\-Null\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Null\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga54}
+
+
+nfs2\_\-remote\_\-Null\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Null.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Null.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1672 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Read@{nfs2\_\-remote\_\-Read}}
+\index{nfs2_remote_Read@{nfs2\_\-remote\_\-Read}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Read (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga6}
+
+
+nfs2\_\-remote\_\-Read: The NFS proc read function, v2.
+
+The NFS proc read function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 585 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Read_Free@{nfs2\_\-remote\_\-Read\_\-Free}}
+\index{nfs2_remote_Read_Free@{nfs2\_\-remote\_\-Read\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Read\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga58}
+
+
+nfs2\_\-remote\_\-Read\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Read.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Read.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1724 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Readdir@{nfs2\_\-remote\_\-Readdir}}
+\index{nfs2_remote_Readdir@{nfs2\_\-remote\_\-Readdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Readdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga16}
+
+
+nfs2\_\-remote\_\-Readdir: The NFS proc readdir function, v2.
+
+The NFS proc readdir function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 844 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Readdir_Free@{nfs2\_\-remote\_\-Readdir\_\-Free}}
+\index{nfs2_remote_Readdir_Free@{nfs2\_\-remote\_\-Readdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Readdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga70}
+
+
+nfs2\_\-remote\_\-Readdir\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Readdir.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Readdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1880 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Readlink@{nfs2\_\-remote\_\-Readlink}}
+\index{nfs2_remote_Readlink@{nfs2\_\-remote\_\-Readlink}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Readlink (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga5}
+
+
+nfs2\_\-remote\_\-Readlink: The NFS proc readlink function, v2.
+
+The NFS proc readlink function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 559 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Readlink_Free@{nfs2\_\-remote\_\-Readlink\_\-Free}}
+\index{nfs2_remote_Readlink_Free@{nfs2\_\-remote\_\-Readlink\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Readlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga71}
+
+
+nfs2\_\-remote\_\-Readlink\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Readlink.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Readlink.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1893 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Remove@{nfs2\_\-remote\_\-Remove}}
+\index{nfs2_remote_Remove@{nfs2\_\-remote\_\-Remove}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Remove (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga10}
+
+
+nfs2\_\-remote\_\-Remove: The NFS proc remove function, v2.
+
+The NFS proc remove function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 688 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Remove_Free@{nfs2\_\-remote\_\-Remove\_\-Free}}
+\index{nfs2_remote_Remove_Free@{nfs2\_\-remote\_\-Remove\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Remove\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga63}
+
+
+nfs2\_\-remote\_\-Remove\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Remove.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Remove.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1789 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Rename@{nfs2\_\-remote\_\-Rename}}
+\index{nfs2_remote_Rename@{nfs2\_\-remote\_\-Rename}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Rename (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga11}
+
+
+nfs2\_\-remote\_\-Rename: The NFS proc rename function, v2.
+
+The NFS proc rename function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 714 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Rename_Free@{nfs2\_\-remote\_\-Rename\_\-Free}}
+\index{nfs2_remote_Rename_Free@{nfs2\_\-remote\_\-Rename\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Rename\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga65}
+
+
+nfs2\_\-remote\_\-Rename\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Rename.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Rename.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1815 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Rmdir@{nfs2\_\-remote\_\-Rmdir}}
+\index{nfs2_remote_Rmdir@{nfs2\_\-remote\_\-Rmdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Rmdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga15}
+
+
+nfs2\_\-remote\_\-Rmdir: The NFS proc rmdir function, v2.
+
+The NFS proc rmdir function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 818 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Rmdir_Free@{nfs2\_\-remote\_\-Rmdir\_\-Free}}
+\index{nfs2_remote_Rmdir_Free@{nfs2\_\-remote\_\-Rmdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Rmdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga64}
+
+
+nfs2\_\-remote\_\-Rmdir\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Rmdir.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Rmdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1802 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Root@{nfs2\_\-remote\_\-Root}}
+\index{nfs2_remote_Root@{nfs2\_\-remote\_\-Root}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Root (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga3}
+
+
+nfs2\_\-remote\_\-Root: The NFS proc root function, v2.
+
+The NFS proc root function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 508 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Root_Free@{nfs2\_\-remote\_\-Root\_\-Free}}
+\index{nfs2_remote_Root_Free@{nfs2\_\-remote\_\-Root\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Root\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga68}
+
+
+nfs2\_\-remote\_\-Root\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Root.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Root.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1854 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Setattr@{nfs2\_\-remote\_\-Setattr}}
+\index{nfs2_remote_Setattr@{nfs2\_\-remote\_\-Setattr}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Setattr (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga2}
+
+
+nfs2\_\-remote\_\-Setattr: The NFS proc setattr function, v2.
+
+The NFS proc setattr function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 482 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Setattr_Free@{nfs2\_\-remote\_\-Setattr\_\-Free}}
+\index{nfs2_remote_Setattr_Free@{nfs2\_\-remote\_\-Setattr\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Setattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga56}
+
+
+nfs2\_\-remote\_\-Setattr\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Setattr.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Setattr.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1698 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Symlink@{nfs2\_\-remote\_\-Symlink}}
+\index{nfs2_remote_Symlink@{nfs2\_\-remote\_\-Symlink}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Symlink (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga13}
+
+
+nfs2\_\-remote\_\-Symlink: The NFS proc symlink function, v2.
+
+The NFS proc symlink function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 766 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Symlink_Free@{nfs2\_\-remote\_\-Symlink\_\-Free}}
+\index{nfs2_remote_Symlink_Free@{nfs2\_\-remote\_\-Symlink\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Symlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga62}
+
+
+nfs2\_\-remote\_\-Symlink\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Symlink.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Symlink.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1776 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Write@{nfs2\_\-remote\_\-Write}}
+\index{nfs2_remote_Write@{nfs2\_\-remote\_\-Write}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Write (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga8}
+
+
+nfs2\_\-remote\_\-Write: The NFS proc write function, v2.
+
+The NFS proc write function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 636 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Write_Free@{nfs2\_\-remote\_\-Write\_\-Free}}
+\index{nfs2_remote_Write_Free@{nfs2\_\-remote\_\-Write\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Write\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga59}
+
+
+nfs2\_\-remote\_\-Write\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Write.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Write.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1737 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Writecache@{nfs2\_\-remote\_\-Writecache}}
+\index{nfs2_remote_Writecache@{nfs2\_\-remote\_\-Writecache}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-remote\_\-Writecache (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga7}
+
+
+nfs2\_\-remote\_\-Writecache: The NFS proc writecache function, v2.
+
+The NFS proc writecache function, v2.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 611 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs2_remote_Writecache_Free@{nfs2\_\-remote\_\-Writecache\_\-Free}}
+\index{nfs2_remote_Writecache_Free@{nfs2\_\-remote\_\-Writecache\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs2\_\-remote\_\-Writecache\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga69}
+
+
+nfs2\_\-remote\_\-Writecache\_\-Free: Frees the result structure allocated for nfs2\_\-remote\_\-Writecache.
+
+Frees the result structure allocated for nfs2\_\-remote\_\-Writecache.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1867 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Access@{nfs3\_\-remote\_\-Access}}
+\index{nfs3_remote_Access@{nfs3\_\-remote\_\-Access}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Access (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga34}
+
+
+nfs3\_\-remote\_\-Access: The NFS proc access function, v3.
+
+The NFS proc access function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1311 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-access().\index{NFSprocs@{NFSprocs}!nfs3_remote_Access_Free@{nfs3\_\-remote\_\-Access\_\-Free}}
+\index{nfs3_remote_Access_Free@{nfs3\_\-remote\_\-Access\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Access\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga76}
+
+
+nfs3\_\-remote\_\-Access\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Access.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Access.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1958 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-access().\index{NFSprocs@{NFSprocs}!nfs3_remote_Commit@{nfs3\_\-remote\_\-Commit}}
+\index{nfs3_remote_Commit@{nfs3\_\-remote\_\-Commit}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Commit (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga38}
+
+
+nfs3\_\-remote\_\-Commit: The NFS proc commit function, v3.
+
+The NFS proc commit function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1415 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Commit_Free@{nfs3\_\-remote\_\-Commit\_\-Free}}
+\index{nfs3_remote_Commit_Free@{nfs3\_\-remote\_\-Commit\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Commit\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga92}
+
+
+nfs3\_\-remote\_\-Commit\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Commit.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Commit.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2166 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Create@{nfs3\_\-remote\_\-Create}}
+\index{nfs3_remote_Create@{nfs3\_\-remote\_\-Create}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Create (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga25}
+
+
+nfs3\_\-remote\_\-Create: The NFS proc create function, v3.
+
+The NFS proc create function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1077 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-create().\index{NFSprocs@{NFSprocs}!nfs3_remote_Create_Free@{nfs3\_\-remote\_\-Create\_\-Free}}
+\index{nfs3_remote_Create_Free@{nfs3\_\-remote\_\-Create\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Create\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga79}
+
+
+nfs3\_\-remote\_\-Create\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Create.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Create.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1997 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-create().\index{NFSprocs@{NFSprocs}!nfs3_remote_Fsinfo@{nfs3\_\-remote\_\-Fsinfo}}
+\index{nfs3_remote_Fsinfo@{nfs3\_\-remote\_\-Fsinfo}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Fsinfo (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga36}
+
+
+nfs3\_\-remote\_\-Fsinfo: The NFS proc fsinfo function, v3.
+
+The NFS proc fsinfo function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1363 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Fsinfo_Free@{nfs3\_\-remote\_\-Fsinfo\_\-Free}}
+\index{nfs3_remote_Fsinfo_Free@{nfs3\_\-remote\_\-Fsinfo\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Fsinfo\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga90}
+
+
+nfs3\_\-remote\_\-Fsinfo\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Fsinfo.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Fsinfo.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2140 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Fsstat@{nfs3\_\-remote\_\-Fsstat}}
+\index{nfs3_remote_Fsstat@{nfs3\_\-remote\_\-Fsstat}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Fsstat (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga33}
+
+
+nfs3\_\-remote\_\-Fsstat: The NFS proc statfs function, v3.
+
+The NFS proc statfs function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1285 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Fsstat_Free@{nfs3\_\-remote\_\-Fsstat\_\-Free}}
+\index{nfs3_remote_Fsstat_Free@{nfs3\_\-remote\_\-Fsstat\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Fsstat\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga89}
+
+
+nfs3\_\-remote\_\-Fsstat\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Fsstat.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Fsstat.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2127 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Getattr@{nfs3\_\-remote\_\-Getattr}}
+\index{nfs3_remote_Getattr@{nfs3\_\-remote\_\-Getattr}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Getattr (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga19}
+
+
+nfs3\_\-remote\_\-Getattr: The NFS proc getattr function, v3.
+
+The NFS proc getattr function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 921 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-getattr().\index{NFSprocs@{NFSprocs}!nfs3_remote_Getattr_Free@{nfs3\_\-remote\_\-Getattr\_\-Free}}
+\index{nfs3_remote_Getattr_Free@{nfs3\_\-remote\_\-Getattr\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Getattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga73}
+
+
+nfs3\_\-remote\_\-Getattr\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Getattr.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Getattr.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1919 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-getattr().\index{NFSprocs@{NFSprocs}!nfs3_remote_Link@{nfs3\_\-remote\_\-Link}}
+\index{nfs3_remote_Link@{nfs3\_\-remote\_\-Link}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Link (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga28}
+
+
+nfs3\_\-remote\_\-Link: The NFS proc link function, v3.
+
+The NFS proc link function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1155 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-link().\index{NFSprocs@{NFSprocs}!nfs3_remote_Link_Free@{nfs3\_\-remote\_\-Link\_\-Free}}
+\index{nfs3_remote_Link_Free@{nfs3\_\-remote\_\-Link\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Link\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga86}
+
+
+nfs3\_\-remote\_\-Link\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Link.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Link.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2088 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-link().\index{NFSprocs@{NFSprocs}!nfs3_remote_Lookup@{nfs3\_\-remote\_\-Lookup}}
+\index{nfs3_remote_Lookup@{nfs3\_\-remote\_\-Lookup}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Lookup (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga21}
+
+
+nfs3\_\-remote\_\-Lookup: The NFS proc lookup function, v3.
+
+The NFS proc lookup function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 973 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-solvepath().\index{NFSprocs@{NFSprocs}!nfs3_remote_Lookup_Free@{nfs3\_\-remote\_\-Lookup\_\-Free}}
+\index{nfs3_remote_Lookup_Free@{nfs3\_\-remote\_\-Lookup\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Lookup\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga75}
+
+
+nfs3\_\-remote\_\-Lookup\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Lookup.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Lookup.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1945 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-solvepath().\index{NFSprocs@{NFSprocs}!nfs3_remote_Mkdir@{nfs3\_\-remote\_\-Mkdir}}
+\index{nfs3_remote_Mkdir@{nfs3\_\-remote\_\-Mkdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Mkdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga30}
+
+
+nfs3\_\-remote\_\-Mkdir: The NFS proc mkdir function, v3.
+
+The NFS proc mkdir function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1207 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-mkdir().\index{NFSprocs@{NFSprocs}!nfs3_remote_Mkdir_Free@{nfs3\_\-remote\_\-Mkdir\_\-Free}}
+\index{nfs3_remote_Mkdir_Free@{nfs3\_\-remote\_\-Mkdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Mkdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga80}
+
+
+nfs3\_\-remote\_\-Mkdir\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Mkdir.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Mkdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2010 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-mkdir().\index{NFSprocs@{NFSprocs}!nfs3_remote_Mknod@{nfs3\_\-remote\_\-Mknod}}
+\index{nfs3_remote_Mknod@{nfs3\_\-remote\_\-Mknod}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Mknod (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga39}
+
+
+nfs3\_\-remote\_\-Mknod: The NFS proc mknod function, v3.
+
+The NFS proc mknod function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1441 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Mknod_Free@{nfs3\_\-remote\_\-Mknod\_\-Free}}
+\index{nfs3_remote_Mknod_Free@{nfs3\_\-remote\_\-Mknod\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Mknod\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga82}
+
+
+nfs3\_\-remote\_\-Mknod\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Mknod.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Mknod.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2036 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Null@{nfs3\_\-remote\_\-Null}}
+\index{nfs3_remote_Null@{nfs3\_\-remote\_\-Null}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Null (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga18}
+
+
+nfs3\_\-remote\_\-Null: The NFS proc null function, v3.
+
+The NFS proc null function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 896 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Null_Free@{nfs3\_\-remote\_\-Null\_\-Free}}
+\index{nfs3_remote_Null_Free@{nfs3\_\-remote\_\-Null\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Null\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga72}
+
+
+nfs3\_\-remote\_\-Null\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Null.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Null.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1906 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Pathconf@{nfs3\_\-remote\_\-Pathconf}}
+\index{nfs3_remote_Pathconf@{nfs3\_\-remote\_\-Pathconf}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Pathconf (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga37}
+
+
+nfs3\_\-remote\_\-Pathconf: The NFS proc pathconf function, v3.
+
+The NFS proc pathconf function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1389 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Pathconf_Free@{nfs3\_\-remote\_\-Pathconf\_\-Free}}
+\index{nfs3_remote_Pathconf_Free@{nfs3\_\-remote\_\-Pathconf\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Pathconf\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga91}
+
+
+nfs3\_\-remote\_\-Pathconf\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Pathconf.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Pathconf.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2153 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Read@{nfs3\_\-remote\_\-Read}}
+\index{nfs3_remote_Read@{nfs3\_\-remote\_\-Read}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Read (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga23}
+
+
+nfs3\_\-remote\_\-Read: The NFS proc read function, v3.
+
+The NFS proc read function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1025 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Read_Free@{nfs3\_\-remote\_\-Read\_\-Free}}
+\index{nfs3_remote_Read_Free@{nfs3\_\-remote\_\-Read\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Read\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga93}
+
+
+nfs3\_\-remote\_\-Read\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Read.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Read.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2179 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Readdir@{nfs3\_\-remote\_\-Readdir}}
+\index{nfs3_remote_Readdir@{nfs3\_\-remote\_\-Readdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Readdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga32}
+
+
+nfs3\_\-remote\_\-Readdir: The NFS proc readdir function, v3.
+
+The NFS proc readdir function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1259 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readdir().\index{NFSprocs@{NFSprocs}!nfs3_remote_Readdir_Free@{nfs3\_\-remote\_\-Readdir\_\-Free}}
+\index{nfs3_remote_Readdir_Free@{nfs3\_\-remote\_\-Readdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Readdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga87}
+
+
+nfs3\_\-remote\_\-Readdir\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Readdir.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Readdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2101 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readdir(), and nfs\_\-remote\_\-readdir\_\-free().\index{NFSprocs@{NFSprocs}!nfs3_remote_Readdirplus@{nfs3\_\-remote\_\-Readdirplus}}
+\index{nfs3_remote_Readdirplus@{nfs3\_\-remote\_\-Readdirplus}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Readdirplus (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga35}
+
+
+nfs3\_\-remote\_\-Readdirplus: The NFS proc readdirplus function, v3.
+
+The NFS proc readdirplus function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1337 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readdirplus().\index{NFSprocs@{NFSprocs}!nfs3_remote_Readdirplus_Free@{nfs3\_\-remote\_\-Readdirplus\_\-Free}}
+\index{nfs3_remote_Readdirplus_Free@{nfs3\_\-remote\_\-Readdirplus\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Readdirplus\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga88}
+
+
+nfs3\_\-remote\_\-Readdirplus\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Readdirplus.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Readdirplus.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2114 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readdirplus(), and nfs\_\-remote\_\-readdirplus\_\-free().\index{NFSprocs@{NFSprocs}!nfs3_remote_Readlink@{nfs3\_\-remote\_\-Readlink}}
+\index{nfs3_remote_Readlink@{nfs3\_\-remote\_\-Readlink}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Readlink (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga22}
+
+
+nfs3\_\-remote\_\-Readlink: The NFS proc readlink function, v3.
+
+The NFS proc readlink function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 999 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readlink().\index{NFSprocs@{NFSprocs}!nfs3_remote_Readlink_Free@{nfs3\_\-remote\_\-Readlink\_\-Free}}
+\index{nfs3_remote_Readlink_Free@{nfs3\_\-remote\_\-Readlink\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Readlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga77}
+
+
+nfs3\_\-remote\_\-Readlink\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Readlink.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Readlink.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1971 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-readlink().\index{NFSprocs@{NFSprocs}!nfs3_remote_Remove@{nfs3\_\-remote\_\-Remove}}
+\index{nfs3_remote_Remove@{nfs3\_\-remote\_\-Remove}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Remove (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga26}
+
+
+nfs3\_\-remote\_\-Remove: The NFS proc remove function, v3.
+
+The NFS proc remove function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1103 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-remove().\index{NFSprocs@{NFSprocs}!nfs3_remote_Remove_Free@{nfs3\_\-remote\_\-Remove\_\-Free}}
+\index{nfs3_remote_Remove_Free@{nfs3\_\-remote\_\-Remove\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Remove\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga83}
+
+
+nfs3\_\-remote\_\-Remove\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Remove.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Remove.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2049 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-remove().\index{NFSprocs@{NFSprocs}!nfs3_remote_Rename@{nfs3\_\-remote\_\-Rename}}
+\index{nfs3_remote_Rename@{nfs3\_\-remote\_\-Rename}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Rename (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga27}
+
+
+nfs3\_\-remote\_\-Rename: The NFS proc rename function, v3.
+
+The NFS proc rename function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1129 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-rename().\index{NFSprocs@{NFSprocs}!nfs3_remote_Rename_Free@{nfs3\_\-remote\_\-Rename\_\-Free}}
+\index{nfs3_remote_Rename_Free@{nfs3\_\-remote\_\-Rename\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Rename\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga85}
+
+
+nfs3\_\-remote\_\-Rename\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Rename.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Rename.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2075 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-rename().\index{NFSprocs@{NFSprocs}!nfs3_remote_Rmdir@{nfs3\_\-remote\_\-Rmdir}}
+\index{nfs3_remote_Rmdir@{nfs3\_\-remote\_\-Rmdir}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Rmdir (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga31}
+
+
+nfs3\_\-remote\_\-Rmdir: The NFS proc rmdir function, v3.
+
+The NFS proc rmdir function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1233 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-rmdir().\index{NFSprocs@{NFSprocs}!nfs3_remote_Rmdir_Free@{nfs3\_\-remote\_\-Rmdir\_\-Free}}
+\index{nfs3_remote_Rmdir_Free@{nfs3\_\-remote\_\-Rmdir\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Rmdir\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga84}
+
+
+nfs3\_\-remote\_\-Rmdir\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Rmdir.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Rmdir.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2062 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-rmdir().\index{NFSprocs@{NFSprocs}!nfs3_remote_Setattr@{nfs3\_\-remote\_\-Setattr}}
+\index{nfs3_remote_Setattr@{nfs3\_\-remote\_\-Setattr}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Setattr (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga20}
+
+
+nfs3\_\-remote\_\-Setattr: The NFS proc setattr function, v3.
+
+The NFS proc setattr function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 947 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-setattr().\index{NFSprocs@{NFSprocs}!nfs3_remote_Setattr_Free@{nfs3\_\-remote\_\-Setattr\_\-Free}}
+\index{nfs3_remote_Setattr_Free@{nfs3\_\-remote\_\-Setattr\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Setattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga74}
+
+
+nfs3\_\-remote\_\-Setattr\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Setattr.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Setattr.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1932 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-setattr().\index{NFSprocs@{NFSprocs}!nfs3_remote_Symlink@{nfs3\_\-remote\_\-Symlink}}
+\index{nfs3_remote_Symlink@{nfs3\_\-remote\_\-Symlink}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Symlink (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga29}
+
+
+nfs3\_\-remote\_\-Symlink: The NFS proc symlink function, v3.
+
+The NFS proc symlink function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1181 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-symlink().\index{NFSprocs@{NFSprocs}!nfs3_remote_Symlink_Free@{nfs3\_\-remote\_\-Symlink\_\-Free}}
+\index{nfs3_remote_Symlink_Free@{nfs3\_\-remote\_\-Symlink\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Symlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga81}
+
+
+nfs3\_\-remote\_\-Symlink\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Symlink.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Symlink.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 2023 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by nfs\_\-remote\_\-symlink().\index{NFSprocs@{NFSprocs}!nfs3_remote_Write@{nfs3\_\-remote\_\-Write}}
+\index{nfs3_remote_Write@{nfs3\_\-remote\_\-Write}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-remote\_\-Write (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__NFSprocs_ga24}
+
+
+nfs3\_\-remote\_\-Write: The NFS proc write function, v3.
+
+The NFS proc write function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1051 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs3_remote_Write_Free@{nfs3\_\-remote\_\-Write\_\-Free}}
+\index{nfs3_remote_Write_Free@{nfs3\_\-remote\_\-Write\_\-Free}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-remote\_\-Write\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{group__NFSprocs_ga78}
+
+
+nfs3\_\-remote\_\-Write\_\-Free: Frees the result structure allocated for nfs3\_\-remote\_\-Write.
+
+Frees the result structure allocated for nfs3\_\-remote\_\-Write.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 1984 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs4_remote_COMPOUND@{nfs4\_\-remote\_\-COMPOUND}}
+\index{nfs4_remote_COMPOUND@{nfs4\_\-remote\_\-COMPOUND}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-remote\_\-COMPOUND (CLIENT $\ast$ {\em clnt}, COMPOUND4args $\ast$ {\em parg}, COMPOUND4res $\ast$ {\em pres})}\label{group__NFSprocs_ga40}
+
+
+nfs4\_\-remote\_\-COMPOUND: The NFS proc compound function, v4.
+
+The NFS proc compound function, v4.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 1490 of file nfs\_\-remote\_\-functions.c.\index{NFSprocs@{NFSprocs}!nfs4_remote_Null@{nfs4\_\-remote\_\-Null}}
+\index{nfs4_remote_Null@{nfs4\_\-remote\_\-Null}!NFSprocs@{NFSprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-remote\_\-Null (CLIENT $\ast$ {\em clnt})}\label{group__NFSprocs_ga41}
+
+
+nfs4\_\-remote\_\-Null: The NFS proc null function, v4.
+
+The NFS proc null function, v4.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \end{description}
+\end{Desc}
+
+
+Definition at line 1465 of file nfs\_\-remote\_\-functions.c.

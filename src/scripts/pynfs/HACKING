@@ -1,0 +1,37 @@
+Different path data types and variable names
+============================================
+pathname: An XDR array; pathname4. 
+component: A string with a single object name. Example: "doc". 
+unixpath: Example: "/dev/fd0"
+pathcomps: A list of components. Example: ["doc", "README"]
+
+The function nfs4lib.unixpath2comps translates a unixpath to pathcomps. 
+
+Misc
+====
+"object" is preferred over "file", when talking about nfs_ftype4's. 
+
+
+Test tree principle
+===================
+Initial tree content is created by test_tree_net.py. Earlier, the
+script test_tree.py, which runs locally, was used. This method is not
+used anymore, since it is not always possible to run an Python
+interpreter locally. For example, NetApp Filers are only accessible
+via the network.
+
+Test cases may create additional objects, but should use the tmp
+directory. Test cases need not to delete created objects; failed test
+cases are unable to do so anyway. Instead, test cases creating objects
+should remove the object in question before trying the creation.
+
+The test suite uses uid=0 and gid=0 when testing. The reason for this
+is that root privilegies is required to create special device files,
+for example. If your server uses root_squashing, tests may fail. 
+
+
+Test case preparation failure
+=============================
+If the preparation for a test case (such as creating a directory in
+preparation for testing REMOVE) fails, the test case should be skipped
+with a warning. 

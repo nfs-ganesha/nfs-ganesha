@@ -1,0 +1,55 @@
+\section{fsal\_\-truncate.c File Reference}
+\label{fsal__truncate_8c}\index{fsal_truncate.c@{fsal\_\-truncate.c}}
+Truncate function. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+fsal\_\-status\_\-t {\bf FSAL\_\-truncate} (fsal\_\-handle\_\-t $\ast$p\_\-filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-size\_\-t length, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Truncate function. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/07/29 09:39:05 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.4 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-truncate.c}.
+
+\subsection{Function Documentation}
+\index{fsal_truncate.c@{fsal\_\-truncate.c}!FSAL_truncate@{FSAL\_\-truncate}}
+\index{FSAL_truncate@{FSAL\_\-truncate}!fsal_truncate.c@{fsal\_\-truncate.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-truncate (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-size\_\-t {\em length}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__truncate_8c_a0}
+
+
+FSAL\_\-truncate: Modify the data length of a regular file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em filehandle}](input): Handle of the file is to be truncated. \item[{\em cred}](input): Authentication context for the operation (user,...). \item[{\em length}](input): The new data length for the file. \item[{\em object\_\-attributes}](optionnal input/output): The post operation attributes of the file. As input, it defines the attributes that the caller wants to retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be NULL.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Major error codes :\begin{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item Another error code if an error occurred. \end{itemize}
+\end{Desc}
+
+
+Definition at line 48 of file fsal\_\-truncate.c.
+
+References FSAL\_\-getattrs(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), posix2fsal\_\-error(), and Take\-Token\-FSCall().

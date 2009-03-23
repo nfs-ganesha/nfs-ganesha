@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>GANESHA configuration</TITLE>
+<META NAME="description" CONTENT="GANESHA configuration">
+<META NAME="keywords" CONTENT="using_posix_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="index.php?page=using_posix_fsal/using_posix_fsal.css">
+
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node5">
+<LINK REL="previous" HREF="index.php?page=using_posix_fsal/node3">
+<LINK REL="up" HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node5">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html46"
+  HREF="index.php?page=using_posix_fsal/node5">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html44"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html38"
+  HREF="index.php?page=using_posix_fsal/node3">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html47"
+  HREF="index.php?page=using_posix_fsal/node5">About this document ...</A>
+<B> Up:</B> <A NAME="tex2html45"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">using_posix_fsal</A>
+<B> Previous:</B> <A NAME="tex2html39"
+  HREF="index.php?page=using_posix_fsal/node3">Compiling GANESHA</A>
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00040000000000000000">
+GANESHA configuration</A>
+</H1>
+
+<P>
+For configurating GANESHA's access to database, you have to set
+some options in the configuration file: this in done in the ``<TT>POSIX</TT>''
+configuration block.
+
+<BR>
+<P>
+In this block, you must set the following values:
+
+<P>
+
+<UL>
+<LI><TT>DB_host</TT>: address of the host where the database server is running.
+</LI>
+<LI><TT>DB_name</TT>: the database name.
+</LI>
+<LI><TT>DB_login</TT>: user owning the database.
+</LI>
+<LI><TT>DB_keytab</TT>: path of the password file.
+</LI>
+<LI><TT>DB_port</TT>: port number where the database engine is listening on (do not set this parameter for using defaut).
+</LI>
+</UL>
+<B>NB: For PostGreSQL, all those values must be exactly the same as in the database keytab file.</B>
+<BR>
+<P>
+Note that postgreSQL <B>v7</B> does not support alternative path for keytab file:
+this file must be named `<TT>.pgpass</TT>' and must be located in the home
+directory of the user who is starting GANESHA (commonly `root').
+<BR>
+<P>
+Here is an example of a POSIX block in the configuration file:
+<PRE>
+POSIX
+{
+    # Host
+    DB_Host = "localhost";
+    # Database Name
+    DB_Name = "ganesha_db";
+    # Login
+    DB_Login = "GANESHA";
+    # Path to the file where the password is stored
+    # (format of the file is Database specific)
+    DB_keytab = "/var/ganesha/.dbpass";
+}
+</PRE>
+
+<P>
+<BR><HR>
+<ADDRESS>
+2009-03-06
+</ADDRESS>
+</BODY>
+</HTML>

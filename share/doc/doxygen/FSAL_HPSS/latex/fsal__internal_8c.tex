@@ -1,0 +1,262 @@
+\section{fsal\_\-internal.c File Reference}
+\label{fsal__internal_8c}\index{fsal_internal.c@{fsal\_\-internal.c}}
+Defines the datas that are to be accessed as extern by the fsal modules. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Sem\-N.h\char`\"{}}\par
+{\tt \#include $<$pthread.h$>$}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf FSAL\_\-INTERNAL\_\-C}\label{fsal__internal_8c_a0}
+
+\item 
+\#define {\bf SET\_\-INTEGER\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\item 
+\#define {\bf SET\_\-BITMAP\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\item 
+\#define {\bf SET\_\-BOOLEAN\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf fsal\_\-increment\_\-nbcall} (int function\_\-index, fsal\_\-status\_\-t status)
+\item 
+void {\bf fsal\_\-internal\_\-getstats} (fsal\_\-statistics\_\-t $\ast$output\_\-stats)
+\item 
+void {\bf fsal\_\-internal\_\-Set\-Credential\-Lifetime} (fsal\_\-uint\_\-t lifetime\_\-in)
+\item 
+void {\bf fsal\_\-internal\_\-Set\-Return\-Inconsistent\-Dirent} (fsal\_\-uint\_\-t bool\_\-in)
+\item 
+void {\bf Take\-Token\-FSCall} ()
+\item 
+void {\bf Release\-Token\-FSCall} ()\label{fsal__internal_8c_a19}
+
+\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-init\_\-global} (fsal\_\-init\_\-info\_\-t $\ast$fsal\_\-info, fs\_\-common\_\-initinfo\_\-t $\ast$fs\_\-common\_\-info)\label{fsal__internal_8c_a20}
+
+\item 
+fsal\_\-boolean\_\-t {\bf fsal\_\-do\_\-log} (fsal\_\-status\_\-t status)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+fsal\_\-uint\_\-t {\bf Credential\-Lifetime} = 3600\label{fsal__internal_8c_a4}
+
+\item 
+fsal\_\-uint\_\-t {\bf Return\-Inconsistent\-Dirent} = FALSE\label{fsal__internal_8c_a5}
+
+\item 
+fsal\_\-staticfsinfo\_\-t {\bf global\_\-fs\_\-info}\label{fsal__internal_8c_a6}
+
+\item 
+log\_\-t {\bf fsal\_\-log}\label{fsal__internal_8c_a8}
+
+\item 
+semaphore\_\-t {\bf sem\_\-fs\_\-calls}\label{fsal__internal_8c_a10}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Defines the datas that are to be accessed as extern by the fsal modules. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/08 12:46:59 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.25 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-internal.c}.
+
+\subsection{Define Documentation}
+\index{fsal_internal.c@{fsal\_\-internal.c}!SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}}
+\index{SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BITMAP\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a2}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a bit AND */                                     \
+      cfg._field &= (p_init_info)->values._field ;                \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a bit OR */                                      \
+      cfg._field |= (p_init_info)->values._field ;                \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 310 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!SET_BOOLEAN_PARAM@{SET\_\-BOOLEAN\_\-PARAM}}
+\index{SET_BOOLEAN_PARAM@{SET\_\-BOOLEAN\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BOOLEAN\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a3}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a boolean AND */                                 \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a boolean OR */                                  \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 328 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}}
+\index{SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-INTEGER\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a1}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+      /* force the value in any case */                           \
+      cfg._field = (p_init_info)->values._field;                  \
+      break;                                                      \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* check the higher limit */                                \
+      if ( cfg._field > (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* check the lower limit */                                 \
+      if ( cfg._field < (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 290 of file fsal\_\-internal.c.
+
+\subsection{Function Documentation}
+\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_do_log@{fsal\_\-do\_\-log}}
+\index{fsal_do_log@{fsal\_\-do\_\-log}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-boolean\_\-t fsal\_\-do\_\-log (fsal\_\-status\_\-t {\em status})}\label{fsal__internal_8c_a21}
+
+
+fsal\_\-do\_\-log: Indicates if an FSAL error has to be traced into its log file in the NIV\_\-EVENT level. (in the other cases, return codes are only logged in the NIV\_\-FULL\_\-DEBUG logging lovel).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em status(input):}]The fsal status that is to be tested.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]- TRUE if the error is to be traced.\begin{itemize}
+\item FALSE if the error must not be traced except in NIV\_\-FULL\_\-DEBUG level. \end{itemize}
+\end{Desc}
+
+
+Definition at line 462 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_increment_nbcall@{fsal\_\-increment\_\-nbcall}}
+\index{fsal_increment_nbcall@{fsal\_\-increment\_\-nbcall}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-increment\_\-nbcall (int {\em function\_\-index}, fsal\_\-status\_\-t {\em status})}\label{fsal__internal_8c_a14}
+
+
+fsal\_\-increment\_\-nbcall: Updates fonction call statistics.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em function\_\-index}](input): Index of the function whom number of call is to be incremented. \item[{\em status}](input): Status the function returned.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 106 of file fsal\_\-internal.c.
+
+References fsal\_\-is\_\-retryable().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_getstats@{fsal\_\-internal\_\-getstats}}
+\index{fsal_internal_getstats@{fsal\_\-internal\_\-getstats}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-internal\_\-getstats (fsal\_\-statistics\_\-t $\ast$ {\em output\_\-stats})}\label{fsal__internal_8c_a15}
+
+
+fsal\_\-internal\_\-getstats: (For internal use in the FSAL). Retrieve call statistics for current thread.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output\_\-stats}](output): Pointer to the call statistics structure.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 185 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-get\_\-stats().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_SetCredentialLifetime@{fsal\_\-internal\_\-SetCredentialLifetime}}
+\index{fsal_internal_SetCredentialLifetime@{fsal\_\-internal\_\-SetCredentialLifetime}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-internal\_\-Set\-Credential\-Lifetime (fsal\_\-uint\_\-t {\em lifetime\_\-in})}\label{fsal__internal_8c_a16}
+
+
+Set credential lifetime. (For internal use in the FSAL). Set the period for thread's credential renewal.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em lifetime\_\-in}](input): The period for thread's credential renewal.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 242 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-Init().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_SetReturnInconsistentDirent@{fsal\_\-internal\_\-SetReturnInconsistentDirent}}
+\index{fsal_internal_SetReturnInconsistentDirent@{fsal\_\-internal\_\-SetReturnInconsistentDirent}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-internal\_\-Set\-Return\-Inconsistent\-Dirent (fsal\_\-uint\_\-t {\em bool\_\-in})}\label{fsal__internal_8c_a17}
+
+
+Set behavior when detecting a MD inconsistency in readdir. (For internal use in the FSAL).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em lifetime\_\-in}](input): The period for thread's credential renewal.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 257 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-Init().\index{fsal_internal.c@{fsal\_\-internal.c}!TakeTokenFSCall@{TakeTokenFSCall}}
+\index{TakeTokenFSCall@{TakeTokenFSCall}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Take\-Token\-FSCall ()}\label{fsal__internal_8c_a18}
+
+
+Used to limit the number of simultaneous calls to Filesystem. 
+
+Definition at line 267 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-access(), FSAL\_\-close(), FSAL\_\-create(), FSAL\_\-dynamic\_\-fsinfo(), FSAL\_\-getattrs(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-lookup\-Junction(), FSAL\_\-mkdir(), FSAL\_\-open(), FSAL\_\-read(), FSAL\_\-readdir(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-symlink(), FSAL\_\-truncate(), FSAL\_\-unlink(), and FSAL\_\-write().

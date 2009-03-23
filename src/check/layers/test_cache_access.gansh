@@ -1,0 +1,128 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_EVENT"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+print "------------ I am " $USER1 " -------------"
+# je deviens user1
+su $USER1
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+
+print "----- Creating files and directories -----"
+
+create file_access_0     000
+
+create file_access_Ur    400
+create file_access_Urw   600
+
+create file_access_UrwGr 640
+create file_access_UrwGrw 660
+
+create file_access_UrwGrwOr 664
+create file_access_UrwGrwOrw 666
+
+mkdir dir_access_0     000
+
+mkdir dir_access_Ur    400
+mkdir dir_access_Ux    100
+mkdir dir_access_Uw    200
+
+mkdir dir_access_Gr    040
+mkdir dir_access_Gx    010
+mkdir dir_access_Gw    020
+
+mkdir dir_access_Or    004
+mkdir dir_access_Ox    001
+mkdir dir_access_Ow    002
+
+
+# all perms should be OK
+
+access R file_access_Ur
+access R file_access_Urw
+access W file_access_Urw
+access R  dir_access_Ur
+access X  dir_access_Ux
+access W  dir_access_Uw
+
+print "------ I become " $USER2 " --------"
+
+su $USER2 
+
+access R file_access_UrwGr
+access R file_access_UrwGrw
+access W file_access_UrwGrw
+access R  dir_access_Gr
+access X  dir_access_Gx
+access W  dir_access_Gw
+
+print "------ I become " $USER3 " --------"
+
+su $USER3 
+
+access R file_access_UrwGrwOr
+access R file_access_UrwGrwOrw
+access R  dir_access_Or
+access X  dir_access_Ox
+
+ls -ld dir_access_Or
+ls -ld dir_access_Ox
+
+print "------ I become " $USER1 " --------"
+
+su $USER1 
+
+print "----- unlink -----"
+
+unlink file_access_0     
+unlink file_access_Ur    
+unlink file_access_Urw   
+unlink file_access_UrwGr 
+unlink file_access_UrwGrw 
+unlink file_access_UrwGrwOr 
+unlink file_access_UrwGrwOrw 
+unlink dir_access_0     
+unlink dir_access_Ur    
+unlink dir_access_Ux    
+unlink dir_access_Uw   
+unlink dir_access_Gr    
+unlink dir_access_Gx    
+unlink dir_access_Gw   
+unlink dir_access_Or    
+unlink dir_access_Ox    
+unlink dir_access_Ow   

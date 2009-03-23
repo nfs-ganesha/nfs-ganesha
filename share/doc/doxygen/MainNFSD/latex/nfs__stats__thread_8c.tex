@@ -1,0 +1,86 @@
+\section{nfs\_\-stats\_\-thread.c File Reference}
+\label{nfs__stats__thread_8c}\index{nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}}
+The file that contain the 'stats\_\-thread' routine for the nfsd. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-stat.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void $\ast$ {\bf stats\_\-thread} (void $\ast$addr)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\item 
+time\_\-t {\bf Server\-Boot\-Time}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-ip\_\-stats} [NB\_\-MAX\_\-WORKER\_\-THREAD]
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+The file that contain the 'stats\_\-thread' routine for the nfsd. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/22 12:01:58 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.6 \end{Desc}
+\end{Desc}
+{\bf nfs\_\-stats\_\-thread.c}{\rm (p.\,\pageref{nfs__stats__thread_8c})} : The file that contain the 'stats\_\-thread' routine for the nfsd.
+
+Definition in file {\bf nfs\_\-stats\_\-thread.c}.
+
+\subsection{Function Documentation}
+\index{nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}!stats_thread@{stats\_\-thread}}
+\index{stats_thread@{stats\_\-thread}!nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ stats\_\-thread (void $\ast$ {\em addr})}\label{nfs__stats__thread_8c_a3}
+
+
+
+
+Definition at line 104 of file nfs\_\-stats\_\-thread.c.
+
+References global\_\-buddy\_\-stat, ht\_\-ip\_\-stats, nfs\_\-dupreq\_\-get\_\-stats(), nfs\_\-param, Server\-Boot\-Time, stats\_\-snmp(), and workers\_\-data.
+
+\subsection{Variable Documentation}
+\index{nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}!ht_ip_stats@{ht\_\-ip\_\-stats}}
+\index{ht_ip_stats@{ht\_\-ip\_\-stats}!nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-ip\_\-stats}[NB\_\-MAX\_\-WORKER\_\-THREAD]}\label{nfs__stats__thread_8c_a2}
+
+
+
+
+Definition at line 136 of file nfs\_\-init.c.
+
+Referenced by stats\_\-thread().\index{nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__stats__thread_8c_a0}
+
+
+
+
+Definition at line 130 of file nfs\_\-init.c.\index{nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}!ServerBootTime@{ServerBootTime}}
+\index{ServerBootTime@{ServerBootTime}!nfs_stats_thread.c@{nfs\_\-stats\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Server\-Boot\-Time}}\label{nfs__stats__thread_8c_a1}
+
+
+
+
+Definition at line 131 of file nfs\_\-init.c.
+
+Referenced by nfs\_\-start(), and stats\_\-thread().

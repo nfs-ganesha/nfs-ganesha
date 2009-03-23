@@ -1,0 +1,758 @@
+\section{nfs\_\-proto\_\-tools.c File Reference}
+\label{nfs__proto__tools_8c}\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+A set of functions used to managed NFS. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include $<$pwd.h$>$}\par
+{\tt \#include $<$grp.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-tools.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-entry\_\-t $\ast$ {\bf nfs\_\-Fhandle\-To\-Cache} (u\_\-long rq\_\-vers, fhandle2 $\ast$pfh2, nfs\_\-fh3 $\ast$pfh3, nfs\_\-fh4 $\ast$pfh4, nfsstat2 $\ast$pstatus2, nfsstat3 $\ast$pstatus3, nfsstat4 $\ast$pstatus4, fsal\_\-attrib\_\-list\_\-t $\ast$pattr, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-client\_\-t $\ast$pclient, hash\_\-table\_\-t $\ast$ht, int $\ast$prc)
+\item 
+int {\bf nfs\_\-Set\-Post\-Op\-Attr} (fsal\_\-op\_\-context\_\-t $\ast$pcontext, exportlist\_\-t $\ast$pexport, cache\_\-entry\_\-t $\ast$pentry, fsal\_\-attrib\_\-list\_\-t $\ast$pfsal\_\-attr, post\_\-op\_\-attr $\ast$presult)
+\item 
+void {\bf nfs\_\-Set\-Pre\-Op\-Attr} (fsal\_\-attrib\_\-list\_\-t $\ast$pfsal\_\-attr, pre\_\-op\_\-attr $\ast$pattr)
+\item 
+void {\bf nfs\_\-Set\-Wcc\-Data} (fsal\_\-op\_\-context\_\-t $\ast$pcontext, exportlist\_\-t $\ast$pexport, cache\_\-entry\_\-t $\ast$pentry, fsal\_\-attrib\_\-list\_\-t $\ast$pbefore\_\-attr, fsal\_\-attrib\_\-list\_\-t $\ast$pafter\_\-attr, wcc\_\-data $\ast$pwcc\_\-data)
+\item 
+int {\bf nfs\_\-Retryable\-Error} (cache\_\-inode\_\-status\_\-t cache\_\-status)
+\item 
+void {\bf nfs\_\-Set\-Failed\-Status} (fsal\_\-op\_\-context\_\-t $\ast$pcontext, exportlist\_\-t $\ast$pexport, int version, cache\_\-inode\_\-status\_\-t status, nfsstat2 $\ast$pstatus2, nfsstat3 $\ast$pstatus3, cache\_\-entry\_\-t $\ast$pentry0, post\_\-op\_\-attr $\ast$ppost\_\-op\_\-attr, cache\_\-entry\_\-t $\ast$pentry1, fsal\_\-attrib\_\-list\_\-t $\ast$ppre\_\-vattr1, wcc\_\-data $\ast$pwcc\_\-data1, cache\_\-entry\_\-t $\ast$pentry2, fsal\_\-attrib\_\-list\_\-t $\ast$ppre\_\-vattr2, wcc\_\-data $\ast$pwcc\_\-data2)
+\item 
+int {\bf nfs4\_\-FSALattr\_\-To\_\-Fattr} (exportlist\_\-t $\ast$pexport, fsal\_\-attrib\_\-list\_\-t $\ast$pattr, fattr4 $\ast$Fattr, compound\_\-data\_\-t $\ast$data, nfs\_\-fh4 $\ast$obj\-FH, bitmap4 $\ast$Bitmap)
+\item 
+int {\bf nfs3\_\-Sattr\_\-To\_\-FSALattr} (fsal\_\-attrib\_\-list\_\-t $\ast$p\-FSAL\_\-attr, sattr3 $\ast$psattr)
+\item 
+int {\bf nfs2\_\-FSALattr\_\-To\_\-Fattr} (exportlist\_\-t $\ast$pexport, fsal\_\-attrib\_\-list\_\-t $\ast$p\-FSAL\_\-attr, fattr2 $\ast$p\-Fattr)
+\item 
+int {\bf nfs4\_\-Set\-Compound\-Export} (compound\_\-data\_\-t $\ast$data)
+\item 
+int {\bf nfs4\_\-Fhandle\-To\-Ex\-Id} (nfs\_\-fh4 $\ast$fh4p, unsigned short $\ast$Ex\-Idp)
+\item 
+void {\bf nfs4\_\-stringid\_\-split} (char $\ast$buff, char $\ast$uidname, char $\ast$domainname)
+\item 
+int {\bf utf82str} (char $\ast$str, utf8string $\ast$utf8str)
+\item 
+int {\bf str2utf8} (char $\ast$str, utf8string $\ast$utf8str)
+\item 
+seqid4 {\bf nfs4\_\-Next\-Seq\-Id} (seqid4 seqid)
+\item 
+void {\bf nfs4\_\-bitmap4\_\-to\_\-list} (bitmap4 $\ast$b, uint\_\-t $\ast$plen, uint32\_\-t $\ast$pval)
+\item 
+void {\bf nfs4\_\-list\_\-to\_\-bitmap4} (bitmap4 $\ast$b, uint\_\-t $\ast$plen, uint32\_\-t $\ast$pval)
+\item 
+int {\bf nfs3\_\-FSALattr\_\-To\_\-Fattr} (exportlist\_\-t $\ast$pexport, fsal\_\-attrib\_\-list\_\-t $\ast$FSAL\_\-attr, fattr3 $\ast$Fattr)
+\item 
+int {\bf nfs2\_\-Sattr\_\-To\_\-FSALattr} (fsal\_\-attrib\_\-list\_\-t $\ast$p\-FSAL\_\-attr, sattr2 $\ast$Fattr)
+\item 
+int {\bf nfs4\_\-Fattr\_\-Check\_\-Access} (fattr4 $\ast$Fattr, int access)
+\item 
+int {\bf nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap} (bitmap4 $\ast$pbitmap, int access)
+\item 
+int {\bf nfs4\_\-Fattr\_\-Supported} (fattr4 $\ast$Fattr)
+\item 
+int {\bf nfs4\_\-Fattr\_\-Supported\_\-Bitmap} (bitmap4 $\ast$pbitmap)
+\item 
+int {\bf nfs4\_\-Fattr\_\-cmp} (fattr4 $\ast$Fattr1, fattr4 $\ast$Fattr2)
+\item 
+int {\bf nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr} (fsal\_\-attrib\_\-list\_\-t $\ast$p\-FSAL\_\-attr, fattr4 $\ast$Fattr)
+\item 
+nfsstat4 {\bf nfs4\_\-Errno} (cache\_\-inode\_\-status\_\-t error)
+\item 
+nfsstat3 {\bf nfs3\_\-Errno} (cache\_\-inode\_\-status\_\-t error)
+\item 
+nfsstat2 {\bf nfs2\_\-Errno} (cache\_\-inode\_\-status\_\-t error)
+\item 
+int {\bf nfs4\_\-Allocate\-FH} (nfs\_\-fh4 $\ast$fh)
+\item 
+int {\bf nfs4\_\-Make\-Cred} (compound\_\-data\_\-t $\ast$data)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+A set of functions used to managed NFS. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/01/31 10:06:00 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.48 \end{Desc}
+\end{Desc}
+{\bf nfs\_\-proto\_\-tools.c}{\rm (p.\,\pageref{nfs__proto__tools_8c})} - A set of functions used to managed NFS.
+
+Definition in file {\bf nfs\_\-proto\_\-tools.c}.
+
+\subsection{Function Documentation}
+\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs2_Errno@{nfs2\_\-Errno}}
+\index{nfs2_Errno@{nfs2\_\-Errno}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfsstat2 nfs2\_\-Errno (cache\_\-inode\_\-status\_\-t {\em error})}\label{nfs__proto__tools_8c_a28}
+
+
+nfs2\_\-Errno: Converts a cache\_\-inode status to a nfsv2 status.
+
+Converts a cache\_\-inode status to a nfsv2 status.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em error}][IN] Input cache inode ewrror.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the converted NFSv2 status. \end{Desc}
+
+
+Definition at line 3262 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Readdir(), and nfs\_\-Set\-Failed\-Status().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs2_FSALattr_To_Fattr@{nfs2\_\-FSALattr\_\-To\_\-Fattr}}
+\index{nfs2_FSALattr_To_Fattr@{nfs2\_\-FSALattr\_\-To\_\-Fattr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FSALattr\_\-To\_\-Fattr (exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\-FSAL\_\-attr}, fattr2 $\ast$ {\em p\-Fattr})}\label{nfs__proto__tools_8c_a9}
+
+
+nfs2\_\-FSALattr\_\-To\_\-Fattr: Converts FSAL Attributes to NFSv2 attributes.
+
+Converts FSAL Attributes to NFSv2 attributes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pexport}][IN] the related export entry. \item[{\em FSAL\_\-attr}][IN] pointer to FSAL attributes. \item[{\em Fattr}][OUT] pointer to NFSv2 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]mode mask ? 
+
+mode mask ?\end{Desc}
+
+
+Definition at line 1614 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Create(), nfs\_\-Getattr(), nfs\_\-Lookup(), nfs\_\-Mkdir(), nfs\_\-Read(), nfs\_\-Setattr(), and nfs\_\-Write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs2_Sattr_To_FSALattr@{nfs2\_\-Sattr\_\-To\_\-FSALattr}}
+\index{nfs2_Sattr_To_FSALattr@{nfs2\_\-Sattr\_\-To\_\-FSALattr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-Sattr\_\-To\_\-FSALattr (fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\-FSAL\_\-attr}, sattr2 $\ast$ {\em Fattr})}\label{nfs__proto__tools_8c_a19}
+
+
+nfs2\_\-Sattr\_\-To\_\-FSALattr: Converts NFSv2 Set Attributes to FSAL attributes.
+
+Converts NFSv2 Set Attributes to FSAL attributes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em FSAL\_\-attr}][IN] pointer to FSAL attributes. \item[{\em Fattr}][OUT] pointer to NFSv2 set attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2168 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Create(), and nfs\_\-Setattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs3_Errno@{nfs3\_\-Errno}}
+\index{nfs3_Errno@{nfs3\_\-Errno}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfsstat3 nfs3\_\-Errno (cache\_\-inode\_\-status\_\-t {\em error})}\label{nfs__proto__tools_8c_a27}
+
+
+nfs3\_\-Errno: Converts a cache\_\-inode status to a nfsv3 status.
+
+Converts a cache\_\-inode status to a nfsv3 status.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em error}][IN] Input cache inode ewrror.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the converted NFSv3 status.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: Check if this works by making stress tests\end{Desc}
+
+
+Definition at line 3147 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs3\_\-Pathconf(), nfs3\_\-Readdirplus(), nfs\_\-Readdir(), and nfs\_\-Set\-Failed\-Status().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs3_FSALattr_To_Fattr@{nfs3\_\-FSALattr\_\-To\_\-Fattr}}
+\index{nfs3_FSALattr_To_Fattr@{nfs3\_\-FSALattr\_\-To\_\-Fattr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FSALattr\_\-To\_\-Fattr (exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em FSAL\_\-attr}, fattr3 $\ast$ {\em Fattr})}\label{nfs__proto__tools_8c_a18}
+
+
+nfs3\_\-FSALattr\_\-To\_\-Fattr: Converts FSAL Attributes to NFSv3 attributes.
+
+Converts FSAL Attributes to NFSv3 attributes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pexport}][IN] the related export entry \item[{\em FSAL\_\-attr}][IN] pointer to FSAL attributes. \item[{\em Fattr}][OUT] pointer to NFSv3 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2072 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Getattr(), nfs\_\-Setattr(), and nfs\_\-Set\-Post\-Op\-Attr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs3_Sattr_To_FSALattr@{nfs3\_\-Sattr\_\-To\_\-FSALattr}}
+\index{nfs3_Sattr_To_FSALattr@{nfs3\_\-Sattr\_\-To\_\-FSALattr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Sattr\_\-To\_\-FSALattr (fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\-FSAL\_\-attr}, sattr3 $\ast$ {\em psattr})}\label{nfs__proto__tools_8c_a8}
+
+
+nfs3\_\-Sattr\_\-To\_\-FSALattr: Converts NFSv3 Sattr to FSAL Attributes.
+
+Converts NFSv3 Sattr to FSAL Attributes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em p\-FSAL\_\-attr}][OUT] computed FSAL attributes. \item[{\em psattr}][IN] NFSv3 sattr to be set.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if failed, 1 if successful. \end{Desc}
+
+
+Definition at line 1506 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Create(), and nfs\_\-Setattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_AllocateFH@{nfs4\_\-AllocateFH}}
+\index{nfs4_AllocateFH@{nfs4\_\-AllocateFH}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Allocate\-FH (nfs\_\-fh4 $\ast$ {\em fh})}\label{nfs__proto__tools_8c_a29}
+
+
+nfs4\_\-Allocate\-FH: Allocates a buffer to be used for storing a NFSv4 filehandle.
+
+Allocates a buffer to be used for storing a NFSv4 filehandle.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh}][INOUT] the filehandle to manage.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successful, NFS3ERR\_\-SERVERFAULT, NFS4ERR\_\-RESOURCE or NFS4ERR\_\-STALE otherwise. \end{Desc}
+
+
+Definition at line 3365 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by Create\-PUBFH4(), Create\-ROOTFH4(), nfs4\_\-Create\-ROOTFH4(), nfs4\_\-op\_\-create(), nfs4\_\-op\_\-getfh(), nfs4\_\-op\_\-lookup\_\-pseudo(), nfs4\_\-op\_\-open(), nfs4\_\-op\_\-putfh(), nfs4\_\-op\_\-putpubfh(), nfs4\_\-op\_\-putrootfh(), nfs4\_\-op\_\-readdir(), nfs4\_\-op\_\-readdir\_\-pseudo(), and nfs4\_\-op\_\-savefh().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_bitmap4_to_list@{nfs4\_\-bitmap4\_\-to\_\-list}}
+\index{nfs4_bitmap4_to_list@{nfs4\_\-bitmap4\_\-to\_\-list}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-bitmap4\_\-to\_\-list (bitmap4 $\ast$ {\em b}, uint\_\-t $\ast$ {\em plen}, uint32\_\-t $\ast$ {\em pval})}\label{nfs__proto__tools_8c_a16}
+
+
+nfs\_\-bitmap4\_\-to\_\-list: convert an attribute's bitmap to a list of attributes.
+
+Convert an attribute's bitmap to a list of attributes.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em b}][IN] bitmap to convert. \item[{\em plen}][OUT] list's length. \item[{\em plval}][OUT] list's values.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 1949 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs4\_\-Fattr\_\-Check\_\-Access(), nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap(), nfs4\_\-Fattr\_\-cmp(), nfs4\_\-Fattr\_\-Supported(), nfs4\_\-Fattr\_\-Supported\_\-Bitmap(), nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr(), nfs4\_\-FSALattr\_\-To\_\-Fattr(), and nfs4\_\-Pseudo\-To\-Fattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Errno@{nfs4\_\-Errno}}
+\index{nfs4_Errno@{nfs4\_\-Errno}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfsstat4 nfs4\_\-Errno (cache\_\-inode\_\-status\_\-t {\em error})}\label{nfs__proto__tools_8c_a26}
+
+
+nfs4\_\-Errno: Converts a cache\_\-inode status to a nfsv4 status.
+
+Converts a cache\_\-inode status to a nfsv4 status.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em error}][IN] Input cache inode ewrror.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the converted NFSv4 status. \end{Desc}
+
+
+Definition at line 3031 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs4\_\-op\_\-access(), nfs4\_\-op\_\-close(), nfs4\_\-op\_\-create(), nfs4\_\-op\_\-getattr(), nfs4\_\-op\_\-link(), nfs4\_\-op\_\-lock(), nfs4\_\-op\_\-lookup(), nfs4\_\-op\_\-lookupp(), nfs4\_\-op\_\-open(), nfs4\_\-op\_\-read(), nfs4\_\-op\_\-readdir(), nfs4\_\-op\_\-readlink(), nfs4\_\-op\_\-remove(), nfs4\_\-op\_\-rename(), nfs4\_\-op\_\-setattr(), and nfs4\_\-op\_\-write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_Check_Access@{nfs4\_\-Fattr\_\-Check\_\-Access}}
+\index{nfs4_Fattr_Check_Access@{nfs4\_\-Fattr\_\-Check\_\-Access}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-Check\_\-Access (fattr4 $\ast$ {\em Fattr}, int {\em access})}\label{nfs__proto__tools_8c_a20}
+
+
+nfs4\_\-Fattr\_\-Check\_\-Access: checks if attributes have READ or WRITE access.
+
+Checks if attributes have READ or WRITE access.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Fattr}][IN] pointer to NFSv4 attributes. \item[{\em access}][IN] access to be checked, either FATTR4\_\-ATTR\_\-READ or FATTR4\_\-ATTR\_\-WRITE\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2264 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-create(), nfs4\_\-op\_\-nverify(), nfs4\_\-op\_\-open(), nfs4\_\-op\_\-setattr(), and nfs4\_\-op\_\-verify().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_Check_Access_Bitmap@{nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap}}
+\index{nfs4_Fattr_Check_Access_Bitmap@{nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap (bitmap4 $\ast$ {\em pbitmap}, int {\em access})}\label{nfs__proto__tools_8c_a21}
+
+
+nfs4\_\-Fattr\_\-Check\_\-Access\_\-Bitmap: checks if attributes bitmaps have READ or WRITE access.
+
+Checks if attributes have READ or WRITE access.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pbitmap}][IN] pointer to NFSv4 attributes. \item[{\em access}][IN] access to be checked, either FATTR4\_\-ATTR\_\-READ or FATTR4\_\-ATTR\_\-WRITE\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2311 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-getattr(), and nfs4\_\-op\_\-readdir().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_cmp@{nfs4\_\-Fattr\_\-cmp}}
+\index{nfs4_Fattr_cmp@{nfs4\_\-Fattr\_\-cmp}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-cmp (fattr4 $\ast$ {\em Fattr1}, fattr4 $\ast$ {\em Fattr2})}\label{nfs__proto__tools_8c_a24}
+
+
+nfs4\_\-Fattr\_\-cmp: compares 2 fattr4 buffers.
+
+Compares 2 fattr4 buffers.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Fattr1}][IN] pointer to NFSv4 attributes. \item[{\em Fattr2}][IN] pointer to NFSv4 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if attributes are the same, FALSE otherwise, but -1 if RDATTR\_\-ERROR is set \end{Desc}
+
+
+Definition at line 2451 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-nverify(), and nfs4\_\-op\_\-verify().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_Supported@{nfs4\_\-Fattr\_\-Supported}}
+\index{nfs4_Fattr_Supported@{nfs4\_\-Fattr\_\-Supported}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-Supported (fattr4 $\ast$ {\em Fattr})}\label{nfs__proto__tools_8c_a22}
+
+
+nfs4\_\-Fattr\_\-Supported: Checks if an attribute is supported.
+
+Checks if an attribute is supported.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Fattr}][IN] pointer to NFSv4 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2357 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-create(), nfs4\_\-op\_\-nverify(), nfs4\_\-op\_\-open(), nfs4\_\-op\_\-setattr(), and nfs4\_\-op\_\-verify().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_Supported_Bitmap@{nfs4\_\-Fattr\_\-Supported\_\-Bitmap}}
+\index{nfs4_Fattr_Supported_Bitmap@{nfs4\_\-Fattr\_\-Supported\_\-Bitmap}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-Supported\_\-Bitmap (bitmap4 $\ast$ {\em pbitmap})}\label{nfs__proto__tools_8c_a23}
+
+
+nfs4\_\-Fattr\_\-Supported: Checks if an attribute is supported.
+
+Checks if an attribute is supported.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Fattr}][IN] pointer to NFSv4 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 otherwise. \end{Desc}
+
+
+Definition at line 2404 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-getattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_Fattr_To_FSAL_attr@{nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr}}
+\index{nfs4_Fattr_To_FSAL_attr@{nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr (fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\-FSAL\_\-attr}, fattr4 $\ast$ {\em Fattr})}\label{nfs__proto__tools_8c_a25}
+
+
+nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
+
+Converts NFSv4 attributes buffer to a FSAL attributes structure.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em p\-FSAL\_\-attr}][OUT] pointer to FSAL attributes. \item[{\em Fattr}][IN] pointer to NFSv4 attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]1 if successful, 0 if not supported, -1 if argument is badly formed \end{Desc}
+
+
+Definition at line 2621 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list().
+
+Referenced by nfs4\_\-op\_\-create(), nfs4\_\-op\_\-open(), and nfs4\_\-op\_\-setattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_FhandleToExId@{nfs4\_\-FhandleToExId}}
+\index{nfs4_FhandleToExId@{nfs4\_\-FhandleToExId}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fhandle\-To\-Ex\-Id (nfs\_\-fh4 $\ast$ {\em fh4p}, unsigned short $\ast$ {\em Ex\-Idp})}\label{nfs__proto__tools_8c_a11}
+
+
+nfs4\_\-Fhandle\-To\-Ex\-Id
+
+This routine extracts the export id from the filehandle
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fh4p}][IN] pointer to file handle to be used. \item[{\em Ex\-Idp}][OUT] pointer to buffer in which found export id will be stored.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE is successful, FALSE otherwise. \end{Desc}
+
+
+Definition at line 1758 of file nfs\_\-proto\_\-tools.c.\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_FSALattr_To_Fattr@{nfs4\_\-FSALattr\_\-To\_\-Fattr}}
+\index{nfs4_FSALattr_To_Fattr@{nfs4\_\-FSALattr\_\-To\_\-Fattr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FSALattr\_\-To\_\-Fattr (exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, fattr4 $\ast$ {\em Fattr}, compound\_\-data\_\-t $\ast$ {\em data}, nfs\_\-fh4 $\ast$ {\em obj\-FH}, bitmap4 $\ast$ {\em Bitmap})}\label{nfs__proto__tools_8c_a7}
+
+
+nfs4\_\-FSALattr\_\-To\_\-Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
+
+Converts FSAL Attributes to NFSv4 Fattr buffer.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pexport}][IN] the related export entry. \item[{\em pattr}][IN] pointer to FSAL attributes. \item[{\em Fattr}][OUT] NFSv4 Fattr buffer \item[{\em data}][IN] NFSv4 compoud request's data. \item[{\em Bitmap}][OUT] NFSv4 attributes bitmap to the Fattr buffer.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]-1 if failed, 0 if successful.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: not the right answer, actual quotas should be implemented 
+
+: not the right answer, actual quotas should be implemented\end{Desc}
+
+
+Definition at line 505 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-bitmap4\_\-to\_\-list(), nfs4\_\-list\_\-to\_\-bitmap4(), and nfs\_\-param.
+
+Referenced by nfs4\_\-op\_\-getattr(), nfs4\_\-op\_\-nverify(), nfs4\_\-op\_\-readdir(), and nfs4\_\-op\_\-verify().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_list_to_bitmap4@{nfs4\_\-list\_\-to\_\-bitmap4}}
+\index{nfs4_list_to_bitmap4@{nfs4\_\-list\_\-to\_\-bitmap4}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-list\_\-to\_\-bitmap4 (bitmap4 $\ast$ {\em b}, uint\_\-t $\ast$ {\em plen}, uint32\_\-t $\ast$ {\em pval})}\label{nfs__proto__tools_8c_a17}
+
+
+nfs4\_\-list\_\-to\_\-bitmap4: convert a list of attributes to an attributes's bitmap.
+
+Convert a list of attributes to an attributes's bitmap.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em b}][OUT] computed bitmap \item[{\em plen}][IN] list's length \item[{\em pval}][IN] list's array\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 2027 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs4\_\-FSALattr\_\-To\_\-Fattr(), and nfs4\_\-Pseudo\-To\-Fattr().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_MakeCred@{nfs4\_\-MakeCred}}
+\index{nfs4_MakeCred@{nfs4\_\-MakeCred}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Make\-Cred (compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__proto__tools_8c_a30}
+
+
+nfs4\_\-Make\-Cred
+
+This routine fills in the pcontext field in the compound data.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pfh}][INOUT] pointer to compound data to be used. NOT YET IMPLEMENTED\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successful, NFS4ERR\_\-WRONGSEC otherwise. \end{Desc}
+
+
+Definition at line 3402 of file nfs\_\-proto\_\-tools.c.
+
+References nfs\_\-param.
+
+Referenced by nfs4\_\-op\_\-lookup\_\-pseudo(), nfs4\_\-op\_\-readdir\_\-pseudo(), and nfs4\_\-Set\-Compound\-Export().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_NextSeqId@{nfs4\_\-NextSeqId}}
+\index{nfs4_NextSeqId@{nfs4\_\-NextSeqId}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}seqid4 nfs4\_\-Next\-Seq\-Id (seqid4 {\em seqid})}\label{nfs__proto__tools_8c_a15}
+
+
+nfs4\_\-Next\-Seq\-Id: compute the next nfsv4 sequence id.
+
+Compute the next nfsv4 sequence id.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em seqid}][IN] previous sequence number.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the requested sequence number. \end{Desc}
+
+
+Definition at line 1892 of file nfs\_\-proto\_\-tools.c.\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_SetCompoundExport@{nfs4\_\-SetCompoundExport}}
+\index{nfs4_SetCompoundExport@{nfs4\_\-SetCompoundExport}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Set\-Compound\-Export (compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__proto__tools_8c_a10}
+
+
+nfs4\_\-Set\-Compound\-Export
+
+This routine fills in the pexport field in the compound data.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pfh}][OUT] pointer to compound data to be used.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull. Possible errors are NFS4ERR\_\-BADHANDLE and NFS4ERR\_\-WRONGSEC. \end{Desc}
+
+
+Definition at line 1721 of file nfs\_\-proto\_\-tools.c.
+
+References nfs4\_\-Make\-Cred().
+
+Referenced by nfs4\_\-op\_\-link(), nfs4\_\-op\_\-lookupp(), nfs4\_\-op\_\-putfh(), nfs4\_\-op\_\-rename(), and nfs4\_\-op\_\-restorefh().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs4_stringid_split@{nfs4\_\-stringid\_\-split}}
+\index{nfs4_stringid_split@{nfs4\_\-stringid\_\-split}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-stringid\_\-split (char $\ast$ {\em buff}, char $\ast$ {\em uidname}, char $\ast$ {\em domainname})}\label{nfs__proto__tools_8c_a12}
+
+
+nfs4\_\-stringid\_\-split: Splits a domain stamped name in two different parts.
+
+Splits a domain stamped name in two different parts.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buff}][IN] the input string \item[{\em uidname}][OUT] the extracted uid name \item[{\em domainname}][OUT] the extracted fomain name\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 1790 of file nfs\_\-proto\_\-tools.c.\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_FhandleToCache@{nfs\_\-FhandleToCache}}
+\index{nfs_FhandleToCache@{nfs\_\-FhandleToCache}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ nfs\_\-Fhandle\-To\-Cache (u\_\-long {\em rq\_\-vers}, fhandle2 $\ast$ {\em pfh2}, nfs\_\-fh3 $\ast$ {\em pfh3}, nfs\_\-fh4 $\ast$ {\em pfh4}, nfsstat2 $\ast$ {\em pstatus2}, nfsstat3 $\ast$ {\em pstatus3}, nfsstat4 $\ast$ {\em pstatus4}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, int $\ast$ {\em prc})}\label{nfs__proto__tools_8c_a1}
+
+
+nfs\_\-Fhandle\-To\-Cache: Gets a cache entry using a file handle (v2 or v3) as input.
+
+Gets a cache entry using a file handle (v2 or v3) as input.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em rq\_\-vers}][IN] version of the NFS protocol to be used \item[{\em pfh2}][IN] NFSv2 file handle or NULL \item[{\em pfh3}][IN] NFSv3 file handle or NULL \item[{\em pfh4}][IN] NFSv4 file handle or NULL \item[{\em pstatus2}][OUT] pointer to NFSv2 status or NULL \item[{\em pstatus3}][OUT] pointer to NFSv3 status or NULL \item[{\em pstatus4}][OUT] pointer to NFSv4 status or NULL \item[{\em pattr}][OUT] FSAL attributes related to this cache entry \item[{\em pcontext}][IN] client's FSAL credentials \item[{\em pclient}][IN] client's ressources to be used for accessing the Cache Inode \item[{\em ht}][INOUT] Hash Table used to address the Cache Inode \item[{\em prc}][OUT] internal status for the request (NFS\_\-REQ\_\-DROP or NFS\_\-REQ\_\-OK)\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]a pointer to the related pentry if successful, NULL is returned in case of a failure. \end{Desc}
+
+
+Definition at line 153 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs3\_\-Mknod(), nfs3\_\-Readdirplus(), nfs4\_\-op\_\-open(), nfs4\_\-op\_\-putfh(), nfs\_\-Create(), nfs\_\-Fsstat(), nfs\_\-Getattr(), nfs\_\-Link(), nfs\_\-Lookup(), nfs\_\-Mkdir(), nfs\_\-Read(), nfs\_\-Readdir(), nfs\_\-Readlink(), nfs\_\-Remove(), nfs\_\-Rename(), nfs\_\-Rmdir(), nfs\_\-Setattr(), nfs\_\-Symlink(), and nfs\_\-Write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_RetryableError@{nfs\_\-RetryableError}}
+\index{nfs_RetryableError@{nfs\_\-RetryableError}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Retryable\-Error (cache\_\-inode\_\-status\_\-t {\em cache\_\-status})}\label{nfs__proto__tools_8c_a5}
+
+
+nfs\_\-Retryable\-Error: Indicates if an error is retryable or not.
+
+Indicates if an error is retryable or not.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em cache\_\-status}][IN] input Cache Inode Status value, to be tested.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if retryable, FALSE otherwise.\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: Not implemented for NOW BUGAZEOMEU \end{Desc}
+
+
+Definition at line 369 of file nfs\_\-proto\_\-tools.c.
+
+References nfs\_\-param.
+
+Referenced by nfs3\_\-Access(), nfs3\_\-Mknod(), nfs3\_\-Readdirplus(), nfs\_\-Create(), nfs\_\-Fsstat(), nfs\_\-Link(), nfs\_\-Lookup(), nfs\_\-Mkdir(), nfs\_\-Read(), nfs\_\-Readdir(), nfs\_\-Readlink(), nfs\_\-Remove(), nfs\_\-Rename(), nfs\_\-Rmdir(), nfs\_\-Setattr(), nfs\_\-Symlink(), and nfs\_\-Write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_SetFailedStatus@{nfs\_\-SetFailedStatus}}
+\index{nfs_SetFailedStatus@{nfs\_\-SetFailedStatus}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Set\-Failed\-Status (fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, exportlist\_\-t $\ast$ {\em pexport}, int {\em version}, cache\_\-inode\_\-status\_\-t {\em status}, nfsstat2 $\ast$ {\em pstatus2}, nfsstat3 $\ast$ {\em pstatus3}, cache\_\-entry\_\-t $\ast$ {\em pentry0}, post\_\-op\_\-attr $\ast$ {\em ppost\_\-op\_\-attr}, cache\_\-entry\_\-t $\ast$ {\em pentry1}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em ppre\_\-vattr1}, wcc\_\-data $\ast$ {\em pwcc\_\-data1}, cache\_\-entry\_\-t $\ast$ {\em pentry2}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em ppre\_\-vattr2}, wcc\_\-data $\ast$ {\em pwcc\_\-data2})}\label{nfs__proto__tools_8c_a6}
+
+
+
+
+Definition at line 451 of file nfs\_\-proto\_\-tools.c.
+
+References nfs2\_\-Errno(), nfs3\_\-Errno(), nfs\_\-Set\-Post\-Op\-Attr(), and nfs\_\-Set\-Wcc\-Data().
+
+Referenced by nfs3\_\-Access(), nfs3\_\-Mknod(), nfs3\_\-Readdirplus(), nfs\_\-Create(), nfs\_\-Fsstat(), nfs\_\-Getattr(), nfs\_\-Link(), nfs\_\-Lookup(), nfs\_\-Mkdir(), nfs\_\-Read(), nfs\_\-Readdir(), nfs\_\-Readlink(), nfs\_\-Remove(), nfs\_\-Rename(), nfs\_\-Rmdir(), nfs\_\-Setattr(), nfs\_\-Symlink(), and nfs\_\-Write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_SetPostOpAttr@{nfs\_\-SetPostOpAttr}}
+\index{nfs_SetPostOpAttr@{nfs\_\-SetPostOpAttr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Set\-Post\-Op\-Attr (fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, exportlist\_\-t $\ast$ {\em pexport}, cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pfsal\_\-attr}, post\_\-op\_\-attr $\ast$ {\em presult})}\label{nfs__proto__tools_8c_a2}
+
+
+nfs\_\-Set\-Post\-Op\-Attr: Converts FSAL Attributes to NFSv3 Post\-Op Attributes structure.
+
+Converts FSAL Attributes to NFSv3 Post\-Op Attributes structure.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pexport}][IN] the related export entry \item[{\em pfsal\_\-attr}][IN] FSAL attributes \item[{\em pattr}][OUT] NFSv3 Post\-Op structure attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 in all cases (making it a void function maybe a good idea) \end{Desc}
+
+
+Definition at line 258 of file nfs\_\-proto\_\-tools.c.
+
+References nfs3\_\-FSALattr\_\-To\_\-Fattr().
+
+Referenced by nfs3\_\-Access(), nfs3\_\-Fsinfo(), nfs3\_\-Mknod(), nfs3\_\-Pathconf(), nfs3\_\-Readdirplus(), nfs\_\-Create(), nfs\_\-Fsstat(), nfs\_\-Link(), nfs\_\-Lookup(), nfs\_\-Mkdir(), nfs\_\-Read(), nfs\_\-Readdir(), nfs\_\-Readlink(), nfs\_\-Set\-Failed\-Status(), nfs\_\-Set\-Wcc\-Data(), and nfs\_\-Symlink().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_SetPreOpAttr@{nfs\_\-SetPreOpAttr}}
+\index{nfs_SetPreOpAttr@{nfs\_\-SetPreOpAttr}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Set\-Pre\-Op\-Attr (fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pfsal\_\-attr}, pre\_\-op\_\-attr $\ast$ {\em pattr})}\label{nfs__proto__tools_8c_a3}
+
+
+nfs\_\-Set\-Pre\-Op\-Attr: Converts FSAL Attributes to NFSv3 Pre\-Op Attributes structure.
+
+Converts FSAL Attributes to NFSv3 Pre\-Op Attributes structure.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pfsal\_\-attr}][IN] FSAL attributes. \item[{\em pattr}][OUT] NFSv3 Pre\-Op structure attributes.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 297 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs\_\-Set\-Wcc\-Data().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_SetWccData@{nfs\_\-SetWccData}}
+\index{nfs_SetWccData@{nfs\_\-SetWccData}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Set\-Wcc\-Data (fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, exportlist\_\-t $\ast$ {\em pexport}, cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pbefore\_\-attr}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pafter\_\-attr}, wcc\_\-data $\ast$ {\em pwcc\_\-data})}\label{nfs__proto__tools_8c_a4}
+
+
+nfs\_\-Set\-Wcc\-Data: Sets NFSv3 Weak Cache Coherency structure.
+
+Sets NFSv3 Weak Cache Coherency structure.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pcontext}][IN] credentials \item[{\em pentry}][IN] related pentry \item[{\em pbefore\_\-attr}][IN] the attributes before the operation. \item[{\em pafter\_\-attr}][IN] the attributes after the operation \item[{\em pwcc\_\-data}][OUT] the Weak Cache Coherency structure\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 335 of file nfs\_\-proto\_\-tools.c.
+
+References nfs\_\-Set\-Post\-Op\-Attr(), and nfs\_\-Set\-Pre\-Op\-Attr().
+
+Referenced by nfs3\_\-Commit(), nfs3\_\-Mknod(), nfs\_\-Create(), nfs\_\-Link(), nfs\_\-Mkdir(), nfs\_\-Remove(), nfs\_\-Rename(), nfs\_\-Rmdir(), nfs\_\-Setattr(), nfs\_\-Set\-Failed\-Status(), nfs\_\-Symlink(), and nfs\_\-Write().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!str2utf8@{str2utf8}}
+\index{str2utf8@{str2utf8}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int str2utf8 (char $\ast$ {\em str}, utf8string $\ast$ {\em utf8str})}\label{nfs__proto__tools_8c_a14}
+
+
+str2utf8: converts a string buffer into a UTF8 string descriptor.
+
+Converts a string buffer into a UTF8 string descriptor.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str}][IN] input string \item[{\em utf8str}][OUT] computed UTF8 string\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]-1 if failed, 0 if successful. \end{Desc}
+
+
+Definition at line 1852 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs4\_\-op\_\-readdir(), and nfs4\_\-op\_\-readlink().\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!utf82str@{utf82str}}
+\index{utf82str@{utf82str}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int utf82str (char $\ast$ {\em str}, utf8string $\ast$ {\em utf8str})}\label{nfs__proto__tools_8c_a13}
+
+
+utf82str: converts a UTF8 string buffer into a string descriptor.
+
+Converts a UTF8 string buffer into a string descriptor.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em str}][OUT] computed output string \item[{\em utf8str}][IN] input UTF8 string\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]-1 if failed, 0 if successful. \end{Desc}
+
+
+Definition at line 1821 of file nfs\_\-proto\_\-tools.c.
+
+Referenced by nfs4\_\-Compound(), and nfs4\_\-op\_\-create().
+
+\subsection{Variable Documentation}
+\index{nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!nfs_proto_tools.c@{nfs\_\-proto\_\-tools.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__proto__tools_8c_a0}
+
+

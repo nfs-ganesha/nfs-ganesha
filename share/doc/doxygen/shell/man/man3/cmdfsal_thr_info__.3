@@ -1,0 +1,74 @@
+.TH "cmdfsal_thr_info__" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cmdfsal_thr_info__ \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBis_thread_ok\fP"
+.br
+.ti -1c
+.RI "fsal_handle_t \fBcurrent_dir\fP"
+.br
+.ti -1c
+.RI "char \fBcurrent_path\fP [FSAL_MAX_PATH_LEN]"
+.br
+.ti -1c
+.RI "fsal_op_context_t \fBcontext\fP"
+.br
+.ti -1c
+.RI "fsal_export_context_t \fBexp_context\fP"
+.br
+.ti -1c
+.RI "int \fBopened\fP"
+.br
+.ti -1c
+.RI "fsal_file_t \fBcurrent_fd\fP"
+.br
+.in -1c
+.SH "Member Data Documentation"
+.PP 
+.SS "fsal_op_context_t \fBcmdfsal_thr_info__::context\fP"
+.PP
+Definition at line 313 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_rcp(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), Init_Thread_Context(), and solvepath().
+.SS "fsal_handle_t \fBcmdfsal_thr_info__::current_dir\fP"
+.PP
+Definition at line 309 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), fn_fsal_unlink(), and Init_Thread_Context().
+.SS "fsal_file_t \fBcmdfsal_thr_info__::current_fd\fP"
+.PP
+Definition at line 321 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_open(), fn_fsal_open_byfileid(), and fn_fsal_open_byname().
+.SS "char \fBcmdfsal_thr_info__::current_path\fP[FSAL_MAX_PATH_LEN]"
+.PP
+Definition at line 310 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), fn_fsal_unlink(), GetFSALCmdContext(), and Init_Thread_Context().
+.SS "fsal_export_context_t \fBcmdfsal_thr_info__::exp_context\fP"
+.PP
+Definition at line 319 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_su(), and Init_Thread_Context().
+.SS "int \fBcmdfsal_thr_info__::is_thread_ok\fP"
+.PP
+Definition at line 308 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_pwd(), fn_fsal_rcp(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), fsal_init(), GetFSALCmdContext(), Init_Thread_Context(), and solvepath().
+.SS "int \fBcmdfsal_thr_info__::opened\fP"
+.PP
+Definition at line 320 of file commands_FSAL.c.
+.PP
+Referenced by fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), and GetFSALCmdContext().
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

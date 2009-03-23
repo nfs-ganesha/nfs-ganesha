@@ -1,0 +1,2756 @@
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 13 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 39 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 62 resolved as shift.
+shift/reduce conflict in state 68 resolved as shift.
+shift/reduce conflict in state 70 resolved as shift.
+shift/reduce conflict in state 73 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 75 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 97 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 117 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 120 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 123 resolved as shift.
+shift/reduce conflict in state 131 resolved as shift.
+shift/reduce conflict in state 131 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 145 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+shift/reduce conflict in state 147 resolved as shift.
+
+
+Unused terminals:
+
+
+Grammar
+
+Rule 1     specification -> definition_list
+Rule 2     definition_list -> definition_list definition
+Rule 3     definition_list -> empty
+Rule 4     definition -> type_def
+Rule 5     definition -> constant_def
+Rule 6     definition -> program_def
+Rule 7     type_def -> ENUM ID enum_body SEMI
+Rule 8     type_def -> TYPEDEF declaration SEMI
+Rule 9     type_def -> STRUCT ID struct_body SEMI
+Rule 10    type_def -> UNION ID union_body SEMI
+Rule 11    constant_def -> CONST ID EQUALS NUMBER SEMI
+Rule 12    union_body -> SWITCH LPAREN declaration RPAREN LBRACE switch_body RBRACE
+Rule 13    switch_body -> case_declaration case_list default_declaration
+Rule 14    case_declaration -> case_value_colon decl_semi
+Rule 15    case_value_colon -> CASE value COLON
+Rule 16    decl_semi -> declaration SEMI
+Rule 17    decl_semi -> empty
+Rule 18    case_list -> case_list case_declaration
+Rule 19    case_list -> empty
+Rule 20    default_declaration -> DEFAULT COLON decl_semi
+Rule 21    default_declaration -> empty
+Rule 22    union_type_spec -> UNION union_body
+Rule 23    struct_body -> LBRACE struct_declaration struct_declaration_list RBRACE
+Rule 24    struct_declaration -> declaration SEMI
+Rule 25    struct_declaration_list -> struct_declaration_list struct_declaration
+Rule 26    struct_declaration_list -> empty
+Rule 27    struct_type_spec -> STRUCT struct_body
+Rule 28    enum_body -> LBRACE enum_body_contents RBRACE
+Rule 29    enum_body_contents -> enum_constant enum_constant_list
+Rule 30    enum_constant -> ID EQUALS NUMBER
+Rule 31    enum_constant_list -> enum_constant_list COMMA enum_constant
+Rule 32    enum_constant_list -> empty
+Rule 33    enum_type_spec -> ENUM enum_body
+Rule 34    type_specifier -> unsigned_specifier INT
+Rule 35    type_specifier -> unsigned_specifier HYPER
+Rule 36    type_specifier -> FLOAT
+Rule 37    type_specifier -> DOUBLE
+Rule 38    type_specifier -> QUADRUPLE
+Rule 39    type_specifier -> BOOL
+Rule 40    type_specifier -> enum_type_spec
+Rule 41    type_specifier -> struct_type_spec
+Rule 42    type_specifier -> union_type_spec
+Rule 43    type_specifier -> ID
+Rule 44    type_specifier -> UNSIGNED
+Rule 45    unsigned_specifier -> UNSIGNED
+Rule 46    unsigned_specifier -> empty
+Rule 47    value -> NUMBER
+Rule 48    value -> ID
+Rule 49    optional_value -> value
+Rule 50    optional_value -> empty
+Rule 51    declaration -> type_specifier ID
+Rule 52    declaration -> type_specifier ID LBRACKET value RBRACKET
+Rule 53    declaration -> type_specifier ID LT optional_value GT
+Rule 54    declaration -> OPAQUE ID LBRACKET value RBRACKET
+Rule 55    declaration -> OPAQUE ID LT optional_value GT
+Rule 56    declaration -> STRING ID LT optional_value GT
+Rule 57    declaration -> type_specifier STAR ID
+Rule 58    declaration -> VOID
+Rule 59    program_def -> PROGRAM ID LBRACE version_def version_def_list RBRACE EQUALS NUMBER SEMI
+Rule 60    version_def -> VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+Rule 61    version_def_list -> version_def_list version_def
+Rule 62    version_def_list -> empty
+Rule 63    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+Rule 64    procedure_def_list -> procedure_def_list procedure_def
+Rule 65    procedure_def_list -> empty
+Rule 66    type_specifier_list -> type_specifier_list COMMA rpc_type_specifier
+Rule 67    type_specifier_list -> empty
+Rule 68    rpc_type_specifier -> type_specifier
+Rule 69    rpc_type_specifier -> VOID
+Rule 70    empty -> <empty>
+
+Terminals, with rules where they appear
+
+RBRACKET             : 52 54
+EQUALS               : 11 30 59 60 63
+RBRACE               : 12 23 28 59 60
+error                : 
+BOOL                 : 39
+SWITCH               : 12
+STAR                 : 57
+LT                   : 53 55 56
+UNSIGNED             : 44 45
+COMMA                : 31 66
+FLOAT                : 36
+DOUBLE               : 37
+INT                  : 34
+OPAQUE               : 54 55
+LBRACE               : 12 23 28 59 60
+STRUCT               : 9 27
+RPAREN               : 12 63
+HYPER                : 35
+PROGRAM              : 59
+CASE                 : 15
+DEFAULT              : 20
+ID                   : 7 9 10 11 30 43 48 51 52 53 54 55 56 57 59 60 63
+LPAREN               : 12 63
+SEMI                 : 7 8 9 10 11 16 24 59 60 63
+VERSION              : 60
+COLON                : 15 20
+LBRACKET             : 52 54
+QUADRUPLE            : 38
+NUMBER               : 11 30 47 59 60 63
+ENUM                 : 7 33
+VOID                 : 58 69
+UNION                : 10 22
+STRING               : 56
+CONST                : 11
+GT                   : 53 55 56
+TYPEDEF              : 8
+
+Nonterminals, with rules where they appear
+
+empty                : 3 17 19 21 26 32 46 50 62 65 67
+procedure_def_list   : 60 64
+enum_constant_list   : 29 31
+enum_body_contents   : 28
+switch_body          : 12
+union_body           : 10 22
+decl_semi            : 14 20
+version_def_list     : 59 61
+struct_body          : 9 27
+value                : 15 49 52 54
+union_type_spec      : 42
+unsigned_specifier   : 34 35
+specification        : 0
+enum_constant        : 29 31
+case_declaration     : 13 18
+constant_def         : 5
+type_specifier       : 51 52 53 57 68
+definition           : 2
+type_def             : 4
+rpc_type_specifier   : 63 63 66
+procedure_def        : 60 64
+version_def          : 59 61
+declaration          : 8 12 16 24
+optional_value       : 53 55 56
+type_specifier_list  : 63 66
+struct_declaration_list : 23 25
+struct_type_spec     : 41
+case_list            : 13 18
+definition_list      : 1 2
+program_def          : 6
+enum_type_spec       : 40
+default_declaration  : 13
+enum_body            : 7 33
+struct_declaration   : 23 25
+case_value_colon     : 14
+
+
+Parsing method: SLR
+
+
+state 0
+
+    S' -> . specification
+    specification -> . definition_list
+    definition_list -> . definition_list definition
+    definition_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 1
+
+    definition_list -> empty .
+
+    $               reduce using rule 3
+    ENUM            reduce using rule 3
+    TYPEDEF         reduce using rule 3
+    STRUCT          reduce using rule 3
+    UNION           reduce using rule 3
+    CONST           reduce using rule 3
+    PROGRAM         reduce using rule 3
+
+
+state 2
+
+    specification -> definition_list .
+    definition_list -> definition_list . definition
+    definition -> . type_def
+    definition -> . constant_def
+    definition -> . program_def
+    type_def -> . ENUM ID enum_body SEMI
+    type_def -> . TYPEDEF declaration SEMI
+    type_def -> . STRUCT ID struct_body SEMI
+    type_def -> . UNION ID union_body SEMI
+    constant_def -> . CONST ID EQUALS NUMBER SEMI
+    program_def -> . PROGRAM ID LBRACE version_def version_def_list RBRACE EQUALS NUMBER SEMI
+
+    $               reduce using rule 1
+    ENUM            shift and go to state 11
+    TYPEDEF         shift and go to state 13
+    STRUCT          shift and go to state 5
+    UNION           shift and go to state 10
+    CONST           shift and go to state 12
+    PROGRAM         shift and go to state 8
+
+
+state 3
+
+    S' -> specification .
+
+
+
+state 4
+
+    definition -> constant_def .
+
+    $               reduce using rule 5
+    ENUM            reduce using rule 5
+    TYPEDEF         reduce using rule 5
+    STRUCT          reduce using rule 5
+    UNION           reduce using rule 5
+    CONST           reduce using rule 5
+    PROGRAM         reduce using rule 5
+
+
+state 5
+
+    type_def -> STRUCT . ID struct_body SEMI
+
+    ID              shift and go to state 14
+
+
+state 6
+
+    definition_list -> definition_list definition .
+
+    $               reduce using rule 2
+    ENUM            reduce using rule 2
+    TYPEDEF         reduce using rule 2
+    STRUCT          reduce using rule 2
+    UNION           reduce using rule 2
+    CONST           reduce using rule 2
+    PROGRAM         reduce using rule 2
+
+
+state 7
+
+    definition -> type_def .
+
+    $               reduce using rule 4
+    ENUM            reduce using rule 4
+    TYPEDEF         reduce using rule 4
+    STRUCT          reduce using rule 4
+    UNION           reduce using rule 4
+    CONST           reduce using rule 4
+    PROGRAM         reduce using rule 4
+
+
+state 8
+
+    program_def -> PROGRAM . ID LBRACE version_def version_def_list RBRACE EQUALS NUMBER SEMI
+
+    ID              shift and go to state 15
+
+
+state 9
+
+    definition -> program_def .
+
+    $               reduce using rule 6
+    ENUM            reduce using rule 6
+    TYPEDEF         reduce using rule 6
+    STRUCT          reduce using rule 6
+    UNION           reduce using rule 6
+    CONST           reduce using rule 6
+    PROGRAM         reduce using rule 6
+
+
+state 10
+
+    type_def -> UNION . ID union_body SEMI
+
+    ID              shift and go to state 16
+
+
+state 11
+
+    type_def -> ENUM . ID enum_body SEMI
+
+    ID              shift and go to state 17
+
+
+state 12
+
+    constant_def -> CONST . ID EQUALS NUMBER SEMI
+
+    ID              shift and go to state 18
+
+
+state 13
+
+    type_def -> TYPEDEF . declaration SEMI
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 14
+
+    type_def -> STRUCT ID . struct_body SEMI
+    struct_body -> . LBRACE struct_declaration struct_declaration_list RBRACE
+
+    LBRACE          shift and go to state 39
+
+
+state 15
+
+    program_def -> PROGRAM ID . LBRACE version_def version_def_list RBRACE EQUALS NUMBER SEMI
+
+    LBRACE          shift and go to state 40
+
+
+state 16
+
+    type_def -> UNION ID . union_body SEMI
+    union_body -> . SWITCH LPAREN declaration RPAREN LBRACE switch_body RBRACE
+
+    SWITCH          shift and go to state 42
+
+
+state 17
+
+    type_def -> ENUM ID . enum_body SEMI
+    enum_body -> . LBRACE enum_body_contents RBRACE
+
+    LBRACE          shift and go to state 44
+
+
+state 18
+
+    constant_def -> CONST ID . EQUALS NUMBER SEMI
+
+    EQUALS          shift and go to state 45
+
+
+state 19
+
+    unsigned_specifier -> empty .
+
+    INT             reduce using rule 46
+    HYPER           reduce using rule 46
+
+
+state 20
+
+    type_specifier -> UNSIGNED .
+    unsigned_specifier -> UNSIGNED .
+
+    ID              reduce using rule 44
+    STAR            reduce using rule 44
+    RPAREN          reduce using rule 44
+    EQUALS          reduce using rule 44
+    NUMBER          reduce using rule 44
+    SEMI            reduce using rule 44
+    COMMA           reduce using rule 44
+    INT             reduce using rule 45
+    HYPER           reduce using rule 45
+
+
+state 21
+
+    type_specifier -> BOOL .
+
+    ID              reduce using rule 39
+    STAR            reduce using rule 39
+    RPAREN          reduce using rule 39
+    EQUALS          reduce using rule 39
+    NUMBER          reduce using rule 39
+    SEMI            reduce using rule 39
+    COMMA           reduce using rule 39
+
+
+state 22
+
+    type_specifier -> union_type_spec .
+
+    ID              reduce using rule 42
+    STAR            reduce using rule 42
+    RPAREN          reduce using rule 42
+    EQUALS          reduce using rule 42
+    NUMBER          reduce using rule 42
+    SEMI            reduce using rule 42
+    COMMA           reduce using rule 42
+
+
+state 23
+
+    type_specifier -> FLOAT .
+
+    ID              reduce using rule 36
+    STAR            reduce using rule 36
+    RPAREN          reduce using rule 36
+    EQUALS          reduce using rule 36
+    NUMBER          reduce using rule 36
+    SEMI            reduce using rule 36
+    COMMA           reduce using rule 36
+
+
+state 24
+
+    type_specifier -> unsigned_specifier . INT
+    type_specifier -> unsigned_specifier . HYPER
+
+    INT             shift and go to state 47
+    HYPER           shift and go to state 46
+
+
+state 25
+
+    type_specifier -> DOUBLE .
+
+    ID              reduce using rule 37
+    STAR            reduce using rule 37
+    RPAREN          reduce using rule 37
+    EQUALS          reduce using rule 37
+    NUMBER          reduce using rule 37
+    SEMI            reduce using rule 37
+    COMMA           reduce using rule 37
+
+
+state 26
+
+    declaration -> OPAQUE . ID LBRACKET value RBRACKET
+    declaration -> OPAQUE . ID LT optional_value GT
+
+    ID              shift and go to state 48
+
+  ! ID              [ shift and go to state 48 ]
+
+state 27
+
+    struct_type_spec -> STRUCT . struct_body
+    struct_body -> . LBRACE struct_declaration struct_declaration_list RBRACE
+
+    LBRACE          shift and go to state 39
+
+
+state 28
+
+    declaration -> type_specifier . ID
+    declaration -> type_specifier . ID LBRACKET value RBRACKET
+    declaration -> type_specifier . ID LT optional_value GT
+    declaration -> type_specifier . STAR ID
+
+    ID              shift and go to state 50
+    STAR            shift and go to state 51
+
+  ! ID              [ shift and go to state 50 ]
+  ! ID              [ shift and go to state 50 ]
+
+state 29
+
+    type_specifier -> ID .
+
+    ID              reduce using rule 43
+    STAR            reduce using rule 43
+    RPAREN          reduce using rule 43
+    EQUALS          reduce using rule 43
+    NUMBER          reduce using rule 43
+    SEMI            reduce using rule 43
+    COMMA           reduce using rule 43
+
+
+state 30
+
+    type_def -> TYPEDEF declaration . SEMI
+
+    SEMI            shift and go to state 52
+
+
+state 31
+
+    type_specifier -> struct_type_spec .
+
+    ID              reduce using rule 41
+    STAR            reduce using rule 41
+    RPAREN          reduce using rule 41
+    EQUALS          reduce using rule 41
+    NUMBER          reduce using rule 41
+    SEMI            reduce using rule 41
+    COMMA           reduce using rule 41
+
+
+state 32
+
+    type_specifier -> enum_type_spec .
+
+    ID              reduce using rule 40
+    STAR            reduce using rule 40
+    RPAREN          reduce using rule 40
+    EQUALS          reduce using rule 40
+    NUMBER          reduce using rule 40
+    SEMI            reduce using rule 40
+    COMMA           reduce using rule 40
+
+
+state 33
+
+    type_specifier -> QUADRUPLE .
+
+    ID              reduce using rule 38
+    STAR            reduce using rule 38
+    RPAREN          reduce using rule 38
+    EQUALS          reduce using rule 38
+    NUMBER          reduce using rule 38
+    SEMI            reduce using rule 38
+    COMMA           reduce using rule 38
+
+
+state 34
+
+    enum_type_spec -> ENUM . enum_body
+    enum_body -> . LBRACE enum_body_contents RBRACE
+
+    LBRACE          shift and go to state 44
+
+
+state 35
+
+    declaration -> VOID .
+
+    SEMI            reduce using rule 58
+    RPAREN          reduce using rule 58
+
+
+state 36
+
+    union_type_spec -> UNION . union_body
+    union_body -> . SWITCH LPAREN declaration RPAREN LBRACE switch_body RBRACE
+
+    SWITCH          shift and go to state 42
+
+
+state 37
+
+    declaration -> STRING . ID LT optional_value GT
+
+    ID              shift and go to state 55
+
+
+state 38
+
+    type_def -> STRUCT ID struct_body . SEMI
+
+    SEMI            shift and go to state 56
+
+
+state 39
+
+    struct_body -> LBRACE . struct_declaration struct_declaration_list RBRACE
+    struct_declaration -> . declaration SEMI
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 40
+
+    program_def -> PROGRAM ID LBRACE . version_def version_def_list RBRACE EQUALS NUMBER SEMI
+    version_def -> . VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+
+    VERSION         shift and go to state 59
+
+
+state 41
+
+    type_def -> UNION ID union_body . SEMI
+
+    SEMI            shift and go to state 61
+
+
+state 42
+
+    union_body -> SWITCH . LPAREN declaration RPAREN LBRACE switch_body RBRACE
+
+    LPAREN          shift and go to state 62
+
+
+state 43
+
+    type_def -> ENUM ID enum_body . SEMI
+
+    SEMI            shift and go to state 63
+
+
+state 44
+
+    enum_body -> LBRACE . enum_body_contents RBRACE
+    enum_body_contents -> . enum_constant enum_constant_list
+    enum_constant -> . ID EQUALS NUMBER
+
+    ID              shift and go to state 64
+
+
+state 45
+
+    constant_def -> CONST ID EQUALS . NUMBER SEMI
+
+    NUMBER          shift and go to state 67
+
+
+state 46
+
+    type_specifier -> unsigned_specifier HYPER .
+
+    ID              reduce using rule 35
+    STAR            reduce using rule 35
+    RPAREN          reduce using rule 35
+    EQUALS          reduce using rule 35
+    NUMBER          reduce using rule 35
+    SEMI            reduce using rule 35
+    COMMA           reduce using rule 35
+
+
+state 47
+
+    type_specifier -> unsigned_specifier INT .
+
+    ID              reduce using rule 34
+    STAR            reduce using rule 34
+    RPAREN          reduce using rule 34
+    EQUALS          reduce using rule 34
+    NUMBER          reduce using rule 34
+    SEMI            reduce using rule 34
+    COMMA           reduce using rule 34
+
+
+state 48
+
+    declaration -> OPAQUE ID . LBRACKET value RBRACKET
+    declaration -> OPAQUE ID . LT optional_value GT
+
+    LBRACKET        shift and go to state 69
+    LT              shift and go to state 68
+
+
+state 49
+
+    struct_type_spec -> STRUCT struct_body .
+
+    ID              reduce using rule 27
+    STAR            reduce using rule 27
+    RPAREN          reduce using rule 27
+    EQUALS          reduce using rule 27
+    NUMBER          reduce using rule 27
+    SEMI            reduce using rule 27
+    COMMA           reduce using rule 27
+
+
+state 50
+
+    declaration -> type_specifier ID .
+    declaration -> type_specifier ID . LBRACKET value RBRACKET
+    declaration -> type_specifier ID . LT optional_value GT
+
+    SEMI            reduce using rule 51
+    RPAREN          reduce using rule 51
+    LBRACKET        shift and go to state 71
+    LT              shift and go to state 70
+
+
+state 51
+
+    declaration -> type_specifier STAR . ID
+
+    ID              shift and go to state 72
+
+
+state 52
+
+    type_def -> TYPEDEF declaration SEMI .
+
+    $               reduce using rule 8
+    ENUM            reduce using rule 8
+    TYPEDEF         reduce using rule 8
+    STRUCT          reduce using rule 8
+    UNION           reduce using rule 8
+    CONST           reduce using rule 8
+    PROGRAM         reduce using rule 8
+
+
+state 53
+
+    enum_type_spec -> ENUM enum_body .
+
+    ID              reduce using rule 33
+    STAR            reduce using rule 33
+    RPAREN          reduce using rule 33
+    EQUALS          reduce using rule 33
+    NUMBER          reduce using rule 33
+    SEMI            reduce using rule 33
+    COMMA           reduce using rule 33
+
+
+state 54
+
+    union_type_spec -> UNION union_body .
+
+    ID              reduce using rule 22
+    STAR            reduce using rule 22
+    RPAREN          reduce using rule 22
+    EQUALS          reduce using rule 22
+    NUMBER          reduce using rule 22
+    SEMI            reduce using rule 22
+    COMMA           reduce using rule 22
+
+
+state 55
+
+    declaration -> STRING ID . LT optional_value GT
+
+    LT              shift and go to state 73
+
+
+state 56
+
+    type_def -> STRUCT ID struct_body SEMI .
+
+    $               reduce using rule 9
+    ENUM            reduce using rule 9
+    TYPEDEF         reduce using rule 9
+    STRUCT          reduce using rule 9
+    UNION           reduce using rule 9
+    CONST           reduce using rule 9
+    PROGRAM         reduce using rule 9
+
+
+state 57
+
+    struct_body -> LBRACE struct_declaration . struct_declaration_list RBRACE
+    struct_declaration_list -> . struct_declaration_list struct_declaration
+    struct_declaration_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 58
+
+    struct_declaration -> declaration . SEMI
+
+    SEMI            shift and go to state 76
+
+
+state 59
+
+    version_def -> VERSION . ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+
+    ID              shift and go to state 77
+
+
+state 60
+
+    program_def -> PROGRAM ID LBRACE version_def . version_def_list RBRACE EQUALS NUMBER SEMI
+    version_def_list -> . version_def_list version_def
+    version_def_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 61
+
+    type_def -> UNION ID union_body SEMI .
+
+    $               reduce using rule 10
+    ENUM            reduce using rule 10
+    TYPEDEF         reduce using rule 10
+    STRUCT          reduce using rule 10
+    UNION           reduce using rule 10
+    CONST           reduce using rule 10
+    PROGRAM         reduce using rule 10
+
+
+state 62
+
+    union_body -> SWITCH LPAREN . declaration RPAREN LBRACE switch_body RBRACE
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 63
+
+    type_def -> ENUM ID enum_body SEMI .
+
+    $               reduce using rule 7
+    ENUM            reduce using rule 7
+    TYPEDEF         reduce using rule 7
+    STRUCT          reduce using rule 7
+    UNION           reduce using rule 7
+    CONST           reduce using rule 7
+    PROGRAM         reduce using rule 7
+
+
+state 64
+
+    enum_constant -> ID . EQUALS NUMBER
+
+    EQUALS          shift and go to state 81
+
+
+state 65
+
+    enum_body -> LBRACE enum_body_contents . RBRACE
+
+    RBRACE          shift and go to state 82
+
+
+state 66
+
+    enum_body_contents -> enum_constant . enum_constant_list
+    enum_constant_list -> . enum_constant_list COMMA enum_constant
+    enum_constant_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 67
+
+    constant_def -> CONST ID EQUALS NUMBER . SEMI
+
+    SEMI            shift and go to state 85
+
+
+state 68
+
+    declaration -> OPAQUE ID LT . optional_value GT
+    optional_value -> . value
+    optional_value -> . empty
+    value -> . NUMBER
+    value -> . ID
+    empty -> .
+
+  ! shift/reduce conflict for ID resolved as shift.
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! ID              [ reduce using rule 70 ]
+
+state 69
+
+    declaration -> OPAQUE ID LBRACKET . value RBRACKET
+    value -> . NUMBER
+    value -> . ID
+
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+
+
+state 70
+
+    declaration -> type_specifier ID LT . optional_value GT
+    optional_value -> . value
+    optional_value -> . empty
+    value -> . NUMBER
+    value -> . ID
+    empty -> .
+
+  ! shift/reduce conflict for ID resolved as shift.
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! ID              [ reduce using rule 70 ]
+
+state 71
+
+    declaration -> type_specifier ID LBRACKET . value RBRACKET
+    value -> . NUMBER
+    value -> . ID
+
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+
+
+state 72
+
+    declaration -> type_specifier STAR ID .
+
+    SEMI            reduce using rule 57
+    RPAREN          reduce using rule 57
+
+
+state 73
+
+    declaration -> STRING ID LT . optional_value GT
+    optional_value -> . value
+    optional_value -> . empty
+    value -> . NUMBER
+    value -> . ID
+    empty -> .
+
+  ! shift/reduce conflict for ID resolved as shift.
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! ID              [ reduce using rule 70 ]
+
+state 74
+
+    struct_declaration_list -> empty .
+
+    RBRACE          reduce using rule 26
+    UNSIGNED        reduce using rule 26
+    FLOAT           reduce using rule 26
+    DOUBLE          reduce using rule 26
+    QUADRUPLE       reduce using rule 26
+    BOOL            reduce using rule 26
+    ENUM            reduce using rule 26
+    STRUCT          reduce using rule 26
+    UNION           reduce using rule 26
+    ID              reduce using rule 26
+    OPAQUE          reduce using rule 26
+    STRING          reduce using rule 26
+    VOID            reduce using rule 26
+
+
+state 75
+
+    struct_body -> LBRACE struct_declaration struct_declaration_list . RBRACE
+    struct_declaration_list -> struct_declaration_list . struct_declaration
+    struct_declaration -> . declaration SEMI
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for RBRACE resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    RBRACE          shift and go to state 96
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! RBRACE          [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 76
+
+    struct_declaration -> declaration SEMI .
+
+    RBRACE          reduce using rule 24
+    UNSIGNED        reduce using rule 24
+    FLOAT           reduce using rule 24
+    DOUBLE          reduce using rule 24
+    QUADRUPLE       reduce using rule 24
+    BOOL            reduce using rule 24
+    ENUM            reduce using rule 24
+    STRUCT          reduce using rule 24
+    UNION           reduce using rule 24
+    ID              reduce using rule 24
+    OPAQUE          reduce using rule 24
+    STRING          reduce using rule 24
+    VOID            reduce using rule 24
+
+
+state 77
+
+    version_def -> VERSION ID . LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+
+    LBRACE          shift and go to state 97
+
+
+state 78
+
+    version_def_list -> empty .
+
+    RBRACE          reduce using rule 62
+    VERSION         reduce using rule 62
+
+
+state 79
+
+    program_def -> PROGRAM ID LBRACE version_def version_def_list . RBRACE EQUALS NUMBER SEMI
+    version_def_list -> version_def_list . version_def
+    version_def -> . VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+
+    RBRACE          shift and go to state 99
+    VERSION         shift and go to state 59
+
+
+state 80
+
+    union_body -> SWITCH LPAREN declaration . RPAREN LBRACE switch_body RBRACE
+
+    RPAREN          shift and go to state 100
+
+
+state 81
+
+    enum_constant -> ID EQUALS . NUMBER
+
+    NUMBER          shift and go to state 101
+
+
+state 82
+
+    enum_body -> LBRACE enum_body_contents RBRACE .
+
+    SEMI            reduce using rule 28
+    ID              reduce using rule 28
+    STAR            reduce using rule 28
+    RPAREN          reduce using rule 28
+    EQUALS          reduce using rule 28
+    NUMBER          reduce using rule 28
+    COMMA           reduce using rule 28
+
+
+state 83
+
+    enum_constant_list -> empty .
+
+    RBRACE          reduce using rule 32
+    COMMA           reduce using rule 32
+
+
+state 84
+
+    enum_body_contents -> enum_constant enum_constant_list .
+    enum_constant_list -> enum_constant_list . COMMA enum_constant
+
+    RBRACE          reduce using rule 29
+    COMMA           shift and go to state 102
+
+
+state 85
+
+    constant_def -> CONST ID EQUALS NUMBER SEMI .
+
+    $               reduce using rule 11
+    ENUM            reduce using rule 11
+    TYPEDEF         reduce using rule 11
+    STRUCT          reduce using rule 11
+    UNION           reduce using rule 11
+    CONST           reduce using rule 11
+    PROGRAM         reduce using rule 11
+
+
+state 86
+
+    optional_value -> value .
+
+    GT              reduce using rule 49
+
+
+state 87
+
+    value -> ID .
+
+    COLON           reduce using rule 48
+    RBRACKET        reduce using rule 48
+    GT              reduce using rule 48
+
+
+state 88
+
+    declaration -> OPAQUE ID LT optional_value . GT
+
+    GT              shift and go to state 103
+
+
+state 89
+
+    optional_value -> empty .
+
+    GT              reduce using rule 50
+
+
+state 90
+
+    value -> NUMBER .
+
+    COLON           reduce using rule 47
+    RBRACKET        reduce using rule 47
+    GT              reduce using rule 47
+
+
+state 91
+
+    declaration -> OPAQUE ID LBRACKET value . RBRACKET
+
+    RBRACKET        shift and go to state 104
+
+
+state 92
+
+    declaration -> type_specifier ID LT optional_value . GT
+
+    GT              shift and go to state 105
+
+
+state 93
+
+    declaration -> type_specifier ID LBRACKET value . RBRACKET
+
+    RBRACKET        shift and go to state 106
+
+
+state 94
+
+    declaration -> STRING ID LT optional_value . GT
+
+    GT              shift and go to state 107
+
+
+state 95
+
+    struct_declaration_list -> struct_declaration_list struct_declaration .
+
+    RBRACE          reduce using rule 25
+    UNSIGNED        reduce using rule 25
+    FLOAT           reduce using rule 25
+    DOUBLE          reduce using rule 25
+    QUADRUPLE       reduce using rule 25
+    BOOL            reduce using rule 25
+    ENUM            reduce using rule 25
+    STRUCT          reduce using rule 25
+    UNION           reduce using rule 25
+    ID              reduce using rule 25
+    OPAQUE          reduce using rule 25
+    STRING          reduce using rule 25
+    VOID            reduce using rule 25
+
+
+state 96
+
+    struct_body -> LBRACE struct_declaration struct_declaration_list RBRACE .
+
+    SEMI            reduce using rule 23
+    ID              reduce using rule 23
+    STAR            reduce using rule 23
+    RPAREN          reduce using rule 23
+    EQUALS          reduce using rule 23
+    NUMBER          reduce using rule 23
+    COMMA           reduce using rule 23
+
+
+state 97
+
+    version_def -> VERSION ID LBRACE . procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI
+    procedure_def -> . rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+    rpc_type_specifier -> . type_specifier
+    rpc_type_specifier -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    VOID            shift and go to state 111
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 98
+
+    version_def_list -> version_def_list version_def .
+
+    RBRACE          reduce using rule 61
+    VERSION         reduce using rule 61
+
+
+state 99
+
+    program_def -> PROGRAM ID LBRACE version_def version_def_list RBRACE . EQUALS NUMBER SEMI
+
+    EQUALS          shift and go to state 112
+
+
+state 100
+
+    union_body -> SWITCH LPAREN declaration RPAREN . LBRACE switch_body RBRACE
+
+    LBRACE          shift and go to state 113
+
+
+state 101
+
+    enum_constant -> ID EQUALS NUMBER .
+
+    RBRACE          reduce using rule 30
+    COMMA           reduce using rule 30
+
+
+state 102
+
+    enum_constant_list -> enum_constant_list COMMA . enum_constant
+    enum_constant -> . ID EQUALS NUMBER
+
+    ID              shift and go to state 64
+
+
+state 103
+
+    declaration -> OPAQUE ID LT optional_value GT .
+
+    SEMI            reduce using rule 55
+    RPAREN          reduce using rule 55
+
+
+state 104
+
+    declaration -> OPAQUE ID LBRACKET value RBRACKET .
+
+    SEMI            reduce using rule 54
+    RPAREN          reduce using rule 54
+
+
+state 105
+
+    declaration -> type_specifier ID LT optional_value GT .
+
+    SEMI            reduce using rule 53
+    RPAREN          reduce using rule 53
+
+
+state 106
+
+    declaration -> type_specifier ID LBRACKET value RBRACKET .
+
+    SEMI            reduce using rule 52
+    RPAREN          reduce using rule 52
+
+
+state 107
+
+    declaration -> STRING ID LT optional_value GT .
+
+    SEMI            reduce using rule 56
+    RPAREN          reduce using rule 56
+
+
+state 108
+
+    rpc_type_specifier -> type_specifier .
+
+    ID              reduce using rule 68
+    RPAREN          reduce using rule 68
+    EQUALS          reduce using rule 68
+    NUMBER          reduce using rule 68
+    SEMI            reduce using rule 68
+    COMMA           reduce using rule 68
+
+
+state 109
+
+    procedure_def -> rpc_type_specifier . ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+
+    ID              shift and go to state 115
+
+
+state 110
+
+    version_def -> VERSION ID LBRACE procedure_def . procedure_def_list RBRACE EQUALS NUMBER SEMI
+    procedure_def_list -> . procedure_def_list procedure_def
+    procedure_def_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 111
+
+    rpc_type_specifier -> VOID .
+
+    ID              reduce using rule 69
+    RPAREN          reduce using rule 69
+    EQUALS          reduce using rule 69
+    NUMBER          reduce using rule 69
+    SEMI            reduce using rule 69
+    COMMA           reduce using rule 69
+
+
+state 112
+
+    program_def -> PROGRAM ID LBRACE version_def version_def_list RBRACE EQUALS . NUMBER SEMI
+
+    NUMBER          shift and go to state 118
+
+
+state 113
+
+    union_body -> SWITCH LPAREN declaration RPAREN LBRACE . switch_body RBRACE
+    switch_body -> . case_declaration case_list default_declaration
+    case_declaration -> . case_value_colon decl_semi
+    case_value_colon -> . CASE value COLON
+
+    CASE            shift and go to state 122
+
+
+state 114
+
+    enum_constant_list -> enum_constant_list COMMA enum_constant .
+
+    RBRACE          reduce using rule 31
+    COMMA           reduce using rule 31
+
+
+state 115
+
+    procedure_def -> rpc_type_specifier ID . LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+
+    LPAREN          shift and go to state 123
+
+
+state 116
+
+    procedure_def_list -> empty .
+
+    RBRACE          reduce using rule 65
+    UNSIGNED        reduce using rule 65
+    FLOAT           reduce using rule 65
+    DOUBLE          reduce using rule 65
+    QUADRUPLE       reduce using rule 65
+    BOOL            reduce using rule 65
+    ENUM            reduce using rule 65
+    STRUCT          reduce using rule 65
+    UNION           reduce using rule 65
+    ID              reduce using rule 65
+    VOID            reduce using rule 65
+
+
+state 117
+
+    version_def -> VERSION ID LBRACE procedure_def procedure_def_list . RBRACE EQUALS NUMBER SEMI
+    procedure_def_list -> procedure_def_list . procedure_def
+    procedure_def -> . rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+    rpc_type_specifier -> . type_specifier
+    rpc_type_specifier -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for RBRACE resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    RBRACE          shift and go to state 125
+    VOID            shift and go to state 111
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    CASE            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! RBRACE          [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 118
+
+    program_def -> PROGRAM ID LBRACE version_def version_def_list RBRACE EQUALS NUMBER . SEMI
+
+    SEMI            shift and go to state 126
+
+
+state 119
+
+    union_body -> SWITCH LPAREN declaration RPAREN LBRACE switch_body . RBRACE
+
+    RBRACE          shift and go to state 127
+
+
+state 120
+
+    case_declaration -> case_value_colon . decl_semi
+    decl_semi -> . declaration SEMI
+    decl_semi -> . empty
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    empty -> .
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+
+state 121
+
+    switch_body -> case_declaration . case_list default_declaration
+    case_list -> . case_list case_declaration
+    case_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 122
+
+    case_value_colon -> CASE . value COLON
+    value -> . NUMBER
+    value -> . ID
+
+    NUMBER          shift and go to state 90
+    ID              shift and go to state 87
+
+
+state 123
+
+    procedure_def -> rpc_type_specifier ID LPAREN . rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI
+    rpc_type_specifier -> . type_specifier
+    rpc_type_specifier -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    VOID            shift and go to state 111
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 124
+
+    procedure_def_list -> procedure_def_list procedure_def .
+
+    RBRACE          reduce using rule 64
+    UNSIGNED        reduce using rule 64
+    FLOAT           reduce using rule 64
+    DOUBLE          reduce using rule 64
+    QUADRUPLE       reduce using rule 64
+    BOOL            reduce using rule 64
+    ENUM            reduce using rule 64
+    STRUCT          reduce using rule 64
+    UNION           reduce using rule 64
+    ID              reduce using rule 64
+    VOID            reduce using rule 64
+
+
+state 125
+
+    version_def -> VERSION ID LBRACE procedure_def procedure_def_list RBRACE . EQUALS NUMBER SEMI
+
+    EQUALS          shift and go to state 135
+
+
+state 126
+
+    program_def -> PROGRAM ID LBRACE version_def version_def_list RBRACE EQUALS NUMBER SEMI .
+
+    $               reduce using rule 59
+    ENUM            reduce using rule 59
+    TYPEDEF         reduce using rule 59
+    STRUCT          reduce using rule 59
+    UNION           reduce using rule 59
+    CONST           reduce using rule 59
+    PROGRAM         reduce using rule 59
+
+
+state 127
+
+    union_body -> SWITCH LPAREN declaration RPAREN LBRACE switch_body RBRACE .
+
+    SEMI            reduce using rule 12
+    ID              reduce using rule 12
+    STAR            reduce using rule 12
+    RPAREN          reduce using rule 12
+    EQUALS          reduce using rule 12
+    NUMBER          reduce using rule 12
+    COMMA           reduce using rule 12
+
+
+state 128
+
+    decl_semi -> empty .
+    unsigned_specifier -> empty .
+
+    DEFAULT         reduce using rule 17
+    RBRACE          reduce using rule 17
+    CASE            reduce using rule 17
+    INT             reduce using rule 46
+    HYPER           reduce using rule 46
+
+
+state 129
+
+    case_declaration -> case_value_colon decl_semi .
+
+    DEFAULT         reduce using rule 14
+    RBRACE          reduce using rule 14
+    CASE            reduce using rule 14
+
+
+state 130
+
+    decl_semi -> declaration . SEMI
+
+    SEMI            shift and go to state 136
+
+
+state 131
+
+    switch_body -> case_declaration case_list . default_declaration
+    case_list -> case_list . case_declaration
+    default_declaration -> . DEFAULT COLON decl_semi
+    default_declaration -> . empty
+    case_declaration -> . case_value_colon decl_semi
+    empty -> .
+    case_value_colon -> . CASE value COLON
+
+  ! shift/reduce conflict for DEFAULT resolved as shift.
+  ! shift/reduce conflict for CASE resolved as shift.
+    DEFAULT         shift and go to state 139
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    RBRACE          reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+    CASE            shift and go to state 122
+
+  ! DEFAULT         [ reduce using rule 70 ]
+  ! CASE            [ reduce using rule 70 ]
+
+state 132
+
+    case_list -> empty .
+
+    DEFAULT         reduce using rule 19
+    RBRACE          reduce using rule 19
+    CASE            reduce using rule 19
+
+
+state 133
+
+    case_value_colon -> CASE value . COLON
+
+    COLON           shift and go to state 141
+
+
+state 134
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier . type_specifier_list RPAREN EQUALS NUMBER SEMI
+    type_specifier_list -> . type_specifier_list COMMA rpc_type_specifier
+    type_specifier_list -> . empty
+    empty -> .
+
+    $               reduce using rule 70
+    ENUM            reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    STRUCT          reduce using rule 70
+    UNION           reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    UNSIGNED        reduce using rule 70
+    FLOAT           reduce using rule 70
+    DOUBLE          reduce using rule 70
+    QUADRUPLE       reduce using rule 70
+    BOOL            reduce using rule 70
+    ID              reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    VOID            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+
+state 135
+
+    version_def -> VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS . NUMBER SEMI
+
+    NUMBER          shift and go to state 144
+
+
+state 136
+
+    decl_semi -> declaration SEMI .
+
+    DEFAULT         reduce using rule 16
+    RBRACE          reduce using rule 16
+    CASE            reduce using rule 16
+
+
+state 137
+
+    default_declaration -> empty .
+
+    RBRACE          reduce using rule 21
+
+
+state 138
+
+    switch_body -> case_declaration case_list default_declaration .
+
+    RBRACE          reduce using rule 13
+
+
+state 139
+
+    default_declaration -> DEFAULT . COLON decl_semi
+
+    COLON           shift and go to state 145
+
+
+state 140
+
+    case_list -> case_list case_declaration .
+
+    DEFAULT         reduce using rule 18
+    RBRACE          reduce using rule 18
+    CASE            reduce using rule 18
+
+
+state 141
+
+    case_value_colon -> CASE value COLON .
+
+    UNSIGNED        reduce using rule 15
+    FLOAT           reduce using rule 15
+    DOUBLE          reduce using rule 15
+    QUADRUPLE       reduce using rule 15
+    BOOL            reduce using rule 15
+    ENUM            reduce using rule 15
+    STRUCT          reduce using rule 15
+    UNION           reduce using rule 15
+    ID              reduce using rule 15
+    OPAQUE          reduce using rule 15
+    STRING          reduce using rule 15
+    VOID            reduce using rule 15
+    DEFAULT         reduce using rule 15
+    RBRACE          reduce using rule 15
+    CASE            reduce using rule 15
+
+
+state 142
+
+    type_specifier_list -> empty .
+
+    RPAREN          reduce using rule 67
+    COMMA           reduce using rule 67
+
+
+state 143
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list . RPAREN EQUALS NUMBER SEMI
+    type_specifier_list -> type_specifier_list . COMMA rpc_type_specifier
+
+    RPAREN          shift and go to state 146
+    COMMA           shift and go to state 147
+
+
+state 144
+
+    version_def -> VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER . SEMI
+
+    SEMI            shift and go to state 148
+
+
+state 145
+
+    default_declaration -> DEFAULT COLON . decl_semi
+    decl_semi -> . declaration SEMI
+    decl_semi -> . empty
+    declaration -> . type_specifier ID
+    declaration -> . type_specifier ID LBRACKET value RBRACKET
+    declaration -> . type_specifier ID LT optional_value GT
+    declaration -> . OPAQUE ID LBRACKET value RBRACKET
+    declaration -> . OPAQUE ID LT optional_value GT
+    declaration -> . STRING ID LT optional_value GT
+    declaration -> . type_specifier STAR ID
+    declaration -> . VOID
+    empty -> .
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+
+  ! shift/reduce conflict for OPAQUE resolved as shift.
+  ! shift/reduce conflict for STRING resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+    OPAQUE          shift and go to state 26
+    STRING          shift and go to state 37
+    VOID            shift and go to state 35
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+
+  ! OPAQUE          [ shift and go to state 26 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! OPAQUE          [ reduce using rule 70 ]
+  ! STRING          [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+  ! UNSIGNED        [ shift and go to state 20 ]
+
+state 146
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN . EQUALS NUMBER SEMI
+
+    EQUALS          shift and go to state 150
+
+
+state 147
+
+    type_specifier_list -> type_specifier_list COMMA . rpc_type_specifier
+    rpc_type_specifier -> . type_specifier
+    rpc_type_specifier -> . VOID
+    type_specifier -> . unsigned_specifier INT
+    type_specifier -> . unsigned_specifier HYPER
+    type_specifier -> . FLOAT
+    type_specifier -> . DOUBLE
+    type_specifier -> . QUADRUPLE
+    type_specifier -> . BOOL
+    type_specifier -> . enum_type_spec
+    type_specifier -> . struct_type_spec
+    type_specifier -> . union_type_spec
+    type_specifier -> . ID
+    type_specifier -> . UNSIGNED
+    unsigned_specifier -> . UNSIGNED
+    unsigned_specifier -> . empty
+    enum_type_spec -> . ENUM enum_body
+    struct_type_spec -> . STRUCT struct_body
+    union_type_spec -> . UNION union_body
+    empty -> .
+
+  ! shift/reduce conflict for ENUM resolved as shift.
+  ! shift/reduce conflict for STRUCT resolved as shift.
+  ! shift/reduce conflict for UNION resolved as shift.
+  ! shift/reduce conflict for UNSIGNED resolved as shift.
+  ! shift/reduce conflict for FLOAT resolved as shift.
+  ! shift/reduce conflict for DOUBLE resolved as shift.
+  ! shift/reduce conflict for QUADRUPLE resolved as shift.
+  ! shift/reduce conflict for BOOL resolved as shift.
+  ! shift/reduce conflict for ID resolved as shift.
+  ! shift/reduce conflict for VOID resolved as shift.
+    VOID            shift and go to state 111
+    FLOAT           shift and go to state 23
+    DOUBLE          shift and go to state 25
+    QUADRUPLE       shift and go to state 33
+    BOOL            shift and go to state 21
+    ID              shift and go to state 29
+    UNSIGNED        shift and go to state 20
+    ENUM            shift and go to state 34
+    STRUCT          shift and go to state 27
+    UNION           shift and go to state 36
+    $               reduce using rule 70
+    TYPEDEF         reduce using rule 70
+    CONST           reduce using rule 70
+    PROGRAM         reduce using rule 70
+    DEFAULT         reduce using rule 70
+    RBRACE          reduce using rule 70
+    CASE            reduce using rule 70
+    OPAQUE          reduce using rule 70
+    STRING          reduce using rule 70
+    COMMA           reduce using rule 70
+    INT             reduce using rule 70
+    HYPER           reduce using rule 70
+    VERSION         reduce using rule 70
+    RPAREN          reduce using rule 70
+    GT              reduce using rule 70
+
+  ! UNSIGNED        [ shift and go to state 20 ]
+  ! ENUM            [ reduce using rule 70 ]
+  ! STRUCT          [ reduce using rule 70 ]
+  ! UNION           [ reduce using rule 70 ]
+  ! UNSIGNED        [ reduce using rule 70 ]
+  ! FLOAT           [ reduce using rule 70 ]
+  ! DOUBLE          [ reduce using rule 70 ]
+  ! QUADRUPLE       [ reduce using rule 70 ]
+  ! BOOL            [ reduce using rule 70 ]
+  ! ID              [ reduce using rule 70 ]
+  ! VOID            [ reduce using rule 70 ]
+
+state 148
+
+    version_def -> VERSION ID LBRACE procedure_def procedure_def_list RBRACE EQUALS NUMBER SEMI .
+
+    RBRACE          reduce using rule 60
+    EQUALS          reduce using rule 60
+    NUMBER          reduce using rule 60
+    SEMI            reduce using rule 60
+    VERSION         reduce using rule 60
+
+
+state 149
+
+    default_declaration -> DEFAULT COLON decl_semi .
+
+    RBRACE          reduce using rule 20
+
+
+state 150
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS . NUMBER SEMI
+
+    NUMBER          shift and go to state 152
+
+
+state 151
+
+    type_specifier_list -> type_specifier_list COMMA rpc_type_specifier .
+
+    RPAREN          reduce using rule 66
+    COMMA           reduce using rule 66
+
+
+state 152
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER . SEMI
+
+    SEMI            shift and go to state 153
+
+
+state 153
+
+    procedure_def -> rpc_type_specifier ID LPAREN rpc_type_specifier type_specifier_list RPAREN EQUALS NUMBER SEMI .
+
+    RBRACE          reduce using rule 63
+    EQUALS          reduce using rule 63
+    NUMBER          reduce using rule 63
+    SEMI            reduce using rule 63
+    UNSIGNED        reduce using rule 63
+    FLOAT           reduce using rule 63
+    DOUBLE          reduce using rule 63
+    QUADRUPLE       reduce using rule 63
+    BOOL            reduce using rule 63
+    ENUM            reduce using rule 63
+    STRUCT          reduce using rule 63
+    UNION           reduce using rule 63
+    ID              reduce using rule 63
+    VOID            reduce using rule 63
+

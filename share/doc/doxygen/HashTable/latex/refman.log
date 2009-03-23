@@ -1,0 +1,531 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./group__HashTableExportedFunctions.aux) (./test__cmchash_8c.aux
+) (./test__cmchash__bugdelete_8c.aux) (./test__configurable__hash_8c.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+)
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+ [1
+
+] [2
+
+]
+Chapter 1.
+(./modules.tex) [1
+
+] [2
+
+]
+Chapter 2.
+(./files.tex) [3] [4
+
+]
+Chapter 3.
+(./group__HashTableInternalFunctions.tex
+Underfull \hbox (badness 2261) in paragraph at lines 11--13
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 simple_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 13--15
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 double_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+) [6]
+\openout2 = `group__HashTableExportedFunctions.aux'.
+
+ (./group__HashTableExportedFunctions.tex
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+[7
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 91--91
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--122
+
+ []
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 141--141
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 146--146
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 148--148
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--169
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 174--174
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 176--176
+
+ []
+
+[9]
+Underfull \hbox (badness 10000) in paragraph at lines 195--195
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 200--200
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--205
+
+ []
+
+) [10]
+Chapter 4.
+(./HashTable_8c.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 5.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+Underfull \hbox (badness 2261) in paragraph at lines 26--28
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 simple_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 28--30
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 double_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+[11
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/Hash-Table/Hash-
+Table.c,v 1.41
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+[12]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [13])
+[14]
+\openout2 = `test__cmchash_8c.aux'.
+
+ (./test__cmchash_8c.tex
+Underfull \hbox (badness 2261) in paragraph at lines 34--36
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 simple_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 36--38
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 double_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+[15
+
+]) [16]
+\openout2 = `test__cmchash__bugdelete_8c.aux'.
+
+ (./test__cmchash__bugdelete_8c.tex
+Underfull \hbox (badness 2261) in paragraph at lines 34--36
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 simple_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 36--38
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 double_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+[17
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+\T1/cmr/m/n/10 Table_-Get-Stats(), Hash-Table_-Init(), Hash-Table_-Print(), Has
+h-Table_-Test_-And_-Set(),
+ []
+
+) [18]
+\openout2 = `test__configurable__hash_8c.aux'.
+
+ (./test__configurable__hash_8c.tex
+Underfull \hbox (badness 2261) in paragraph at lines 43--45
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 simple_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+
+Underfull \hbox (badness 1946) in paragraph at lines 45--47
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 double_-hash_-func \T1/cmr/m/n/1
+0 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, hash_-buf
+fer_-t
+ []
+
+[19
+
+
+] [20]) [21] [22] (./refman.ind [23
+
+
+] [24]) (./refman.aux
+(./group__HashTableExportedFunctions.aux) (./test__cmchash_8c.aux)
+(./test__cmchash__bugdelete_8c.aux) (./test__configurable__hash_8c.aux)) ) 
+Here is how much of TeX's memory you used:
+ 1688 strings out of 95847
+ 22961 string characters out of 1193874
+ 68176 words of memory out of 1000001
+ 4572 multiletter control sequences out of 10000+50000
+ 14253 words of font info for 29 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 29i,12n,43p,660b,488s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (28 pages, 48124 bytes).

@@ -1,0 +1,464 @@
+\section{commands\_\-FSAL.c File Reference}
+\label{commands__FSAL_8c}\index{commands_FSAL.c@{commands\_\-FSAL.c}}
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$sys/time.h$>$}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$ctype.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pwd.h$>$}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}err\_\-ghost\_\-fs.h\char`\"{}}\par
+{\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
+{\tt \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}commands.h\char`\"{}}\par
+{\tt \#include \char`\"{}Getopt.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf cmdfsal\_\-thr\_\-info\_\-\_\-}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf READDIR\_\-SIZE}\ FSAL\_\-READDIR\_\-SIZE
+\item 
+\#define {\bf MAX\_\-GRPS}\ 128
+\item 
+\#define {\bf MAX\_\-CAT\_\-SIZE}\ (1024$\ast$1024)
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf cmdfsal\_\-thr\_\-info\_\-\_\-} {\bf cmdfsal\_\-thr\_\-info\_\-t}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf cmdfsal\_\-thr\_\-info\_\-t} $\ast$ {\bf Get\-FSALCmd\-Context} ()
+\item 
+int {\bf Init\_\-Thread\_\-Context} (FILE $\ast$output, {\bf cmdfsal\_\-thr\_\-info\_\-t} $\ast$context, int flag\_\-v)
+\item 
+void {\bf fsal\_\-layer\_\-Set\-Log\-Level} (int log\_\-lvl)
+\item 
+int {\bf fsal\_\-init} (char $\ast$filename, int flag\_\-v, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-init\_\-fs} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-pwd} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf solvepath} (char $\ast$io\_\-global\_\-path, int size\_\-global\_\-path, char $\ast$i\_\-spec\_\-path, fsal\_\-handle\_\-t i\_\-current\_\-handle, fsal\_\-handle\_\-t $\ast$new\_\-handle, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-cd} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-stat} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-lsxattrs} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-getxattr} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-ls} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-callstat} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-su} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-unlink} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-mkdir} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-rename} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-ln} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-hardlink} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-create} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-setattr} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-access} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-truncate} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-open\_\-byname} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-open} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-open\_\-byfileid} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-read} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-write} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-close} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-close\_\-byfileid} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-cat} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-rcp} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-cross} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf fn\_\-fsal\_\-handlecmp} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{commands_FSAL.c@{commands\_\-FSAL.c}!MAX_CAT_SIZE@{MAX\_\-CAT\_\-SIZE}}
+\index{MAX_CAT_SIZE@{MAX\_\-CAT\_\-SIZE}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-CAT\_\-SIZE\ (1024$\ast$1024)}\label{commands__FSAL_8c_a2}
+
+
+\index{commands_FSAL.c@{commands\_\-FSAL.c}!MAX_GRPS@{MAX\_\-GRPS}}
+\index{MAX_GRPS@{MAX\_\-GRPS}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-GRPS\ 128}\label{commands__FSAL_8c_a1}
+
+
+\index{commands_FSAL.c@{commands\_\-FSAL.c}!READDIR_SIZE@{READDIR\_\-SIZE}}
+\index{READDIR_SIZE@{READDIR\_\-SIZE}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define READDIR\_\-SIZE\ FSAL\_\-READDIR\_\-SIZE}\label{commands__FSAL_8c_a0}
+
+
+
+
+Referenced by fn\_\-fsal\_\-ls().
+
+\subsection{Typedef Documentation}
+\index{commands_FSAL.c@{commands\_\-FSAL.c}!cmdfsal_thr_info_t@{cmdfsal\_\-thr\_\-info\_\-t}}
+\index{cmdfsal_thr_info_t@{cmdfsal\_\-thr\_\-info\_\-t}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdfsal\_\-thr\_\-info\_\-\_\-}  {\bf cmdfsal\_\-thr\_\-info\_\-t}}\label{commands__FSAL_8c_a8}
+
+
+
+
+Referenced by fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-cd(), fn\_\-fsal\_\-close(), fn\_\-fsal\_\-close\_\-byfileid(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-cross(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-handlecmp(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-pwd(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-su(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fsal\_\-init(), Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), and solvepath().
+
+\subsection{Function Documentation}
+\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_access@{fn\_\-fsal\_\-access}}
+\index{fn_fsal_access@{fn\_\-fsal\_\-access}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-access (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a34}
+
+
+perform an access command. syntax: access [-A] [F][R][W][X] $<$file$>$ example: access toto FRX 
+
+Definition at line 3125 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-attributes(), print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_callstat@{fn\_\-fsal\_\-callstat}}
+\index{fn_fsal_callstat@{fn\_\-fsal\_\-callstat}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-callstat (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a25}
+
+
+display statistics about FSAL calls. 
+
+Definition at line 1810 of file commands\_\-FSAL.c.\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_cat@{fn\_\-fsal\_\-cat}}
+\index{fn_fsal_cat@{fn\_\-fsal\_\-cat}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-cat (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a43}
+
+
+Command that prints a file to screen. cat [-f] $<$path$>$ 
+
+Definition at line 5103 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_cd@{fn\_\-fsal\_\-cd}}
+\index{fn_fsal_cd@{fn\_\-fsal\_\-cd}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-cd (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a20}
+
+
+change current path 
+
+Definition at line 919 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_close@{fn\_\-fsal\_\-close}}
+\index{fn_fsal_close@{fn\_\-fsal\_\-close}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-close (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a41}
+
+
+Command that closes a file. close 
+
+Definition at line 4974 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-fd, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, cmdfsal\_\-thr\_\-info\_\-\_\-::opened, and print\_\-fsal\_\-status().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_close_byfileid@{fn\_\-fsal\_\-close\_\-byfileid}}
+\index{fn_fsal_close_byfileid@{fn\_\-fsal\_\-close\_\-byfileid}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-close\_\-byfileid (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a42}
+
+
+Command that closes a file. close 
+
+Definition at line 5038 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-fd, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, cmdfsal\_\-thr\_\-info\_\-\_\-::opened, and print\_\-fsal\_\-status().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_create@{fn\_\-fsal\_\-create}}
+\index{fn_fsal_create@{fn\_\-fsal\_\-create}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-create (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a32}
+
+
+proceed an create command. 
+
+Definition at line 2758 of file commands\_\-FSAL.c.
+
+References atomode(), cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_cross@{fn\_\-fsal\_\-cross}}
+\index{fn_fsal_cross@{fn\_\-fsal\_\-cross}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-cross (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a45}
+
+
+change current path 
+
+Definition at line 5472 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_getxattr@{fn\_\-fsal\_\-getxattr}}
+\index{fn_fsal_getxattr@{fn\_\-fsal\_\-getxattr}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-getxattr (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a23}
+
+
+display an extended attribute. 
+
+Definition at line 1280 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_handlecmp@{fn\_\-fsal\_\-handlecmp}}
+\index{fn_fsal_handlecmp@{fn\_\-fsal\_\-handlecmp}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-handlecmp (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a46}
+
+
+compare 2 handles. 
+
+Definition at line 5564 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_hardlink@{fn\_\-fsal\_\-hardlink}}
+\index{fn_fsal_hardlink@{fn\_\-fsal\_\-hardlink}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-hardlink (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a31}
+
+
+proceed a hardlink command. 
+
+Definition at line 2598 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_init_fs@{fn\_\-fsal\_\-init\_\-fs}}
+\index{fn_fsal_init_fs@{fn\_\-fsal\_\-init\_\-fs}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-init\_\-fs (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a17}
+
+
+proceed an init\_\-fs command. 
+
+Definition at line 639 of file commands\_\-FSAL.c.
+
+References fsal\_\-init(), Getopt(), Optind, and Optopt.\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_ln@{fn\_\-fsal\_\-ln}}
+\index{fn_fsal_ln@{fn\_\-fsal\_\-ln}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-ln (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a30}
+
+
+proceed an ln command. 
+
+Definition at line 2430 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_ls@{fn\_\-fsal\_\-ls}}
+\index{fn_fsal_ls@{fn\_\-fsal\_\-ls}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-ls (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a24}
+
+
+proceed an ls command. 
+
+Definition at line 1522 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-attributes(), print\_\-fsal\_\-status(), print\_\-item\_\-line(), READDIR\_\-SIZE, and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_lsxattrs@{fn\_\-fsal\_\-lsxattrs}}
+\index{fn_fsal_lsxattrs@{fn\_\-fsal\_\-lsxattrs}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-lsxattrs (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a22}
+
+
+list extended attributes. 
+
+Definition at line 1146 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_mkdir@{fn\_\-fsal\_\-mkdir}}
+\index{fn_fsal_mkdir@{fn\_\-fsal\_\-mkdir}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-mkdir (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a28}
+
+
+proceed an mkdir command. 
+
+Definition at line 2086 of file commands\_\-FSAL.c.
+
+References atomode(), cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_open@{fn\_\-fsal\_\-open}}
+\index{fn_fsal_open@{fn\_\-fsal\_\-open}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-open (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a37}
+
+
+Command that opens a file using specific flags. open $<$path$>$ [ rwat ] 
+
+Definition at line 3693 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-fd, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, cmdfsal\_\-thr\_\-info\_\-\_\-::opened, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_open_byfileid@{fn\_\-fsal\_\-open\_\-byfileid}}
+\index{fn_fsal_open_byfileid@{fn\_\-fsal\_\-open\_\-byfileid}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-open\_\-byfileid (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a38}
+
+
+Command that opens a file using specific flags. open $<$path$>$ [ rwat ] 
+
+Definition at line 3884 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-fd, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, cmdfsal\_\-thr\_\-info\_\-\_\-::opened, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_open_byname@{fn\_\-fsal\_\-open\_\-byname}}
+\index{fn_fsal_open_byname@{fn\_\-fsal\_\-open\_\-byname}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-open\_\-byname (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a36}
+
+
+Command that opens a file using specific flags, but using FSAL\_\-open\_\-by\_\-name. open $<$path$>$ [ rwat ] 
+
+Definition at line 3498 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-fd, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, cmdfsal\_\-thr\_\-info\_\-\_\-::opened, Optind, Optopt, and print\_\-fsal\_\-status().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_pwd@{fn\_\-fsal\_\-pwd}}
+\index{fn_fsal_pwd@{fn\_\-fsal\_\-pwd}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-pwd (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a18}
+
+
+prints current path 
+
+Definition at line 713 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), and cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok.\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_rcp@{fn\_\-fsal\_\-rcp}}
+\index{fn_fsal_rcp@{fn\_\-fsal\_\-rcp}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-rcp (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a44}
+
+
+Command that copy a file from/to the local filesystem. rcp [-h] -r$|$-w $<$fsal\_\-path$>$ $<$local\_\-path$>$ 
+
+Definition at line 5269 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_read@{fn\_\-fsal\_\-read}}
+\index{fn_fsal_read@{fn\_\-fsal\_\-read}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-read (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a39}
+
+
+Command that reads data from an opened file. 
+
+Definition at line 4081 of file commands\_\-FSAL.c.
+
+References ato64(), cmdfsal\_\-thr\_\-info\_\-t, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), NULL, Optarg, Optind, Optopt, print\_\-fsal\_\-status(), print\_\-timeval, and time\_\-diff().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_rename@{fn\_\-fsal\_\-rename}}
+\index{fn_fsal_rename@{fn\_\-fsal\_\-rename}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-rename (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a29}
+
+
+proceed a rename command. 
+
+Definition at line 2255 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_setattr@{fn\_\-fsal\_\-setattr}}
+\index{fn_fsal_setattr@{fn\_\-fsal\_\-setattr}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-setattr (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a33}
+
+
+change file attributes. 
+
+Definition at line 2939 of file commands\_\-FSAL.c.
+
+References ATTR\_\-32, ATTR\_\-64, shell\_\-attribute\_\-\_\-::attr\_\-name, ATTR\_\-OCTAL, ATTR\_\-TIME, shell\_\-attribute\_\-\_\-::attr\_\-type, cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, Mk\-FSALSet\-Attr\-Struct(), NULL, Optind, Optopt, print\_\-fsal\_\-attributes(), print\_\-fsal\_\-status(), shell\_\-attribute\_\-t, and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_stat@{fn\_\-fsal\_\-stat}}
+\index{fn_fsal_stat@{fn\_\-fsal\_\-stat}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-stat (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a21}
+
+
+proceed a stat command. 
+
+Definition at line 1019 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, Optind, Optopt, print\_\-fsal\_\-attrib\_\-mask(), print\_\-fsal\_\-attributes(), print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_su@{fn\_\-fsal\_\-su}}
+\index{fn_fsal_su@{fn\_\-fsal\_\-su}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-su (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a26}
+
+
+change thread contexte. 
+
+Definition at line 1854 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::exp\_\-context, Get\-FSALCmd\-Context(), getugroups(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, MAX\_\-GRPS, my\_\-atoi(), and print\_\-fsal\_\-status().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_truncate@{fn\_\-fsal\_\-truncate}}
+\index{fn_fsal_truncate@{fn\_\-fsal\_\-truncate}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-truncate (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a35}
+
+
+proceed a truncate command. 
+
+Definition at line 3370 of file commands\_\-FSAL.c.
+
+References ato64(), cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_unlink@{fn\_\-fsal\_\-unlink}}
+\index{fn_fsal_unlink@{fn\_\-fsal\_\-unlink}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-unlink (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a27}
+
+
+proceed an unlink command. 
+
+Definition at line 1960 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, Optind, Optopt, print\_\-fsal\_\-status(), solvepath(), and split\_\-path().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fn_fsal_write@{fn\_\-fsal\_\-write}}
+\index{fn_fsal_write@{fn\_\-fsal\_\-write}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fn\_\-fsal\_\-write (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a40}
+
+
+Command that writes data to an opened file.
+
+Usage: write [-h][-v] [ -s $<$seek\_\-type$>$,$<$offset$>$ ] [-N $<$nb\_\-times$>$] -A $<$ascii\_\-string$>$ write [-h][-v] [ -s $<$seek\_\-type$>$,$<$offset$>$ ] [-N $<$nb\_\-times$>$] -X $<$hexa\_\-data$>$ Where: $<$seek\_\-type$>$ can be: SET, CUR, END $<$offset$>$ is a signed number of bytes. $<$nb\_\-times$>$ is the number of times we write the expression into the file.
+
+$<$ascii\_\-string$>$ is a string to be written to file. Note that the null terminating character of is also written to file. or $<$hexa\_\-data$>$ is a data represented in hexadecimal format, that is to be written to file.
+
+Examples:
+
+For writing 10 times the null terminated string \char`\"{}hello world\char`\"{} at the end of the file: write -s END,0 -N 10 -A \char`\"{}hello world\char`\"{}
+
+For overwriting the beginning of the file with the pattern 0x\-A1267AEF31254ADE repeated twice: write -s SET,0 -N 2 -X \char`\"{}A1267AEF31254ADE\char`\"{} 
+
+Definition at line 4525 of file commands\_\-FSAL.c.
+
+References ato64(), cmdfsal\_\-thr\_\-info\_\-t, Get\-FSALCmd\-Context(), Getopt(), Init\_\-Thread\_\-Context(), NULL, Optarg, Optind, Optopt, print\_\-fsal\_\-status(), print\_\-timeval, and time\_\-diff().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fsal_init@{fsal\_\-init}}
+\index{fsal_init@{fsal\_\-init}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int fsal\_\-init (char $\ast$ {\em filename}, int {\em flag\_\-v}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a16}
+
+
+
+
+Definition at line 507 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, and print\_\-fsal\_\-status().
+
+Referenced by fn\_\-fsal\_\-init\_\-fs().\index{commands_FSAL.c@{commands\_\-FSAL.c}!fsal_layer_SetLogLevel@{fsal\_\-layer\_\-SetLogLevel}}
+\index{fsal_layer_SetLogLevel@{fsal\_\-layer\_\-SetLogLevel}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-layer\_\-Set\-Log\-Level (int {\em log\_\-lvl})}\label{commands__FSAL_8c_a14}
+
+
+
+
+Definition at line 473 of file commands\_\-FSAL.c.\index{commands_FSAL.c@{commands\_\-FSAL.c}!GetFSALCmdContext@{GetFSALCmdContext}}
+\index{GetFSALCmdContext@{GetFSALCmdContext}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf cmdfsal\_\-thr\_\-info\_\-t}$\ast$ Get\-FSALCmd\-Context ()}\label{commands__FSAL_8c_a12}
+
+
+Get\-FSALCmd\-Context : manages pthread\_\-keys. 
+
+Definition at line 347 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, and cmdfsal\_\-thr\_\-info\_\-\_\-::opened.
+
+Referenced by fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-cd(), fn\_\-fsal\_\-close(), fn\_\-fsal\_\-close\_\-byfileid(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-cross(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-handlecmp(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-pwd(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-su(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fsal\_\-init(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!Init_Thread_Context@{Init\_\-Thread\_\-Context}}
+\index{Init_Thread_Context@{Init\_\-Thread\_\-Context}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Init\_\-Thread\_\-Context (FILE $\ast$ {\em output}, {\bf cmdfsal\_\-thr\_\-info\_\-t} $\ast$ {\em context}, int {\em flag\_\-v})}\label{commands__FSAL_8c_a13}
+
+
+Initialize thread specific FSAL environment. 
+
+Definition at line 395 of file commands\_\-FSAL.c.
+
+References cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-dir, cmdfsal\_\-thr\_\-info\_\-\_\-::current\_\-path, cmdfsal\_\-thr\_\-info\_\-\_\-::exp\_\-context, cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, and print\_\-fsal\_\-status().
+
+Referenced by fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-cd(), fn\_\-fsal\_\-close(), fn\_\-fsal\_\-close\_\-byfileid(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-cross(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-handlecmp(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-pwd(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-su(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fsal\_\-init(), and solvepath().\index{commands_FSAL.c@{commands\_\-FSAL.c}!solvepath@{solvepath}}
+\index{solvepath@{solvepath}!commands_FSAL.c@{commands\_\-FSAL.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int solvepath (char $\ast$ {\em io\_\-global\_\-path}, int {\em size\_\-global\_\-path}, char $\ast$ {\em i\_\-spec\_\-path}, fsal\_\-handle\_\-t {\em i\_\-current\_\-handle}, fsal\_\-handle\_\-t $\ast$ {\em new\_\-handle}, FILE $\ast$ {\em output})}\label{commands__FSAL_8c_a19}
+
+
+
+
+Definition at line 757 of file commands\_\-FSAL.c.
+
+References clean\_\-path(), cmdfsal\_\-thr\_\-info\_\-t, cmdfsal\_\-thr\_\-info\_\-\_\-::context, Get\-FSALCmd\-Context(), Init\_\-Thread\_\-Context(), cmdfsal\_\-thr\_\-info\_\-\_\-::is\_\-thread\_\-ok, NULL, and print\_\-fsal\_\-status().
+
+Referenced by fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-cd(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-cross(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-handlecmp(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-truncate(), and fn\_\-fsal\_\-unlink().

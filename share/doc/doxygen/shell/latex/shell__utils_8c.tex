@@ -1,0 +1,132 @@
+\section{shell\_\-utils.c File Reference}
+\label{shell__utils_8c}\index{shell_utils.c@{shell\_\-utils.c}}
+Miscellaneous build-in commands for shell. 
+
+{\tt \#include \char`\"{}cmd\_\-tools.h\char`\"{}}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include \char`\"{}shell\_\-utils.h\char`\"{}}\par
+{\tt \#include \char`\"{}Getopt.h\char`\"{}}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include $<$malloc.h$>$}\par
+{\tt \#include $<$sys/time.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf util\_\-timer} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-sleep} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-shell} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-meminfo} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-cmp} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-diff} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-wc} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf util\_\-chomp} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Miscellaneous build-in commands for shell. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/01/17 14:56:22 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.8 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Log]{\bf shell\_\-utils.c}{\rm (p.\,\pageref{shell__utils_8c})},v \end{Desc}
+Revision 1.8 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.
+
+Revision 1.7 2005/11/28 17:03:00 deniel Added Ce\-CILL headers
+
+Revision 1.6 2005/10/10 12:39:08 leibovic Using mnt/nfs free functions.
+
+Revision 1.5 2005/08/02 09:40:28 leibovic stream error in diff.
+
+Revision 1.4 2005/05/11 15:53:37 leibovic Adding time function.
+
+Revision 1.3 2005/05/11 07:25:45 leibovic adding chomp util.
+
+Revision 1.2 2005/05/09 14:54:43 leibovic Adding eq and ne.
+
+Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+
+Definition in file {\bf shell\_\-utils.c}.
+
+\subsection{Function Documentation}
+\index{shell_utils.c@{shell\_\-utils.c}!util_chomp@{util\_\-chomp}}
+\index{util_chomp@{util\_\-chomp}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-chomp (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a12}
+
+
+
+
+Definition at line 736 of file shell\_\-utils.c.\index{shell_utils.c@{shell\_\-utils.c}!util_cmp@{util\_\-cmp}}
+\index{util_cmp@{util\_\-cmp}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-cmp (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a7}
+
+
+String utils 
+
+Definition at line 419 of file shell\_\-utils.c.
+
+References Getopt(), my\_\-atoi(), Opterr, Optind, and Optopt.\index{shell_utils.c@{shell\_\-utils.c}!util_diff@{util\_\-diff}}
+\index{util_diff@{util\_\-diff}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-diff (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a9}
+
+
+
+
+Definition at line 674 of file shell\_\-utils.c.\index{shell_utils.c@{shell\_\-utils.c}!util_meminfo@{util\_\-meminfo}}
+\index{util_meminfo@{util\_\-meminfo}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-meminfo (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a6}
+
+
+
+
+Definition at line 344 of file shell\_\-utils.c.\index{shell_utils.c@{shell\_\-utils.c}!util_shell@{util\_\-shell}}
+\index{util_shell@{util\_\-shell}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-shell (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a5}
+
+
+
+
+Definition at line 291 of file shell\_\-utils.c.\index{shell_utils.c@{shell\_\-utils.c}!util_sleep@{util\_\-sleep}}
+\index{util_sleep@{util\_\-sleep}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-sleep (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a4}
+
+
+System utils. 
+
+Definition at line 251 of file shell\_\-utils.c.
+
+References my\_\-atoi().\index{shell_utils.c@{shell\_\-utils.c}!util_timer@{util\_\-timer}}
+\index{util_timer@{util\_\-timer}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-timer (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a3}
+
+
+Timer management. 
+
+Definition at line 146 of file shell\_\-utils.c.
+
+References NULL, print\_\-timeval, and time\_\-diff().\index{shell_utils.c@{shell\_\-utils.c}!util_wc@{util\_\-wc}}
+\index{util_wc@{util\_\-wc}!shell_utils.c@{shell\_\-utils.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int util\_\-wc (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell__utils_8c_a11}
+
+
+
+
+Definition at line 716 of file shell\_\-utils.c.

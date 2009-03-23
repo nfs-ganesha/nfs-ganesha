@@ -1,0 +1,214 @@
+\section{Hash\-Table\-Exported\-Functions}
+\label{group__HashTableExportedFunctions}\index{HashTableExportedFunctions@{HashTableExportedFunctions}}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf Hash\-Table\_\-Init} (hash\_\-parameter\_\-t hparam)
+\item 
+int {\bf Hash\-Table\_\-Test\_\-And\_\-Set} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval, hashtable\_\-set\_\-how\_\-t how)
+\item 
+int {\bf Hash\-Table\_\-Get} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval)
+\item 
+int {\bf Hash\-Table\_\-Del} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffdata)
+\item 
+void {\bf Hash\-Table\_\-Get\-Stats} (hash\_\-table\_\-t $\ast$ht, hash\_\-stat\_\-t $\ast$hstat)
+\item 
+unsigned int {\bf Hash\-Table\_\-Get\-Size} (hash\_\-table\_\-t $\ast$ht)
+\item 
+void {\bf Hash\-Table\_\-Print} (hash\_\-table\_\-t $\ast$ht)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_Del@{HashTable\_\-Del}}
+\index{HashTable_Del@{HashTable\_\-Del}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Hash\-Table\_\-Del (hash\_\-table\_\-t $\ast$ {\em ht}, hash\_\-buffer\_\-t $\ast$ {\em buffkey}, hash\_\-buffer\_\-t $\ast$ {\em p\_\-usedbuffkey}, hash\_\-buffer\_\-t $\ast$ {\em p\_\-usedbuffdata})}\label{group__HashTableExportedFunctions_ga3}
+
+
+Hash\-Table\_\-Del: Remove a (key,val) couple from the hashtable.
+
+Remove a (key,val) couple from the hashtable. The parameter buffkey contains the key which describes the object to be removed from the hash table.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used. \item[{\em buffkey}]a pointeur to an object of type hash\_\-buffer\_\-t which describe the key location in memory. \item[{\em pusedbuffkeydata}]the key data buffer that was associated with this entry. Not considered if equal to NULL.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]HASHTABLE\_\-SUCCESS if successfull\par
+. 
+
+HASHTABLE\_\-ERROR\_\-NO\_\-SUCH\_\-KEY is the key was not found.\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} \end{Desc}
+
+
+Definition at line 816 of file Hash\-Table.c.
+
+Referenced by do\_\-del(), and main().\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_Get@{HashTable\_\-Get}}
+\index{HashTable_Get@{HashTable\_\-Get}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Hash\-Table\_\-Get (hash\_\-table\_\-t $\ast$ {\em ht}, hash\_\-buffer\_\-t $\ast$ {\em buffkey}, hash\_\-buffer\_\-t $\ast$ {\em buffval})}\label{group__HashTableExportedFunctions_ga2}
+
+
+Hash\-Table\_\-Get: Try to retrieve the value associated with a key.
+
+Try to retrieve the value associated with a key. The structure buffval will point to the object found if successfull.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used. \item[{\em buffkey}]a pointeur to an object of type hash\_\-buffer\_\-t which describe the key location in memory. \item[{\em buffval}]a pointeur to an object of type hash\_\-buffer\_\-t which describe the value location in memory.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]HASHTABLE\_\-SUCCESS if successfull\par
+. 
+
+HASHTABLE\_\-ERROR\_\-NO\_\-SUCH\_\-KEY is the key was not found.\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Del}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 754 of file Hash\-Table.c.
+
+Referenced by do\_\-get(), and main().\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_GetSize@{HashTable\_\-GetSize}}
+\index{HashTable_GetSize@{HashTable\_\-GetSize}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int Hash\-Table\_\-Get\-Size (hash\_\-table\_\-t $\ast$ {\em ht})}\label{group__HashTableExportedFunctions_ga5}
+
+
+Hash\-Table\_\-Get\-Size: Gets the number of entries in the hashtable.
+
+Gets the number of entries in the hashtable.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the number of found entries\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} \end{Desc}
+
+
+Definition at line 986 of file Hash\-Table.c.\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_GetStats@{HashTable\_\-GetStats}}
+\index{HashTable_GetStats@{HashTable\_\-GetStats}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Hash\-Table\_\-Get\-Stats (hash\_\-table\_\-t $\ast$ {\em ht}, hash\_\-stat\_\-t $\ast$ {\em hstat})}\label{group__HashTableExportedFunctions_ga4}
+
+
+Hash\-Table\_\-Get\-Stats: Computes statistiques on the hashtable
+
+Print information about the hashtable (mostly for debugging purpose).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used. \item[{\em hstat}]pointer to the result\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]none (returns void).\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} \end{Desc}
+
+
+Definition at line 908 of file Hash\-Table.c.
+
+Referenced by main().\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_Init@{HashTable\_\-Init}}
+\index{HashTable_Init@{HashTable\_\-Init}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ Hash\-Table\_\-Init (hash\_\-parameter\_\-t {\em hparam})}\label{group__HashTableExportedFunctions_ga0}
+
+
+Hash\-Table\_\-Init: Init the Hash Table.
+
+Init the Hash Table .
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em hparam}]A structure of type hash\_\-parameter\_\-t which contains the values used to init the hash table.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL if init failed, the pointeur to the hashtable otherwise.\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} 
+
+Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Del}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 515 of file Hash\-Table.c.
+
+References Mem\_\-Alloc.
+
+Referenced by main().\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_Print@{HashTable\_\-Print}}
+\index{HashTable_Print@{HashTable\_\-Print}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Hash\-Table\_\-Print (hash\_\-table\_\-t $\ast$ {\em ht})}\label{group__HashTableExportedFunctions_ga6}
+
+
+Hash\-Table\_\-Print: Print information about the hashtable (mostly for debugging purpose).
+
+Print information about the hashtable (mostly for debugging purpose).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]none (returns void).\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Set 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} \end{Desc}
+
+
+Definition at line 1015 of file Hash\-Table.c.
+
+Referenced by main().\index{HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}!HashTable_Test_And_Set@{HashTable\_\-Test\_\-And\_\-Set}}
+\index{HashTable_Test_And_Set@{HashTable\_\-Test\_\-And\_\-Set}!HashTableExportedFunctions@{Hash\-Table\-Exported\-Functions}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Hash\-Table\_\-Test\_\-And\_\-Set (hash\_\-table\_\-t $\ast$ {\em ht}, hash\_\-buffer\_\-t $\ast$ {\em buffkey}, hash\_\-buffer\_\-t $\ast$ {\em buffval}, hashtable\_\-set\_\-how\_\-t {\em how})}\label{group__HashTableExportedFunctions_ga1}
+
+
+Hash\-Table\_\-Test\_\-And\_\-Set: set a pair (key,value) into the Hash Table.
+
+Set a (key,val) couple in the hashtable .
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}]the hashtable to be used. \item[{\em buffkey}]a pointeur to an object of type hash\_\-buffer\_\-t which describe the key location in memory. \item[{\em buffval}]a pointeur to an object of type hash\_\-buffer\_\-t which describe the value location in memory. \item[{\em how}]a switch to tell if the entry is to be tested or overwritten or not\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]HASHTABLE\_\-SUCCESS if successfull\par
+. 
+
+HASHTABLE\_\-INSERT\_\-MALLOC\_\-ERROR if an error occured during the insertion process.\end{Desc}
+\begin{Desc}
+\item[See also:]{\bf Hash\-Table\_\-Get}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga2})} 
+
+{\bf Hash\-Table\_\-Init}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga0})} 
+
+{\bf Hash\-Table\_\-Del}{\rm (p.\,\pageref{group__HashTableExportedFunctions_ga3})} \end{Desc}
+
+
+Definition at line 617 of file Hash\-Table.c.
+
+Referenced by do\_\-new(), do\_\-test(), and main().

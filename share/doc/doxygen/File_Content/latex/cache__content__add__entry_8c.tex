@@ -1,0 +1,72 @@
+\section{cache\_\-content\_\-add\_\-entry.c File Reference}
+\label{cache__content__add__entry_8c}\index{cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}}
+Management of the file content cache: adding a new entry. 
+
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-content\_\-entry\_\-t $\ast$ {\bf cache\_\-content\_\-new\_\-entry} (cache\_\-entry\_\-t $\ast$pentry\_\-inode, cache\_\-content\_\-spec\_\-data\_\-t $\ast$pspecdata, cache\_\-content\_\-client\_\-t $\ast$pclient, cache\_\-content\_\-add\_\-behaviour\_\-t how, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Management of the file content cache: adding a new entry. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:32 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.12 \end{Desc}
+\end{Desc}
+{\bf cache\_\-content\_\-add\_\-entry.c}{\rm (p.\,\pageref{cache__content__add__entry_8c})} : Management of the file content cache: adding a new entry.
+
+Definition in file {\bf cache\_\-content\_\-add\_\-entry.c}.
+
+\subsection{Function Documentation}
+\index{cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}!cache_content_new_entry@{cache\_\-content\_\-new\_\-entry}}
+\index{cache_content_new_entry@{cache\_\-content\_\-new\_\-entry}!cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-entry\_\-t$\ast$ cache\_\-content\_\-new\_\-entry (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, cache\_\-content\_\-spec\_\-data\_\-t $\ast$ {\em pspecdata}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-add\_\-behaviour\_\-t {\em how}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__add__entry_8c_a0}
+
+
+cache\_\-content\_\-new\_\-entry: adds an entry to the file content cache.
+
+Adds an entry to the file content cache. This routine should be called only from the cache\_\-inode layer.
+
+No lock management is done in this layer: the related pentry in the cache inode layer is locked and will prevent from concurent accesses.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry\_\-inode}][IN] entry in cache\_\-inode layer for this file. \item[{\em pspecdata}][IN] pointer to the entry's specific data \item[{\em pclient}][IN] ressource allocated by the client for the nfs management.  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
+
+
+Definition at line 128 of file cache\_\-content\_\-add\_\-entry.c.
+
+References cache\_\-content\_\-create\_\-name(), and cache\_\-content\_\-refresh().
+
+Referenced by cache\_\-content\_\-crash\_\-recover().

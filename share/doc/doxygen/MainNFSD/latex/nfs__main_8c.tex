@@ -1,0 +1,167 @@
+\section{nfs\_\-main.c File Reference}
+\label{nfs__main_8c}\index{nfs_main.c@{nfs\_\-main.c}}
+The file that contain the 'main' routine for the nfsd. 
+
+{\tt \#include \char`\"{}nfs\_\-init.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$signal.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf main} (int argc, char $\ast$argv[$\,$])
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+{\bf nfs\_\-start\_\-info\_\-t} {\bf nfs\_\-start\_\-info}
+\item 
+char {\bf config\_\-path} [MAXPATHLEN] = \char`\"{}/etc/ganesha/ganesha\_\-nfsd.conf\char`\"{}
+\item 
+char {\bf log\_\-path} [MAXPATHLEN] = \char`\"{}/tmp/ganesha\_\-nfsd.log\char`\"{}
+\item 
+char {\bf exec\_\-name} [MAXPATHLEN] = \char`\"{}ganesha-nfsd\char`\"{}
+\item 
+char {\bf host\_\-name} [MAXHOSTNAMELEN] = \char`\"{}localhost\char`\"{}
+\item 
+int {\bf debug\_\-level} = NIV\_\-EVENT
+\item 
+int {\bf detach\_\-flag} = FALSE
+\item 
+char {\bf options} [$\,$] = \char`\"{}h@Rd\-S:F:S:f:L:N:\char`\"{}
+\item 
+char {\bf usage} [$\,$]
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+The file that contain the 'main' routine for the nfsd. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+{\bf nfs\_\-main.c}{\rm (p.\,\pageref{nfs__main_8c})} : The file that contain the 'main' routine for the nfsd.
+
+Definition in file {\bf nfs\_\-main.c}.
+
+\subsection{Function Documentation}
+\index{nfs_main.c@{nfs\_\-main.c}!main@{main}}
+\index{main@{main}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, char $\ast$ {\em argv}[$\,$])}\label{nfs__main_8c_a10}
+
+
+main: simply the main function.
+
+The 'main' function as in every C program.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em argc}]number of arguments \item[{\em argv}]array of arguments\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]status to calling program by calling the exit(3C) function. \end{Desc}
+
+
+Definition at line 173 of file nfs\_\-main.c.
+
+References config\_\-path, debug\_\-level, detach\_\-flag, \_\-\_\-nfs\_\-start\_\-info::enable\_\-rpcsec\_\-gss, exec\_\-name, \_\-\_\-nfs\_\-start\_\-info::flush\_\-behaviour, \_\-\_\-nfs\_\-start\_\-info::flush\_\-datacache\_\-mode, host\_\-name, log\_\-path, \_\-\_\-nfs\_\-start\_\-info::nb\_\-flush\_\-threads, nfs\_\-check\_\-param\_\-consistency(), nfs\_\-param, nfs\_\-prereq\_\-init(), nfs\_\-set\_\-param\_\-default(), nfs\_\-set\_\-param\_\-from\_\-conf(), nfs\_\-start(), nfs\_\-start\_\-info, options, and usage.
+
+\subsection{Variable Documentation}
+\index{nfs_main.c@{nfs\_\-main.c}!config_path@{config\_\-path}}
+\index{config_path@{config\_\-path}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf config\_\-path}[MAXPATHLEN] = \char`\"{}/etc/ganesha/ganesha\_\-nfsd.conf\char`\"{}}\label{nfs__main_8c_a1}
+
+
+
+
+Definition at line 108 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!debug_level@{debug\_\-level}}
+\index{debug_level@{debug\_\-level}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf debug\_\-level} = NIV\_\-EVENT}\label{nfs__main_8c_a5}
+
+
+
+
+Definition at line 112 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!detach_flag@{detach\_\-flag}}
+\index{detach_flag@{detach\_\-flag}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf detach\_\-flag} = FALSE}\label{nfs__main_8c_a6}
+
+
+
+
+Definition at line 113 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!exec_name@{exec\_\-name}}
+\index{exec_name@{exec\_\-name}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf exec\_\-name}[MAXPATHLEN] = \char`\"{}ganesha-nfsd\char`\"{}}\label{nfs__main_8c_a3}
+
+
+
+
+Definition at line 110 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!host_name@{host\_\-name}}
+\index{host_name@{host\_\-name}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf host\_\-name}[MAXHOSTNAMELEN] = \char`\"{}localhost\char`\"{}}\label{nfs__main_8c_a4}
+
+
+
+
+Definition at line 111 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!log_path@{log\_\-path}}
+\index{log_path@{log\_\-path}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf log\_\-path}[MAXPATHLEN] = \char`\"{}/tmp/ganesha\_\-nfsd.log\char`\"{}}\label{nfs__main_8c_a2}
+
+
+
+
+Definition at line 109 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!nfs_start_info@{nfs\_\-start\_\-info}}
+\index{nfs_start_info@{nfs\_\-start\_\-info}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf nfs\_\-start\_\-info\_\-t} {\bf nfs\_\-start\_\-info}}\label{nfs__main_8c_a0}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim}
+{
+   .flush_datacache_mode = FALSE,
+   .nb_flush_threads     = 1,
+   .flush_behaviour      = CACHE_CONTENT_FLUSH_AND_DELETE,
+   .enable_rpcsec_gss    = FALSE
+}
+\end{verbatim}\normalsize 
+
+
+Definition at line 100 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!options@{options}}
+\index{options@{options}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf options}[$\,$] = \char`\"{}h@Rd\-S:F:S:f:L:N:\char`\"{}}\label{nfs__main_8c_a7}
+
+
+
+
+Definition at line 118 of file nfs\_\-main.c.\index{nfs_main.c@{nfs\_\-main.c}!usage@{usage}}
+\index{usage@{usage}!nfs_main.c@{nfs\_\-main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf usage}[$\,$]}\label{nfs__main_8c_a8}
+
+
+{\bf Initial value:}
+
+\footnotesize\begin{verbatim} 
+    "Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
+    "\t[-h]                display this help\n"
+    "\t[-L <logfile>]      set the default logfile for the daemon\n"
+    "\t[-N <dbg_lvl>]      set the verbosity level\n"
+    "\t[-f <config_file>]  set the config file to be used\n"
+    "\t[-d]                the daemon starts in background, in a new process group\n"
+    "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
+    "\t[-F] <nb_flushers>  flushes the data cache with purge, but do not answer to requests\n"
+    "\t[-S] <nb_flushers>  flushes the data cache without purge, but do not answer to requests\n"
+    "----------------- Signals ----------------\n"
+    "SIGUSR1    : Enable/Disable File Content Cache forced flush\n" 
+    "------------- Default Values -------------\n"
+    "LogFile    : /tmp/ganesha_nfsd.log\n"
+    "DebugLevel : NIV_EVENT\n"
+    "ConfigFile : /etc/ganesha_nfsd.conf\n"
+\end{verbatim}\normalsize 
+
+
+Definition at line 119 of file nfs\_\-main.c.

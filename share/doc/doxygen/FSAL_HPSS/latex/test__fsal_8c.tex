@@ -1,0 +1,80 @@
+\section{test\_\-fsal.c File Reference}
+\label{test__fsal_8c}\index{test_fsal.c@{test\_\-fsal.c}}
+Program for testing fsal. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf READDIR\_\-SIZE}\ 5\label{test__fsal_8c_a0}
+
+\item 
+\#define {\bf CHANGE\_\-ATTRS}(str\_\-nom, nom, flag, new\_\-val)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf printmask} (fsal\_\-attrib\_\-mask\_\-t mask)\label{test__fsal_8c_a2}
+
+\item 
+char $\ast$ {\bf strtype} (fsal\_\-nodetype\_\-t type)\label{test__fsal_8c_a3}
+
+\item 
+void {\bf printattributes} (fsal\_\-attrib\_\-list\_\-t attrs)\label{test__fsal_8c_a4}
+
+\item 
+void {\bf usage} ()\label{test__fsal_8c_a5}
+
+\item 
+int {\bf main} (int argc, char $\ast$$\ast$argv)\label{test__fsal_8c_a6}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Program for testing fsal. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/09 12:40:52 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.25 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf test\_\-fsal.c}.
+
+\subsection{Define Documentation}
+\index{test_fsal.c@{test\_\-fsal.c}!CHANGE_ATTRS@{CHANGE\_\-ATTRS}}
+\index{CHANGE_ATTRS@{CHANGE\_\-ATTRS}!test_fsal.c@{test\_\-fsal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CHANGE\_\-ATTRS(str\_\-nom, nom, flag, new\_\-val)}\label{test__fsal_8c_a1}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}do {\
+  memset(&attr_set, 0, sizeof(fsal_attrib_list_t) );    \
+  printf("\nTry to change '%s' :\n",str_nom);           \
+  FSAL_SET_MASK( attr_set.asked_attributes , flag );    \
+  attr_set.nom = new_val;                               \
+  attribs.asked_attributes = attr_set.asked_attributes; \
+/*  attribs.asked_attributes = mask;                      */\
+  st = FSAL_setattrs( &dir_hdl, &op_ctx, &attr_set, &attribs );\
+  if ( FSAL_IS_ERROR(st) )                              \
+    DisplayErrorJd(log_desc,ERR_FSAL,st.major,st.minor);\
+  else                                                  \
+    printattributes( attribs );                         \
+  } while(0)
+\end{verbatim}\normalsize 

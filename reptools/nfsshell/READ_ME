@@ -1,0 +1,26 @@
+Nfs shell provides user level access to an NFS server, over UDP or TCP,
+supports source routing and "secure" (privileged port) mounts. Its a
+useful tool to manually check (or show) security problems after a security
+scanner has detected them.
+ 
+The sources are in:
+ 
+        ftp://ftp.cs.vu.nl/pub/leendert/nfsshell.tar.gz
+
+The shell is tested on the following systems:
+
+	System V release 4 (386)
+	SunOS 4.[123] (SPARC/SUN3)
+	DEC Ultrix 4.[23] (DEC Station 5100)
+	AIX 4.1
+	Linux 2.0.33
+	Linux Redhat 5 (1)
+
+(1) The stock RedHat 5 distribution lacks /usr/include/rpc/key_prot*.
+    You have to install this before compiling. I took mine from our
+    Linux 2.0.27 machine.
+
+--
+Leendert van Doorn				      <leendert@watson.ibm.com>
+IBM T.J. Watson Research Center			      (914) 784-7831
+30 Saw Mill River Road, Hawthorne, NY 10532

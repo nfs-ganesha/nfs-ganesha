@@ -1,0 +1,4992 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./structnfs4__op__desc____.aux) (./mnt__Export_8c.aux)
+(./mnt__Mnt_8c.aux) (./mnt__Null_8c.aux) (./mnt__Umnt_8c.aux)
+(./mnt__UmntAll_8c.aux) (./nfs2__Root_8c.aux) (./nfs2__Writecache_8c.aux)
+(./nfs3__Access_8c.aux) (./nfs3__Commit_8c.aux) (./nfs3__Fsinfo_8c.aux)
+(./nfs3__Mknod_8c.aux) (./nfs3__Pathconf_8c.aux) (./nfs3__Readdirplus_8c.aux)
+(./nfs4__cb__Compound_8c.aux) (./nfs4__cb__getattr_8c.aux)
+(./nfs4__cb__illegal_8c.aux) (./nfs4__cb__Null_8c.aux)
+(./nfs4__cb__recall_8c.aux) (./nfs4__Compound_8c.aux)
+(./nfs4__op__access_8c.aux) (./nfs4__op__close_8c.aux)
+(./nfs4__op__commit_8c.aux) (./nfs4__op__create_8c.aux)
+(./nfs4__op__delegpurge_8c.aux) (./nfs4__op__delegreturn_8c.aux)
+(./nfs4__op__getattr_8c.aux) (./nfs4__op__getfh_8c.aux)
+(./nfs4__op__illegal_8c.aux) (./nfs4__op__link_8c.aux) (./nfs4__op__lock_8c.aux
+) (./nfs4__op__lockt_8c.aux) (./nfs4__op__locku_8c.aux)
+(./nfs4__op__lookup_8c.aux) (./nfs4__op__lookupp_8c.aux)
+(./nfs4__op__nverify_8c.aux) (./nfs4__op__open_8c.aux)
+(./nfs4__op__open__confirm_8c.aux) (./nfs4__op__open__downgrade_8c.aux)
+(./nfs4__op__openattr_8c.aux) (./nfs4__op__putfh_8c.aux)
+(./nfs4__op__putpubfh_8c.aux) (./nfs4__op__putrootfh_8c.aux)
+(./nfs4__op__read_8c.aux) (./nfs4__op__readdir_8c.aux)
+(./nfs4__op__readlink_8c.aux) (./nfs4__op__release__lockowner_8c.aux)
+(./nfs4__op__remove_8c.aux) (./nfs4__op__rename_8c.aux)
+(./nfs4__op__renew_8c.aux) (./nfs4__op__restorefh_8c.aux)
+(./nfs4__op__savefh_8c.aux) (./nfs4__op__secinfo_8c.aux)
+(./nfs4__op__setattr_8c.aux) (./nfs4__op__setclientid_8c.aux)
+(./nfs4__op__setclientid__confirm_8c.aux) (./nfs4__op__verify_8c.aux)
+(./nfs4__op__write_8c.aux) (./nfs4__pseudo_8c.aux) (./nfs__Create_8c.aux)
+(./nfs__Fsstat_8c.aux) (./nfs__Getattr_8c.aux) (./nfs__Link_8c.aux)
+(./nfs__Lookup_8c.aux) (./nfs__Mkdir_8c.aux) (./nfs__Null_8c.aux)
+(./nfs__proto__tools_8c.aux) (./nfs__Read_8c.aux) (./nfs__Readdir_8c.aux)
+(./nfs__Readlink_8c.aux) (./nfs__Remove_8c.aux) (./nfs__Rename_8c.aux)
+(./nfs__Rmdir_8c.aux) (./nfs__Setattr_8c.aux) (./nfs__Symlink_8c.aux)
+(./nfs__Write_8c.aux) (./test__mnt__proto_8c.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+ [1
+
+]
+Underfull \vbox (badness 1389) has occurred while \output is active []
+
+ [2])
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+
+[3] [4
+
+]
+Chapter 1.
+(./annotated.tex) [1
+
+] [2
+
+]
+Chapter 2.
+(./files.tex [3] [4]) [5] [6
+
+]
+Chapter 3.
+(./pages.tex) [7] [8
+
+]
+Chapter 4.
+(./structnfs4__cb__desc____.tex) [9]
+\openout2 = `structnfs4__op__desc____.aux'.
+
+ (./structnfs4__op__desc____.tex) [10
+
+]
+Chapter 5.
+(./mnt__Dump_8c.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 5.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [11
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+) [12]
+\openout2 = `mnt__Export_8c.aux'.
+
+ (./mnt__Export_8c.tex [13
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--105
+
+ []
+
+[14]
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+
+ []
+
+) [15]
+\openout2 = `mnt__Mnt_8c.aux'.
+
+ (./mnt__Mnt_8c.tex [16
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--108
+
+ []
+
+[17]) [18]
+\openout2 = `mnt__Null_8c.aux'.
+
+ (./mnt__Null_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[19
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+) [20]
+\openout2 = `mnt__Umnt_8c.aux'.
+
+ (./mnt__Umnt_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[21
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+) [22]
+\openout2 = `mnt__UmntAll_8c.aux'.
+
+ (./mnt__UmntAll_8c.tex
+Underfull \hbox (badness 4108) in paragraph at lines 31--33
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 mnt_-Umnt-All \T1/cmr/m/n/10 (nfs_-arg_-t 
+$\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 parg, exportlist_-t $\OMS/cmsy/m/n/10 ^^C$
+\T1/cmr/m/n/10 pexport, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[23
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+) [24]
+\openout2 = `nfs2__Root_8c.aux'.
+
+ (./nfs2__Root_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[25
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+) [26]
+\openout2 = `nfs2__Writecache_8c.aux'.
+
+ (./nfs2__Writecache_8c.tex
+Underfull \hbox (badness 1320) in paragraph at lines 31--33
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs2_-Writecache \T1/cmr/m/n/10 (nfs_-arg_
+-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 parg, exportlist_-t $\OMS/cmsy/m/n/10 ^
+^C$\T1/cmr/m/n/10 pexport, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[27
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+) [28]
+\openout2 = `nfs3__Access_8c.aux'.
+
+ (./nfs3__Access_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[29
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+) [30]
+\openout2 = `nfs3__Commit_8c.aux'.
+
+ (./nfs3__Commit_8c.tex
+Underfull \hbox (badness 5217) in paragraph at lines 32--34
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs3_-Commit \T1/cmr/m/n/10 (nfs_-arg_-t $
+\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 parg, exportlist_-t $\OMS/cmsy/m/n/10 ^^C$\
+T1/cmr/m/n/10 pexport, fsal_-op_-context_-t
+ []
+
+[31
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+[32]
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+) [33]
+\openout2 = `nfs3__Fsinfo_8c.aux'.
+
+ (./nfs3__Fsinfo_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[34
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+) [35] [36]
+\openout2 = `nfs3__Mknod_8c.aux'.
+
+ (./nfs3__Mknod_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[37
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+) [38]
+\openout2 = `nfs3__Pathconf_8c.aux'.
+
+ (./nfs3__Pathconf_8c.tex
+Underfull \hbox (badness 3861) in paragraph at lines 32--34
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs3_-Pathconf \T1/cmr/m/n/10 (nfs_-arg_-t
+ $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 parg, exportlist_-t $\OMS/cmsy/m/n/10 ^^C
+$\T1/cmr/m/n/10 pexport, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[39
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+) [40]
+\openout2 = `nfs3__Readdirplus_8c.aux'.
+
+ (./nfs3__Readdirplus_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 33--35
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 RES_-READDIRPLUS_-REPLY \T1/cmr/m/n/10
+ pres $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 res_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--36
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 PRES-READ-DIRPLUS-RE-PLY \T1/cmr/m/n/1
+0 resp $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 res_-
+ []
+
+[41
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 93--93
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+[42]
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+) [43]
+\openout2 = `nfs4__cb__Compound_8c.aux'.
+
+ (./nfs4__cb__Compound_8c.tex [44
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--94
+
+ []
+
+[45]) [46]
+\openout2 = `nfs4__cb__getattr_8c.aux'.
+
+ (./nfs4__cb__getattr_8c.tex
+Underfull \vbox (badness 1661) has occurred while \output is active []
+
+ [47
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+) [48]
+\openout2 = `nfs4__cb__illegal_8c.aux'.
+
+ (./nfs4__cb__illegal_8c.tex
+Underfull \vbox (badness 1661) has occurred while \output is active []
+
+ [49
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+) [50]
+\openout2 = `nfs4__cb__Null_8c.aux'.
+
+ (./nfs4__cb__Null_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[51
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+) [52]
+\openout2 = `nfs4__cb__recall_8c.aux'.
+
+ (./nfs4__cb__recall_8c.tex
+Underfull \vbox (badness 1661) has occurred while \output is active []
+
+ [53
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+) [54]
+\openout2 = `nfs4__Compound_8c.aux'.
+
+ (./nfs4__Compound_8c.tex
+Underfull \hbox (badness 1400) in paragraph at lines 45--47
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs4_-Compound \T1/cmr/m/n/10 (nfs_-arg_-t
+ $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 parg, exportlist_-t $\OMS/cmsy/m/n/10 ^^C
+$\T1/cmr/m/n/10 pexport, fsal_-op_-context_-t
+ []
+
+[55
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+[56]
+Underfull \hbox (badness 10000) in paragraph at lines 126--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--131
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 137--137
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--159
+
+ []
+
+[57]) [58]
+\openout2 = `nfs4__op__access_8c.aux'.
+
+ (./nfs4__op__access_8c.tex [59
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[60]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [61]
+\openout2 = `nfs4__op__close_8c.aux'.
+
+ (./nfs4__op__close_8c.tex [62
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+[63]
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--123
+
+ []
+
+) [64]
+\openout2 = `nfs4__op__commit_8c.aux'.
+
+ (./nfs4__op__commit_8c.tex [65
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[66]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [67]
+\openout2 = `nfs4__op__create_8c.aux'.
+
+ (./nfs4__op__create_8c.tex [68
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 1112) in paragraph at lines 106--108
+[]\T1/cmr/m/n/10 References arg_-CREATE4, nfs4_-Allocate-FH(), nfs4_-Errno(), n
+fs4_-Fattr_-Check_-Access(),
+ []
+
+[69]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [70]
+\openout2 = `nfs4__op__delegpurge_8c.aux'.
+
+ (./nfs4__op__delegpurge_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[71
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+[72]) [73]
+\openout2 = `nfs4__op__delegreturn_8c.aux'.
+
+ (./nfs4__op__delegreturn_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[74
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+[75]) [76]
+\openout2 = `nfs4__op__getattr_8c.aux'.
+
+ (./nfs4__op__getattr_8c.tex [77
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+
+Underfull \hbox (badness 3417) in paragraph at lines 116--118
+\T1/cmr/m/n/10 Supported_-Bitmap(), nfs4_-FSALattr_-To_-Fattr(), nfs4_-op_-geta
+ttr_-pseudo(), and res_-
+ []
+
+[78]
+Underfull \hbox (badness 10000) in paragraph at lines 126--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--131
+
+ []
+
+) [79]
+\openout2 = `nfs4__op__getfh_8c.aux'.
+
+ (./nfs4__op__getfh_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[80
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+) [81]
+\openout2 = `nfs4__op__illegal_8c.aux'.
+
+ (./nfs4__op__illegal_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[82
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [83]
+\openout2 = `nfs4__op__link_8c.aux'.
+
+ (./nfs4__op__link_8c.tex [84
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[85]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [86]
+\openout2 = `nfs4__op__lock_8c.aux'.
+
+ (./nfs4__op__lock_8c.tex [87
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+[88]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+) [89]
+\openout2 = `nfs4__op__lockt_8c.aux'.
+
+ (./nfs4__op__lockt_8c.tex [90
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+[91]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+) [92]
+\openout2 = `nfs4__op__locku_8c.aux'.
+
+ (./nfs4__op__locku_8c.tex [93
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+[94]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+) [95]
+\openout2 = `nfs4__op__lookup_8c.aux'.
+
+ (./nfs4__op__lookup_8c.tex [96
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[97]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [98]
+\openout2 = `nfs4__op__lookupp_8c.aux'.
+
+ (./nfs4__op__lookupp_8c.tex [99
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[100]
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+) [101]
+\openout2 = `nfs4__op__nverify_8c.aux'.
+
+ (./nfs4__op__nverify_8c.tex [102
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[103]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [104]
+\openout2 = `nfs4__op__open_8c.aux'.
+
+ (./nfs4__op__open_8c.tex [105
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 100--100
+
+ []
+
+[106]
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 143--143
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 148--148
+
+ []
+
+) [107]
+\openout2 = `nfs4__op__open__confirm_8c.aux'.
+
+ (./nfs4__op__open__confirm_8c.tex [108
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[109]
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+) [110]
+\openout2 = `nfs4__op__open__downgrade_8c.aux'.
+
+ (./nfs4__op__open__downgrade_8c.tex [111
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[112]
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+) [113]
+\openout2 = `nfs4__op__openattr_8c.aux'.
+
+ (./nfs4__op__openattr_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[114
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/NFS_-Protocols/n
+fs4_-op_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--78
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--83
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--117
+
+ []
+
+[115]
+Underfull \hbox (badness 10000) in paragraph at lines 122--122
+
+ []
+
+) [116]
+\openout2 = `nfs4__op__putfh_8c.aux'.
+
+ (./nfs4__op__putfh_8c.tex [117
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+[118]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+) [119]
+\openout2 = `nfs4__op__putpubfh_8c.aux'.
+
+ (./nfs4__op__putpubfh_8c.tex [120
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+[121]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 144--144
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+
+ []
+
+) [122]
+\openout2 = `nfs4__op__putrootfh_8c.aux'.
+
+ (./nfs4__op__putrootfh_8c.tex [123
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+[124]
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 142--142
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 147--147
+
+ []
+
+) [125]
+\openout2 = `nfs4__op__read_8c.aux'.
+
+ (./nfs4__op__read_8c.tex [126
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+[127]
+Underfull \hbox (badness 10000) in paragraph at lines 117--117
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--122
+
+ []
+
+) [128]
+\openout2 = `nfs4__op__readdir_8c.aux'.
+
+ (./nfs4__op__readdir_8c.tex [129
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 2790) in paragraph at lines 89--90
+\T1/cmr/m/n/10 Bitmap(), nfs4_-FSALattr_-To_-Fattr(), nfs4_-op_-readdir_-pseudo
+(), res_-READDIR4, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+) [130] [131]
+\openout2 = `nfs4__op__readlink_8c.aux'.
+
+ (./nfs4__op__readlink_8c.tex [132
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+[133]
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--123
+
+ []
+
+) [134]
+\openout2 = `nfs4__op__release__lockowner_8c.aux'.
+
+ (./nfs4__op__release__lockowner_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[135
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 1092) in paragraph at lines 108--109
+\T1/cmr/m/n/10 nfs4_-op_-release_-lockowner_-Free: frees what was al-lo-cared t
+o han-dle nfs4_-op_-release_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+[136]
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+) [137]
+\openout2 = `nfs4__op__remove_8c.aux'.
+
+ (./nfs4__op__remove_8c.tex [138
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[139]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [140]
+\openout2 = `nfs4__op__rename_8c.aux'.
+
+ (./nfs4__op__rename_8c.tex [141
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[142]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [143]
+\openout2 = `nfs4__op__renew_8c.aux'.
+
+ (./nfs4__op__renew_8c.tex [144
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+[145]
+Underfull \hbox (badness 10000) in paragraph at lines 124--124
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
+
+ []
+
+) [146]
+\openout2 = `nfs4__op__restorefh_8c.aux'.
+
+ (./nfs4__op__restorefh_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[147
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 92--92
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--97
+
+ []
+
+) [148]
+\openout2 = `nfs4__op__savefh_8c.aux'.
+
+ (./nfs4__op__savefh_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[149
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 92--92
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--97
+
+ []
+
+) [150]
+\openout2 = `nfs4__op__secinfo_8c.aux'.
+
+ (./nfs4__op__secinfo_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[151
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+[152]) [153]
+\openout2 = `nfs4__op__setattr_8c.aux'.
+
+ (./nfs4__op__setattr_8c.tex [154
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--108
+[]\T1/cmr/m/n/10 References arg_-SETATTR4, nfs4_-Errno(), nfs4_-Fattr_-Check_-A
+ccess(), nfs4_-Fattr_-
+ []
+
+[155]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [156]
+\openout2 = `nfs4__op__setclientid_8c.aux'.
+
+ (./nfs4__op__setclientid_8c.tex [157
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--97
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+[158]
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 124--124
+
+ []
+
+) [159]
+\openout2 = `nfs4__op__setclientid__confirm_8c.aux'.
+
+ (./nfs4__op__setclientid__confirm_8c.tex
+Underfull \hbox (badness 4673) in paragraph at lines 32--34
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 arg_-SETCLIENTID_-CONFIRM4 \T1/cmr/m/n
+/10 op $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 nfs_-argop4_-u.opsetclientid_-
+ []
+
+
+Underfull \hbox (badness 2644) in paragraph at lines 34--35
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 res_-SETCLIENTID_-CONFIRM4 \T1/cmr/m/n
+/10 resp $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 nfs_-resop4_-u.opsetclientid_-
+ []
+
+[160
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--97
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+[161]
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 124--124
+
+ []
+
+) [162]
+\openout2 = `nfs4__op__verify_8c.aux'.
+
+ (./nfs4__op__verify_8c.tex [163
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 2903) in paragraph at lines 106--108
+[]\T1/cmr/m/n/10 References arg_-VERIFY4, nfs4_-Fattr_-Check_-Access(), nfs4_-F
+attr_-cmp(), nfs4_-Fattr_-
+ []
+
+[164]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+) [165]
+\openout2 = `nfs4__op__write_8c.aux'.
+
+ (./nfs4__op__write_8c.tex [166
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+[167]
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 136--136
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 141--141
+
+ []
+
+) [168]
+\openout2 = `nfs4__pseudo_8c.aux'.
+
+ (./nfs4__pseudo_8c.tex [169
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 93--93
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--94
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--97
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+[170]
+Underfull \hbox (badness 10000) in paragraph at lines 126--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--131
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 144--144
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--162
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--167
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 180--180
+
+ []
+
+[171]
+Underfull \hbox (badness 10000) in paragraph at lines 185--185
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 221--221
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 226--226
+
+ []
+
+[172]
+Underfull \hbox (badness 10000) in paragraph at lines 270--270
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 275--275
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 290--290
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 305--305
+
+ []
+
+[173]
+Underfull \hbox (badness 10000) in paragraph at lines 310--310
+
+ []
+
+
+Underfull \hbox (badness 1831) in paragraph at lines 315--317
+[]\T1/cmr/m/n/10 Referenced by nfs4_-op_-getattr_-pseudo(), nfs4_-op_-lookup_-p
+seudo(), nfs4_-op_-lookupp_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 325--325
+
+ []
+
+
+Underfull \hbox (badness 2617) in paragraph at lines 350--351
+[]\T1/cmr/m/n/10 References arg_-GETATTR4, nfs4_-Fhandle-To-Pseudo(), nfs4_-Pse
+udo-To-Fattr(), and res_-
+ []
+
+[174]
+Underfull \hbox (badness 1199) in paragraph at lines 383--384
+\T1/cmr/m/n/10 nfs4_-op_-readdir(), nfs4_-Pseudo-To-Fattr(), nfs4_-Pseudo-To-Fh
+andle(), res_-READDIR4, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--395
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--400
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 404--404
+
+ []
+
+[175]
+Underfull \hbox (badness 10000) in paragraph at lines 429--429
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 434--434
+
+ []
+
+
+Underfull \hbox (badness 1028) in paragraph at lines 439--441
+[]\T1/cmr/m/n/10 Referenced by Create-PUBFH4(), Create-ROOTFH4(), nfs4_-Create-
+ROOTFH4(), nfs4_-op_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 449--449
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 454--454
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 456--456
+
+ []
+
+) [176]
+\openout2 = `nfs__Create_8c.aux'.
+
+ (./nfs__Create_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[177
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--83
+[]\T1/cmr/m/n/10 References nfs2_-FSALattr_-To_-Fattr(), nfs2_-Sattr_-To_-FSALa
+ttr(), nfs3_-Sattr_-To_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 91--91
+
+ []
+
+) [178]
+\openout2 = `nfs__Fsstat_8c.aux'.
+
+ (./nfs__Fsstat_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[179
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+) [180]
+\openout2 = `nfs__Getattr_8c.aux'.
+
+ (./nfs__Getattr_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[181
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+) [182]
+\openout2 = `nfs__Link_8c.aux'.
+
+ (./nfs__Link_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[183
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+) [184]
+\openout2 = `nfs__Lookup_8c.aux'.
+
+ (./nfs__Lookup_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[185
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+) [186]
+\openout2 = `nfs__Mkdir_8c.aux'.
+
+ (./nfs__Mkdir_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[187
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+) [188]
+\openout2 = `nfs__Null_8c.aux'.
+
+ (./nfs__Null_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[189
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--83
+
+ []
+
+) [190]
+\openout2 = `nfs__proto__tools_8c.aux'.
+
+ (./nfs__proto__tools_8c.tex [191
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+[192]
+Underfull \hbox (badness 10000) in paragraph at lines 132--132
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 137--137
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 178--178
+
+ []
+
+[193]
+Underfull \hbox (badness 10000) in paragraph at lines 183--183
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 198--198
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 203--203
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 222--222
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--227
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 242--242
+
+ []
+
+[194]
+Underfull \hbox (badness 10000) in paragraph at lines 247--247
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 262--262
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 267--267
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 267--267
+[]\T1/cmr/m/n/10 NFS4_-OK if suc-cess-ful, NFS3ERR_-SERVERFAULT, NFS4ERR_-RESOU
+RCE or
+ []
+
+
+Underfull \hbox (badness 1028) in paragraph at lines 272--274
+[]\T1/cmr/m/n/10 Referenced by Create-PUBFH4(), Create-ROOTFH4(), nfs4_-Create-
+ROOTFH4(), nfs4_-op_-
+ []
+
+
+Underfull \hbox (badness 2418) in paragraph at lines 272--274
+\T1/cmr/m/n/10 create(), nfs4_-op_-getfh(), nfs4_-op_-lookup_-pseudo(), nfs4_-o
+p_-open(), nfs4_-op_-putfh(),
+ []
+
+
+Underfull \hbox (badness 1571) in paragraph at lines 272--274
+\T1/cmr/m/n/10 nfs4_-op_-putpubfh(), nfs4_-op_-putrootfh(), nfs4_-op_-readdir()
+, nfs4_-op_-readdir_-pseudo(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--287
+
+ []
+
+
+Underfull \hbox (badness 4242) in paragraph at lines 292--294
+[]\T1/cmr/m/n/10 Referenced by nfs4_-Fattr_-Check_-Access(), nfs4_-Fattr_-Check
+_-Access_-Bitmap(), nfs4_-
+ []
+
+
+Underfull \hbox (badness 1242) in paragraph at lines 292--294
+\T1/cmr/m/n/10 Fattr_-cmp(), nfs4_-Fattr_-Supported(), nfs4_-Fattr_-Supported_-
+Bitmap(), nfs4_-Fattr_-To_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 302--302
+
+ []
+
+[195]
+Underfull \hbox (badness 10000) in paragraph at lines 307--307
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--322
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 327--327
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 344--344
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 349--349
+
+ []
+
+[196]
+Underfull \hbox (badness 10000) in paragraph at lines 366--366
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 371--371
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 388--388
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 393--393
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 410--410
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 415--415
+
+ []
+
+[197]
+Underfull \hbox (badness 10000) in paragraph at lines 432--432
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 437--437
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 454--454
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 459--459
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 472--472
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 477--477
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 481--481
+
+ []
+
+[198]
+Underfull \hbox (badness 10000) in paragraph at lines 500--500
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 505--505
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 520--520
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 525--525
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 542--542
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 547--547
+
+ []
+
+[199]
+Underfull \hbox (badness 10000) in paragraph at lines 560--560
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 565--565
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 582--582
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 587--587
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 600--600
+
+ []
+
+[200]
+Underfull \hbox (badness 10000) in paragraph at lines 605--605
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 620--620
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 625--625
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 629--629
+
+ []
+
+[201]
+Underfull \hbox (badness 10000) in paragraph at lines 657--657
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 662--662
+
+ []
+
+
+Underfull \hbox (badness 7814) in paragraph at lines 669--671
+[]\T1/cmr/m/n/10 Referenced by nfs3_-Access(), nfs3_-Fsinfo(), nfs3_-Mknod(), n
+fs3_-Pathconf(), nfs3_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 679--679
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 684--684
+
+ []
+
+[202]
+Underfull \hbox (badness 10000) in paragraph at lines 699--699
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 704--704
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 721--721
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 726--726
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 741--741
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 746--746
+
+ []
+
+[203]) [204]
+\openout2 = `nfs__Read_8c.aux'.
+
+ (./nfs__Read_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[205
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--108
+
+ []
+
+[206]) [207]
+\openout2 = `nfs__Readdir_8c.aux'.
+
+ (./nfs__Readdir_8c.tex [208
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+[209]
+Underfull \hbox (badness 10000) in paragraph at lines 135--135
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 140--140
+
+ []
+
+) [210]
+\openout2 = `nfs__Readlink_8c.aux'.
+
+ (./nfs__Readlink_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[211
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+[212]) [213]
+\openout2 = `nfs__Remove_8c.aux'.
+
+ (./nfs__Remove_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[214
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [215]
+\openout2 = `nfs__Rename_8c.aux'.
+
+ (./nfs__Rename_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[216
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [217]
+\openout2 = `nfs__Rmdir_8c.aux'.
+
+ (./nfs__Rmdir_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[218
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [219]
+\openout2 = `nfs__Setattr_8c.aux'.
+
+ (./nfs__Setattr_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[220
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 1742) in paragraph at lines 80--82
+[]\T1/cmr/m/n/10 References nfs2_-FSALattr_-To_-Fattr(), nfs2_-Sattr_-To_-FSALa
+ttr(), nfs3_-FSALattr_-To_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [221]
+\openout2 = `nfs__Symlink_8c.aux'.
+
+ (./nfs__Symlink_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[222
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 91--91
+
+ []
+
+) [223]
+\openout2 = `nfs__Write_8c.aux'.
+
+ (./nfs__Write_8c.tex [224
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--83
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+[225]
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+) [226]
+\openout2 = `test__mnt__proto_8c.aux'.
+
+ (./test__mnt__proto_8c.tex [227
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+[228]) [229] [230
+
+
+]
+Chapter 6.
+(./todo.tex
+Overfull \hbox (569.96553pt too wide) in paragraph at lines 9--9
+[]
+ []
+
+
+Overfull \hbox (113.32626pt too wide) in paragraph at lines 14--14
+[]
+ []
+
+
+Overfull \hbox (118.58054pt too wide) in paragraph at lines 19--19
+[]
+ []
+
+
+Overfull \hbox (120.4412pt too wide) in paragraph at lines 24--24
+[]
+ []
+
+
+Overfull \hbox (287.80557pt too wide) in paragraph at lines 29--30
+[]
+ []
+
+
+Overfull \hbox (164.49571pt too wide) in paragraph at lines 42--43
+[]
+ []
+
+
+Overfull \hbox (436.30249pt too wide) in paragraph at lines 54--55
+[]
+ []
+
+[231]) (./refman.ind [232] [233
+
+] [234] [235] [236] [237] [238]
+Underfull \hbox (badness 10000) in paragraph at lines 673--674
+[]| \T1/cmr/m/n/10 nfs4_-op_-setclientid_-confirm_-Free,
+ []
+
+[239]
+Underfull \hbox (badness 10000) in paragraph at lines 810--811
+[]| \T1/cmr/m/n/10 nfs4_-Fattr_-Check_-Access_-Bitmap,
+ []
+
+[240] [241] [242]) (./refman.aux (./structnfs4__op__desc____.aux)
+(./mnt__Export_8c.aux) (./mnt__Mnt_8c.aux) (./mnt__Null_8c.aux)
+(./mnt__Umnt_8c.aux) (./mnt__UmntAll_8c.aux) (./nfs2__Root_8c.aux)
+(./nfs2__Writecache_8c.aux) (./nfs3__Access_8c.aux) (./nfs3__Commit_8c.aux)
+(./nfs3__Fsinfo_8c.aux) (./nfs3__Mknod_8c.aux) (./nfs3__Pathconf_8c.aux)
+(./nfs3__Readdirplus_8c.aux) (./nfs4__cb__Compound_8c.aux)
+(./nfs4__cb__getattr_8c.aux) (./nfs4__cb__illegal_8c.aux)
+(./nfs4__cb__Null_8c.aux) (./nfs4__cb__recall_8c.aux) (./nfs4__Compound_8c.aux)
+(./nfs4__op__access_8c.aux) (./nfs4__op__close_8c.aux)
+(./nfs4__op__commit_8c.aux) (./nfs4__op__create_8c.aux)
+(./nfs4__op__delegpurge_8c.aux) (./nfs4__op__delegreturn_8c.aux)
+(./nfs4__op__getattr_8c.aux) (./nfs4__op__getfh_8c.aux)
+(./nfs4__op__illegal_8c.aux) (./nfs4__op__link_8c.aux) (./nfs4__op__lock_8c.aux
+) (./nfs4__op__lockt_8c.aux) (./nfs4__op__locku_8c.aux)
+(./nfs4__op__lookup_8c.aux) (./nfs4__op__lookupp_8c.aux)
+(./nfs4__op__nverify_8c.aux) (./nfs4__op__open_8c.aux)
+(./nfs4__op__open__confirm_8c.aux) (./nfs4__op__open__downgrade_8c.aux)
+(./nfs4__op__openattr_8c.aux) (./nfs4__op__putfh_8c.aux)
+(./nfs4__op__putpubfh_8c.aux) (./nfs4__op__putrootfh_8c.aux)
+(./nfs4__op__read_8c.aux) (./nfs4__op__readdir_8c.aux)
+(./nfs4__op__readlink_8c.aux) (./nfs4__op__release__lockowner_8c.aux)
+(./nfs4__op__remove_8c.aux) (./nfs4__op__rename_8c.aux)
+(./nfs4__op__renew_8c.aux) (./nfs4__op__restorefh_8c.aux)
+(./nfs4__op__savefh_8c.aux) (./nfs4__op__secinfo_8c.aux)
+(./nfs4__op__setattr_8c.aux) (./nfs4__op__setclientid_8c.aux)
+(./nfs4__op__setclientid__confirm_8c.aux) (./nfs4__op__verify_8c.aux)
+(./nfs4__op__write_8c.aux) (./nfs4__pseudo_8c.aux) (./nfs__Create_8c.aux)
+(./nfs__Fsstat_8c.aux) (./nfs__Getattr_8c.aux) (./nfs__Link_8c.aux)
+(./nfs__Lookup_8c.aux) (./nfs__Mkdir_8c.aux) (./nfs__Null_8c.aux)
+(./nfs__proto__tools_8c.aux) (./nfs__Read_8c.aux) (./nfs__Readdir_8c.aux)
+(./nfs__Readlink_8c.aux) (./nfs__Remove_8c.aux) (./nfs__Rename_8c.aux)
+(./nfs__Rmdir_8c.aux) (./nfs__Setattr_8c.aux) (./nfs__Symlink_8c.aux)
+(./nfs__Write_8c.aux) (./test__mnt__proto_8c.aux)) ) 
+Here is how much of TeX's memory you used:
+ 2628 strings out of 95847
+ 43151 string characters out of 1193874
+ 98044 words of memory out of 1000001
+ 4993 multiletter control sequences out of 10000+50000
+ 15330 words of font info for 31 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 34i,12n,43p,1471b,507s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (248 pages, 482416 bytes).

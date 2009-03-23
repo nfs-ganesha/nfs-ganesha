@@ -1,0 +1,4106 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./group__NFSprocs.aux) (./structcmdfsal__thr__info____.aux)
+(./structcmdnfs__funcdesc____.aux) (./structcmdnfs__thr__info____.aux)
+(./structcmdnfsremote__funcdesc____.aux) (./structcommand__def____.aux)
+(./structlayer__def____.aux) (./structprog__vers__client__def____.aux)
+(./structprog__vers__def____.aux) (./structshell__attribute____.aux)
+(./structshell__fh3____.aux) (./structshell__info____.aux)
+(./structshell__state____.aux) (./structshell__variable____.aux)
+(./cmd__nfstools_8h.aux) (./cmd__tools_8c.aux) (./cmd__tools_8h.aux)
+(./commands_8h.aux) (./commands__Cache__inode_8c.aux) (./commands__FSAL_8c.aux)
+(./commands__NFS_8c.aux) (./commands__NFS__remote_8c.aux) (./Getopt_8c.aux)
+(./Getopt_8h.aux) (./main_8c.aux) (./nfs__remote__functions_8c.aux)
+(./nfs__remote__functions_8h.aux) (./shell_8c.aux) (./shell_8h.aux)
+(./shell__types_8h.aux) (./shell__utils_8c.aux) (./shell__utils_8h.aux)
+(./shell__vars_8c.aux) (./shell__vars_8h.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+ [1
+
+])
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+ [2]
+Chapter 1.
+(./modules.tex) [1
+
+
+] [2
+
+]
+Chapter 2.
+(./annotated.tex) [3] [4
+
+]
+Chapter 3.
+(./files.tex) [5] [6
+
+]
+Chapter 4.
+(./pages.tex) [7] [8
+
+]
+Chapter 5.
+(./group__MNTprocs.tex
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+[9]
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+
+ []
+
+[10]
+Underfull \hbox (badness 10000) in paragraph at lines 128--128
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 144--144
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 160--160
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 176--176
+
+ []
+
+[11]
+Underfull \hbox (badness 10000) in paragraph at lines 194--194
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 210--210
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 226--226
+
+ []
+
+[12]) [13]
+\openout2 = `group__NFSprocs.aux'.
+
+ (./group__NFSprocs.tex [14
+
+] [15]
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--223
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--239
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 255--255
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--271
+
+ []
+
+[16]
+Underfull \hbox (badness 10000) in paragraph at lines 287--287
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 303--303
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 319--319
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 335--335
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 353--353
+
+ []
+
+[17]
+Underfull \hbox (badness 10000) in paragraph at lines 369--369
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 387--387
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 403--403
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 419--419
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 435--435
+
+ []
+
+[18]
+Underfull \hbox (badness 10000) in paragraph at lines 451--451
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 467--467
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 483--483
+
+ []
+
+[19]
+Underfull \hbox (badness 10000) in paragraph at lines 499--499
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 515--515
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 531--531
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 547--547
+
+ []
+
+[20]
+Underfull \hbox (badness 10000) in paragraph at lines 563--563
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 579--579
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 595--595
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 611--611
+
+ []
+
+[21]
+Underfull \hbox (badness 10000) in paragraph at lines 627--627
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 643--643
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 659--659
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 675--675
+
+ []
+
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 691--691
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 707--707
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 723--723
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 739--739
+
+ []
+
+[23]
+Underfull \hbox (badness 10000) in paragraph at lines 755--755
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 771--771
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 787--787
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 803--803
+
+ []
+
+[24]
+Underfull \hbox (badness 10000) in paragraph at lines 819--819
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 835--835
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 851--851
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 867--867
+
+ []
+
+[25]
+Underfull \hbox (badness 10000) in paragraph at lines 883--883
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 899--899
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 915--915
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 931--931
+
+ []
+
+[26]
+Underfull \hbox (badness 10000) in paragraph at lines 947--947
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 963--963
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 979--979
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 997--997
+
+ []
+
+[27]
+Underfull \hbox (badness 10000) in paragraph at lines 1015--1015
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1031--1031
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1047--1047
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1065--1065
+
+ []
+
+[28]
+Underfull \hbox (badness 10000) in paragraph at lines 1083--1083
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1099--1099
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1115--1115
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1131--1131
+
+ []
+
+[29]
+Underfull \hbox (badness 10000) in paragraph at lines 1147--1147
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1165--1165
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1183--1183
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1201--1201
+
+ []
+
+[30]
+Underfull \hbox (badness 10000) in paragraph at lines 1219--1219
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1237--1237
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1255--1255
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1273--1273
+
+ []
+
+[31]
+Underfull \hbox (badness 10000) in paragraph at lines 1291--1291
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1307--1307
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1323--1323
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1339--1339
+
+ []
+
+[32]
+Underfull \hbox (badness 10000) in paragraph at lines 1355--1355
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1371--1371
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1387--1387
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1403--1403
+
+ []
+
+[33]
+Underfull \hbox (badness 10000) in paragraph at lines 1419--1419
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1437--1437
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1455--1455
+
+ []
+
+
+Underfull \hbox (badness 2237) in paragraph at lines 1468--1469
+\T1/cmr/m/n/10 nfs3_-remote_-Readdirplus_-Free: Frees the re-sult struc-ture al
+-lo-cated for nfs3_-remote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1473--1473
+
+ []
+
+[34]
+Underfull \hbox (badness 10000) in paragraph at lines 1491--1491
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1509--1509
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1527--1527
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1545--1545
+
+ []
+
+[35]
+Underfull \hbox (badness 10000) in paragraph at lines 1563--1563
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1581--1581
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1599--1599
+
+ []
+
+[36]
+Underfull \hbox (badness 10000) in paragraph at lines 1617--1617
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1635--1635
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1653--1653
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1671--1671
+
+ []
+
+[37]
+Underfull \hbox (badness 10000) in paragraph at lines 1689--1689
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1707--1707
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1723--1723
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1739--1739
+
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 1755--1755
+
+ []
+
+) [39] [40
+
+
+]
+Chapter 6.
+(./structcmdCacheInode__thr__info____.tex
+Underfull \hbox (badness 1521) in paragraph at lines 36--38
+\T1/cmr/m/n/10 inode_-cd(), fn_-Cache_-inode_-create(), fn_-Cache_-inode_-data_
+-cache(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 6542) in paragraph at lines 45--47
+\T1/cmr/m/n/10 cache(), fn_-Cache_-inode_-flush_-cache(), fn_-Cache_-inode_-gc(
+), fn_-Cache_-inode_-link(),
+ []
+
+
+Underfull \hbox (badness 5231) in paragraph at lines 45--47
+\T1/cmr/m/n/10 read(), fn_-Cache_-inode_-recover_-cache(), fn_-Cache_-inode_-re
+fresh_-cache(), fn_-Cache_-
+ []
+
+[41]
+Underfull \hbox (badness 1521) in paragraph at lines 54--56
+\T1/cmr/m/n/10 inode_-cd(), fn_-Cache_-inode_-create(), fn_-Cache_-inode_-data_
+-cache(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 1406) in paragraph at lines 54--56
+\T1/cmr/m/n/10 flush_-cache(), fn_-Cache_-inode_-link(), fn_-Cache_-inode_-ln()
+, fn_-Cache_-inode_-ls(), fn_-
+ []
+
+
+Underfull \hbox (badness 7869) in paragraph at lines 54--56
+\T1/cmr/m/n/10 Cache_-inode_-mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-inod
+e_-recover_-cache(), fn_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--56
+\T1/cmr/m/n/10 fn_-Cache_-inode_-setattr(), fn_-Cache_-inode_-stat(), fn_-Cache
+_-inode_-su(), fn_-Cache_-
+ []
+
+
+Underfull \hbox (badness 2573) in paragraph at lines 63--65
+[]\T1/cmr/m/n/10 Referenced by cacheinode_-init(), fn_-Cache_-inode_-access(), 
+fn_-Cache_-inode_-cd(), fn_-
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 63--65
+\T1/cmr/m/n/10 fn_-Cache_-inode_-pwd(), fn_-Cache_-inode_-read(), fn_-Cache_-in
+ode_-refresh_-cache(), fn_-
+ []
+
+[42]
+Underfull \hbox (badness 2573) in paragraph at lines 108--109
+[]\T1/cmr/m/n/10 Referenced by cacheinode_-init(), fn_-Cache_-inode_-access(), 
+fn_-Cache_-inode_-cd(), fn_-
+ []
+
+
+Underfull \hbox (badness 3189) in paragraph at lines 108--109
+\T1/cmr/m/n/10 fn_-Cache_-inode_-pwd(), fn_-Cache_-inode_-read(), fn_-Cache_-in
+ode_-refresh_-cache(), fn_-
+ []
+
+) [43]
+\openout2 = `structcmdfsal__thr__info____.aux'.
+
+ (./structcmdfsal__thr__info____.tex
+Underfull \hbox (badness 1226) in paragraph at lines 41--43
+\T1/cmr/m/n/10 fsal_-lsxattrs(), fn_-fsal_-mkdir(), fn_-fsal_-open(), fn_-fsal_
+-open_-byfileid(), fn_-fsal_-open_-
+ []
+
+
+Underfull \hbox (badness 2744) in paragraph at lines 50--52
+[]\T1/cmr/m/n/10 Referenced by fn_-fsal_-close(), fn_-fsal_-close_-byfileid(), 
+fn_-fsal_-open(), fn_-fsal_-open_-
+ []
+
+[44
+
+]
+Underfull \hbox (badness 2744) in paragraph at lines 86--87
+[]\T1/cmr/m/n/10 Referenced by fn_-fsal_-close(), fn_-fsal_-close_-byfileid(), 
+fn_-fsal_-open(), fn_-fsal_-open_-
+ []
+
+) [45]
+\openout2 = `structcmdnfs__funcdesc____.aux'.
+
+ (./structcmdnfs__funcdesc____.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 3.
+
+(/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+) [46
+
+
+]) [47]
+\openout2 = `structcmdnfs__thr__info____.aux'.
+
+
+(./structcmdnfs__thr__info____.tex [48
+
+
+]
+Underfull \hbox (badness 3713) in paragraph at lines 112--114
+\T1/cmr/m/n/10 NFS3_-command(), fn_-nfs_-id(), fn_-nfs_-mount(), fn_-nfs_-su(),
+ fn_-nfs_-umount(), Get-
+ []
+
+) [49]
+\openout2 = `structcmdnfsremote__funcdesc____.aux'.
+
+ (./structcmdnfsremote__funcdesc____.tex [50
+
+
+]) [51]
+\openout2 = `structcommand__def____.aux'.
+
+
+(./structcommand__def____.tex) [52
+
+
+]
+\openout2 = `structlayer__def____.aux'.
+
+ (./structlayer__def____.tex) [53
+
+
+]
+\openout2 = `structprog__vers__client__def____.aux'.
+
+
+(./structprog__vers__client__def____.tex) [54
+
+
+]
+\openout2 = `structprog__vers__def____.aux'.
+
+ (./structprog__vers__def____.tex) [55
+
+
+]
+\openout2 = `structshell__attribute____.aux'.
+
+ (./structshell__attribute____.tex) [56
+
+
+]
+\openout2 = `structshell__fh3____.aux'.
+
+ (./structshell__fh3____.tex)
+[57
+
+
+]
+\openout2 = `structshell__info____.aux'.
+
+ (./structshell__info____.tex) [58
+
+
+]
+\openout2 = `structshell__state____.aux'.
+
+ (./structshell__state____.tex [59
+
+
+])
+[60]
+\openout2 = `structshell__variable____.aux'.
+
+ (./structshell__variable____.tex) [61
+
+
+] [62
+
+
+]
+Chapter 7.
+(./cmd__nfstools_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 25--27
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 MNT_-HANDLE\T1/cmr/m/n/10 (p_-mount_-r
+es3) ( (p_-mount_-res3) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 mountres3_-
+ []
+
+
+Underfull \hbox (badness 6477) in paragraph at lines 27--29
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 AUTH_-FLAVORS\T1/cmr/m/n/10 (p_-mount_
+-res3) ( (p_-mount_-res3) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 mountres3_-
+ []
+
+
+Underfull \hbox (badness 4569) in paragraph at lines 29--31
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 ATTR2_-ATTRIBUTES\T1/cmr/m/n/10 (_-p_-
+attr2res) ( (_-p_-attr2res) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 ATTR2res_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--35
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 DIROP2_-ATTRIBUTES\T1/cmr/m/n/10 (_-p_
+-dirop) ( (_-p_-dirop) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 DIROP2res_-
+ []
+
+[63]
+Underfull \hbox (badness 1715) in paragraph at lines 39--41
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 LOOKUP3_-OK_-HANDLE\T1/cmr/m/n/10 (_-p
+_-LOOKUP3res) ( (_-p_-LOOKUP3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--49
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 READDIR3_-OK\T1/cmr/m/n/10 (_-p_-READD
+IR3res) ( (_-p_-READDIR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--51
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 READDIR3_-FAIL\T1/cmr/m/n/10 (_-p_-REA
+DDIR3res) ( (_-p_-READDIR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--53
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 READDIRPLUS3_-OK\T1/cmr/m/n/10 (_-p_-R
+EADDIRPLUS3res) ( (_-p_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--55
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 READDIRPLUS3_-FAIL\T1/cmr/m/n/10 (_-p_
+-READDIRPLUS3res) ( (_-p_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--65
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 FSSTAT3_-FAIL_-ATTRS\T1/cmr/m/n/10 (_-
+p_-FSSTAT3res) ( (_-p_-FSSTAT3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--67
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 ACCESS3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p_
+-ACCESS3res) ( (_-p_-ACCESS3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--69
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 ACCESS3_-OK_-ACCESS\T1/cmr/m/n/10 (_-p
+_-ACCESS3res) ( (_-p_-ACCESS3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--71
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 ACCESS3_-FAIL_-ATTRS\T1/cmr/m/n/10 (_-
+p_-ACCESS3res) ( (_-p_-ACCESS3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--73
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 CREATE3_-OK_-FH\T1/cmr/m/n/10 (_-p_-CR
+EATE3res) ( (_-p_-CREATE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--75
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 CREATE3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p_
+-CREATE3res) ( (_-p_-CREATE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--77
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 CREATE3_-OK_-WCC\T1/cmr/m/n/10 (_-p_-C
+REATE3res) ( (_-p_-CREATE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--79
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 CREATE3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p_
+-CREATE3res) ( (_-p_-CREATE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--83
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 MKDIR3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p_-
+MKDIR3res) ( (_-p_-MKDIR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--87
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 MKDIR3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p_-
+MKDIR3res) ( (_-p_-MKDIR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--89
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 REMOVE3_-OK_-WCC\T1/cmr/m/n/10 (_-p_-R
+EMOVE3res) ( (_-p_-REMOVE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 6252) in paragraph at lines 89--91
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 REMOVE3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p_
+-REMOVE3res) ( (_-p_-REMOVE3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+[64]
+Underfull \hbox (badness 10000) in paragraph at lines 93--95
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 RMDIR3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p_-
+RMDIR3res) ( (_-p_-RMDIR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 8151) in paragraph at lines 95--97
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SETATTR3_-OK_-WCC\T1/cmr/m/n/10 (_-p_-
+SETATTR3res) ( (_-p_-SETATTR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 2961) in paragraph at lines 97--99
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SETATTR3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p
+_-SETATTR3res) ( (_-p_-SETATTR3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 1888) in paragraph at lines 101--103
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 RENAME3_-OK_-TOWCC\T1/cmr/m/n/10 (_-p_
+-RENAME3res) ( (_-p_-RENAME3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 4505) in paragraph at lines 107--109
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 LINK3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p_-L
+INK3res) ( (_-p_-LINK3res) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 LINK3res_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--111
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 LINK3_-OK_-WCC\T1/cmr/m/n/10 (_-p_-LIN
+K3res) ( (_-p_-LINK3res) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 LINK3res_-
+ []
+
+
+Underfull \hbox (badness 1688) in paragraph at lines 111--113
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 LINK3_-FAIL_-ATTRS\T1/cmr/m/n/10 (_-p_
+-LINK3res) ( (_-p_-LINK3res) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 LINK3res_-
+ []
+
+
+Underfull \hbox (badness 5637) in paragraph at lines 113--115
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 LINK3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p_-L
+INK3res) ( (_-p_-LINK3res) $\OMS/cmsy/m/n/10 !$ \T1/cmr/m/n/10 LINK3res_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--117
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SYMLINK3_-OK_-FH\T1/cmr/m/n/10 (_-p_-S
+YMLINK3res) ( (_-p_-SYMLINK3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 1412) in paragraph at lines 117--119
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SYMLINK3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p
+_-SYMLINK3res) ( (_-p_-SYMLINK3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 6412) in paragraph at lines 119--121
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SYMLINK3_-OK_-WCC\T1/cmr/m/n/10 (_-p_-
+SYMLINK3res) ( (_-p_-SYMLINK3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 2103) in paragraph at lines 121--123
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 SYMLINK3_-FAIL_-WCC\T1/cmr/m/n/10 (_-p
+_-SYMLINK3res) ( (_-p_-SYMLINK3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--125
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 FSINFO3_-OK_-ATTRS\T1/cmr/m/n/10 (_-p_
+-FSINFO3res) ( (_-p_-FSINFO3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--127
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 FSINFO3_-OK_-INFO\T1/cmr/m/n/10 (_-p_-
+FSINFO3res) ( (_-p_-FSINFO3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 127--129
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 FSINFO3_-FAIL_-ATTRS\T1/cmr/m/n/10 (_-
+p_-FSINFO3res) ( (_-p_-FSINFO3res) $\OMS/cmsy/m/n/10 !$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 133--135
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 PATHCONF3_-FAIL_-ATTRS\T1/cmr/m/n/10 (
+_-p_-PATHCONF3res) ( (_-p_-
+ []
+
+[65]
+Underfull \hbox (badness 1270) in paragraph at lines 176--178
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-SETATTR2args \T1/cmr/m/n/10 (\T1/c
+mr/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 182--184
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-RENAME2args \T1/cmr/m/n/10 (\T1/cm
+r/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+[66]
+Underfull \hbox (badness 1270) in paragraph at lines 234--236
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-SETATTR3args \T1/cmr/m/n/10 (\T1/c
+mr/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 238--240
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-RENAME3args \T1/cmr/m/n/10 (\T1/cm
+r/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+[67]
+Underfull \hbox (badness 10000) in paragraph at lines 264--264
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 265--265
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 268--268
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 269--269
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 272--272
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 273--273
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 276--276
+
+ []
+
+[68] [69] [70] [71] [72]
+Underfull \hbox (badness 10000) in paragraph at lines 640--640
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 645--645
+
+ []
+
+[73] [74] [75] [76]
+Underfull \hbox (badness 4940) in paragraph at lines 887--889
+[]\T1/cmr/m/n/10 References ACCESS3_-FAIL_-ATTRS, ACCESS3_-OK_-ACCESS, ACCESS3_
+-OK_-ATTRS,
+ []
+
+
+Underfull \hbox (badness 1668) in paragraph at lines 896--898
+[]\T1/cmr/m/n/10 References ATTR2_-ATTRIBUTES, CMDNFS_-DECODE, CMDNFS_-ENCODE, 
+cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 905--907
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs2(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+[77]
+Underfull \hbox (badness 2150) in paragraph at lines 914--916
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 923--925
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-postopfh3(), cmdnfs_-wccdata(), CR
+EATE3_-FAIL_-WCC,
+ []
+
+
+Underfull \hbox (badness 3735) in paragraph at lines 932--934
+\T1/cmr/m/n/10 CMDNFS_-FREE, cmdnfs_-nfsstat2(), DIROP2_-ATTRIBUTES, DIROP2_-HA
+NDLE, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 954--956
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-CREATE3args(), cmdnfs_-LINK3args(), cmdn
+fs_-MKDIR3args(),
+ []
+
+[78]
+Underfull \hbox (badness 10000) in paragraph at lines 980--980
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 993--993
+
+ []
+
+
+Underfull \hbox (badness 1648) in paragraph at lines 1011--1013
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-DIROP2res(), cmdnfs_-diropargs2(), cmdnf
+s_-fhstatus2(), cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1022--1024
+\T1/cmr/m/n/10 LOOKUP3res(), cmdnfs_-mountres3(), cmdnfs_-postopfh3(), cmdnfs_-
+READDIR3args(),
+ []
+
+
+Underfull \hbox (badness 6364) in paragraph at lines 1022--1024
+\T1/cmr/m/n/10 cmdnfs_-READDIRPLUS3args(), cmdnfs_-SETATTR3args(), and nfs_-rem
+ote_-solvepath().[]
+ []
+
+[79]
+Underfull \hbox (badness 2285) in paragraph at lines 1040--1042
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), FSINFO3_-FAIL_-ATTRS, FSINFO3_-OK_-ATTRS, 
+FSINFO3_-OK_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1067--1069
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1076--1078
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-wccdata(), LINK3_-FAIL_-ATTRS, LIN
+K3_-FAIL_-WCC,
+ []
+
+[80]
+Underfull \hbox (badness 1924) in paragraph at lines 1085--1087
+\T1/cmr/m/n/10 cmdnfs_-nfsstat3(), cmdnfs_-postopattr(), LOOKUP3_-FAIL_-DIRATTR
+, LOOKUP3_-OK_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 1094--1096
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1103--1105
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-postopfh3(), cmdnfs_-wccdata(), MK
+DIR3_-FAIL_-WCC,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1118--1118
+
+ []
+
+
+Underfull \hbox (badness 1629) in paragraph at lines 1134--1136
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ATTR2res(), cmdnfs_-DIROP2res(), cmdnfs_
+-fhstatus2(), cmdnfs_-
+ []
+
+[81]
+Underfull \hbox (badness 10000) in paragraph at lines 1145--1147
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ACCESS3res(), cmdnfs_-CREATE3res(), cmdn
+fs_-FSINFO3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1145--1147
+\T1/cmr/m/n/10 cmdnfs_-FSSTAT3res(), cmdnfs_-GETATTR3res(), cmdnfs_-LINK3res(),
+ cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1145--1147
+\T1/cmr/m/n/10 cmdnfs_-READDIRPLUS3res(), cmdnfs_-READLINK3res(), cmdnfs_-REMOV
+E3res(),
+ []
+
+
+Underfull \hbox (badness 3601) in paragraph at lines 1145--1147
+\T1/cmr/m/n/10 cmdnfs_-RENAME3res(), cmdnfs_-RMDIR3res(), cmdnfs_-SETATTR3res()
+, and cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1165--1167
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ACCESS3res(), cmdnfs_-CREATE3res(), cmdn
+fs_-FSINFO3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1165--1167
+\T1/cmr/m/n/10 cmdnfs_-PATHCONF3res(), cmdnfs_-READDIR3res(), cmdnfs_-READDIRPL
+US3res(),
+ []
+
+[82]
+Underfull \hbox (badness 10000) in paragraph at lines 1214--1216
+[]\T1/cmr/m/n/10 References ato64(), CMDNFS_-DECODE, CMDNFS_-ENCODE, cmdnfs_-fh
+andle3(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1232--1234
+[]\T1/cmr/m/n/10 References ato64(), CMDNFS_-DECODE, CMDNFS_-ENCODE, cmdnfs_-fh
+andle3(),
+ []
+
+[83]
+Underfull \hbox (badness 2150) in paragraph at lines 1277--1279
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs2(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 1286--1288
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 1295--1297
+\T1/cmr/m/n/10 cmdnfs_-wccdata(), NULL, RENAME3_-FAIL_-FROMWCC, RENAME3_-FAIL_-
+TOWCC,
+ []
+
+[84]
+Underfull \hbox (badness 7047) in paragraph at lines 1313--1314
+[]\T1/cmr/m/n/10 References ato64(), ato-m-ode(), ato-time(), CMDNFS_-DECODE, C
+MDNFS_-ENCODE,
+ []
+
+
+Underfull \hbox (badness 7047) in paragraph at lines 1324--1325
+[]\T1/cmr/m/n/10 References ato64(), ato-m-ode(), ato-time(), CMDNFS_-DECODE, C
+MDNFS_-ENCODE,
+ []
+
+[85]
+Underfull \hbox (badness 10000) in paragraph at lines 1382--1384
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), cmdnfs_-dirpa
+th(), CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1407--1408
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+s_-
+ []
+
+
+Underfull \hbox (badness 1275) in paragraph at lines 1409--1411
+\T1/cmr/m/n/10 REMOVE3res(), cmdnfs_-RENAME3res(), cmdnfs_-RMDIR3res(), cmdnfs_
+-SETATTR3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1424--1424
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1429--1429
+
+ []
+
+[86]
+Underfull \hbox (badness 10000) in paragraph at lines 1442--1442
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1447--1447
+
+ []
+
+) [87]
+\openout2 = `cmd__nfstools_8h.aux'.
+
+ (./cmd__nfstools_8h.tex [88
+
+]
+Underfull \hbox (badness 1270) in paragraph at lines 70--72
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-SETATTR2args \T1/cmr/m/n/10 (\T1/c
+mr/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+[89]
+Underfull \hbox (badness 1270) in paragraph at lines 120--122
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-SETATTR3args \T1/cmr/m/n/10 (\T1/c
+mr/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 124--126
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-RENAME3args \T1/cmr/m/n/10 (\T1/cm
+r/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 140--142
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cmdnfs_-RENAME2args \T1/cmr/m/n/10 (\T1/cm
+r/bx/n/10 cmdnfs_-encodetype_-t \T1/cmr/m/n/10 en-code-flag, int argc, char
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 154--154
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--155
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 158--158
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 159--159
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--162
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 163--163
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 166--166
+
+ []
+
+[90]
+Underfull \vbox (badness 6658) has occurred while \output is active []
+
+ [91]
+Underfull \hbox (badness 10000) in paragraph at lines 249--249
+
+ []
+
+
+Underfull \hbox (badness 4940) in paragraph at lines 283--285
+[]\T1/cmr/m/n/10 References ACCESS3_-FAIL_-ATTRS, ACCESS3_-OK_-ACCESS, ACCESS3_
+-OK_-ATTRS,
+ []
+
+
+Underfull \hbox (badness 1668) in paragraph at lines 292--294
+[]\T1/cmr/m/n/10 References ATTR2_-ATTRIBUTES, CMDNFS_-DECODE, CMDNFS_-ENCODE, 
+cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 301--303
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs2(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+[92]
+Underfull \hbox (badness 2150) in paragraph at lines 310--312
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 319--321
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-postopfh3(), cmdnfs_-wccdata(), CR
+EATE3_-FAIL_-WCC,
+ []
+
+
+Underfull \hbox (badness 3735) in paragraph at lines 328--330
+\T1/cmr/m/n/10 CMDNFS_-FREE, cmdnfs_-nfsstat2(), DIROP2_-ATTRIBUTES, DIROP2_-HA
+NDLE, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 350--352
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-CREATE3args(), cmdnfs_-LINK3args(), cmdn
+fs_-MKDIR3args(),
+ []
+
+[93]
+Underfull \hbox (badness 10000) in paragraph at lines 376--376
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 389--389
+
+ []
+
+
+Underfull \hbox (badness 1648) in paragraph at lines 407--409
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-DIROP2res(), cmdnfs_-diropargs2(), cmdnf
+s_-fhstatus2(), cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 418--420
+\T1/cmr/m/n/10 LOOKUP3res(), cmdnfs_-mountres3(), cmdnfs_-postopfh3(), cmdnfs_-
+READDIR3args(),
+ []
+
+
+Underfull \hbox (badness 6364) in paragraph at lines 418--420
+\T1/cmr/m/n/10 cmdnfs_-READDIRPLUS3args(), cmdnfs_-SETATTR3args(), and nfs_-rem
+ote_-solvepath().[]
+ []
+
+[94]
+Underfull \hbox (badness 2285) in paragraph at lines 436--438
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), FSINFO3_-FAIL_-ATTRS, FSINFO3_-OK_-ATTRS, 
+FSINFO3_-OK_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 463--465
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 472--474
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-wccdata(), LINK3_-FAIL_-ATTRS, LIN
+K3_-FAIL_-WCC,
+ []
+
+[95]
+Underfull \hbox (badness 1924) in paragraph at lines 481--483
+\T1/cmr/m/n/10 cmdnfs_-nfsstat3(), cmdnfs_-postopattr(), LOOKUP3_-FAIL_-DIRATTR
+, LOOKUP3_-OK_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 490--492
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 499--501
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-postopfh3(), cmdnfs_-wccdata(), MK
+DIR3_-FAIL_-WCC,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 514--514
+
+ []
+
+
+Underfull \hbox (badness 1629) in paragraph at lines 530--532
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ATTR2res(), cmdnfs_-DIROP2res(), cmdnfs_
+-fhstatus2(), cmdnfs_-
+ []
+
+[96]
+Underfull \hbox (badness 10000) in paragraph at lines 541--543
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ACCESS3res(), cmdnfs_-CREATE3res(), cmdn
+fs_-FSINFO3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 541--543
+\T1/cmr/m/n/10 cmdnfs_-FSSTAT3res(), cmdnfs_-GETATTR3res(), cmdnfs_-LINK3res(),
+ cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 541--543
+\T1/cmr/m/n/10 cmdnfs_-READDIRPLUS3res(), cmdnfs_-READLINK3res(), cmdnfs_-REMOV
+E3res(),
+ []
+
+
+Underfull \hbox (badness 3601) in paragraph at lines 541--543
+\T1/cmr/m/n/10 cmdnfs_-RENAME3res(), cmdnfs_-RMDIR3res(), cmdnfs_-SETATTR3res()
+, and cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--563
+[]\T1/cmr/m/n/10 Referenced by cmdnfs_-ACCESS3res(), cmdnfs_-CREATE3res(), cmdn
+fs_-FSINFO3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--563
+\T1/cmr/m/n/10 cmdnfs_-PATHCONF3res(), cmdnfs_-READDIR3res(), cmdnfs_-READDIRPL
+US3res(),
+ []
+
+[97]
+Underfull \hbox (badness 10000) in paragraph at lines 599--601
+[]\T1/cmr/m/n/10 References ato64(), CMDNFS_-DECODE, CMDNFS_-ENCODE, cmdnfs_-fh
+andle3(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 617--619
+[]\T1/cmr/m/n/10 References ato64(), CMDNFS_-DECODE, CMDNFS_-ENCODE, cmdnfs_-fh
+andle3(),
+ []
+
+[98]
+Underfull \hbox (badness 2150) in paragraph at lines 662--664
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs2(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 671--673
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), CMDNFS_-ENCOD
+E, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 7888) in paragraph at lines 680--682
+\T1/cmr/m/n/10 cmdnfs_-wccdata(), NULL, RENAME3_-FAIL_-FROMWCC, RENAME3_-FAIL_-
+TOWCC,
+ []
+
+
+Underfull \hbox (badness 7047) in paragraph at lines 698--699
+[]\T1/cmr/m/n/10 References ato64(), ato-m-ode(), ato-time(), CMDNFS_-DECODE, C
+MDNFS_-ENCODE,
+ []
+
+[99]
+Underfull \hbox (badness 7047) in paragraph at lines 709--710
+[]\T1/cmr/m/n/10 References ato64(), ato-m-ode(), ato-time(), CMDNFS_-DECODE, C
+MDNFS_-ENCODE,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 756--758
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, cmdnfs_-diropargs3(), cmdnfs_-dirpa
+th(), CMDNFS_-
+ []
+
+[100]
+Underfull \hbox (badness 10000) in paragraph at lines 780--780
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 785--785
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 798--798
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 803--803
+
+ []
+
+) [101]
+\openout2 = `cmd__tools_8c.aux'.
+
+ (./cmd__tools_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+[102
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+[103]
+Underfull \hbox (badness 10000) in paragraph at lines 140--140
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--145
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 175--175
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 180--180
+
+ []
+
+[104]
+Underfull \hbox (badness 10000) in paragraph at lines 204--204
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 209--209
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 222--222
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--227
+
+ []
+
+[105]
+Underfull \hbox (badness 10000) in paragraph at lines 256--256
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--271
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 276--276
+
+ []
+
+
+Underfull \hbox (badness 5374) in paragraph at lines 281--283
+[]\T1/cmr/m/n/10 Referenced by ato-time(), cmdnfs_-READDIR2args(), cmdnfs_-satt
+r2(), cmdnfs_-sattr3(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 289--289
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--294
+
+ []
+
+[106]
+Underfull \hbox (badness 10000) in paragraph at lines 307--307
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 312--312
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 327--327
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 332--332
+
+ []
+
+
+Underfull \hbox (badness 1102) in paragraph at lines 337--339
+\T1/cmr/m/n/10 getxattr(), fn_-fsal_-handlecmp(), fn_-fsal_-hardlink(), fn_-fsa
+l_-ln(), fn_-fsal_-ls(), fn_-fsal_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 345--345
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 350--350
+
+ []
+
+[107]
+Underfull \hbox (badness 10000) in paragraph at lines 365--365
+
+ []
+
+
+Underfull \hbox (badness 3601) in paragraph at lines 373--375
+[]\T1/cmr/m/n/10 Referenced by fn_-Cache_-inode_-create(), fn_-Cache_-inode_-li
+nk(), fn_-Cache_-inode_-ln(),
+ []
+
+
+Underfull \hbox (badness 2096) in paragraph at lines 373--375
+\T1/cmr/m/n/10 create(), fn_-fsal_-hardlink(), fn_-fsal_-ln(), fn_-fsal_-mkdir(
+), fn_-fsal_-rename(), fn_-fsal_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 381--381
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 386--386
+
+ []
+
+) [108] [109]
+\openout2 = `cmd__tools_8h.aux'.
+
+ (./cmd__tools_8h.tex [110
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--83
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+
+ []
+
+[111]
+Underfull \hbox (badness 10000) in paragraph at lines 152--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 189--189
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 194--194
+
+ []
+
+[112]
+Underfull \hbox (badness 10000) in paragraph at lines 218--218
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 223--223
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 236--236
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 241--241
+
+ []
+
+[113]
+Underfull \hbox (badness 10000) in paragraph at lines 270--270
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 290--290
+
+ []
+
+
+Underfull \hbox (badness 5374) in paragraph at lines 295--297
+[]\T1/cmr/m/n/10 Referenced by ato-time(), cmdnfs_-READDIR2args(), cmdnfs_-satt
+r2(), cmdnfs_-sattr3(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 303--303
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 308--308
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 321--321
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 326--326
+
+ []
+
+[114]
+Underfull \hbox (badness 10000) in paragraph at lines 341--341
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 346--346
+
+ []
+
+
+Underfull \hbox (badness 1102) in paragraph at lines 351--353
+\T1/cmr/m/n/10 getxattr(), fn_-fsal_-handlecmp(), fn_-fsal_-hardlink(), fn_-fsa
+l_-ln(), fn_-fsal_-ls(), fn_-fsal_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 359--359
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 364--364
+
+ []
+
+[115]
+Underfull \hbox (badness 10000) in paragraph at lines 379--379
+
+ []
+
+
+Underfull \hbox (badness 3601) in paragraph at lines 387--389
+[]\T1/cmr/m/n/10 Referenced by fn_-Cache_-inode_-create(), fn_-Cache_-inode_-li
+nk(), fn_-Cache_-inode_-ln(),
+ []
+
+
+Underfull \hbox (badness 2096) in paragraph at lines 387--389
+\T1/cmr/m/n/10 create(), fn_-fsal_-hardlink(), fn_-fsal_-ln(), fn_-fsal_-mkdir(
+), fn_-fsal_-rename(), fn_-fsal_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 395--395
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--400
+
+ []
+
+) [116]
+\openout2 = `commands_8h.aux'.
+
+ (./commands_8h.tex [117
+
+
+] [118]
+Underfull \hbox (badness 10000) in paragraph at lines 208--208
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 209--209
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 212--212
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 213--213
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 216--216
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 217--217
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 220--220
+
+ []
+
+[119]
+Underfull \hbox (badness 2213) in paragraph at lines 307--308
+[]\T1/cmr/m/n/10 Revision 1.9 2004/12/08 17:31:01 de-niel adding ar-ray for Cac
+he_-inode layer in \T1/cmr/bx/n/10 com-
+ []
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [120]
+Underfull \hbox (badness 2443) in paragraph at lines 380--382
+\T1/cmr/m/n/10 Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_-thr_-info_-
+t, cmd-Cache-Inode_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 380--382
+\T1/cmr/m/n/10 ::context, cmd-Cache-Inode_-thr_-info_-_-::current_-path, Getopt
+(), ht, NULL, Optind, Op-
+ []
+
+[121]
+Underfull \hbox (badness 5217) in paragraph at lines 407--409
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-_-::cache_-status, cmd-
+Cache-Inode_-thr_-info_-_-::client,
+ []
+
+[122]
+Underfull \hbox (badness 2443) in paragraph at lines 443--445
+\T1/cmr/m/n/10 Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_-thr_-info_-
+t, cmd-Cache-Inode_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 443--445
+\T1/cmr/m/n/10 ::context, cmd-Cache-Inode_-thr_-info_-_-::current_-path, Getopt
+(), ht, NULL, Optind, Op-
+ []
+
+
+Underfull \hbox (badness 5417) in paragraph at lines 452--454
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-_-::cache_-status, cmd-
+Cache-Inode_-thr_-info_-t, cmd-
+ []
+
+[123]
+Underfull \hbox (badness 1253) in paragraph at lines 508--510
+\T1/cmr/m/n/10 status, cmd-Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_
+-thr_-info_-t, cmd-Cache-Inode_-
+ []
+
+[124]
+Underfull \hbox (badness 4713) in paragraph at lines 526--528
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-t, cmd-Cache-Inode_-thr
+_-info_-_-::context, cmd-Cache-
+ []
+
+
+Underfull \hbox (badness 1221) in paragraph at lines 526--528
+\T1/cmr/m/n/10 Inode_-thr_-info_-_-::exp_-context, getu-groups(), ht, MAX_-GRPS
+, my_-atoi(), print_-fsal_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 553--555
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 569--571
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+[125]
+Underfull \hbox (badness 3690) in paragraph at lines 578--580
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Init_-Thread_-Context(),
+ []
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 587--589
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-fd, Get-FSALCmd-Context(),
+ []
+
+
+Underfull \hbox (badness 3049) in paragraph at lines 587--589
+\T1/cmr/m/n/10 Init_-Thread_-Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok,
+ cmdfsal_-thr_-info_-_-::opened,
+ []
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 596--598
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-fd, Get-FSALCmd-Context(),
+ []
+
+
+Underfull \hbox (badness 3049) in paragraph at lines 596--598
+\T1/cmr/m/n/10 Init_-Thread_-Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok,
+ cmdfsal_-thr_-info_-_-::opened,
+ []
+
+
+Underfull \hbox (badness 3690) in paragraph at lines 614--616
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Init_-Thread_-Context(),
+ []
+
+[126]
+Underfull \hbox (badness 1097) in paragraph at lines 623--625
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 623--625
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+
+Underfull \hbox (badness 7576) in paragraph at lines 632--634
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-dir, cmdfsal_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 641--643
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 659--661
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 668--670
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+[127]
+Underfull \hbox (badness 1097) in paragraph at lines 677--679
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 677--679
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+
+Underfull \hbox (badness 4084) in paragraph at lines 695--697
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, cmdfsal_-thr_-info_-_-
+::current_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 695--697
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, NULL,
+ []
+
+
+Underfull \hbox (badness 4084) in paragraph at lines 704--706
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, cmdfsal_-thr_-info_-_-
+::current_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 704--706
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, NULL,
+ []
+
+
+Underfull \hbox (badness 4621) in paragraph at lines 713--715
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, Get-FSALCmd-Context(),
+ Getopt(), Init_-Thread_-
+ []
+
+[128]
+Underfull \hbox (badness 7576) in paragraph at lines 722--724
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-dir, cmdfsal_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 731--733
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 731--733
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 749--751
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 6944) in paragraph at lines 758--760
+\T1/cmr/m/n/10 TIME, shell_-attribute_-_-::attr_-type, cmdfsal_-thr_-info_-t, c
+mdfsal_-thr_-info_-_-::context,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 758--760
+\T1/cmr/m/n/10 cmdfsal_-thr_-info_-_-::current_-dir, cmdfsal_-thr_-info_-_-::cu
+rrent_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 7379) in paragraph at lines 758--760
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, Mk-
+ []
+
+[129]
+Underfull \hbox (badness 1097) in paragraph at lines 767--769
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1810) in paragraph at lines 776--778
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::cont
+ext, cmdfsal_-thr_-info_-_-::exp_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 794--796
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+[130]
+Underfull \hbox (badness 2846) in paragraph at lines 822--824
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 831--833
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 831--833
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 831--833
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 840--842
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+[131]
+Underfull \hbox (badness 1286) in paragraph at lines 849--851
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 849--851
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 849--851
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 858--860
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 867--869
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 867--869
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 867--869
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 876--878
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 885--887
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 885--887
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 885--887
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+[132]
+Underfull \hbox (badness 6608) in paragraph at lines 894--896
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 912--914
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 912--914
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+[133]
+Underfull \hbox (badness 6608) in paragraph at lines 948--950
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 966--968
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 966--968
+\T1/cmr/m/n/10 _-::context, cmdnfs_-thr_-info_-_-::current_-path, cmdnfs_-thr_-
+info_-_-::current_-path_-hdl,
+ []
+
+
+Underfull \hbox (badness 5105) in paragraph at lines 966--968
+\T1/cmr/m/n/10 thr_-info_-_-::is_-mounted_-path, cmdnfs_-thr_-info_-_-::is_-thr
+ead_-init, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 975--977
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 2393) in paragraph at lines 975--977
+\T1/cmr/m/n/10 ::current_-path_-hdl, shell_-fh3_-_-::data_-len, shell_-fh3_-_-:
+:data_-val, Get-NFSClient(), and
+ []
+
+[134]
+Underfull \hbox (badness 5175) in paragraph at lines 1020--1022
+[]\T1/cmr/m/n/10 References CMDNFS_-ENCODE, cmdnfs_-sattr3(), shell_-fh3_-_-::d
+ata_-len, shell_-fh3_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1029--1031
+\T1/cmr/m/n/10 nfs_-remote_-readdirplus(), nfs_-remote_-readdirplus_-free(), nf
+s_-remote_-readlink(), nfs_-
+ []
+
+
+Underfull \hbox (badness 4132) in paragraph at lines 1029--1031
+\T1/cmr/m/n/10 remote_-solvepath(), Optind, Op-topt, print_-nfs_-attributes(), 
+print_-nfsitem_-line(), and
+ []
+
+[135]
+Underfull \hbox (badness 2150) in paragraph at lines 1074--1076
+[]\T1/cmr/m/n/10 References CMDNFS_-ENCODE, cmdnfs_-sattr3(), Getopt(), nfs_-re
+mote_-setattr(), nfs_-
+ []
+
+[136]
+Underfull \hbox (badness 6608) in paragraph at lines 1119--1121
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1119--1121
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 1137--1139
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 5345) in paragraph at lines 1146--1148
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::contex
+t, cmdnfs_-thr_-info_-_-::exp_-
+ []
+
+[137]
+Underfull \hbox (badness 10000) in paragraph at lines 1155--1157
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 2894) in paragraph at lines 1155--1157
+\T1/cmr/m/n/10 _-::context, Get-NFSClient(), ht, Init-NFSClient(), cmdnfs_-thr_
+-info_-_-::is_-mounted_-path,
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 1164--1166
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1164--1166
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+) [138]
+\openout2 = `commands__Cache__inode_8c.aux'.
+
+ (./commands__Cache__inode_8c.tex [139
+
+
+] [140]
+Underfull \hbox (badness 6542) in paragraph at lines 159--160
+\T1/cmr/m/n/10 cache(), fn_-Cache_-inode_-flush_-cache(), fn_-Cache_-inode_-gc(
+), fn_-Cache_-inode_-link(),
+ []
+
+
+Underfull \hbox (badness 2460) in paragraph at lines 159--160
+\T1/cmr/m/n/10 cache(), fn_-Cache_-inode_-release_-cache(), fn_-Cache_-inode_-r
+ename(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 1571) in paragraph at lines 159--160
+\T1/cmr/m/n/10 setattr(), fn_-Cache_-inode_-stat(), fn_-Cache_-inode_-su(), fn_
+-Cache_-inode_-unlink(), fn_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 180--182
+\T1/cmr/m/n/10 fn_-Cache_-inode_-refresh_-cache(), fn_-Cache_-inode_-release_-c
+ache(), fn_-Cache_-inode_-
+ []
+
+[141]
+Underfull \hbox (badness 2443) in paragraph at lines 236--238
+\T1/cmr/m/n/10 Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_-thr_-info_-
+t, cmd-Cache-Inode_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 236--238
+\T1/cmr/m/n/10 ::context, cmd-Cache-Inode_-thr_-info_-_-::current_-path, Getopt
+(), ht, NULL, Optind, Op-
+ []
+
+[142]
+Underfull \hbox (badness 5217) in paragraph at lines 263--265
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-_-::cache_-status, cmd-
+Cache-Inode_-thr_-info_-_-::client,
+ []
+
+[143]
+Underfull \hbox (badness 2443) in paragraph at lines 299--301
+\T1/cmr/m/n/10 Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_-thr_-info_-
+t, cmd-Cache-Inode_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 299--301
+\T1/cmr/m/n/10 ::context, cmd-Cache-Inode_-thr_-info_-_-::current_-path, Getopt
+(), ht, NULL, Optind, Op-
+ []
+
+
+Underfull \hbox (badness 5417) in paragraph at lines 308--310
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-_-::cache_-status, cmd-
+Cache-Inode_-thr_-info_-t, cmd-
+ []
+
+[144]
+Underfull \hbox (badness 1253) in paragraph at lines 364--366
+\T1/cmr/m/n/10 status, cmd-Cache-Inode_-thr_-info_-_-::client, cmd-Cache-Inode_
+-thr_-info_-t, cmd-Cache-Inode_-
+ []
+
+[145]
+Underfull \hbox (badness 4713) in paragraph at lines 382--384
+[]\T1/cmr/m/n/10 References cmd-Cache-Inode_-thr_-info_-t, cmd-Cache-Inode_-thr
+_-info_-_-::context, cmd-Cache-
+ []
+
+
+Underfull \hbox (badness 1221) in paragraph at lines 382--384
+\T1/cmr/m/n/10 Inode_-thr_-info_-_-::exp_-context, getu-groups(), ht, MAX_-GRPS
+, my_-atoi(), print_-fsal_-
+ []
+
+
+Underfull \hbox (badness 5231) in paragraph at lines 425--426
+\T1/cmr/m/n/10 read(), fn_-Cache_-inode_-recover_-cache(), fn_-Cache_-inode_-re
+fresh_-cache(), fn_-Cache_-
+ []
+
+[146])
+Underfull \hbox (badness 1210) in paragraph at lines 455--62
+\T1/cmr/m/n/10 inode_-cache_-init(), fn_-Cache_-inode_-callstat(), fn_-Cache_-i
+node_-cd(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 4001) in paragraph at lines 455--62
+\T1/cmr/m/n/10 gc(), fn_-Cache_-inode_-link(), fn_-Cache_-inode_-ln(), fn_-Cach
+e_-inode_-ls(), fn_-Cache_-
+ []
+
+
+Underfull \hbox (badness 3579) in paragraph at lines 455--62
+\T1/cmr/m/n/10 cache(), fn_-Cache_-inode_-refresh_-cache(), fn_-Cache_-inode_-r
+elease_-cache(), fn_-Cache_-
+ []
+
+
+Underfull \hbox (badness 2269) in paragraph at lines 455--62
+\T1/cmr/m/n/10 fn_-Cache_-inode_-unlink(), fn_-Cache_-inode_-write(), fn_-MNT1_
+-command(), fn_-MNT3_-
+ []
+
+[147]
+\openout2 = `commands__FSAL_8c.aux'.
+
+ (./commands__FSAL_8c.tex [148
+
+
+] [149]
+Underfull \hbox (badness 1097) in paragraph at lines 153--155
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 169--171
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 3690) in paragraph at lines 178--180
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Init_-Thread_-Context(),
+ []
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 187--189
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-fd, Get-FSALCmd-Context(),
+ []
+
+
+Underfull \hbox (badness 3049) in paragraph at lines 187--189
+\T1/cmr/m/n/10 Init_-Thread_-Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok,
+ cmdfsal_-thr_-info_-_-::opened,
+ []
+
+
+Underfull \hbox (badness 2452) in paragraph at lines 196--198
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-fd, Get-FSALCmd-Context(),
+ []
+
+
+Underfull \hbox (badness 3049) in paragraph at lines 196--198
+\T1/cmr/m/n/10 Init_-Thread_-Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok,
+ cmdfsal_-thr_-info_-_-::opened,
+ []
+
+[150]
+Underfull \hbox (badness 3690) in paragraph at lines 214--216
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Init_-Thread_-Context(),
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 223--225
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 223--225
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+
+Underfull \hbox (badness 7576) in paragraph at lines 232--234
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-dir, cmdfsal_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 241--243
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+[151]
+Underfull \hbox (badness 1097) in paragraph at lines 259--261
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 268--270
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 277--279
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 277--279
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+[152]
+Underfull \hbox (badness 4084) in paragraph at lines 295--297
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, cmdfsal_-thr_-info_-_-
+::current_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 295--297
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, NULL,
+ []
+
+
+Underfull \hbox (badness 4084) in paragraph at lines 304--306
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, cmdfsal_-thr_-info_-_-
+::current_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 304--306
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, NULL,
+ []
+
+
+Underfull \hbox (badness 4621) in paragraph at lines 313--315
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-fd, Get-FSALCmd-Context(),
+ Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 7576) in paragraph at lines 322--324
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-dir, cmdfsal_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 331--333
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 331--333
+\T1/cmr/m/n/10 Context(), cmdfsal_-thr_-info_-_-::is_-thread_-ok, Optind, Op-to
+pt, print_-fsal_-status(), and
+ []
+
+[153]
+Underfull \hbox (badness 1097) in paragraph at lines 349--351
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 6944) in paragraph at lines 358--360
+\T1/cmr/m/n/10 TIME, shell_-attribute_-_-::attr_-type, cmdfsal_-thr_-info_-t, c
+mdfsal_-thr_-info_-_-::context,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 358--360
+\T1/cmr/m/n/10 cmdfsal_-thr_-info_-_-::current_-dir, cmdfsal_-thr_-info_-_-::cu
+rrent_-path, Get-FSALCmd-
+ []
+
+
+Underfull \hbox (badness 7379) in paragraph at lines 358--360
+\T1/cmr/m/n/10 Context(), Getopt(), Init_-Thread_-Context(), cmdfsal_-thr_-info
+_-_-::is_-thread_-ok, Mk-
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 367--369
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+
+Underfull \hbox (badness 1810) in paragraph at lines 376--378
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::cont
+ext, cmdfsal_-thr_-info_-_-::exp_-
+ []
+
+[154]
+Underfull \hbox (badness 1097) in paragraph at lines 394--396
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, Get-FSALCmd-Context(
+), Getopt(), Init_-Thread_-
+ []
+
+[155]
+Underfull \hbox (badness 2443) in paragraph at lines 440--441
+[]\T1/cmr/m/n/10 References cmdfsal_-thr_-info_-t, cmdfsal_-thr_-info_-_-::curr
+ent_-path, cmdfsal_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 1430) in paragraph at lines 451--452
+\T1/cmr/m/n/10 dir, cmdfsal_-thr_-info_-_-::current_-path, cmdfsal_-thr_-info_-
+_-::exp_-context, cmdfsal_-thr_-
+ []
+
+) [156]
+\openout2 = `commands__NFS_8c.aux'.
+
+ (./commands__NFS_8c.tex [157
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--122
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--123
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 126--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 127--127
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
+
+ []
+
+[158]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [159]
+Underfull \hbox (badness 1062) in paragraph at lines 229--230
+\T1/cmr/m/n/10 fn_-nfs_-mkdir(), fn_-nfs_-remote_-cd(), fn_-nfs_-remote_-create
+(), fn_-nfs_-remote_-hardlink(),
+ []
+
+
+Underfull \hbox (badness 5533) in paragraph at lines 229--230
+\T1/cmr/m/n/10 link(), nfs_-remote_-mkdir(), nfs_-remote_-mount(), nfs_-remote_
+-readdir(), nfs_-remote_-
+ []
+
+
+Underfull \hbox (badness 2443) in paragraph at lines 229--230
+\T1/cmr/m/n/10 readdirplus(), nfs_-remote_-readlink(), nfs_-remote_-remove(), n
+fs_-remote_-rename(), nfs_-
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 241--243
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 250--252
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+[160]
+Underfull \hbox (badness 2846) in paragraph at lines 259--261
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 2846) in paragraph at lines 268--270
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, CMDNFS_-
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 277--279
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 295--297
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 295--297
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+[161]
+Underfull \hbox (badness 6608) in paragraph at lines 331--333
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+[162]
+Underfull \hbox (badness 10000) in paragraph at lines 349--351
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 349--351
+\T1/cmr/m/n/10 _-::context, cmdnfs_-thr_-info_-_-::current_-path, cmdnfs_-thr_-
+info_-_-::current_-path_-hdl,
+ []
+
+
+Underfull \hbox (badness 5105) in paragraph at lines 349--351
+\T1/cmr/m/n/10 thr_-info_-_-::is_-mounted_-path, cmdnfs_-thr_-info_-_-::is_-thr
+ead_-init, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 358--360
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 2393) in paragraph at lines 358--360
+\T1/cmr/m/n/10 ::current_-path_-hdl, shell_-fh3_-_-::data_-len, shell_-fh3_-_-:
+:data_-val, Get-NFSClient(), and
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 367--369
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 367--369
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 385--387
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 5345) in paragraph at lines 394--396
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::contex
+t, cmdnfs_-thr_-info_-_-::exp_-
+ []
+
+[163]
+Underfull \hbox (badness 10000) in paragraph at lines 403--405
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-_-::authunix_-struct, cmdnfs_-th
+r_-info_-_-::client, cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 2894) in paragraph at lines 403--405
+\T1/cmr/m/n/10 _-::context, Get-NFSClient(), ht, Init-NFSClient(), cmdnfs_-thr_
+-info_-_-::is_-mounted_-path,
+ []
+
+
+Underfull \hbox (badness 6608) in paragraph at lines 412--414
+[]\T1/cmr/m/n/10 References cmdnfs_-thr_-info_-t, cmdnfs_-thr_-info_-_-::curren
+t_-path, cmdnfs_-thr_-info_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 412--414
+\T1/cmr/m/n/10 ::current_-path_-hdl, Get-NFSClient(), Getopt(), cmdnfs_-thr_-in
+fo_-_-::is_-mounted_-path,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 429--429
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--442
+
+ []
+
+[164]
+Underfull \hbox (badness 1210) in paragraph at lines 502--504
+\T1/cmr/m/n/10 inode_-cache_-init(), fn_-Cache_-inode_-callstat(), fn_-Cache_-i
+node_-cd(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 4001) in paragraph at lines 502--504
+\T1/cmr/m/n/10 gc(), fn_-Cache_-inode_-link(), fn_-Cache_-inode_-ln(), fn_-Cach
+e_-inode_-ls(), fn_-Cache_-
+ []
+
+
+Underfull \hbox (badness 3579) in paragraph at lines 502--504
+\T1/cmr/m/n/10 cache(), fn_-Cache_-inode_-refresh_-cache(), fn_-Cache_-inode_-r
+elease_-cache(), fn_-Cache_-
+ []
+
+
+Underfull \hbox (badness 2269) in paragraph at lines 502--504
+\T1/cmr/m/n/10 fn_-Cache_-inode_-unlink(), fn_-Cache_-inode_-write(), fn_-MNT1_
+-command(), fn_-MNT3_-
+ []
+
+[165]) [166]
+\openout2 = `commands__NFS__remote_8c.aux'.
+
+ (./commands__NFS__remote_8c.tex [167
+
+
+]
+Underfull \hbox (badness 2189) in paragraph at lines 98--100
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-remote_-access \T1/cmr/m/n/10 (\T1/cm
+r/bx/n/10 shell_-fh3_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hdl, nfs3_-uint
+32 $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 access_-mask, FILE
+ []
+
+
+Underfull \hbox (badness 2707) in paragraph at lines 118--120
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-remote_-setattr \T1/cmr/m/n/10 (\T1/c
+mr/bx/n/10 shell_-fh3_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-obj_-hdl, satt
+r3 $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-attributes, FILE
+ []
+
+[168] [169]
+Underfull \hbox (badness 1286) in paragraph at lines 231--233
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 231--233
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 231--233
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 240--242
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 240--242
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 240--242
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 249--251
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 249--251
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 249--251
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 258--260
+[]\T1/cmr/m/n/10 References CMDNFS_-DECODE, CMDNFS_-ENCODE, CMDNFS_-FREE, cmdnf
+sremote_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 258--260
+\T1/cmr/m/n/10 funcdesc_-t, cmdnfsremote_-funcdesc_-_-::func_-call, cmdnfsremot
+e_-funcdesc_-_-::func_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 258--260
+\T1/cmr/m/n/10 decode, cmdnfsremote_-funcdesc_-_-::func_-encode, cmdnfsremote_-
+funcdesc_-_-::func_-free,
+ []
+
+[170]
+Underfull \hbox (badness 5175) in paragraph at lines 303--305
+[]\T1/cmr/m/n/10 References CMDNFS_-ENCODE, cmdnfs_-sattr3(), shell_-fh3_-_-::d
+ata_-len, shell_-fh3_-_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 312--314
+\T1/cmr/m/n/10 nfs_-remote_-readdirplus(), nfs_-remote_-readdirplus_-free(), nf
+s_-remote_-readlink(), nfs_-
+ []
+
+
+Underfull \hbox (badness 4132) in paragraph at lines 312--314
+\T1/cmr/m/n/10 remote_-solvepath(), Optind, Op-topt, print_-nfs_-attributes(), 
+print_-nfsitem_-line(), and
+ []
+
+[171]
+Underfull \hbox (badness 2150) in paragraph at lines 357--359
+[]\T1/cmr/m/n/10 References CMDNFS_-ENCODE, cmdnfs_-sattr3(), Getopt(), nfs_-re
+mote_-setattr(), nfs_-
+ []
+
+[172]
+Underfull \hbox (badness 7064) in paragraph at lines 413--415
+\T1/cmr/m/n/10 access(), nfs_-remote_-create(), nfs_-remote_-getattr(), nfs_-re
+mote_-link(), nfs_-remote_-
+ []
+
+[173] [174]
+Underfull \vbox (badness 1292) has occurred while \output is active []
+
+ [175]
+Underfull \hbox (badness 10000) in paragraph at lines 546--547
+[]\T1/cmr/m/n/10 References get-CLIENT(), nfs3_-remote_-Readdirplus(), nfs3_-re
+mote_-Readdirplus_-Free(),
+ []
+
+[176]
+Underfull \hbox (badness 2435) in paragraph at lines 625--627
+\T1/cmr/m/n/10 nfs_-remote_-ln(), fn_-nfs_-remote_-ls(), fn_-nfs_-remote_-mkdir
+(), fn_-nfs_-remote_-rename(),
+ []
+
+[177] [178]
+Underfull \hbox (badness 7064) in paragraph at lines 713--715
+\T1/cmr/m/n/10 access(), nfs_-remote_-create(), nfs_-remote_-getattr(), nfs_-re
+mote_-link(), nfs_-remote_-
+ []
+
+) [179]
+\openout2 = `Getopt_8c.aux'.
+
+ (./Getopt_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+[180
+
+
+]
+Underfull \hbox (badness 4013) in paragraph at lines 99--100
+\T1/cmr/m/n/10 ATTR2res(), cmdnfs_-CREATE2args(), cmdnfs_-CREATE3args(), cmdnfs
+_-CREATE3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 fhstatus2(), cmdnfs_-FSINFO3res(), cmdnfs_-FSSTAT3res(), cmdnfs_
+-GETATTR3res(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 cmdnfs_-postopattr(), cmdnfs_-postopfh3(), cmdnfs_-READDIR2args(
+), cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 READDIR2res(), cmdnfs_-READDIR3args(), cmdnfs_-READDIR3res(), cm
+dnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 READDIRPLUS3args(), cmdnfs_-READDIRPLUS3res(), cmdnfs_-READLINK2
+res(),
+ []
+
+
+Underfull \hbox (badness 4859) in paragraph at lines 99--100
+\T1/cmr/m/n/10 cmdnfs_-READLINK3res(), cmdnfs_-REMOVE3res(), cmdnfs_-RENAME2arg
+s(), cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 cmdnfs_-SETATTR3args(), cmdnfs_-SETATTR3res(), cmdnfs_-STATFS2re
+s(), cmdnfs_-
+ []
+
+
+Underfull \hbox (badness 1968) in paragraph at lines 99--100
+\T1/cmr/m/n/10 SYMLINK3args(), cmdnfs_-SYMLINK3res(), cmdnfs_-wccdata(), fn_-Ca
+che_-inode_-create(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 fn_-Cache_-inode_-mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-
+inode_-write(), fn_-fsal_-
+ []
+
+
+Underfull \hbox (badness 4108) in paragraph at lines 99--100
+\T1/cmr/m/n/10 fn_-fsal_-ls(), fn_-fsal_-mkdir(), fn_-fsal_-open(), fn_-fsal_-o
+pen_-byfileid(), fn_-fsal_-open_-
+ []
+
+
+Underfull \hbox (badness 2285) in paragraph at lines 99--100
+\T1/cmr/m/n/10 byname(), fn_-fsal_-read(), fn_-fsal_-rename(), fn_-fsal_-setatt
+r(), fn_-fsal_-truncate(), fn_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 fsal_-unlink(), fn_-fsal_-write(), fn_-MNT1_-command(), fn_-MNT1
+_-remote_-command(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+\T1/cmr/m/n/10 remote_-command(), fn_-NFS3_-command(), fn_-NFS3_-remote_-comman
+d(), fn_-nfs_-ln(),
+ []
+
+
+Underfull \vbox (badness 2790) has occurred while \output is active []
+
+ [181]
+Underfull \hbox (badness 7869) in paragraph at lines 113--114
+\T1/cmr/m/n/10 mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-inode_-recover_-ca
+che(), fn_-Cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 7326) in paragraph at lines 143--145
+\T1/cmr/m/n/10 inode_-read(), fn_-Cache_-inode_-recover_-cache(), fn_-Cache_-in
+ode_-refresh_-cache(), fn_-
+ []
+
+[182])
+Underfull \hbox (badness 7869) in paragraph at lines 152--66
+\T1/cmr/m/n/10 mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-inode_-recover_-ca
+che(), fn_-Cache_-inode_-
+ []
+
+[183]
+\openout2 = `Getopt_8h.aux'.
+
+ (./Getopt_8h.tex
+Underfull \hbox (badness 10000) in paragraph at lines 27--27
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 7869) in paragraph at lines 58--59
+\T1/cmr/m/n/10 mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-inode_-recover_-ca
+che(), fn_-Cache_-inode_-
+ []
+
+[184
+
+
+]
+Underfull \hbox (badness 7326) in paragraph at lines 88--90
+\T1/cmr/m/n/10 inode_-read(), fn_-Cache_-inode_-recover_-cache(), fn_-Cache_-in
+ode_-refresh_-cache(), fn_-
+ []
+
+)
+Underfull \hbox (badness 7869) in paragraph at lines 97--67
+\T1/cmr/m/n/10 mkdir(), fn_-Cache_-inode_-read(), fn_-Cache_-inode_-recover_-ca
+che(), fn_-Cache_-inode_-
+ []
+
+[185] [186]
+\openout2 = `main_8c.aux'.
+
+ (./main_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+[187
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 1394) in paragraph at lines 108--109
+[]\T1/cmr/m/n/10 References shell_-info_-_-::prompt, shell_-info_-_-::script_-f
+ile, shell_-info_-_-::shell_-id, shell_-
+ []
+
+
+Underfull \hbox (badness 1314) in paragraph at lines 119--120
+[]\T1/cmr/m/n/10 References Getopt(), Launch-Shell(), NBTHRMAX, NULL, Op-targ, 
+Opterr, Optind, Op-
+ []
+
+
+Underfull \vbox (badness 1189) has occurred while \output is active []
+
+ [188])
+[189]
+\openout2 = `nfs__remote__functions_8c.aux'.
+
+ (./nfs__remote__functions_8c.tex [190
+
+
+] [191]) [192]
+\openout2 = `nfs__remote__functions_8h.aux'.
+
+
+(./nfs__remote__functions_8h.tex [193
+
+
+] [194]) [195]
+\openout2 = `shell_8c.aux'.
+
+ (./shell_8c.tex [196
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--117
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+[197]
+Underfull \hbox (badness 1776) in paragraph at lines 199--201
+\T1/cmr/m/n/10 Solve-Args(), shellcmd_-barrier(), shellcmd_-help(), shellcmd_-i
+nteractive(), shellcmd_-quit(),
+ []
+
+
+Underfull \vbox (badness 1424) has occurred while \output is active []
+
+ [198]
+Underfull \hbox (badness 10000) in paragraph at lines 230--230
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 246--246
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 251--251
+
+ []
+
+[199]
+Underfull \hbox (badness 10000) in paragraph at lines 333--333
+
+ []
+
+[200]
+Underfull \hbox (badness 10000) in paragraph at lines 362--362
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 367--367
+
+ []
+
+
+Underfull \hbox (badness 1776) in paragraph at lines 383--385
+\T1/cmr/m/n/10 Solve-Args(), shellcmd_-barrier(), shellcmd_-help(), shellcmd_-i
+nteractive(), shellcmd_-quit(),
+ []
+
+[201]
+Underfull \hbox (badness 10000) in paragraph at lines 413--413
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 429--429
+
+ []
+
+
+Underfull \hbox (badness 2744) in paragraph at lines 434--435
+[]\T1/cmr/m/n/10 References shell_-state_-_-::layer, layer_-def_-t, layer_-def_
+-_-::layer_-name, set_-var_-value(),
+ []
+
+
+Underfull \hbox (badness 4846) in paragraph at lines 445--446
+[]\T1/cmr/m/n/10 References shell_-state_-_-::line, set_-var_-value(), shell_-P
+rint-Error(), shell_-state_-t, and
+ []
+
+[202]
+Underfull \hbox (badness 1721) in paragraph at lines 478--479
+[]\T1/cmr/m/n/10 References set_-var_-value(), shell_-Print-Error(), shell_-sta
+te_-t, shell_-state_-_-::status, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 499--499
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 504--504
+
+ []
+
+
+Underfull \hbox (badness 4531) in paragraph at lines 509--510
+[]\T1/cmr/m/n/10 References get_-var_-value(), MAX_-OUTPUT_-LEN, shell_-Clean-A
+rgs(), shell_-Execute(),
+ []
+
+[203] [204]) [205]
+\openout2 = `shell_8h.aux'.
+
+ (./shell_8h.tex [206
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--99
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+
+ []
+
+[207]
+Underfull \hbox (badness 10000) in paragraph at lines 194--194
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 210--210
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 215--215
+
+ []
+
+[208] [209]
+Underfull \hbox (badness 10000) in paragraph at lines 295--295
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--324
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
+
+ []
+
+
+Underfull \hbox (badness 1776) in paragraph at lines 345--347
+\T1/cmr/m/n/10 Solve-Args(), shellcmd_-barrier(), shellcmd_-help(), shellcmd_-i
+nteractive(), shellcmd_-quit(),
+ []
+
+[210]
+Underfull \hbox (badness 10000) in paragraph at lines 375--375
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 391--391
+
+ []
+
+
+Underfull \hbox (badness 2744) in paragraph at lines 396--397
+[]\T1/cmr/m/n/10 References shell_-state_-_-::layer, layer_-def_-t, layer_-def_
+-_-::layer_-name, set_-var_-value(),
+ []
+
+[211]
+Underfull \hbox (badness 4846) in paragraph at lines 407--408
+[]\T1/cmr/m/n/10 References shell_-state_-_-::line, set_-var_-value(), shell_-P
+rint-Error(), shell_-state_-t, and
+ []
+
+
+Underfull \hbox (badness 1721) in paragraph at lines 440--441
+[]\T1/cmr/m/n/10 References set_-var_-value(), shell_-Print-Error(), shell_-sta
+te_-t, shell_-state_-_-::status, and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 461--461
+
+ []
+
+[212]
+Underfull \hbox (badness 10000) in paragraph at lines 466--466
+
+ []
+
+
+Underfull \hbox (badness 4531) in paragraph at lines 471--472
+[]\T1/cmr/m/n/10 References get_-var_-value(), MAX_-OUTPUT_-LEN, shell_-Clean-A
+rgs(), shell_-Execute(),
+ []
+
+[213]) [214]
+\openout2 = `shell__types_8h.aux'.
+
+ (./shell__types_8h.tex
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+)
+Underfull \hbox (badness 3407) in paragraph at lines 69--73
+\T1/cmr/m/n/10 shell_-Get-Line(), shell_-Get-Prompt(), shell_-Get-Status(), she
+ll_-Get-Verbose(), shell_-Init(),
+ []
+
+[215
+
+
+] [216]
+\openout2 = `shell__utils_8c.aux'.
+
+ (./shell__utils_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+[217
+
+
+]) [218]
+\openout2 = `shell__utils_8h.aux'.
+
+ (./shell__utils_8h.tex
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[219
+
+
+]) [220]
+\openout2 = `shell__vars_8c.aux'.
+
+ (./shell__vars_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+[221
+
+
+] [222]) [223]
+\openout2 = `shell__vars_8h.aux'.
+
+ (./shell__vars_8h.tex
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+[224
+
+
+]) [225] [226
+
+
+]
+Chapter 8.
+(./todo.tex
+Overfull \hbox (299.72797pt too wide) in paragraph at lines 6--6
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 6--6
+
+ []
+
+
+Overfull \hbox (299.72797pt too wide) in paragraph at lines 13--13
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 13--13
+
+ []
+
+
+Overfull \hbox (323.74432pt too wide) in paragraph at lines 18--18
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 23--23
+[]\T1/cmr/m/n/10 No sec-ondary
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+[]\T1/cmr/m/n/10 Are there other
+ []
+
+) (./refman.ind [227]
+Underfull \hbox (badness 10000) in paragraph at lines 55--56
+[]\T1/cmr/m/n/10 CACHE_-INODE_-SHELL_-READDIR_-
+ []
+
+[228
+
+] [229] [230] [231] [232] [233]
+Underfull \hbox (badness 10000) in paragraph at lines 647--648
+[]| \T1/cmr/m/n/10 CACHE_-INODE_-SHELL_-
+ []
+
+[234] [235] [236] [237] [238] [239] [240] [241] [242] [243] [244] [245]
+[246] [247] [248]) (./refman.aux (./group__NFSprocs.aux)
+(./structcmdfsal__thr__info____.aux) (./structcmdnfs__funcdesc____.aux)
+(./structcmdnfs__thr__info____.aux) (./structcmdnfsremote__funcdesc____.aux)
+(./structcommand__def____.aux) (./structlayer__def____.aux)
+(./structprog__vers__client__def____.aux) (./structprog__vers__def____.aux)
+(./structshell__attribute____.aux) (./structshell__fh3____.aux)
+(./structshell__info____.aux) (./structshell__state____.aux)
+(./structshell__variable____.aux) (./cmd__nfstools_8h.aux) (./cmd__tools_8c.aux
+) (./cmd__tools_8h.aux) (./commands_8h.aux) (./commands__Cache__inode_8c.aux)
+(./commands__FSAL_8c.aux) (./commands__NFS_8c.aux)
+(./commands__NFS__remote_8c.aux) (./Getopt_8c.aux) (./Getopt_8h.aux)
+(./main_8c.aux) (./nfs__remote__functions_8c.aux)
+(./nfs__remote__functions_8h.aux) (./shell_8c.aux) (./shell_8h.aux)
+(./shell__types_8h.aux) (./shell__utils_8c.aux) (./shell__utils_8h.aux)
+(./shell__vars_8c.aux) (./shell__vars_8h.aux)) ) 
+Here is how much of TeX's memory you used:
+ 2736 strings out of 95847
+ 45385 string characters out of 1193874
+ 92841 words of memory out of 1000001
+ 5396 multiletter control sequences out of 10000+50000
+ 15330 words of font info for 31 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 30i,12n,43p,2395b,507s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (252 pages, 668968 bytes).

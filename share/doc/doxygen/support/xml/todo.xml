@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="todo" kind="page">
+    <compoundname>todo</compoundname>
+    <title>Todo List</title>
+    <detaileddescription>
+<para><anchor id="todo_1_todo000001"/> <variablelist>
+<varlistentry><term>Member <ref refid="exports_8c_1a27" kindref="member">FLAG_EXPORT_ID</ref>  </term></varlistentry>
+<listitem><para>: add encrypt handles option</para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000004"/> <variablelist>
+<varlistentry><term>Member <ref refid="exports_8c_1a72" kindref="member">BuildDefaultExport</ref> () </term></varlistentry>
+<listitem><para>set default values here </para><para>BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite</para></listitem>
+</variablelist>
+</para>    </detaileddescription>
+  </compounddef>
+</doxygen>

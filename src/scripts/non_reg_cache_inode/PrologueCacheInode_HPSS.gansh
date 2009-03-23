@@ -1,0 +1,14 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs /tmp/hpss.ganesha.nfsd.conf
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+
+init_cache -v /tmp/hpss.ganesha.nfsd.conf
+
+cd /cea/prot/S/lama/s8/deniel/ganesha
+
+interactive 

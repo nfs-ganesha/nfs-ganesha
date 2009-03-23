@@ -1,0 +1,87 @@
+\section{mnt\_\-Umnt.c File Reference}
+\label{mnt__Umnt_8c}\index{mnt_Umnt.c@{mnt\_\-Umnt.c}}
+MOUNTPROC\_\-UMNT for Mount protocol v1 and v3. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf mnt\_\-Umnt} (nfs\_\-arg\_\-t $\ast$parg, exportlist\_\-t $\ast$pexport, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-client\_\-t $\ast$pclient, hash\_\-table\_\-t $\ast$ht, struct svc\_\-req $\ast$preq, nfs\_\-res\_\-t $\ast$pres)
+\item 
+void {\bf mnt\_\-Umnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+MOUNTPROC\_\-UMNT for Mount protocol v1 and v3. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/12/20 10:52:14 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.7 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf mnt\_\-Umnt.c}.
+
+\subsection{Function Documentation}
+\index{mnt_Umnt.c@{mnt\_\-Umnt.c}!mnt_Umnt@{mnt\_\-Umnt}}
+\index{mnt_Umnt@{mnt\_\-Umnt}!mnt_Umnt.c@{mnt\_\-Umnt.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt\_\-Umnt (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Umnt_8c_a0}
+
+
+mnt\_\-Umnt: The Mount proc umount function, for all versions.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em parg}][IN] \item[{\em pexportlist}][IN] \item[{\em pcontextp}][IN] \item[{\em pclient}][INOUT] \item[{\em ht}][INOUT] \item[{\em preq}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 135 of file mnt\_\-Umnt.c.\index{mnt_Umnt.c@{mnt\_\-Umnt.c}!mnt_Umnt_Free@{mnt\_\-Umnt\_\-Free}}
+\index{mnt_Umnt_Free@{mnt\_\-Umnt\_\-Free}!mnt_Umnt.c@{mnt\_\-Umnt.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt\_\-Umnt\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Umnt_8c_a1}
+
+
+mnt\_\-Umnt\_\-Free: Frees the result structure allocated for mnt\_\-Umnt.
+
+Frees the result structure allocated for mnt\_\-Umnt\-All.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
+\end{Desc}
+
+
+Definition at line 174 of file mnt\_\-Umnt.c.

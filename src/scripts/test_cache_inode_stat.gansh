@@ -1,0 +1,127 @@
+# $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/scripts/test_cache_inode_stat.gansh,v 1.3 2005/01/11 08:26:32 leibovic Exp $
+#
+# $Log: test_cache_inode_stat.gansh,v $
+# Revision 1.3  2005/01/11 08:26:32  leibovic
+# Adding tests.
+#
+# Revision 1.2  2005/01/07 14:38:39  leibovic
+# Added caching test.
+# Modified print command to print strings.
+#
+# Revision 1.1  2005/01/07 13:06:46  leibovic
+# Testing stat features of Cache_inode layer.
+#
+#
+# tests du bug detecte sur les stats
+#
+
+# options du shell
+#set VERBOSE "OFF"
+
+# Initialisation des layers FSAL et Cache_inode
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+layer set Cache_inode
+init_cache
+
+# on se place a la racine
+cd /
+
+# TEST 1 : on fait des stat sur la racine par un stat /
+# puis par un stat . et on compare les resultats
+
+print "------ TEST 1 : stat / and stat .        -------"
+
+set STAT1_1 stat /
+set STAT1_2 stat /
+set STAT1_3 stat .
+set STAT1_4 stat /
+set STAT1_5 stat .
+
+wc STAT1_1
+wc STAT1_2
+wc STAT1_3
+wc STAT1_4
+wc STAT1_5
+
+cmp STAT1_1 STAT1_2
+cmp STAT1_1 STAT1_4
+cmp STAT1_3 STAT1_5
+
+
+# test de stats sur d'autres repertoires
+# entrecoupes d'autres appels
+
+print "------ TEST 2 : stat, cd, stat           -------"
+
+set STAT2_1 stat /AIX_5/ebin
+set STAT2_2 stat /AIX_5/ebin
+set VOID cd /AIX_5
+set STAT2_3 stat ebin
+set STAT2_4 stat ebin
+
+wc STAT2_1
+wc STAT2_2
+wc STAT2_3
+wc STAT2_4
+
+cmp STAT2_1 STAT2_2
+cmp STAT2_3 STAT2_4
+cmp STAT2_1 STAT2_3
+
+# idem avec un ls -l entre les deux
+
+print  "------ TEST 3 : stat, ls -l, stat, ls -l -------"
+
+set STAT3_1 stat /SunOS_5/bin
+set LS3_1 ls -ld /SunOS_5/bin
+set STAT3_2 stat /SunOS_5/bin
+set LS3_2 ls -ld /SunOS_5/bin
+
+wc STAT3_1
+wc STAT3_2
+cmp STAT3_1 STAT3_2
+
+wc LS3_1
+wc LS3_2
+cmp LS3_1 LS3_2
+
+# idem avec un ls -S entre les deux
+
+print "------ TEST 4 : stat, ls -S, stat  ls -S -------"
+
+set STAT4_1 stat /SunOS_5/bin
+set LS4_1 ls -Sd /SunOS_5/bin
+set STAT4_2 stat /SunOS_5/bin
+set LS4_2 ls -Sd /SunOS_5/bin
+
+wc STAT4_1
+wc STAT4_2
+cmp STAT4_1 STAT4_2
+
+wc LS4_1
+wc LS4_2
+cmp LS4_1 LS4_2
+
+
+#idem avec un cd et un ls entre les 2
+
+print "------ TEST 5 : stat, cd, ls, stat, ls   ------- "
+
+
+set STAT5_1 stat /OSF1_V5/bin
+set VOID cd /OSF1_V5
+set LS5_1 ls -l
+set STAT5_2 stat bin
+set LS5_2 ls -l
+
+wc STAT5_1
+wc STAT5_2
+cmp STAT5_1 STAT5_2
+wc LS5_1
+wc LS5_2
+cmp LS5_1 LS5_2
+
+
+# passage en mode interactif
+# interactive

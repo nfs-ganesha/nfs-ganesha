@@ -1,0 +1,232 @@
+\section{Mount protocol functions.}
+\label{group__MNTprocs}\index{Mount protocol functions.@{Mount protocol functions.}}
+\subsection*{Modules}
+\begin{CompactItemize}
+\item 
+group {\bf NFS protocols functions.}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf mnt1\_\-remote\_\-Null} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt1\_\-remote\_\-Mnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt1\_\-remote\_\-Dump} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt1\_\-remote\_\-Umnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt1\_\-remote\_\-Umnt\-All} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt1\_\-remote\_\-Export} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Null} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Mnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Dump} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Umnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Umnt\-All} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\item 
+int {\bf mnt3\_\-remote\_\-Export} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{MNTprocs@{MNTprocs}!mnt1_remote_Dump@{mnt1\_\-remote\_\-Dump}}
+\index{mnt1_remote_Dump@{mnt1\_\-remote\_\-Dump}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Dump (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga2}
+
+
+mnt1\_\-remote\_\-Dump: The Mount proc dump function, v1.
+
+The MOUNT proc dump function, v1
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 176 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt1_remote_Export@{mnt1\_\-remote\_\-Export}}
+\index{mnt1_remote_Export@{mnt1\_\-remote\_\-Export}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Export (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga5}
+
+
+mnt1\_\-remote\_\-Export: The Mount proc export function, v1.
+
+The MOUNT proc export function, v1
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 252 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt1_remote_Mnt@{mnt1\_\-remote\_\-Mnt}}
+\index{mnt1_remote_Mnt@{mnt1\_\-remote\_\-Mnt}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Mnt (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga1}
+
+
+mnt1\_\-remote\_\-Mnt: The Mount proc mount function, v1.
+
+The MOUNT proc mount function, v1.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 150 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt1_remote_Null@{mnt1\_\-remote\_\-Null}}
+\index{mnt1_remote_Null@{mnt1\_\-remote\_\-Null}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Null (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga0}
+
+
+mnt1\_\-remote\_\-Null: The Mount proc null function, v1.
+
+The MOUNT proc null function, v1.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 125 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt1_remote_Umnt@{mnt1\_\-remote\_\-Umnt}}
+\index{mnt1_remote_Umnt@{mnt1\_\-remote\_\-Umnt}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Umnt (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga3}
+
+
+mnt1\_\-remote\_\-Umnt: The Mount proc umount function, v1.
+
+The MOUNT proc umount function, v1
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 202 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt1_remote_UmntAll@{mnt1\_\-remote\_\-UmntAll}}
+\index{mnt1_remote_UmntAll@{mnt1\_\-remote\_\-UmntAll}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt1\_\-remote\_\-Umnt\-All (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga4}
+
+
+mnt1\_\-remote\_\-Umnt\-All: The Mount proc umount\_\-all function, v1.
+
+The MOUNT proc umount\_\-all function, v1
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 227 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt3_remote_Dump@{mnt3\_\-remote\_\-Dump}}
+\index{mnt3_remote_Dump@{mnt3\_\-remote\_\-Dump}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Dump (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga8}
+
+
+mnt3\_\-remote\_\-Dump: The Mount proc dump function, v3.
+
+The MOUNT proc dump function, v3
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 329 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt3_remote_Export@{mnt3\_\-remote\_\-Export}}
+\index{mnt3_remote_Export@{mnt3\_\-remote\_\-Export}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Export (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga11}
+
+
+mnt3\_\-remote\_\-Export: The Mount proc export function, v3.
+
+The MOUNT proc export function, v3
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 405 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt3_remote_Mnt@{mnt3\_\-remote\_\-Mnt}}
+\index{mnt3_remote_Mnt@{mnt3\_\-remote\_\-Mnt}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Mnt (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga7}
+
+
+mnt3\_\-remote\_\-Mnt: The Mount proc mount function, v3.
+
+The MOUNT proc mount function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 303 of file nfs\_\-remote\_\-functions.c.
+
+Referenced by fn\_\-nfs\_\-remote\_\-umount(), and nfs\_\-remote\_\-mount().\index{MNTprocs@{MNTprocs}!mnt3_remote_Null@{mnt3\_\-remote\_\-Null}}
+\index{mnt3_remote_Null@{mnt3\_\-remote\_\-Null}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Null (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga6}
+
+
+mnt3\_\-remote\_\-Null: The Mount proc null function, v3.
+
+The MOUNT proc null function, v3.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 278 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt3_remote_Umnt@{mnt3\_\-remote\_\-Umnt}}
+\index{mnt3_remote_Umnt@{mnt3\_\-remote\_\-Umnt}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Umnt (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga9}
+
+
+mnt3\_\-remote\_\-Umnt: The Mount proc umount function, v3.
+
+The MOUNT proc umount function, v3
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 355 of file nfs\_\-remote\_\-functions.c.\index{MNTprocs@{MNTprocs}!mnt3_remote_UmntAll@{mnt3\_\-remote\_\-UmntAll}}
+\index{mnt3_remote_UmntAll@{mnt3\_\-remote\_\-UmntAll}!MNTprocs@{MNTprocs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt3\_\-remote\_\-Umnt\-All (CLIENT $\ast$ {\em clnt}, nfs\_\-arg\_\-t $\ast$ {\em parg}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{group__MNTprocs_ga10}
+
+
+mnt3\_\-remote\_\-Umnt\-All: The Mount proc umount\_\-all function, v3.
+
+The MOUNT proc umount\_\-all function, v3
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em clnt}][IN] \item[{\em parg}][IN] \item[{\em pres}][OUT] \end{description}
+\end{Desc}
+
+
+Definition at line 380 of file nfs\_\-remote\_\-functions.c.

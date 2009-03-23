@@ -1,0 +1,381 @@
+.TH "nfs_ip_name.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+nfs_ip_name.c \- The management of the IP/name cache. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'HashData.h'\fP
+.br
+\fC#include 'HashTable.h'\fP
+.br
+\fC#include 'log_functions.h'\fP
+.br
+\fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'nfs_core.h'\fP
+.br
+\fC#include 'nfs_exports.h'\fP
+.br
+\fC#include 'config_parsing.h'\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include <sys/socket.h>\fP
+.br
+\fC#include <netinet/in.h>\fP
+.br
+\fC#include <arpa/inet.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "unsigned long int \fBip_name_value_hash_func\fP (hash_parameter_t *p_hparam, hash_buffer_t *buffclef)"
+.br
+.ti -1c
+.RI "unsigned long int \fBip_name_rbt_hash_func\fP (hash_parameter_t *p_hparam, hash_buffer_t *buffclef)"
+.br
+.ti -1c
+.RI "int \fBcompare_ip_name\fP (hash_buffer_t *buff1, hash_buffer_t *buff2)"
+.br
+.ti -1c
+.RI "int \fBdisplay_ip_name\fP (hash_buffer_t *pbuff, char *str)"
+.br
+.ti -1c
+.RI "int \fBdisplay_ip_value\fP (hash_buffer_t *pbuff, char *str)"
+.br
+.ti -1c
+.RI "int \fBnfs_ip_name_add\fP (unsigned int ipaddr, char *hostname)"
+.br
+.ti -1c
+.RI "int \fBnfs_ip_name_get\fP (unsigned int ipaddr, char *hostname)"
+.br
+.ti -1c
+.RI "int \fBnfs_ip_name_remove\fP (int ipaddr)"
+.br
+.ti -1c
+.RI "int \fBnfs_Init_ip_name\fP (nfs_ip_name_parameter_t param)"
+.br
+.ti -1c
+.RI "int \fBnfs_ip_name_populate\fP (char *path)"
+.br
+.ti -1c
+.RI "void \fBnfs_ip_name_get_stats\fP (hash_stat_t *phstat)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "hash_table_t * \fBht_ip_name\fP"
+.br
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
+.br
+.ti -1c
+.RI "unsigned int \fBexpiration_time\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+The management of the IP/name cache. 
+
+\fBAuthor:\fP
+.RS 4
+\fBAuthor\fP.RS 4
+leibovic 
+.RE
+.PP
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+\fBDate\fP.RS 4
+2006/01/20 07:39:23 
+.RE
+.PP
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+\fBRevision\fP.RS 4
+1.6 
+.RE
+.PP
+.RE
+.PP
+\fBnfs_ip_name.c\fP : The management of the IP/name cache.
+.PP
+\fBHeader\fP.RS 4
+/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_ip_name.c,v 1.6 2006/01/20 07:39:23 leibovic Exp 
+.RE
+.PP
+.PP
+\fBLog\fP.RS 4
+\fBnfs_ip_name.c\fP,v 
+.RE
+.PP
+Revision 1.6 2006/01/20 07:39:23 leibovic Back to the previous version.
+.PP
+Revision 1.4 2005/11/28 17:03:03 deniel Added CeCILL headers
+.PP
+Revision 1.3 2005/11/24 13:44:29 deniel ajout du remove dans ipname track list in nfs_mnt_listc.
+.PP
+Revision 1.2 2005/11/10 07:53:25 deniel Corrected some memory leaks
+.PP
+Revision 1.1 2005/11/08 15:22:24 deniel WildCard and Netgroup entry for exportlist are now supported
+.PP
+Definition in file \fBnfs_ip_name.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "int compare_ip_name (hash_buffer_t * buff1, hash_buffer_t * buff2)"
+.PP
+compare_ip_name: compares the ip address stored in the key buffers.
+.PP
+compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the nfs duplicated requests.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuff1\fP [IN] first key 
+.br
+\fIbuff2\fP [IN] second key
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if keys are identifical, 1 if they are different. 
+.RE
+.PP
+
+.PP
+Definition at line 187 of file nfs_ip_name.c.
+.SS "int display_ip_name (hash_buffer_t * pbuff, char * str)"
+.PP
+display_ip_name: displays the ip_name stored in the buffer.
+.PP
+displays the ip_name stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the nfs duplicated requests.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuff1\fP [IN] buffer to display 
+.br
+\fIbuff2\fP [OUT] output string
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+number of character written. 
+.RE
+.PP
+
+.PP
+Definition at line 208 of file nfs_ip_name.c.
+.SS "int display_ip_value (hash_buffer_t * pbuff, char * str)"
+.PP
+Definition at line 220 of file nfs_ip_name.c.
+.SS "unsigned long int ip_name_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
+.PP
+ip_name_rbt_hash_func: computes the rbt value for the entry in IP/name cache.
+.PP
+Computes the rbt value for the entry in IP/name cache. In fact, it just use the address value itself (which is an unsigned integer) as the rbt value. This function is called internal in the HasTable_* function
+.PP
+\fBParameters:\fP
+.RS 4
+\fIhparam\fP [IN] hash table parameter. 
+.br
+\fIbuffcleff[in]\fP pointer to the hash key buffer
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the computed rbt value.
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+HashTable_Init 
+.RE
+.PP
+
+.PP
+Definition at line 168 of file nfs_ip_name.c.
+.SS "unsigned long int ip_name_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
+.PP
+ip_name_rbt_hash_func: computes the hash value for the entry in IP/name cache.
+.PP
+Computes the hash value for the entry in IP/name cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable_* function
+.PP
+\fBParameters:\fP
+.RS 4
+\fIhparam\fP [IN] hash table parameter. 
+.br
+\fIbuffcleff[in]\fP pointer to the hash key buffer
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the computed hash value.
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+HashTable_Init 
+.RE
+.PP
+
+.PP
+Definition at line 146 of file nfs_ip_name.c.
+.SS "int nfs_Init_ip_name (nfs_ip_name_parameter_t param)"
+.PP
+nfs_Init_ip_name: Init the hashtable for IP/name cache.
+.PP
+Perform all the required initialization for hashtable IP/name cache
+.PP
+\fBParameters:\fP
+.RS 4
+\fIparam\fP [IN] parameter used to init the ip name cache
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, -1 otherwise 
+.RE
+.PP
+
+.PP
+Definition at line 393 of file nfs_ip_name.c.
+.PP
+References expiration_time, and ht_ip_name.
+.SS "int nfs_ip_name_add (unsigned int ipaddr, char * hostname)"
+.PP
+nfs_ip_name_add: adds an entry in the duplicate requests cache.
+.PP
+Adds an entry in the duplicate requests cache.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIipaddr\fP [IN] the ipaddr to be used as key 
+.br
+\fIhostname\fP [IN] the hostname added (found by using gethostbyaddr)
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+IP_NAME_SUCCESS if successfull
+.br
+. 
+.PP
+IP_NAME_INSERT_MALLOC_ERROR if an error occured during the insertion process 
+.br
+ 
+.PP
+IP_NAME_NETDB_ERROR if an error occured during the netdb query (via gethostbyaddr). 
+.RE
+.PP
+
+.PP
+Definition at line 249 of file nfs_ip_name.c.
+.PP
+References ht_ip_name.
+.PP
+Referenced by nfs_export_check_access().
+.SS "int nfs_ip_name_get (unsigned int ipaddr, char * hostname)"
+.PP
+nfs_ip_name_get: Tries to get an entry for ip_name cache.
+.PP
+Tries to get an entry for ip_name cache.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIipaddr\fP [IN] the ip address requested 
+.br
+\fIhostname\fP [OUT] the hostname
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the result previously set if *pstatus == IP_NAME_SUCCESS 
+.RE
+.PP
+
+.PP
+Definition at line 318 of file nfs_ip_name.c.
+.PP
+References ht_ip_name.
+.PP
+Referenced by nfs_export_check_access().
+.SS "void nfs_ip_name_get_stats (hash_stat_t * phstat)"
+.PP
+nfs_ip_name_get_stats: gets the hash table statistics for the IP_NAME Table.
+.PP
+Gets the hash table statistics for the IP_NAME Table.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIphstat\fP [OUT] pointer to the resulting stats.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+nothing (void function)
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+HashTable_GetStats 
+.RE
+.PP
+
+.PP
+Definition at line 505 of file nfs_ip_name.c.
+.PP
+References ht_ip_name.
+.SS "int nfs_ip_name_populate (char * path)"
+.PP
+Definition at line 408 of file nfs_ip_name.c.
+.PP
+References ht_ip_name.
+.SS "int nfs_ip_name_remove (int ipaddr)"
+.PP
+nfs_ip_name_remove: Tries to remove an entry for ip_name cache
+.PP
+Tries to remove an entry for ip_name cache.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIipaddr\fP [IN] the ip address to be uncached.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the result previously set if *pstatus == IP_NAME_SUCCESS 
+.RE
+.PP
+
+.PP
+Definition at line 356 of file nfs_ip_name.c.
+.PP
+References ht_ip_name.
+.SH "Variable Documentation"
+.PP 
+.SS "unsigned int \fBexpiration_time\fP"
+.PP
+Definition at line 127 of file nfs_ip_name.c.
+.PP
+Referenced by nfs_Init_ip_name().
+.SS "hash_table_t* \fBht_ip_name\fP"
+.PP
+Definition at line 125 of file nfs_ip_name.c.
+.PP
+Referenced by nfs_Init_ip_name(), nfs_ip_name_add(), nfs_ip_name_get(), nfs_ip_name_get_stats(), nfs_ip_name_populate(), and nfs_ip_name_remove().
+.SS "nfs_parameter_t \fBnfs_param\fP"
+.PP
+Definition at line 146 of file test_clientid.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Support routines layer from the source code.

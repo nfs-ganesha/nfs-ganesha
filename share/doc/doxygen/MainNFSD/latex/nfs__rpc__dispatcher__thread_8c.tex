@@ -1,0 +1,470 @@
+\section{nfs\_\-rpc\_\-dispatcher\_\-thread.c File Reference}
+\label{nfs__rpc__dispatcher__thread_8c}\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include $<$gssapi/gssapi.h$>$}\par
+{\tt \#include $<$sys/select.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/svc.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-dupreq.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-stat.h\char`\"{}}\par
+{\tt \#include \char`\"{}Sem\-N.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf svc\_\-callout}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf NULL\_\-SVC}\ ((struct svc\_\-callout $\ast$)0)
+\item 
+\#define {\bf NO\_\-VALUE\_\-CHOOSEN}\ 1000000
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+SVCXPRT $\ast$ {\bf Svcfd\_\-create} (int fd, u\_\-int sendsize, u\_\-int recvsize)
+\item 
+SVCXPRT $\ast$ {\bf Svctcp\_\-create} (register int sock, u\_\-int sendsize, u\_\-int recvsize)
+\item 
+SVCXPRT $\ast$ {\bf Svcudp\_\-bufcreate} (register int sock, u\_\-int sendsz, u\_\-int recvsz)
+\item 
+bool\_\-t {\bf Svc\_\-register} (SVCXPRT $\ast$xprt, u\_\-long prog, u\_\-long vers, void($\ast$dispatch)(), int protocol)
+\item 
+void {\bf socket\_\-setoptions} (int socket\-Fd)
+\item 
+void {\bf nfs\_\-rpc\_\-dispatch\_\-dummy} (struct svc\_\-req $\ast$ptr\_\-req, SVCXPRT $\ast$ptr\_\-svc)
+\item 
+int {\bf nfs\_\-Init\_\-svc} ()
+\item 
+int {\bf nfs\_\-rpc\_\-get\_\-worker\_\-index} (int mount\_\-protocol\_\-flag)
+\item 
+void {\bf nfs\_\-rpc\_\-getreq} (fd\_\-set $\ast$readfds, nfs\_\-parameter\_\-t $\ast$pnfs\_\-para)
+\item 
+int {\bf clean\_\-pending\_\-request} (LRU\_\-entry\_\-t $\ast$pentry, void $\ast$addparam)
+\item 
+int {\bf print\_\-pending\_\-request} (LRU\_\-data\_\-t data, char $\ast$str)
+\item 
+void {\bf rpc\_\-dispatcher\_\-svc\_\-run} (nfs\_\-parameter\_\-t $\ast$pnfs\_\-param)
+\item 
+void $\ast$ {\bf rpc\_\-dispatcher\_\-thread} (void $\ast$Arg)
+\item 
+int {\bf nfs\_\-Init\_\-request\_\-data} (nfs\_\-request\_\-data\_\-t $\ast$pdata)
+\item 
+void {\bf constructor\_\-nfs\_\-request\_\-data\_\-t} (void $\ast$ptr)
+\item 
+int {\bf nfs\_\-Init\_\-gc\_\-counter} (void)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+fd\_\-set {\bf Svc\_\-fdset}
+\item 
+nfs\_\-worker\_\-data\_\-t $\ast$ {\bf workers\_\-data}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\item 
+SVCXPRT $\ast$$\ast$ {\bf Xports}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-dupreq}
+\item 
+int {\bf rpcsec\_\-gss\_\-flag}
+\item 
+pthread\_\-mutex\_\-t {\bf mutex\_\-cond\_\-xprt} [FD\_\-SETSIZE]
+\item 
+pthread\_\-cond\_\-t {\bf condvar\_\-xprt} [FD\_\-SETSIZE]
+\item 
+int {\bf etat\_\-xprt} [FD\_\-SETSIZE]
+\item 
+unsigned int {\bf nb\_\-current\_\-gc\_\-workers}
+\item 
+pthread\_\-mutex\_\-t {\bf lock\_\-nb\_\-current\_\-gc\_\-workers}
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!NO_VALUE_CHOOSEN@{NO\_\-VALUE\_\-CHOOSEN}}
+\index{NO_VALUE_CHOOSEN@{NO\_\-VALUE\_\-CHOOSEN}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NO\_\-VALUE\_\-CHOOSEN\ 1000000}\label{nfs__rpc__dispatcher__thread_8c_a1}
+
+
+\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!NULL_SVC@{NULL\_\-SVC}}
+\index{NULL_SVC@{NULL\_\-SVC}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NULL\_\-SVC\ ((struct svc\_\-callout $\ast$)0)}\label{nfs__rpc__dispatcher__thread_8c_a0}
+
+
+
+
+Definition at line 135 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+\subsection{Function Documentation}
+\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!clean_pending_request@{clean\_\-pending\_\-request}}
+\index{clean_pending_request@{clean\_\-pending\_\-request}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-pending\_\-request (LRU\_\-entry\_\-t $\ast$ {\em pentry}, void $\ast$ {\em addparam})}\label{nfs__rpc__dispatcher__thread_8c_a24}
+
+
+clean\_\-pending\_\-request: cleans an entry in a nfs request LRU,
+
+cleans an entry in a nfs request LRU.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][INOUT] entry to be cleaned. \item[{\em addparam}][IN] additional parameter used for cleaning.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if ok, other values mean an error. \end{Desc}
+
+
+Definition at line 1074 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!constructor_nfs_request_data_t@{constructor\_\-nfs\_\-request\_\-data\_\-t}}
+\index{constructor_nfs_request_data_t@{constructor\_\-nfs\_\-request\_\-data\_\-t}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void constructor\_\-nfs\_\-request\_\-data\_\-t (void $\ast$ {\em ptr})}\label{nfs__rpc__dispatcher__thread_8c_a29}
+
+
+constructor\_\-nfs\_\-request\_\-data\_\-t: Constructor for a nfs\_\-request\_\-data\_\-t structure
+
+This function is used to init the nfs\_\-request\_\-data for a worker. These data are used by the worker for RPC processing.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ptr}]void pointer to the structure to be managed\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) will exit the program if failed. \end{Desc}
+
+
+Definition at line 1265 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References nfs\_\-Init\_\-request\_\-data().
+
+Referenced by nfs\_\-rpc\_\-getreq(), and rpc\_\-tcp\_\-socket\_\-manager\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_Init_gc_counter@{nfs\_\-Init\_\-gc\_\-counter}}
+\index{nfs_Init_gc_counter@{nfs\_\-Init\_\-gc\_\-counter}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-gc\_\-counter (void)}\label{nfs__rpc__dispatcher__thread_8c_a30}
+
+
+nfs\_\-Init\_\-gc\_\-counter: Init the worker's gc counters.
+
+This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently performing the garbagge collection.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em void}]No parameters\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successfull, -1 otherwise. \end{Desc}
+
+
+Definition at line 1288 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References lock\_\-nb\_\-current\_\-gc\_\-workers, and nb\_\-current\_\-gc\_\-workers.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_Init_request_data@{nfs\_\-Init\_\-request\_\-data}}
+\index{nfs_Init_request_data@{nfs\_\-Init\_\-request\_\-data}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-request\_\-data (nfs\_\-request\_\-data\_\-t $\ast$ {\em pdata})}\label{nfs__rpc__dispatcher__thread_8c_a28}
+
+
+nfs\_\-Init\_\-request\_\-data: Init the data associated with a pending request
+
+This function is used to init the nfs\_\-request\_\-data for a worker. These data are used by the worker for RPC processing.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}]A structure of type nfs\_\-worker\_\-parameter\_\-t with all the necessary information related to a worker \item[{\em pdata}]Pointer to the data to be initialized.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successfull, -1 otherwise. \end{Desc}
+
+
+Definition at line 1231 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References nfs\_\-param, and Svcudp\_\-bufcreate().
+
+Referenced by constructor\_\-nfs\_\-request\_\-data\_\-t().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_Init_svc@{nfs\_\-Init\_\-svc}}
+\index{nfs_Init_svc@{nfs\_\-Init\_\-svc}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-svc ()}\label{nfs__rpc__dispatcher__thread_8c_a20}
+
+
+nfs\_\-Init\_\-svc: Init the svc descriptors for the nfs daemon.
+
+Perform all the required initialization for the SVCXPRT pointer. 
+
+Definition at line 336 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References nfs\_\-param, nfs\_\-rpc\_\-dispatch\_\-dummy(), rpcsec\_\-gss\_\-flag, socket\_\-setoptions(), Svc\_\-fdset, Svc\_\-register(), Svcauth\_\-gss\_\-acquire\_\-cred(), Svcauth\_\-gss\_\-import\_\-name(), Svctcp\_\-create(), and Svcudp\_\-bufcreate().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_rpc_dispatch_dummy@{nfs\_\-rpc\_\-dispatch\_\-dummy}}
+\index{nfs_rpc_dispatch_dummy@{nfs\_\-rpc\_\-dispatch\_\-dummy}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-rpc\_\-dispatch\_\-dummy (struct svc\_\-req $\ast$ {\em ptr\_\-req}, SVCXPRT $\ast$ {\em ptr\_\-svc})}\label{nfs__rpc__dispatcher__thread_8c_a19}
+
+
+nfs\_\-rpc\_\-dispatch\_\-dummy: Function never called, but the symbol is necessary for Svc\_\-register/
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ptr\_\-req}]the RPC request to be managed \item[{\em ptr\_\-svc}]SVCXPRT pointer to be used for managing this request\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) and is never called indeed. \end{Desc}
+
+
+Definition at line 322 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-Init\_\-svc().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_rpc_get_worker_index@{nfs\_\-rpc\_\-get\_\-worker\_\-index}}
+\index{nfs_rpc_get_worker_index@{nfs\_\-rpc\_\-get\_\-worker\_\-index}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-rpc\_\-get\_\-worker\_\-index (int {\em mount\_\-protocol\_\-flag})}\label{nfs__rpc__dispatcher__thread_8c_a22}
+
+
+nfs\_\-rpc\_\-get\_\-worker\_\-index: Returns the index of the worker to be used
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em mount\_\-protocol\_\-flag}]a flag (TRUE of FALSE) to tell if the worker is to be used for mount protocol\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the chosen worker index. \end{Desc}
+
+
+Definition at line 796 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-rpc\_\-getreq(), and rpc\_\-tcp\_\-socket\_\-manager\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_rpc_getreq@{nfs\_\-rpc\_\-getreq}}
+\index{nfs_rpc_getreq@{nfs\_\-rpc\_\-getreq}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-rpc\_\-getreq (fd\_\-set $\ast$ {\em readfds}, nfs\_\-parameter\_\-t $\ast$ {\em pnfs\_\-para})}\label{nfs__rpc__dispatcher__thread_8c_a23}
+
+
+nfs\_\-rpc\_\-getreq: Do half of the work done by svc\_\-getreqset.
+
+This function wait for an incoming ONC message by waiting on a 'select' statement. Then getting a request it perform the authentication and extracts the RPC message for the related socket. It then find the less busy worker (the one with the shortest pending queue) and put the msg in this queue.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em readfds}]File Descriptor Set related to the socket used for RPC management.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing (void function), but calls svcerr\_\-$\ast$ function to notify the client when an error occures. \end{Desc}
+
+
+Definition at line 826 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References constructor\_\-nfs\_\-request\_\-data\_\-t(), nfs\_\-param, nfs\_\-rpc\_\-get\_\-worker\_\-index(), workers\_\-data, and Xports.
+
+Referenced by rpc\_\-dispatcher\_\-svc\_\-run().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!print_pending_request@{print\_\-pending\_\-request}}
+\index{print_pending_request@{print\_\-pending\_\-request}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int print\_\-pending\_\-request (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{nfs__rpc__dispatcher__thread_8c_a25}
+
+
+print\_\-pending\_\-request: prints an entry related to a pending request in the LRU list.
+
+prints an entry related to a pending request in the LRU list.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em data}][IN] data stored in a LRU entry to be printed. \item[{\em str}][OUT] string used to store the result.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if ok, other values mean an error. \end{Desc}
+
+
+Definition at line 1097 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!rpc_dispatcher_svc_run@{rpc\_\-dispatcher\_\-svc\_\-run}}
+\index{rpc_dispatcher_svc_run@{rpc\_\-dispatcher\_\-svc\_\-run}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void rpc\_\-dispatcher\_\-svc\_\-run (nfs\_\-parameter\_\-t $\ast$ {\em pnfs\_\-param})}\label{nfs__rpc__dispatcher__thread_8c_a26}
+
+
+nfs\_\-rpc\_\-dispatcher\_\-svc\_\-run: the same as svc\_\-run.
+
+The same as svc\_\-run.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em none}]\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 1113 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References nfs\_\-rpc\_\-getreq().
+
+Referenced by rpc\_\-dispatcher\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!rpc_dispatcher_thread@{rpc\_\-dispatcher\_\-thread}}
+\index{rpc_dispatcher_thread@{rpc\_\-dispatcher\_\-thread}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ rpc\_\-dispatcher\_\-thread (void $\ast$ {\em Arg})}\label{nfs__rpc__dispatcher__thread_8c_a27}
+
+
+rpc\_\-dispatcher\_\-thread: thread used for RPC dispatching.
+
+Thead used for RPC dispatching. It gets the requests and then spool it to one of the worker's LRU. The worker chosen is the one with the smaller load (its LRU is the shorter one).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Index\-Arg}]the index for the worker thread (unused)\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the result (but this function will mostly loop forever). \end{Desc}
+
+
+Definition at line 1190 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+References nfs\_\-param, and rpc\_\-dispatcher\_\-svc\_\-run().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!socket_setoptions@{socket\_\-setoptions}}
+\index{socket_setoptions@{socket\_\-setoptions}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void socket\_\-setoptions (int {\em socket\-Fd})}\label{nfs__rpc__dispatcher__thread_8c_a18}
+
+
+
+
+Definition at line 245 of file nfs\_\-tools.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Svc_register@{Svc\_\-register}}
+\index{Svc_register@{Svc\_\-register}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}bool\_\-t Svc\_\-register (SVCXPRT $\ast$ {\em xprt}, u\_\-long {\em prog}, u\_\-long {\em vers}, void($\ast$)() {\em dispatch}, int {\em protocol})}\label{nfs__rpc__dispatcher__thread_8c_a17}
+
+
+
+
+Definition at line 107 of file Svc\_\-oncrpc.c.
+
+Referenced by nfs\_\-Init\_\-svc().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Svcfd_create@{Svcfd\_\-create}}
+\index{Svcfd_create@{Svcfd\_\-create}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}SVCXPRT$\ast$ Svcfd\_\-create (int {\em fd}, u\_\-int {\em sendsize}, u\_\-int {\em recvsize})}\label{nfs__rpc__dispatcher__thread_8c_a14}
+
+
+
+
+Definition at line 219 of file Svc\_\-tcp\_\-gssrpc.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Svctcp_create@{Svctcp\_\-create}}
+\index{Svctcp_create@{Svctcp\_\-create}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}SVCXPRT$\ast$ Svctcp\_\-create (register int {\em sock}, u\_\-int {\em sendsize}, u\_\-int {\em recvsize})}\label{nfs__rpc__dispatcher__thread_8c_a15}
+
+
+
+
+Definition at line 151 of file Svc\_\-tcp\_\-gssrpc.c.
+
+References MAX\_\-CONN, tcp\_\-rendezvous::recvsize, tcp\_\-rendezvous::sendsize, and Xprt\_\-register().
+
+Referenced by nfs\_\-Init\_\-svc().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Svcudp_bufcreate@{Svcudp\_\-bufcreate}}
+\index{Svcudp_bufcreate@{Svcudp\_\-bufcreate}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}SVCXPRT$\ast$ Svcudp\_\-bufcreate (register int {\em sock}, u\_\-int {\em sendsz}, u\_\-int {\em recvsz})}\label{nfs__rpc__dispatcher__thread_8c_a16}
+
+
+
+
+Definition at line 113 of file Svc\_\-udp\_\-gssrpc.c.
+
+References MAX, rpc\_\-buffer, Svcudp\_\-data::su\_\-iosz, Svcudp\_\-data::su\_\-verfbody, and Xprt\_\-register().
+
+Referenced by nfs\_\-Init\_\-request\_\-data(), nfs\_\-Init\_\-svc(), and Svcudp\_\-create().
+
+\subsection{Variable Documentation}
+\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!condvar_xprt@{condvar\_\-xprt}}
+\index{condvar_xprt@{condvar\_\-xprt}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf condvar\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__rpc__dispatcher__thread_8c_a9}
+
+
+
+
+Definition at line 73 of file Svc\_\-tcp\_\-gssrpc.c.
+
+Referenced by rpc\_\-tcp\_\-socket\_\-manager\_\-thread(), and worker\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!etat_xprt@{etat\_\-xprt}}
+\index{etat_xprt@{etat\_\-xprt}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf etat\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__rpc__dispatcher__thread_8c_a10}
+
+
+
+
+Definition at line 74 of file Svc\_\-tcp\_\-gssrpc.c.
+
+Referenced by rpc\_\-tcp\_\-socket\_\-manager\_\-thread(), and worker\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!ht_dupreq@{ht\_\-dupreq}}
+\index{ht_dupreq@{ht\_\-dupreq}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-dupreq}}\label{nfs__rpc__dispatcher__thread_8c_a6}
+
+
+
+
+Definition at line 136 of file nfs\_\-dupreq.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!lock_nb_current_gc_workers@{lock\_\-nb\_\-current\_\-gc\_\-workers}}
+\index{lock_nb_current_gc_workers@{lock\_\-nb\_\-current\_\-gc\_\-workers}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lock\_\-nb\_\-current\_\-gc\_\-workers}}\label{nfs__rpc__dispatcher__thread_8c_a13}
+
+
+
+
+Definition at line 160 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-Init\_\-gc\_\-counter(), and worker\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!mutex_cond_xprt@{mutex\_\-cond\_\-xprt}}
+\index{mutex_cond_xprt@{mutex\_\-cond\_\-xprt}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf mutex\_\-cond\_\-xprt}[FD\_\-SETSIZE]}\label{nfs__rpc__dispatcher__thread_8c_a8}
+
+
+
+
+Definition at line 72 of file Svc\_\-tcp\_\-gssrpc.c.
+
+Referenced by rpc\_\-tcp\_\-socket\_\-manager\_\-thread(), and worker\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nb_current_gc_workers@{nb\_\-current\_\-gc\_\-workers}}
+\index{nb_current_gc_workers@{nb\_\-current\_\-gc\_\-workers}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf nb\_\-current\_\-gc\_\-workers}}\label{nfs__rpc__dispatcher__thread_8c_a12}
+
+
+
+
+Definition at line 159 of file nfs\_\-rpc\_\-dispatcher\_\-thread.c.
+
+Referenced by nfs\_\-Init\_\-gc\_\-counter(), and worker\_\-thread().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__rpc__dispatcher__thread_8c_a4}
+
+
+
+
+Definition at line 130 of file nfs\_\-init.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!rpcsec_gss_flag@{rpcsec\_\-gss\_\-flag}}
+\index{rpcsec_gss_flag@{rpcsec\_\-gss\_\-flag}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf rpcsec\_\-gss\_\-flag}}\label{nfs__rpc__dispatcher__thread_8c_a7}
+
+
+
+
+Referenced by nfs\_\-Init\_\-svc().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Svc_fdset@{Svc\_\-fdset}}
+\index{Svc_fdset@{Svc\_\-fdset}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fd\_\-set {\bf Svc\_\-fdset}}\label{nfs__rpc__dispatcher__thread_8c_a2}
+
+
+
+
+Definition at line 72 of file Svc\_\-gssrpc.c.
+
+Referenced by nfs\_\-Init\_\-svc(), Xprt\_\-register(), and Xprt\_\-unregister().\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!workers_data@{workers\_\-data}}
+\index{workers_data@{workers\_\-data}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-worker\_\-data\_\-t$\ast$ {\bf workers\_\-data}}\label{nfs__rpc__dispatcher__thread_8c_a3}
+
+
+
+
+Definition at line 132 of file nfs\_\-init.c.\index{nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}!Xports@{Xports}}
+\index{Xports@{Xports}!nfs_rpc_dispatcher_thread.c@{nfs\_\-rpc\_\-dispatcher\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}SVCXPRT$\ast$$\ast$ {\bf Xports}}\label{nfs__rpc__dispatcher__thread_8c_a5}
+
+
+
+
+Definition at line 66 of file Svc\_\-gssrpc.c.
+
+Referenced by nfs\_\-rpc\_\-getreq(), rpc\_\-tcp\_\-socket\_\-manager\_\-thread(), Svc\_\-getreqset(), Xprt\_\-register(), and Xprt\_\-unregister().

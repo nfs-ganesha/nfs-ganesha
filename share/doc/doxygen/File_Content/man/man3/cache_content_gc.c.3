@@ -1,0 +1,284 @@
+.TH "cache_content_gc.c" 3 "9 Apr 2008" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cache_content_gc.c \- Management of the file content cache: initialisation. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'LRU_List.h'\fP
+.br
+\fC#include 'log_functions.h'\fP
+.br
+\fC#include 'HashData.h'\fP
+.br
+\fC#include 'HashTable.h'\fP
+.br
+\fC#include 'fsal.h'\fP
+.br
+\fC#include 'cache_inode.h'\fP
+.br
+\fC#include 'cache_content.h'\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <sys/param.h>\fP
+.br
+\fC#include <sys/vfs.h>\fP
+.br
+\fC#include <time.h>\fP
+.br
+\fC#include <pthread.h>\fP
+.br
+\fC#include <errno.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBcache_content_set_gc_policy\fP (cache_content_gc_policy_t policy)"
+.br
+.ti -1c
+.RI "cache_content_gc_policy_t \fBcache_content_get_gc_policy\fP (void)"
+.br
+.ti -1c
+.RI "int \fBcache_content_gc_function\fP (LRU_entry_t *plru_entry, void *addparam)"
+.br
+.ti -1c
+.RI "int \fBcache_content_sync_function\fP (LRU_entry_t *plru_entry, void *addparam)"
+.br
+.ti -1c
+.RI "cache_content_status_t \fBcache_content_gc\fP (cache_content_client_t *pclient, cache_content_status_t *pstatus)"
+.br
+.ti -1c
+.RI "cache_content_status_t \fBcache_content_sync\fP (cache_content_client_t *pclient, cache_content_status_t *pstatus)"
+.br
+.ti -1c
+.RI "int \fBcache_content_invalidate_flushed\fP (LRU_entry_t *plru_entry, void *addparam)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "cache_content_gc_policy_t \fBcache_content_gc_policy\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Management of the file content cache: initialisation. 
+
+\fBAuthor:\fP
+.RS 4
+\fBAuthor\fP.RS 4
+deniel 
+.RE
+.PP
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+\fBDate\fP.RS 4
+2005/11/28 17:02:33 
+.RE
+.PP
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+\fBRevision\fP.RS 4
+1.8 
+.RE
+.PP
+.RE
+.PP
+cache_content.c : Management of the file content cache: initialisation.
+.PP
+Definition in file \fBcache_content_gc.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "cache_content_status_t cache_content_gc (cache_content_client_t * pclient, cache_content_status_t * pstatus)"
+.PP
+cache_content_gc: Perform garbbage collection on the ressources managed by a client.
+.PP
+Perform garbbage collection on the ressources managed by a client.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpclient\fP [INOUT] ressource allocated by the client for the nfs management. 
+.br
+\fIpstatus\fP [OUT] returned status.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+CACHE_CONTENT_SUCCESS if operation is a success 
+.br
+ 
+.PP
+CACHE_CONTENT_INVALID_ARGUMENT if a null argument is passed 
+.br
+ 
+.PP
+CACHE_CONTENT_LRU_ERROR if allocation error occured when validating the entry
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+LRU_invalidate_by_function 
+.PP
+LRU_gc_invalid 
+.RE
+.PP
+
+.PP
+Definition at line 308 of file cache_content_gc.c.
+.PP
+References cache_content_gc_function().
+.SS "int cache_content_gc_function (LRU_entry_t * plru_entry, void * addparam)"
+.PP
+cache_content_gc_function: Tests is an entry in the File Content cache is to be set invalid (has expired).
+.PP
+Tests is an entry in cache inode is to be set invalid (has expired). If entry is invalidated, does the cleaning stuff on it.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpentry\fP [IN] pointer to the entry to test
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 if entry must be set invalid, 0 if not.
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+LRU_invalidate_by_function 
+.PP
+LRU_gc_invalid 
+.RE
+.PP
+
+.PP
+Definition at line 219 of file cache_content_gc.c.
+.PP
+References cache_content_gc_policy.
+.PP
+Referenced by cache_content_gc().
+.SS "cache_content_gc_policy_t cache_content_get_gc_policy (void)"
+.PP
+cache_content_get_gc_policy: Set the cache_content garbagge collecting policy.
+.PP
+\fBReturns:\fP
+.RS 4
+the current policy. 
+.RE
+.PP
+
+.PP
+Definition at line 134 of file cache_content_gc.c.
+.SS "int cache_content_invalidate_flushed (LRU_entry_t * plru_entry, void * addparam)"
+.PP
+Definition at line 385 of file cache_content_gc.c.
+.SS "void cache_content_set_gc_policy (cache_content_gc_policy_t policy)"
+.PP
+cache_content_set_gc_policy: Set the cache_content garbagge collecting policy.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpolicy\fP [IN] policy to be set.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+nothing (void function) 
+.RE
+.PP
+
+.PP
+Definition at line 121 of file cache_content_gc.c.
+.PP
+References cache_content_gc_policy.
+.SS "cache_content_status_t cache_content_sync (cache_content_client_t * pclient, cache_content_status_t * pstatus)"
+.PP
+cache_content_sync: Sync the entry on the client
+.PP
+Perform garbbage collection on the ressources managed by a client.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpclient\fP [INOUT] ressource allocated by the client for the nfs management. 
+.br
+\fIpstatus\fP [OUT] returned status.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+CACHE_CONTENT_SUCCESS if operation is a success 
+.br
+ 
+.PP
+CACHE_CONTENT_INVALID_ARGUMENT if a null argument is passed 
+.br
+ 
+.PP
+CACHE_CONTENT_LRU_ERROR if allocation error occured when validating the entry
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+LRU_invalidate_by_function 
+.PP
+LRU_gc_invalid 
+.RE
+.PP
+
+.PP
+Definition at line 359 of file cache_content_gc.c.
+.PP
+References cache_content_sync_function().
+.SS "int cache_content_sync_function (LRU_entry_t * plru_entry, void * addparam)"
+.PP
+cache_content_sync_function: Test if a entry is to be synced, and sync it.
+.PP
+Tests is an entry in cache inode is to be set invalid (has expired). If entry is invalidated, does the cleaning stuff on it.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpentry\fP [IN] pointer to the entry to test
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 if entry must be set invalid, 0 if not.
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+LRU_invalidate_by_function 
+.PP
+LRU_gc_invalid 
+.RE
+.PP
+
+.PP
+Definition at line 263 of file cache_content_gc.c.
+.PP
+References cache_content_gc_policy.
+.PP
+Referenced by cache_content_sync().
+.SH "Variable Documentation"
+.PP 
+.SS "cache_content_gc_policy_t \fBcache_content_gc_policy\fP"
+.PP
+Definition at line 109 of file cache_content_gc.c.
+.PP
+Referenced by cache_content_gc_function(), cache_content_set_gc_policy(), and cache_content_sync_function().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for File Content layer from the source code.

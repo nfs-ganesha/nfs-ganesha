@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structlayer__def____" kind="struct" prot="public">
+    <compoundname>layer_def__</compoundname>
+    <includes refid="shell__types_8h" local="no">shell_types.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structlayer__def_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* layer_def__::layer_name</definition>
+        <argsstring></argsstring>
+        <name>layer_name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="49" bodystart="49" bodyend="-1"/>
+        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
+        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structlayer__def_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="structcommand__def____" kindref="compound">command_def_t</ref> *</type>
+        <definition>command_def_t* layer_def__::command_list</definition>
+        <argsstring></argsstring>
+        <name>command_list</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="50" bodystart="50" bodyend="-1"/>
+        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
+        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structlayer__def_____1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* layer_def__::layer_description</definition>
+        <argsstring></argsstring>
+        <name>layer_description</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="51" bodystart="51" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structlayer__def_____1o3" prot="public" static="no" volatile="no" mutable="no">
+        <type>void(*</type>
+        <definition>void(* layer_def__::setlog_func)(int)</definition>
+        <argsstring>)(int)</argsstring>
+        <name>setlog_func</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="52"/>
+        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>layer definition </para>    </detaileddescription>
+    <collaborationgraph>
+      <node id="14">
+        <label>layer_def__</label>
+        <link refid="structlayer__def____"/>
+        <childnode refid="15" relation="usage">
+          <edgelabel>command_list</edgelabel>
+        </childnode>
+      </node>
+      <node id="15">
+        <label>command_def__</label>
+        <link refid="structcommand__def____"/>
+      </node>
+    </collaborationgraph>
+    <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="47" bodystart="46" bodyend="54"/>
+    <listofallmembers>
+      <member refid="structlayer__def_____1o1" prot="public" virt="non-virtual"><scope>layer_def__</scope><name>command_list</name></member>
+      <member refid="structlayer__def_____1o2" prot="public" virt="non-virtual"><scope>layer_def__</scope><name>layer_description</name></member>
+      <member refid="structlayer__def_____1o0" prot="public" virt="non-virtual"><scope>layer_def__</scope><name>layer_name</name></member>
+      <member refid="structlayer__def_____1o3" prot="public" virt="non-virtual"><scope>layer_def__</scope><name>setlog_func</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

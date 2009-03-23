@@ -1,0 +1,796 @@
+diff --git a/configure.ac b/configure.ac
+index 6ecbf55..439c912 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -127,6 +127,18 @@ AC_ARG_ENABLE(mount,
+ 	enable_mount=$enableval,
+ 	enable_mount=yes)
+ 	AM_CONDITIONAL(CONFIG_MOUNT, [test "$enable_mount" = "yes"])
++AC_ARG_ENABLE(ipv6,
++	[AC_HELP_STRING([--enable-ipv6],
++                        [enable support for IPv6 @<:@default=no@:>@])],
++	enable_ipv6=$enableval,
++	enable_ipv6=no)
++	if test "$enable_ipv6" = yes; then
++		AC_DEFINE(IPV6_SUPPORTED, 1, [Define this if you want IPv6 support compiled in])
++	else
++		enable_ipv6=
++	fi
++	AC_SUBST(enable_ipv6)
++	AM_CONDITIONAL(CONFIG_IPV6, [test "$enable_ipv6" = "yes"])
+ 
+ # Check whether user wants TCP wrappers support
+ AC_TCP_WRAPPERS
+@@ -234,6 +246,15 @@ if test "$enable_gss" = yes; then
+ 
+ fi
+ 
++if test "$enable_ipv6" = yes; then
++  AC_CHECK_FUNC(inet_ntop, , ,
++               AC_MSG_ERROR(Function 'inet_ntop' not found.))
++  AC_CHECK_LIB(tirpc, bindresvport_sa, ,
++	       AC_MSG_ERROR([libtirpc needed for IPv6 support]))
++  AC_CHECK_FUNC(getaddrinfo, , ,
++               AC_MSG_ERROR(Function 'getaddrinfo' not found.))
++fi
++
+ dnl *************************************************************
+ dnl Check for headers
+ dnl *************************************************************
+@@ -278,6 +299,7 @@ AC_FUNC_STAT
+ AC_FUNC_VPRINTF
+ AC_CHECK_FUNCS([alarm atexit dup2 fdatasync ftruncate getcwd \
+                gethostbyaddr gethostbyname gethostname getmntent \
++               inet_ntop bindresvport_sa getaddrinfo \
+                gettimeofday hasmntopt inet_ntoa innetgr memset mkdir pathconf \
+                realpath rmdir select socket strcasecmp strchr strdup \
+                strerror strrchr strtol strtoul sigprocmask])
+diff --git a/utils/mount/mount.c b/utils/mount/mount.c
+index 5076468..88e5ae0 100644
+--- a/utils/mount/mount.c
++++ b/utils/mount/mount.c
+@@ -54,6 +54,7 @@ int nomtab;
+ int verbose;
+ int sloppy;
+ int string;
++int dnsfamily = AF_INET;
+ 
+ #define FOREGROUND	(0)
+ #define BACKGROUND	(1)
+@@ -289,6 +290,12 @@ fail_unlock:
+ 	return result;
+ }
+ 
++#if IPV6_SUPPORTED
++static char *mount_command_options = "rvVw46fno:hs";
++#else
++static char *mount_command_options = "rvVwfno:hs";
++#endif
++
+ void mount_usage(void)
+ {
+ 	printf(_("usage: %s remotetarget dir [-rvVwfnsih] [-o nfsoptions]\n"),
+@@ -298,6 +305,10 @@ void mount_usage(void)
+ 	printf(_("\t-v\t\tVerbose\n"));
+ 	printf(_("\t-V\t\tPrint version\n"));
+ 	printf(_("\t-w\t\tMount file system read-write\n"));
++#if IPV6_SUPPORTED
++	printf(_("\t-4\t\tFavor IPv4 DNS resolution results\n"));
++	printf(_("\t-6\t\tFavor IPv6 DNS resolution results\n"));
++#endif
+ 	printf(_("\t-f\t\tFake mount, do not actually mount\n"));
+ 	printf(_("\t-n\t\tDo not update /etc/mtab\n"));
+ 	printf(_("\t-s\t\tTolerate sloppy mount options rather than fail\n"));
+@@ -446,7 +457,7 @@ int main(int argc, char *argv[])
+ 	mount_point = argv[2];
+ 
+ 	argv[2] = argv[0]; /* so that getopt error messages are correct */
+-	while ((c = getopt_long(argc - 2, argv + 2, "rvVwfno:hs",
++	while ((c = getopt_long(argc - 2, argv + 2, mount_command_options,
+ 				longopts, NULL)) != -1) {
+ 		switch (c) {
+ 		case 'r':
+@@ -461,6 +472,14 @@ int main(int argc, char *argv[])
+ 		case 'w':
+ 			flags &= ~MS_RDONLY;
+ 			break;
++#if IPV6_SUPPORTED
++		case '4':
++			dnsfamily = AF_INET;
++			break;
++		case '6':
++			dnsfamily = AF_INET6;
++			break;
++#endif
+ 		case 'f':
+ 			++fake;
+ 			break;
+diff --git a/utils/mount/mount.nfs.man b/utils/mount/mount.nfs.man
+index 1a4561b..9526d9e 100644
+--- a/utils/mount/mount.nfs.man
++++ b/utils/mount/mount.nfs.man
+@@ -39,6 +39,14 @@ Print version.
+ .BI "\-w"
+ Mount file system read-write.
+ .TP
++.BI "\-4"
++If a server has both IPv4 and IPv6 interfaces,
++favor IPv4 results when resolving the server's hostname to an IP address.
++.TP
++.BI "\-6"
++If a server has both IPv4 and IPv6 interfaces,
++favor IPv6 results when resolving the server's hostname to an IP address.
++.TP
+ .BI "\-f"
+ Fake mount. Don't actually call the mount system call.
+ .TP
+diff --git a/utils/mount/network.c b/utils/mount/network.c
+index ab7f6d0..1ed48f1 100644
+--- a/utils/mount/network.c
++++ b/utils/mount/network.c
+@@ -33,10 +33,13 @@
+ #include <errno.h>
+ #include <netdb.h>
+ #include <time.h>
++
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
+ #include <rpc/rpc.h>
+ #include <rpc/pmap_prot.h>
+ #include <rpc/pmap_clnt.h>
+-#include <sys/socket.h>
+ 
+ #include "xcommon.h"
+ #include "mount.h"
+@@ -52,6 +55,16 @@
+ #define nfsstat nfs_stat
+ #endif
+ 
++/*
++ * Currently tirpc/rpc/rpc.h is not usable if we have already
++ * included the RPC headers for glibc, as it attempts to include
++ * duplicate tirpc headers with similar definitions to what's
++ * been included via rpc/rpc.h and friends.
++ */
++#ifdef HAVE_BINDRESVPORT_SA
++extern int bindresvport_sa(int, struct sockaddr *);
++#endif
++
+ #ifndef NFS_PORT
+ #define NFS_PORT 2049
+ #endif
+@@ -172,13 +185,220 @@ int nfs_gethostbyname(const char *hostname, struct sockaddr_in *saddr)
+ 	return 1;
+ }
+ 
++/**
++ * nfs_name_to_address - resolve hostname to an IPv4 or IPv6 socket address
++ * @hostname: pointer to C string containing DNS hostname to resolve
++ * @hint: which address family to prioritize in the results
++ * @sap: pointer to buffer to fill with result
++ *
++ * Returns zero if successful, or -1 if an error occurred.
++ *
++ * Assumes the sap argument points to a large enough buffer.
++ */
++#ifdef HAVE_GETADDRINFO
++int nfs_name_to_address(const char *hostname, const sa_family_t hint,
++			struct sockaddr *sap)
++{
++	struct addrinfo *result, *results;
++	int error;
++
++	error = getaddrinfo(hostname, NULL, NULL, &results);
++	if (error) {
++		gai_strerror(error);
++		goto out_err;
++	}
++	if (!results) {
++		nfs_error(_("%s: no results from getaddrinfo\n"), progname);
++		goto out_err;
++	}
++
++	/*
++	 * Try to find a result whose family matches "hint".  If there
++	 * isn't one, just return the address in the first item.  If
++	 * the caller sets "hint" to AF_UNSPEC, it will never match any
++	 * of the results, and the first one will be returned by default.
++	 */
++	for (result = results; result; result = result->ai_next)
++		if (result->ai_family == hint)
++			break;
++	if (!result)
++		result = results;
++
++	switch (result->ai_family) {
++	case AF_INET:
++		memcpy(sap, result->ai_addr, sizeof(struct sockaddr_in));
++		break;
++	case AF_INET6:
++		memcpy(sap, result->ai_addr, sizeof(struct sockaddr_in6));
++		break;
++	default:
++		nfs_error(_("%s: unrecognized address family: %u\n"),
++			  ((struct sockaddr *)result->ai_addr)->sa_family);
++		error = EAFNOSUPPORT;
++	}
++
++	freeaddrinfo(results);
++
++	if (!error)
++		return 0;
++
++out_err:
++	nfs_error(_("%s: hostname resolution failed for %s\n"),
++			progname, hostname);
++	return -1;
++}
++#else
++int nfs_name_to_address(const char *hostname, const sa_family_t hint,
++			struct sockaddr *sap)
++{
++	return nfs_gethostbyname(hostname, (struct sockaddr_in *)sap);
++}
++#endif
++
++static int __nfs_gs_err_done(const int error)
++{
++	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
++	rpc_createerr.cf_error.re_errno = error;
++	return RPC_ANYSOCK;
++}
++
++static int __nfs_gs_err_socket(const unsigned short protocol, const int error)
++{
++	if (verbose)
++		nfs_error(_("%s: Unable to create %s socket: errno %d (%s)\n"),
++				progname, protocol == IPPROTO_UDP ?
++							_("UDP") : _("TCP"),
++				error, strerror(error));
++	return __nfs_gs_err_done(error);
++}
++
++static int __nfs_gs_err_bindresvport(const int socket,
++					const unsigned short protocol,
++					const int error)
++{
++	close(socket);
++	if (verbose)
++		nfs_error(_("%s: Unable to bindresvport %s socket: "
++							"errno %d (%s)\n"),
++				progname, protocol == IPPROTO_UDP ?
++							_("UDP") : _("TCP"),
++				error, strerror(error));
++	return __nfs_gs_err_done(error);
++}
++
++static int __nfs_gs_err_bind(const int socket, const unsigned short protocol,
++				const int error)
++{
++	close(socket);
++	if (verbose)
++		nfs_error(_("%s: Unable to bind to %s socket: errno %d (%s)\n"),
++				progname, protocol == IPPROTO_UDP ?
++							_("UDP") : _("TCP"),
++				error, strerror(error));
++	return __nfs_gs_err_done(error);
++}
++
++static int __nfs_gs_err_connect(const int socket, const struct sockaddr *saddr,
++				const int error)
++{
++	close(socket);
++	if (verbose) {
++#ifdef HAVE_INET_NTOP
++		char buf[INET6_ADDRSTRLEN];
++		unsigned short port = 0;
++		void *inet_addr = NULL;
++
++		buf[0] = '\0';
++
++		switch (saddr->sa_family) {
++		case AF_INET:
++			port = ntohs(((struct sockaddr_in *)saddr)->sin_port);
++			inet_addr = &((struct sockaddr_in *)saddr)->sin_addr;
++			break;
++		case AF_INET6:
++			port = ntohs(((struct sockaddr_in6 *)saddr)->sin6_port);
++			inet_addr = &((struct sockaddr_in6 *)saddr)->sin6_addr;
++			break;
++		}
++
++		inet_ntop(saddr->sa_family, inet_addr, buf, sizeof(buf));
++#else
++		struct sockaddr_in *sin = (struct sockaddr_in *)saddr;
++		char *buf = inet_ntoa(sin->sin_addr);
++		unsigned short port = ntohs(sin->sin_port);
++#endif
++
++		nfs_error(_("%s: Unable to connect to %s:%u, errno %d (%s)\n"),
++				progname, buf, port, error, strerror(error));
++	}
++	return __nfs_gs_err_done(error);
++}
++
++static void __nfs_gs_init_any_ipv4(struct sockaddr *sap, socklen_t *len)
++{
++	struct sockaddr_in *sin = (struct sockaddr_in *)sap;
++
++	sin->sin_family = AF_INET;
++	sin->sin_addr.s_addr = htonl(INADDR_ANY);
++	sin->sin_port = 0;
++
++	*len = sizeof(struct sockaddr_in);
++}
++
++#ifdef IPV6_SUPPORTED
++static void __nfs_gs_init_any_ipv6(struct sockaddr *sap, socklen_t *len)
++{
++	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
++
++	sin6->sin6_family = AF_INET6;
++	sin6->sin6_addr = in6addr_any;
++	sin6->sin6_port = 0;
++
++	*len = sizeof(struct sockaddr_in6);
++}
++
++static void __nfs_gs_init_any_address(const sa_family_t family,
++					struct sockaddr *sap, socklen_t *len)
++{
++	*len = 0;
++
++	switch (family) {
++	case AF_INET:
++		__nfs_gs_init_any_ipv4(sap, len);
++	case AF_INET6:
++		__nfs_gs_init_any_ipv6(sap, len);
++	}
++}
++#else
++static void __nfs_gs_init_any_address(const sa_family_t family,
++					struct sockaddr *sap, socklen_t *len)
++{
++	__nfs_gs_init_any_ipv4(sap, len);
++}
++#endif
++
++#ifdef HAVE_BINDRESVPORT_SA
++static int __nfs_bindresvport(const int socket, struct sockaddr *sap)
++{
++	return bindresvport_sa(socket, sap);
++}
++#else
++static int __nfs_bindresvport(const int socket, struct sockaddr *sap)
++{
++	return bindresvport(socket, (struct sockaddr_in *)sap);
++}
++#endif
++
+ /*
+  * Attempt to connect a socket, but time out after "timeout" seconds.
+  *
+- * On error return, caller closes the socket.
++ * Returns zero if successful, or -1 if an error occurred.
++ * On error return, caller must close the socket.
+  */
+-static int connect_to(int fd, struct sockaddr *addr,
+-			socklen_t addrlen, int timeout)
++static int __nfs_gs_connect_with_timeout(const int fd,
++						const struct sockaddr *addr,
++						const socklen_t addrlen,
++						const time_t timeout)
+ {
+ 	int ret, saved;
+ 	fd_set rset, wset;
+@@ -223,81 +443,41 @@ out:
+ /*
+  * Create a socket that is locally bound to a reserved or non-reserved port.
+  *
+- * The caller should check rpc_createerr to determine the cause of any error.
++ * Returns a positive integer representing a freshly created socket
++ * file descriptor, or the value RPC_ANYSOCK if an error occurs.  The caller
++ * should check rpc_createerr to determine the cause of the error.
+  */
+-static int get_socket(struct sockaddr_in *saddr, unsigned int p_prot,
+-			unsigned int timeout, int resvp, int conn)
++static int nfs_getsocket(const struct sockaddr *saddr,
++				const unsigned short protocol,
++				const time_t timeout,
++				const int resvp, const int conn)
+ {
+-	int so, cc, type;
+-	struct sockaddr_in laddr;
+-	socklen_t namelen = sizeof(laddr);
++	struct sockaddr_storage dummy;
++	struct sockaddr *any_addr = (struct sockaddr *)&dummy;
++	socklen_t addrlen;
++	int so, type;
+ 
+-	type = (p_prot == IPPROTO_UDP ? SOCK_DGRAM : SOCK_STREAM);
+-	if ((so = socket (AF_INET, type, p_prot)) < 0)
+-		goto err_socket;
++	/* Use address family and protocol family interchangeably */
++	type = (protocol == IPPROTO_UDP ? SOCK_DGRAM : SOCK_STREAM);
++	so = socket(saddr->sa_family, type, protocol);
++	if (so < 0)
++		return __nfs_gs_err_socket(protocol, errno);
+ 
+-	laddr.sin_family = AF_INET;
+-	laddr.sin_port = 0;
+-	laddr.sin_addr.s_addr = htonl(INADDR_ANY);
+-	if (resvp) {
+-		if (bindresvport(so, &laddr) < 0)
+-			goto err_bindresvport;
+-	} else {
+-		cc = bind(so, (struct sockaddr *)&laddr, namelen);
+-		if (cc < 0)
+-			goto err_bind;
+-	}
+-	if (type == SOCK_STREAM || (conn && type == SOCK_DGRAM)) {
+-		cc = connect_to(so, (struct sockaddr *)saddr, namelen,
+-				timeout);
+-		if (cc < 0)
+-			goto err_connect;
+-	}
+-	return so;
++	__nfs_gs_init_any_address(saddr->sa_family, any_addr, &addrlen);
+ 
+-err_socket:
+-	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+-	rpc_createerr.cf_error.re_errno = errno;
+-	if (verbose) {
+-		nfs_error(_("%s: Unable to create %s socket: errno %d (%s)\n"),
+-			progname, p_prot == IPPROTO_UDP ? _("UDP") : _("TCP"),
+-			errno, strerror(errno));
+-	}
+-	return RPC_ANYSOCK;
++	if (resvp) {
++		if (__nfs_bindresvport(so, any_addr) < 0)
++			return __nfs_gs_err_bindresvport(so, protocol, errno);
++	} else
++		if (bind(so, any_addr, addrlen) < 0)
++			return __nfs_gs_err_bind(so, protocol, errno);
+ 
+-err_bindresvport:
+-	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+-	rpc_createerr.cf_error.re_errno = errno;
+-	if (verbose) {
+-		nfs_error(_("%s: Unable to bindresvport %s socket: errno %d"
+-				" (%s)\n"),
+-			progname, p_prot == IPPROTO_UDP ? _("UDP") : _("TCP"),
+-			errno, strerror(errno));
+-	}
+-	close(so);
+-	return RPC_ANYSOCK;
++	if (type == SOCK_STREAM || conn)
++		if (__nfs_gs_connect_with_timeout(so, saddr, addrlen,
++								timeout) < 0)
++			return __nfs_gs_err_connect(so, saddr, errno);
+ 
+-err_bind:
+-	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+-	rpc_createerr.cf_error.re_errno = errno;
+-	if (verbose) {
+-		nfs_error(_("%s: Unable to bind to %s socket: errno %d (%s)\n"),
+-			progname, p_prot == IPPROTO_UDP ? _("UDP") : _("TCP"),
+-			errno, strerror(errno));
+-	}
+-	close(so);
+-	return RPC_ANYSOCK;
+-
+-err_connect:
+-	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+-	rpc_createerr.cf_error.re_errno = errno;
+-	if (verbose) {
+-		nfs_error(_("%s: Unable to connect to %s:%d, errno %d (%s)\n"),
+-			progname, inet_ntoa(saddr->sin_addr),
+-			ntohs(saddr->sin_port), errno, strerror(errno));
+-	}
+-	close(so);
+-	return RPC_ANYSOCK;
++	return so;
+ }
+ 
+ /*
+@@ -323,7 +503,8 @@ static unsigned short getport(struct sockaddr_in *saddr,
+ 	bind_saddr = *saddr;
+ 	bind_saddr.sin_port = htons(PMAPPORT);
+ 
+-	socket = get_socket(&bind_saddr, proto, PMAP_TIMEOUT, FALSE, FALSE);
++	socket = nfs_getsocket((struct sockaddr *)&bind_saddr, proto,
++				PMAP_TIMEOUT, FALSE, FALSE);
+ 	if (socket == RPC_ANYSOCK) {
+ 		if (proto == IPPROTO_TCP &&
+ 		    rpc_createerr.cf_error.re_errno == ETIMEDOUT)
+@@ -616,8 +797,8 @@ CLIENT *mnt_openclnt(clnt_addr_t *mnt_server, int *msock)
+ 	CLIENT *clnt = NULL;
+ 
+ 	mnt_saddr->sin_port = htons((u_short)mnt_pmap->pm_port);
+-	*msock = get_socket(mnt_saddr, mnt_pmap->pm_prot, MOUNT_TIMEOUT,
+-				TRUE, FALSE);
++	*msock = nfs_getsocket((struct sockaddr *)mnt_saddr, mnt_pmap->pm_prot,
++				MOUNT_TIMEOUT, TRUE, FALSE);
+ 	if (*msock == RPC_ANYSOCK) {
+ 		if (rpc_createerr.cf_error.re_errno == EADDRINUSE)
+ 			/*
+@@ -692,7 +873,8 @@ int clnt_ping(struct sockaddr_in *saddr, const unsigned long prog,
+ 	struct sockaddr dissolve;
+ 
+ 	rpc_createerr.cf_stat = stat = 0;
+-	sock = get_socket(saddr, prot, CONNECT_TIMEOUT, FALSE, TRUE);
++	sock = nfs_getsocket((struct sockaddr *)saddr, prot,
++				CONNECT_TIMEOUT, FALSE, TRUE);
+ 	if (sock == RPC_ANYSOCK) {
+ 		if (rpc_createerr.cf_error.re_errno == ETIMEDOUT) {
+ 			/*
+@@ -752,34 +934,36 @@ int clnt_ping(struct sockaddr_in *saddr, const unsigned long prog,
+ }
+ 
+ /**
+- * get_client_address - acquire our local network address
++ * nfs_client_address - acquire our local network address
+  * @saddr: server's address
+- * @caddr: filled in with our network address
++ * @laddr: filled in with our local network address
++ * @laddr_len: IN: length of buffer to fill in; OUT: length of filled-in address
+  *
+  * Discover a network address that the server will use to call us back.
+  * On multi-homed clients, this address depends on which NIC we use to
+  * route requests to the server.
+  *
+- * Use a connected datagram socket so as not to leave a socket in TIME_WAIT.
++ * A connected datagram socket is used to prevent leaving the socket
++ * in TIME_WAIT, to conserve the ephemeral port number space.  This helps
++ * reduce failed socket binds during mount storms.
+  *
+  * Returns one if successful, otherwise zero.
+  */
+-int get_client_address(struct sockaddr_in *saddr, struct sockaddr_in *caddr)
++int nfs_client_address(const struct sockaddr *saddr, struct sockaddr *laddr,
++		       socklen_t *laddr_len)
+ {
+-	socklen_t len = sizeof(*caddr);
+-	int socket, err;
++	int sock, err;
+ 
+-	socket = get_socket(saddr, IPPROTO_UDP, CONNECT_TIMEOUT, FALSE, TRUE);
+-	if (socket == RPC_ANYSOCK)
++	sock = nfs_getsocket(saddr, IPPROTO_UDP,
++				CONNECT_TIMEOUT, FALSE, TRUE);
++	if (sock == RPC_ANYSOCK)
+ 		return 0;
+ 
+-	err = getsockname(socket, caddr, &len);
+-	close(socket);
+-
+-	if (err && verbose) {
+-		nfs_error(_("%s: getsockname failed: %s"),
++	err = getsockname(sock, laddr, laddr_len);
++	if (err && verbose)
++		nfs_error(_("%s: error acquiring client's local address: %s"),
+ 				progname, strerror(errno));
+-		return 0;
+-	}
+-	return 1;
++
++	close(sock);
++	return err ? 0 : 1;
+ }
+diff --git a/utils/mount/network.h b/utils/mount/network.h
+index 99ecc1e..97538b6 100644
+--- a/utils/mount/network.h
++++ b/utils/mount/network.h
+@@ -48,7 +48,8 @@ static const struct timeval RETRY_TIMEOUT = { 3, 0 };
+ 
+ int probe_bothports(clnt_addr_t *, clnt_addr_t *);
+ int nfs_gethostbyname(const char *, struct sockaddr_in *);
+-int get_client_address(struct sockaddr_in *, struct sockaddr_in *);
++int nfs_name_to_address(const char *, const sa_family_t, struct sockaddr *);
++int nfs_client_address(const struct sockaddr *, struct sockaddr *, socklen_t *);
+ int nfs_call_umount(clnt_addr_t *, dirpath *);
+ int clnt_ping(struct sockaddr_in *, const unsigned long,
+ 		const unsigned long, const unsigned int,
+diff --git a/utils/mount/stropts.c b/utils/mount/stropts.c
+index cadb1f4..4e796c6 100644
+--- a/utils/mount/stropts.c
++++ b/utils/mount/stropts.c
+@@ -33,8 +33,11 @@
+ #include <errno.h>
+ #include <netdb.h>
+ #include <time.h>
++
++#include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/mount.h>
++#include <arpa/inet.h>
+ 
+ #include "xcommon.h"
+ #include "mount.h"
+@@ -68,6 +71,7 @@
+ extern int nfs_mount_data_version;
+ extern char *progname;
+ extern int verbose;
++extern int dnsfamily;
+ 
+ static int parse_devname(const char *spec, char **hostname)
+ {
+@@ -141,6 +145,66 @@ static int fill_ipv4_sockaddr(const char *hostname, struct sockaddr_in *addr)
+ }
+ 
+ /*
++ * Convert the passed-in sockaddr-style address to a text version of
++ * the address, then append an option of the form "keyword=address".
++ *
++ * Returns 1 if the option was appended successfully;
++ * otherwise zero.
++ */
++#ifdef HAVE_INET_NTOP
++static int append_generic_address_option(const struct sockaddr *sap,
++					 const char *keyword,
++					 struct mount_options *options)
++{
++	char new_option[128 + INET6_ADDRSTRLEN];
++	size_t len = strlen(keyword) + 1;
++	void *src;
++
++	if (len + INET6_ADDRSTRLEN >= sizeof(new_option))
++		return 0;
++
++	new_option[0] = '\0';
++	strcat(new_option, keyword);
++	strcat(new_option, "=");
++
++	switch (sap->sa_family) {
++	case AF_INET:
++		src = &((struct sockaddr_in *)sap)->sin_addr;
++		break;
++	case AF_INET6:
++		src = &((struct sockaddr_in6 *)sap)->sin6_addr;
++		break;
++	default:
++		return 0;
++	}
++	if (inet_ntop(sap->sa_family, src, new_option + len,
++						INET6_ADDRSTRLEN) == NULL)
++		return 0;
++
++	if (po_append(options, new_option) != PO_SUCCEEDED)
++		return 0;
++	return 1;
++}
++#else
++static int append_generic_address_option(const struct sockaddr *sap,
++					 const char *keyword,
++					 struct mount_options *options)
++{
++	char new_option[128];
++
++	if (strlen(keyword) + 16 > sizeof(new_option))
++		return 0;
++
++	snprintf(new_option, sizeof(new_option) - 1, "%s=%s", keyword,
++			inet_ntoa(((struct sockaddr_in *)sap)->sin_addr));
++
++	if (po_append(options, new_option) != PO_SUCCEEDED)
++		return 0;
++	return 1;
++}
++#endif
++
++/*
+  * Append the 'addr=' option to the options string to pass a resolved
+  * server address to the kernel.  After a successful mount, this address
+  * is also added to /etc/mtab for use when unmounting.
+@@ -152,19 +216,12 @@ static int fill_ipv4_sockaddr(const char *hostname, struct sockaddr_in *addr)
+  * Returns 1 if 'addr=' option appended successfully;
+  * otherwise zero.
+  */
+-static int append_addr_option(struct sockaddr_in *saddr,
++static int append_addr_option(struct sockaddr *saddr,
+ 			   struct mount_options *options)
+ {
+-	char new_option[24];
+-
+ 	po_remove_all(options, "addr");
+ 
+-	snprintf(new_option, sizeof(new_option) - 1,
+-			"addr=%s", inet_ntoa(saddr->sin_addr));
+-
+-	if (po_append(options, new_option) == PO_SUCCEEDED)
+-		return 1;
+-	return 0;
++	return append_generic_address_option(saddr, "addr", options);
+ }
+ 
+ /*
+@@ -174,24 +231,20 @@ static int append_addr_option(struct sockaddr_in *saddr,
+  * Returns 1 if 'clientaddr=' option created successfully or if
+  * 'clientaddr=' option is already present; otherwise zero.
+  */
+-static int append_clientaddr_option(struct sockaddr_in *saddr,
++static int append_clientaddr_option(struct sockaddr *saddr,
+ 				    struct mount_options *options)
+ {
+ 	struct sockaddr_in my_addr;
+-	char new_option[32];
++	socklen_t len = sizeof(my_addr);
+ 
+ 	if (po_contains(options, "clientaddr") == PO_SUCCEEDED)
+ 		return 1;
+ 
+-	if (!get_client_address(saddr, &my_addr))
++	if (!nfs_client_address(saddr, (struct sockaddr *)&my_addr, &len))
+ 		return 0;
+ 
+-	snprintf(new_option, sizeof(new_option) - 1,
+-			"clientaddr=%s", inet_ntoa(my_addr.sin_addr));
+-
+-	if (po_append(options, new_option) == PO_SUCCEEDED)
+-		return 1;
+-	return 0;
++	return append_generic_address_option((struct sockaddr *)&my_addr,
++						"clientaddr", options);
+ }
+ 
+ /*
+@@ -201,7 +254,7 @@ static int append_clientaddr_option(struct sockaddr_in *saddr,
+ static int fix_mounthost_option(struct mount_options *options)
+ {
+ 	struct sockaddr_in maddr;
+-	char *mounthost, new_option[32];
++	char *mounthost;
+ 
+ 	mounthost = po_get(options, "mounthost");
+ 	if (!mounthost)
+@@ -210,12 +263,8 @@ static int fix_mounthost_option(struct mount_options *options)
+ 	if (!fill_ipv4_sockaddr(mounthost, &maddr))
+ 		return 0;
+ 
+-	snprintf(new_option, sizeof(new_option) - 1,
+-			"mountaddr=%s", inet_ntoa(maddr.sin_addr));
+-
+-	if (po_append(options, new_option) == PO_SUCCEEDED)
+-		return 1;
+-	return 0;
++	return append_generic_address_option((struct sockaddr *)&maddr,
++						"mountaddr", options);
+ }
+ 
+ /*
+@@ -224,7 +273,7 @@ static int fix_mounthost_option(struct mount_options *options)
+  * Returns 1 if successful; otherwise zero.
+  */
+ static int set_mandatory_options(const char *type,
+-				 struct sockaddr_in *saddr,
++				 struct sockaddr *saddr,
+ 				 struct mount_options *options)
+ {
+ 	if (!append_addr_option(saddr, options))
+@@ -677,13 +726,14 @@ int nfsmount_string(const char *spec, const char *node, const char *type,
+ 		    int flags, char **extra_opts, int fake, int child)
+ {
+ 	struct mount_options *options = NULL;
+-	struct sockaddr_in saddr;
++	struct sockaddr_storage dummy;
++	struct sockaddr *saddr = (struct sockaddr *)&dummy;
+ 	char *hostname;
+ 	int retval = EX_FAIL;
+ 
+ 	if (!parse_devname(spec, &hostname))
+ 		return retval;
+-	if (!fill_ipv4_sockaddr(hostname, &saddr))
++	if (nfs_name_to_address(hostname, dnsfamily, saddr))
+ 		goto fail;
+ 
+ 	options = po_split(*extra_opts);
+@@ -692,7 +742,7 @@ int nfsmount_string(const char *spec, const char *node, const char *type,
+ 		goto fail;
+ 	}
+ 
+-	if (!set_mandatory_options(type, &saddr, options))
++	if (!set_mandatory_options(type, saddr, options))
+ 		goto out;
+ 
+ 	if (po_rightmost(options, "bg", "fg") == PO_KEY1_RIGHTMOST)

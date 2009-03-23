@@ -1,0 +1,1109 @@
+.TH "commands.h" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+commands.h \- Header file for processing user's command line. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'shell_types.h'\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBfsal_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_init_fs\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_callstat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_hardlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_access\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_truncate\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open_byname\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_open_byfileid\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_read\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_write\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_close\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_close_byfileid\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_rcp\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_cross\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_handlecmp\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_lsxattrs\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_fsal_getxattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBCache_inode_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_cache_init\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_gc\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_link\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_callstat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_data_cache\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_recover_cache\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_refresh_cache\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_flush_cache\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_release_cache\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_read\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_write\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_Cache_inode_access\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBnfs_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_init\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT1_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT3_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS2_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS3_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_mount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_umount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_hardlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_id\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBnfs_remote_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfn_rpc_init\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT1_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT3_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS2_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS3_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_mount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_umount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_hardlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_id\fP (int argc, char **argv, FILE *output)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Header file for processing user's command line. 
+
+\fBAuthor:\fP
+.RS 4
+\fBAuthor\fP.RS 4
+leibovic 
+.RE
+.PP
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+\fBDate\fP.RS 4
+2006/01/24 15:04:22 
+.RE
+.PP
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+\fBRevision\fP.RS 4
+1.52 
+.RE
+.PP
+.RE
+.PP
+\fBLog\fP.RS 4
+\fBcommands.h\fP,v 
+.RE
+.PP
+Revision 1.52 2006/01/24 15:04:22 leibovic Re-integrating nfs commands for HPSS_62.
+.PP
+Revision 1.51 2006/01/17 14:56:22 leibovic Adaptation de HPSS 6.2.
+.PP
+Revision 1.50 2005/09/28 11:02:29 leibovic Adding su command to NFS layer.
+.PP
+Revision 1.49 2005/09/19 14:20:58 leibovic Adding handlecmp call.
+.PP
+Revision 1.48 2005/09/09 15:23:11 leibovic Adding 'cross' command for crossing junctions.
+.PP
+Revision 1.47 2005/09/07 14:08:32 leibovic Adding stat command for NFS.
+.PP
+Revision 1.46 2005/08/25 13:44:26 leibovic Adding su commande for cache indoe layer.
+.PP
+Revision 1.45 2005/08/12 07:07:23 leibovic Adding ln command for nfs.
+.PP
+Revision 1.44 2005/08/10 14:55:05 leibovic NFS support of setattr, rename, link, symlink.
+.PP
+Revision 1.43 2005/08/10 10:57:17 leibovic Adding removal functions.
+.PP
+Revision 1.42 2005/08/09 14:52:57 leibovic Addinf create and mkdir commands.
+.PP
+Revision 1.41 2005/08/08 11:42:49 leibovic Adding some stardard unix calls through NFS (ls, cd, pwd).
+.PP
+Revision 1.40 2005/08/05 15:17:57 leibovic Adding mount and pwd commands for browsing.
+.PP
+Revision 1.39 2005/08/03 11:51:10 leibovic MNT1 protocol OK.
+.PP
+Revision 1.38 2005/06/14 12:25:13 deniel commit for seek size
+.PP
+Revision 1.37 2005/06/02 12:53:44 deniel Shell is now support flush/refresh commands for data cache
+.PP
+Revision 1.36 2005/06/02 07:14:33 leibovic Adding rcp call.
+.PP
+Revision 1.35 2005/05/27 14:47:52 leibovic adding cat command.
+.PP
+Revision 1.34 2005/05/27 12:01:47 leibovic Adding write command.
+.PP
+Revision 1.33 2005/05/26 12:54:18 leibovic Adding open, read, close commands for FSAL.
+.PP
+Revision 1.32 2005/05/18 13:07:19 leibovic Adding fsal truncate operation.
+.PP
+Revision 1.31 2005/05/10 11:44:15 deniel Datacache and metadatacache are noewqw bounded
+.PP
+Revision 1.30 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+.PP
+Revision 1.29 2005/04/27 09:33:48 deniel Added cache_inode_access
+.PP
+Revision 1.28 2005/04/26 14:57:27 leibovic Implementing access command.
+.PP
+Revision 1.27 2005/04/25 15:19:12 deniel Adding setattr support in Cache inode
+.PP
+Revision 1.26 2005/04/25 12:57:48 leibovic Implementing setattr.
+.PP
+Revision 1.25 2005/04/21 13:19:15 deniel Adding cache_inode_rename/ link/ remove implementation
+.PP
+Revision 1.24 2005/04/20 10:40:55 deniel Adding 'create'
+.PP
+Revision 1.23 2005/04/19 12:29:32 leibovic Adding create command.
+.PP
+Revision 1.22 2005/04/19 08:28:17 leibovic Adding hardlink command for FSAL.
+.PP
+Revision 1.21 2005/04/18 14:03:25 deniel First version of mkdir/symlink/unlink that works Further test are to be made with DIR_CONTINUE entry type
+.PP
+Revision 1.20 2005/04/18 07:59:27 deniel Added mkdir and ln support
+.PP
+Revision 1.19 2005/04/15 12:25:44 deniel Added mkdir for Cache_inode
+.PP
+Revision 1.18 2005/04/14 11:21:56 leibovic Changing command syntax.
+.PP
+Revision 1.17 2005/04/13 13:36:17 leibovic Ajout de la commande rename.
+.PP
+Revision 1.16 2005/04/13 09:28:05 leibovic Adding unlink and mkdir calls.
+.PP
+Revision 1.15 2005/03/15 13:01:13 deniel Pb with one stream log desc is ok
+.PP
+Revision 1.14 2005/03/04 10:12:15 leibovic New debug functions.
+.PP
+Revision 1.13 2005/03/02 09:20:53 deniel Test for gc added
+.PP
+Revision 1.12 2005/01/21 13:31:26 leibovic Code clenaning.
+.PP
+Revision 1.11 2005/01/21 09:40:31 leibovic Integrating NFS and MNT protocol commands.
+.PP
+Revision 1.10 2004/12/15 16:19:10 deniel Some command for testing cache_inode were added
+.PP
+Revision 1.9 2004/12/08 17:31:01 deniel adding array for Cache_inode layer in \fBcommands.h\fP
+.PP
+Revision 1.8 2004/12/08 17:13:50 leibovic Multi-layer support.
+.PP
+Revision 1.7 2004/12/08 15:56:57 deniel Beginning addition for Cache_inode support
+.PP
+Revision 1.6 2004/12/01 16:12:21 leibovic New tests + displaying command number in verbose mode.
+.PP
+Revision 1.5 2004/11/22 14:02:36 leibovic Adding su command.
+.PP
+Revision 1.4 2004/11/19 16:18:12 leibovic First operational version.
+.PP
+Revision 1.3 2004/11/19 08:46:16 leibovic fixed conflict between command names and syscalls.
+.PP
+Revision 1.2 2004/11/18 13:40:40 leibovic implemented: init_fs, pwd, cd
+.PP
+Revision 1.1 2004/11/18 08:55:54 leibovic Shell for browsing FSAL and other GANESHA modules.
+.PP
+Definition in file \fBcommands.h\fP.
+.SH "Function Documentation"
+.PP 
+.SS "void Cache_inode_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 547 of file commands_Cache_inode.c.
+.SS "int fn_Cache_inode_access (int argc, char ** argv, FILE * output)"
+.PP
+perform an access command. syntax: access [F][R][W][X] <file> example: access toto FRX 
+.PP
+Definition at line 3012 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_cache_init (int argc, char ** argv, FILE * output)"
+.PP
+proceed an init_fs command. 
+.PP
+Definition at line 1019 of file commands_Cache_inode.c.
+.PP
+References cacheinode_init(), Getopt(), ht, Optind, and Optopt.
+.SS "int fn_Cache_inode_callstat (int argc, char ** argv, FILE * output)"
+.PP
+display statistics about FSAL calls. 
+.PP
+Definition at line 1807 of file commands_Cache_inode.c.
+.PP
+References cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, ht, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 1134 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, ht, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_create (int argc, char ** argv, FILE * output)"
+.PP
+proceed an create command. 
+.PP
+Definition at line 2339 of file commands_Cache_inode.c.
+.PP
+References atomode(), cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, NULL, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_data_cache (int argc, char ** argv, FILE * output)"
+.PP
+cache en entry (REGULAR_FILE) in the data cache 
+.PP
+Definition at line 3185 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_flush_cache (int argc, char ** argv, FILE * output)"
+.PP
+flush en entry (REGULAR_FILE) in the data cache 
+.PP
+Definition at line 3671 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_gc (int argc, char ** argv, FILE * output)"
+.PP
+proceed to a call to the garbagge collector. 
+.PP
+Definition at line 1298 of file commands_Cache_inode.c.
+.PP
+References cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, Getopt(), ht, Optopt, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_link (int argc, char ** argv, FILE * output)"
+.PP
+proceed an create command. 
+.PP
+Definition at line 2040 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln (symlink) command. 
+.PP
+Definition at line 2186 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command. 
+.PP
+Definition at line 1382 of file commands_Cache_inode.c.
+.PP
+References CACHE_INODE_SHELL_READDIR_SIZE, cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_attributes(), print_item_line(), and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+proceed an mkdir command. 
+.PP
+Definition at line 1866 of file commands_Cache_inode.c.
+.PP
+References atomode(), cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, NULL, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 1103 of file commands_Cache_inode.c.
+.PP
+References cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::current_path, ht, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_read (int argc, char ** argv, FILE * output)"
+.PP
+Reads the content of a cached regular file 
+.PP
+Definition at line 3792 of file commands_Cache_inode.c.
+.PP
+References ato64(), cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, NULL, Optarg, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_timeval, RetrieveInitializedContext(), and time_diff().
+.SS "int fn_Cache_inode_recover_cache (int argc, char ** argv, FILE * output)"
+.PP
+recover the data cache 
+.PP
+Definition at line 3443 of file commands_Cache_inode.c.
+.PP
+References cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, EXPORT_ID, Getopt(), ht, Optind, Optopt, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_refresh_cache (int argc, char ** argv, FILE * output)"
+.PP
+refresh en entry (REGULAR_FILE) in the data cache 
+.PP
+Definition at line 3549 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_release_cache (int argc, char ** argv, FILE * output)"
+.PP
+cache en entry (REGULAR_FILE) in the data cache 
+.PP
+Definition at line 3331 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 2511 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_setattr (int argc, char ** argv, FILE * output)"
+.PP
+setattr
+.PP
+syntax of command line: setattr file_path attribute_name attribute_value 
+.PP
+Definition at line 2828 of file commands_Cache_inode.c.
+.PP
+References ATTR_32, ATTR_64, shell_attribute__::attr_name, ATTR_OCTAL, ATTR_TIME, shell_attribute__::attr_type, cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, MkFSALSetAttrStruct(), Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_attributes(), RetrieveInitializedContext(), and shell_attribute_t.
+.SS "int fn_Cache_inode_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed a stat command. 
+.PP
+Definition at line 1199 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_attributes(), and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread contexte. 
+.PP
+Definition at line 4664 of file commands_Cache_inode.c.
+.PP
+References cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::exp_context, getugroups(), ht, MAX_GRPS, my_atoi(), print_fsal_status(), and RetrieveInitializedContext().
+.SS "int fn_Cache_inode_unlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed an unlink command. 
+.PP
+Definition at line 2685 of file commands_Cache_inode.c.
+.PP
+References cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_fsal_status(), RetrieveInitializedContext(), and split_path().
+.SS "int fn_Cache_inode_write (int argc, char ** argv, FILE * output)"
+.PP
+Reads the content of a cached regular file 
+.PP
+Definition at line 4219 of file commands_Cache_inode.c.
+.PP
+References ato64(), cache_solvepath(), cmdCacheInode_thr_info__::cache_status, cmdCacheInode_thr_info__::client, cmdCacheInode_thr_info_t, cmdCacheInode_thr_info__::context, cmdCacheInode_thr_info__::current_path, Getopt(), ht, NULL, Optarg, Optind, Optopt, cmdCacheInode_thr_info__::pentry, print_timeval, RetrieveInitializedContext(), and time_diff().
+.SS "int fn_fsal_access (int argc, char ** argv, FILE * output)"
+.PP
+perform an access command. syntax: access [-A] [F][R][W][X] <file> example: access toto FRX 
+.PP
+Definition at line 3125 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), and solvepath().
+.SS "int fn_fsal_callstat (int argc, char ** argv, FILE * output)"
+.PP
+display statistics about FSAL calls. 
+.PP
+Definition at line 1810 of file commands_FSAL.c.
+.SS "int fn_fsal_cat (int argc, char ** argv, FILE * output)"
+.PP
+Command that prints a file to screen. cat [-f] <path> 
+.PP
+Definition at line 5103 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 919 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_close (int argc, char ** argv, FILE * output)"
+.PP
+Command that closes a file. close 
+.PP
+Definition at line 4974 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, cmdfsal_thr_info__::opened, and print_fsal_status().
+.SS "int fn_fsal_close_byfileid (int argc, char ** argv, FILE * output)"
+.PP
+Command that closes a file. close 
+.PP
+Definition at line 5038 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, cmdfsal_thr_info__::opened, and print_fsal_status().
+.SS "int fn_fsal_create (int argc, char ** argv, FILE * output)"
+.PP
+proceed an create command. 
+.PP
+Definition at line 2758 of file commands_FSAL.c.
+.PP
+References atomode(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_cross (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 5472 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_getxattr (int argc, char ** argv, FILE * output)"
+.PP
+display an extended attribute. 
+.PP
+Definition at line 1280 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_handlecmp (int argc, char ** argv, FILE * output)"
+.PP
+compare 2 handles. 
+.PP
+Definition at line 5564 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_hardlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed a hardlink command. 
+.PP
+Definition at line 2598 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_init_fs (int argc, char ** argv, FILE * output)"
+.PP
+proceed an init_fs command. 
+.PP
+Definition at line 639 of file commands_FSAL.c.
+.PP
+References fsal_init(), Getopt(), Optind, and Optopt.
+.SS "int fn_fsal_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln command. 
+.PP
+Definition at line 2430 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command. 
+.PP
+Definition at line 1522 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), print_item_line(), READDIR_SIZE, and solvepath().
+.SS "int fn_fsal_lsxattrs (int argc, char ** argv, FILE * output)"
+.PP
+list extended attributes. 
+.PP
+Definition at line 1146 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+proceed an mkdir command. 
+.PP
+Definition at line 2086 of file commands_FSAL.c.
+.PP
+References atomode(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_open (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags. open <path> [ rwat ] 
+.PP
+Definition at line 3693 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_open_byfileid (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags. open <path> [ rwat ] 
+.PP
+Definition at line 3884 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_open_byname (int argc, char ** argv, FILE * output)"
+.PP
+Command that opens a file using specific flags, but using FSAL_open_by_name. open <path> [ rwat ] 
+.PP
+Definition at line 3498 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_fd, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, cmdfsal_thr_info__::opened, Optind, Optopt, and print_fsal_status().
+.SS "int fn_fsal_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 713 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Init_Thread_Context(), and cmdfsal_thr_info__::is_thread_ok.
+.SS "int fn_fsal_rcp (int argc, char ** argv, FILE * output)"
+.PP
+Command that copy a file from/to the local filesystem. rcp [-h] -r|-w <fsal_path> <local_path> 
+.PP
+Definition at line 5269 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_read (int argc, char ** argv, FILE * output)"
+.PP
+Command that reads data from an opened file. 
+.PP
+Definition at line 4081 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), NULL, Optarg, Optind, Optopt, print_fsal_status(), print_timeval, and time_diff().
+.SS "int fn_fsal_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 2255 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_setattr (int argc, char ** argv, FILE * output)"
+.PP
+change file attributes. 
+.PP
+Definition at line 2939 of file commands_FSAL.c.
+.PP
+References ATTR_32, ATTR_64, shell_attribute__::attr_name, ATTR_OCTAL, ATTR_TIME, shell_attribute__::attr_type, cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, MkFSALSetAttrStruct(), NULL, Optind, Optopt, print_fsal_attributes(), print_fsal_status(), shell_attribute_t, and solvepath().
+.SS "int fn_fsal_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed a stat command. 
+.PP
+Definition at line 1019 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, Optind, Optopt, print_fsal_attrib_mask(), print_fsal_attributes(), print_fsal_status(), and solvepath().
+.SS "int fn_fsal_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread contexte. 
+.PP
+Definition at line 1854 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::exp_context, GetFSALCmdContext(), getugroups(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, MAX_GRPS, my_atoi(), and print_fsal_status().
+.SS "int fn_fsal_truncate (int argc, char ** argv, FILE * output)"
+.PP
+proceed a truncate command. 
+.PP
+Definition at line 3370 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), and solvepath().
+.SS "int fn_fsal_unlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed an unlink command. 
+.PP
+Definition at line 1960 of file commands_FSAL.c.
+.PP
+References cmdfsal_thr_info_t, cmdfsal_thr_info__::context, cmdfsal_thr_info__::current_dir, cmdfsal_thr_info__::current_path, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), cmdfsal_thr_info__::is_thread_ok, NULL, Optind, Optopt, print_fsal_status(), solvepath(), and split_path().
+.SS "int fn_fsal_write (int argc, char ** argv, FILE * output)"
+.PP
+Command that writes data to an opened file.
+.PP
+Usage: write [-h][-v] [ -s <seek_type>,<offset> ] [-N <nb_times>] -A <ascii_string> write [-h][-v] [ -s <seek_type>,<offset> ] [-N <nb_times>] -X <hexa_data> Where: <seek_type> can be: SET, CUR, END <offset> is a signed number of bytes. <nb_times> is the number of times we write the expression into the file.
+.PP
+<ascii_string> is a string to be written to file. Note that the null terminating character of is also written to file. or <hexa_data> is a data represented in hexadecimal format, that is to be written to file.
+.PP
+Examples:
+.PP
+For writing 10 times the null terminated string 'hello world' at the end of the file: write -s END,0 -N 10 -A 'hello world'
+.PP
+For overwriting the beginning of the file with the pattern 0xA1267AEF31254ADE repeated twice: write -s SET,0 -N 2 -X 'A1267AEF31254ADE' 
+.PP
+Definition at line 4525 of file commands_FSAL.c.
+.PP
+References ato64(), cmdfsal_thr_info_t, GetFSALCmdContext(), Getopt(), Init_Thread_Context(), NULL, Optarg, Optind, Optopt, print_fsal_status(), print_timeval, and time_diff().
+.SS "int fn_MNT1_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT1 protocol's command. 
+.PP
+Definition at line 623 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+.SS "int fn_MNT1_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT1 protocol's command. 
+.PP
+Definition at line 666 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_MNT3_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT3 protocol's command. 
+.PP
+Definition at line 727 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+.SS "int fn_MNT3_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT3 protocol's command. 
+.PP
+Definition at line 748 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_NFS2_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS2 protocol's command. 
+.PP
+Definition at line 828 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+.SS "int fn_NFS2_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS2 protocol's command. 
+.PP
+Definition at line 830 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_NFS3_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS3 protocol's command. 
+.PP
+Definition at line 947 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+.SS "int fn_NFS3_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS3 protocol's command. 
+.PP
+Definition at line 913 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_nfs_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 2682 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), cmdnfs_thr_info__::is_mounted_path, and shell_fh3_t.
+.SS "int fn_nfs_create (int argc, char ** argv, FILE * output)"
+.PP
+create a file 
+.PP
+Definition at line 2768 of file commands_NFS.c.
+.PP
+References atomode(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_hardlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed a hardlink command. 
+.PP
+Definition at line 3415 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_id (int argc, char ** argv, FILE * output)"
+.PP
+Definition at line 3965 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::context, GetNFSClient(), InitNFSClient(), and cmdnfs_thr_info__::is_thread_init.
+.SS "int fn_nfs_init (int argc, char ** argv, FILE * output)"
+.PP
+Init nfs layer 
+.PP
+Definition at line 536 of file commands_NFS.c.
+.PP
+References Getopt(), nfs_init(), Optind, and Optopt.
+.SS "int fn_nfs_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln command. 
+.PP
+Definition at line 3548 of file commands_NFS.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, NULL, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 2341 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, nfs_readdirplus_free(), Optind, Optopt, print_nfs_attributes(), print_nfsitem_line(), and shell_fh3_t.
+.SS "int fn_nfs_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+create a directory 
+.PP
+Definition at line 2895 of file commands_NFS.c.
+.PP
+References atomode(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_mount (int argc, char ** argv, FILE * output)"
+.PP
+mount a path to browse it. 
+.PP
+Definition at line 2100 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_mounted_path, cmdnfs_thr_info__::is_thread_init, cmdnfs_thr_info__::mounted_path, cmdnfs_thr_info__::mounted_path_hdl, NULL, and pexportlist.
+.SS "int fn_nfs_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 2306 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), and cmdnfs_thr_info__::is_mounted_path.
+.SS "int fn_nfs_remote_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 2462 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, nfs_remote_access(), nfs_remote_getattr(), nfs_remote_solvepath(), and shell_fh3_t.
+.SS "int fn_nfs_remote_create (int argc, char ** argv, FILE * output)"
+.PP
+create a file 
+.PP
+Definition at line 2538 of file commands_NFS_remote.c.
+.PP
+References atomode(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_create(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_hardlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed a hardlink command. 
+.PP
+Definition at line 3122 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_link(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_id (int argc, char ** argv, FILE * output)"
+.PP
+Definition at line 3623 of file commands_NFS_remote.c.
+.PP
+References current_pw.
+.SS "int fn_nfs_remote_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln command. 
+.PP
+Definition at line 3244 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_solvepath(), nfs_remote_symlink(), NULL, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 2132 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_getattr(), nfs_remote_readdirplus(), nfs_remote_readdirplus_free(), nfs_remote_readlink(), nfs_remote_solvepath(), Optind, Optopt, print_nfs_attributes(), print_nfsitem_line(), and shell_fh3_t.
+.SS "int fn_nfs_remote_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+create a directory 
+.PP
+Definition at line 2647 of file commands_NFS_remote.c.
+.PP
+References atomode(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_mkdir(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_mount (int argc, char ** argv, FILE * output)"
+.PP
+mount a path to browse it. 
+.PP
+Definition at line 1985 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, nfs_remote_mount(), and shell_fh3_t.
+.SS "int fn_nfs_remote_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 2109 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, and shell_fh3__::data_val.
+.SS "int fn_nfs_remote_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 2996 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_rename(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_setattr (int argc, char ** argv, FILE * output)"
+.PP
+setattr 
+.PP
+Definition at line 2881 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), Getopt(), nfs_remote_setattr(), nfs_remote_solvepath(), NULL, Optind, Optopt, and shell_fh3_t.
+.SS "int fn_nfs_remote_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 3374 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_getattr(), nfs_remote_solvepath(), Optind, Optopt, print_nfs_attributes(), and shell_fh3_t.
+.SS "int fn_nfs_remote_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread credentials. 
+.PP
+Definition at line 3535 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::clnt, current_pw, getugroups(), MAX_GRPS, my_atoi(), prog_vers_client_def__::name, and prog_vers_client_def_t.
+.SS "int fn_nfs_remote_umount (int argc, char ** argv, FILE * output)"
+.PP
+umount a mounted path 
+.PP
+Definition at line 2031 of file commands_NFS_remote.c.
+.PP
+References cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, getCLIENT(), mnt3_remote_Mnt(), mnt3_remote_Umnt_Free(), NULL, shell_fh3_t, and switch_result().
+.SS "int fn_nfs_remote_unlink (int argc, char ** argv, FILE * output)"
+.PP
+unlink a file 
+.PP
+Definition at line 2759 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_getattr(), nfs_remote_remove(), nfs_remote_rmdir(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 3278 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_setattr (int argc, char ** argv, FILE * output)"
+.PP
+setattr 
+.PP
+Definition at line 3153 of file commands_NFS.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, NULL, Optind, Optopt, and shell_fh3_t.
+.SS "int fn_nfs_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 3689 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, print_nfs_attributes(), and shell_fh3_t.
+.SS "int fn_nfs_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread credentials. 
+.PP
+Definition at line 3861 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_thr_info__::exp_context, GetNFSClient(), getugroups(), InitNFSClient(), cmdnfs_thr_info__::is_thread_init, MAX_GRPS, my_atoi(), and print_fsal_status().
+.SS "int fn_nfs_umount (int argc, char ** argv, FILE * output)"
+.PP
+umount a mounted path. 
+.PP
+Definition at line 2211 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_mounted_path, cmdnfs_thr_info__::is_thread_init, cmdnfs_thr_info__::mounted_path, NULL, and pexportlist.
+.SS "int fn_nfs_unlink (int argc, char ** argv, FILE * output)"
+.PP
+unlink a file 
+.PP
+Definition at line 3021 of file commands_NFS.c.
+.PP
+References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_rpc_init (int argc, char ** argv, FILE * output)"
+.PP
+fn_rpc_init 
+.PP
+Definition at line 579 of file commands_NFS_remote.c.
+.PP
+References Getopt(), Optind, Optopt, and rpc_init().
+.SS "void fsal_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 473 of file commands_FSAL.c.
+.SS "void nfs_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 450 of file commands_NFS.c.
+.SS "void nfs_remote_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 657 of file commands_NFS_remote.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

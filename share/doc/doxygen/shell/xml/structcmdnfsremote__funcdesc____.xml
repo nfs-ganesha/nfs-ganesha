@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structcmdnfsremote__funcdesc____" kind="struct" prot="public">
+    <compoundname>cmdnfsremote_funcdesc__</compoundname>
+    <includes refid="cmd__nfstools_8h" local="no">cmd_nfstools.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* cmdnfsremote_funcdesc__::func_name</definition>
+        <argsstring></argsstring>
+        <name>func_name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="139" bodystart="139" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>nfsremote_protocol_function_t</type>
+        <definition>nfsremote_protocol_function_t cmdnfsremote_funcdesc__::func_call</definition>
+        <argsstring></argsstring>
+        <name>func_call</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="142" bodystart="142" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>nfs_protocol_free_t</type>
+        <definition>nfs_protocol_free_t cmdnfsremote_funcdesc__::func_free</definition>
+        <argsstring></argsstring>
+        <name>func_free</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="145" bodystart="145" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o3" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="cmd__nfstools_8h_1a1" kindref="member">cmdnfs_encoding_func_t</ref></type>
+        <definition>cmdnfs_encoding_func_t cmdnfsremote_funcdesc__::func_encode</definition>
+        <argsstring></argsstring>
+        <name>func_encode</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="148" bodystart="148" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o4" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="cmd__nfstools_8h_1a1" kindref="member">cmdnfs_encoding_func_t</ref></type>
+        <definition>cmdnfs_encoding_func_t cmdnfsremote_funcdesc__::func_decode</definition>
+        <argsstring></argsstring>
+        <name>func_decode</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="151" bodystart="151" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcmdnfsremote__funcdesc_____1o5" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* cmdnfsremote_funcdesc__::func_help</definition>
+        <argsstring></argsstring>
+        <name>func_help</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="154" bodystart="154" bodyend="-1"/>
+        <referencedby refid="commands__NFS__remote_8c_1a36" compoundref="commands__NFS__remote_8c" startline="666" endline="744">fn_MNT1_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a37" compoundref="commands__NFS__remote_8c" startline="748" endline="826">fn_MNT3_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a38" compoundref="commands__NFS__remote_8c" startline="830" endline="909">fn_NFS2_remote_command</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a39" compoundref="commands__NFS__remote_8c" startline="913" endline="992">fn_NFS3_remote_command</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/shell/cmd_nfstools.h" line="136" bodystart="136" bodyend="156"/>
+    <listofallmembers>
+      <member refid="structcmdnfsremote__funcdesc_____1o1" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_call</name></member>
+      <member refid="structcmdnfsremote__funcdesc_____1o4" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_decode</name></member>
+      <member refid="structcmdnfsremote__funcdesc_____1o3" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_encode</name></member>
+      <member refid="structcmdnfsremote__funcdesc_____1o2" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_free</name></member>
+      <member refid="structcmdnfsremote__funcdesc_____1o5" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_help</name></member>
+      <member refid="structcmdnfsremote__funcdesc_____1o0" prot="public" virt="non-virtual"><scope>cmdnfsremote_funcdesc__</scope><name>func_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

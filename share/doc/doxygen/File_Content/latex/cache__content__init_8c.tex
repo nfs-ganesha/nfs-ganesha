@@ -1,0 +1,103 @@
+\section{cache\_\-content\_\-init.c File Reference}
+\label{cache__content__init_8c}\index{cache_content_init.c@{cache\_\-content\_\-init.c}}
+Management of the file content cache: initialisation. 
+
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf cache\_\-content\_\-init} (cache\_\-content\_\-client\_\-parameter\_\-t param, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\item 
+int {\bf cache\_\-content\_\-init\_\-dir} (cache\_\-content\_\-client\_\-parameter\_\-t param, unsigned short export\_\-id)
+\item 
+int {\bf cache\_\-content\_\-client\_\-init} (cache\_\-content\_\-client\_\-t $\ast$pclient, cache\_\-content\_\-client\_\-parameter\_\-t param)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Management of the file content cache: initialisation. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:33 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.8 \end{Desc}
+\end{Desc}
+cache\_\-content.c : Management of the file content cache: initialisation.
+
+Definition in file {\bf cache\_\-content\_\-init.c}.
+
+\subsection{Function Documentation}
+\index{cache_content_init.c@{cache\_\-content\_\-init.c}!cache_content_client_init@{cache\_\-content\_\-client\_\-init}}
+\index{cache_content_client_init@{cache\_\-content\_\-client\_\-init}!cache_content_init.c@{cache\_\-content\_\-init.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-client\_\-init (cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-client\_\-parameter\_\-t {\em param})}\label{cache__content__init_8c_a2}
+
+
+cache\_\-content\_\-client\_\-init: Init the ressource necessary for the cache content client.
+
+Init the ressource necessary for the cache content client.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}][IN] the parameter for this client \item[{\em pstatus}][OUT] pointer to buffer used to store the status for the operation.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if operation failed, -1 if failed. \end{Desc}
+
+
+Definition at line 174 of file cache\_\-content\_\-init.c.\index{cache_content_init.c@{cache\_\-content\_\-init.c}!cache_content_init@{cache\_\-content\_\-init}}
+\index{cache_content_init@{cache\_\-content\_\-init}!cache_content_init.c@{cache\_\-content\_\-init.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-init (cache\_\-content\_\-client\_\-parameter\_\-t {\em param}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__init_8c_a0}
+
+
+cache\_\-inode\_\-init: Init the ressource necessary for the cache inode management.
+
+Init the ressource necessary for the cache inode management.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}][IN] the parameter for this cache. \item[{\em pstatus}][OUT] pointer to buffer used to store the status for the operation.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if operation failed, -1 if failed. \end{Desc}
+
+
+Definition at line 120 of file cache\_\-content\_\-init.c.\index{cache_content_init.c@{cache\_\-content\_\-init.c}!cache_content_init_dir@{cache\_\-content\_\-init\_\-dir}}
+\index{cache_content_init_dir@{cache\_\-content\_\-init\_\-dir}!cache_content_init.c@{cache\_\-content\_\-init.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-init\_\-dir (cache\_\-content\_\-client\_\-parameter\_\-t {\em param}, unsigned short {\em export\_\-id})}\label{cache__content__init_8c_a1}
+
+
+cache\_\-content\_\-init\_\-dir: Init the directory for caching entries from a given export id.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}][IN] the parameter for this cache. \item[{\em export\_\-id}][IN] export id for the entries to be cached.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if ok, -1 otherwise. Errno will be set with the error's value. \end{Desc}
+
+
+Definition at line 148 of file cache\_\-content\_\-init.c.

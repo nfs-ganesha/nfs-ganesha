@@ -1,0 +1,2616 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./group__Cache__inode__gc__interface.aux)
+(./cache__inode__add__data__cache_8c.aux) (./cache__inode__create_8c.aux)
+(./cache__inode__fsal__hash_8c.aux) (./cache__inode__gc_8c.aux)
+(./cache__inode__get_8c.aux) (./cache__inode__getattr_8c.aux)
+(./cache__inode__init_8c.aux) (./cache__inode__link_8c.aux)
+(./cache__inode__lock_8c.aux) (./cache__inode__lookup_8c.aux)
+(./cache__inode__lookupp_8c.aux) (./cache__inode__make__root_8c.aux)
+(./cache__inode__misc_8c.aux) (./cache__inode__open__close_8c.aux)
+(./cache__inode__rdwr_8c.aux) (./cache__inode__read__conf_8c.aux)
+(./cache__inode__readdir_8c.aux) (./cache__inode__readlink_8c.aux)
+(./cache__inode__release_8c.aux) (./cache__inode__release__data__cache_8c.aux)
+(./cache__inode__remove_8c.aux) (./cache__inode__rename_8c.aux)
+(./cache__inode__renew__entry_8c.aux) (./cache__inode__setattr_8c.aux)
+(./cache__inode__statfs_8c.aux) (./cache__inode__truncate_8c.aux)
+(./test__cache__inode_8c.aux) (./test__cache__inode__lookup_8c.aux)
+(./test__cache__inode__readdir_8c.aux) (./test__cache__inode__readlink_8c.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+ [1
+
+])
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+ [2]
+Chapter 1.
+(./modules.tex) [1
+
+
+] [2
+
+]
+Chapter 2.
+(./files.tex [3]) [4]
+Chapter 3.
+(./pages.tex) [5
+
+] [6
+
+]
+Chapter 4.
+(./group__Cache__inode__gc__internal.tex
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+
+ []
+
+) [8]
+\openout2 = `group__Cache__inode__gc__interface.aux'.
+
+ (./group__Cache__inode__gc__interface.tex
+Underfull \hbox (badness 3158) in paragraph at lines 10--11
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-gc \T1/c
+mr/m/n/10 (hash_-table_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode
+_-client_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+[9
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+) [10]
+Chapter 5.
+(./cache__inode__access_8c.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 5.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+Underfull \hbox (badness 7704) in paragraph at lines 20--22
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-access_-
+sw \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry,
+ fsal_-
+ []
+
+
+Underfull \hbox (badness 6078) in paragraph at lines 22--24
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-access_-
+no_-mutex \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 
+pentry,
+ []
+
+[11
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+[12]
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+) [13]
+\openout2 = `cache__inode__add__data__cache_8c.aux'.
+
+ (./cache__inode__add__data__cache_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 20--21
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-add_-dat
+a_-cache \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p
+entry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+) [14
+
+]
+\openout2 = `cache__inode__create_8c.aux'.
+
+ (./cache__inode__create_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \vbox (badness 4479) has occurred while \output is active []
+
+ [15
+
+
+])
+Underfull \hbox (badness 10000) in paragraph at lines 53--42
+\T1/cmr/m/n/10 kill_-entry(), cache_-inode_-lookup(), cache_-inode_-new_-entry(
+), cache_-inode_-readdir_-
+ []
+
+[16]
+\openout2 = `cache__inode__fsal__hash_8c.aux'.
+
+ (./cache__inode__fsal__hash_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+[17
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+) [18]
+\openout2 = `cache__inode__gc_8c.aux'.
+
+ (./cache__inode__gc_8c.tex
+Underfull \hbox (badness 3158) in paragraph at lines 30--31
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-gc \T1/c
+mr/m/n/10 (hash_-table_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode
+_-client_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+) [19
+
+
+]
+\openout2 = `cache__inode__get_8c.aux'.
+
+ (./cache__inode__get_8c.tex
+Underfull \hbox (badness 1292) in paragraph at lines 20--21
+\T1/cmr/m/n/10 list_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pattr, hash_-table_
+-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode_-client_-t $\OMS/cmsy/
+m/n/10 ^^C$\T1/cmr/m/n/10 pclient, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+[20
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 1221) in paragraph at lines 64--65
+[]\T1/cmr/m/n/10 References cache_-inode_-error_-convert(), cache_-inode_-fsal_
+-type_-convert(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 1048) in paragraph at lines 64--65
+\T1/cmr/m/n/10 fsaldata_-2_-key(), cache_-inode_-get_-attributes(), cache_-inod
+e_-kill_-entry(), cache_-inode_-
+ []
+
+) [21]
+\openout2 = `cache__inode__getattr_8c.aux'.
+
+ (./cache__inode__getattr_8c.tex
+Underfull \hbox (badness 1292) in paragraph at lines 20--21
+\T1/cmr/m/n/10 list_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pattr, hash_-table_
+-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode_-client_-t $\OMS/cmsy/
+m/n/10 ^^C$\T1/cmr/m/n/10 pclient, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+[22
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+) [23]
+\openout2 = `cache__inode__init_8c.aux'.
+
+ (./cache__inode__init_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \vbox (badness 3407) has occurred while \output is active []
+
+ [24
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+) [25]
+\openout2 = `cache__inode__link_8c.aux'.
+
+ (./cache__inode__link_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 27--27
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+[26
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+) [27]
+\openout2 = `cache__inode__lock_8c.aux'.
+
+ (./cache__inode__lock_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 21--23
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-lock_-ch
+eck_-conflicting_-range \T1/cmr/m/n/10 (cache_-
+ []
+
+
+Underfull \hbox (badness 1924) in paragraph at lines 25--27
+[]\T1/cmr/m/n/10 void \T1/cmr/bx/n/10 cache_-inode_-lock_-insert \T1/cmr/m/n/10
+ (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry, cache_-inode_-st
+ate_-v4_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+[28
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+[29]
+Underfull \hbox (badness 10000) in paragraph at lines 99--99
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 124--124
+
+ []
+
+) [30]
+\openout2 = `cache__inode__lookup_8c.aux'.
+
+ (./cache__inode__lookup_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+[31
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--83
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+[32]
+Underfull \hbox (badness 10000) in paragraph at lines 108--108
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 4647) in paragraph at lines 121--122
+[]\T1/cmr/m/n/10 References cache_-inode_-access_-no_-mutex(), cache_-inode_-ad
+d_-cached_-dirent(), cache_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--122
+\T1/cmr/m/n/10 inode_-error_-convert(), cache_-inode_-fsal_-type_-convert(), ca
+che_-inode_-get_-attributes(),
+ []
+
+
+Underfull \hbox (badness 7631) in paragraph at lines 121--122
+\T1/cmr/m/n/10 cache_-inode_-kill_-entry(), cache_-inode_-lookupp_-no_-mutex(),
+ cache_-inode_-new_-entry(),
+ []
+
+) [33]
+\openout2 = `cache__inode__lookupp_8c.aux'.
+
+ (./cache__inode__lookupp_8c.tex
+Underfull \hbox (badness 1831) in paragraph at lines 22--24
+\T1/cmr/m/n/10 cache_-inode_-client_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pcl
+ient, fsal_-op_-context_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pcontext, cache
+_-inode_-status_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+[34
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+[35]
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 119--120
+[]\T1/cmr/m/n/10 References cache_-inode_-error_-convert(), cache_-inode_-get()
+, cache_-inode_-kill_-entry(),
+ []
+
+) [36]
+\openout2 = `cache__inode__make__root_8c.aux'.
+
+ (./cache__inode__make__root_8c.tex
+Underfull \hbox (badness 6526) in paragraph at lines 19--20
+[]\T1/cmr/m/n/10 cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$ \T1/cmr/bx/n/10 cache_-
+inode_-make_-root \T1/cmr/m/n/10 (cache_-inode_-fsal_-data_-t $\OMS/cmsy/m/n/10
+ ^^C$\T1/cmr/m/n/10 pfsdata,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 27--27
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+[37
+
+
+]) [38]
+\openout2 = `cache__inode__misc_8c.aux'.
+
+ (./cache__inode__misc_8c.tex
+Underfull \hbox (badness 4886) in paragraph at lines 24--26
+[]\T1/cmr/m/n/10 void \T1/cmr/bx/n/10 cache_-inode_-release_-fsaldata_-key \T1/
+cmr/m/n/10 (hash_-buffer_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pkey, cache_-i
+node_-
+ []
+
+
+Underfull \hbox (badness 1270) in paragraph at lines 26--28
+\T1/cmr/m/n/10 attrib_-list_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pfsal_-attr
+, cache_-inode_-file_-type_-t type, cache_-inode_-create_-arg_-t
+ []
+
+
+Underfull \hbox (badness 1028) in paragraph at lines 40--42
+[]\T1/cmr/m/n/10 fsal_-handle_-t $\OMS/cmsy/m/n/10 ^^C$ \T1/cmr/bx/n/10 cache_-
+inode_-get_-fsal_-handle \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$
+\T1/cmr/m/n/10 pentry, cache_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--44
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cache_-inode_-type_-are_-rename_-compatibl
+e \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry_-
+src,
+ []
+
+
+Underfull \hbox (badness 3098) in paragraph at lines 52--54
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-dump_-co
+ntent \T1/cmr/m/n/10 (char $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 path, cache_-en
+try_-t
+ []
+
+
+Underfull \hbox (badness 2269) in paragraph at lines 54--56
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-reload_-
+content \T1/cmr/m/n/10 (char $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 path, cache_-
+entry_-t
+ []
+
+[39
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--94
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+[40]
+Underfull \hbox (badness 10000) in paragraph at lines 133--133
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 138--138
+
+ []
+
+
+Underfull \hbox (badness 7151) in paragraph at lines 143--145
+\T1/cmr/m/n/10 by_-name(), cache_-inode_-operate_-cached_-dirent(), cache_-inod
+e_-rdwr(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 143--145
+\T1/cmr/m/n/10 readdir_-populate(), cache_-inode_-readlink(), cache_-inode_-rem
+ove_-sw(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 2426) in paragraph at lines 143--145
+\T1/cmr/m/n/10 rename(), cache_-inode_-renew_-entry(), cache_-inode_-setattr(),
+ cache_-inode_-statfs(), and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--153
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 158--158
+
+ []
+
+
+Underfull \hbox (badness 1072) in paragraph at lines 163--165
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-get(), cache_-inode_-lookup_-sw(),
+ and cache_-inode_-readdir_-
+ []
+
+[41]
+Underfull \hbox (badness 10000) in paragraph at lines 173--173
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 178--178
+
+ []
+
+
+Underfull \hbox (badness 5077) in paragraph at lines 183--185
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-get(), cache_-inode_-kill_-entry()
+, cache_-inode_-new_-entry(),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 193--193
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 198--198
+
+ []
+
+
+Underfull \hbox (badness 1803) in paragraph at lines 203--205
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-access_-sw(), cache_-inode_-get(),
+ cache_-inode_-getattr(), and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 213--213
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 218--218
+
+ []
+
+[42]
+Underfull \hbox (badness 10000) in paragraph at lines 233--233
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--238
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 251--251
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 256--256
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 269--269
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 274--274
+
+ []
+
+[43]
+Underfull \hbox (badness 1320) in paragraph at lines 282--283
+[]\T1/cmr/m/n/10 References cache_-inode_-fsaldata_-2_-key(), cache_-inode_-get
+_-fsal_-handle(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 4531) in paragraph at lines 284--286
+\T1/cmr/m/n/10 inode_-remove_-sw(), cache_-inode_-rename(), cache_-inode_-renew
+_-entry(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 294--294
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 299--299
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 314--314
+
+ []
+
+[44]
+Underfull \hbox (badness 10000) in paragraph at lines 319--319
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--336
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 341--341
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 356--356
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 361--361
+
+ []
+
+
+Underfull \hbox (badness 5077) in paragraph at lines 366--368
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-get(), cache_-inode_-kill_-entry()
+, cache_-inode_-new_-entry(),
+ []
+
+[45]
+Underfull \hbox (badness 10000) in paragraph at lines 376--376
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 381--381
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 397--397
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 402--402
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 417--417
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 422--422
+
+ []
+
+[46]
+Underfull \hbox (badness 10000) in paragraph at lines 437--437
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 442--442
+
+ []
+
+)
+Underfull \hbox (badness 4582) in paragraph at lines 452--53
+\T1/cmr/m/n/10 inode_-getattr(), cache_-inode_-link(), cache_-inode_-lookup_-sw
+(), cache_-inode_-lookupp_-
+ []
+
+
+Underfull \hbox (badness 1168) in paragraph at lines 452--53
+\T1/cmr/m/n/10 readlink(), cache_-inode_-remove_-sw(), cache_-inode_-rename(), 
+cache_-inode_-setattr(), and
+ []
+
+[47]
+\openout2 = `cache__inode__open__close_8c.aux'.
+
+ (./cache__inode__open__close_8c.tex
+Underfull \hbox (badness 1571) in paragraph at lines 23--25
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-open \T1
+/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry, cache
+_-inode_-
+ []
+
+
+Underfull \hbox (badness 1642) in paragraph at lines 27--28
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-close \T
+1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry, cach
+e_-inode_-
+ []
+
+[48
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+
+ []
+
+
+Underfull \vbox (badness 4981) has occurred while \output is active []
+
+ [49]
+Underfull \hbox (badness 10000) in paragraph at lines 91--91
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 135--135
+
+ []
+
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 140--140
+
+ []
+
+) [51]
+\openout2 = `cache__inode__rdwr_8c.aux'.
+
+ (./cache__inode__rdwr_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+[52
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+)
+Underfull \hbox (badness 3872) in paragraph at lines 70--55
+[]\T1/cmr/m/n/10 References cache_-inode_-close(), cache_-inode_-error_-convert
+(), cache_-inode_-open(), and
+ []
+
+[53]
+\openout2 = `cache__inode__read__conf_8c.aux'.
+
+ (./cache__inode__read__conf_8c.tex
+Underfull \hbox (badness 7722) in paragraph at lines 22--24
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-read_-co
+nf_-hash_-parameter \T1/cmr/m/n/10 (config_-file_-t
+ []
+
+
+Underfull \hbox (badness 2529) in paragraph at lines 24--26
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-read_-co
+nf_-client_-parameter \T1/cmr/m/n/10 (config_-file_-t
+ []
+
+
+Underfull \hbox (badness 1708) in paragraph at lines 28--30
+[]\T1/cmr/m/n/10 void \T1/cmr/bx/n/10 cache_-inode_-print_-conf_-hash_-paramete
+r \T1/cmr/m/n/10 (FILE $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 output, cache_-inod
+e_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+[54
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--102
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+[55]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 138--138
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 143--143
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 156--156
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--161
+
+ []
+
+) [56]
+\openout2 = `cache__inode__readdir_8c.aux'.
+
+ (./cache__inode__readdir_8c.tex
+Underfull \hbox (badness 4229) in paragraph at lines 20--22
+\T1/cmr/m/n/10 parent, fsal_-name_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pname
+, fsal_-name_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 newname, cache_-inode_-dir
+ent_-op_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 26--28
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-remove_-
+cached_-dirent \T1/cmr/m/n/10 (cache_-entry_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+[57
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+[58]
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 110--112
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-remove_-cached_-dirent(), and cach
+e_-inode_-rename_-cached_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+[59]
+Underfull \hbox (badness 10000) in paragraph at lines 148--148
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 168--168
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--173
+
+ []
+
+[60]) [61]
+\openout2 = `cache__inode__readlink_8c.aux'.
+
+ (./cache__inode__readlink_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 27--27
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+)
+Underfull \hbox (badness 2626) in paragraph at lines 52--58
+[]\T1/cmr/m/n/10 References cache_-inode_-error_-convert(), cache_-inode_-kill_
+-entry(), cache_-inode_-renew_-
+ []
+
+[62
+
+
+]
+\openout2 = `cache__inode__release_8c.aux'.
+
+ (./cache__inode__release_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+)
+Underfull \hbox (badness 1320) in paragraph at lines 53--59
+[]\T1/cmr/m/n/10 References cache_-inode_-fsaldata_-2_-key(), cache_-inode_-get
+_-fsal_-handle(), cache_-inode_-
+ []
+
+[63
+
+
+] [64]
+\openout2 = `cache__inode__release__data__cache_8c.aux'.
+
+ (./cache__inode__release__data__cache_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+) [65
+
+
+]
+\openout2 = `cache__inode__remove_8c.aux'.
+
+ (./cache__inode__remove_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 23--25
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-is_-dir_
+-empty_-With-Lock \T1/cmr/m/n/10 (cache_-entry_-t
+ []
+
+
+Underfull \hbox (badness 4013) in paragraph at lines 25--27
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-remove_-
+sw \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry,
+ fsal_-
+ []
+
+
+Underfull \hbox (badness 1062) in paragraph at lines 25--27
+\T1/cmr/m/n/10 name_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pnode_-name, fsal_-
+attrib_-list_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pattr, hash_-table_-t $\OM
+S/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 2096) in paragraph at lines 27--29
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-remove_-
+no_-mutex \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 
+pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[66
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--81
+[]\T1/cmr/m/n/10 Referenced by cache_-inode_-gc_-suppress_-directory(), cache_-
+inode_-is_-dir_-empty_-With-
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 79--81
+\T1/cmr/m/n/10 Lock(), cache_-inode_-remove_-sw(), cache_-inode_-rename(), and 
+cache_-inode_-type_-are_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--94
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+[67]
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 144--144
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 154--154
+
+ []
+
+[68]
+Underfull \hbox (badness 10000) in paragraph at lines 175--175
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 180--180
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 185--185
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 194--195
+[]\T1/cmr/m/n/10 References cache_-inode_-error_-convert(), cache_-inode_-fsald
+ata_-2_-key(), cache_-inode_-
+ []
+
+
+Underfull \hbox (badness 1152) in paragraph at lines 194--195
+\T1/cmr/m/n/10 lookup_-sw(), cache_-inode_-mutex_-destroy(), cache_-inode_-rele
+ase_-fsaldata_-key(), cache_-
+ []
+
+) [69]
+\openout2 = `cache__inode__rename_8c.aux'.
+
+ (./cache__inode__rename_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 19--21
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-rename_-
+cached_-dirent \T1/cmr/m/n/10 (cache_-entry_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \vbox (badness 1721) has occurred while \output is active []
+
+ [70
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+[71]
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+) [72]
+\openout2 = `cache__inode__renew__entry_8c.aux'.
+
+ (./cache__inode__renew__entry_8c.tex
+Underfull \hbox (badness 1275) in paragraph at lines 20--21
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-renew_-e
+ntry \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentr
+y, fsal_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+[73
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+) [74]
+\openout2 = `cache__inode__setattr_8c.aux'.
+
+ (./cache__inode__setattr_8c.tex
+Underfull \hbox (badness 1097) in paragraph at lines 20--21
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-setattr 
+\T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry, fs
+al_-attrib_-
+ []
+
+
+Underfull \hbox (badness 1292) in paragraph at lines 20--21
+\T1/cmr/m/n/10 list_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pattr, hash_-table_
+-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ht, cache_-inode_-client_-t $\OMS/cmsy/
+m/n/10 ^^C$\T1/cmr/m/n/10 pclient, fsal_-op_-context_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+[75
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+) [76]
+\openout2 = `cache__inode__statfs_8c.aux'.
+
+ (./cache__inode__statfs_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+[77
+
+
+]) [78]
+\openout2 = `cache__inode__truncate_8c.aux'.
+
+ (./cache__inode__truncate_8c.tex
+Underfull \hbox (badness 1609) in paragraph at lines 20--22
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-truncate
+_-sw \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentr
+y, fsal_-
+ []
+
+
+Underfull \hbox (badness 1092) in paragraph at lines 24--25
+[]\T1/cmr/m/n/10 cache_-inode_-status_-t \T1/cmr/bx/n/10 cache_-inode_-truncate
+ \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pentry, f
+sal_-size_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+[79
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+[80]
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+) [81]
+\openout2 = `test__cache__inode_8c.aux'.
+
+ (./test__cache__inode_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+[82
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 100--100
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--105
+
+ []
+
+)
+Underfull \hbox (badness 6364) in paragraph at lines 110--67
+[]\T1/cmr/m/n/10 References cache_-inode_-client_-init(), cache_-inode_-fsaldat
+a_-2_-key(), cache_-inode_-gc(),
+ []
+
+[83]
+\openout2 = `test__cache__inode__lookup_8c.aux'.
+
+ (./test__cache__inode__lookup_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+[84
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+)
+Underfull \hbox (badness 1546) in paragraph at lines 106--68
+[]\T1/cmr/m/n/10 References cache_-inode_-client_-init(), cache_-inode_-init(),
+ cache_-inode_-lookup(), cache_-
+ []
+
+[85]
+\openout2 = `test__cache__inode__readdir_8c.aux'.
+
+ (./test__cache__inode__readdir_8c.tex [86
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+)
+Underfull \hbox (badness 1546) in paragraph at lines 85--69
+[]\T1/cmr/m/n/10 References cache_-inode_-client_-init(), cache_-inode_-init(),
+ cache_-inode_-lookup(), cache_-
+ []
+
+[87]
+\openout2 = `test__cache__inode__readlink_8c.aux'.
+
+ (./test__cache__inode__readlink_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+[88
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 96--96
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+)
+Underfull \hbox (badness 1546) in paragraph at lines 106--70
+[]\T1/cmr/m/n/10 References cache_-inode_-client_-init(), cache_-inode_-init(),
+ cache_-inode_-lookup(), cache_-
+ []
+
+[89] [90
+
+
+]
+Chapter 6.
+(./todo.tex
+Overfull \hbox (1489.09216pt too wide) in paragraph at lines 4--4
+[]
+ []
+
+) (./refman.ind [91] [92
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 104--106
+[]| \T1/cmr/m/n/10 cache_-inode_-lock_-check_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--111
+[]\T1/cmr/m/n/10 cache_-inode_-lock_-check_-conflicting_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--164
+[]| \T1/cmr/m/n/10 cache_-inode_-type_-are_-rename_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 192--194
+[]| \T1/cmr/m/n/10 cache_-inode_-print_-conf_-client_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 194--195
+[]| \T1/cmr/m/n/10 cache_-inode_-print_-conf_-gc_-policy,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 195--196
+[]| \T1/cmr/m/n/10 cache_-inode_-print_-conf_-hash_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 196--198
+[]| \T1/cmr/m/n/10 cache_-inode_-read_-conf_-client_-
+ []
+
+[93]
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+[]| \T1/cmr/m/n/10 cache_-inode_-read_-conf_-hash_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 210--212
+[]| \T1/cmr/m/n/10 cache_-inode_-invalidate_-all_-cached_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 212--213
+[]| \T1/cmr/m/n/10 cache_-inode_-operate_-cached_-dirent,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 215--216
+[]| \T1/cmr/m/n/10 cache_-inode_-remove_-cached_-dirent,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--239
+[]| \T1/cmr/m/n/10 cache_-inode_-is_-dir_-empty_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 252--253
+[]| \T1/cmr/m/n/10 cache_-inode_-rename_-cached_-dirent,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 281--282
+[]\T1/cmr/m/n/10 cache_-inode_-type_-are_-rename_-
+ []
+
+[94] [95
+
+]) (./refman.aux (./group__Cache__inode__gc__interface.aux)
+(./cache__inode__add__data__cache_8c.aux) (./cache__inode__create_8c.aux)
+(./cache__inode__fsal__hash_8c.aux) (./cache__inode__gc_8c.aux)
+(./cache__inode__get_8c.aux) (./cache__inode__getattr_8c.aux)
+(./cache__inode__init_8c.aux) (./cache__inode__link_8c.aux)
+(./cache__inode__lock_8c.aux) (./cache__inode__lookup_8c.aux)
+(./cache__inode__lookupp_8c.aux) (./cache__inode__make__root_8c.aux)
+(./cache__inode__misc_8c.aux) (./cache__inode__open__close_8c.aux)
+(./cache__inode__rdwr_8c.aux) (./cache__inode__read__conf_8c.aux)
+(./cache__inode__readdir_8c.aux) (./cache__inode__readlink_8c.aux)
+(./cache__inode__release_8c.aux) (./cache__inode__release__data__cache_8c.aux)
+(./cache__inode__remove_8c.aux) (./cache__inode__rename_8c.aux)
+(./cache__inode__renew__entry_8c.aux) (./cache__inode__setattr_8c.aux)
+(./cache__inode__statfs_8c.aux) (./cache__inode__truncate_8c.aux)
+(./test__cache__inode_8c.aux) (./test__cache__inode__lookup_8c.aux)
+(./test__cache__inode__readdir_8c.aux) (./test__cache__inode__readlink_8c.aux))
+ ) 
+Here is how much of TeX's memory you used:
+ 1989 strings out of 95847
+ 31632 string characters out of 1193874
+ 78335 words of memory out of 1000001
+ 4678 multiletter control sequences out of 10000+50000
+ 14253 words of font info for 29 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 30i,12n,43p,1663b,507s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (99 pages, 228036 bytes).

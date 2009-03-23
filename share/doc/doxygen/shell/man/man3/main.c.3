@@ -1,0 +1,160 @@
+.TH "main.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+main.c \- main shell routine. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'shell.h'\fP
+.br
+\fC#include 'Getopt.h'\fP
+.br
+\fC#include <libgen.h>\fP
+.br
+\fC#include <pthread.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+\fC#include <readline/readline.h>\fP
+.br
+\fC#include <readline/history.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBshell_info__\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBNBTHRMAX\fP   64"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBshell_info__\fP \fBshell_info_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void * \fBLaunchShell\fP (void *arg)"
+.br
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "time_t \fBServerBootTime\fP = 0"
+.br
+.ti -1c
+.RI "\fBshell_info_t\fP \fBthrlist\fP [NBTHRMAX]"
+.br
+.ti -1c
+.RI "int \fBverbose\fP = 0"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+main shell routine. 
+
+\fBAuthor:\fP
+.RS 4
+\fBAuthor\fP.RS 4
+leibovic 
+.RE
+.PP
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+\fBDate\fP.RS 4
+2006/02/23 07:42:53 
+.RE
+.PP
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+\fBRevision\fP.RS 4
+1.28 
+.RE
+.PP
+.RE
+.PP
+\fBLog\fP.RS 4
+\fBmain.c\fP,v 
+.RE
+.PP
+Revision 1.28 2006/02/23 07:42:53 leibovic Adding -n option to shell.
+.PP
+Revision 1.27 2005/11/28 17:03:00 deniel Added CeCILL headers
+.PP
+Revision 1.26 2005/08/12 11:56:59 leibovic coquille.
+.PP
+Revision 1.25 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
+.PP
+Revision 1.24 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+.PP
+Definition in file \fBmain.c\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define NBTHRMAX   64"
+.PP
+Definition at line 117 of file main.c.
+.PP
+Referenced by main().
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBshell_info__\fP  \fBshell_info_t\fP"
+.PP
+Referenced by LaunchShell().
+.SH "Function Documentation"
+.PP 
+.SS "void* LaunchShell (void * arg)"
+.PP
+Definition at line 142 of file main.c.
+.PP
+References shell_info__::prompt, shell_info__::script_file, shell_info__::shell_id, shell_info_t, shell_Init(), shell_Launch(), shell_info__::status, and verbose.
+.PP
+Referenced by main().
+.SS "int main (int argc, char ** argv)"
+.PP
+Definition at line 174 of file main.c.
+.PP
+References Getopt(), LaunchShell(), NBTHRMAX, NULL, Optarg, Opterr, Optind, Optopt, ServerBootTime, shell_BarrierInit(), shell_info__::shell_id, shell_Init(), shell_Launch(), thrlist, and verbose.
+.SH "Variable Documentation"
+.PP 
+.SS "time_t \fBServerBootTime\fP = 0"
+.PP
+Definition at line 119 of file main.c.
+.PP
+Referenced by main().
+.SS "\fBshell_info_t\fP \fBthrlist\fP[NBTHRMAX]"
+.PP
+Definition at line 136 of file main.c.
+.PP
+Referenced by main().
+.SS "int \fBverbose\fP = 0"
+.PP
+Definition at line 138 of file main.c.
+.PP
+Referenced by LaunchShell(), main(), and shell_Init().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

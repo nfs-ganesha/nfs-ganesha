@@ -1,0 +1,898 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.73 [en] (X11; I; SunOS 5.8 sun4u) [Netscape]">
+   <title>Premiers pas avec la GSSAPI</title>
+</head>
+<body link="#0000FF" vlink="#800080">
+
+<center><font size=+1>Premiers pas avec la GSSAPI</font></center>
+
+<p><br>
+<ul>&nbsp;
+<h1>
+1: Introduction</h1>
+A r&eacute;diger quand ce sera complet.
+<br>&nbsp;
+<h1>
+2: Les concepts de la GSSAPI</h1>
+Dans certains types d'application fonctionnant selon un mode client/serveur,
+il est indispensable de disposer de m&eacute;canismes d'authentification
+et de chiffrement fiables pour &ecirc;tre s&ucirc;r que:
+<ul>
+<li>
+&nbsp;&nbsp;&nbsp; Vous &ecirc;tes bien en train de discuter avec la personne
+que vous pensez et non pas un petit plaisantin qui se fait passer pour
+lui (authentification)</li>
+
+<li>
+Une fois que vous &ecirc;tes convaincu de l'identiti&eacute; de votre interlocuteur
+vous voulez</li>
+
+<ul>
+<li>
+que seul lui et vous puissiez interpr&eacute;ter&nbsp; les messages que
+vous vous &eacute;changer (chiffrement/confidentialit&eacute;)</li>
+
+<li>
+que le message que le ou les messages que vous recevez de votre interlocuteur
+sont bien ceux qu'ils vous a envoy&eacute; (int&eacute;grit&eacute;)</li>
+</ul>
+</ul>
+Plusieurs m&eacute;canismes (d&eacute;finis par des RFCs pour la plupart)
+existent pour rendre ce type de service classique dans une optique de s&eacute;curit&eacute;
+informatique. Le probl&egrave;me, c'est que pour chaque m&eacute;canisme
+d'authentification, il y a une API&nbsp; (Application Programming Interface)
+particuli&egrave;re et une fa&ccedil;on particuli&egrave;re de l'utiliser.
+C'est tr&egrave;s ennuyeux car si l'envie vous prend de changer de m&eacute;canisme,
+ou d'utiliser diff&eacute;rents m&eacute;canismes car il faut g&eacute;rer
+tous les
+<br>aspects de toutes les diff&eacute;rentes APIs. L'id&eacute;e de fournir
+une API qui permettrait de manipuler diff&eacute;rents m&eacute;canismes
+d'authentification et de chiffrement de fa&ccedil;on aussi g&eacute;n&eacute;rique
+que possible n'a pas tard&eacute; &agrave; voir le jour: la GSSAPI &eacute;tait
+n&eacute;e.
+<br>Vous l'aurez compris: le but de la GSSAPI est de fournir une API aussi
+g&eacute;n&eacute;rique que possible qui encapsule un ou plusieurs m&eacute;canismes
+de s&eacute;curit&eacute;. Ainsi le code produit n'est plus d&eacute;pendant
+d'un paradigme de s&eacute;curit&eacute; et le modifier pour passer d'un
+m&eacute;canisme &agrave; un autre s'en trouve grandement simplifi&eacute;.
+<p>Une API c'est surtout des types de donn&eacute;es et des fonctions pour
+manipuler ces types de donn&eacute;es (oui, je sais j'aime bien enfoncer
+des portes grandes ouvertes). En outre, les comportements des clients/serveurs
+en informatique ressemblent beaucoup &agrave; des situations de la vie
+de tous les jours. Le dialogue et l'authentification par la GSSAPI ressemblent
+beaucoup&nbsp; &agrave; la suite de proc&eacute;dures que l'on doit faire&nbsp;
+dans un a&eacute;roport&nbsp; pour partir &agrave; l'&eacute;tranger depuis
+le d&eacute;but du plan VIGIPIRATE.
+<br>Pour commencer, nous allons donc essayer de vous pr&eacute;senter les
+diff&eacute;rents aspects et concepts de la GSSAPI en les comparant aux
+diff&eacute;rentes &eacute;tapes du parcours d'un voyageur qui se rend
+dans un a&eacute;roport pour y prendre un avion &agrave; destination de
+l'&eacute;tranger. Ensuite, nous verrons comment les choses se mettent
+en oeuvre.
+<p>En premier, lieu, le voyageur a du faire l'acquisition de son billet
+d'avion. Pour ce faire, il a du donn&eacute; des informations sur son identit&eacute;
+et son passeport (nom, date et lieu de naissance, num&eacute;ro de passeport).
+Ces informations sont transmises non seulement &agrave; la compagnie qui
+g&egrave;re le vol, mais &agrave; la douane. Ainsi il est maintenant connu
+de la douane.
+<p>Il arrive &agrave; l'a&eacute;roport et se rend au guichet de la compagnie
+sur laquelle il va voyager. Il fait la queue en attendant que l'une des
+charmantes h&ocirc;tesses soit libre pour traiter sa demande.
+<br>Son tour arrive et l'h&ocirc;tesse prend son billet et son passeport
+pour v&eacute;rifier que les informations qu'elle y trouve. Elles doivent
+&ecirc;tre coh&eacute;rentes avec les informations relatives au passager
+qui a &eacute;t&eacute; enregistr&eacute; pour ce billet (information que
+le voyageur a donn&eacute; au moment de l'achat de celui-ci). L'h&ocirc;tesse
+va ensuite discuter avec le voyageur, lui demandant qui a fait sa valise,
+si il y a des objets coupants dans son bagage &agrave; main et &eacute;ventuellement
+v&eacute;rifier le contenu de ses bagages. Si quelque chose cloche, le
+voyageur ne peut pas acc&eacute;der &agrave; l'avion,&nbsp; en revanche,
+si tout va bien, il lui est remis une carte d'embarquement qui lui permet
+de prendre son vol.
+<p>Maintenant, faisons un parall&egrave;le gratuit avec la GSSAPI, vu du
+c&ocirc;t&eacute; du client, c'est &agrave; dire du voyageur:
+<ol>
+<li>
+Le client est enregistr&eacute; au niveau du m&eacute;canisme d'authentification
+sous-jacent &agrave; la GSSAPI: le voyageur a donn&eacute; les informations
+relatives &agrave; son identit&eacute;, &eacute;tape indispensable pour
+acqu&eacute;rir son billet.</li>
+
+<li>
+Le client se connecte sur le serveur: le voyageur arrive au guichet</li>
+
+<li>
+Le client et le serveur partent dans un boucle de n&eacute;gociation du
+contexte de s&eacute;curit&eacute; : c'est l`&eacute;quivalent du petit
+interrogatoire de s&eacute;curit&eacute; fait pour obtenir la carte d'embarquement.
+Cette boucle que nous allons voir en d&eacute;tail dans le paragraphe suivant
+peut se faire en plusieurs passes. Au final on obtient, en&nbsp; cas de
+r&eacute;ussite, une structure qui repr&eacute;sente le contexte de s&eacute;curit&eacute;
+que l'on a n&eacute;goci&eacute;</li>
+
+<li>
+Le client utilise ce contexte pour communiquer ensuite avec le service
+auquel il veut acc&eacute;der: la carte d'embarquement permet au voyageur
+de prendre l'avion</li>
+</ol>
+
+<p><br>A pr&eacute;sent, nous allons nous int&eacute;resser &agrave; la
+partie serveur. L&agrave; encore, for&ccedil;ons un peu l'analogie avec
+les a&eacute;roports et int&eacute;ressons nous au d&eacute;roulement de
+la journ&eacute;e de l'h&ocirc;tesse qui va donner sa carte d'embarquement
+au voyageur:
+<ol>
+<li>
+Elle arrive &agrave; l'a&eacute;roport</li>
+
+<li>
+Elle passe un contr&ocirc;le particulier et bien plus pouss&eacute; que
+pour les passagers incluant la pr&eacute;sentation de son badge qui est
+suppos&eacute; infalsifiable, ou encore des mesures bio-m&eacute;triques.
+La rigueur de ces contr&ocirc;les est imp&eacute;rative car c'est elle
+qui va ensuite laisser passer ou ne pas laisser passer les voyageurs</li>
+
+<li>
+Une fois ce contr&ocirc;le pass&eacute; avec succ&egrave;s, elle peux commencer
+son travail et traiter le cas des voyageurs qui arrivent &agrave; son guichet.
+Pour chaque carte d'embarquement qu'elle donne, elle conserve un talon
+qui est indissociable de la carte d'embarquement en question.</li>
+</ol>
+
+<p><br>Retournons &agrave; la GSSAPI:
+<ol>
+<li>
+Le serveur d&eacute;marre et commence &agrave; allouer ses ressources:
+arriv&eacute;e de l'h&ocirc;tesse &agrave; l'a&eacute;roport</li>
+
+<li>
+Le serveur essaye d'obtenir des credentials aupr&egrave;s du gestionnaire
+de s&eacute;curit&eacute;: l'h&ocirc;tesse passe au contr&ocirc;le biom&eacute;trique</li>
+
+<li>
+Le serveur d&eacute;pile ensuite ses clients et n&eacute;gocie avec eux
+des contextes de s&eacute;curit&eacute;. Chaque client a un contexte qui
+lui est sp&eacute;cifique et que le serveur doit conserver : l'h&ocirc;tesse
+s'occupe des cartes d'embarquement et conserve le talon de chacune</li>
+</ol>
+
+<p><br>Poussons le bouchon de l'analogie encore plus loin: imaginons que
+le client parle une langue maternelle diff&eacute;rente de celle de l'h&ocirc;tesse.
+Ils ne se comprendront pas s'ils utilisent chacun leurs propres langues
+et ils conviennent&nbsp; alors de parler dans une langue qu'ils comprendront
+tous les deux (l'anglais en g&eacute;n&eacute;ral). Une probl&eacute;matique
+similaire existe dans la GSSAPI car rien ne garantit que le client et le
+serveur tourneront sur des plateformes identiques. Les types usuels du
+C (short, init, long, ...) peuvent &ecirc;tre de taille et de nature diff&eacute;rentes
+selon que les machines fonctionnent sur des logiques 32 bits ou 64 bits,
+ou encore en Little Endian ou Big Endian. Pour contourner cela, la GSSAPI
+fournit des types standards diff&eacute;rents qu'il faudra utiliser en
+lieu et place des types habituels du C. Ces types ont toujours la m&ecirc;me
+signification et la m&ecirc;ne structure sur toutes les architectures et
+ne d&eacute;pendent que de la GSSAPI.
+<h1>
+3: En pratique</h1>
+Maintenant que nous avons pas mal tourn&eacute; autour du pot avec nos
+histoires d'a&eacute;roport, voyons comment les choses se passent sur un
+plan un petit peu plus technique. En particulier, comment on utilise la
+GSSAPI &agrave; partir du C. Cette partie n'a pas vocation &agrave; se
+substituer &agrave; une document sur la GSSAPI (des pointeurs sur des documentations
+compl&egrave;tes sont indiqu&eacute;es en annexe), elle a pour seul but
+de vous donner une id&eacute;e assez pr&eacute;cise sur la fa&ccedil;on
+dont les choses se mettent en oeuvre et sur les possibilit&eacute;s de
+la GSSAPI.
+<p>Dans ce qui suit, la GSSAPI que nous avons utilis&eacute; pour les tests
+est celle fourni avec heimdal <b><font size=+3>(mettre ici l'url)
+</font></b>qui
+est une impl&eacute;mentation libre du protocole Kerberos 5 du MIT. Dans
+la distribution, vous trouverez un r&eacute;pertoire appl/test contenant
+les sources des outils de non-regression qui permettent de valider que
+le produit est correctement install&eacute; ety configur&eacute;. On s'int&eacute;ressera
+plus sp&eacute;cifiquement aux programmes <i>nt_gss_server</i> et <i>nt_gss_client.</i>
+Les extraits de source qui suivent sont tir&eacute;s des sources de ces
+produits et plus ou moins adapt&eacute;s pour les rendre plus didactiques.&nbsp;
+En particulier, pour all&eacute;ger les extraits de code, la gestion d'erreur
+a &eacute;t&eacute; simplifi&eacute;e : si une fonction retourne une erreur,
+on sortira du programme&nbsp; sans raffiner davantage. Il est &eacute;vident
+que c'est tr&egrave;s tr&egrave;s vilain de coder ainsi mais dans le cas
+pr&eacute;sent cela permet de se d&eacute;barasser de nombreuses lignes
+que tout le monde peut r&eacute;&eacute;crire sans difficult&eacute;s et
+de se focaliser sur les fonctions GSSAPI proprement dites.
+<p>Chaque exemple de code sera suivi des traces, obtenues avec tcpdump,
+de l'&eacute;change entre le client et le serveur sous GSSAPI. Ainsi vous
+verrez concretement les effets des lignes de code.
+<br>&nbsp;
+<br>&nbsp;
+<h2>
+3.0: G&eacute;rer les erreurs</h2>
+Toutes les fonctions de la GSSAPI retournent une valeur de type <b>OM_uint32
+</b>qui
+repr&eacute;sente un entier 32 bits non-sign&eacute;: c'est le statut majeur.
+Le premier argument de toutes les fonctions sera un pointeur sur un objet
+de type OM_uint32 qui contiendra le statut mineur. Quand une erreur se
+produit, la situation d&eacute;crivant cette erreur est toujours repr&eacute;sent&eacute;e
+par ces deux statuts retourn&eacute;s par la fonction qui produit l'erreur.
+Le status majeur repr&eacute;sente l'erreur vue du point de vue g&eacute;n&eacute;rique
+de la GSSAPI, le status mineur est le point de vue du m&eacute;canisme
+d'authentification qui est sous-jacent. Dans la distribution de heimdal,
+je vous invite fortement &agrave; regarder le fichier src/appl/test/gss_common.c
+qui contient les routines d'affichage d'erreur.
+<h2>
+3.1: Obtention de credentials par le serveur</h2>
+
+<p><br>Le serveur est connu du gestionnaire de s&eacute;curit&eacute; par
+un nom de service. Quand il d&eacute;marre, il va lui demander, gr&acirc;ce
+&agrave; ce nom, de lui d&eacute;livrer un credential. Ce dernier, qui
+est identifi&eacute; dans la GSSAPI par un objet de type <i>gss_cred_id_t</i>,
+est en quelque sorte un certificat, estampill&eacute; par le gestionnaire
+de s&eacute;curit&eacute; garantissant la bonne foi de son porteur.
+<p>Le serveur veut obtenir un credential pour un service dont il connait
+le nom. La premi&egrave;re chose &agrave; faire est de convertir ce nom
+dans un format interne &agrave; la GSSAPI. Pour ce faire, on va utiliser
+la fonction <b>gss_import_name </b>de la fa&ccedil;on suivante. Dans l'exemple
+qui suit la variable <i>service_name </i>est une cha&icirc;ne de caract&egrave;res
+qui contient le nom du service&nbsp; que l'on veut importer. Le r&eacute;sultat&nbsp;
+est la production du contenu de la variable
+<i>server_name
+</i>qui contient
+le nom du serveur import&eacute; dans la GSSAPI. Ensuite, on utilise le
+nom import&eacute; pour n&eacute;gocier un credential avec le gestionnaire
+d'authentification gr&acirc;ce &agrave; la fonction <b>gss_acquire_cred</b>
+<p><i><font size=-1>OM_uint32 maj_stat, min_stat;</font></i>
+<br><i><font size=-1>&nbsp;gss_name_t server_name;</font></i>
+<br><i><font size=-1>gss_buffer_desc name_buf;</font></i>
+<br><i><font size=-1>gss_cred_id_t creds ;</font></i>
+<p><i><font size=-1>name_buf.value = service_name;</font></i>
+<br><i><font size=-1>name_buf.length = strlen(name_buf.value) + 1; /*</font></i>
+<p><i><font size=-1>if( ( maj_stat = gss_import_name(&nbsp;&nbsp;&nbsp;
+&amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;name_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(gss_OID)GSS_C_NT_HOSTBASED_SERVICE,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;server_name ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp; exit( 1 )&nbsp; ; /* un traitement
+plus fin serait utile , je le vire pour all&eacute;ger */</font></i>
+<p><i><font size=-1>if( ( maj_stat = gss_acquire_cred( &amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+server_name,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_NULL_OID_SET,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_ACCEPT,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;creds,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; exit( 1
+) ; /* sortie sur erreur, traitement supprimer pour all&eacute;ger */</font></i>
+<br>&nbsp;
+<p>Il&nbsp; y a plusieurs choses int&eacute;ressantes &agrave; noter dans
+ce premier petit morceau de code :
+<ul>
+<li>
+On utilise le type <i>OM_uint32</i>: il repr&eacute;sente des entiers non-sign&eacute;s
+sur 32 bits dans un format de ls GSSAPI ind&eacute;pendant de la machine.</li>
+
+<li>
+On remarque que, avant d'&ecirc;tre utilis&eacute;, la cha&icirc;ne de
+caract&egrave;res qui contient le nom du service est encapsul&eacute;e
+dans une variable de type <i>gss_buffer_desc</i>. La GSSAPI ne manipule
+que des types qui sont portables entre plateformes, elle n'utilisera jamais
+explicitement des char * ou &eacute;quivalent. Les <i>gss_buffer_desc,</i>
+que nous allons croiser souvent par la suite, repr&eacute;sente tout ce
+qui peux se r&eacute;sumer &agrave; un buffer en m&eacute;moire, identifi&eacute;
+par son adresse et la taille de la zone. Ici le <i>gss_buffer_desc </i>encapsule
+une cha&icirc;ne de caract&egrave;re contenant le nom du service et donc
+la longueur est obtenue avec strlen.</li>
+
+<li>
+&nbsp;Dans l'appel &agrave; gss_import_name, le troisi&egrave;me argument
+est une constante qui indique le format du service. GSS_C_NT_HOSTBASED_SERVICE
+indique que le nom contient le nom de la machine sous la forme <i>service@machine</i></li>
+
+<li>
+&nbsp;On remarque dans ces deux fonctions les deux codes de retour d'erreur
+maj_stat et min_stat</li>
+
+<li>
+Quand un appel GSSAPI est r&eacute;ussi, la valeur de retour est GSS_S_COMPLETE</li>
+
+<ol>
+<li>
+La fonction gss_acquire_cred prend en argument le nom du service import&eacute;
+en second argument,&nbsp; apr&egrave;s le statut mineur</li>
+
+<li>
+ensuite vient un param&egrave;tre relatif &agrave; la dur&eacute;e de vide
+des credentials. Ici, on n'est pas int&eacute;ress&eacute; par cela et
+on l'indique en mettant 0</li>
+
+<li>
+l'argument suivant contient la liste des m&eacute;canismes pour lequel
+on veux un credentials. Il est en effet possible d'utiliser plusieurs m&eacute;canismes,
+mais ici on prendra seulement le d&eacute;faut. On indique cela par GSS_C_NULL_OID_SET</li>
+
+<li>
+la constante GSS_C_ACCEPT indique que les credentials que l'on va obtenir
+ne pourront &ecirc;tre utilis&eacute;s que pour n&eacute;gocier des contextes
+de s&eacute;curit&eacute;</li>
+
+<li>
+ensuite on indique un pointeur vers la structure qui repr&eacute;sente
+les credentials</li>
+
+<li>
+les deux derniers param&egrave;tres permettent de pr&eacute;ciser des pointeurs
+sur des structures qui, en sortie, indiqueront quel m&eacute;canisme a
+&eacute;t&eacute; utilis&eacute; et la dur&eacute;e de vie du credential.
+Mettre un pointeur de valeur NULL indique qu'il n'est pas utilise de remonter
+ces informations.</li>
+</ol>
+</ul>
+
+<h2>
+<i>3.2: </i>Clients, serveurs et credentials</h2>
+Dans la pratique, le client et le serveur ont besoin de credentials, on
+peut voir les credentials comme une sorte de laisser-passer temporaire
+et nominatif d&eacute;livr&eacute; par le gestionnaire de s&eacute;curit&eacute;.
+Il est d'usage que le serveur acquiert toujours explicitement ses credentials
+et qu'il en re-acquiert de nouveau si le credential arrive &agrave; expiration
+(la plupart des m&eacute;canismes de s&eacute;curit&eacute; fournissent
+des credentials avec une dur&eacute;e de vie limit&eacute;e). En revanche,
+le client peut ne pas explicitement acqu&eacute;rir les credentials, en
+g&eacute;n&eacute;ral il h&eacute;rite du credentials du processus qui
+le lance car il appartient souvent &agrave; un utilisateur reconnu par
+le gestionnaire de s&eacute;curit&eacute;. Il est toutefois parfaitement
+possible de faire acqu&eacute;rir des credentials &agrave; un client si
+le besoin s'en fait sentir. La d&eacute;marche est alors la m&ecirc;me
+que pour le serveur, en utilisant gss_acquire_cred
+<br>&nbsp;
+<br>&nbsp;
+<h2>
+3.3: Le client et le serveur n&eacute;gocient un contexte</h2>
+
+<p><br>C'est de loin le morceau de code le plus complexe que vous allez
+voir ici. La n&eacute;gociation de contexte se passe dans le cadre d'une
+boucle qui a lieu sur le serveur et le client. Quand le contexte est n&eacute;goci&eacute;,
+l'un et l'autre sortent de la boucle si GSS_S_COMPLETE est retourn&eacute;.
+<br>On consid&egrave;re ici que le serveur est initialis&eacute;, et a
+obtenu des credentials. Je suppose que client et serveur dialoguent au
+travers de TCP/IP. Le cadre de cet article n'est pas de d&eacute;crire
+le code &agrave; r&eacute;aliser pour faire un client/serveur TCP/IP, donc
+on consid&egrave;rera que le client est connect&eacute; sur le serveur.
+Je vous renvoie aux pr&eacute;c&eacute;dents num&eacute;ros de Linux Magazine
+qui contenaient plusieurs articles sur l'utilisation des sockets. Dans
+le code qui suit, la variable <i>sockfd</i> repr&eacute;sente pour le client
+une socket connect&eacute; sur le serveur, et que la variable
+<i>socket_service</i>
+repr&eacute;sente, pour le serveur, la socket de service qui va de pair
+avec un client connect&eacute;.
+<p>Dans le cadre de la n&eacute;gociation, le client et le serveur vont
+s'&eacute;changer des donn&eacute;es encapsuler dans des <i>gss_buffer_desc.
+</i>On a d&eacute;j&agrave; vu les <i>gss_buffer_desc </i>dans l'utilisation
+de gss_import_name avec des cha&icirc;nes de caract&egrave;res, mais ici
+les choses sont diff&eacute;rentes. Les buffers qui seront manipul&eacute;s
+et &eacute;chang&eacute;s sont ce que l'on appele des tokens de contexte
+dans le jargon de la GSSAPI. Ils contiennent les informations dont le serveur
+ou le client a besoin pour poursuivre la n&eacute;gociation. En quelque
+sorte, le client et le serveur s'interrogent mutuellement, et ces tokens
+contiennent leurs jeux de questions/r&eacute;ponses.&nbsp; Dans le code,
+vous verrez deux fonctions, <i>nt_write_token</i> et <i>nt_read_token</i>
+qui, comme leurs noms l'indiquent, permettent de recevoir ou d'envoyer
+un token au travers d'une socket. Ces fonctions se trouvent dans src/appl/test/nt_gss_common.c
+dans la distribution de heimdall. Elles provoquent une sortie en erreur
+avec arr&ecirc;t du programme si le token est mal re&ccedil;u ou mal envoy&eacute;.
+<p><b>Etape #1:</b> le client import dans un objet de type <i>gss_name_t
+</i>le
+nom du service auquel il veux acc&eacute;der. On a d&eacute;ja recontr&eacute;
+du code similaire un peu plus haut, donc nous ne nous apesantirons pas
+sur ces lignes.
+<p>&nbsp;<i><font size=-1>/* Instanciation du nom GSSAPI du service */</font></i>
+<br><i><font size=-1>char * strerrgss ;</font></i>
+<br><i><font size=-1>OM_unit32 maj_stat, min_stat ;</font></i>
+<br><i><font size=-1>gss_name_t tname ;</font></i>
+<br><i><font size=-1>gss_buffer_desc token ;</font></i>
+<p><i><font size=-1>&nbsp;token.value = service_name ;</font></i>
+<br><i><font size=-1>&nbsp;token.length = strlen( service_name ) + 1 ;</font></i>
+<p><i><font size=-1>&nbsp; if( ( maj_stat = gss_import_name( &amp;min_stat,
+&amp;token,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(gss_OID)GSS_C_NT_HOSTBASED_SERVICE, &amp;tname ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; exit( 1
+) ; /* sortie en erreur */</font></i>
+<p><i><font size=-1>&nbsp;&nbsp; </font></i><b>Etape #2</b>: Le client
+et le serveur n&eacute;gocient.&nbsp; Comme indiqu&eacute; plus haut, le
+dialogue et les questions / r&eacute;ponses se font par l'&eacute;change
+de token. Regardez bien ce qui se d&eacute;roule dans les lignes qui suivent:
+on a toujours chacun des&nbsp; deux interlocuteurs qui utilise le dernier
+token qu'il a re&ccedil;u dans l'appel GSSAPI qui permet de n&eacute;gocier
+un contexte (<i>gss_init_sec_context</i> ou <i>gss_sec_accept_context </i>selon
+le c&ocirc;t&eacute; o&ugrave; l'on se trouve), cela lui permet de cr&eacute;er
+un autre token qu'il envoie ensuite &agrave; l'autre partie. Ensuite, son
+interlocuteur fait la m&ecirc;me chose avec ce token re&ccedil;u et ainsi
+de suite jusqu'&agrave; ce que les deux parties soient satisfaites et arr&ecirc;tent
+la n&eacute;gociation. On ne sait pas &agrave; l'avance combien d'&eacute;changes
+de tokens seront n&eacute;cessaires. Ainsi, pour certains m&eacute;canismes,
+une passe suffira alors que pour d'autres il faudra deux passes ou plus.
+C'est pourquoi on impl&eacute;mente g&eacute;n&eacute;ralement la n&eacute;gociation
+sous la forme d'une boucle r&eacute;sum&eacute;e par ce tableau. Cette
+fa&ccedil;on de faire garantit la plus grande portabilit&eacute;.
+<br>&nbsp;
+<table BORDER COLS=2 WIDTH="100%" NOSAVE >
+<tr>
+<td>CLIENT</td>
+
+<td>SERVEUR</td>
+</tr>
+
+<tr>
+<td>Initialise sur token &eacute;chang&eacute; sur la valeur GSS_C_NO_BUFFER</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td>DEBUT BOUCLE</td>
+
+<td>DEBUT BOUCLE</td>
+</tr>
+
+<tr>
+<td>Le client appelle gss_init_sec_context, cela produit un token qu'il
+envoie au serveur</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>le serveur re&ccedil;oit le token. Il l'utilise comme argument de gss_accept_sec_context.
+Cela produit un nouveau token. Il envoie ce nouveau token sur le client.&nbsp;</td>
+</tr>
+
+<tr>
+<td>Si le status de sortie majeur de gss_init_sec_context est GSS_S_COMPLETE
+on arrete
+<br>Si c'est une erreur on affiche un message et on arrete avec un message
+d'erreur</td>
+
+<td>Si le status de sortie majeur de gss_accept_sec_context est GSS_S_COMPLETE
+on arrete
+<br>Si c'est une erreur on affiche un message et on arrete avec un message
+d'erreur</td>
+</tr>
+
+<tr>
+<td>On re&ccedil;oit le token &eacute;mis par le serveur. On utilisera
+ce token dans la prochaine passe comme argument de gss_init_sec_context</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td>NOUVELLE ITERATION si le status est GSS_S_CONTINUE_NEEDED</td>
+
+<td>NOUVELLE ITERATION si le status est GSS_S_CONTINUE_NEEDED</td>
+</tr>
+</table>
+
+<p>Si la n&eacute;gociation se passe bien, on aura de chaque c&ocirc;t&eacute;
+un objet de type <i>gss_ctx_id_t&nbsp;</i> qui repr&eacute;sente le contexte
+n&eacute;goci&eacute;
+<p>Maintenant regardons de quoi &agrave; l'air le code. Gardez bien en
+t&ecirc;te le tableau qui est au dessus en le lisant. les lignes qui suivent.
+<p><b><u>C&ocirc;t&eacute; Client:</u></b>
+<p>&nbsp; <i><font size=-1>token_ptr = GSS_C_NO_BUFFER ;</font></i>
+<br><i><font size=-1>&nbsp; gss_context = GSS_C_NO_CONTEXT ;</font></i>
+<p><i><font size=-1>&nbsp; do</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp; {</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* On cree un context
+que l'on va envoyer au serveur */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; maj_stat = gss_init_sec_context(
+&amp;init_sec_min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_NO_CREDENTIAL,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;gss_context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+tname,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+oid,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG | deleg_flag,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+0,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_NO_CHANNEL_BINDINGS,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* no channel bindings */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+token_ptr,&nbsp;&nbsp;&nbsp; /* ignore mech type&nbsp;&nbsp;&nbsp; */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;send_tok,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(int *)&amp;ret_flags,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL ) ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* ignore time_rec&nbsp;&nbsp;&nbsp;&nbsp;
+*/</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if( token_ptr != GSS_C_NO_BUFFER
+)</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (void)
+gss_release_buffer( &amp;min_stat, &amp;recv_tok ) ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; nt_write_token( sockfd,
+&amp;send_tok )&nbsp; ; /* Envoie du token */</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Maintenant que send_tok
+est envoye, je le relache */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (void) gss_release_buffer(&amp;min_stat,
+&amp;send_tok);</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if( maj_stat != GSS_S_COMPLETE
+&amp;&amp; maj_stat != GSS_S_CONTINUE_NEEDED )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Erreur dasn gss_init_sec_context --> Sortie */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+exit( 1 ) ;</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Est ce que j'ai besoin
+de continuer ? */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if( maj_stat == GSS_S_CONTINUE_NEEDED
+)</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /*
+OUI, on repart pour un tour */</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Je recupere dans recv_tok les infos venues du serveur */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nt_read_token( sockfd,&nbsp; &amp;recv_tok ) ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* on utilise ce token recue pour la passe d'apres */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+token_ptr = &amp;recv_tok ;</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp; } while( maj_stat == GSS_S_CONTINUE_NEEDED
+) ;</font></i>
+<p>On remarquera que:
+<ol>
+<li>
+C'est le client qu initie la n&eacute;gociation</li>
+
+<li>
+C'est le client qui cr&eacute;e le premier token de n&eacute;gociation
+avec <i>gss_init_sec_context </i>et qui l'envoie</li>
+
+<li>
+Le client ne lit un nouveau token venant du serveur que si une nouvelle
+passe est n&eacute;cessaire</li>
+</ol>
+
+<p><br><b><u>C&ocirc;t&eacute; serveur</u></b>
+<p><i><font size=-1>do</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* 1- Reception d'un token initial */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nt_read_token( sockfd,&nbsp; &amp;recv_tok )&nbsp; ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* 2- on utilise ce token pour accepter un contexte, ce qui cree un token
+a envoyer */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+maj_stat = gss_accept_sec_context( &amp;acc_sec_min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+creds,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;recv_tok,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_NO_CHANNEL_BINDINGS,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;client,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;doid,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;send_tok,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;ret_flags,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL,&nbsp;&nbsp;&nbsp;&nbsp; /* ignore time_rec */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL ) ;&nbsp; /* ignore del_cred_handle */</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Je relache le recv_token, on n'en a plus besoin */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(void) gss_release_buffer( &amp;min_stat, &amp;recv_tok ) ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* 3- Je donne le send_tok cree par l'appel precedent au client */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+nt_write_token( sockfd, , &amp;send_tok ) ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Je relache le send_token, j'en aurait besoin pour une eventuelle passe
+ulterieure */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(void) gss_release_buffer(&amp;min_stat, &amp;send_tok);</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* Maintenant je regarde s'il faut faire un nouveau tour de table a la
+negociation */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+if( maj_stat != GSS_S_COMPLETE &amp;&amp; maj_stat != GSS_S_CONTINUE_NEEDED&nbsp;
+)</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+exit( 1 ) ; /* Sortie en erreur */</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+else if( maj_stat == GSS_S_CONTINUE_NEEDED )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+fprintf( stderr, "Negociation: Il est necessaire de faire une nouvelle
+passe.." ) ;</font></i>
+<p><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } while(
+maj_stat == GSS_S_CONTINUE_NEEDED ) ;</font></i>
+<p>On remarque:
+<ol>
+<li>
+dans la n&eacute;gociation, le serveur tente d'accepter le token que lui
+envoie le client avec <i>gss_accept_sec_context</i></li>
+
+<li>
+le serveur &eacute;met un token dans tous les cas, il ne lit un nouveau
+token qu'en cas de nouvelle passe de n&eacute;gociation</li>
+</ol>
+
+<h2>
+3.3: Autres aspects de la GSSAPI: &eacute;change de donn&eacute;es chiffr&eacute;es</h2>
+
+<p><br>Maintenant, on sait comment faire pour que le client et le serveur
+fassent le n&eacute;cessaire pour &ecirc;tre assur&eacute;s de leurs identit&eacute;s
+respectives. Mais la GSSAPI ne permet pas uniquement de faire cela. Elle
+offre d'autres services tels que le chiffrement de donn&eacute;es. Cette
+fonctionnalit&eacute; n'est pas support&eacute; par toutes les impl&eacute;mentations
+de la GSSAPI mais est disponible la plupart du temps. En fonction du m&eacute;canisme
+utilis&eacute; on peut disposer de paires de clefs publique/priv&eacute;es
+au niveau du client et du serveur. Ces clefs, sont contenues dans la structure
+de type gss_ctx_id_t que la n&eacute;gociation nous a permis d'obtenir.
+<br>Dans l'exemple qui suit, on va faire deux choses:
+<ol>
+<li>
+Chiffer des donn&eacute;es, les envoyer et les faire d&eacute;chiffer par
+le receveur.</li>
+
+<li>
+Garantir l'int&eacute;grit&eacute; de la transmission du message gr&acirc;ce
+&agrave; une &eacute;change de signature.&nbsp; Cette signature, ou&nbsp;
+MIC (Message Integrity Code), est propre &agrave; chaque message. Les deux
+parties sont assur&eacute;es de chacun produire le m&ecirc;me MIC pour
+le m&ecirc;me message. Le receveur peux retourner sur l''emetteur la MIC&nbsp;qu'il
+a calcul&eacute;, et ce dernier comparer avec le r&eacute;sultat qu'il
+obtient lui. Si il trouve la&nbsp; m&ecirc;me chose, le message est correct.
+Ainsi on est s&ucirc;r que ce que l'on a envoy&eacute; est correctement
+re&ccedil;u.</li>
+</ol>
+
+<p><br>De cet fa&ccedil;on, non seulement la cryptographie nous assure
+la confidentialit&eacute; des donn&eacute;es &eacute;chang&eacute;es, mais
+aussi la somme de contr&ocirc;le nous permet de garantir au niveau applicatif
+l'int&eacute;grit&eacute; du message re&ccedil;u. La encore, on manipulera
+des <i>gss_buffer_desc</i> qui repr&eacute;senteront lers donn&eacute;es
+chiffr&eacute;es. On parle alors de tokens de chiffrement.
+<p>Les choses seront cod&eacute;es ainsi:
+<br>&nbsp;
+<table BORDER COLS=2 WIDTH="100%" NOSAVE >
+<tr>
+<td>L'&eacute;metteur crypte son message avec <i>gss_wrap</i>. Il envoie
+le token chiffr&eacute; au receveur</td>
+
+<td></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>Le receveur re&ccedil;oit le message. Il le d&eacute;crypte avec <i>gss_unwrap</i></td>
+</tr>
+
+<tr>
+<td></td>
+
+<td>Le receveur calcule la signature du message d&eacute;crypt&eacute;
+avec <i>gss_get_mic.</i> Il envoie cette signature sur l'&eacute;metteur</td>
+</tr>
+
+<tr>
+<td>L'&eacute;metteur re&ccedil;oit la signature. Il utilise <i>gss_verify_mic
+</i>pour v&eacute;rifier qu'elle correspond bien &agrave; ce qu'il a envoy&eacute;</td>
+
+<td></td>
+</tr>
+</table>
+
+<p>On n'est bien s&ucirc;r pas oblig&eacute; de g&eacute;rer la MIC, mais
+elle permet de fournir une sorte d'accus&eacute; r&eacute;ception qui garantit
+&agrave; l'&eacute;metteur, non seulement que son message est re&ccedil;u
+mais que son contenu &agrave; &eacute;t&eacute; correctement d&eacute;chiffr&eacute;.
+L'utilisation de la paire <i>gss_wrap/gss_unwrap </i>garantit assure simplement
+que:
+<ol>
+<li>
+les donn&eacute;es chiffr&eacute;es ne sont accessibles que par les deux
+parties</li>
+
+<li>
+si l'appel &agrave; gss_unwrap sort avec le statut GSS_S_COMPLETE, c'est
+que le message est correctement d&eacute;chiffr&eacute; et indentique &agrave;
+celui &eacute;mis, mais cette information est uniquement pr&eacute;sente
+au niveau du receveur.&nbsp; L'&eacute;metteur n'en sait rien. Utiliser
+la paire <i>gss_get_mic/gss_verify_mic </i>permet de lui donner la confirmation
+de la bonne r&eacute;ception du message par son interlocuteur.</li>
+</ol>
+
+<p><br><b>Emission d'un message avec contr&ocirc;le de la MIC</b>
+<br><i><font size=-1>int send_msg( int fd, char * msg, gss_ctx_id_t context,
+char * errbuff )</font></i>
+<br><i><font size=-1>{</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc clear_buf ;</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc code_buf ;</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc mic_buf ;</font></i>
+<br><i><font size=-1>&nbsp; OM_uint32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+maj_stat, min_stat ;</font></i>
+<br><i><font size=-1>&nbsp; int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+encrypt_flag = 1 ;</font></i>
+<br><i><font size=-1>&nbsp; int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+state ;</font></i>
+<br><i><font size=-1>&nbsp; int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+tok_flags ;</font></i>
+<br><i><font size=-1>&nbsp; gss_qop_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+qop_state;</font></i>
+<p><i><font size=-1>&nbsp; clear_buf.value = msg ;</font></i>
+<br><i><font size=-1>&nbsp; clear_buf.length = strlen( msg ) +1&nbsp; ;
+/* pour garder le \0 final */</font></i>
+<p><i><font size=-1>&nbsp; /* Wrapping du message */</font></i>
+<br><i><font size=-1>&nbsp; if( ( maj_stat = gss_wrap( &amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+encrypt_flag,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_QOP_DEFAULT,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;clear_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;state,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;code_buf ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp; exit( 1 ) ;</font></i>
+<p><i><font size=-1>&nbsp; if( !state ) exit( 1 ) ; /* Sortie car buffer
+non encod&eacute; */</font></i>
+<p><i><font size=-1>&nbsp; /* Envoi de la chose encode */</font></i>
+<br><i><font size=-1>&nbsp; nt_write_token( fd, &amp;code_buf )&nbsp; ;</font></i>
+<p><i><font size=-1>&nbsp; /* reception de la mic */</font></i>
+<br><i><font size=-1>&nbsp; nt_read_token( fd,&nbsp; &amp;mic_buf ) ;</font></i>
+<p><i><font size=-1>&nbsp; /* Verification de la mic */</font></i>
+<br><i><font size=-1>&nbsp; if( ( maj_stat = gss_verify_mic( &amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;clear_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;mic_buf ,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;qop_state ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp; exit( 1) ;&nbsp; /* Sortie en erreur
+*/</font></i>
+<br><i><font size=-1>}</font></i>
+<p><b>Reception d'un message et retour de la MIC:</b>
+<br><i><font size=-1>int recv_msg( int fd, char * msg, gss_ctx_id_t context,
+char * errbuff )</font></i>
+<br><i><font size=-1>{</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc code_buf ;</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc clear_buf ;</font></i>
+<br><i><font size=-1>&nbsp; gss_buffer_desc mic_buf&nbsp; ;</font></i>
+<br><i><font size=-1>&nbsp; int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+conf_state ;</font></i>
+<br><i><font size=-1>&nbsp; OM_uint32&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+maj_stat, min_stat ;</font></i>
+<p><i><font size=-1>&nbsp; nt_read_oken( fd, &amp;code_buf )&nbsp; ;&nbsp;
+/* Reception du token */</font></i>
+<p><i><font size=-1>&nbsp;/* Unwrapping du message */</font></i>
+<br><i><font size=-1>&nbsp; if( ( maj_stat = gss_unwrap( &amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;code_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;clear_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;conf_state,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(gss_qop_t *)NULL ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp; exit( 1 ) ; /* sortie en erreur
+*/</font></i>
+<p><i><font size=-1>&nbsp; if( !conf_state )</font></i>
+<br><i><font size=-1>&nbsp; exit( 1)&nbsp; ; /* Sortie en erreur car d&eacute;faut
+dans le chiffrement */</font></i>
+<p><i><font size=-1>&nbsp;/* Calcul de la mic */</font></i>
+<br><i><font size=-1>&nbsp; if( ( maj_stat = gss_get_mic( &amp;min_stat,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+context,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GSS_C_QOP_DEFAULT,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;clear_buf,</font></i>
+<br><i><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&amp;mic_buf ) ) != GSS_S_COMPLETE )</font></i>
+<br><i><font size=-1>&nbsp;&nbsp; exit( 1 ) ; /* Sortie en erreur */</font></i>
+<p><i><font size=-1>&nbsp;nt_write_token( fd,&nbsp; &amp;mic_buf ) ; /*Envoi
+du token */</font></i>
+<p><i><font size=-1>&nbsp; de&nbsp;&nbsp; return 0;</font></i>
+<br><i><font size=-1>}</font></i>
+<br>&nbsp;
+<h1>
+5: Conclusion</h1>
+L'utilisation de la GSSAPI permet d'utiliser les services classiquement
+offerts par les outils de s&eacute;curit&eacute; sous-jacent sans avoir
+&agrave; utiliser des APIs propres &agrave; ces m&eacute;canismes, lesquelles
+<br>ne sont pas du tout standardis&eacute;es alors que des RFCs pr&eacute;cises
+d&eacute;finissent la GSSAPI. De plus la GSSAPI produit un code qui n'est
+pas plus compliqu&eacute; &agrave; lire, &eacute;crire ou maintenir que
+ce que l'on obtiendrait en utilisant ces APIs sp&eacute;cifiques.
+<br>La GSSAPI est impl&eacute;ment&eacute;e, pour ce qui est du monde Linux,
+par dessus le protocole Kerberos 5 dans les produits Heimdall et MIT-Kerberos.
+De nouvelles impl&eacute;mentations actuellement en version b&ecirc;ta
+supporteront d'autres m&eacute;canismes tel que SPKM-3 (<i>Single Public
+Key Mechanism</i>).
+<br>La GSSAPI a pour propos d'&ecirc;tre aussi g&eacute;n&eacute;rique
+que possible et peut &ecirc;tre utilis&eacute; dans un nombre assez grand
+de situation. En particulier, elle ne g&egrave;re pas la couche de transport,
+c'est
+<br>la responsabilit&eacute; de l'application de g&eacute;rer cet aspect
+des choses. Une autre API englobe la GSSAPI: les RPCSEC_GSS. Ces derni&egrave;res
+sont amen&eacute;es &agrave; conna&icirc;tre un d&eacute;veloppement dans
+les mois et les ann&eacute;es qui viennent car elles sont la solution retenue
+pour g&eacute;rer les aspects de transport et de s&eacute;curit&eacute;
+dans le protocole NFS v4 qui succ&egrave;de &agrave; NFS v2 et NFS v3.
+Il y a fort &agrave; parier que tous les unix inclueront un support NFS
+v4 dans moins d'un an, Linux en t&ecirc;te car il est la plateforme de
+d&eacute;veloppement de NFS v4. Les RPCSEC_GSS sont grosso-modo une &eacute;volution
+des ONC RPC qui sous-tendent NFS v2 et NFS v3, avec en plus le support
+de la s&eacute;curit&eacute; en interne par la GSSAPI. Cette API g&egrave;re
+elle m&ecirc;me les aspect de transport (de la m&ecirc;me fa&ccedil;on
+que les ONC RPC) et la n&eacute;gociation de s&eacute;curit&eacute; entre
+le client et le serveur. Cette API est &eacute;galement beaucoup plus simple
+&agrave; utiliser, surtout au niveau du client.
+<p>Conclusion de la conclusion, en forme de r&eacute;sum&eacute;: la GSSAPI
+est un m&eacute;canisme portable permettant de g&eacute;rer dans une application
+les aspects de s&eacute;curit&eacute;. Son interd&eacute;pendance avec
+NFS v4 et RPCSEC_GSS garantissent en outre sa disponibilit&eacute; et sa
+p&eacute;r&eacute;nnit&eacute;. Pour les besoins plus sp&eacute;cifiques
+rentrant dans le moule des RPCs, l'utilisation de RPCSEC_GSS facilite encore
+la prise en compte de la s&eacute;curit&eacute;
+<br>&nbsp;
+<p>REFERENCE:
+<ul>
+<li>
+nfsv4.org</li>
+
+<li>
+docs suns</li>
+
+<li>
+heimdall</li>
+
+<li>
+MIT</li>
+
+<li>
+Connecthathon</li>
+</ul>
+</ul>
+
+</body>
+</html>

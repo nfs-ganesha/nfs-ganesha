@@ -1,0 +1,102 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_EVENT"
+nfs_init -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+mount /
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+# je deviens user1
+su $USER1
+
+set chemin $TESTDIR "/TEST_DIR"
+
+set VERBOSE "OFF"
+mkdir $chemin 777
+set VERBOSE "ON"
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+
+print "------------ Je cree des repertoires -------------"
+
+mkdir test_rights_Ur    400
+mkdir test_rights_Uwx   300
+mkdir test_rights_Gr    740
+mkdir test_rights_Gwx   730
+mkdir test_rights_Or    774
+mkdir test_rights_Owx   773
+
+print "-------- Je deviens root --------"
+
+su 0
+
+print "-------- Je tente diverses operations --------"
+
+create test_rights_Ur/toto 755
+ls -l test_rights_Ur/toto
+ls test_rights_Ur
+
+create test_rights_Uwx/toto 755
+ls -l test_rights_Uwx/toto
+ls test_rights_Uwx
+
+create test_rights_Gr/toto 755
+ls -l test_rights_Gr/toto
+ls test_rights_Gr
+
+create test_rights_Gwx/toto 755
+ls -l test_rights_Gwx/toto
+ls test_rights_Gwx
+
+create test_rights_Or/toto 755
+ls -l test_rights_Or/toto
+ls test_rights_Or    
+
+create test_rights_Owx/toto 755
+ls -l test_rights_Owx/toto
+ls test_rights_Owx
+
+unlink test_rights_Ur/toto
+unlink test_rights_Ur    
+unlink test_rights_Uwx/toto
+unlink test_rights_Uwx   
+unlink test_rights_Gr/toto
+unlink test_rights_Gr    
+unlink test_rights_Gwx/toto
+unlink test_rights_Gwx
+unlink test_rights_Or/toto    
+unlink test_rights_Or
+unlink test_rights_Owx/toto
+unlink test_rights_Owx

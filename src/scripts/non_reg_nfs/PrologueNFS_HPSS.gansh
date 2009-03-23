@@ -1,0 +1,24 @@
+
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+
+init_fs $CONFIG_FILE
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+
+init_cache $CONFIG_FILE
+
+set LAYER NFS
+nfs_init -v $CONFIG_FILE
+
+# display export entries
+echo "=========== Export entries are: =============="
+mnt3_export
+
+# prompt
+echo "----> Use 'mount' command for browsing them using unix-like commands"
+
+interactive
