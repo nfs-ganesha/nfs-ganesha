@@ -1,0 +1,138 @@
+\section{analyse.c File Reference}
+\label{analyse_8c}\index{analyse.c@{analyse.c}}
+Building the syntax tree. 
+
+{\tt \#include \char`\"{}analyse.h\char`\"{}}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf list\_\-block} $\ast$ {\bf config\_\-createlistblock} ()
+\item 
+{\bf type\_\-block} $\ast$ {\bf config\_\-createblock} (char $\ast$blockname, {\bf list\_\-affect} $\ast$list)
+\item 
+void {\bf config\_\-addblock} ({\bf list\_\-block} $\ast$list, {\bf type\_\-block} $\ast$block)
+\item 
+{\bf list\_\-affect} $\ast$ {\bf config\_\-createlistaffect} ()
+\item 
+{\bf type\_\-affect} $\ast$ {\bf config\_\-createaffect} (char $\ast$varname, char $\ast$varval)
+\item 
+void {\bf config\_\-adddef} ({\bf list\_\-affect} $\ast$list, {\bf type\_\-affect} $\ast$affect)
+\item 
+void {\bf config\_\-print\_\-list} (FILE $\ast$output, {\bf list\_\-block} $\ast$list)
+\item 
+void {\bf config\_\-free\_\-list} ({\bf list\_\-block} $\ast$list)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Building the syntax tree. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:31 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.5 \end{Desc}
+\end{Desc}
+Build the structure that represents a config file.
+
+Definition in file {\bf analyse.c}.
+
+\subsection{Function Documentation}
+\index{analyse.c@{analyse.c}!config_addblock@{config\_\-addblock}}
+\index{config_addblock@{config\_\-addblock}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-addblock ({\bf list\_\-block} $\ast$ {\em list}, {\bf type\_\-block} $\ast$ {\em block})}\label{analyse_8c_a2}
+
+
+Ajout d'un block a une list de blocks 
+
+Definition at line 123 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::next, and type\_\-block.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_adddef@{config\_\-adddef}}
+\index{config_adddef@{config\_\-adddef}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-adddef ({\bf list\_\-affect} $\ast$ {\em list}, {\bf type\_\-affect} $\ast$ {\em affect})}\label{analyse_8c_a5}
+
+
+Ajout d'une definition a une list d'affectations 
+
+Definition at line 164 of file analyse.c.
+
+References list\_\-affect, \_\-type\_\-affect\_\-::next, and type\_\-affect.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_createaffect@{config\_\-createaffect}}
+\index{config_createaffect@{config\_\-createaffect}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf type\_\-affect}$\ast$ config\_\-createaffect (char $\ast$ {\em varname}, char $\ast$ {\em varval})}\label{analyse_8c_a4}
+
+
+Creation d'une definition variable=valeur 
+
+Definition at line 149 of file analyse.c.
+
+References MAXSTRLEN, \_\-type\_\-affect\_\-::next, and type\_\-affect.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_createblock@{config\_\-createblock}}
+\index{config_createblock@{config\_\-createblock}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf type\_\-block}$\ast$ config\_\-createblock (char $\ast$ {\em blockname}, {\bf list\_\-affect} $\ast$ {\em list})}\label{analyse_8c_a1}
+
+
+Creation d'un block 
+
+Definition at line 109 of file analyse.c.
+
+References list\_\-affect, \_\-type\_\-block\_\-::list\_\-def, MAXSTRLEN, \_\-type\_\-affect\_\-::next, and type\_\-block.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_createlistaffect@{config\_\-createlistaffect}}
+\index{config_createlistaffect@{config\_\-createlistaffect}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-affect}$\ast$ config\_\-createlistaffect ()}\label{analyse_8c_a3}
+
+
+Creation d'une list d'affectations 
+
+Definition at line 138 of file analyse.c.
+
+References list\_\-affect.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_createlistblock@{config\_\-createlistblock}}
+\index{config_createlistblock@{config\_\-createlistblock}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-block}$\ast$ config\_\-createlistblock ()}\label{analyse_8c_a0}
+
+
+Creation d'une list de blocks 
+
+Definition at line 98 of file analyse.c.
+
+References list\_\-block.
+
+Referenced by yyparse().\index{analyse.c@{analyse.c}!config_free_list@{config\_\-free\_\-list}}
+\index{config_free_list@{config\_\-free\_\-list}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-free\_\-list ({\bf list\_\-block} $\ast$ {\em list})}\label{analyse_8c_a8}
+
+
+config\_\-free\_\-list: libere les ressources utilisees par une liste de blocks. 
+
+Definition at line 238 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::next, and type\_\-block.
+
+Referenced by config\_\-Free().\index{analyse.c@{analyse.c}!config_print_list@{config\_\-print\_\-list}}
+\index{config_print_list@{config\_\-print\_\-list}!analyse.c@{analyse.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-print\_\-list (FILE $\ast$ {\em output}, {\bf list\_\-block} $\ast$ {\em list})}\label{analyse_8c_a6}
+
+
+Affichage idente du contenu d'une list de blocks. 
+
+Definition at line 178 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::list\_\-def, \_\-type\_\-block\_\-::name, \_\-type\_\-affect\_\-::next, \_\-type\_\-block\_\-::next, type\_\-affect, type\_\-block, \_\-type\_\-affect\_\-::varname, and \_\-type\_\-affect\_\-::varvalue.
+
+Referenced by config\_\-Print().

@@ -1,0 +1,693 @@
+.TH "commands_NFS_remote.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+commands_NFS_remote.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <rpc/types.h>\fP
+.br
+\fC#include <rpc/rpc.h>\fP
+.br
+\fC#include <rpc/auth.h>\fP
+.br
+\fC#include <rpc/clnt.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include 'fsal.h'\fP
+.br
+\fC#include 'cache_inode.h'\fP
+.br
+\fC#include 'cache_content.h'\fP
+.br
+\fC#include 'commands.h'\fP
+.br
+\fC#include 'stuff_alloc.h'\fP
+.br
+\fC#include 'Getopt.h'\fP
+.br
+\fC#include 'cmd_nfstools.h'\fP
+.br
+\fC#include 'cmd_tools.h'\fP
+.br
+\fC#include 'nfs_file_handle.h'\fP
+.br
+\fC#include 'nfs_core.h'\fP
+.br
+\fC#include 'nfs23.h'\fP
+.br
+\fC#include 'mount.h'\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <pwd.h>\fP
+.br
+\fC#include <ctype.h>\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "struct \fBshell_fh3__\fP"
+.br
+.ti -1c
+.RI "struct \fBprog_vers_def__\fP"
+.br
+.ti -1c
+.RI "struct \fBprog_vers_client_def__\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAXIT\fP   10"
+.br
+.ti -1c
+.RI "#define \fBMAXRETRY\fP   3"
+.br
+.ti -1c
+.RI "#define \fBMAX_GRPS\fP   128"
+.br
+.ti -1c
+.RI "#define \fBNFS_READDIR_SIZE\fP   10"
+.br
+.ti -1c
+.RI "#define \fBMAX_GRPS\fP   128"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBshell_fh3__\fP \fBshell_fh3_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBprog_vers_def__\fP \fBprog_vers_def_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBprog_vers_client_def__\fP \fBprog_vers_client_def_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "CLIENT * \fBgetCLIENT\fP (char *name)"
+.br
+.ti -1c
+.RI "int \fBsetCLIENT\fP (char *name, CLIENT *clnt)"
+.br
+.ti -1c
+.RI "char * \fBgetHostname\fP (char *name)"
+.br
+.ti -1c
+.RI "int \fBsetHostname\fP (char *name, char *hostname)"
+.br
+.ti -1c
+.RI "char * \fBgetProto\fP (char *name)"
+.br
+.ti -1c
+.RI "int \fBsetProto\fP (char *name, char *proto)"
+.br
+.ti -1c
+.RI "int \fBgetPort\fP (char *name)"
+.br
+.ti -1c
+.RI "int \fBsetPort\fP (char *name, int port)"
+.br
+.ti -1c
+.RI "int \fBrpc_init\fP (char *hostname, char *name, char *proto, int port, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBrpc_reinit\fP (char *name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBtry_rpc_reinit\fP (char *name, int error, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBswitch_result\fP (int result, int i, char *name, char *func_name, char *func_called_name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_rpc_init\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBnfs_remote_layer_SetLogLevel\fP (int log_lvl)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT1_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_MNT3_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS2_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_NFS3_remote_command\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_solvepath\fP (\fBshell_fh3_t\fP *p_mounted_path_hdl, char *io_global_path, int size_global_path, char *i_spec_path, \fBshell_fh3_t\fP *p_current_hdl, \fBshell_fh3_t\fP *pnew_hdl, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_getattr\fP (\fBshell_fh3_t\fP *p_hdl, fattr3 *attrs, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_access\fP (\fBshell_fh3_t\fP *p_hdl, nfs3_uint32 *access_mask, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_readlink\fP (\fBshell_fh3_t\fP *p_hdl, char *linkcontent, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_readdirplus\fP (\fBshell_fh3_t\fP *p_dir_hdl, cookie3 cookie, cookieverf3 *p_cookieverf, dirlistplus3 *dirlist, nfs_res_t **to_be_freed, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBnfs_remote_readdirplus_free\fP (nfs_res_t *to_free)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_readdir\fP (\fBshell_fh3_t\fP *p_dir_hdl, cookie3 cookie, cookieverf3 *p_cookieverf, dirlist3 *dirlist, nfs_res_t **to_be_freed, FILE *output)"
+.br
+.ti -1c
+.RI "void \fBnfs_remote_readdir_free\fP (nfs_res_t *to_free)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_create\fP (\fBshell_fh3_t\fP *p_dir_hdl, char *obj_name, mode_t posix_mode, \fBshell_fh3_t\fP *p_obj_hdl, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_mkdir\fP (\fBshell_fh3_t\fP *p_dir_hdl, char *obj_name, mode_t posix_mode, \fBshell_fh3_t\fP *p_obj_hdl, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_rmdir\fP (\fBshell_fh3_t\fP *p_dir_hdl, char *obj_name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_remove\fP (\fBshell_fh3_t\fP *p_dir_hdl, char *obj_name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_setattr\fP (\fBshell_fh3_t\fP *p_obj_hdl, sattr3 *p_attributes, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_rename\fP (\fBshell_fh3_t\fP *p_src_dir_hdl, char *src_name, \fBshell_fh3_t\fP *p_tgt_dir_hdl, char *tgt_name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_link\fP (\fBshell_fh3_t\fP *p_file_hdl, \fBshell_fh3_t\fP *p_tgt_dir_hdl, char *tgt_name, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_symlink\fP (\fBshell_fh3_t\fP path_hdl, char *link_name, char *link_content, sattr3 *p_setattr, \fBshell_fh3_t\fP *p_link_hdl, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBnfs_remote_mount\fP (char *str_path, \fBshell_fh3_t\fP *p_mnt_hdl, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_mount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_umount\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_pwd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_ls\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_cd\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_create\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_mkdir\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_unlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_setattr\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_rename\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_hardlink\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_ln\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_stat\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_su\fP (int argc, char **argv, FILE *output)"
+.br
+.ti -1c
+.RI "int \fBfn_nfs_remote_id\fP (int argc, char **argv, FILE *output)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
+.br
+.ti -1c
+.RI "passwd * \fBcurrent_pw\fP"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define MAX_GRPS   128"
+.PP
+.SS "#define MAX_GRPS   128"
+.PP
+.SS "#define MAXIT   10"
+.PP
+Definition at line 113 of file commands_NFS_remote.c.
+.SS "#define MAXRETRY   3"
+.PP
+Definition at line 114 of file commands_NFS_remote.c.
+.SS "#define NFS_READDIR_SIZE   10"
+.PP
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBprog_vers_client_def__\fP  \fBprog_vers_client_def_t\fP"
+.PP
+Referenced by fn_nfs_remote_su(), getCLIENT(), getHostname(), getPort(), getProto(), setCLIENT(), setHostname(), setPort(), and setProto().
+.SS "typedef struct \fBprog_vers_def__\fP  \fBprog_vers_def_t\fP"
+.PP
+Referenced by rpc_init().
+.SS "typedef struct \fBshell_fh3__\fP  \fBshell_fh3_t\fP"
+.PP
+.SH "Function Documentation"
+.PP 
+.SS "int fn_MNT1_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT1 protocol's command. 
+.PP
+Definition at line 666 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_MNT3_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process MNT3 protocol's command. 
+.PP
+Definition at line 748 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_NFS2_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS2 protocol's command. 
+.PP
+Definition at line 830 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_NFS3_remote_command (int argc, char ** argv, FILE * output)"
+.PP
+process NFS3 protocol's command. 
+.PP
+Definition at line 913 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfsremote_funcdesc_t, cmdnfsremote_funcdesc__::func_call, cmdnfsremote_funcdesc__::func_decode, cmdnfsremote_funcdesc__::func_encode, cmdnfsremote_funcdesc__::func_free, cmdnfsremote_funcdesc__::func_help, cmdnfsremote_funcdesc__::func_name, getCLIENT(), NULL, and switch_result().
+.SS "int fn_nfs_remote_cd (int argc, char ** argv, FILE * output)"
+.PP
+change current path 
+.PP
+Definition at line 2462 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, nfs_remote_access(), nfs_remote_getattr(), nfs_remote_solvepath(), and shell_fh3_t.
+.SS "int fn_nfs_remote_create (int argc, char ** argv, FILE * output)"
+.PP
+create a file 
+.PP
+Definition at line 2538 of file commands_NFS_remote.c.
+.PP
+References atomode(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_create(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_hardlink (int argc, char ** argv, FILE * output)"
+.PP
+proceed a hardlink command. 
+.PP
+Definition at line 3122 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_link(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_id (int argc, char ** argv, FILE * output)"
+.PP
+Definition at line 3623 of file commands_NFS_remote.c.
+.PP
+References current_pw.
+.SS "int fn_nfs_remote_ln (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ln command. 
+.PP
+Definition at line 3244 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_solvepath(), nfs_remote_symlink(), NULL, Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_ls (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 2132 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_getattr(), nfs_remote_readdirplus(), nfs_remote_readdirplus_free(), nfs_remote_readlink(), nfs_remote_solvepath(), Optind, Optopt, print_nfs_attributes(), print_nfsitem_line(), and shell_fh3_t.
+.SS "int fn_nfs_remote_mkdir (int argc, char ** argv, FILE * output)"
+.PP
+create a directory 
+.PP
+Definition at line 2647 of file commands_NFS_remote.c.
+.PP
+References atomode(), shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_mkdir(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_mount (int argc, char ** argv, FILE * output)"
+.PP
+mount a path to browse it. 
+.PP
+Definition at line 1985 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, nfs_remote_mount(), and shell_fh3_t.
+.SS "int fn_nfs_remote_pwd (int argc, char ** argv, FILE * output)"
+.PP
+prints current path 
+.PP
+Definition at line 2109 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, and shell_fh3__::data_val.
+.SS "int fn_nfs_remote_rename (int argc, char ** argv, FILE * output)"
+.PP
+proceed a rename command. 
+.PP
+Definition at line 2996 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_rename(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_nfs_remote_setattr (int argc, char ** argv, FILE * output)"
+.PP
+setattr 
+.PP
+Definition at line 2881 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), Getopt(), nfs_remote_setattr(), nfs_remote_solvepath(), NULL, Optind, Optopt, and shell_fh3_t.
+.SS "int fn_nfs_remote_stat (int argc, char ** argv, FILE * output)"
+.PP
+proceed an ls command using NFS protocol NFS 
+.PP
+Definition at line 3374 of file commands_NFS_remote.c.
+.PP
+References shell_fh3__::data_len, shell_fh3__::data_val, Getopt(), nfs_remote_getattr(), nfs_remote_solvepath(), Optind, Optopt, print_nfs_attributes(), and shell_fh3_t.
+.SS "int fn_nfs_remote_su (int argc, char ** argv, FILE * output)"
+.PP
+change thread credentials. 
+.PP
+Definition at line 3535 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::clnt, current_pw, getugroups(), MAX_GRPS, my_atoi(), prog_vers_client_def__::name, and prog_vers_client_def_t.
+.SS "int fn_nfs_remote_umount (int argc, char ** argv, FILE * output)"
+.PP
+umount a mounted path 
+.PP
+Definition at line 2031 of file commands_NFS_remote.c.
+.PP
+References cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, getCLIENT(), mnt3_remote_Mnt(), mnt3_remote_Umnt_Free(), NULL, shell_fh3_t, and switch_result().
+.SS "int fn_nfs_remote_unlink (int argc, char ** argv, FILE * output)"
+.PP
+unlink a file 
+.PP
+Definition at line 2759 of file commands_NFS_remote.c.
+.PP
+References Getopt(), nfs_remote_getattr(), nfs_remote_remove(), nfs_remote_rmdir(), nfs_remote_solvepath(), Optind, Optopt, shell_fh3_t, and split_path().
+.SS "int fn_rpc_init (int argc, char ** argv, FILE * output)"
+.PP
+fn_rpc_init 
+.PP
+Definition at line 579 of file commands_NFS_remote.c.
+.PP
+References Getopt(), Optind, Optopt, and rpc_init().
+.SS "CLIENT* getCLIENT (char * name)"
+.PP
+getCLIENT 
+.PP
+Definition at line 204 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::clnt, prog_vers_client_def__::name, and prog_vers_client_def_t.
+.PP
+Referenced by fn_MNT1_remote_command(), fn_MNT3_remote_command(), fn_NFS2_remote_command(), fn_NFS3_remote_command(), fn_nfs_remote_umount(), nfs_remote_access(), nfs_remote_create(), nfs_remote_getattr(), nfs_remote_link(), nfs_remote_mkdir(), nfs_remote_mount(), nfs_remote_readdir(), nfs_remote_readdirplus(), nfs_remote_readlink(), nfs_remote_remove(), nfs_remote_rename(), nfs_remote_rmdir(), nfs_remote_setattr(), nfs_remote_solvepath(), and nfs_remote_symlink().
+.SS "char* getHostname (char * name)"
+.PP
+getHostname 
+.PP
+Definition at line 238 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::hostname, prog_vers_client_def__::name, and prog_vers_client_def_t.
+.PP
+Referenced by rpc_reinit().
+.SS "int getPort (char * name)"
+.PP
+getPort 
+.PP
+Definition at line 306 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::name, prog_vers_client_def__::port, and prog_vers_client_def_t.
+.PP
+Referenced by rpc_reinit().
+.SS "char* getProto (char * name)"
+.PP
+getProto 
+.PP
+Definition at line 272 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::name, prog_vers_client_def_t, and prog_vers_client_def__::proto.
+.PP
+Referenced by rpc_reinit().
+.SS "int nfs_remote_access (\fBshell_fh3_t\fP * p_hdl, nfs3_uint32 * access_mask, FILE * output)"
+.PP
+nfs_remote_access 
+.PP
+Definition at line 1209 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Access(), nfs3_remote_Access_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_cd().
+.SS "int nfs_remote_create (\fBshell_fh3_t\fP * p_dir_hdl, char * obj_name, mode_t posix_mode, \fBshell_fh3_t\fP * p_obj_hdl, FILE * output)"
+.PP
+nfs_remote_create 
+.PP
+Definition at line 1457 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), getCLIENT(), nfs3_remote_Create(), nfs3_remote_Create_Free(), NULL, shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_create().
+.SS "int nfs_remote_getattr (\fBshell_fh3_t\fP * p_hdl, fattr3 * attrs, FILE * output)"
+.PP
+nfs_remote_getattr 
+.PP
+Definition at line 1159 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Getattr(), nfs3_remote_Getattr_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_cd(), fn_nfs_remote_ls(), fn_nfs_remote_stat(), and fn_nfs_remote_unlink().
+.SS "void nfs_remote_layer_SetLogLevel (int log_lvl)"
+.PP
+Definition at line 657 of file commands_NFS_remote.c.
+.SS "int nfs_remote_link (\fBshell_fh3_t\fP * p_file_hdl, \fBshell_fh3_t\fP * p_tgt_dir_hdl, char * tgt_name, FILE * output)"
+.PP
+nfs_remote_link 
+.PP
+Definition at line 1805 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Link(), nfs3_remote_Link_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_hardlink().
+.SS "int nfs_remote_mkdir (\fBshell_fh3_t\fP * p_dir_hdl, char * obj_name, mode_t posix_mode, \fBshell_fh3_t\fP * p_obj_hdl, FILE * output)"
+.PP
+nfs_remote_mkdir 
+.PP
+Definition at line 1531 of file commands_NFS_remote.c.
+.PP
+References CMDNFS_ENCODE, cmdnfs_sattr3(), getCLIENT(), nfs3_remote_Mkdir(), nfs3_remote_Mkdir_Free(), NULL, shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_mkdir().
+.SS "int nfs_remote_mount (char * str_path, \fBshell_fh3_t\fP * p_mnt_hdl, FILE * output)"
+.PP
+nfs_remote_mount 
+.PP
+Definition at line 1922 of file commands_NFS_remote.c.
+.PP
+References cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, getCLIENT(), mnt3_remote_Mnt(), mnt3_remote_Mnt_Free(), NULL, shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_mount().
+.SS "int nfs_remote_readdir (\fBshell_fh3_t\fP * p_dir_hdl, cookie3 cookie, cookieverf3 * p_cookieverf, dirlist3 * dirlist, nfs_res_t ** to_be_freed, FILE * output)"
+.PP
+nfs_remote_readdir 
+.PP
+Definition at line 1385 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Readdir(), nfs3_remote_Readdir_Free(), shell_fh3_t, and switch_result().
+.SS "void nfs_remote_readdir_free (nfs_res_t * to_free)"
+.PP
+nfs_remote_readdir_free 
+.PP
+Definition at line 1447 of file commands_NFS_remote.c.
+.PP
+References nfs3_remote_Readdir_Free().
+.SS "int nfs_remote_readdirplus (\fBshell_fh3_t\fP * p_dir_hdl, cookie3 cookie, cookieverf3 * p_cookieverf, dirlistplus3 * dirlist, nfs_res_t ** to_be_freed, FILE * output)"
+.PP
+nfs_remote_readdirplus 
+.PP
+Definition at line 1312 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Readdirplus(), nfs3_remote_Readdirplus_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_ls().
+.SS "void nfs_remote_readdirplus_free (nfs_res_t * to_free)"
+.PP
+nfs_remote_readdirplus_free 
+.PP
+Definition at line 1375 of file commands_NFS_remote.c.
+.PP
+References nfs3_remote_Readdirplus_Free().
+.PP
+Referenced by fn_nfs_remote_ls().
+.SS "int nfs_remote_readlink (\fBshell_fh3_t\fP * p_hdl, char * linkcontent, FILE * output)"
+.PP
+nfs_remote_readlink 
+.PP
+Definition at line 1261 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Readlink(), nfs3_remote_Readlink_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_ls().
+.SS "int nfs_remote_remove (\fBshell_fh3_t\fP * p_dir_hdl, char * obj_name, FILE * output)"
+.PP
+nfs_remote_remove 
+.PP
+Definition at line 1653 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Remove(), nfs3_remote_Remove_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_unlink().
+.SS "int nfs_remote_rename (\fBshell_fh3_t\fP * p_src_dir_hdl, char * src_name, \fBshell_fh3_t\fP * p_tgt_dir_hdl, char * tgt_name, FILE * output)"
+.PP
+nfs_remote_rename 
+.PP
+Definition at line 1752 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Rename(), nfs3_remote_Rename_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_rename().
+.SS "int nfs_remote_rmdir (\fBshell_fh3_t\fP * p_dir_hdl, char * obj_name, FILE * output)"
+.PP
+nfs_remote_rmdir 
+.PP
+Definition at line 1604 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Rmdir(), nfs3_remote_Rmdir_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_unlink().
+.SS "int nfs_remote_setattr (\fBshell_fh3_t\fP * p_obj_hdl, sattr3 * p_attributes, FILE * output)"
+.PP
+nfs_remote_setattr 
+.PP
+Definition at line 1702 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Setattr(), nfs3_remote_Setattr_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_setattr().
+.SS "int nfs_remote_solvepath (\fBshell_fh3_t\fP * p_mounted_path_hdl, char * io_global_path, int size_global_path, char * i_spec_path, \fBshell_fh3_t\fP * p_current_hdl, \fBshell_fh3_t\fP * pnew_hdl, FILE * output)"
+.PP
+Definition at line 1001 of file commands_NFS_remote.c.
+.PP
+References clean_path(), CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, getCLIENT(), nfs3_remote_Lookup(), nfs3_remote_Lookup_Free(), NULL, shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_cd(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_ls(), fn_nfs_remote_mkdir(), fn_nfs_remote_rename(), fn_nfs_remote_setattr(), fn_nfs_remote_stat(), and fn_nfs_remote_unlink().
+.SS "int nfs_remote_symlink (\fBshell_fh3_t\fP path_hdl, char * link_name, char * link_content, sattr3 * p_setattr, \fBshell_fh3_t\fP * p_link_hdl, FILE * output)"
+.PP
+nfs_remote_symlink 
+.PP
+Definition at line 1856 of file commands_NFS_remote.c.
+.PP
+References getCLIENT(), nfs3_remote_Symlink(), nfs3_remote_Symlink_Free(), shell_fh3_t, and switch_result().
+.PP
+Referenced by fn_nfs_remote_ln().
+.SS "int rpc_init (char * hostname, char * name, char * proto, int port, FILE * output)"
+.PP
+rpc_init 
+.PP
+Definition at line 357 of file commands_NFS_remote.c.
+.PP
+References current_pw, getugroups(), MAX_GRPS, prog_vers_def__::name, prog_vers_def__::prog, prog_vers_def_t, setCLIENT(), setHostname(), setPort(), setProto(), and prog_vers_def__::vers.
+.PP
+Referenced by fn_rpc_init(), and rpc_reinit().
+.SS "int rpc_reinit (char * name, FILE * output)"
+.PP
+rpc_reinit 
+.PP
+Definition at line 487 of file commands_NFS_remote.c.
+.PP
+References getHostname(), getPort(), getProto(), and rpc_init().
+.PP
+Referenced by try_rpc_reinit().
+.SS "int setCLIENT (char * name, CLIENT * clnt)"
+.PP
+setCLIENT 
+.PP
+Definition at line 220 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::clnt, prog_vers_client_def__::name, and prog_vers_client_def_t.
+.PP
+Referenced by rpc_init(), and switch_result().
+.SS "int setHostname (char * name, char * hostname)"
+.PP
+setHostname 
+.PP
+Definition at line 254 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::hostname, prog_vers_client_def__::name, and prog_vers_client_def_t.
+.PP
+Referenced by rpc_init().
+.SS "int setPort (char * name, int port)"
+.PP
+setPort 
+.PP
+Definition at line 322 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::name, prog_vers_client_def__::port, and prog_vers_client_def_t.
+.PP
+Referenced by rpc_init().
+.SS "int setProto (char * name, char * proto)"
+.PP
+setProto 
+.PP
+Definition at line 288 of file commands_NFS_remote.c.
+.PP
+References prog_vers_client_def__::name, prog_vers_client_def_t, and prog_vers_client_def__::proto.
+.PP
+Referenced by rpc_init().
+.SS "int switch_result (int result, int i, char * name, char * func_name, char * func_called_name, FILE * output)"
+.PP
+Definition at line 539 of file commands_NFS_remote.c.
+.PP
+References NULL, setCLIENT(), and try_rpc_reinit().
+.PP
+Referenced by fn_MNT1_remote_command(), fn_MNT3_remote_command(), fn_NFS2_remote_command(), fn_NFS3_remote_command(), fn_nfs_remote_umount(), nfs_remote_access(), nfs_remote_create(), nfs_remote_getattr(), nfs_remote_link(), nfs_remote_mkdir(), nfs_remote_mount(), nfs_remote_readdir(), nfs_remote_readdirplus(), nfs_remote_readlink(), nfs_remote_remove(), nfs_remote_rename(), nfs_remote_rmdir(), nfs_remote_setattr(), nfs_remote_solvepath(), and nfs_remote_symlink().
+.SS "int try_rpc_reinit (char * name, int error, FILE * output)"
+.PP
+try_rpc_reinit 
+.PP
+Definition at line 520 of file commands_NFS_remote.c.
+.PP
+References rpc_reinit().
+.PP
+Referenced by switch_result().
+.SH "Variable Documentation"
+.PP 
+.SS "struct passwd* \fBcurrent_pw\fP"
+.PP
+Definition at line 339 of file commands_NFS_remote.c.
+.PP
+Referenced by fn_nfs_remote_id(), fn_nfs_remote_su(), and rpc_init().
+.SS "nfs_parameter_t \fBnfs_param\fP"
+.PP
+Definition at line 118 of file commands_NFS_remote.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ganeshell from the source code.

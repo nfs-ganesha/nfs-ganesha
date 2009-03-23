@@ -1,0 +1,52 @@
+\section{fsal\_\-stats.c File Reference}
+\label{fsal__stats_8c}\index{fsal_stats.c@{fsal\_\-stats.c}}
+Statistics functions. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf FSAL\_\-get\_\-stats} (fsal\_\-statistics\_\-t $\ast$stats, fsal\_\-boolean\_\-t reset)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Statistics functions. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/07/27 13:30:26 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.2 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-stats.c}.
+
+\subsection{Function Documentation}
+\index{fsal_stats.c@{fsal\_\-stats.c}!FSAL_get_stats@{FSAL\_\-get\_\-stats}}
+\index{FSAL_get_stats@{FSAL\_\-get\_\-stats}!fsal_stats.c@{fsal\_\-stats.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void FSAL\_\-get\_\-stats (fsal\_\-statistics\_\-t $\ast$ {\em stats}, fsal\_\-boolean\_\-t {\em reset})}\label{fsal__stats_8c_a0}
+
+
+FSAL\_\-get\_\-stats: Retrieve call statistics for current thread.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em stats}](output): Pointer to the call statistics structure. \item[{\em reset}](input): Boolean that indicates if the stats must be reset.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 34 of file fsal\_\-stats.c.
+
+References fsal\_\-internal\_\-getstats().

@@ -1,0 +1,219 @@
+# main script.
+
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+# set VERBOSE "ON"
+# set DEBUG_LEVEL "NIV_DEBUG"
+set DEBUG_LEVEL "NIV_EVENT"
+
+#configuration file
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/leibovic"
+set TEST_DIR  "/connectathon-ganesha-NFS"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+
+############################
+#     TEST BODY
+############################
+
+# wait for NFS initialisation
+barrier
+
+# setting NFS layer
+set LAYER NFS
+
+mount $MOUNT_DIR
+mkdir $TEST_DIR  755
+
+cd $TEST_DIR
+
+# waiting for 50 entries to be created
+barrier
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+# waiting for 50 entries to be created
+barrier
+
+# rename are beggining...
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+# waiting for 50 entries to be moved
+barrier
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 2
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+# barrier before unlinking
+barrier
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+sleep 1
+
+set WC_1 `wc \`ls -l REP_1\``
+set WC_2 `wc \`ls -l REP_2\``
+echo "Entries in REP_1 : " `chomp $WC_1`
+echo "Entries in REP_2 : " `chomp $WC_2`
+
+#barrier before termination
+barrier
+
+meminfo

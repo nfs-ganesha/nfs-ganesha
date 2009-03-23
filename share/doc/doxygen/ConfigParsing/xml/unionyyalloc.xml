@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="unionyyalloc" kind="union" prot="public">
+    <compoundname>yyalloc</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="unionyyalloc_1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>short</type>
+        <definition>short yyalloc::yyss</definition>
+        <argsstring></argsstring>
+        <name>yyss</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="188" bodystart="188" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="unionyyalloc_1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="unionYYSTYPE" kindref="compound">YYSTYPE</ref></type>
+        <definition>YYSTYPE yyalloc::yyvs</definition>
+        <argsstring></argsstring>
+        <name>yyvs</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="189" bodystart="189" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="10">
+        <label>yyalloc</label>
+        <link refid="unionyyalloc"/>
+        <childnode refid="11" relation="usage">
+          <edgelabel>yyvs</edgelabel>
+        </childnode>
+      </node>
+      <node id="13">
+        <label>_type_affect_</label>
+        <link refid="struct__type__affect__"/>
+        <childnode refid="13" relation="usage">
+          <edgelabel>next</edgelabel>
+        </childnode>
+      </node>
+      <node id="11">
+        <label>YYSTYPE</label>
+        <link refid="unionYYSTYPE"/>
+        <childnode refid="12" relation="usage">
+          <edgelabel>block</edgelabel>
+        </childnode>
+        <childnode refid="13" relation="usage">
+          <edgelabel>affectation</edgelabel>
+        </childnode>
+      </node>
+      <node id="12">
+        <label>_type_block_</label>
+        <link refid="struct__type__block__"/>
+        <childnode refid="12" relation="usage">
+          <edgelabel>next</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="187" bodystart="186" bodyend="190"/>
+    <listofallmembers>
+      <member refid="unionyyalloc_1o0" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyss</name></member>
+      <member refid="unionyyalloc_1o1" prot="public" virt="non-virtual"><scope>yyalloc</scope><name>yyvs</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

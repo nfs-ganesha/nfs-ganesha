@@ -1,0 +1,109 @@
+set VERBOSE     OFF
+set DEBUG_LEVEL NIV_DEBUG
+set LAYER FSAL
+
+init_fs -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+
+# je deviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+print "------------ Creation de differents repertoires -------------"
+
+mkdir -v test_non_reg 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/B 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+print "--------------------- Deplacements ----------------------"
+# doit renvoyer une erreur (ERR_FSAL_NOT_EMPTY)
+
+#shell ../../FSAL/FSAL_POSIX/posix.ganesha.fsal_posixdb_tool -H localhost -P 5432 -L GANESHA -D POSIX_FS_DB -K ~/.pgpass find
+
+rename -v test_non_reg/B test_non_reg/A
+if ne -n -- $STATUS 93 ? print "NOTEMPTY_ERROR" : print "NOTEMPTY_OK"
+
+#shell ../../FSAL/FSAL_POSIX/posix.ganesha.fsal_posixdb_tool -H localhost -P 5432 -L GANESHA -D POSIX_FS_DB -K ~/.pgpass find
+# doit fonctionner
+
+rename -v test_non_reg/A test_non_reg/B
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+#shell ../../FSAL/FSAL_POSIX/posix.ganesha.fsal_posixdb_tool -H localhost -P 5432 -L GANESHA -D POSIX_FS_DB -K ~/.pgpass find
+
+# on doit avoir un repertoire C dans B
+# et a n'existe plus
+
+ls -ld test_non_reg/B/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+ls -ld test_non_reg/A
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+# doit fonctionner
+rename -v test_non_reg/B/C test_non_reg/C/C
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit avoir un repertoire C dans C mais plus dans B
+
+ls -ld test_non_reg/C/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+ls -ld test_non_reg/B/C
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+print "--------------------- Menage ----------------------"
+# suppression des repertoires temporaires
+
+unlink test_non_reg/B
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+

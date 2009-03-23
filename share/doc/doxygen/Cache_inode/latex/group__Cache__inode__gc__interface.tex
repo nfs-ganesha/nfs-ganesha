@@ -1,0 +1,78 @@
+\section{Cache Inode GC interface.}
+\label{group__Cache__inode__gc__interface}\index{Cache Inode GC interface.@{Cache Inode GC interface.}}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf cache\_\-inode\_\-set\_\-gc\_\-policy} (cache\_\-inode\_\-gc\_\-policy\_\-t policy)
+\item 
+cache\_\-inode\_\-gc\_\-policy\_\-t {\bf cache\_\-inode\_\-get\_\-gc\_\-policy} (void)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-gc} (hash\_\-table\_\-t $\ast$ht, cache\_\-inode\_\-client\_\-t $\ast$pclient, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+These functions are used to run and configure the Cache inode GC 
+
+\subsection{Function Documentation}
+\index{Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}!cache_inode_gc@{cache\_\-inode\_\-gc}}
+\index{cache_inode_gc@{cache\_\-inode\_\-gc}!Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-gc (hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{group__Cache__inode__gc__interface_ga2}
+
+
+cache\_\-inode\_\-gc: Perform garbbage collection on the ressources managed by a client.
+
+Perform garbbage collection on the ressources managed by a client.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}][INOUT] the hashtable used to stored the cache\_\-inode entries. \item[{\em pclient}][INOUT] ressource allocated by the client for the nfs management. \item[{\em pstatus}][OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-INODE\_\-SUCCESS if operation is a success \par
+ 
+
+CACHE\_\-INODE\_\-LRU\_\-ERROR if allocation error occured when validating the entry\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Get\-Size 
+
+LRU\_\-invalidate\_\-by\_\-function 
+
+LRU\_\-gc\_\-invalid \end{Desc}
+
+
+Definition at line 603 of file cache\_\-inode\_\-gc.c.
+
+References cache\_\-inode\_\-gc\_\-function().
+
+Referenced by main().\index{Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}!cache_inode_get_gc_policy@{cache\_\-inode\_\-get\_\-gc\_\-policy}}
+\index{cache_inode_get_gc_policy@{cache\_\-inode\_\-get\_\-gc\_\-policy}!Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-gc\_\-policy\_\-t cache\_\-inode\_\-get\_\-gc\_\-policy (void)}\label{group__Cache__inode__gc__interface_ga1}
+
+
+cache\_\-inode\_\-get\_\-gc\_\-policy: Set the cache\_\-inode garbagge collecting policy.
+
+\begin{Desc}
+\item[Returns:]the current policy. \end{Desc}
+
+
+Definition at line 580 of file cache\_\-inode\_\-gc.c.\index{Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}!cache_inode_set_gc_policy@{cache\_\-inode\_\-set\_\-gc\_\-policy}}
+\index{cache_inode_set_gc_policy@{cache\_\-inode\_\-set\_\-gc\_\-policy}!Cache_inode_gc_interface@{Cache\_\-inode\_\-gc\_\-interface}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-inode\_\-set\_\-gc\_\-policy (cache\_\-inode\_\-gc\_\-policy\_\-t {\em policy})}\label{group__Cache__inode__gc__interface_ga0}
+
+
+cache\_\-inode\_\-set\_\-gc\_\-policy: Set the cache\_\-inode garbagge collecting policy.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em policy}][IN] policy to be set.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function) \end{Desc}
+
+
+Definition at line 567 of file cache\_\-inode\_\-gc.c.
+
+Referenced by main().

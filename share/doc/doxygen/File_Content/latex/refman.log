@@ -1,0 +1,1156 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./cache__content__crash__recover_8c.aux)
+(./cache__content__emergency__flush_8c.aux) (./cache__content__flush_8c.aux)
+(./cache__content__gc_8c.aux) (./cache__content__init_8c.aux)
+(./cache__content__misc_8c.aux) (./cache__content__rdwr_8c.aux)
+(./cache__content__read__conf_8c.aux) (./cache__content__release__entry_8c.aux)
+(./cache__content__truncate_8c.aux) (./test__threshold_8c.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+)
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+ [1
+
+] [2
+
+]
+Chapter 1.
+(./files.tex) [1
+
+] [2
+
+]
+Chapter 2.
+(./pages.tex) [3] [4
+
+]
+Chapter 3.
+(./cache__content__add__entry_8c.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 5.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+Underfull \hbox (badness 4205) in paragraph at lines 24--25
+[]\T1/cmr/m/n/10 cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$ \T1/cmr/bx/n/1
+0 cache_-content_-new_-entry \T1/cmr/m/n/10 (cache_-entry_-t $\OMS/cmsy/m/n/10 
+^^C$\T1/cmr/m/n/10 pentry_-
+ []
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+) [6]
+\openout2 = `cache__content__crash__recover_8c.aux'.
+
+ (./cache__content__crash__recover_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+)
+Underfull \hbox (badness 4913) in paragraph at lines 44--36
+[]\T1/cmr/m/n/10 References cache_-content_-get_-export_-id(), cache_-content_-
+get_-inum(), cache_-content_-
+ []
+
+[7
+
+]
+\openout2 = `cache__content__emergency__flush_8c.aux'.
+
+ (./cache__content__emergency__flush_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+[8
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 1173) in paragraph at lines 69--70
+[]\T1/cmr/m/n/10 References cache_-content_-dir_-errno, cache_-content_-get_-da
+tapath(), cache_-content_-get_-
+ []
+
+
+Underfull \hbox (badness 1490) in paragraph at lines 69--70
+\T1/cmr/m/n/10 inum(), cache_-content_-local_-cache_-closedir(), cache_-content
+_-local_-cache_-dir_-iter(), and
+ []
+
+) [9]
+\openout2 = `cache__content__flush_8c.aux'.
+
+ (./cache__content__flush_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 20--22
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-flus
+h \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10
+ pentry,
+ []
+
+
+Underfull \hbox (badness 4940) in paragraph at lines 22--24
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-refr
+esh \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/
+10 pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+[10
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+) [11]
+\openout2 = `cache__content__gc_8c.aux'.
+
+ (./cache__content__gc_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 33--35
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-sync
+ \T1/cmr/m/n/10 (cache_-content_-client_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10
+ pclient,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+[12
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 87--87
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+[13]
+Underfull \hbox (badness 10000) in paragraph at lines 128--128
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 146--146
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--151
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 166--166
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--171
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 179--179
+
+ []
+
+[14]
+Underfull \hbox (badness 10000) in paragraph at lines 196--196
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--201
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 203--203
+
+ []
+
+) [15]
+\openout2 = `cache__content__init_8c.aux'.
+
+ (./cache__content__init_8c.tex
+Underfull \hbox (badness 2189) in paragraph at lines 25--27
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cache_-content_-init_-dir \T1/cmr/m/n/10 (
+cache_-content_-client_-parameter_-t param, un-signed
+ []
+
+
+Underfull \hbox (badness 1178) in paragraph at lines 27--28
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cache_-content_-client_-init \T1/cmr/m/n/1
+0 (cache_-content_-client_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pclient, cach
+e_-content_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+[16
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 79--79
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 95--95
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 100--100
+
+ []
+
+) [17]
+\openout2 = `cache__content__misc_8c.aux'.
+
+ (./cache__content__misc_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 52--54
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-prep
+are_-directories \T1/cmr/m/n/10 (exportlist_-t
+ []
+
+[18
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 54--56
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-vali
+d \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10
+ pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--64
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 cache_-content_-local_-cache_-dir_-iter \T
+1/cmr/m/n/10 (cache_-content_-dirinfo_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 d
+irectory,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--78
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+[19]
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 142--142
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 147--147
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--164
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--169
+
+ []
+
+[20]
+Underfull \hbox (badness 10000) in paragraph at lines 182--182
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 187--187
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 202--202
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 222--222
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--227
+
+ []
+
+[21]
+Underfull \hbox (badness 10000) in paragraph at lines 238--238
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 243--243
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 260--260
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 265--265
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 280--280
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 285--285
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 298--298
+
+ []
+
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 303--303
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 316--316
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 321--321
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 336--336
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 341--341
+
+ []
+
+[23]
+Underfull \hbox (badness 10000) in paragraph at lines 358--358
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 363--363
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 376--376
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 381--381
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 398--398
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 403--403
+
+ []
+
+[24]
+Underfull \hbox (badness 10000) in paragraph at lines 418--418
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--423
+
+ []
+
+) [25]
+\openout2 = `cache__content__rdwr_8c.aux'.
+
+ (./cache__content__rdwr_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 26--28
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-open
+ \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 
+pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--30
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-clos
+e \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10
+ pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 30--31
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-rdwr
+ \T1/cmr/m/n/10 (cache_-content_-entry_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 
+pentry,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 39--39
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 42--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--43
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+[26
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 88--88
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 93--93
+
+ []
+
+[27]
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+) [28]
+\openout2 = `cache__content__read__conf_8c.aux'.
+
+ (./cache__content__read__conf_8c.tex
+Underfull \hbox (badness 5133) in paragraph at lines 22--24
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-read
+_-conf_-client_-parameter \T1/cmr/m/n/10 (config_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 24--26
+[]\T1/cmr/m/n/10 void \T1/cmr/bx/n/10 cache_-content_-print_-conf_-client_-para
+meter \T1/cmr/m/n/10 (FILE $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 output, cache_-
+
+ []
+
+
+Underfull \hbox (badness 1184) in paragraph at lines 28--29
+[]\T1/cmr/m/n/10 void \T1/cmr/bx/n/10 cache_-content_-print_-conf_-gc_-policy \
+T1/cmr/m/n/10 (FILE $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 output, cache_-content
+_-gc_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 44--44
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 45--45
+
+ []
+
+[29
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--98
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 103--103
+
+ []
+
+
+Underfull \hbox (badness 1910) in paragraph at lines 103--103
+[]\T1/cmr/m/n/10 CACHE_-CONTENT_-SUCCESS if ok, CACHE_-CONTENT_-INVALID_-ARGUME
+NT
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+[30]
+Underfull \hbox (badness 10000) in paragraph at lines 124--124
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--129
+
+ []
+
+) [31]
+\openout2 = `cache__content__release__entry_8c.aux'.
+
+ (./cache__content__release__entry_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 24--25
+[]\T1/cmr/m/n/10 cache_-content_-status_-t \T1/cmr/bx/n/10 cache_-content_-rele
+ase_-entry \T1/cmr/m/n/10 (cache_-content_-entry_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 40--40
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+[32
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+) [33]
+\openout2 = `cache__content__truncate_8c.aux'.
+
+ (./cache__content__truncate_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 29--29
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--37
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 38--38
+
+ []
+
+) [34
+
+
+]
+\openout2 = `test__threshold_8c.aux'.
+
+ (./test__threshold_8c.tex) [35
+
+
+] [36
+
+
+]
+Chapter 4.
+(./todo.tex
+Overfull \hbox (645.16151pt too wide) in paragraph at lines 4--4
+[]
+ []
+
+
+Overfull \hbox (253.66035pt too wide) in paragraph at lines 9--10
+[]
+ []
+
+) (./refman.ind [37]
+Underfull \hbox (badness 10000) in paragraph at lines 95--96
+[]| \T1/cmr/m/n/10 cache_-content_-local_-cache_-closedir,
+ []
+
+[38
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
+[]| \T1/cmr/m/n/10 cache_-content_-local_-cache_-dir_-iter,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--98
+[]| \T1/cmr/m/n/10 cache_-content_-local_-cache_-opendir,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--111
+[]\T1/cmr/m/n/10 cache_-content_-print_-conf_-client_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 123--125
+[]| \T1/cmr/m/n/10 cache_-content_-print_-conf_-client_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+[]| \T1/cmr/m/n/10 cache_-content_-print_-conf_-gc_-policy,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 126--128
+[]| \T1/cmr/m/n/10 cache_-content_-read_-conf_-client_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 128--129
+[]| \T1/cmr/m/n/10 cache_-content_-read_-conf_-gc_-policy,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--130
+[]\T1/cmr/m/n/10 cache_-content_-read_-conf_-client_-
+ []
+
+[39]) (./refman.aux (./cache__content__crash__recover_8c.aux)
+(./cache__content__emergency__flush_8c.aux) (./cache__content__flush_8c.aux)
+(./cache__content__gc_8c.aux) (./cache__content__init_8c.aux)
+(./cache__content__misc_8c.aux) (./cache__content__rdwr_8c.aux)
+(./cache__content__read__conf_8c.aux) (./cache__content__release__entry_8c.aux)
+(./cache__content__truncate_8c.aux) (./test__threshold_8c.aux)) ) 
+Here is how much of TeX's memory you used:
+ 1749 strings out of 95847
+ 24693 string characters out of 1193874
+ 70845 words of memory out of 1000001
+ 4584 multiletter control sequences out of 10000+50000
+ 14253 words of font info for 29 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 29i,12n,43p,1585b,487s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (43 pages, 90872 bytes).

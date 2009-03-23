@@ -1,0 +1,292 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="group__LRUExportedFunctions" kind="group">
+    <compoundname>LRUExportedFunctions</compoundname>
+    <title>LRUExportedFunctions</title>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>LRU_list_t *</type>
+        <definition>LRU_list_t* LRU_Init</definition>
+        <argsstring>(LRU_parameter_t lru_param, LRU_status_t *pstatus)</argsstring>
+        <name>LRU_Init</name>
+        <param>
+          <type>LRU_parameter_t</type>
+          <declname>lru_param</declname>
+        </param>
+        <param>
+          <type>LRU_status_t *</type>
+          <declname>pstatus</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_Init: Init the LRU list.</para><para>Init the Hash Table .</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>lru_param</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A structure of type lru_parameter_t which contains the values used to init the LRU. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pstatus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to an integer to contain the status for the operation.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>NULL if init failed, the pointeur to the hashtable otherwise.</para></simplesect>
+<simplesect kind="see"><para>PreAllocEntry </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="181" bodystart="180" bodyend="220"/>
+        <referencedby refid="test__configurable__lru_8c_1a10" compoundref="test__configurable__lru_8c" startline="172" endline="309">main</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int LRU_invalidate</definition>
+        <argsstring>(LRU_list_t *plru, LRU_entry_t *pentry)</argsstring>
+        <name>LRU_invalidate</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <param>
+          <type>LRU_entry_t *</type>
+          <declname>pentry</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_invalidate: Tag an entry as invalid.</para><para>Tag an entry as invalid, this kind of entry will be put off the LRU (and sent back to the pool) when a garbagge collection will be performed.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to the list to be managed. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pentry</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to the entry to be tagged.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>LRU_LIST_SUCCESS if successfull, other values show an error.</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__LRUExportedFunctions_1ga3" kindref="member">LRU_gc_invalid</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="237" bodystart="236" bodyend="245"/>
+        <referencedby refid="test__configurable__lru_8c_1a7" compoundref="test__configurable__lru_8c" startline="134" endline="141">do_invalidate</referencedby>
+        <referencedby refid="group__LRUExportedFunctions_1ga4" compoundref="LRU__List_8c" startline="394" endline="427">LRU_invalidate_by_function</referencedby>
+        <referencedby refid="test__lru_8c_1a5" compoundref="test__lru_8c" startline="135" endline="203">main</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>LRU_entry_t *</type>
+        <definition>LRU_entry_t* LRU_new_entry</definition>
+        <argsstring>(LRU_list_t *plru, LRU_status_t *pstatus)</argsstring>
+        <name>LRU_new_entry</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <param>
+          <type>LRU_status_t *</type>
+          <declname>pstatus</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_new_entry : acquire a new entry from the pool.</para><para>acquire a new entry from the pool. If pool is empty, a new chunck is added to complete the operation.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to the list to be managed. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pstatus</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to an integer to contain the status for the operation.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>NULL if init failed, the pointeur to the hashtable otherwise.</para></simplesect>
+<simplesect kind="see"><para>PreAllocEntry </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="261" bodystart="260" bodyend="305"/>
+        <referencedby refid="test__configurable__lru_8c_1a8" compoundref="test__configurable__lru_8c" startline="143" endline="164">do_new</referencedby>
+        <referencedby refid="test__lru_8c_1a5" compoundref="test__lru_8c" startline="135" endline="203">main</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int LRU_gc_invalid</definition>
+        <argsstring>(LRU_list_t *plru, void *cleanparam)</argsstring>
+        <name>LRU_gc_invalid</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <param>
+          <type>void *</type>
+          <declname>cleanparam</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_gc_invalid : garbagge collection for invalid entries.</para><para>Read the whole LRU list and put the invalid entries back to the pool.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to the list to be managed. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An integer to contain the status for the operation.</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__LRUExportedFunctions_1ga1" kindref="member">LRU_invalidate</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="319" bodystart="318" bodyend="376"/>
+        <referencedby refid="test__configurable__lru_8c_1a9" compoundref="test__configurable__lru_8c" startline="166" endline="169">do_gc</referencedby>
+        <referencedby refid="test__lru_8c_1a5" compoundref="test__lru_8c" startline="135" endline="203">main</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int LRU_invalidate_by_function</definition>
+        <argsstring>(LRU_list_t *plru, int(*testfunc)(LRU_entry_t *, void *addparam), void *addparam)</argsstring>
+        <name>LRU_invalidate_by_function</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <param>
+          <type>int(*)(LRU_entry_t *, void *addparam)</type>
+          <declname>testfunc</declname>
+        </param>
+        <param>
+          <type>void *</type>
+          <declname>addparam</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_invalidate_by_function: Browse the lru to test if entries should ne invalidated.</para><para>Browse the lru to test if entries should ne invalidated. This function is used for garbagge collection</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] LRU list to be managed. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>testfunc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] function used to identify an entry to be tagged invalid. This function returns TRUE if entry will be tagged invalid </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>addparam</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] parameter for the input function.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>LRU_LIST_SUCCESS if ok, other values shows an error</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__LRUExportedFunctions_1ga1" kindref="member">LRU_invalidate</ref> </para><para><ref refid="group__LRUExportedFunctions_1ga3" kindref="member">LRU_gc_invalid</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="395" bodystart="394" bodyend="427"/>
+        <references refid="group__LRUExportedFunctions_1ga1" compoundref="LRU__List_8c" startline="236" endline="245">LRU_invalidate</references>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int LRU_apply_function</definition>
+        <argsstring>(LRU_list_t *plru, int(*myfunc)(LRU_entry_t *, void *addparam), void *addparam)</argsstring>
+        <name>LRU_apply_function</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <param>
+          <type>int(*)(LRU_entry_t *, void *addparam)</type>
+          <declname>myfunc</declname>
+        </param>
+        <param>
+          <type>void *</type>
+          <declname>addparam</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>LRU_apply_function: apply the same function to every LRU entry, but do not change their states.</para><para>apply the same function to every LRU entry, but do not change their states.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] LRU list to be managed. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>myfunc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] function used to be runned on every entry. If this function return FALSE, the loop stops. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>addparam</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[IN] parameter for the input function.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>LRU_LIST_SUCCESS if ok, other values shows an error</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__LRUExportedFunctions_1ga1" kindref="member">LRU_invalidate</ref> </para><para><ref refid="group__LRUExportedFunctions_1ga3" kindref="member">LRU_gc_invalid</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="448" bodystart="447" bodyend="480"/>
+      </memberdef>
+      <memberdef kind="function" id="group__LRUExportedFunctions_1ga6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void LRU_Print</definition>
+        <argsstring>(LRU_list_t *plru)</argsstring>
+        <name>LRU_Print</name>
+        <param>
+          <type>LRU_list_t *</type>
+          <declname>plru</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>HashTable_Print: Print information about the LRU (mostly for debugging purpose).</para><para>Print information about the LRU (mostly for debugging purpose).</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>plru</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the LRU to be used.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>none (returns void). </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/LRU/LRU_List.c" line="494" bodystart="493" bodyend="504"/>
+        <referencedby refid="test__configurable__lru_8c_1a10" compoundref="test__configurable__lru_8c" startline="172" endline="309">main</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+  </compounddef>
+</doxygen>

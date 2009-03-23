@@ -1,0 +1,100 @@
+\section{nfs4\_\-op\_\-savefh.c File Reference}
+\label{nfs4__op__savefh_8c}\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
+Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/types.h$>$}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/auth.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf nfs4\_\-op\_\-savefh} (struct nfs\_\-argop4 $\ast$op, compound\_\-data\_\-t $\ast$data, struct nfs\_\-resop4 $\ast$resp)
+\item 
+void {\bf nfs4\_\-op\_\-savefh\_\-Free} (SAVEFH4res $\ast$resp)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/01/05 15:14:52 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.10 \end{Desc}
+\end{Desc}
+{\bf nfs4\_\-op\_\-getfh.c}{\rm (p.\,\pageref{nfs4__op__getfh_8c})} : Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation.
+
+Definition in file {\bf nfs4\_\-op\_\-savefh.c}.
+
+\subsection{Function Documentation}
+\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4_op_savefh@{nfs4\_\-op\_\-savefh}}
+\index{nfs4_op_savefh@{nfs4\_\-op\_\-savefh}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-savefh (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_a0}
+
+
+nfs4\_\-op\_\-savefh: the NFS4\_\-OP\_\-SAVEFH operation
+
+This functions handles the NFS4\_\-OP\_\-SAVEFH operation in NFSv4. This function can be called only from nfs4\_\-Compound. The operation set the saved\-FH with the value of the current\-FH.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em op}][IN] pointer to nfs4\_\-op arguments \item[{\em data}][INOUT] Pointer to the compound request's data \item[{\em resp}][IN] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NFS4\_\-OK if successfull, other values show an error.\end{Desc}
+\begin{Desc}
+\item[See also:]all the nfs4\_\-op\_\-$<$$\ast$$>$ function 
+
+{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+
+
+Definition at line 145 of file nfs4\_\-op\_\-savefh.c.
+
+References nfs4\_\-Allocate\-FH().\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4_op_savefh_Free@{nfs4\_\-op\_\-savefh\_\-Free}}
+\index{nfs4_op_savefh_Free@{nfs4\_\-op\_\-savefh\_\-Free}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-savefh\_\-Free (SAVEFH4res $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_a1}
+
+
+nfs4\_\-op\_\-savefh\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-savefh.
+
+Frees what was allocared to handle nfs4\_\-op\_\-savefh.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em resp}][INOUT] Pointer to nfs4\_\-op results\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function ) \end{Desc}
+
+
+Definition at line 218 of file nfs4\_\-op\_\-savefh.c.

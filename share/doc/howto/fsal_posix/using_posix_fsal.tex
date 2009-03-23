@@ -1,0 +1,174 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+{\Large \textbf{Exporting a POSIX filesystem with GANESHA} }\\
+
+\section{Introduction}
+
+Thanks to its backend modules called {}``File System Abstraction Layers'' (FSAL),
+GANESHA NFS server makes it possible to export any filesystem where entries
+can be accessed using handles.
+
+In a POSIX filesystem, entries are accessed using their path, which does not
+meet the requirements for a handle (persistency, unicity).
+However GANESHA provides a FSAL that can assign a unic and persistent
+filehandle to each filesystem entry. To do this, it needs to keep some persistent
+information in a database.
+
+This document will describe the database configuration needed,
+and the parameters GANESHA uses for accessing this database.
+
+\section{Database configuration}
+
+GANESHA supports both MySQL 5, PostgreSQL 7 and 8.\\
+This section will explain how to install/configure a database in order to use the POSIX FSAL.
+
+\subsection{MySQL configuration}
+
+\begin{itemize}
+\item First, install the mysql-server package
+\item Start the mysql server:\\
+      \texttt{service mysqld start}
+\item As root, create a database for NFS-GANESHA:\\
+      \texttt{mysqladmin create ganesha\_db}
+\item Then, create a database user and give it all access rights.\\
+      For this, open a SQL session (as root):\\
+      \texttt{mysql ganesha\_db}\\
+      And execute the following commands:\\
+      \texttt{create user 'GANESHA' identified by 'passw0rd';}\\
+      \texttt{grant usage on ganesha\_db.* to 'GANESHA'@'localhost' identified by 'passw0rd';}\\
+      \texttt{grant all privileges on ganesha\_db.* to 'GANESHA'@'localhost' identified by 'passw0rd';}\\
+      Finally, commit the new settings:\\
+      \texttt{flush privileges;}
+\item Check that this new user can access the database by openning a SQL session:\\
+      \texttt{mysql --user=GANESHA --password=passw0rd --host=localhost ganesha\_db}
+\item Retrieve the database schema from nfs-ganesha sources:\\
+      \texttt{src/FSAL/FSAL\_POSIX/DBExt/MYSQL/posixdb\_mysql5.sql}, and execute the SQL statements it contains: \\
+      \texttt{mysql --user=GANESHA --password=passw0rd --host=localhost ganesha\_db < posixdb\_mysql5.sql}
+\item Create a password file that will be used by NFS-GANESHA daemon:\\
+      \texttt{echo "passw0rd" > /var/ganesha/.dbpass}\\
+      Don't forget setting restrictive access rights to this file:\\
+      \texttt{chmod 600 /var/ganesha/.dbpass}
+\end{itemize}
+
+\subsection{PostgreSQL configuration}
+
+GANESHA supports PostgreSQL version 7 and higher.\\
+This section will explain how to install/configure a PostgreSQL 8.1 database in order to use the POSIX FSAL.
+For 7.x version, configuration is very similar (differences will be noticed inline).\\
+In the following description, replace \%DBNAME\% and \%USERNAME\% signs
+with the actual database name and user name you want to use.
+
+\begin{itemize}
+
+\item First, install the postgreSQL 8.1 package.
+\item Then, take the "postgres" identity (this user is created during package setup. It has all rights on PostgreSQL engine)\\
+      \texttt{su - postgres}
+\item Create a new user for using the database with GANESHA:\\
+      \texttt{createuser --no-superuser --no-createdb --no-createrole --login --pwprompt \%USERNAME\%} (you will be prompted for a password).\\
+      \\
+      With postgreSQL 7, use the following command instead:\\
+      \texttt{createuser --no-adduser --no-createdb --pwprompt \%USERNAME\%}  (reply 'no' to questions that will be prompted, and enter a password)
+\item Create a new database (owned by the user we have juste created):\\
+      \texttt{createdb -O \%USERNAME\% \%DBNAME\%}
+\item In order to use PGSQL Procedural Language for improving frequent database queries, we have to activate plpgsql into our database:\\
+      \texttt{createlang plpgsql \%DBNAME\%}
+\item Make sure you have tcp connections enabled for your database. This is set in file `\texttt{postgresql.conf}' (it should be located in
+      `\texttt{/var/lib/pgsql/data}'). Make sure `\texttt{tcpip\_socket}' parameter is true and the line is not commented:\\
+      \texttt{tcpip\_socket = true}
+\item In order to enable server's authentication, you have to modify \texttt{pg\_hba.conf} (by default, this is located
+      in the \texttt{/var/lib/pgsql/data} directory).\\
+      At the end of the file you should have something like this:
+      \begin{verbatim}
+local   all         all                               trust
+# IPv4 local connections:
+host    all         all         127.0.0.1/32          md5
+host    all         all         %GANESHA_NFSD_IP%/32  md5
+# IPv6 local connections:
+host    all         all         ::1/128               trust
+      \end{verbatim}
+      After this step, you have to restart the postgresql service:\\
+      \texttt{service postgresql restart}
+\item We can now create the tables in the database. To do this, retrieve the appropriate SQL script
+      from directory `\texttt{src/FSAL/FSAL\_POSIX/DBExt/PGSQL}' in GANESHA sources: 
+      use `\texttt{posixdb\_v7.sql}' if you have a postgreSQL v7.x database,
+      `\texttt{posixdb\_v8.sql}' if you are using postgreSQL v8 database or higher version
+      (with stored procedures support).\\
+      Then execute it like this:\\
+      \texttt{cat posixdb\_v8.sql | psql -h localhost -U \%USERNAME\% \%DBNAME\%}
+\item Create a keytab file in order for GANESHA to access the database. The content of this file
+      must have the folowing syntax:\\
+      \texttt{hostname:port:database:username:password}\\
+      Take care of setting exactly the same values in the GANESHA's configuration file
+      for \texttt{DB\_host}, \texttt{DB\_port}, \texttt{DB\_name} and \texttt{DB\_login}.\\
+      This file's permissions MUST be 600 (rw-------).            
+\end{itemize}
+
+Database is now ready.
+
+
+\section{Compiling GANESHA}
+
+For using GANESHA's over a POSIX filesystem, you have to build it using the configure arg \texttt{--with-fsal=POSIX}.\\
+Database can be selected using one of the following options \texttt{--with-db=MYSQL} or  \texttt{--with-db=PGSQL}.\\
+For PostGreSQL databases that support stored procedures (PostgreSQL PL), you can activate them with \texttt{--enable-pl-pgsql} arg.
+
+Thus, for compiling GANESHA execute the following commands:
+\begin{verbatim}
+cd src
+./configure --with-fsal=POSIX --with-db=MYSQL
+make
+\end{verbatim}
+
+\section{GANESHA configuration}
+
+For configurating GANESHA's access to database, you have to set
+some options in the configuration file: this in done in the {}``\texttt{POSIX}''
+configuration block.
+\\
+
+In this block, you must set the following values:
+
+\begin{itemize}
+\item \texttt{DB\_host}: address of the host where the database server is running.
+\item \texttt{DB\_name}: the database name.
+\item \texttt{DB\_login}: user owning the database.
+\item \texttt{DB\_keytab}: path of the keytab file.
+\item \texttt{DB\_port}: port number where the database engine is listening on (do not set this parameter for using defaut).
+\end{itemize}
+\textbf{NB: For PostGreSQL, all those values must be exactly the same as in the database keytab file.}\\
+
+Note that postgreSQL \textbf{v7} does not support alternative path for keytab file:
+this file must be named `\texttt{.pgpass}' and must be located in the home
+directory of the user who is starting GANESHA (commonly `root').\\
+
+Here is an example of a POSIX block in the configuration file:
+\begin{verbatim}
+POSIX
+{
+    # Host
+    DB_Host = "localhost";
+
+    # Database Name
+    DB_Name = "ganesha_db";
+
+    # Login
+    DB_Login = "GANESHA";
+
+    # Path to the file where the password is stored
+    # (format of the file is Database specific)
+    DB_keytab = "/var/ganesha/posixdb.keytab";
+}
+\end{verbatim}
+
+\end{document}

@@ -1,0 +1,329 @@
+\section{fsal\_\-internal.c File Reference}
+\label{fsal__internal_8c}\index{fsal_internal.c@{fsal\_\-internal.c}}
+Defines the datas that are to be accessed as extern by the fsal modules. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
+{\tt \#include \char`\"{}posixdb\_\-consistency.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Sem\-N.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
+{\tt \#include $<$libgen.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf FSAL\_\-INTERNAL\_\-C}\label{fsal__internal_8c_a0}
+
+\item 
+\#define {\bf SET\_\-INTEGER\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\item 
+\#define {\bf SET\_\-BITMAP\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\item 
+\#define {\bf SET\_\-BOOLEAN\_\-PARAM}(cfg, p\_\-init\_\-info, \_\-field)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf fsal\_\-increment\_\-nbcall} (int function\_\-index, fsal\_\-status\_\-t status)
+\item 
+void {\bf fsal\_\-internal\_\-getstats} (fsal\_\-statistics\_\-t $\ast$output\_\-stats)
+\item 
+void {\bf fsal\_\-internal\_\-Set\-Credential\-Lifetime} (fsal\_\-uint\_\-t lifetime\_\-in)
+\item 
+void {\bf Take\-Token\-FSCall} ()
+\item 
+void {\bf Release\-Token\-FSCall} ()\label{fsal__internal_8c_a18}
+
+\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-init\_\-global} (fsal\_\-init\_\-info\_\-t $\ast$fsal\_\-info, fs\_\-common\_\-initinfo\_\-t $\ast$fs\_\-common\_\-info, fs\_\-specific\_\-initinfo\_\-t $\ast$fs\_\-specific\_\-info)\label{fsal__internal_8c_a19}
+
+\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-posix2posixdb\_\-fileinfo} (struct stat $\ast$buffstat, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$info)
+\begin{CompactList}\small\item\em convert 'struct stat' to 'fsal\_\-posixdb\_\-fileinfo\_\-t' \item\end{CompactList}\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-posixdb\_\-add\_\-entry} (fsal\_\-posixdb\_\-conn $\ast$p\_\-conn, fsal\_\-name\_\-t $\ast$p\_\-filename, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$p\_\-info, fsal\_\-handle\_\-t $\ast$p\_\-dir\_\-handle, fsal\_\-handle\_\-t $\ast$p\_\-new\_\-handle)\label{fsal__internal_8c_a21}
+
+\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath} (fsal\_\-path\_\-t $\ast$p\_\-path, fsal\_\-name\_\-t $\ast$p\_\-name)
+\begin{CompactList}\small\item\em p\_\-path $<$- p\_\-path + '/' + p\_\-name \item\end{CompactList}\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-get\-Path\-From\-Handle} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-handle\_\-t $\ast$p\_\-handle, int is\_\-dir, fsal\_\-path\_\-t $\ast$p\_\-fsalpath, struct stat $\ast$p\_\-buffstat)
+\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-get\-Info\-From\-Name} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-handle\_\-t $\ast$p\_\-parent\_\-dir\_\-handle, fsal\_\-name\_\-t $\ast$p\_\-fsalname, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$p\_\-infofs, fsal\_\-handle\_\-t $\ast$p\_\-object\_\-handle)
+\begin{CompactList}\small\item\em Get the handle of a file, knowing its name and its parent dir. \item\end{CompactList}\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-get\-Info\-From\-Children\-List} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-handle\_\-t $\ast$p\_\-parent\_\-dir\_\-handle, fsal\_\-name\_\-t $\ast$p\_\-fsalname, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$p\_\-infofs, fsal\_\-posixdb\_\-child $\ast$p\_\-children, unsigned int children\_\-count, fsal\_\-handle\_\-t $\ast$p\_\-object\_\-handle)
+\begin{CompactList}\small\item\em Get the handle of a file from a fsal\_\-posixdb\_\-child array, knowing its name. \item\end{CompactList}\item 
+fsal\_\-status\_\-t {\bf fsal\_\-internal\_\-test\-Access} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-accessflags\_\-t access\_\-type, struct stat $\ast$p\_\-buffstat, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)\label{fsal__internal_8c_a26}
+
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+fsal\_\-uint\_\-t {\bf Credential\-Lifetime} = 3600\label{fsal__internal_8c_a4}
+
+\item 
+fsal\_\-staticfsinfo\_\-t {\bf global\_\-fs\_\-info}\label{fsal__internal_8c_a5}
+
+\item 
+fsal\_\-posixdb\_\-conn\_\-params\_\-t {\bf global\_\-posixdb\_\-params}\label{fsal__internal_8c_a6}
+
+\item 
+log\_\-t {\bf fsal\_\-log}\label{fsal__internal_8c_a8}
+
+\item 
+semaphore\_\-t {\bf sem\_\-fs\_\-calls}\label{fsal__internal_8c_a10}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Defines the datas that are to be accessed as extern by the fsal modules. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/01/17 14:20:07 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.24 \end{Desc}
+\end{Desc}
+
+
+Definition in file {\bf fsal\_\-internal.c}.
+
+\subsection{Define Documentation}
+\index{fsal_internal.c@{fsal\_\-internal.c}!SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}}
+\index{SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BITMAP\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a2}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a bit AND */                                     \
+      cfg._field &= (p_init_info)->values._field ;                \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a bit OR */                                      \
+      cfg._field |= (p_init_info)->values._field ;                \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 292 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!SET_BOOLEAN_PARAM@{SET\_\-BOOLEAN\_\-PARAM}}
+\index{SET_BOOLEAN_PARAM@{SET\_\-BOOLEAN\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BOOLEAN\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a3}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a boolean AND */                                 \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a boolean OR */                                  \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 310 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}}
+\index{SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-INTEGER\_\-PARAM(cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__internal_8c_a1}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+      /* force the value in any case */                           \
+      cfg._field = (p_init_info)->values._field;                  \
+      break;                                                      \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* check the higher limit */                                \
+      if ( cfg._field > (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* check the lower limit */                                 \
+      if ( cfg._field < (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    /* In the other cases, we keep the default value. */          \
+    }
+\end{verbatim}\normalsize 
+
+
+Definition at line 272 of file fsal\_\-internal.c.
+
+\subsection{Function Documentation}
+\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_increment_nbcall@{fsal\_\-increment\_\-nbcall}}
+\index{fsal_increment_nbcall@{fsal\_\-increment\_\-nbcall}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-increment\_\-nbcall (int {\em function\_\-index}, fsal\_\-status\_\-t {\em status})}\label{fsal__internal_8c_a14}
+
+
+fsal\_\-increment\_\-nbcall: Updates fonction call statistics.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em function\_\-index}](input): Index of the function whom number of call is to be incremented. \item[{\em status}](input): Status the function returned.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 106 of file fsal\_\-internal.c.
+
+References fsal\_\-is\_\-retryable().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_appendFSALNameToFSALPath@{fsal\_\-internal\_\-appendFSALNameToFSALPath}}
+\index{fsal_internal_appendFSALNameToFSALPath@{fsal\_\-internal\_\-appendFSALNameToFSALPath}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath (fsal\_\-path\_\-t $\ast$ {\em p\_\-path}, fsal\_\-name\_\-t $\ast$ {\em p\_\-name})}\label{fsal__internal_8c_a22}
+
+
+p\_\-path $<$- p\_\-path + '/' + p\_\-name 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em p\_\-path}]\item[{\em p\_\-name}]\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]\end{Desc}
+
+
+Definition at line 504 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-create(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-mkdir(), FSAL\_\-mknode(), FSAL\_\-readdir(), FSAL\_\-rename(), FSAL\_\-symlink(), and FSAL\_\-unlink().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_getInfoFromChildrenList@{fsal\_\-internal\_\-getInfoFromChildrenList}}
+\index{fsal_internal_getInfoFromChildrenList@{fsal\_\-internal\_\-getInfoFromChildrenList}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t fsal\_\-internal\_\-get\-Info\-From\-Children\-List (fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-dir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-fsalname}, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$ {\em p\_\-infofs}, fsal\_\-posixdb\_\-child $\ast$ {\em p\_\-children}, unsigned int {\em children\_\-count}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle})}\label{fsal__internal_8c_a25}
+
+
+Get the handle of a file from a fsal\_\-posixdb\_\-child array, knowing its name. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em p\_\-context}]\item[{\em p\_\-parent\_\-dir\_\-handle}]Handle of the parent directory \item[{\em p\_\-fsalname}]Name of the object \item[{\em p\_\-infofs}]Information about the file (taken from the filesystem) to be compared to information stored in database \item[{\em p\_\-children}]fsal\_\-posixdb\_\-child array (that contains the entries of the directory stored in the db) \item[{\em p\_\-object\_\-handle}]Handle of the file.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]ERR\_\-FSAL\_\-NOERR, if no error Anothere error code else. \end{Desc}
+
+
+Definition at line 703 of file fsal\_\-internal.c.
+
+References FSAL\_\-namecmp(), and posixdb2fsal\_\-error().
+
+Referenced by FSAL\_\-readdir().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_getInfoFromName@{fsal\_\-internal\_\-getInfoFromName}}
+\index{fsal_internal_getInfoFromName@{fsal\_\-internal\_\-getInfoFromName}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t fsal\_\-internal\_\-get\-Info\-From\-Name (fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-dir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-fsalname}, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$ {\em p\_\-infofs}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle})}\label{fsal__internal_8c_a24}
+
+
+Get the handle of a file, knowing its name and its parent dir. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em p\_\-context}]\item[{\em p\_\-parent\_\-dir\_\-handle}]Handle of the parent directory \item[{\em p\_\-fsalname}]Name of the object \item[{\em p\_\-infofs}]Information about the file (taken from the filesystem) to be compared to information stored in database \item[{\em p\_\-object\_\-handle}]Handle of the file.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]ERR\_\-FSAL\_\-NOERR, if no error Anothere error code else. \end{Desc}
+
+
+Definition at line 638 of file fsal\_\-internal.c.
+
+References posixdb2fsal\_\-error().
+
+Referenced by FSAL\_\-lookup(), and FSAL\_\-readdir().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_getPathFromHandle@{fsal\_\-internal\_\-getPathFromHandle}}
+\index{fsal_internal_getPathFromHandle@{fsal\_\-internal\_\-getPathFromHandle}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t fsal\_\-internal\_\-get\-Path\-From\-Handle (fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-handle}, int {\em is\_\-dir}, fsal\_\-path\_\-t $\ast$ {\em p\_\-fsalpath}, struct stat $\ast$ {\em p\_\-buffstat})}\label{fsal__internal_8c_a23}
+
+
+Get a valid path associated to an handle. The function selects many paths from the DB and return the first valid one. If is\_\-dir is set, then only 1 path will be constructed from the database. 
+
+Definition at line 534 of file fsal\_\-internal.c.
+
+References fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), FSAL\_\-lookup\-Path(), FSAL\_\-pathcpy(), FSAL\_\-str2name(), FSAL\_\-str2path(), posixdb2fsal\_\-error(), and Take\-Token\-FSCall().
+
+Referenced by FSAL\_\-create(), FSAL\_\-dynamic\_\-fsinfo(), FSAL\_\-getattrs(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-mkdir(), FSAL\_\-mknode(), FSAL\_\-open(), FSAL\_\-opendir(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-symlink(), FSAL\_\-truncate(), and FSAL\_\-unlink().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_getstats@{fsal\_\-internal\_\-getstats}}
+\index{fsal_internal_getstats@{fsal\_\-internal\_\-getstats}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-internal\_\-getstats (fsal\_\-statistics\_\-t $\ast$ {\em output\_\-stats})}\label{fsal__internal_8c_a15}
+
+
+fsal\_\-internal\_\-getstats: (For internal use in the FSAL). Retrieve call statistics for current thread.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output\_\-stats}](output): Pointer to the call statistics structure.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 185 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-get\_\-stats().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_posix2posixdb_fileinfo@{fsal\_\-internal\_\-posix2posixdb\_\-fileinfo}}
+\index{fsal_internal_posix2posixdb_fileinfo@{fsal\_\-internal\_\-posix2posixdb\_\-fileinfo}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t fsal\_\-internal\_\-posix2posixdb\_\-fileinfo (struct stat $\ast$ {\em buffstat}, fsal\_\-posixdb\_\-fileinfo\_\-t $\ast$ {\em info})}\label{fsal__internal_8c_a20}
+
+
+convert 'struct stat' to 'fsal\_\-posixdb\_\-fileinfo\_\-t' 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buffstat}]\item[{\em info}]\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]\end{Desc}
+
+
+Definition at line 453 of file fsal\_\-internal.c.
+
+References posix2fsal\_\-type().
+
+Referenced by FSAL\_\-create(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-mkdir(), FSAL\_\-mknode(), FSAL\_\-readdir(), FSAL\_\-rename(), FSAL\_\-symlink(), and FSAL\_\-unlink().\index{fsal_internal.c@{fsal\_\-internal.c}!fsal_internal_SetCredentialLifetime@{fsal\_\-internal\_\-SetCredentialLifetime}}
+\index{fsal_internal_SetCredentialLifetime@{fsal\_\-internal\_\-SetCredentialLifetime}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void fsal\_\-internal\_\-Set\-Credential\-Lifetime (fsal\_\-uint\_\-t {\em lifetime\_\-in})}\label{fsal__internal_8c_a16}
+
+
+Set credential lifetime. (For internal use in the FSAL). Set the period for thread's credential renewal.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em lifetime\_\-in}](input): The period for thread's credential renewal.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Nothing. \end{Desc}
+
+
+Definition at line 240 of file fsal\_\-internal.c.\index{fsal_internal.c@{fsal\_\-internal.c}!TakeTokenFSCall@{TakeTokenFSCall}}
+\index{TakeTokenFSCall@{TakeTokenFSCall}!fsal_internal.c@{fsal\_\-internal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Take\-Token\-FSCall ()}\label{fsal__internal_8c_a17}
+
+
+Used to limit the number of simultaneous calls to Filesystem. 
+
+Definition at line 249 of file fsal\_\-internal.c.
+
+Referenced by FSAL\_\-close(), FSAL\_\-create(), FSAL\_\-dynamic\_\-fsinfo(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-mkdir(), FSAL\_\-mknode(), FSAL\_\-open(), FSAL\_\-opendir(), FSAL\_\-read(), FSAL\_\-readdir(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-symlink(), FSAL\_\-truncate(), FSAL\_\-unlink(), and FSAL\_\-write().

@@ -1,0 +1,215 @@
+\section{analyse.h File Reference}
+\label{analyse_8h}\index{analyse.h@{analyse.h}}
+Building the syntax tree. 
+
+{\tt \#include $<$stdio.h$>$}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf \_\-type\_\-affect\_\-}
+\item 
+struct {\bf \_\-type\_\-block\_\-}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXSTRLEN}\ 1024
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf \_\-type\_\-affect\_\-} {\bf type\_\-affect}
+\item 
+typedef {\bf type\_\-affect} $\ast$ {\bf list\_\-affect}
+\item 
+typedef {\bf \_\-type\_\-block\_\-} {\bf type\_\-block}
+\item 
+typedef {\bf type\_\-block} $\ast$ {\bf list\_\-block}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf list\_\-block} $\ast$ {\bf config\_\-createlistblock} ()
+\item 
+{\bf type\_\-block} $\ast$ {\bf config\_\-createblock} (char $\ast$blockname, {\bf list\_\-affect} $\ast$list)
+\item 
+void {\bf config\_\-addblock} ({\bf list\_\-block} $\ast$list, {\bf type\_\-block} $\ast$block)
+\item 
+{\bf list\_\-affect} $\ast$ {\bf config\_\-createlistaffect} ()
+\item 
+{\bf type\_\-affect} $\ast$ {\bf config\_\-createaffect} (char $\ast$varname, char $\ast$varval)
+\item 
+void {\bf config\_\-adddef} ({\bf list\_\-affect} $\ast$list, {\bf type\_\-affect} $\ast$affect)
+\item 
+void {\bf config\_\-print\_\-list} (FILE $\ast$output, {\bf list\_\-block} $\ast$list)
+\item 
+void {\bf config\_\-free\_\-list} ({\bf list\_\-block} $\ast$list)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Building the syntax tree. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/04/22 07:42:05 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.3 \end{Desc}
+\end{Desc}
+Build the structure that represents a config file.
+
+CVS History :
+
+\begin{Desc}
+\item[Log]{\bf analyse.h}{\rm (p.\,\pageref{analyse_8h})},v \end{Desc}
+Revision 1.3 2005/04/22 07:42:05 leibovic Adding configuration print function.
+
+Revision 1.2 2005/04/18 10:42:02 leibovic Developping config file reading.
+
+Revision 1.1 2005/04/15 15:01:49 leibovic Initial version for config file parsing.
+
+Definition in file {\bf analyse.h}.
+
+\subsection{Define Documentation}
+\index{analyse.h@{analyse.h}!MAXSTRLEN@{MAXSTRLEN}}
+\index{MAXSTRLEN@{MAXSTRLEN}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXSTRLEN\ 1024}\label{analyse_8h_a0}
+
+
+
+
+Definition at line 33 of file analyse.h.
+
+Referenced by config\_\-createaffect(), config\_\-createblock(), config\_\-Get\-Block\-Index\-By\-Name(), config\_\-Get\-Key\-Value\-By\-Name(), and YY\_\-BUFFER\_\-APPEND().
+
+\subsection{Typedef Documentation}
+\index{analyse.h@{analyse.h}!list_affect@{list\_\-affect}}
+\index{list_affect@{list\_\-affect}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf type\_\-affect}$\ast$ {\bf list\_\-affect}}\label{analyse_8h_a2}
+
+
+
+
+Definition at line 41 of file analyse.h.
+
+Referenced by config\_\-adddef(), config\_\-createblock(), and config\_\-createlistaffect().\index{analyse.h@{analyse.h}!list_block@{list\_\-block}}
+\index{list_block@{list\_\-block}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf type\_\-block}$\ast$ {\bf list\_\-block}}\label{analyse_8h_a4}
+
+
+
+
+Definition at line 51 of file analyse.h.
+
+Referenced by config\_\-addblock(), config\_\-createlistblock(), config\_\-free\_\-list(), and config\_\-print\_\-list().\index{analyse.h@{analyse.h}!type_affect@{type\_\-affect}}
+\index{type_affect@{type\_\-affect}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf \_\-type\_\-affect\_\-} {\bf type\_\-affect}}\label{analyse_8h_a1}
+
+
+
+
+Referenced by config\_\-adddef(), config\_\-createaffect(), config\_\-Get\-Key\-Value(), config\_\-Get\-Key\-Value\-By\-Name(), config\_\-Get\-Nb\-Keys(), and config\_\-print\_\-list().\index{analyse.h@{analyse.h}!type_block@{type\_\-block}}
+\index{type_block@{type\_\-block}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf \_\-type\_\-block\_\-}  {\bf type\_\-block}}\label{analyse_8h_a3}
+
+
+
+
+Referenced by config\_\-addblock(), config\_\-createblock(), config\_\-free\_\-list(), config\_\-Get\-Block\-Index\-By\-Name(), config\_\-Get\-Nb\-Blocks(), and config\_\-print\_\-list().
+
+\subsection{Function Documentation}
+\index{analyse.h@{analyse.h}!config_addblock@{config\_\-addblock}}
+\index{config_addblock@{config\_\-addblock}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-addblock ({\bf list\_\-block} $\ast$ {\em list}, {\bf type\_\-block} $\ast$ {\em block})}\label{analyse_8h_a7}
+
+
+Ajout d'un block a une list de blocks 
+
+Definition at line 123 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::next, and type\_\-block.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_adddef@{config\_\-adddef}}
+\index{config_adddef@{config\_\-adddef}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-adddef ({\bf list\_\-affect} $\ast$ {\em list}, {\bf type\_\-affect} $\ast$ {\em affect})}\label{analyse_8h_a10}
+
+
+Ajout d'une definition a une list d'affectations 
+
+Definition at line 164 of file analyse.c.
+
+References list\_\-affect, \_\-type\_\-affect\_\-::next, and type\_\-affect.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_createaffect@{config\_\-createaffect}}
+\index{config_createaffect@{config\_\-createaffect}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf type\_\-affect}$\ast$ config\_\-createaffect (char $\ast$ {\em varname}, char $\ast$ {\em varval})}\label{analyse_8h_a9}
+
+
+Creation d'une definition variable=valeur 
+
+Definition at line 149 of file analyse.c.
+
+References MAXSTRLEN, \_\-type\_\-affect\_\-::next, and type\_\-affect.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_createblock@{config\_\-createblock}}
+\index{config_createblock@{config\_\-createblock}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf type\_\-block}$\ast$ config\_\-createblock (char $\ast$ {\em blockname}, {\bf list\_\-affect} $\ast$ {\em list})}\label{analyse_8h_a6}
+
+
+Creation d'un block 
+
+Definition at line 109 of file analyse.c.
+
+References list\_\-affect, \_\-type\_\-block\_\-::list\_\-def, MAXSTRLEN, \_\-type\_\-affect\_\-::next, and type\_\-block.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_createlistaffect@{config\_\-createlistaffect}}
+\index{config_createlistaffect@{config\_\-createlistaffect}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-affect}$\ast$ config\_\-createlistaffect ()}\label{analyse_8h_a8}
+
+
+Creation d'une list d'affectations 
+
+Definition at line 138 of file analyse.c.
+
+References list\_\-affect.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_createlistblock@{config\_\-createlistblock}}
+\index{config_createlistblock@{config\_\-createlistblock}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-block}$\ast$ config\_\-createlistblock ()}\label{analyse_8h_a5}
+
+
+Creation d'une list de blocks 
+
+Definition at line 98 of file analyse.c.
+
+References list\_\-block.
+
+Referenced by yyparse().\index{analyse.h@{analyse.h}!config_free_list@{config\_\-free\_\-list}}
+\index{config_free_list@{config\_\-free\_\-list}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-free\_\-list ({\bf list\_\-block} $\ast$ {\em list})}\label{analyse_8h_a12}
+
+
+config\_\-free\_\-list: libere les ressources utilisees par une liste de blocks. 
+
+Definition at line 238 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::next, and type\_\-block.
+
+Referenced by config\_\-Free().\index{analyse.h@{analyse.h}!config_print_list@{config\_\-print\_\-list}}
+\index{config_print_list@{config\_\-print\_\-list}!analyse.h@{analyse.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-print\_\-list (FILE $\ast$ {\em output}, {\bf list\_\-block} $\ast$ {\em list})}\label{analyse_8h_a11}
+
+
+Affichage idente du contenu d'une list de blocks. 
+
+Definition at line 178 of file analyse.c.
+
+References list\_\-block, \_\-type\_\-block\_\-::list\_\-def, \_\-type\_\-block\_\-::name, \_\-type\_\-block\_\-::next, \_\-type\_\-affect\_\-::next, type\_\-affect, type\_\-block, \_\-type\_\-affect\_\-::varname, and \_\-type\_\-affect\_\-::varvalue.
+
+Referenced by config\_\-Print().

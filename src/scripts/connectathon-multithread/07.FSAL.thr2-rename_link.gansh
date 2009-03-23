@@ -1,0 +1,48 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+barrier
+
+cd $TEST_DIR
+
+create FICHIER_2 666
+
+print "-> OK expected (nlink=1)"
+ls -l FICHIER_2
+
+rename FICHIER_2  NEW_FICHIER_2
+
+print "-> Error ERR_FSAL_NOENT expected"
+ls -l FICHIER_2
+
+print "-> nlink=1 expected"
+ls -l NEW_FICHIER_2
+
+hardlink NEW_FICHIER_2  FICHIER_2
+
+print "-> nlink=2 expected"
+ls -l NEW_FICHIER_2
+
+print "-> nlink=2 expected"
+ls -l FICHIER_2
+
+unlink NEW_FICHIER_2
+
+print "-> nlink=1 expected"
+ls -l FICHIER_2
+
+unlink FICHIER_2

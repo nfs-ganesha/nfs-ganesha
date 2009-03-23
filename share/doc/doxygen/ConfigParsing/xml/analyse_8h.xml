@@ -1,0 +1,397 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="analyse_8h" kind="file">
+    <compoundname>analyse.h</compoundname>
+    <includes local="no">stdio.h</includes>
+    <includedby refid="analyse_8c" local="yes">analyse.c</includedby>
+    <includedby refid="conf__lex_8c" local="yes">conf_lex.c</includedby>
+    <includedby refid="conf__yacc_8c" local="yes">conf_yacc.c</includedby>
+    <includedby refid="config__parsing_8c" local="yes">config_parsing.c</includedby>
+    <incdepgraph>
+      <node id="6">
+        <label>analyse.h</label>
+        <link refid="analyse.h"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>stdio.h</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="12">
+        <label>config_parsing.c</label>
+        <link refid="config__parsing_8c"/>
+      </node>
+      <node id="11">
+        <label>conf_yacc.c</label>
+        <link refid="conf__yacc_8c"/>
+      </node>
+      <node id="9">
+        <label>analyse.c</label>
+        <link refid="analyse_8c"/>
+      </node>
+      <node id="8">
+        <label>analyse.h</label>
+        <link refid="analyse.h"/>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>conf_lex.c</label>
+        <link refid="conf__lex_8c"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="struct__type__affect__">_type_affect_</innerclass>
+    <innerclass refid="struct__type__block__">_type_block_</innerclass>
+      <sectiondef kind="define">
+      <memberdef kind="define" id="analyse_8h_1a0" prot="public" static="no">
+        <name>MAXSTRLEN</name>
+        <initializer>1024</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="33" bodystart="33" bodyend="-1"/>
+        <referencedby refid="analyse_8h_1a9" compoundref="analyse_8c" startline="149" endline="158">config_createaffect</referencedby>
+        <referencedby refid="analyse_8h_1a6" compoundref="analyse_8c" startline="109" endline="118">config_createblock</referencedby>
+        <referencedby refid="config__parsing_8c_1a12" compoundref="config__parsing_8c" startline="351" endline="387">config_GetBlockIndexByName</referencedby>
+        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
+        <referencedby refid="conf__lex_8c_1a109" compoundref="conf__lex_8c" startline="421" endline="423">YY_BUFFER_APPEND</referencedby>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="analyse_8h_1a1" prot="public" static="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">_type_affect_</ref></type>
+        <definition>typedef struct _type_affect_ type_affect</definition>
+        <argsstring></argsstring>
+        <name>type_affect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="39"/>
+        <referencedby refid="analyse_8h_1a10" compoundref="analyse_8c" startline="164" endline="172">config_adddef</referencedby>
+        <referencedby refid="analyse_8h_1a9" compoundref="analyse_8c" startline="149" endline="158">config_createaffect</referencedby>
+        <referencedby refid="config__parsing_8c_1a15" compoundref="config__parsing_8c" startline="453" endline="494">config_GetKeyValue</referencedby>
+        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
+        <referencedby refid="config__parsing_8c_1a14" compoundref="config__parsing_8c" startline="421" endline="443">config_GetNbKeys</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      <memberdef kind="typedef" id="analyse_8h_1a2" prot="public" static="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">type_affect</ref> *</type>
+        <definition>typedef type_affect* list_affect</definition>
+        <argsstring></argsstring>
+        <name>list_affect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="41" bodystart="41" bodyend="-1"/>
+        <referencedby refid="analyse_8h_1a10" compoundref="analyse_8c" startline="164" endline="172">config_adddef</referencedby>
+        <referencedby refid="analyse_8h_1a6" compoundref="analyse_8c" startline="109" endline="118">config_createblock</referencedby>
+        <referencedby refid="analyse_8h_1a8" compoundref="analyse_8c" startline="138" endline="144">config_createlistaffect</referencedby>
+      </memberdef>
+      <memberdef kind="typedef" id="analyse_8h_1a3" prot="public" static="no">
+        <type><ref refid="struct__type__block__" kindref="compound">_type_block_</ref></type>
+        <definition>typedef struct _type_block_  type_block</definition>
+        <argsstring></argsstring>
+        <name>type_block</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="49"/>
+        <referencedby refid="analyse_8h_1a7" compoundref="analyse_8c" startline="123" endline="132">config_addblock</referencedby>
+        <referencedby refid="analyse_8h_1a6" compoundref="analyse_8c" startline="109" endline="118">config_createblock</referencedby>
+        <referencedby refid="analyse_8h_1a12" compoundref="analyse_8c" startline="238" endline="256">config_free_list</referencedby>
+        <referencedby refid="config__parsing_8c_1a12" compoundref="config__parsing_8c" startline="351" endline="387">config_GetBlockIndexByName</referencedby>
+        <referencedby refid="config__parsing_8c_1a10" compoundref="config__parsing_8c" startline="258" endline="296">config_GetNbBlocks</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      <memberdef kind="typedef" id="analyse_8h_1a4" prot="public" static="no">
+        <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
+        <definition>typedef type_block* list_block</definition>
+        <argsstring></argsstring>
+        <name>list_block</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="51" bodystart="51" bodyend="-1"/>
+        <referencedby refid="analyse_8h_1a7" compoundref="analyse_8c" startline="123" endline="132">config_addblock</referencedby>
+        <referencedby refid="analyse_8h_1a5" compoundref="analyse_8c" startline="98" endline="104">config_createlistblock</referencedby>
+        <referencedby refid="analyse_8h_1a12" compoundref="analyse_8c" startline="238" endline="256">config_free_list</referencedby>
+        <referencedby refid="analyse_8h_1a11" compoundref="analyse_8c" startline="178" endline="207">config_print_list</referencedby>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="analyse_8h_1a5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+        <definition>list_block* config_createlistblock</definition>
+        <argsstring>()</argsstring>
+        <name>config_createlistblock</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Creation d&apos;une list de blocks </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="57" bodystart="98" bodyend="104"/>
+        <references refid="analyse_8h_1a4" compoundref="analyse_8h" startline="51">list_block</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
+        <definition>type_block* config_createblock</definition>
+        <argsstring>(char *blockname, list_affect *list)</argsstring>
+        <name>config_createblock</name>
+        <param>
+          <type>char *</type>
+          <declname>blockname</declname>
+        </param>
+        <param>
+          <type><ref refid="struct__type__affect__" kindref="compound">list_affect</ref> *</type>
+          <declname>list</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Creation d&apos;un block </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="62" bodystart="109" bodyend="118"/>
+        <references refid="analyse_8h_1a2" compoundref="analyse_8h" startline="41">list_affect</references>
+        <references refid="struct__type__block___1o1" compoundref="analyse_8h" startline="46">_type_block_::list_def</references>
+        <references refid="analyse_8h_1a0" compoundref="analyse_8h" startline="33">MAXSTRLEN</references>
+        <references refid="struct__type__affect___1o2" compoundref="analyse_8h" startline="38">_type_affect_::next</references>
+        <references refid="analyse_8h_1a3">type_block</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void config_addblock</definition>
+        <argsstring>(list_block *list, type_block *block)</argsstring>
+        <name>config_addblock</name>
+        <param>
+          <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+          <declname>list</declname>
+        </param>
+        <param>
+          <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
+          <declname>block</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Ajout d&apos;un block a une list de blocks </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="67" bodystart="123" bodyend="132"/>
+        <references refid="analyse_8h_1a4" compoundref="analyse_8h" startline="51">list_block</references>
+        <references refid="struct__type__block___1o2" compoundref="analyse_8h" startline="47">_type_block_::next</references>
+        <references refid="analyse_8h_1a3">type_block</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="struct__type__affect__" kindref="compound">list_affect</ref> *</type>
+        <definition>list_affect* config_createlistaffect</definition>
+        <argsstring>()</argsstring>
+        <name>config_createlistaffect</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Creation d&apos;une list d&apos;affectations </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="73" bodystart="138" bodyend="144"/>
+        <references refid="analyse_8h_1a2" compoundref="analyse_8h" startline="41">list_affect</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="struct__type__affect__" kindref="compound">type_affect</ref> *</type>
+        <definition>type_affect* config_createaffect</definition>
+        <argsstring>(char *varname, char *varval)</argsstring>
+        <name>config_createaffect</name>
+        <param>
+          <type>char *</type>
+          <declname>varname</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>varval</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Creation d&apos;une definition variable=valeur </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="78" bodystart="149" bodyend="158"/>
+        <references refid="analyse_8h_1a0" compoundref="analyse_8h" startline="33">MAXSTRLEN</references>
+        <references refid="struct__type__affect___1o2" compoundref="analyse_8h" startline="38">_type_affect_::next</references>
+        <references refid="analyse_8h_1a1">type_affect</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a10" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void config_adddef</definition>
+        <argsstring>(list_affect *list, type_affect *affect)</argsstring>
+        <name>config_adddef</name>
+        <param>
+          <type><ref refid="struct__type__affect__" kindref="compound">list_affect</ref> *</type>
+          <declname>list</declname>
+        </param>
+        <param>
+          <type><ref refid="struct__type__affect__" kindref="compound">type_affect</ref> *</type>
+          <declname>affect</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Ajout d&apos;une definition a une list d&apos;affectations </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="84" bodystart="164" bodyend="172"/>
+        <references refid="analyse_8h_1a2" compoundref="analyse_8h" startline="41">list_affect</references>
+        <references refid="struct__type__affect___1o2" compoundref="analyse_8h" startline="38">_type_affect_::next</references>
+        <references refid="analyse_8h_1a1">type_affect</references>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void config_print_list</definition>
+        <argsstring>(FILE *output, list_block *list)</argsstring>
+        <name>config_print_list</name>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <param>
+          <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+          <declname>list</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Affichage idente du contenu d&apos;une list de blocks. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="90" bodystart="178" bodyend="207"/>
+        <references refid="analyse_8h_1a4" compoundref="analyse_8h" startline="51">list_block</references>
+        <references refid="struct__type__block___1o1" compoundref="analyse_8h" startline="46">_type_block_::list_def</references>
+        <references refid="struct__type__block___1o0" compoundref="analyse_8h" startline="45">_type_block_::name</references>
+        <references refid="struct__type__block___1o2" compoundref="analyse_8h" startline="47">_type_block_::next</references>
+        <references refid="struct__type__affect___1o2" compoundref="analyse_8h" startline="38">_type_affect_::next</references>
+        <references refid="analyse_8h_1a1">type_affect</references>
+        <references refid="analyse_8h_1a3">type_block</references>
+        <references refid="struct__type__affect___1o0" compoundref="analyse_8h" startline="36">_type_affect_::varname</references>
+        <references refid="struct__type__affect___1o1" compoundref="analyse_8h" startline="37">_type_affect_::varvalue</references>
+        <referencedby refid="config__parsing_8c_1a8" compoundref="config__parsing_8c" startline="217" endline="225">config_Print</referencedby>
+      </memberdef>
+      <memberdef kind="function" id="analyse_8h_1a12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void config_free_list</definition>
+        <argsstring>(list_block *list)</argsstring>
+        <name>config_free_list</name>
+        <param>
+          <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+          <declname>list</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>config_free_list: libere les ressources utilisees par une liste de blocks. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h" line="97" bodystart="238" bodyend="256"/>
+        <references refid="analyse_8h_1a4" compoundref="analyse_8h" startline="51">list_block</references>
+        <references refid="struct__type__block___1o2" compoundref="analyse_8h" startline="47">_type_block_::next</references>
+        <references refid="analyse_8h_1a3">type_block</references>
+        <referencedby refid="config__parsing_8c_1a9" compoundref="config__parsing_8c" startline="237" endline="249">config_Free</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Building the syntax tree. </para>    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+</para></simplesect>
+<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/04/22 07:42:05 </para></simplesect>
+</para></simplesect>
+<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.3 </para></simplesect>
+</para></simplesect>
+Build the structure that represents a config file.</para><para>CVS History :</para><para><simplesect kind="rcs"><title>Log</title><para><ref refid="analyse_8h" kindref="compound">analyse.h</ref>,v </para></simplesect>
+Revision 1.3 2005/04/22 07:42:05 leibovic Adding configuration print function.</para><para>Revision 1.2 2005/04/18 10:42:02 leibovic Developping config file reading.</para><para>Revision 1.1 2005/04/15 15:01:49 leibovic Initial version for config file parsing.</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="27"><highlight class="preprocessor">#ifndef<sp/>CONFPARSER_H</highlight></codeline>
+<codeline lineno="28"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>CONFPARSER_H</highlight></codeline>
+<codeline lineno="29"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight></codeline>
+<codeline lineno="33" refid="analyse_8h_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAXSTRLEN<sp/><sp/><sp/>1024</highlight></codeline>
+<codeline lineno="34"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35" refid="struct__type__affect__" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="struct__type__affect__" kindref="compound">_type_affect_</ref><sp/>{</highlight></codeline>
+<codeline lineno="36" refid="struct__type__affect___1o0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>varname[MAXSTRLEN];</highlight></codeline>
+<codeline lineno="37" refid="struct__type__affect___1o1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>varvalue[MAXSTRLEN];</highlight></codeline>
+<codeline lineno="38" refid="struct__type__affect___1o2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="struct__type__affect__" kindref="compound">_type_affect_</ref><sp/>*<sp/>next;<sp/></highlight><highlight class="comment">/*<sp/>chained<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal">}<ref refid="struct__type__affect__" kindref="compound">type_affect</ref>;</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41" refid="analyse_8h_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/><ref refid="struct__type__affect__" kindref="compound">type_affect</ref><sp/>*<sp/><ref refid="struct__type__affect__" kindref="compound">list_affect</ref>;</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43" refid="struct__type__block__" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="struct__type__block__" kindref="compound">_type_block_</ref><sp/>{</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="45" refid="struct__type__block___1o0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>name[MAXSTRLEN];</highlight></codeline>
+<codeline lineno="46" refid="struct__type__block___1o1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="analyse_8h_1a2" kindref="member">list_affect</ref><sp/>list_def;<sp/></highlight><highlight class="comment">/*<sp/>list<sp/>of<sp/>blockk<sp/>definitions<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47" refid="struct__type__block___1o2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="struct__type__block__" kindref="compound">_type_block_</ref><sp/>*<sp/>next;<sp/></highlight><highlight class="comment">/*<sp/>chained<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal">}<sp/><ref refid="struct__type__block__" kindref="compound">type_block</ref>;</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight></codeline>
+<codeline lineno="51" refid="analyse_8h_1a4" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/><ref refid="struct__type__block__" kindref="compound">type_block</ref><sp/>*<sp/><ref refid="struct__type__block__" kindref="compound">list_block</ref>;</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><ref refid="analyse_8h_1a4" kindref="member">list_block</ref><sp/>*<sp/><ref refid="analyse_8c_1a0" kindref="member">config_createlistblock</ref>();</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><ref refid="struct__type__block__" kindref="compound">type_block</ref><sp/>*<sp/><ref refid="analyse_8h_1a6" kindref="member">config_createblock</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>blockname,list_affect<sp/>*<sp/>list);</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="analyse_8h_1a7" kindref="member">config_addblock</ref>(<sp/>list_block<sp/>*<sp/>list,<ref refid="struct__type__block__" kindref="compound">type_block</ref><sp/>*<sp/>block<sp/>);</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><ref refid="analyse_8h_1a2" kindref="member">list_affect</ref><sp/>*<sp/><ref refid="analyse_8c_1a3" kindref="member">config_createlistaffect</ref>();</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><ref refid="struct__type__affect__" kindref="compound">type_affect</ref><sp/>*<sp/><ref refid="analyse_8h_1a9" kindref="member">config_createaffect</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname,</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varval);</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="analyse_8h_1a10" kindref="member">config_adddef</ref>(list_affect<sp/>*<sp/>list,<ref refid="struct__type__affect__" kindref="compound">type_affect</ref><sp/>*<sp/>affect);</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="analyse_8h_1a11" kindref="member">config_print_list</ref>(FILE<sp/>*<sp/>output,<sp/>list_block<sp/>*<sp/>list);</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="analyse_8h_1a12" kindref="member">config_free_list</ref>(list_block<sp/>*<sp/>list);</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+    </programlisting>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/analyse.h"/>
+  </compounddef>
+</doxygen>

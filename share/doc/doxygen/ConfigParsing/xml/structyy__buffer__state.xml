@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structyy__buffer__state" kind="struct" prot="public">
+    <compoundname>yy_buffer_state</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structyy__buffer__state_1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* yy_buffer_state::yy_input_file</definition>
+        <argsstring></argsstring>
+        <name>yy_input_file</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="146" bodystart="146" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* yy_buffer_state::yy_ch_buf</definition>
+        <argsstring></argsstring>
+        <name>yy_ch_buf</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="148" bodystart="148" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* yy_buffer_state::yy_buf_pos</definition>
+        <argsstring></argsstring>
+        <name>yy_buf_pos</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="149" bodystart="149" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o3" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="conf__lex_8c_1a67" kindref="member">yy_size_t</ref></type>
+        <definition>yy_size_t yy_buffer_state::yy_buf_size</definition>
+        <argsstring></argsstring>
+        <name>yy_buf_size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="154" bodystart="154" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o4" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_n_chars</definition>
+        <argsstring></argsstring>
+        <name>yy_n_chars</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="159" bodystart="159" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o5" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_is_our_buffer</definition>
+        <argsstring></argsstring>
+        <name>yy_is_our_buffer</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="165" bodystart="165" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o6" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_is_interactive</definition>
+        <argsstring></argsstring>
+        <name>yy_is_interactive</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="172" bodystart="172" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o7" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_at_bol</definition>
+        <argsstring></argsstring>
+        <name>yy_at_bol</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="178" bodystart="178" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o8" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_fill_buffer</definition>
+        <argsstring></argsstring>
+        <name>yy_fill_buffer</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="183" bodystart="183" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structyy__buffer__state_1o9" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int yy_buffer_state::yy_buffer_status</definition>
+        <argsstring></argsstring>
+        <name>yy_buffer_status</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="185" bodystart="185" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_lex.c" line="145" bodystart="144" bodyend="199"/>
+    <listofallmembers>
+      <member refid="structyy__buffer__state_1o7" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_at_bol</name></member>
+      <member refid="structyy__buffer__state_1o2" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_buf_pos</name></member>
+      <member refid="structyy__buffer__state_1o3" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_buf_size</name></member>
+      <member refid="structyy__buffer__state_1o9" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_buffer_status</name></member>
+      <member refid="structyy__buffer__state_1o1" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_ch_buf</name></member>
+      <member refid="structyy__buffer__state_1o8" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_fill_buffer</name></member>
+      <member refid="structyy__buffer__state_1o0" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_input_file</name></member>
+      <member refid="structyy__buffer__state_1o6" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_is_interactive</name></member>
+      <member refid="structyy__buffer__state_1o5" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_is_our_buffer</name></member>
+      <member refid="structyy__buffer__state_1o4" prot="public" virt="non-virtual"><scope>yy_buffer_state</scope><name>yy_n_chars</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

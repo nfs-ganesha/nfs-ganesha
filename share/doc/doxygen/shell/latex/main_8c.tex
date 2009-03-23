@@ -1,0 +1,149 @@
+\section{main.c File Reference}
+\label{main_8c}\index{main.c@{main.c}}
+main shell routine. 
+
+{\tt \#include \char`\"{}shell.h\char`\"{}}\par
+{\tt \#include \char`\"{}Getopt.h\char`\"{}}\par
+{\tt \#include $<$libgen.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$readline/readline.h$>$}\par
+{\tt \#include $<$readline/history.h$>$}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf shell\_\-info\_\-\_\-}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf NBTHRMAX}\ 64
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf shell\_\-info\_\-\_\-} {\bf shell\_\-info\_\-t}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void $\ast$ {\bf Launch\-Shell} (void $\ast$arg)
+\item 
+int {\bf main} (int argc, char $\ast$$\ast$argv)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+time\_\-t {\bf Server\-Boot\-Time} = 0
+\item 
+{\bf shell\_\-info\_\-t} {\bf thrlist} [NBTHRMAX]
+\item 
+int {\bf verbose} = 0
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+main shell routine. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/23 07:42:53 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.28 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Log]{\bf main.c}{\rm (p.\,\pageref{main_8c})},v \end{Desc}
+Revision 1.28 2006/02/23 07:42:53 leibovic Adding -n option to shell.
+
+Revision 1.27 2005/11/28 17:03:00 deniel Added Ce\-CILL headers
+
+Revision 1.26 2005/08/12 11:56:59 leibovic coquille.
+
+Revision 1.25 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
+
+Revision 1.24 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+
+Definition in file {\bf main.c}.
+
+\subsection{Define Documentation}
+\index{main.c@{main.c}!NBTHRMAX@{NBTHRMAX}}
+\index{NBTHRMAX@{NBTHRMAX}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define NBTHRMAX\ 64}\label{main_8c_a0}
+
+
+
+
+Definition at line 117 of file main.c.
+
+Referenced by main().
+
+\subsection{Typedef Documentation}
+\index{main.c@{main.c}!shell_info_t@{shell\_\-info\_\-t}}
+\index{shell_info_t@{shell\_\-info\_\-t}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf shell\_\-info\_\-\_\-}  {\bf shell\_\-info\_\-t}}\label{main_8c_a2}
+
+
+
+
+Referenced by Launch\-Shell().
+
+\subsection{Function Documentation}
+\index{main.c@{main.c}!LaunchShell@{LaunchShell}}
+\index{LaunchShell@{LaunchShell}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ Launch\-Shell (void $\ast$ {\em arg})}\label{main_8c_a5}
+
+
+
+
+Definition at line 142 of file main.c.
+
+References shell\_\-info\_\-\_\-::prompt, shell\_\-info\_\-\_\-::script\_\-file, shell\_\-info\_\-\_\-::shell\_\-id, shell\_\-info\_\-t, shell\_\-Init(), shell\_\-Launch(), shell\_\-info\_\-\_\-::status, and verbose.
+
+Referenced by main().\index{main.c@{main.c}!main@{main}}
+\index{main@{main}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, char $\ast$$\ast$ {\em argv})}\label{main_8c_a6}
+
+
+
+
+Definition at line 174 of file main.c.
+
+References Getopt(), Launch\-Shell(), NBTHRMAX, NULL, Optarg, Opterr, Optind, Optopt, Server\-Boot\-Time, shell\_\-Barrier\-Init(), shell\_\-info\_\-\_\-::shell\_\-id, shell\_\-Init(), shell\_\-Launch(), thrlist, and verbose.
+
+\subsection{Variable Documentation}
+\index{main.c@{main.c}!ServerBootTime@{ServerBootTime}}
+\index{ServerBootTime@{ServerBootTime}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Server\-Boot\-Time} = 0}\label{main_8c_a1}
+
+
+
+
+Definition at line 119 of file main.c.
+
+Referenced by main().\index{main.c@{main.c}!thrlist@{thrlist}}
+\index{thrlist@{thrlist}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf shell\_\-info\_\-t} {\bf thrlist}[NBTHRMAX]}\label{main_8c_a3}
+
+
+
+
+Definition at line 136 of file main.c.
+
+Referenced by main().\index{main.c@{main.c}!verbose@{verbose}}
+\index{verbose@{verbose}!main.c@{main.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf verbose} = 0}\label{main_8c_a4}
+
+
+
+
+Definition at line 138 of file main.c.
+
+Referenced by Launch\-Shell(), main(), and shell\_\-Init().

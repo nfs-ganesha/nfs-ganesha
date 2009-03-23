@@ -1,0 +1,619 @@
+.TH "conf_yacc.c" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+conf_yacc.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include 'analyse.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "union \fBYYSTYPE\fP"
+.br
+.ti -1c
+.RI "union \fByyalloc\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBYYBISON\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYSKELETON_NAME\fP   'yacc.c'"
+.br
+.ti -1c
+.RI "#define \fBYYPURE\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYLSP_NEEDED\fP   0"
+.br
+.ti -1c
+.RI "#define \fB_ERROR_\fP   258"
+.br
+.ti -1c
+.RI "#define \fBBEGIN_BLOCK\fP   259"
+.br
+.ti -1c
+.RI "#define \fBEND_BLOCK\fP   260"
+.br
+.ti -1c
+.RI "#define \fBAFFECTATION\fP   261"
+.br
+.ti -1c
+.RI "#define \fBEND_AFFECT\fP   262"
+.br
+.ti -1c
+.RI "#define \fBIDENTIFIER\fP   263"
+.br
+.ti -1c
+.RI "#define \fBKEYVALUE\fP   264"
+.br
+.ti -1c
+.RI "#define \fBDEBUG_YACK\fP"
+.br
+.ti -1c
+.RI "#define \fBYYDEBUG\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYERROR_VERBOSE\fP   0"
+.br
+.ti -1c
+.RI "#define \fByystype\fP   \fBYYSTYPE\fP"
+.br
+.ti -1c
+.RI "#define \fBYYSTYPE_IS_DECLARED\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYSTYPE_IS_TRIVIAL\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYFREE\fP   free"
+.br
+.ti -1c
+.RI "#define \fBYYMALLOC\fP   malloc"
+.br
+.ti -1c
+.RI "#define \fBYYSTACK_ALLOC\fP   YYMALLOC"
+.br
+.ti -1c
+.RI "#define \fBYYSTACK_FREE\fP   YYFREE"
+.br
+.ti -1c
+.RI "#define \fBYYSTACK_GAP_MAXIMUM\fP   (sizeof (union \fByyalloc\fP) - 1)"
+.br
+.ti -1c
+.RI "#define \fBYYSTACK_BYTES\fP(N)"
+.br
+.ti -1c
+.RI "#define \fBYYCOPY\fP(To, From, Count)"
+.br
+.ti -1c
+.RI "#define \fBYYSTACK_RELOCATE\fP(Stack)"
+.br
+.ti -1c
+.RI "#define \fBYYFINAL\fP   6"
+.br
+.ti -1c
+.RI "#define \fBYYLAST\fP   10"
+.br
+.ti -1c
+.RI "#define \fBYYNTOKENS\fP   10"
+.br
+.ti -1c
+.RI "#define \fBYYNNTS\fP   6"
+.br
+.ti -1c
+.RI "#define \fBYYNRULES\fP   8"
+.br
+.ti -1c
+.RI "#define \fBYYNSTATES\fP   16"
+.br
+.ti -1c
+.RI "#define \fBYYUNDEFTOK\fP   2"
+.br
+.ti -1c
+.RI "#define \fBYYMAXUTOK\fP   264"
+.br
+.ti -1c
+.RI "#define \fBYYTRANSLATE\fP(YYX)   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)"
+.br
+.ti -1c
+.RI "#define \fBYYPACT_NINF\fP   -9"
+.br
+.ti -1c
+.RI "#define \fBYYTABLE_NINF\fP   -1"
+.br
+.ti -1c
+.RI "#define \fBYYSIZE_T\fP   unsigned int"
+.br
+.ti -1c
+.RI "#define \fByyerrok\fP   (yyerrstatus = 0)"
+.br
+.ti -1c
+.RI "#define \fByyclearin\fP   (\fByychar\fP = YYEMPTY)"
+.br
+.ti -1c
+.RI "#define \fBYYEMPTY\fP   (-2)"
+.br
+.ti -1c
+.RI "#define \fBYYEOF\fP   0"
+.br
+.ti -1c
+.RI "#define \fBYYACCEPT\fP   goto yyacceptlab"
+.br
+.ti -1c
+.RI "#define \fBYYABORT\fP   goto yyabortlab"
+.br
+.ti -1c
+.RI "#define \fBYYERROR\fP   goto yyerrorlab"
+.br
+.ti -1c
+.RI "#define \fBYYFAIL\fP   goto yyerrlab"
+.br
+.ti -1c
+.RI "#define \fBYYRECOVERING\fP()   (!!yyerrstatus)"
+.br
+.ti -1c
+.RI "#define \fBYYBACKUP\fP(Token, Value)"
+.br
+.ti -1c
+.RI "#define \fBYYTERROR\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYERRCODE\fP   256"
+.br
+.ti -1c
+.RI "#define \fBYYLLOC_DEFAULT\fP(Current, Rhs, N)"
+.br
+.ti -1c
+.RI "#define \fBYYLEX\fP   yylex ()"
+.br
+.ti -1c
+.RI "#define \fBYYDPRINTF\fP(Args)"
+.br
+.ti -1c
+.RI "#define \fBYYDSYMPRINT\fP(Args)"
+.br
+.ti -1c
+.RI "#define \fBYYDSYMPRINTF\fP(Title, Token, Value, Location)"
+.br
+.ti -1c
+.RI "#define \fBYY_STACK_PRINT\fP(Bottom, Top)"
+.br
+.ti -1c
+.RI "#define \fBYY_REDUCE_PRINT\fP(Rule)"
+.br
+.ti -1c
+.RI "#define \fBYYINITDEPTH\fP   200"
+.br
+.ti -1c
+.RI "#define \fBYYMAXDEPTH\fP   10000"
+.br
+.ti -1c
+.RI "#define \fBYYPOPSTACK\fP   (yyvsp--, yyssp--)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBYYSTYPE\fP \fBYYSTYPE\fP"
+.br
+.ti -1c
+.RI "typedef short \fByysigned_char\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fByytokentype\fP { \fB_ERROR_\fP =  258, \fBBEGIN_BLOCK\fP =  259, \fBEND_BLOCK\fP =  260, \fBAFFECTATION\fP =  261, \fBEND_AFFECT\fP =  262, \fBIDENTIFIER\fP =  263, \fBKEYVALUE\fP =  264 }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fByylex\fP (void)"
+.br
+.ti -1c
+.RI "void \fByyerror\fP (char *)"
+.br
+.ti -1c
+.RI "int \fByyparse\fP ()"
+.br
+.ti -1c
+.RI "void \fBset_error\fP (char *s)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBlist_block\fP * \fBprogram_result\fP = NULL"
+.br
+.ti -1c
+.RI "char \fBlocal_errormsg\fP [1024] = ''"
+.br
+.ti -1c
+.RI "char \fBextern_errormsg\fP [1024] = ''"
+.br
+.ti -1c
+.RI "int \fByychar\fP"
+.br
+.ti -1c
+.RI "\fBYYSTYPE\fP \fByylval\fP"
+.br
+.ti -1c
+.RI "int \fByynerrs\fP"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define _ERROR_   258"
+.PP
+Definition at line 65 of file conf_yacc.c.
+.SS "#define AFFECTATION   261"
+.PP
+Definition at line 68 of file conf_yacc.c.
+.SS "#define BEGIN_BLOCK   259"
+.PP
+Definition at line 66 of file conf_yacc.c.
+.SS "#define DEBUG_YACK"
+.PP
+Definition at line 99 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define END_AFFECT   262"
+.PP
+Definition at line 69 of file conf_yacc.c.
+.SS "#define END_BLOCK   260"
+.PP
+Definition at line 67 of file conf_yacc.c.
+.SS "#define IDENTIFIER   263"
+.PP
+Definition at line 70 of file conf_yacc.c.
+.SS "#define KEYVALUE   264"
+.PP
+Definition at line 71 of file conf_yacc.c.
+.SS "#define YY_REDUCE_PRINT(Rule)"
+.PP
+Definition at line 575 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YY_STACK_PRINT(Bottom, Top)"
+.PP
+Definition at line 574 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYABORT   goto yyabortlab"
+.PP
+Definition at line 428 of file conf_yacc.c.
+.SS "#define YYACCEPT   goto yyacceptlab"
+.PP
+Definition at line 427 of file conf_yacc.c.
+.SS "#define YYBACKUP(Token, Value)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+do                                                          \
+  if (yychar == YYEMPTY && yylen == 1)                          \
+    {                                                           \
+      yychar = (Token);                                         \
+      yylval = (Value);                                         \
+      yytoken = YYTRANSLATE (yychar);                           \
+      YYPOPSTACK;                                               \
+      goto yybackup;                                            \
+    }                                                           \
+  else                                                          \
+    {                                                           \
+      yyerror ('syntax error: cannot back up');\
+      YYERROR;                                                  \
+    }                                                           \
+while (0)
+.fi
+.PP
+Definition at line 440 of file conf_yacc.c.
+.SS "#define YYBISON   1"
+.PP
+Definition at line 37 of file conf_yacc.c.
+.SS "#define yyclearin   (\fByychar\fP = YYEMPTY)"
+.PP
+Definition at line 423 of file conf_yacc.c.
+.SS "#define YYCOPY(To, From, Count)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+do                                   \
+        {                                       \
+          register YYSIZE_T yyi;                \
+          for (yyi = 0; yyi < (Count); yyi++)   \
+            (To)[yyi] = (From)[yyi];            \
+        }                                       \
+      while (0)
+.fi
+.PP
+Definition at line 208 of file conf_yacc.c.
+.SS "#define YYDEBUG   0"
+.PP
+Definition at line 107 of file conf_yacc.c.
+.SS "#define YYDPRINTF(Args)"
+.PP
+Definition at line 571 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYDSYMPRINT(Args)"
+.PP
+Definition at line 572 of file conf_yacc.c.
+.SS "#define YYDSYMPRINTF(Title, Token, Value, Location)"
+.PP
+Definition at line 573 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYEMPTY   (-2)"
+.PP
+Definition at line 424 of file conf_yacc.c.
+.SS "#define YYEOF   0"
+.PP
+Definition at line 425 of file conf_yacc.c.
+.SS "#define YYERRCODE   256"
+.PP
+Definition at line 458 of file conf_yacc.c.
+.SS "#define yyerrok   (yyerrstatus = 0)"
+.PP
+Definition at line 422 of file conf_yacc.c.
+.SS "#define YYERROR   goto yyerrorlab"
+.PP
+Definition at line 429 of file conf_yacc.c.
+.SS "#define YYERROR_VERBOSE   0"
+.PP
+Definition at line 115 of file conf_yacc.c.
+.SS "#define YYFAIL   goto yyerrlab"
+.PP
+Definition at line 436 of file conf_yacc.c.
+.SS "#define YYFINAL   6"
+.PP
+Definition at line 244 of file conf_yacc.c.
+.SS "#define YYFREE   free"
+.PP
+Definition at line 145 of file conf_yacc.c.
+.SS "#define YYINITDEPTH   200"
+.PP
+Definition at line 581 of file conf_yacc.c.
+.SS "#define YYLAST   10"
+.PP
+Definition at line 246 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYLEX   yylex ()"
+.PP
+Definition at line 476 of file conf_yacc.c.
+.SS "#define YYLLOC_DEFAULT(Current, Rhs, N)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+((Current).first_line   = (Rhs)[1].first_line,      \
+    (Current).first_column = (Rhs)[1].first_column,     \
+    (Current).last_line    = (Rhs)[N].last_line,        \
+    (Current).last_column  = (Rhs)[N].last_column)
+.fi
+.PP
+Definition at line 464 of file conf_yacc.c.
+.SS "#define YYLSP_NEEDED   0"
+.PP
+Definition at line 46 of file conf_yacc.c.
+.SS "#define YYMALLOC   malloc"
+.PP
+Definition at line 148 of file conf_yacc.c.
+.SS "#define YYMAXDEPTH   10000"
+.PP
+Definition at line 596 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYMAXUTOK   264"
+.PP
+Definition at line 259 of file conf_yacc.c.
+.SS "#define YYNNTS   6"
+.PP
+Definition at line 251 of file conf_yacc.c.
+.SS "#define YYNRULES   8"
+.PP
+Definition at line 253 of file conf_yacc.c.
+.SS "#define YYNSTATES   16"
+.PP
+Definition at line 255 of file conf_yacc.c.
+.SS "#define YYNTOKENS   10"
+.PP
+Definition at line 249 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYPACT_NINF   -9"
+.PP
+Definition at line 368 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYPOPSTACK   (yyvsp--, yyssp--)"
+.PP
+.SS "#define YYPURE   0"
+.PP
+Definition at line 43 of file conf_yacc.c.
+.SS "#define YYRECOVERING()   (!!yyerrstatus)"
+.PP
+Definition at line 438 of file conf_yacc.c.
+.SS "#define YYSIZE_T   unsigned int"
+.PP
+Definition at line 419 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYSKELETON_NAME   'yacc.c'"
+.PP
+Definition at line 40 of file conf_yacc.c.
+.SS "#define YYSTACK_ALLOC   YYMALLOC"
+.PP
+Definition at line 175 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYSTACK_BYTES(N)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+((N) * (sizeof (short) + sizeof (YYSTYPE))                               \
+      + YYSTACK_GAP_MAXIMUM)
+.fi
+.PP
+Definition at line 197 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYSTACK_FREE   YYFREE"
+.PP
+Definition at line 176 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYSTACK_GAP_MAXIMUM   (sizeof (union \fByyalloc\fP) - 1)"
+.PP
+Definition at line 193 of file conf_yacc.c.
+.SS "#define YYSTACK_RELOCATE(Stack)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+do                                                                      \
+      {                                                                 \
+        YYSIZE_T yynewbytes;                                            \
+        YYCOPY (&yyptr->Stack, Stack, yysize);                          \
+        Stack = &yyptr->Stack;                                          \
+        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / sizeof (*yyptr);                          \
+      }                                                                 \
+    while (0)
+.fi
+.PP
+Definition at line 224 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define yystype   \fBYYSTYPE\fP"
+.PP
+Definition at line 129 of file conf_yacc.c.
+.SS "#define YYSTYPE_IS_DECLARED   1"
+.PP
+Definition at line 130 of file conf_yacc.c.
+.SS "#define YYSTYPE_IS_TRIVIAL   1"
+.PP
+Definition at line 131 of file conf_yacc.c.
+.SS "#define YYTABLE_NINF   -1"
+.PP
+Definition at line 385 of file conf_yacc.c.
+.SS "#define YYTERROR   1"
+.PP
+Definition at line 457 of file conf_yacc.c.
+.SS "#define YYTRANSLATE(YYX)   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)"
+.PP
+Definition at line 261 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "#define YYUNDEFTOK   2"
+.PP
+Definition at line 258 of file conf_yacc.c.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef short \fByysigned_char\fP"
+.PP
+Definition at line 240 of file conf_yacc.c.
+.SS "typedef union \fBYYSTYPE\fP  \fBYYSTYPE\fP"
+.PP
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fByytokentype\fP"
+.PP
+\fBEnumeration values: \fP
+.in +1c
+.TP
+\fB\fI_ERROR_ \fP\fP
+.TP
+\fB\fIBEGIN_BLOCK \fP\fP
+.TP
+\fB\fIEND_BLOCK \fP\fP
+.TP
+\fB\fIAFFECTATION \fP\fP
+.TP
+\fB\fIEND_AFFECT \fP\fP
+.TP
+\fB\fIIDENTIFIER \fP\fP
+.TP
+\fB\fIKEYVALUE \fP\fP
+
+.PP
+Definition at line 55 of file conf_yacc.c.
+.SH "Function Documentation"
+.PP 
+.SS "void set_error (char * s)"
+.PP
+Definition at line 1287 of file conf_yacc.c.
+.PP
+References local_errormsg.
+.SS "void yyerror (char *)"
+.PP
+Definition at line 1280 of file conf_yacc.c.
+.PP
+References extern_errormsg, and local_errormsg.
+.PP
+Referenced by yyparse().
+.SS "int yylex (void)"
+.PP
+.SS "int yyparse ()"
+.PP
+Definition at line 766 of file conf_yacc.c.
+.PP
+References YYSTYPE::affectation, YYSTYPE::block, config_addblock(), config_adddef(), config_createaffect(), config_createblock(), config_createlistaffect(), config_createlistblock(), DEBUG_YACK, YYSTYPE::listaf, YYSTYPE::listbl, program_result, YY_REDUCE_PRINT, YY_STACK_PRINT, yychar, YYDPRINTF, YYDSYMPRINTF, yyerror(), YYLAST, yylval, YYMAXDEPTH, yynerrs, YYNTOKENS, YYPACT_NINF, YYSIZE_T, YYSTACK_ALLOC, YYSTACK_BYTES, YYSTACK_FREE, YYSTACK_RELOCATE, and YYTRANSLATE.
+.PP
+Referenced by config_ParseFile().
+.SH "Variable Documentation"
+.PP 
+.SS "char \fBextern_errormsg\fP[1024] = ''"
+.PP
+Definition at line 94 of file conf_yacc.c.
+.PP
+Referenced by config_ParseFile(), and yyerror().
+.SS "char \fBlocal_errormsg\fP[1024] = ''"
+.PP
+Definition at line 91 of file conf_yacc.c.
+.PP
+Referenced by set_error(), and yyerror().
+.SS "\fBlist_block\fP* \fBprogram_result\fP = NULL"
+.PP
+Definition at line 88 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "int \fByychar\fP"
+.PP
+Definition at line 739 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "\fBYYSTYPE\fP \fByylval\fP"
+.PP
+Definition at line 742 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SS "int \fByynerrs\fP"
+.PP
+Definition at line 745 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ConfigParsing from the source code.

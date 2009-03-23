@@ -1,0 +1,28 @@
+\section{Todo List}\label{todo}
+\label{todo__todo000001}
+ \begin{description}
+\item[Member {\bf posix2fsal\_\-error}{\rm (p.\,\pageref{fsal__convert_8c_a2})}(int posix\_\-errorcode) ]: The EBADF error also happens when file is opened for reading, and we try writting in it. In this case, we return ERR\_\-FSAL\_\-NOT\_\-OPENED, but it doesn't seems to be a correct error translation. \end{description}
+
+
+\label{todo__todo000002}
+ \begin{description}
+\item[Member {\bf fsal\_\-is\_\-retryable}{\rm (p.\,\pageref{fsal__errors_8c_a0})}(fsal\_\-status\_\-t status) ]: ERR\_\-FSAL\_\-DELAY : The only retryable error ?\end{description}
+
+
+\label{todo__todo000003}
+ \begin{description}
+\item[Member {\bf FSAL\_\-read}{\rm (p.\,\pageref{fsal__fileop_8c_a2})}(fsal\_\-file\_\-t $\ast$p\_\-file\_\-descriptor, fsal\_\-seek\_\-t $\ast$p\_\-seek\_\-descriptor, fsal\_\-size\_\-t buffer\_\-size, caddr\_\-t buffer, fsal\_\-size\_\-t $\ast$p\_\-read\_\-amount, fsal\_\-boolean\_\-t $\ast$p\_\-end\_\-of\_\-file) ]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+
+: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{description}
+
+
+\label{todo__todo000004}
+ \begin{description}
+\item[Member {\bf FSAL\_\-write}{\rm (p.\,\pageref{fsal__fileop_8c_a3})}(fsal\_\-file\_\-t $\ast$p\_\-file\_\-descriptor, fsal\_\-seek\_\-t $\ast$p\_\-seek\_\-descriptor, fsal\_\-size\_\-t buffer\_\-size, caddr\_\-t buffer, fsal\_\-size\_\-t $\ast$p\_\-write\_\-amount) ]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+
+: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{description}
+
+
+\label{todo__todo000005}
+ \begin{description}
+\item[Member {\bf FSAL\_\-lookup\-Path}{\rm (p.\,\pageref{fsal__lookup_8c_a1})}(fsal\_\-path\_\-t $\ast$p\_\-path, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-handle\_\-t $\ast$object\_\-handle, fsal\_\-attrib\_\-list\_\-t $\ast$object\_\-attributes) ]: Be carefull about junction crossing, symlinks, hardlinks,...\end{description}

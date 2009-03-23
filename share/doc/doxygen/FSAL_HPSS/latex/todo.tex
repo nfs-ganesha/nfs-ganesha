@@ -1,0 +1,61 @@
+\section{Todo List}\label{todo}
+\label{todo__todo000001}
+ \begin{description}
+\item[Member {\bf FSAL\_\-setattrs}{\rm (p.\,\pageref{fsal__attrs_8c_a1})}(fsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-attrib\_\-list\_\-t $\ast$attrib\_\-set, fsal\_\-attrib\_\-list\_\-t $\ast$object\_\-attributes) ]: chown restricted seems to be OK. 
+
+voir pourquoi hpss\_\-fattr\_\-out ne contient pas ce qu'il devrait contenir\end{description}
+
+
+\label{todo__todo000004}
+ \begin{description}
+\item[Member {\bf fsal2hpss\_\-attribset}{\rm (p.\,\pageref{fsal__convert_8c_a16})}(fsal\_\-handle\_\-t $\ast$p\_\-fsal\_\-handle, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-attrib\_\-set, hpss\_\-fileattrbits\_\-t $\ast$p\_\-hpss\_\-attrmask, hpss\_\-Attrs\_\-t $\ast$p\_\-hpss\_\-attrs) ]: Define some constants for settable and supported attributes. 
+
+ACL management\end{description}
+
+
+\label{todo__todo000003}
+ \begin{description}
+\item[Member {\bf hpss2fsal\_\-attributes}{\rm (p.\,\pageref{fsal__convert_8c_a14})}(ns\_\-Obj\-Handle\_\-t $\ast$p\_\-hpss\_\-handle\_\-in, hpss\_\-Attrs\_\-t $\ast$p\_\-hpss\_\-attr\_\-in, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-fsalattr\_\-out) ]: This doesn't convert ACLs for the moment.\end{description}
+
+
+\label{todo__todo000002}
+ \begin{description}
+\item[Member {\bf hpss2fsal\_\-error}{\rm (p.\,\pageref{fsal__convert_8c_a2})}(int hpss\_\-errorcode) ]: The EBADF error also happens when file is opened for reading, and we try writting in it. In this case, we return ERR\_\-FSAL\_\-NOT\_\-OPENED, but it doesn't seems to be a correct error translation. \end{description}
+
+
+\label{todo__todo000005}
+ \begin{description}
+\item[Member {\bf FSAL\_\-readdir}{\rm (p.\,\pageref{fsal__dirs_8c_a1})}(fsal\_\-dir\_\-t $\ast$dir\_\-descriptor, fsal\_\-cookie\_\-t start\_\-position, fsal\_\-attrib\_\-mask\_\-t get\_\-attr\_\-mask, fsal\_\-mdsize\_\-t buffersize, fsal\_\-dirent\_\-t $\ast$pdirent, fsal\_\-cookie\_\-t $\ast$end\_\-position, fsal\_\-count\_\-t $\ast$nb\_\-entries, fsal\_\-boolean\_\-t $\ast$end\_\-of\_\-dir) ]: does handle provide mounted\_\-on\_\-fileid ? 
+
+: test returned status\end{description}
+
+
+\label{todo__todo000006}
+ \begin{description}
+\item[Member {\bf fsal\_\-is\_\-retryable}{\rm (p.\,\pageref{fsal__errors_8c_a0})}(fsal\_\-status\_\-t status) ]: ERR\_\-FSAL\_\-DELAY : The only retryable error ?\end{description}
+
+
+\label{todo__todo000007}
+ \begin{description}
+\item[Member {\bf FSAL\_\-read}{\rm (p.\,\pageref{fsal__fileop_8c_a2})}(fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-seek\_\-t $\ast$seek\_\-descriptor, fsal\_\-size\_\-t buffer\_\-size, caddr\_\-t buffer, fsal\_\-size\_\-t $\ast$read\_\-amount, fsal\_\-boolean\_\-t $\ast$end\_\-of\_\-file) ]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+
+: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{description}
+
+
+\label{todo__todo000008}
+ \begin{description}
+\item[Member {\bf FSAL\_\-write}{\rm (p.\,\pageref{fsal__fileop_8c_a3})}(fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-seek\_\-t $\ast$seek\_\-descriptor, fsal\_\-size\_\-t buffer\_\-size, caddr\_\-t buffer, fsal\_\-size\_\-t $\ast$write\_\-amount) ]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+
+: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{description}
+
+
+\label{todo__todo000009}
+ \begin{description}
+\item[Member {\bf FSAL\_\-test\_\-access}{\rm (p.\,\pageref{fsal__local__op_8c_a0})}(fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-accessflags\_\-t access\_\-type, fsal\_\-attrib\_\-list\_\-t $\ast$object\_\-attributes) ]: test that needed attributes are in the structure 
+
+: ACLs.\end{description}
+
+
+\label{todo__todo000010}
+ \begin{description}
+\item[Member {\bf FSAL\_\-lookup\-Path}{\rm (p.\,\pageref{fsal__lookup_8c_a2})}(fsal\_\-path\_\-t $\ast$p\_\-path, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-handle\_\-t $\ast$object\_\-handle, fsal\_\-attrib\_\-list\_\-t $\ast$object\_\-attributes) ]: Be carefull about junction crossing, symlinks, hardlinks,...\end{description}

@@ -1,0 +1,10 @@
+\contentsline {chapter}{\numberline {1}Stuff Allocator File Index}{1}
+\contentsline {section}{\numberline {1.1}Stuff Allocator File List}{1}
+\contentsline {chapter}{\numberline {2}Stuff Allocator File Documentation}{3}
+\contentsline {section}{\numberline {2.1}stuff\_\discretionary {-}{}{}alloc.h File Reference}{3}
+\contentsline {subsection}{\numberline {2.1.1}Detailed Description}{3}
+\contentsline {subsection}{\numberline {2.1.2}Define Documentation}{4}
+\contentsline {subsubsection}{\numberline {2.1.2.1}\setlength {\rightskip }{0pt plus 5cm}\#define GET\_\discretionary {-}{}{}PREALLOC(entry, pool, nb, type, name\_\discretionary {-}{}{}next)}{4}
+\contentsline {subsubsection}{\numberline {2.1.2.2}\setlength {\rightskip }{0pt plus 5cm}\#define Mem\_\discretionary {-}{}{}Alloc(a)\ Buddy\discretionary {-}{}{}Malloc( a )}{4}
+\contentsline {subsubsection}{\numberline {2.1.2.3}\setlength {\rightskip }{0pt plus 5cm}\#define RELEASE\_\discretionary {-}{}{}PREALLOC(entry, pool, name\_\discretionary {-}{}{}next)}{5}
+\contentsline {subsubsection}{\numberline {2.1.2.4}\setlength {\rightskip }{0pt plus 5cm}\#define STUFF\_\discretionary {-}{}{}PREALLOC(pool, nb, type, name\_\discretionary {-}{}{}next)}{5}

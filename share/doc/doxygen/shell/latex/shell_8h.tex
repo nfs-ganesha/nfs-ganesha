@@ -1,0 +1,561 @@
+\section{shell.h File Reference}
+\label{shell_8h}\index{shell.h@{shell.h}}
+Internal routines for the shell. 
+
+{\tt \#include \char`\"{}shell\_\-types.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAX\_\-LINE\_\-LEN}\ 1024
+\item 
+\#define {\bf MAX\_\-ARGS}\ 256
+\item 
+\#define {\bf SHELL\_\-SUCCESS}\ 0
+\item 
+\#define {\bf SHELL\_\-ERROR}\ -1
+\item 
+\#define {\bf SHELL\_\-NOT\_\-FOUND}\ -2
+\item 
+\#define {\bf SHELL\_\-SYNTAX\_\-ERROR}\ -22
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf shell\_\-Init} (int {\bf verbose}, char $\ast$input\_\-file, char $\ast$prompt, int shell\_\-index)
+\item 
+int {\bf shell\_\-Launch} ()
+\item 
+int {\bf shell\_\-Barrier\-Init} (int nb\_\-threads)
+\item 
+int {\bf shell\_\-Parse\-Line} (char $\ast$in\_\-out\_\-line, char $\ast$$\ast$out\_\-arglist, int $\ast$p\_\-argcount)
+\item 
+void {\bf shell\_\-Clean\-Args} (int argc, char $\ast$$\ast$in\_\-out\_\-argv, int $\ast$in\_\-allocated)
+\item 
+int {\bf shell\_\-Solve\-Args} (int argc, char $\ast$$\ast$in\_\-out\_\-argv, int $\ast$out\_\-allocated)
+\item 
+int {\bf shell\_\-Execute} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+void {\bf shell\_\-Print\-Error} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$error\_\-msg)
+\item 
+void {\bf shell\_\-Print\-Trace} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$msg)
+\item 
+int {\bf shell\_\-Set\-Layer} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$layer\_\-name)
+\item 
+{\bf layer\_\-def\_\-t} $\ast$ {\bf shell\_\-Get\-Layer} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shell\_\-Set\-Status} ({\bf shell\_\-state\_\-t} $\ast$context, int returned\_\-status)
+\item 
+int {\bf shell\_\-Get\-Status} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shell\_\-Set\-Verbose} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$str\_\-verbose)
+\item 
+int {\bf shell\_\-Get\-Verbose} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shell\_\-Set\-Dbg\-Lvl} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$str\_\-debug\_\-level)
+\item 
+int {\bf shell\_\-Get\-Dbg\-Lvl} ()
+\item 
+FILE $\ast$ {\bf shell\_\-Get\-Input\-Stream} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shell\_\-Set\-Input} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$file\_\-name)
+\item 
+int {\bf shell\_\-Set\-Prompt} ({\bf shell\_\-state\_\-t} $\ast$context, char $\ast$str\_\-prompt)
+\item 
+char $\ast$ {\bf shell\_\-Get\-Prompt} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shell\_\-Set\-Shell\-Id} ({\bf shell\_\-state\_\-t} $\ast$context, int shell\_\-index)
+\item 
+int {\bf shell\_\-Set\-Line} ({\bf shell\_\-state\_\-t} $\ast$context, int lineno)
+\item 
+int {\bf shell\_\-Get\-Line} ({\bf shell\_\-state\_\-t} $\ast$context)
+\item 
+int {\bf shellcmd\_\-help} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-if} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-interactive} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-set} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-unset} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-print} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-varlist} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-time} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-quit} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\item 
+int {\bf shellcmd\_\-barrier} (int argc, char $\ast$$\ast$argv, FILE $\ast$output)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Internal routines for the shell. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/23 07:42:53 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.7 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Log]{\bf shell.h}{\rm (p.\,\pageref{shell_8h})},v \end{Desc}
+Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.
+
+Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
+
+Revision 1.5 2005/07/25 12:50:46 leibovic Adding thr\_\-create and thr\_\-join commands.
+
+Revision 1.4 2005/05/27 12:01:48 leibovic Adding write command.
+
+Revision 1.3 2005/05/11 15:53:37 leibovic Adding time function.
+
+Revision 1.2 2005/05/09 14:54:59 leibovic Adding if.
+
+Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+
+Definition in file {\bf shell.h}.
+
+\subsection{Define Documentation}
+\index{shell.h@{shell.h}!MAX_ARGS@{MAX\_\-ARGS}}
+\index{MAX_ARGS@{MAX\_\-ARGS}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-ARGS\ 256}\label{shell_8h_a1}
+
+
+
+
+Definition at line 42 of file shell.h.\index{shell.h@{shell.h}!MAX_LINE_LEN@{MAX\_\-LINE\_\-LEN}}
+\index{MAX_LINE_LEN@{MAX\_\-LINE\_\-LEN}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-LINE\_\-LEN\ 1024}\label{shell_8h_a0}
+
+
+
+
+Definition at line 41 of file shell.h.
+
+Referenced by shell\_\-Launch().\index{shell.h@{shell.h}!SHELL_ERROR@{SHELL\_\-ERROR}}
+\index{SHELL_ERROR@{SHELL\_\-ERROR}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SHELL\_\-ERROR\ -1}\label{shell_8h_a3}
+
+
+
+
+Definition at line 50 of file shell.h.\index{shell.h@{shell.h}!SHELL_NOT_FOUND@{SHELL\_\-NOT\_\-FOUND}}
+\index{SHELL_NOT_FOUND@{SHELL\_\-NOT\_\-FOUND}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SHELL\_\-NOT\_\-FOUND\ -2}\label{shell_8h_a4}
+
+
+
+
+Definition at line 51 of file shell.h.\index{shell.h@{shell.h}!SHELL_SUCCESS@{SHELL\_\-SUCCESS}}
+\index{SHELL_SUCCESS@{SHELL\_\-SUCCESS}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SHELL\_\-SUCCESS\ 0}\label{shell_8h_a2}
+
+
+
+
+Definition at line 49 of file shell.h.\index{shell.h@{shell.h}!SHELL_SYNTAX_ERROR@{SHELL\_\-SYNTAX\_\-ERROR}}
+\index{SHELL_SYNTAX_ERROR@{SHELL\_\-SYNTAX\_\-ERROR}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SHELL\_\-SYNTAX\_\-ERROR\ -22}\label{shell_8h_a5}
+
+
+
+
+Definition at line 52 of file shell.h.
+
+\subsection{Function Documentation}
+\index{shell.h@{shell.h}!shell_BarrierInit@{shell\_\-BarrierInit}}
+\index{shell_BarrierInit@{shell\_\-BarrierInit}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Barrier\-Init (int {\em nb\_\-threads})}\label{shell_8h_a10}
+
+
+Initialize the barrier for shell synchronization routines. The number of threads to wait for is given as parameter. 
+
+Definition at line 209 of file shell.c.
+
+References P, and V.
+
+Referenced by main().\index{shell.h@{shell.h}!shell_CleanArgs@{shell\_\-CleanArgs}}
+\index{shell_CleanArgs@{shell\_\-CleanArgs}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void shell\_\-Clean\-Args (int {\em argc}, char $\ast$$\ast$ {\em in\_\-out\_\-argv}, int $\ast$ {\em in\_\-allocated})}\label{shell_8h_a12}
+
+
+shell\_\-Clean\-Args: Free allocated arguments.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em argc}]The number of command line tokens. \item[{\em in\_\-out\_\-argv}]The list of command line tokens (modified). \item[{\em in\_\-allocated}]Indicates which tokens must be freed. \end{description}
+\end{Desc}
+
+
+Definition at line 1090 of file shell.c.
+
+Referenced by shell\_\-Launch(), and shell\_\-Solve\-Args().\index{shell.h@{shell.h}!shell_Execute@{shell\_\-Execute}}
+\index{shell_Execute@{shell\_\-Execute}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Execute (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a14}
+
+
+shell\_\-Execute: Commands dispatcher.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em argc}]The number of arguments of this command. \item[{\em argv}]The arguments for this command. \item[{\em output}]The output stream of this command.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The returned status of this command. \end{Desc}
+
+
+Definition at line 1123 of file shell.c.
+
+References command\_\-def\_\-\_\-::command\_\-func, layer\_\-def\_\-\_\-::command\_\-list, command\_\-def\_\-\_\-::command\_\-name, layer\_\-def\_\-t, layer\_\-def\_\-\_\-::setlog\_\-func, shell\_\-Get\-Dbg\-Lvl(), shell\_\-Get\-Layer(), shell\_\-Get\-Verbose(), shell\_\-Print\-Error(), shell\_\-Print\-Trace(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Launch(), shell\_\-Solve\-Args(), shellcmd\_\-if(), and shellcmd\_\-time().\index{shell.h@{shell.h}!shell_GetDbgLvl@{shell\_\-GetDbgLvl}}
+\index{shell_GetDbgLvl@{shell\_\-GetDbgLvl}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Get\-Dbg\-Lvl ()}\label{shell_8h_a24}
+
+
+shell\_\-Get\-Dbg\-Lvl Get the special variable \$DEBUG\_\-LEVEL and \$DBG\_\-LVL (internal use). 
+
+Referenced by shell\_\-Execute().\index{shell.h@{shell.h}!shell_GetInputStream@{shell\_\-GetInputStream}}
+\index{shell_GetInputStream@{shell\_\-GetInputStream}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}FILE$\ast$ shell\_\-Get\-Input\-Stream ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a25}
+
+
+shell\_\-Get\-Input\-Stream Get the input stream for reading commands (internal use). 
+
+Definition at line 1688 of file shell.c.
+
+References shell\_\-state\_\-\_\-::input\_\-stream, and shell\_\-state\_\-t.\index{shell.h@{shell.h}!shell_GetLayer@{shell\_\-GetLayer}}
+\index{shell_GetLayer@{shell\_\-GetLayer}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf layer\_\-def\_\-t}$\ast$ shell\_\-Get\-Layer ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a18}
+
+
+shell\_\-Get\-Layer: Retrieves the current active layer (internal use). 
+
+Definition at line 1366 of file shell.c.
+
+References shell\_\-state\_\-\_\-::layer, layer\_\-def\_\-t, and shell\_\-state\_\-t.
+
+Referenced by shell\_\-Execute(), and shellcmd\_\-help().\index{shell.h@{shell.h}!shell_GetLine@{shell\_\-GetLine}}
+\index{shell_GetLine@{shell\_\-GetLine}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Get\-Line ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a31}
+
+
+shell\_\-Get\-Line Get the special variable \$LINE 
+
+Definition at line 1790 of file shell.c.
+
+References shell\_\-state\_\-\_\-::line, and shell\_\-state\_\-t.
+
+Referenced by shell\_\-Launch(), shell\_\-Print\-Error(), and shell\_\-Print\-Trace().\index{shell.h@{shell.h}!shell_GetPrompt@{shell\_\-GetPrompt}}
+\index{shell_GetPrompt@{shell\_\-GetPrompt}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ shell\_\-Get\-Prompt ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a28}
+
+
+shell\_\-Get\-Prompt Get the special variable \$PROMPT 
+
+Definition at line 1724 of file shell.c.
+
+References get\_\-var\_\-value(), and shell\_\-state\_\-t.\index{shell.h@{shell.h}!shell_GetStatus@{shell\_\-GetStatus}}
+\index{shell_GetStatus@{shell\_\-GetStatus}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Get\-Status ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a20}
+
+
+shell\_\-Get\-Status Get the special variables \$? or \$STATUS (internal use). 
+
+Definition at line 1416 of file shell.c.
+
+References shell\_\-state\_\-t, and shell\_\-state\_\-\_\-::status.\index{shell.h@{shell.h}!shell_GetVerbose@{shell\_\-GetVerbose}}
+\index{shell_GetVerbose@{shell\_\-GetVerbose}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Get\-Verbose ({\bf shell\_\-state\_\-t} $\ast$ {\em context})}\label{shell_8h_a22}
+
+
+shell\_\-Get\-Verbose Get the special variable \$VERBOSE (internal use). 
+
+Definition at line 1490 of file shell.c.
+
+References shell\_\-state\_\-t, and shell\_\-state\_\-\_\-::verbose.
+
+Referenced by shell\_\-Execute(), shell\_\-Print\-Trace(), and shellcmd\_\-varlist().\index{shell.h@{shell.h}!shell_Init@{shell\_\-Init}}
+\index{shell_Init@{shell\_\-Init}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Init (int {\em verbose}, char $\ast$ {\em input\_\-file}, char $\ast$ {\em prompt}, int {\em shell\_\-index})}\label{shell_8h_a8}
+
+
+Initialize the shell. The command line for the shell is given as parameter. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em input\_\-file}]the file to read from (NULL if stdin). \end{description}
+\end{Desc}
+
+
+Definition at line 358 of file shell.c.
+
+References NULL, shell\_\-Set\-Dbg\-Lvl(), shell\_\-Set\-Input(), shell\_\-Set\-Prompt(), shell\_\-Set\-Shell\-Id(), shell\_\-Set\-Verbose(), shell\_\-state\_\-t, and verbose.
+
+Referenced by Launch\-Shell(), and main().\index{shell.h@{shell.h}!shell_Launch@{shell\_\-Launch}}
+\index{shell_Launch@{shell\_\-Launch}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Launch ()}\label{shell_8h_a9}
+
+
+Run the interpreter. 
+
+Definition at line 473 of file shell.c.
+
+References shell\_\-state\_\-\_\-::input\_\-stream, shell\_\-state\_\-\_\-::interactive, MAX\_\-LINE\_\-LEN, shell\_\-Clean\-Args(), shell\_\-Execute(), shell\_\-Get\-Line(), shell\_\-Parse\-Line(), shell\_\-Set\-Line(), shell\_\-Set\-Status(), shell\_\-Solve\-Args(), and shell\_\-state\_\-t.
+
+Referenced by Launch\-Shell(), and main().\index{shell.h@{shell.h}!shell_ParseLine@{shell\_\-ParseLine}}
+\index{shell_ParseLine@{shell\_\-ParseLine}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Parse\-Line (char $\ast$ {\em in\_\-out\_\-line}, char $\ast$$\ast$ {\em out\_\-arglist}, int $\ast$ {\em p\_\-argcount})}\label{shell_8h_a11}
+
+
+shell\_\-Parse\-Line: Extract an arglist from a command line.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-out\_\-line}]The command line (modified). \item[{\em out\_\-arglist}]The list of command line tokens. \item[{\em p\_\-argcount}]The number of command line tokens.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if no errors. \end{Desc}
+
+
+Definition at line 695 of file shell.c.
+
+Referenced by shell\_\-Launch(), and shell\_\-Solve\-Args().\index{shell.h@{shell.h}!shell_PrintError@{shell\_\-PrintError}}
+\index{shell_PrintError@{shell\_\-PrintError}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void shell\_\-Print\-Error ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em error\_\-msg})}\label{shell_8h_a15}
+
+
+shell\_\-Print\-Error: Prints an error. 
+
+Definition at line 1257 of file shell.c.
+
+References get\_\-var\_\-value(), shell\_\-Get\-Line(), and shell\_\-state\_\-t.
+
+Referenced by shell\_\-Execute(), shell\_\-Set\-Dbg\-Lvl(), shell\_\-Set\-Input(), shell\_\-Set\-Layer(), shell\_\-Set\-Line(), shell\_\-Set\-Prompt(), shell\_\-Set\-Shell\-Id(), shell\_\-Set\-Status(), shell\_\-Set\-Verbose(), shell\_\-Solve\-Args(), shellcmd\_\-barrier(), shellcmd\_\-help(), shellcmd\_\-interactive(), shellcmd\_\-quit(), shellcmd\_\-set(), shellcmd\_\-unset(), and shellcmd\_\-varlist().\index{shell.h@{shell.h}!shell_PrintTrace@{shell\_\-PrintTrace}}
+\index{shell_PrintTrace@{shell\_\-PrintTrace}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void shell\_\-Print\-Trace ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em msg})}\label{shell_8h_a16}
+
+
+shell\_\-Print\-Trace: Prints a verbose trace. 
+
+Definition at line 1275 of file shell.c.
+
+References get\_\-var\_\-value(), shell\_\-Get\-Line(), shell\_\-Get\-Verbose(), and shell\_\-state\_\-t.
+
+Referenced by shell\_\-Execute(), shell\_\-Set\-Input(), and shell\_\-Set\-Layer().\index{shell.h@{shell.h}!shell_SetDbgLvl@{shell\_\-SetDbgLvl}}
+\index{shell_SetDbgLvl@{shell\_\-SetDbgLvl}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Dbg\-Lvl ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em str\_\-debug\_\-level})}\label{shell_8h_a23}
+
+
+shell\_\-Set\-Dbg\-Lvl Set the special variables \$DEBUG\_\-LEVEL and \$DBG\_\-LVL 
+
+Definition at line 1500 of file shell.c.
+
+References shell\_\-state\_\-\_\-::debug\_\-level, set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Init(), and shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SetInput@{shell\_\-SetInput}}
+\index{shell_SetInput@{shell\_\-SetInput}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Input ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em file\_\-name})}\label{shell_8h_a26}
+
+
+shell\_\-Set\-Input Set the input for reading commands and set the value of \$INPUT and \$INTERACTIVE.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em file\_\-name:}]a script file or NULL for reading from stdin. \end{description}
+\end{Desc}
+
+
+Definition at line 1573 of file shell.c.
+
+References shell\_\-state\_\-\_\-::input\_\-stream, shell\_\-state\_\-\_\-::interactive, set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-Print\-Trace(), shell\_\-Set\-Line(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Init(), shellcmd\_\-interactive(), and shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SetLayer@{shell\_\-SetLayer}}
+\index{shell_SetLayer@{shell\_\-SetLayer}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Layer ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em layer\_\-name})}\label{shell_8h_a17}
+
+
+shell\_\-Set\-Layer: Set the current active layer. \begin{Desc}
+\item[Returns:]0 if OK. else, an error code. \end{Desc}
+
+
+Definition at line 1306 of file shell.c.
+
+References shell\_\-state\_\-\_\-::layer, layer\_\-def\_\-t, layer\_\-def\_\-\_\-::layer\_\-name, set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-Print\-Trace(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SetLine@{shell\_\-SetLine}}
+\index{shell_SetLine@{shell\_\-SetLine}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Line ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, int {\em lineno})}\label{shell_8h_a30}
+
+
+shell\_\-Set\-Line Set the special variable \$LINE 
+
+Definition at line 1761 of file shell.c.
+
+References shell\_\-state\_\-\_\-::line, set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Launch(), and shell\_\-Set\-Input().\index{shell.h@{shell.h}!shell_SetPrompt@{shell\_\-SetPrompt}}
+\index{shell_SetPrompt@{shell\_\-SetPrompt}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Prompt ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em str\_\-prompt})}\label{shell_8h_a27}
+
+
+shell\_\-Set\-Prompt Set the special variable \$PROMPT 
+
+Definition at line 1703 of file shell.c.
+
+References set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Init(), and shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SetShellId@{shell\_\-SetShellId}}
+\index{shell_SetShellId@{shell\_\-SetShellId}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Shell\-Id ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, int {\em shell\_\-index})}\label{shell_8h_a29}
+
+
+shell\_\-Set\-Shell\-Id Set the special variable \$SHELLID 
+
+Definition at line 1735 of file shell.c.
+
+References set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Init().\index{shell.h@{shell.h}!shell_SetStatus@{shell\_\-SetStatus}}
+\index{shell_SetStatus@{shell\_\-SetStatus}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Status ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, int {\em returned\_\-status})}\label{shell_8h_a19}
+
+
+shell\_\-Set\-Status Set the special variables \$? and \$STATUS. 
+
+Definition at line 1378 of file shell.c.
+
+References set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, shell\_\-state\_\-\_\-::status, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Launch(), shell\_\-Solve\-Args(), and shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SetVerbose@{shell\_\-SetVerbose}}
+\index{shell_SetVerbose@{shell\_\-SetVerbose}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Set\-Verbose ({\bf shell\_\-state\_\-t} $\ast$ {\em context}, char $\ast$ {\em str\_\-verbose})}\label{shell_8h_a21}
+
+
+shell\_\-Set\-Verbose Set the special variable \$VERBOSE. 
+
+Definition at line 1426 of file shell.c.
+
+References set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-state\_\-t, TRACEBUFFSIZE, and shell\_\-state\_\-\_\-::verbose.
+
+Referenced by shell\_\-Init(), and shellcmd\_\-set().\index{shell.h@{shell.h}!shell_SolveArgs@{shell\_\-SolveArgs}}
+\index{shell_SolveArgs@{shell\_\-SolveArgs}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shell\_\-Solve\-Args (int {\em argc}, char $\ast$$\ast$ {\em in\_\-out\_\-argv}, int $\ast$ {\em out\_\-allocated})}\label{shell_8h_a13}
+
+
+shell\_\-Solve\-Args: Interprets arguments if they are vars or commands.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em argc}]The number of command line tokens. \item[{\em in\_\-out\_\-argv}]The list of command line tokens (modified). \item[{\em out\_\-allocated}]Indicates which tokens must be freed.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if no errors. \end{Desc}
+
+
+Definition at line 804 of file shell.c.
+
+References get\_\-var\_\-value(), MAX\_\-OUTPUT\_\-LEN, shell\_\-Clean\-Args(), shell\_\-Execute(), shell\_\-Parse\-Line(), shell\_\-Print\-Error(), shell\_\-Set\-Status(), shell\_\-state\_\-t, and TRACEBUFFSIZE.
+
+Referenced by shell\_\-Launch().\index{shell.h@{shell.h}!shellcmd_barrier@{shellcmd\_\-barrier}}
+\index{shellcmd_barrier@{shellcmd\_\-barrier}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-barrier (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a41}
+
+
+
+
+Definition at line 2306 of file shell.c.
+
+References shell\_\-Print\-Error(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_help@{shellcmd\_\-help}}
+\index{shellcmd_help@{shellcmd\_\-help}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-help (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a32}
+
+
+
+
+Definition at line 1802 of file shell.c.
+
+References command\_\-def\_\-\_\-::command\_\-help, layer\_\-def\_\-\_\-::command\_\-list, command\_\-def\_\-\_\-::command\_\-name, layer\_\-def\_\-t, layer\_\-def\_\-\_\-::layer\_\-name, shell\_\-Get\-Layer(), shell\_\-Print\-Error(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_if@{shellcmd\_\-if}}
+\index{shellcmd_if@{shellcmd\_\-if}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-if (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a33}
+
+
+
+
+Definition at line 1879 of file shell.c.
+
+References shell\_\-Execute().\index{shell.h@{shell.h}!shellcmd_interactive@{shellcmd\_\-interactive}}
+\index{shellcmd_interactive@{shellcmd\_\-interactive}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-interactive (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a34}
+
+
+
+
+Definition at line 1973 of file shell.c.
+
+References NULL, shell\_\-Print\-Error(), shell\_\-Set\-Input(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_print@{shellcmd\_\-print}}
+\index{shellcmd_print@{shellcmd\_\-print}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-print (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a37}
+
+
+
+
+Definition at line 2179 of file shell.c.\index{shell.h@{shell.h}!shellcmd_quit@{shellcmd\_\-quit}}
+\index{shellcmd_quit@{shellcmd\_\-quit}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-quit (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a40}
+
+
+
+
+Definition at line 2278 of file shell.c.
+
+References shell\_\-Print\-Error(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_set@{shellcmd\_\-set}}
+\index{shellcmd_set@{shellcmd\_\-set}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-set (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a35}
+
+
+
+
+Definition at line 2003 of file shell.c.
+
+References concat(), is\_\-authorized\_\-varname(), MAX\_\-OUTPUT\_\-LEN, my\_\-atoi(), set\_\-var\_\-value(), shell\_\-Print\-Error(), shell\_\-Set\-Dbg\-Lvl(), shell\_\-Set\-Input(), shell\_\-Set\-Layer(), shell\_\-Set\-Prompt(), shell\_\-Set\-Status(), shell\_\-Set\-Verbose(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_time@{shellcmd\_\-time}}
+\index{shellcmd_time@{shellcmd\_\-time}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-time (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a39}
+
+
+
+
+Definition at line 2231 of file shell.c.
+
+References NULL, print\_\-timeval, shell\_\-Execute(), and time\_\-diff().\index{shell.h@{shell.h}!shellcmd_unset@{shellcmd\_\-unset}}
+\index{shellcmd_unset@{shellcmd\_\-unset}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-unset (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a36}
+
+
+
+
+Definition at line 2115 of file shell.c.
+
+References free\_\-var(), shell\_\-Print\-Error(), and TRACEBUFFSIZE.\index{shell.h@{shell.h}!shellcmd_varlist@{shellcmd\_\-varlist}}
+\index{shellcmd_varlist@{shellcmd\_\-varlist}!shell.h@{shell.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int shellcmd\_\-varlist (int {\em argc}, char $\ast$$\ast$ {\em argv}, FILE $\ast$ {\em output})}\label{shell_8h_a38}
+
+
+
+
+Definition at line 2201 of file shell.c.
+
+References print\_\-varlist(), shell\_\-Get\-Verbose(), shell\_\-Print\-Error(), and TRACEBUFFSIZE.

@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="unionYYSTYPE" kind="union" prot="public">
+    <compoundname>YYSTYPE</compoundname>
+    <includes refid="conf__yacc_8h" local="no">conf_yacc.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="unionYYSTYPE_1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char</type>
+        <definition>char YYSTYPE::str_val</definition>
+        <argsstring>[MAXSTRLEN]</argsstring>
+        <name>str_val</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="121" bodystart="55" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+        <definition>list_block* YYSTYPE::listbl</definition>
+        <argsstring></argsstring>
+        <name>listbl</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="122" bodystart="122" bodyend="-1"/>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
+        <definition>type_block* YYSTYPE::block</definition>
+        <argsstring></argsstring>
+        <name>block</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="123" bodystart="123" bodyend="-1"/>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o3" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">list_affect</ref> *</type>
+        <definition>list_affect* YYSTYPE::listaf</definition>
+        <argsstring></argsstring>
+        <name>listaf</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="124" bodystart="124" bodyend="-1"/>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o4" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">type_affect</ref> *</type>
+        <definition>type_affect* YYSTYPE::affectation</definition>
+        <argsstring></argsstring>
+        <name>affectation</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="125" bodystart="125" bodyend="-1"/>
+        <referencedby refid="conf__yacc_8c_1a87" compoundref="conf__yacc_8c" startline="766" endline="1274">yyparse</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o5" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
+        <definition>list_block* YYSTYPE::listbl</definition>
+        <argsstring></argsstring>
+        <name>listbl</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="56" bodystart="56" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o6" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
+        <definition>type_block* YYSTYPE::block</definition>
+        <argsstring></argsstring>
+        <name>block</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="57" bodystart="57" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o7" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">list_affect</ref> *</type>
+        <definition>list_affect* YYSTYPE::listaf</definition>
+        <argsstring></argsstring>
+        <name>listaf</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="58" bodystart="58" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="unionYYSTYPE_1o8" prot="public" static="no" volatile="no" mutable="no">
+        <type><ref refid="struct__type__affect__" kindref="compound">type_affect</ref> *</type>
+        <definition>type_affect* YYSTYPE::affectation</definition>
+        <argsstring></argsstring>
+        <name>affectation</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.h" line="59" bodystart="59" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="17">
+        <label>_type_affect_</label>
+        <link refid="struct__type__affect__"/>
+        <childnode refid="17" relation="usage">
+          <edgelabel>next</edgelabel>
+        </childnode>
+      </node>
+      <node id="15">
+        <label>YYSTYPE</label>
+        <link refid="unionYYSTYPE"/>
+        <childnode refid="16" relation="usage">
+          <edgelabel>block</edgelabel>
+        </childnode>
+        <childnode refid="17" relation="usage">
+          <edgelabel>affectation</edgelabel>
+        </childnode>
+      </node>
+      <node id="16">
+        <label>_type_block_</label>
+        <link refid="struct__type__block__"/>
+        <childnode refid="16" relation="usage">
+          <edgelabel>next</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="/opt/philippe/GANESHA/src/ConfigParsing/conf_yacc.c" line="120" bodystart="120" bodyend="126"/>
+    <listofallmembers>
+      <member refid="unionYYSTYPE_1o4" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>affectation</name></member>
+      <member refid="unionYYSTYPE_1o8" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>affectation</name></member>
+      <member refid="unionYYSTYPE_1o2" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>block</name></member>
+      <member refid="unionYYSTYPE_1o6" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>block</name></member>
+      <member refid="unionYYSTYPE_1o3" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>listaf</name></member>
+      <member refid="unionYYSTYPE_1o7" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>listaf</name></member>
+      <member refid="unionYYSTYPE_1o1" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>listbl</name></member>
+      <member refid="unionYYSTYPE_1o5" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>listbl</name></member>
+      <member refid="unionYYSTYPE_1o0" prot="public" virt="non-virtual"><scope>YYSTYPE</scope><name>str_val</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

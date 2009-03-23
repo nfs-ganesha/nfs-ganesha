@@ -1,0 +1,139 @@
+.TH "conf_yacc.h" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+conf_yacc.h \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "union \fBYYSTYPE\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fB_ERROR_\fP   258"
+.br
+.ti -1c
+.RI "#define \fBBEGIN_BLOCK\fP   259"
+.br
+.ti -1c
+.RI "#define \fBEND_BLOCK\fP   260"
+.br
+.ti -1c
+.RI "#define \fBAFFECTATION\fP   261"
+.br
+.ti -1c
+.RI "#define \fBEND_AFFECT\fP   262"
+.br
+.ti -1c
+.RI "#define \fBIDENTIFIER\fP   263"
+.br
+.ti -1c
+.RI "#define \fBKEYVALUE\fP   264"
+.br
+.ti -1c
+.RI "#define \fByystype\fP   \fBYYSTYPE\fP"
+.br
+.ti -1c
+.RI "#define \fBYYSTYPE_IS_DECLARED\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYSTYPE_IS_TRIVIAL\fP   1"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBYYSTYPE\fP \fBYYSTYPE\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fByytokentype\fP { \fB_ERROR_\fP =  258, \fBBEGIN_BLOCK\fP =  259, \fBEND_BLOCK\fP =  260, \fBAFFECTATION\fP =  261, \fBEND_AFFECT\fP =  262, \fBIDENTIFIER\fP =  263, \fBKEYVALUE\fP =  264 }"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBYYSTYPE\fP \fByylval\fP"
+.br
+.in -1c
+.SH "Define Documentation"
+.PP 
+.SS "#define _ERROR_   258"
+.PP
+Definition at line 41 of file conf_yacc.h.
+.SS "#define AFFECTATION   261"
+.PP
+Definition at line 44 of file conf_yacc.h.
+.SS "#define BEGIN_BLOCK   259"
+.PP
+Definition at line 42 of file conf_yacc.h.
+.SS "#define END_AFFECT   262"
+.PP
+Definition at line 45 of file conf_yacc.h.
+.SS "#define END_BLOCK   260"
+.PP
+Definition at line 43 of file conf_yacc.h.
+.SS "#define IDENTIFIER   263"
+.PP
+Definition at line 46 of file conf_yacc.h.
+.SS "#define KEYVALUE   264"
+.PP
+Definition at line 47 of file conf_yacc.h.
+.SS "#define yystype   \fBYYSTYPE\fP"
+.PP
+Definition at line 63 of file conf_yacc.h.
+.SS "#define YYSTYPE_IS_DECLARED   1"
+.PP
+Definition at line 64 of file conf_yacc.h.
+.SS "#define YYSTYPE_IS_TRIVIAL   1"
+.PP
+Definition at line 65 of file conf_yacc.h.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef union \fBYYSTYPE\fP  \fBYYSTYPE\fP"
+.PP
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fByytokentype\fP"
+.PP
+\fBEnumeration values: \fP
+.in +1c
+.TP
+\fB\fI_ERROR_ \fP\fP
+.TP
+\fB\fIBEGIN_BLOCK \fP\fP
+.TP
+\fB\fIEND_BLOCK \fP\fP
+.TP
+\fB\fIAFFECTATION \fP\fP
+.TP
+\fB\fIEND_AFFECT \fP\fP
+.TP
+\fB\fIIDENTIFIER \fP\fP
+.TP
+\fB\fIKEYVALUE \fP\fP
+
+.PP
+Definition at line 31 of file conf_yacc.h.
+.SH "Variable Documentation"
+.PP 
+.SS "\fBYYSTYPE\fP \fByylval\fP"
+.PP
+Definition at line 742 of file conf_yacc.c.
+.PP
+Referenced by yyparse().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ConfigParsing from the source code.

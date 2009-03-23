@@ -1,0 +1,66 @@
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: argument `buff1' of command @param is not found in the argument list of display_idmapper_key(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: argument `buff2' of command @param is not found in the argument list of display_idmapper_key(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: The following parameters of display_idmapper_key(hash_buffer_t *pbuff, char *str) are not documented:
+  parameter pbuff
+  parameter str
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: argument `buff1' of command @param is not found in the argument list of display_idmapper_val(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: argument `buff2' of command @param is not found in the argument list of display_idmapper_val(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: The following parameters of display_idmapper_val(hash_buffer_t *pbuff, char *str) are not documented:
+  parameter pbuff
+  parameter str
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:558 Warning: argument `hostname' of command @param is not found in the argument list of idmap_get(hash_table_t *ht, char *key, unsigned long *pval)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:558 Warning: The following parameters of idmap_get(hash_table_t *ht, char *key, unsigned long *pval) are not documented:
+  parameter pval
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:832 Warning: The following parameters of idmap_get_stats(idmap_type_t maptype, hash_stat_t *phstat, hash_stat_t *phstat_reverse) are not documented:
+  parameter phstat_reverse
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `hparam' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `buffcleff' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `in' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: The following parameters of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef) are not documented:
+  parameter p_hparam
+  parameter buffclef
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `hparam' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `buffcleff' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `in' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: The following parameters of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef) are not documented:
+  parameter p_hparam
+  parameter buffclef
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `hparam' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `buffcleff' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: argument `in' of command @param is not found in the argument list of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:117 Warning: The following parameters of idmapper_value_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef) are not documented:
+  parameter p_hparam
+  parameter buffclef
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `hparam' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `buffcleff' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: argument `in' of command @param is not found in the argument list of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:149 Warning: The following parameters of idmapper_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef) are not documented:
+  parameter p_hparam
+  parameter buffclef
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: argument `buff1' of command @param is not found in the argument list of display_idmapper_key(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: argument `buff2' of command @param is not found in the argument list of display_idmapper_key(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:205 Warning: The following parameters of display_idmapper_key(hash_buffer_t *pbuff, char *str) are not documented:
+  parameter pbuff
+  parameter str
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: argument `buff1' of command @param is not found in the argument list of display_idmapper_val(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: argument `buff2' of command @param is not found in the argument list of display_idmapper_val(hash_buffer_t *pbuff, char *str)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:224 Warning: The following parameters of display_idmapper_val(hash_buffer_t *pbuff, char *str) are not documented:
+  parameter pbuff
+  parameter str
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:558 Warning: argument `hostname' of command @param is not found in the argument list of idmap_get(hash_table_t *ht, char *key, unsigned long *pval)
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:558 Warning: The following parameters of idmap_get(hash_table_t *ht, char *key, unsigned long *pval) are not documented:
+  parameter pval
+
+/opt/philippe/GANESHA/src/IdMapper/idmapper_cache.c:832 Warning: The following parameters of idmap_get_stats(idmap_type_t maptype, hash_stat_t *phstat, hash_stat_t *phstat_reverse) are not documented:
+  parameter phstat_reverse
+

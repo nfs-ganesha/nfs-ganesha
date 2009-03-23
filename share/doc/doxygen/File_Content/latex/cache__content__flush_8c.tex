@@ -1,0 +1,82 @@
+\section{cache\_\-content\_\-flush.c File Reference}
+\label{cache__content__flush_8c}\index{cache_content_flush.c@{cache\_\-content\_\-flush.c}}
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-flush} (cache\_\-content\_\-entry\_\-t $\ast$pentry, cache\_\-content\_\-flush\_\-behaviour\_\-t flushhow, cache\_\-content\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-refresh} (cache\_\-content\_\-entry\_\-t $\ast$pentry, cache\_\-content\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-content\_\-refresh\_\-how\_\-t how, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\item 
+cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-sync\_\-all} (cache\_\-content\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-content\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{cache_content_flush.c@{cache\_\-content\_\-flush.c}!cache_content_flush@{cache\_\-content\_\-flush}}
+\index{cache_content_flush@{cache\_\-content\_\-flush}!cache_content_flush.c@{cache\_\-content\_\-flush.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-flush (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-content\_\-flush\_\-behaviour\_\-t {\em flushhow}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__flush_8c_a0}
+
+
+cache\_\-content\_\-flush: Flushes the content of a file in the local cache to the FSAL data.
+
+Flushes the content of a file in the local cache to the FSAL data. This routine should be called only from the cache\_\-inode layer.
+
+No lock management is done in this layer: the related pentry in the cache inode layer is locked and will prevent from concurent accesses.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] entry in file content layer whose content is to be flushed. \item[{\em flushhow}][IN] should we delete the cached entry in local or not ? \item[{\em pclient}][IN] ressource allocated by the client for the nfs management.  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
+
+
+Definition at line 124 of file cache\_\-content\_\-flush.c.\index{cache_content_flush.c@{cache\_\-content\_\-flush.c}!cache_content_refresh@{cache\_\-content\_\-refresh}}
+\index{cache_content_refresh@{cache\_\-content\_\-refresh}!cache_content_flush.c@{cache\_\-content\_\-flush.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-refresh (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-refresh\_\-how\_\-t {\em how}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__flush_8c_a1}
+
+
+cache\_\-content\_\-refresh: Refreshes the whole content of a file in the local cache to the FSAL data.
+
+Refreshes the whole content of a file in the local cache to the FSAL data. This routine should be called only from the cache\_\-inode layer.
+
+No lock management is done in this layer: the related pentry in the cache inode layer is locked and will prevent from concurent accesses.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] entry in file content layer whose content is to be flushed. \item[{\em pclient}][IN] ressource allocated by the client for the nfs management.  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful .\end{Desc}
+
+
+\begin{Desc}
+\item[{\bf Todo}]: BUGAZOMEU: gestion de coherence de date a mettre en place \end{Desc}
+
+
+Definition at line 290 of file cache\_\-content\_\-flush.c.
+
+Referenced by cache\_\-content\_\-new\_\-entry().\index{cache_content_flush.c@{cache\_\-content\_\-flush.c}!cache_content_sync_all@{cache\_\-content\_\-sync\_\-all}}
+\index{cache_content_sync_all@{cache\_\-content\_\-sync\_\-all}!cache_content_flush.c@{cache\_\-content\_\-flush.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-sync\_\-all (cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__flush_8c_a2}
+
+
+
+
+Definition at line 420 of file cache\_\-content\_\-flush.c.

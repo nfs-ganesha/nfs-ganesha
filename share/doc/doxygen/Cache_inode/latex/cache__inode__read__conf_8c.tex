@@ -1,0 +1,164 @@
+\section{cache\_\-inode\_\-read\_\-conf.c File Reference}
+\label{cache__inode__read__conf_8c}\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+Read the configuration file for the Cache inode initialization. 
+
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-read\_\-conf\_\-hash\_\-parameter} (config\_\-file\_\-t in\_\-config, cache\_\-inode\_\-parameter\_\-t $\ast$pparam)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-read\_\-conf\_\-client\_\-parameter} (config\_\-file\_\-t in\_\-config, cache\_\-inode\_\-client\_\-parameter\_\-t $\ast$pparam)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-read\_\-conf\_\-gc\_\-policy} (config\_\-file\_\-t in\_\-config, cache\_\-inode\_\-gc\_\-policy\_\-t $\ast$ppolicy)
+\item 
+void {\bf cache\_\-inode\_\-print\_\-conf\_\-hash\_\-parameter} (FILE $\ast$output, cache\_\-inode\_\-parameter\_\-t param)
+\item 
+void {\bf cache\_\-inode\_\-print\_\-conf\_\-client\_\-parameter} (FILE $\ast$output, cache\_\-inode\_\-client\_\-parameter\_\-t param)
+\item 
+void {\bf cache\_\-inode\_\-print\_\-conf\_\-gc\_\-policy} (FILE $\ast$output, cache\_\-inode\_\-gc\_\-policy\_\-t gcpolicy)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Read the configuration file for the Cache inode initialization. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2006/02/16 08:21:47 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.11 \end{Desc}
+\end{Desc}
+{\bf cache\_\-inode\_\-read\_\-conf.c}{\rm (p.\,\pageref{cache__inode__read__conf_8c})} : Read the configuration file for the Cache inode initialization.
+
+Definition in file {\bf cache\_\-inode\_\-read\_\-conf.c}.
+
+\subsection{Function Documentation}
+\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_print_conf_client_parameter@{cache\_\-inode\_\-print\_\-conf\_\-client\_\-parameter}}
+\index{cache_inode_print_conf_client_parameter@{cache\_\-inode\_\-print\_\-conf\_\-client\_\-parameter}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-inode\_\-print\_\-conf\_\-client\_\-parameter (FILE $\ast$ {\em output}, cache\_\-inode\_\-client\_\-parameter\_\-t {\em param})}\label{cache__inode__read__conf_8c_a4}
+
+
+cache\_\-inode\_\-print\_\-conf\_\-client\_\-parameter: prints the client parameter.
+
+Prints the client parameters.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output}][IN] a descriptor to the IO for printing the data. \item[{\em param}][IN] structure to be printed.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 463 of file cache\_\-inode\_\-read\_\-conf.c.\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_print_conf_gc_policy@{cache\_\-inode\_\-print\_\-conf\_\-gc\_\-policy}}
+\index{cache_inode_print_conf_gc_policy@{cache\_\-inode\_\-print\_\-conf\_\-gc\_\-policy}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-inode\_\-print\_\-conf\_\-gc\_\-policy (FILE $\ast$ {\em output}, cache\_\-inode\_\-gc\_\-policy\_\-t {\em gcpolicy})}\label{cache__inode__read__conf_8c_a5}
+
+
+cache\_\-inode\_\-print\_\-gc\_\-pol: prints the garbagge collection policy.
+
+Prints the garbagge collection policy.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output}][IN] a descriptor to the IO for printing the data. \item[{\em param}][IN] structure to be printed.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 491 of file cache\_\-inode\_\-read\_\-conf.c.\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_print_conf_hash_parameter@{cache\_\-inode\_\-print\_\-conf\_\-hash\_\-parameter}}
+\index{cache_inode_print_conf_hash_parameter@{cache\_\-inode\_\-print\_\-conf\_\-hash\_\-parameter}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-inode\_\-print\_\-conf\_\-hash\_\-parameter (FILE $\ast$ {\em output}, cache\_\-inode\_\-parameter\_\-t {\em param})}\label{cache__inode__read__conf_8c_a3}
+
+
+cache\_\-inode\_\-print\_\-conf\_\-gc\_\-policy: prints the garbagge collection policy.
+
+Prints the garbagge collection policy in configuration file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em output}][IN] a descriptor to the IO for printing the data. \item[{\em param}][IN] structure to be printed.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function). \end{Desc}
+
+
+Definition at line 443 of file cache\_\-inode\_\-read\_\-conf.c.\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_read_conf_client_parameter@{cache\_\-inode\_\-read\_\-conf\_\-client\_\-parameter}}
+\index{cache_inode_read_conf_client_parameter@{cache\_\-inode\_\-read\_\-conf\_\-client\_\-parameter}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-read\_\-conf\_\-client\_\-parameter (config\_\-file\_\-t {\em in\_\-config}, cache\_\-inode\_\-client\_\-parameter\_\-t $\ast$ {\em pparam})}\label{cache__inode__read__conf_8c_a1}
+
+
+cache\_\-inode\_\-read\_\-conf\_\-client\_\-parameter: read the configuration for a client to Cache inode layer.
+
+Reads the configuration for a client to Cache inode layer (typically a worker thread).
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-config}][IN] configuration file handle \item[{\em pparam}][OUT] read parameters\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-INODE\_\-SUCCESS if ok, CACHE\_\-INODE\_\-NOT\_\-FOUND is stanza is not there, CACHE\_\-INODE\_\-INVALID\_\-ARGUMENT otherwise. \end{Desc}
+
+
+Definition at line 196 of file cache\_\-inode\_\-read\_\-conf.c.\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_read_conf_gc_policy@{cache\_\-inode\_\-read\_\-conf\_\-gc\_\-policy}}
+\index{cache_inode_read_conf_gc_policy@{cache\_\-inode\_\-read\_\-conf\_\-gc\_\-policy}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-read\_\-conf\_\-gc\_\-policy (config\_\-file\_\-t {\em in\_\-config}, cache\_\-inode\_\-gc\_\-policy\_\-t $\ast$ {\em ppolicy})}\label{cache__inode__read__conf_8c_a2}
+
+
+cache\_\-inode\_\-read\_\-conf\_\-gc\_\-policy: read the garbagge collection policy in configuration file.
+
+Reads the garbagge collection policy in configuration file.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-config}][IN] configuration file handle \item[{\em pparam}][OUT] read parameters\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-INODE\_\-SUCCESS if ok, CACHE\_\-INODE\_\-NOT\_\-FOUND is stanza is not there, CACHE\_\-INODE\_\-INVALID\_\-ARGUMENT otherwise. \end{Desc}
+
+
+Definition at line 355 of file cache\_\-inode\_\-read\_\-conf.c.\index{cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}!cache_inode_read_conf_hash_parameter@{cache\_\-inode\_\-read\_\-conf\_\-hash\_\-parameter}}
+\index{cache_inode_read_conf_hash_parameter@{cache\_\-inode\_\-read\_\-conf\_\-hash\_\-parameter}!cache_inode_read_conf.c@{cache\_\-inode\_\-read\_\-conf.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-read\_\-conf\_\-hash\_\-parameter (config\_\-file\_\-t {\em in\_\-config}, cache\_\-inode\_\-parameter\_\-t $\ast$ {\em pparam})}\label{cache__inode__read__conf_8c_a0}
+
+
+cache\_\-inode\_\-read\_\-conf\_\-hash\_\-parameter: read the configuration for the hash in Cache\_\-inode layer.
+
+Reads the configuration for the hash in Cache\_\-inode layer.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-config}][IN] configuration file handle \item[{\em pparam}][OUT] read parameters\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-INODE\_\-SUCCESS if ok, CACHE\_\-INODE\_\-NOT\_\-FOUND is stanza is not there, CACHE\_\-INODE\_\-INVALID\_\-ARGUMENT otherwise. \end{Desc}
+
+
+Definition at line 120 of file cache\_\-inode\_\-read\_\-conf.c.

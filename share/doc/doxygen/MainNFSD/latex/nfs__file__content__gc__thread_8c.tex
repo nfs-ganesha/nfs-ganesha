@@ -1,0 +1,144 @@
+\section{nfs\_\-file\_\-content\_\-gc\_\-thread.c File Reference}
+\label{nfs__file__content__gc__thread_8c}\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+The file that contain the 'file\_\-content\_\-gc\_\-thread' routine for the nfsd. 
+
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$fcntl.h$>$}\par
+{\tt \#include $<$sys/file.h$>$}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include $<$rpc/rpc.h$>$}\par
+{\tt \#include $<$rpc/svc.h$>$}\par
+{\tt \#include $<$rpc/pmap\_\-clnt.h$>$}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs23.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
+{\tt \#include \char`\"{}mount.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-creds.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-dupreq.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-file\_\-handle.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-stat.h\char`\"{}}\par
+{\tt \#include \char`\"{}Sem\-N.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf \_\-\_\-\_\-cache\_\-content\_\-invalidate\_\-flushed} (LRU\_\-entry\_\-t $\ast$plru\_\-entry, void $\ast$addparam)
+\item 
+int {\bf file\_\-content\_\-gc\_\-manage\_\-entry} (LRU\_\-entry\_\-t $\ast$plru\_\-entry, void $\ast$addparam)
+\item 
+void $\ast$ {\bf file\_\-content\_\-gc\_\-thread} (void $\ast$Index\-Arg)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\item 
+nfs\_\-worker\_\-data\_\-t $\ast$ {\bf workers\_\-data}
+\item 
+cache\_\-content\_\-client\_\-t {\bf recover\_\-datacache\_\-client}
+\item 
+nfs\_\-worker\_\-data\_\-t {\bf fcc\_\-gc\_\-data}
+\item 
+fsal\_\-op\_\-context\_\-t {\bf fsal\_\-context}
+\item 
+unsigned int {\bf force\_\-flush\_\-by\_\-signal}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+The file that contain the 'file\_\-content\_\-gc\_\-thread' routine for the nfsd. 
+
+\begin{Desc}
+\item[Author:]\$Author\$ \end{Desc}
+\begin{Desc}
+\item[Date:]\$Date\$ \end{Desc}
+\begin{Desc}
+\item[Version:]\$Revision\$ \end{Desc}
+{\bf nfs\_\-file\_\-content\_\-gc\_\-thread.c}{\rm (p.\,\pageref{nfs__file__content__gc__thread_8c})} : The file that contain the 'admin\_\-thread' routine for the nfsd.
+
+Definition in file {\bf nfs\_\-file\_\-content\_\-gc\_\-thread.c}.
+
+\subsection{Function Documentation}
+\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!___cache_content_invalidate_flushed@{\_\-\_\-\_\-cache\_\-content\_\-invalidate\_\-flushed}}
+\index{___cache_content_invalidate_flushed@{\_\-\_\-\_\-cache\_\-content\_\-invalidate\_\-flushed}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int \_\-\_\-\_\-cache\_\-content\_\-invalidate\_\-flushed (LRU\_\-entry\_\-t $\ast$ {\em plru\_\-entry}, void $\ast$ {\em addparam})}\label{nfs__file__content__gc__thread_8c_a6}
+
+
+
+
+Definition at line 138 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!file_content_gc_manage_entry@{file\_\-content\_\-gc\_\-manage\_\-entry}}
+\index{file_content_gc_manage_entry@{file\_\-content\_\-gc\_\-manage\_\-entry}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int file\_\-content\_\-gc\_\-manage\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em plru\_\-entry}, void $\ast$ {\em addparam})}\label{nfs__file__content__gc__thread_8c_a7}
+
+
+
+
+Definition at line 167 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.
+
+References fcc\_\-gc\_\-data, and fsal\_\-context.
+
+Referenced by file\_\-content\_\-gc\_\-thread().\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!file_content_gc_thread@{file\_\-content\_\-gc\_\-thread}}
+\index{file_content_gc_thread@{file\_\-content\_\-gc\_\-thread}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ file\_\-content\_\-gc\_\-thread (void $\ast$ {\em Index\-Arg})}\label{nfs__file__content__gc__thread_8c_a8}
+
+
+
+
+Definition at line 197 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.
+
+References fcc\_\-gc\_\-data, file\_\-content\_\-gc\_\-manage\_\-entry(), force\_\-flush\_\-by\_\-signal, fsal\_\-context, nfs\_\-param, recover\_\-datacache\_\-client, and workers\_\-data.
+
+\subsection{Variable Documentation}
+\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!fcc_gc_data@{fcc\_\-gc\_\-data}}
+\index{fcc_gc_data@{fcc\_\-gc\_\-data}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-worker\_\-data\_\-t {\bf fcc\_\-gc\_\-data}}\label{nfs__file__content__gc__thread_8c_a3}
+
+
+
+
+Definition at line 132 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.
+
+Referenced by file\_\-content\_\-gc\_\-manage\_\-entry(), and file\_\-content\_\-gc\_\-thread().\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!force_flush_by_signal@{force\_\-flush\_\-by\_\-signal}}
+\index{force_flush_by_signal@{force\_\-flush\_\-by\_\-signal}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf force\_\-flush\_\-by\_\-signal}}\label{nfs__file__content__gc__thread_8c_a5}
+
+
+
+
+Definition at line 136 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.
+
+Referenced by file\_\-content\_\-gc\_\-thread().\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!fsal_context@{fsal\_\-context}}
+\index{fsal_context@{fsal\_\-context}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-op\_\-context\_\-t {\bf fsal\_\-context}}\label{nfs__file__content__gc__thread_8c_a4}
+
+
+
+
+Definition at line 133 of file nfs\_\-file\_\-content\_\-gc\_\-thread.c.\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__file__content__gc__thread_8c_a0}
+
+
+
+
+Definition at line 130 of file nfs\_\-init.c.\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!recover_datacache_client@{recover\_\-datacache\_\-client}}
+\index{recover_datacache_client@{recover\_\-datacache\_\-client}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-t {\bf recover\_\-datacache\_\-client}}\label{nfs__file__content__gc__thread_8c_a2}
+
+
+\index{nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}!workers_data@{workers\_\-data}}
+\index{workers_data@{workers\_\-data}!nfs_file_content_gc_thread.c@{nfs\_\-file\_\-content\_\-gc\_\-thread.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-worker\_\-data\_\-t$\ast$ {\bf workers\_\-data}}\label{nfs__file__content__gc__thread_8c_a1}
+
+
+
+
+Definition at line 132 of file nfs\_\-init.c.

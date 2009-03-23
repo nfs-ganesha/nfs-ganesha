@@ -1,0 +1,1872 @@
+This is TeX, Version 3.14159 (Web2C 7.4.5) (format=latex 2005.2.10)  9 APR 2008 08:24
+**refman.tex
+(./refman.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for american, french, german, ngerman, n
+ohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/book.cls
+Document Class: book 2001/04/21 v1.4e Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/bk10.clo
+File: bk10.clo 2001/04/21 v1.4e Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/latex/misc/a4wide.sty
+Package: a4wide 1994/08/30
+
+(/usr/share/texmf/tex/latex/ntgclass/a4.sty
+Package: a4 1999/03/03 v1.2f A4 based page layout
+))
+(/usr/share/texmf/tex/latex/base/makeidx.sty
+Package: makeidx 2000/03/29 v1.0m Standard LaTeX package
+)
+(/usr/share/texmf/tex/latex/fancyhdr/fancyhdr.sty
+\headwidth=\dimen103
+)
+(/usr/share/texmf/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/share/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2001/08/31 v1.1 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 80.
+
+(/usr/share/texmf/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/share/texmf/tex/latex/tools/multicol.sty
+Package: multicol 2000/07/10 v1.5z multicolumn formatting (FMi)
+\c@tracingmulticols=\count88
+\mult@box=\box26
+\multicol@leftmargin=\dimen106
+\c@unbalance=\count89
+\c@collectmore=\count90
+\doublecol@number=\count91
+\multicoltolerance=\count92
+\multicolpretolerance=\count93
+\full@width=\dimen107
+\page@free=\dimen108
+\premulticols=\dimen109
+\postmulticols=\dimen110
+\multicolsep=\skip43
+\multicolbaselineskip=\skip44
+\partial@page=\box27
+\last@line=\box28
+\mult@rightbox=\box29
+\mult@grightbox=\box30
+\mult@gfirstbox=\box31
+\mult@firstbox=\box32
+\@tempa=\box33
+\@tempa=\box34
+\@tempa=\box35
+\@tempa=\box36
+\@tempa=\box37
+\@tempa=\box38
+\@tempa=\box39
+\@tempa=\box40
+\@tempa=\box41
+\@tempa=\box42
+\@tempa=\box43
+\@tempa=\box44
+\@tempa=\box45
+\@tempa=\box46
+\@tempa=\box47
+\@tempa=\box48
+\@tempa=\box49
+\c@columnbadness=\count94
+\c@finalcolumnbadness=\count95
+\last@try=\dimen111
+\multicolovershoot=\dimen112
+\multicolundershoot=\dimen113
+\mult@nat@firstbox=\box50
+\colbreak@box=\box51
+)
+(/usr/share/texmf/tex/latex/misc/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count96
+\float@exts=\toks15
+\float@box=\box52
+\@float@everytoks=\toks16
+\@floatcapt=\box53
+)
+(/usr/share/texmf/tex/latex/base/textcomp.sty
+Package: textcomp 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+))
+(/usr/share/texmf/tex/latex/base/alltt.sty
+Package: alltt 1997/06/16 v2.0g defines alltt environment
+) (./doxygen.sty
+Package: doxygen 
+
+(/usr/share/texmf/tex/latex/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count97
+\calc@Bcount=\count98
+\calc@Adimen=\dimen114
+\calc@Bdimen=\dimen115
+\calc@Askip=\skip45
+\calc@Bskip=\skip46
+LaTeX Info: Redefining \setlength on input line 59.
+LaTeX Info: Redefining \addtolength on input line 60.
+\calc@denominator=\count99
+)
+(/usr/share/texmf/tex/latex/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen116
+\extrarowheight=\dimen117
+\NC@list=\toks17
+\extratabsurround=\skip47
+\backup@length=\skip48
+)
+\tmplength=\skip49
+)
+(/usr/share/texmf/tex/latex/base/fontenc.sty
+Package: fontenc 2001/06/05 v1.94 Standard LaTeX package
+
+(/usr/share/texmf/tex/latex/base/t1enc.def
+File: t1enc.def 2001/06/05 v1.94 Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding T1 on input line 38.
+))
+\@indexfile=\write3
+\openout3 = `refman.idx'.
+
+
+Writing index file refman.idx
+(./refman.aux (./nfs4__tools_8c.aux) (./nfs__client__id_8c.aux)
+(./nfs__convert_8c.aux) (./nfs__export__list_8c.aux)
+(./nfs__filehandle__mgmt_8c.aux) (./nfs__ip__name_8c.aux)
+(./nfs__ip__stats_8c.aux) (./nfs__mnt__list_8c.aux) (./nfs__read__conf_8c.aux)
+(./nfs__stat__mgmt_8c.aux) (./nfs__state__id_8c.aux) (./SHA1_8c.aux)
+(./test__clientid_8c.aux) (./test__clientid__full_8c.aux))
+\openout1 = `refman.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 14.
+
+(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    ... okay on input line 14.
+ [1
+
+
+] [2
+
+] (./refman.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+)
+\tf@toc=\write4
+\openout4 = `refman.toc'.
+
+ [1
+
+] [2
+
+]
+Chapter 1.
+(./files.tex) [1
+
+] [2
+
+]
+Chapter 2.
+(./pages.tex) [3] [4
+
+]
+Chapter 3.
+(./exports_8c.tex
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 5.
+ (/usr/share/texmf/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [5]
+[6]
+Underfull \hbox (badness 8113) in paragraph at lines 137--139
+[]\T1/cmr/m/n/10 #define \T1/cmr/bx/n/10 DEFINED_-TWICE_-WARNING\T1/cmr/m/n/10 
+(_-str_-) Display-Log( "NFS READ_-
+ []
+
+
+Underfull \hbox (badness 2600) in paragraph at lines 162--164
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-Parse-Conf-Line \T1/cmr/m/n/10 (char 
+$\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 Argv[$ $], int nb-Argv, char $\OMS/cmsy/m/
+n/10 ^^C$\T1/cmr/m/n/10 line, int($\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 separato
+r_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 191--191
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 192--192
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 195--195
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 196--196
+
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 199--199
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 200--200
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--205
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--205
+[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/exports.
+c,v 1.33
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 209--209
+
+ []
+
+[8] [9] [10] [11]
+Underfull \hbox (badness 10000) in paragraph at lines 521--521
+
+ []
+
+[12] [13]
+Underfull \hbox (badness 10000) in paragraph at lines 698--698
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 729--729
+
+ []
+
+[14]
+Underfull \hbox (badness 10000) in paragraph at lines 734--734
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 751--751
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 756--756
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 773--773
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 778--778
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 780--780
+
+ []
+
+[15]
+Underfull \hbox (badness 10000) in paragraph at lines 797--797
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 802--802
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 811--811
+
+ []
+
+[16]) [17]
+\openout2 = `nfs4__tools_8c.aux'.
+
+ (./nfs4__tools_8c.tex
+Underfull \vbox (badness 1215) has occurred while \output is active []
+
+ [18
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/Main-NFSD/nfs_-t
+ools.c,v 1.43
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 90--90
+
+ []
+
+) [19] [20]
+\openout2 = `nfs__client__id_8c.aux'.
+
+ (./nfs__client__id_8c.tex
+Underfull \hbox (badness 1226) in paragraph at lines 23--25
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 client_-id_-rbt_-hash_-func \T1/
+cmr/m/n/10 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, 
+hash_-
+ []
+
+[21
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 77--77
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--82
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 106--106
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--111
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 126--126
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--131
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 133--133
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 146--146
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--151
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 171--171
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 176--176
+
+ []
+
+[23]
+Underfull \hbox (badness 10000) in paragraph at lines 203--203
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 208--208
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 240--240
+
+ []
+
+[24]
+Underfull \hbox (badness 10000) in paragraph at lines 245--245
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 271--271
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 276--276
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 291--291
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 296--296
+
+ []
+
+[25]
+Underfull \hbox (badness 10000) in paragraph at lines 330--330
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 335--335
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 350--350
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 355--355
+
+ []
+
+[26]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [27])
+[28]
+\openout2 = `nfs__convert_8c.aux'.
+
+ (./nfs__convert_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 41--41
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+[29
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--78
+
+ []
+
+) [30]
+\openout2 = `nfs__export__list_8c.aux'.
+
+ (./nfs__export__list_8c.tex
+Underfull \hbox (badness 3240) in paragraph at lines 38--40
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-build_-fsal_-context \T1/cmr/m/n/10 (
+struct svc_-req $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 ptr_-req, exportlist_-clie
+nt_-entry_-t
+ []
+
+[31
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--73
+
+ []
+
+[32]
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--120
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 131--131
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 136--136
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 154--154
+
+ []
+
+[33]) [34]
+\openout2 = `nfs__filehandle__mgmt_8c.aux'.
+
+ (./nfs__filehandle__mgmt_8c.tex
+Underfull \hbox (badness 1546) in paragraph at lines 35--37
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs4_-Fhandle-To-FSAL \T1/cmr/m/n/10 (nfs_
+-fh4 $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pfh4, fsal_-handle_-t $\OMS/cmsy/m/n/
+10 ^^C$\T1/cmr/m/n/10 pfsalhandle, fsal_-op_-
+ []
+
+
+Underfull \hbox (badness 1546) in paragraph at lines 37--39
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs3_-Fhandle-To-FSAL \T1/cmr/m/n/10 (nfs_
+-fh3 $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pfh3, fsal_-handle_-t $\OMS/cmsy/m/n/
+10 ^^C$\T1/cmr/m/n/10 pfsalhandle, fsal_-op_-
+ []
+
+
+Underfull \hbox (badness 1087) in paragraph at lines 39--41
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs2_-Fhandle-To-FSAL \T1/cmr/m/n/10 (fhan
+-dle2 $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 pfh2, fsal_-handle_-t $\OMS/cmsy/m/n
+/10 ^^C$\T1/cmr/m/n/10 pfsalhandle, fsal_-op_-
+ []
+
+[35
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 100--100
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--101
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--105
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--108
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--109
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--114
+[]\T1/cmr/m/n/10 /cea/S/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-f
+ilehandle_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 118--118
+
+ []
+
+[36]
+Underfull \hbox (badness 10000) in paragraph at lines 164--164
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--169
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 184--184
+
+ []
+
+[37]
+Underfull \hbox (badness 10000) in paragraph at lines 189--189
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 202--202
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 222--222
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--227
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 242--242
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--247
+
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 262--262
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 267--267
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 282--282
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 287--287
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 302--302
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 307--307
+
+ []
+
+[39]
+Underfull \hbox (badness 10000) in paragraph at lines 322--322
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 327--327
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 342--342
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 347--347
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 360--360
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 365--365
+
+ []
+
+[40]
+Underfull \hbox (badness 10000) in paragraph at lines 380--380
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 385--385
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--400
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 405--405
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 418--418
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--423
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 438--438
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 443--443
+
+ []
+
+[41]
+Underfull \hbox (badness 10000) in paragraph at lines 456--456
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 461--461
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 474--474
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 479--479
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 492--492
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 497--497
+
+ []
+
+[42]
+Underfull \hbox (badness 10000) in paragraph at lines 512--512
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 517--517
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 532--532
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 537--537
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 552--552
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 557--557
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 572--572
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 577--577
+
+ []
+
+[43]) [44]
+\openout2 = `nfs__ip__name_8c.aux'.
+
+ (./nfs__ip__name_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--58
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+[45
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+[]\T1/cmr/m/n/10 /cea/S/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-i
+p_-name.c,v 1.6
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--75
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 99--99
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 104--104
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--117
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--122
+
+ []
+
+[46]
+Underfull \hbox (badness 10000) in paragraph at lines 142--142
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 147--147
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 162--162
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--167
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 169--169
+
+ []
+
+[47]
+Underfull \hbox (badness 10000) in paragraph at lines 182--182
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 187--187
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 202--202
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 207--207
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 230--230
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 235--235
+
+ []
+
+[48]
+Underfull \hbox (badness 10000) in paragraph at lines 252--252
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 257--257
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 259--259
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 283--283
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 288--288
+
+ []
+
+) [49] [50]
+\openout2 = `nfs__ip__stats_8c.aux'.
+
+ (./nfs__ip__stats_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--52
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--56
+
+ []
+
+[51
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 59--59
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+[]\T1/cmr/m/n/10 /cea/S/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-i
+p_-stats.c,v 1.4
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 94--94
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 107--107
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 112--112
+
+ []
+
+[52]
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 132--132
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--145
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 150--150
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--165
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 170--170
+
+ []
+
+[53]
+Underfull \hbox (badness 10000) in paragraph at lines 183--183
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 188--188
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 209--209
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 214--214
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 234--234
+
+ []
+
+[54]
+Underfull \hbox (badness 10000) in paragraph at lines 251--251
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 256--256
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 273--273
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 278--278
+
+ []
+
+) [55]
+\openout2 = `nfs__mnt__list_8c.aux'.
+
+ (./nfs__mnt__list_8c.tex [56
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--61
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--65
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--68
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 69--69
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+[]\T1/cmr/m/n/10 /cea/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-mnt
+_-list.c,v 1.7
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--78
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--108
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--113
+
+ []
+
+[57]
+Underfull \hbox (badness 10000) in paragraph at lines 128--128
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 133--133
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 148--148
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--153
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 168--168
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--173
+
+ []
+
+
+Underfull \hbox (badness 1082) in paragraph at lines 180--182
+[]\T1/cmr/m/n/10 Referenced by nfs_-Add_-Mount-List_-Entry(), nfs_-Get_-Mount-L
+ist(), nfs_-Init_-Mount-List(),
+ []
+
+[58]
+Underfull \hbox (badness 10000) in paragraph at lines 190--190
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 195--195
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 210--210
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 215--215
+
+ []
+
+) [59]
+\openout2 = `nfs__read__conf_8c.aux'.
+
+ (./nfs__read__conf_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 32--34
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-read_-worker_-conf \T1/cmr/m/n/10 (co
+nfig_-file_-t in_-config, nfs_-worker_-parameter_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 36--38
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-read_-dupreq_-hash_-conf \T1/cmr/m/n/
+10 (config_-file_-t in_-config, nfs_-rpc_-dupreq_-
+ []
+
+
+Underfull \hbox (badness 2197) in paragraph at lines 42--44
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-read_-state_-id_-conf \T1/cmr/m/n/10 
+(config_-file_-t in_-config, nfs_-state_-id_-parameter_-t
+ []
+
+[60
+
+
+]
+Underfull \hbox (badness 3407) in paragraph at lines 50--52
+[]\T1/cmr/m/n/10 int \T1/cmr/bx/n/10 nfs_-read_-version4_-conf \T1/cmr/m/n/10 (
+config_-file_-t in_-config, nfs_-version4_-parameter_-t
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 62--62
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--63
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 67--67
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+
+ []
+
+
+Underfull \hbox (badness 2443) in paragraph at lines 76--76
+[]\T1/cmr/m/n/10 /cea/S/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-r
+ead_-conf.c,v 1.10
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 80--80
+
+ []
+
+[61]
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 121--121
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 134--134
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 139--139
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+
+ []
+
+[62]
+Underfull \hbox (badness 10000) in paragraph at lines 170--170
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 175--175
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 188--188
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 193--193
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 206--206
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 211--211
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 224--224
+
+ []
+
+[63]
+Underfull \hbox (badness 10000) in paragraph at lines 229--229
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 242--242
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 247--247
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 260--260
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 265--265
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 278--278
+
+ []
+
+[64]
+Underfull \hbox (badness 10000) in paragraph at lines 283--283
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 296--296
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 301--301
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 316--316
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 321--321
+
+ []
+
+) [65]
+\openout2 = `nfs__stat__mgmt_8c.aux'.
+
+ (./nfs__stat__mgmt_8c.tex
+Underfull \vbox (badness 1661) has occurred while \output is active []
+
+ [66
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 46--46
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--47
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 50--50
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 54--54
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 60--60
+
+ []
+
+
+Underfull \hbox (badness 2409) in paragraph at lines 60--60
+[]\T1/cmr/m/n/10 /cea/S/home/cvs/cvs/SHERPA/Base-Cvs/GANESHA/src/support/nfs_-s
+tat_-mgmt.c,v 1.4
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--64
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 86--86
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 91--91
+
+ []
+
+) [67] [68]
+\openout2 = `nfs__state__id_8c.aux'.
+
+ (./nfs__state__id_8c.tex [69
+
+
+]
+Underfull \hbox (badness 1852) in paragraph at lines 46--48
+[]\T1/cmr/m/n/10 unsigned long \T1/cmr/bx/n/10 state_-id_-rbt_-hash_-func \T1/c
+mr/m/n/10 (hash_-parameter_-t $\OMS/cmsy/m/n/10 ^^C$\T1/cmr/m/n/10 p_-hparam, h
+ash_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 105--105
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--110
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 115--117
+[]\T1/cmr/m/n/10 References nfs4_-Print_-Stateid(), Server-Boot-Time, SHA1Final
+(), SHA1Init(), and
+ []
+
+[70]
+Underfull \hbox (badness 10000) in paragraph at lines 125--125
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 130--130
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--145
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 150--150
+
+ []
+
+[71] [72]) [73]
+\openout2 = `SHA1_8c.aux'.
+
+ (./SHA1_8c.tex
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--48
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--66
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 71--71
+
+ []
+
+[74
+
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+
+ []
+
+) [75]
+\openout2 = `test__clientid_8c.aux'.
+
+ (./test__clientid_8c.tex [76
+
+
+]) [77]
+\openout2 = `test__clientid__full_8c.aux'.
+
+ (./test__clientid__full_8c.tex
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [78
+
+
+])
+[79] [80
+
+
+]
+Chapter 4.
+(./todo.tex) (./refman.ind [81] [82
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 123--124
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-MAX_-CACHE_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 124--125
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-MAX_-OFF_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-MAX_-OFF_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 133--134
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-PREF_-READDIR,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 135--136
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-PRIVILEGED_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 139--140
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-TRANS_-PROTO,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 140--141
+[]| \T1/cmr/m/n/10 CONF_-EXPORT_-USE_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--152
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-MAX_-CACHE_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 152--153
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-MAX_-OFF_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-MAX_-OFF_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 161--162
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-PREF_-READDIR,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 163--164
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-PRIVILEGED_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--166
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-ROOT_-OR_-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--168
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-TRANS_-PROTO,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 168--169
+[]| \T1/cmr/m/n/10 FLAG_-EXPORT_-USE_-
+ []
+
+[83] [84]
+Underfull \hbox (badness 10000) in paragraph at lines 354--355
+[]| \T1/cmr/m/n/10 client_-id_-value_-hash_-func_-reverse,
+ []
+
+[85] [86] [87] [88
+
+]) (./refman.aux (./nfs4__tools_8c.aux)
+(./nfs__client__id_8c.aux) (./nfs__convert_8c.aux) (./nfs__export__list_8c.aux)
+(./nfs__filehandle__mgmt_8c.aux) (./nfs__ip__name_8c.aux)
+(./nfs__ip__stats_8c.aux) (./nfs__mnt__list_8c.aux) (./nfs__read__conf_8c.aux)
+(./nfs__stat__mgmt_8c.aux) (./nfs__state__id_8c.aux) (./SHA1_8c.aux)
+(./test__clientid_8c.aux) (./test__clientid__full_8c.aux)) ) 
+Here is how much of TeX's memory you used:
+ 1935 strings out of 95847
+ 27202 string characters out of 1193874
+ 74195 words of memory out of 1000001
+ 4749 multiletter control sequences out of 10000+50000
+ 14253 words of font info for 29 fonts, out of 500000 for 1000
+ 14 hyphenation exceptions out of 1000
+ 30i,12n,43p,963b,507s stack positions out of 1500i,500n,5000p,200000b,5000s
+
+Output written on refman.dvi (92 pages, 195584 bytes).

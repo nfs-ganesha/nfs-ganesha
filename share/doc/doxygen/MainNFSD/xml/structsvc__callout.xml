@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structsvc__callout" kind="struct" prot="public">
+    <compoundname>svc_callout</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structsvc__callout_1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>svc_callout *</type>
+        <definition>struct svc_callout* svc_callout::sc_next</definition>
+        <argsstring></argsstring>
+        <name>sc_next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_rpc_dispatcher_thread.c" line="153" bodystart="153" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>u_long</type>
+        <definition>u_long svc_callout::sc_prog</definition>
+        <argsstring></argsstring>
+        <name>sc_prog</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_rpc_dispatcher_thread.c" line="154" bodystart="38" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>u_long</type>
+        <definition>u_long svc_callout::sc_vers</definition>
+        <argsstring></argsstring>
+        <name>sc_vers</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_rpc_dispatcher_thread.c" line="155" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o3" prot="public" static="no" volatile="no" mutable="no">
+        <type>void(*</type>
+        <definition>void(* svc_callout::sc_dispatch)()</definition>
+        <argsstring>)()</argsstring>
+        <name>sc_dispatch</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_rpc_dispatcher_thread.c" line="156"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o4" prot="public" static="no" volatile="no" mutable="no">
+        <type>svc_callout *</type>
+        <definition>struct svc_callout* svc_callout::sc_next</definition>
+        <argsstring></argsstring>
+        <name>sc_next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_worker_thread.c" line="148" bodystart="148" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o5" prot="public" static="no" volatile="no" mutable="no">
+        <type>svc_callout *</type>
+        <definition>struct svc_callout* svc_callout::sc_next</definition>
+        <argsstring></argsstring>
+        <name>sc_next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/Svc_gssrpc.c" line="81" bodystart="81" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o6" prot="public" static="no" volatile="no" mutable="no">
+        <type>rpcprog_t</type>
+        <definition>rpcprog_t svc_callout::sc_prog</definition>
+        <argsstring></argsstring>
+        <name>sc_prog</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/Svc_gssrpc.c" line="82" bodystart="82" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o7" prot="public" static="no" volatile="no" mutable="no">
+        <type>rpcprog_t</type>
+        <definition>rpcprog_t svc_callout::sc_vers</definition>
+        <argsstring></argsstring>
+        <name>sc_vers</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/Svc_gssrpc.c" line="83" bodystart="83" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structsvc__callout_1o8" prot="public" static="no" volatile="no" mutable="no">
+        <type>svc_callout *</type>
+        <definition>struct svc_callout* svc_callout::sc_next</definition>
+        <argsstring></argsstring>
+        <name>sc_next</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/MainNFSD/Svc_oncrpc.c" line="37" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_rpc_dispatcher_thread.c" line="152" bodystart="152" bodyend="157"/>
+    <listofallmembers>
+      <member refid="structsvc__callout_1o3" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_dispatch</name></member>
+      <member refid="structsvc__callout_1o0" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_next</name></member>
+      <member refid="structsvc__callout_1o4" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_next</name></member>
+      <member refid="structsvc__callout_1o5" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_next</name></member>
+      <member refid="structsvc__callout_1o8" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_next</name></member>
+      <member refid="structsvc__callout_1o1" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_prog</name></member>
+      <member refid="structsvc__callout_1o6" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_prog</name></member>
+      <member refid="structsvc__callout_1o2" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_vers</name></member>
+      <member refid="structsvc__callout_1o7" prot="public" virt="non-virtual"><scope>svc_callout</scope><name>sc_vers</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,17 @@
+PYTHON = python2
+PYCHECKER = pychecker --stdlib --blacklist=nfs4types
+SRCS = nfs4client.py nfs4lib.py nfs4st.py pynfs_completer.py \
+       rpcgen.py rpc.py test_tree.py 
+
+CHECKS=$(patsubst %.py,.%.chk,$(SRCS))
+
+all: $(CHECKS)
+
+.%.chk: %.py
+	$(PYCHECKER) $^ | tee $@
+
+clean: 
+	rm -f $(CHECKS) $(wildcard *.pyc)
+
+nfs4client.py nfs4constants.py nfs4packer.py: nfs4.x
+	$(PYTHON) rpcgen.py $^

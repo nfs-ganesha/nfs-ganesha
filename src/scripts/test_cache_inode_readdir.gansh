@@ -1,0 +1,54 @@
+# test des readir et getattrs
+
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+
+layer set Cache_inode
+init_cache
+
+# count root elements using many ways
+set LS_ROOT ls /
+wc LS_ROOT
+set LS_ROOT ls .
+wc LS_ROOT
+set LS_ROOT ls
+wc LS_ROOT
+
+# on se place dans le repertoire /AIX_5/bin
+
+# cd absolu
+cd /AIX_5/bin
+
+# readdir relatif
+set LS_REL ls -Sv ..
+
+# readdir du repertoire /AIX_5
+set LS_ABS ls -Sv /AIX_5 
+
+# ici, on ne doit avoir que les chemins qui different
+diff LS_REL LS_ABS
+
+# check whether there the same count of elements
+set LS_AIX5 ls -l ..
+wc LS_AIX5
+set LS_AIX5 ls -l /AIX_5
+wc LS_AIX5
+
+# on effectue les meme tests sur d'autres repertoires
+cd /share
+set LS_REL ls -Sv ..
+set LS_ABS ls -Sv /
+diff LS_REL LS_ABS
+
+# encore un
+cd include
+set LS_REL ls -Sv ..
+set LS_ABS ls -Sv /share
+diff LS_REL LS_ABS
+
+# check whether there are the same count of elements
+set LS_SHARE ls -l ..
+wc LS_SHARE
+set LS_SHARE ls -l /share
+wc LS_SHARE
+

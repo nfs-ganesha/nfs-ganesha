@@ -1,0 +1,26 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER FSAL
+
+# wait for FS initialization
+barrier
+
+cd  /cea/prot/S/lama/s8/leibovic/ganesha
+
+# create a file
+create FICHIER 755
+barrier
+
+# write to file
+open FICHIER wt
+write -v -N 128  -A "1111111111111111"
+close
+
+barrier
+
+#read file
+open FICHIER r
+read -v -A -B 17 -s SET,0 all
+close
+barrier
+ 
+callstat 

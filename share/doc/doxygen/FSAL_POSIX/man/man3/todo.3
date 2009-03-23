@@ -1,0 +1,34 @@
+.TH "todo" 3 "9 Apr 2008" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+todo \- Todo List
+ 
+.IP "\fBMember \fBposix2fsal_error\fP(int posix_errorcode) \fP" 1c
+: The EBADF error also happens when file is opened for reading, and we try writting in it. In this case, we return ERR_FSAL_NOT_OPENED, but it doesn't seems to be a correct error translation. 
+.PP
+.PP
+ 
+.IP "\fBMember \fBfsal_is_retryable\fP(fsal_status_t status) \fP" 1c
+: ERR_FSAL_DELAY : The only retryable error ?
+.PP
+.PP
+ 
+.IP "\fBMember \fBFSAL_read\fP(fsal_file_t *p_file_descriptor, fsal_seek_t *p_seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *p_read_amount, fsal_boolean_t *p_end_of_file) \fP" 1c
+: manage fsal_size_t to size_t convertion 
+.PP
+: manage ssize_t to fsal_size_t convertion
+.PP
+.PP
+ 
+.IP "\fBMember \fBFSAL_write\fP(fsal_file_t *p_file_descriptor, fsal_seek_t *p_seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *p_write_amount) \fP" 1c
+: manage fsal_size_t to size_t convertion 
+.PP
+: manage ssize_t to fsal_size_t convertion
+.PP
+.PP
+ 
+.IP "\fBMember \fBFSAL_lookupPath\fP(fsal_path_t *p_path, fsal_op_context_t *p_context, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes) \fP" 1c
+: Be carefull about junction crossing, symlinks, hardlinks,...
+.PP
+

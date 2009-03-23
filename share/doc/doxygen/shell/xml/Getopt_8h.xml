@@ -1,0 +1,368 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="Getopt_8h" kind="file">
+    <compoundname>Getopt.h</compoundname>
+    <includedby refid="commands__Cache__inode_8c" local="yes">commands_Cache_inode.c</includedby>
+    <includedby refid="commands__FSAL_8c" local="yes">commands_FSAL.c</includedby>
+    <includedby refid="commands__NFS_8c" local="yes">commands_NFS.c</includedby>
+    <includedby refid="commands__NFS__remote_8c" local="yes">commands_NFS_remote.c</includedby>
+    <includedby refid="Getopt_8c" local="yes">Getopt.c</includedby>
+    <includedby refid="main_8c" local="yes">main.c</includedby>
+    <includedby refid="shell__utils_8c" local="yes">shell_utils.c</includedby>
+    <invincdepgraph>
+      <node id="174">
+        <label>commands_NFS.c</label>
+        <link refid="commands__NFS_8c"/>
+      </node>
+      <node id="173">
+        <label>commands_FSAL.c</label>
+        <link refid="commands__FSAL_8c"/>
+      </node>
+      <node id="175">
+        <label>commands_NFS_remote.c</label>
+        <link refid="commands__NFS__remote_8c"/>
+      </node>
+      <node id="176">
+        <label>Getopt.c</label>
+        <link refid="Getopt_8c"/>
+      </node>
+      <node id="171">
+        <label>Getopt.h</label>
+        <link refid="Getopt.h"/>
+        <childnode refid="172" relation="include">
+        </childnode>
+        <childnode refid="173" relation="include">
+        </childnode>
+        <childnode refid="174" relation="include">
+        </childnode>
+        <childnode refid="175" relation="include">
+        </childnode>
+        <childnode refid="176" relation="include">
+        </childnode>
+        <childnode refid="177" relation="include">
+        </childnode>
+        <childnode refid="178" relation="include">
+        </childnode>
+      </node>
+      <node id="177">
+        <label>main.c</label>
+        <link refid="main_8c"/>
+      </node>
+      <node id="172">
+        <label>commands_Cache_inode.c</label>
+        <link refid="commands__Cache__inode_8c"/>
+      </node>
+      <node id="178">
+        <label>shell_utils.c</label>
+        <link refid="shell__utils_8c"/>
+      </node>
+    </invincdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="Getopt_8h_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int Getopt</definition>
+        <argsstring>(int argc, char *argv[], char *opts)</argsstring>
+        <name>Getopt</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>argv</declname>
+          <array>[]</array>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>opts</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/Getopt.h" line="24" bodystart="128" bodyend="179"/>
+        <references refid="Getopt_8c_1a2" compoundref="Getopt_8c" startline="115">ERR</references>
+        <references refid="Getopt_8c_1a6" compoundref="Getopt_8c" startline="126">Optarg</references>
+        <references refid="Getopt_8c_1a4" compoundref="Getopt_8c" startline="124">Optind</references>
+        <references refid="Getopt_8c_1a5" compoundref="Getopt_8c" startline="125">Optopt</references>
+        <referencedby refid="commands__Cache__inode_8c_1a42" compoundref="commands__Cache__inode_8c" startline="3012" endline="3181">fn_Cache_inode_access</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a28" compoundref="commands__Cache__inode_8c" startline="1019" endline="1098">fn_Cache_inode_cache_init</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a38" compoundref="commands__Cache__inode_8c" startline="2339" endline="2506">fn_Cache_inode_create</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a43" compoundref="commands__Cache__inode_8c" startline="3185" endline="3327">fn_Cache_inode_data_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a47" compoundref="commands__Cache__inode_8c" startline="3671" endline="3789">fn_Cache_inode_flush_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a32" compoundref="commands__Cache__inode_8c" startline="1298" endline="1378">fn_Cache_inode_gc</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a36" compoundref="commands__Cache__inode_8c" startline="2040" endline="2181">fn_Cache_inode_link</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a37" compoundref="commands__Cache__inode_8c" startline="2186" endline="2335">fn_Cache_inode_ln</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a33" compoundref="commands__Cache__inode_8c" startline="1382" endline="1802">fn_Cache_inode_ls</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a35" compoundref="commands__Cache__inode_8c" startline="1866" endline="2037">fn_Cache_inode_mkdir</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a48" compoundref="commands__Cache__inode_8c" startline="3792" endline="4215">fn_Cache_inode_read</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a45" compoundref="commands__Cache__inode_8c" startline="3443" endline="3545">fn_Cache_inode_recover_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a46" compoundref="commands__Cache__inode_8c" startline="3549" endline="3667">fn_Cache_inode_refresh_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a44" compoundref="commands__Cache__inode_8c" startline="3331" endline="3439">fn_Cache_inode_release_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a39" compoundref="commands__Cache__inode_8c" startline="2511" endline="2681">fn_Cache_inode_rename</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a41" compoundref="commands__Cache__inode_8c" startline="2828" endline="3002">fn_Cache_inode_setattr</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a31" compoundref="commands__Cache__inode_8c" startline="1199" endline="1294">fn_Cache_inode_stat</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a40" compoundref="commands__Cache__inode_8c" startline="2685" endline="2819">fn_Cache_inode_unlink</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a49" compoundref="commands__Cache__inode_8c" startline="4219" endline="4659">fn_Cache_inode_write</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a34" compoundref="commands__FSAL_8c" startline="3125" endline="3362">fn_fsal_access</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a43" compoundref="commands__FSAL_8c" startline="5103" endline="5261">fn_fsal_cat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a32" compoundref="commands__FSAL_8c" startline="2758" endline="2929">fn_fsal_create</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a23" compoundref="commands__FSAL_8c" startline="1280" endline="1516">fn_fsal_getxattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a31" compoundref="commands__FSAL_8c" startline="2598" endline="2752">fn_fsal_hardlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a17" compoundref="commands__FSAL_8c" startline="639" endline="707">fn_fsal_init_fs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a30" compoundref="commands__FSAL_8c" startline="2430" endline="2592">fn_fsal_ln</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a24" compoundref="commands__FSAL_8c" startline="1522" endline="1805">fn_fsal_ls</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a22" compoundref="commands__FSAL_8c" startline="1146" endline="1277">fn_fsal_lsxattrs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a28" compoundref="commands__FSAL_8c" startline="2086" endline="2249">fn_fsal_mkdir</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a37" compoundref="commands__FSAL_8c" startline="3693" endline="3878">fn_fsal_open</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a38" compoundref="commands__FSAL_8c" startline="3884" endline="4073">fn_fsal_open_byfileid</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a36" compoundref="commands__FSAL_8c" startline="3498" endline="3686">fn_fsal_open_byname</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a44" compoundref="commands__FSAL_8c" startline="5269" endline="5466">fn_fsal_rcp</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a39" compoundref="commands__FSAL_8c" startline="4081" endline="4492">fn_fsal_read</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a29" compoundref="commands__FSAL_8c" startline="2255" endline="2424">fn_fsal_rename</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a33" compoundref="commands__FSAL_8c" startline="2939" endline="3115">fn_fsal_setattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a21" compoundref="commands__FSAL_8c" startline="1019" endline="1142">fn_fsal_stat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a35" compoundref="commands__FSAL_8c" startline="3370" endline="3492">fn_fsal_truncate</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a27" compoundref="commands__FSAL_8c" startline="1960" endline="2082">fn_fsal_unlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a40" compoundref="commands__FSAL_8c" startline="4525" endline="4965">fn_fsal_write</referencedby>
+        <referencedby refid="commands__NFS_8c_1a46" compoundref="commands__NFS_8c" startline="2768" endline="2890">fn_nfs_create</referencedby>
+        <referencedby refid="commands__NFS_8c_1a51" compoundref="commands__NFS_8c" startline="3415" endline="3542">fn_nfs_hardlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a22" compoundref="commands__NFS_8c" startline="536" endline="618">fn_nfs_init</referencedby>
+        <referencedby refid="commands__NFS_8c_1a52" compoundref="commands__NFS_8c" startline="3548" endline="3683">fn_nfs_ln</referencedby>
+        <referencedby refid="commands__NFS_8c_1a44" compoundref="commands__NFS_8c" startline="2341" endline="2677">fn_nfs_ls</referencedby>
+        <referencedby refid="commands__NFS_8c_1a47" compoundref="commands__NFS_8c" startline="2895" endline="3017">fn_nfs_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a62" compoundref="commands__NFS__remote_8c" startline="2538" endline="2642">fn_nfs_remote_create</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a67" compoundref="commands__NFS__remote_8c" startline="3122" endline="3238">fn_nfs_remote_hardlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a68" compoundref="commands__NFS__remote_8c" startline="3244" endline="3368">fn_nfs_remote_ln</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a60" compoundref="commands__NFS__remote_8c" startline="2132" endline="2457">fn_nfs_remote_ls</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a63" compoundref="commands__NFS__remote_8c" startline="2647" endline="2755">fn_nfs_remote_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a66" compoundref="commands__NFS__remote_8c" startline="2996" endline="3116">fn_nfs_remote_rename</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a65" compoundref="commands__NFS__remote_8c" startline="2881" endline="2991">fn_nfs_remote_setattr</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a69" compoundref="commands__NFS__remote_8c" startline="3374" endline="3529">fn_nfs_remote_stat</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a64" compoundref="commands__NFS__remote_8c" startline="2759" endline="2878">fn_nfs_remote_unlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a50" compoundref="commands__NFS_8c" startline="3278" endline="3409">fn_nfs_rename</referencedby>
+        <referencedby refid="commands__NFS_8c_1a49" compoundref="commands__NFS_8c" startline="3153" endline="3273">fn_nfs_setattr</referencedby>
+        <referencedby refid="commands__NFS_8c_1a53" compoundref="commands__NFS_8c" startline="3689" endline="3855">fn_nfs_stat</referencedby>
+        <referencedby refid="commands__NFS_8c_1a48" compoundref="commands__NFS_8c" startline="3021" endline="3150">fn_nfs_unlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a34" compoundref="commands__NFS__remote_8c" startline="579" endline="653">fn_rpc_init</referencedby>
+        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <referencedby refid="shell__utils_8h_1a5" compoundref="shell__utils_8c" startline="419" endline="594">util_cmp</referencedby>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="Getopt_8h_1a0" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int Opterr</definition>
+        <argsstring></argsstring>
+        <name>Opterr</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/Getopt.h" line="19" bodystart="123" bodyend="-1"/>
+        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <referencedby refid="shell__utils_8h_1a5" compoundref="shell__utils_8c" startline="419" endline="594">util_cmp</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="Getopt_8h_1a1" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int Optind</definition>
+        <argsstring></argsstring>
+        <name>Optind</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/Getopt.h" line="20" bodystart="124" bodyend="-1"/>
+        <referencedby refid="commands__Cache__inode_8c_1a42" compoundref="commands__Cache__inode_8c" startline="3012" endline="3181">fn_Cache_inode_access</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a28" compoundref="commands__Cache__inode_8c" startline="1019" endline="1098">fn_Cache_inode_cache_init</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a38" compoundref="commands__Cache__inode_8c" startline="2339" endline="2506">fn_Cache_inode_create</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a43" compoundref="commands__Cache__inode_8c" startline="3185" endline="3327">fn_Cache_inode_data_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a47" compoundref="commands__Cache__inode_8c" startline="3671" endline="3789">fn_Cache_inode_flush_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a36" compoundref="commands__Cache__inode_8c" startline="2040" endline="2181">fn_Cache_inode_link</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a37" compoundref="commands__Cache__inode_8c" startline="2186" endline="2335">fn_Cache_inode_ln</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a33" compoundref="commands__Cache__inode_8c" startline="1382" endline="1802">fn_Cache_inode_ls</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a35" compoundref="commands__Cache__inode_8c" startline="1866" endline="2037">fn_Cache_inode_mkdir</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a48" compoundref="commands__Cache__inode_8c" startline="3792" endline="4215">fn_Cache_inode_read</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a45" compoundref="commands__Cache__inode_8c" startline="3443" endline="3545">fn_Cache_inode_recover_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a46" compoundref="commands__Cache__inode_8c" startline="3549" endline="3667">fn_Cache_inode_refresh_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a44" compoundref="commands__Cache__inode_8c" startline="3331" endline="3439">fn_Cache_inode_release_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a39" compoundref="commands__Cache__inode_8c" startline="2511" endline="2681">fn_Cache_inode_rename</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a41" compoundref="commands__Cache__inode_8c" startline="2828" endline="3002">fn_Cache_inode_setattr</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a31" compoundref="commands__Cache__inode_8c" startline="1199" endline="1294">fn_Cache_inode_stat</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a40" compoundref="commands__Cache__inode_8c" startline="2685" endline="2819">fn_Cache_inode_unlink</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a49" compoundref="commands__Cache__inode_8c" startline="4219" endline="4659">fn_Cache_inode_write</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a34" compoundref="commands__FSAL_8c" startline="3125" endline="3362">fn_fsal_access</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a43" compoundref="commands__FSAL_8c" startline="5103" endline="5261">fn_fsal_cat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a32" compoundref="commands__FSAL_8c" startline="2758" endline="2929">fn_fsal_create</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a23" compoundref="commands__FSAL_8c" startline="1280" endline="1516">fn_fsal_getxattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a31" compoundref="commands__FSAL_8c" startline="2598" endline="2752">fn_fsal_hardlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a17" compoundref="commands__FSAL_8c" startline="639" endline="707">fn_fsal_init_fs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a30" compoundref="commands__FSAL_8c" startline="2430" endline="2592">fn_fsal_ln</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a24" compoundref="commands__FSAL_8c" startline="1522" endline="1805">fn_fsal_ls</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a22" compoundref="commands__FSAL_8c" startline="1146" endline="1277">fn_fsal_lsxattrs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a28" compoundref="commands__FSAL_8c" startline="2086" endline="2249">fn_fsal_mkdir</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a37" compoundref="commands__FSAL_8c" startline="3693" endline="3878">fn_fsal_open</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a38" compoundref="commands__FSAL_8c" startline="3884" endline="4073">fn_fsal_open_byfileid</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a36" compoundref="commands__FSAL_8c" startline="3498" endline="3686">fn_fsal_open_byname</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a44" compoundref="commands__FSAL_8c" startline="5269" endline="5466">fn_fsal_rcp</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a39" compoundref="commands__FSAL_8c" startline="4081" endline="4492">fn_fsal_read</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a29" compoundref="commands__FSAL_8c" startline="2255" endline="2424">fn_fsal_rename</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a33" compoundref="commands__FSAL_8c" startline="2939" endline="3115">fn_fsal_setattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a21" compoundref="commands__FSAL_8c" startline="1019" endline="1142">fn_fsal_stat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a35" compoundref="commands__FSAL_8c" startline="3370" endline="3492">fn_fsal_truncate</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a27" compoundref="commands__FSAL_8c" startline="1960" endline="2082">fn_fsal_unlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a40" compoundref="commands__FSAL_8c" startline="4525" endline="4965">fn_fsal_write</referencedby>
+        <referencedby refid="commands__NFS_8c_1a46" compoundref="commands__NFS_8c" startline="2768" endline="2890">fn_nfs_create</referencedby>
+        <referencedby refid="commands__NFS_8c_1a51" compoundref="commands__NFS_8c" startline="3415" endline="3542">fn_nfs_hardlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a22" compoundref="commands__NFS_8c" startline="536" endline="618">fn_nfs_init</referencedby>
+        <referencedby refid="commands__NFS_8c_1a52" compoundref="commands__NFS_8c" startline="3548" endline="3683">fn_nfs_ln</referencedby>
+        <referencedby refid="commands__NFS_8c_1a44" compoundref="commands__NFS_8c" startline="2341" endline="2677">fn_nfs_ls</referencedby>
+        <referencedby refid="commands__NFS_8c_1a47" compoundref="commands__NFS_8c" startline="2895" endline="3017">fn_nfs_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a62" compoundref="commands__NFS__remote_8c" startline="2538" endline="2642">fn_nfs_remote_create</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a67" compoundref="commands__NFS__remote_8c" startline="3122" endline="3238">fn_nfs_remote_hardlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a68" compoundref="commands__NFS__remote_8c" startline="3244" endline="3368">fn_nfs_remote_ln</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a60" compoundref="commands__NFS__remote_8c" startline="2132" endline="2457">fn_nfs_remote_ls</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a63" compoundref="commands__NFS__remote_8c" startline="2647" endline="2755">fn_nfs_remote_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a66" compoundref="commands__NFS__remote_8c" startline="2996" endline="3116">fn_nfs_remote_rename</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a65" compoundref="commands__NFS__remote_8c" startline="2881" endline="2991">fn_nfs_remote_setattr</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a69" compoundref="commands__NFS__remote_8c" startline="3374" endline="3529">fn_nfs_remote_stat</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a64" compoundref="commands__NFS__remote_8c" startline="2759" endline="2878">fn_nfs_remote_unlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a50" compoundref="commands__NFS_8c" startline="3278" endline="3409">fn_nfs_rename</referencedby>
+        <referencedby refid="commands__NFS_8c_1a49" compoundref="commands__NFS_8c" startline="3153" endline="3273">fn_nfs_setattr</referencedby>
+        <referencedby refid="commands__NFS_8c_1a53" compoundref="commands__NFS_8c" startline="3689" endline="3855">fn_nfs_stat</referencedby>
+        <referencedby refid="commands__NFS_8c_1a48" compoundref="commands__NFS_8c" startline="3021" endline="3150">fn_nfs_unlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a34" compoundref="commands__NFS__remote_8c" startline="579" endline="653">fn_rpc_init</referencedby>
+        <referencedby refid="Getopt_8h_1a4" compoundref="Getopt_8c" startline="128" endline="179">Getopt</referencedby>
+        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <referencedby refid="shell__utils_8h_1a5" compoundref="shell__utils_8c" startline="419" endline="594">util_cmp</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="Getopt_8h_1a2" prot="public" static="no" volatile="no" mutable="no">
+        <type>int</type>
+        <definition>int Optopt</definition>
+        <argsstring></argsstring>
+        <name>Optopt</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/Getopt.h" line="21" bodystart="125" bodyend="-1"/>
+        <referencedby refid="commands__Cache__inode_8c_1a42" compoundref="commands__Cache__inode_8c" startline="3012" endline="3181">fn_Cache_inode_access</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a28" compoundref="commands__Cache__inode_8c" startline="1019" endline="1098">fn_Cache_inode_cache_init</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a38" compoundref="commands__Cache__inode_8c" startline="2339" endline="2506">fn_Cache_inode_create</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a43" compoundref="commands__Cache__inode_8c" startline="3185" endline="3327">fn_Cache_inode_data_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a47" compoundref="commands__Cache__inode_8c" startline="3671" endline="3789">fn_Cache_inode_flush_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a32" compoundref="commands__Cache__inode_8c" startline="1298" endline="1378">fn_Cache_inode_gc</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a36" compoundref="commands__Cache__inode_8c" startline="2040" endline="2181">fn_Cache_inode_link</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a37" compoundref="commands__Cache__inode_8c" startline="2186" endline="2335">fn_Cache_inode_ln</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a33" compoundref="commands__Cache__inode_8c" startline="1382" endline="1802">fn_Cache_inode_ls</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a35" compoundref="commands__Cache__inode_8c" startline="1866" endline="2037">fn_Cache_inode_mkdir</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a48" compoundref="commands__Cache__inode_8c" startline="3792" endline="4215">fn_Cache_inode_read</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a45" compoundref="commands__Cache__inode_8c" startline="3443" endline="3545">fn_Cache_inode_recover_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a46" compoundref="commands__Cache__inode_8c" startline="3549" endline="3667">fn_Cache_inode_refresh_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a44" compoundref="commands__Cache__inode_8c" startline="3331" endline="3439">fn_Cache_inode_release_cache</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a39" compoundref="commands__Cache__inode_8c" startline="2511" endline="2681">fn_Cache_inode_rename</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a41" compoundref="commands__Cache__inode_8c" startline="2828" endline="3002">fn_Cache_inode_setattr</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a31" compoundref="commands__Cache__inode_8c" startline="1199" endline="1294">fn_Cache_inode_stat</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a40" compoundref="commands__Cache__inode_8c" startline="2685" endline="2819">fn_Cache_inode_unlink</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a49" compoundref="commands__Cache__inode_8c" startline="4219" endline="4659">fn_Cache_inode_write</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a34" compoundref="commands__FSAL_8c" startline="3125" endline="3362">fn_fsal_access</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a43" compoundref="commands__FSAL_8c" startline="5103" endline="5261">fn_fsal_cat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a32" compoundref="commands__FSAL_8c" startline="2758" endline="2929">fn_fsal_create</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a23" compoundref="commands__FSAL_8c" startline="1280" endline="1516">fn_fsal_getxattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a31" compoundref="commands__FSAL_8c" startline="2598" endline="2752">fn_fsal_hardlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a17" compoundref="commands__FSAL_8c" startline="639" endline="707">fn_fsal_init_fs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a30" compoundref="commands__FSAL_8c" startline="2430" endline="2592">fn_fsal_ln</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a24" compoundref="commands__FSAL_8c" startline="1522" endline="1805">fn_fsal_ls</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a22" compoundref="commands__FSAL_8c" startline="1146" endline="1277">fn_fsal_lsxattrs</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a28" compoundref="commands__FSAL_8c" startline="2086" endline="2249">fn_fsal_mkdir</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a37" compoundref="commands__FSAL_8c" startline="3693" endline="3878">fn_fsal_open</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a38" compoundref="commands__FSAL_8c" startline="3884" endline="4073">fn_fsal_open_byfileid</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a36" compoundref="commands__FSAL_8c" startline="3498" endline="3686">fn_fsal_open_byname</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a44" compoundref="commands__FSAL_8c" startline="5269" endline="5466">fn_fsal_rcp</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a39" compoundref="commands__FSAL_8c" startline="4081" endline="4492">fn_fsal_read</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a29" compoundref="commands__FSAL_8c" startline="2255" endline="2424">fn_fsal_rename</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a33" compoundref="commands__FSAL_8c" startline="2939" endline="3115">fn_fsal_setattr</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a21" compoundref="commands__FSAL_8c" startline="1019" endline="1142">fn_fsal_stat</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a35" compoundref="commands__FSAL_8c" startline="3370" endline="3492">fn_fsal_truncate</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a27" compoundref="commands__FSAL_8c" startline="1960" endline="2082">fn_fsal_unlink</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a40" compoundref="commands__FSAL_8c" startline="4525" endline="4965">fn_fsal_write</referencedby>
+        <referencedby refid="commands__NFS_8c_1a46" compoundref="commands__NFS_8c" startline="2768" endline="2890">fn_nfs_create</referencedby>
+        <referencedby refid="commands__NFS_8c_1a51" compoundref="commands__NFS_8c" startline="3415" endline="3542">fn_nfs_hardlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a22" compoundref="commands__NFS_8c" startline="536" endline="618">fn_nfs_init</referencedby>
+        <referencedby refid="commands__NFS_8c_1a52" compoundref="commands__NFS_8c" startline="3548" endline="3683">fn_nfs_ln</referencedby>
+        <referencedby refid="commands__NFS_8c_1a44" compoundref="commands__NFS_8c" startline="2341" endline="2677">fn_nfs_ls</referencedby>
+        <referencedby refid="commands__NFS_8c_1a47" compoundref="commands__NFS_8c" startline="2895" endline="3017">fn_nfs_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a62" compoundref="commands__NFS__remote_8c" startline="2538" endline="2642">fn_nfs_remote_create</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a67" compoundref="commands__NFS__remote_8c" startline="3122" endline="3238">fn_nfs_remote_hardlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a68" compoundref="commands__NFS__remote_8c" startline="3244" endline="3368">fn_nfs_remote_ln</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a60" compoundref="commands__NFS__remote_8c" startline="2132" endline="2457">fn_nfs_remote_ls</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a63" compoundref="commands__NFS__remote_8c" startline="2647" endline="2755">fn_nfs_remote_mkdir</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a66" compoundref="commands__NFS__remote_8c" startline="2996" endline="3116">fn_nfs_remote_rename</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a65" compoundref="commands__NFS__remote_8c" startline="2881" endline="2991">fn_nfs_remote_setattr</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a69" compoundref="commands__NFS__remote_8c" startline="3374" endline="3529">fn_nfs_remote_stat</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a64" compoundref="commands__NFS__remote_8c" startline="2759" endline="2878">fn_nfs_remote_unlink</referencedby>
+        <referencedby refid="commands__NFS_8c_1a50" compoundref="commands__NFS_8c" startline="3278" endline="3409">fn_nfs_rename</referencedby>
+        <referencedby refid="commands__NFS_8c_1a49" compoundref="commands__NFS_8c" startline="3153" endline="3273">fn_nfs_setattr</referencedby>
+        <referencedby refid="commands__NFS_8c_1a53" compoundref="commands__NFS_8c" startline="3689" endline="3855">fn_nfs_stat</referencedby>
+        <referencedby refid="commands__NFS_8c_1a48" compoundref="commands__NFS_8c" startline="3021" endline="3150">fn_nfs_unlink</referencedby>
+        <referencedby refid="commands__NFS__remote_8c_1a34" compoundref="commands__NFS__remote_8c" startline="579" endline="653">fn_rpc_init</referencedby>
+        <referencedby refid="Getopt_8h_1a4" compoundref="Getopt_8c" startline="128" endline="179">Getopt</referencedby>
+        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <referencedby refid="shell__utils_8h_1a5" compoundref="shell__utils_8c" startline="419" endline="594">util_cmp</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="Getopt_8h_1a3" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* Optarg</definition>
+        <argsstring></argsstring>
+        <name>Optarg</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/Getopt.h" line="22" bodystart="126" bodyend="-1"/>
+        <referencedby refid="commands__Cache__inode_8c_1a48" compoundref="commands__Cache__inode_8c" startline="3792" endline="4215">fn_Cache_inode_read</referencedby>
+        <referencedby refid="commands__Cache__inode_8c_1a49" compoundref="commands__Cache__inode_8c" startline="4219" endline="4659">fn_Cache_inode_write</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a39" compoundref="commands__FSAL_8c" startline="4081" endline="4492">fn_fsal_read</referencedby>
+        <referencedby refid="commands__FSAL_8c_1a40" compoundref="commands__FSAL_8c" startline="4525" endline="4965">fn_fsal_write</referencedby>
+        <referencedby refid="Getopt_8h_1a4" compoundref="Getopt_8c" startline="128" endline="179">Getopt</referencedby>
+        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Prototype for GANESHA&apos;s version of getopt, to avoid portability issues. </para>    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+</para></simplesect>
+<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/02/02 09:05:30 </para></simplesect>
+</para></simplesect>
+<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.1 </para></simplesect>
+</para></simplesect>
+</para><para><simplesect kind="rcs"><title>Log</title><para><ref refid="Getopt_8h" kindref="compound">Getopt.h</ref>,v </para></simplesect>
+Revision 1.1 2005/02/02 09:05:30 leibovic Adding our own version of getopt, to avoid portability issues.</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="16"><highlight class="preprocessor">#ifndef<sp/>_LOCAL_GETOPT_H</highlight></codeline>
+<codeline lineno="17"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_LOCAL_GETOPT_H</highlight></codeline>
+<codeline lineno="18"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Opterr;</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Optind;</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Optopt;</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*Optarg;</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="Getopt_8h_1a4" kindref="member">Getopt</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*argv[],<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*opts);</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+    </programlisting>
+    <location file="/opt/philippe/GANESHA/src/shell/Getopt.h"/>
+  </compounddef>
+</doxygen>

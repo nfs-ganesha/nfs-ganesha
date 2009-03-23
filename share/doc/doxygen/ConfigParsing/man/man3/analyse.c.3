@@ -1,0 +1,153 @@
+.TH "analyse.c" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+analyse.c \- Building the syntax tree. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'analyse.h'\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBlist_block\fP * \fBconfig_createlistblock\fP ()"
+.br
+.ti -1c
+.RI "\fBtype_block\fP * \fBconfig_createblock\fP (char *blockname, \fBlist_affect\fP *list)"
+.br
+.ti -1c
+.RI "void \fBconfig_addblock\fP (\fBlist_block\fP *list, \fBtype_block\fP *block)"
+.br
+.ti -1c
+.RI "\fBlist_affect\fP * \fBconfig_createlistaffect\fP ()"
+.br
+.ti -1c
+.RI "\fBtype_affect\fP * \fBconfig_createaffect\fP (char *varname, char *varval)"
+.br
+.ti -1c
+.RI "void \fBconfig_adddef\fP (\fBlist_affect\fP *list, \fBtype_affect\fP *affect)"
+.br
+.ti -1c
+.RI "void \fBconfig_print_list\fP (FILE *output, \fBlist_block\fP *list)"
+.br
+.ti -1c
+.RI "void \fBconfig_free_list\fP (\fBlist_block\fP *list)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Building the syntax tree. 
+
+\fBAuthor:\fP
+.RS 4
+\fBAuthor\fP.RS 4
+deniel 
+.RE
+.PP
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+\fBDate\fP.RS 4
+2005/11/28 17:02:31 
+.RE
+.PP
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+\fBRevision\fP.RS 4
+1.5 
+.RE
+.PP
+.RE
+.PP
+Build the structure that represents a config file.
+.PP
+Definition in file \fBanalyse.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "void config_addblock (\fBlist_block\fP * list, \fBtype_block\fP * block)"
+.PP
+Ajout d'un block a une list de blocks 
+.PP
+Definition at line 123 of file analyse.c.
+.PP
+References list_block, _type_block_::next, and type_block.
+.PP
+Referenced by yyparse().
+.SS "void config_adddef (\fBlist_affect\fP * list, \fBtype_affect\fP * affect)"
+.PP
+Ajout d'une definition a une list d'affectations 
+.PP
+Definition at line 164 of file analyse.c.
+.PP
+References list_affect, _type_affect_::next, and type_affect.
+.PP
+Referenced by yyparse().
+.SS "\fBtype_affect\fP* config_createaffect (char * varname, char * varval)"
+.PP
+Creation d'une definition variable=valeur 
+.PP
+Definition at line 149 of file analyse.c.
+.PP
+References MAXSTRLEN, _type_affect_::next, and type_affect.
+.PP
+Referenced by yyparse().
+.SS "\fBtype_block\fP* config_createblock (char * blockname, \fBlist_affect\fP * list)"
+.PP
+Creation d'un block 
+.PP
+Definition at line 109 of file analyse.c.
+.PP
+References list_affect, _type_block_::list_def, MAXSTRLEN, _type_affect_::next, and type_block.
+.PP
+Referenced by yyparse().
+.SS "\fBlist_affect\fP* config_createlistaffect ()"
+.PP
+Creation d'une list d'affectations 
+.PP
+Definition at line 138 of file analyse.c.
+.PP
+References list_affect.
+.PP
+Referenced by yyparse().
+.SS "\fBlist_block\fP* config_createlistblock ()"
+.PP
+Creation d'une list de blocks 
+.PP
+Definition at line 98 of file analyse.c.
+.PP
+References list_block.
+.PP
+Referenced by yyparse().
+.SS "void config_free_list (\fBlist_block\fP * list)"
+.PP
+config_free_list: libere les ressources utilisees par une liste de blocks. 
+.PP
+Definition at line 238 of file analyse.c.
+.PP
+References list_block, _type_block_::next, and type_block.
+.PP
+Referenced by config_Free().
+.SS "void config_print_list (FILE * output, \fBlist_block\fP * list)"
+.PP
+Affichage idente du contenu d'une list de blocks. 
+.PP
+Definition at line 178 of file analyse.c.
+.PP
+References list_block, _type_block_::list_def, _type_block_::name, _type_affect_::next, _type_block_::next, type_affect, type_block, _type_affect_::varname, and _type_affect_::varvalue.
+.PP
+Referenced by config_Print().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ConfigParsing from the source code.

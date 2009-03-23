@@ -1,0 +1,53 @@
+\section{cache\_\-inode\_\-create.c File Reference}
+\label{cache__inode__create_8c}\index{cache_inode_create.c@{cache\_\-inode\_\-create.c}}
+Creation of a file through the cache layer. 
+
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-entry\_\-t $\ast$ {\bf cache\_\-inode\_\-create} (cache\_\-entry\_\-t $\ast$pentry\_\-parent, fsal\_\-name\_\-t $\ast$pname, cache\_\-inode\_\-file\_\-type\_\-t type, fsal\_\-accessmode\_\-t mode, cache\_\-inode\_\-create\_\-arg\_\-t $\ast$pcreate\_\-arg, fsal\_\-attrib\_\-list\_\-t $\ast$pattr, hash\_\-table\_\-t $\ast$ht, cache\_\-inode\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Creation of a file through the cache layer. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:26 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.29 \end{Desc}
+\end{Desc}
+cache\_\-inode\_\-mkdir.c : Creation of an entry through the cache layer
+
+Definition in file {\bf cache\_\-inode\_\-create.c}.
+
+\subsection{Function Documentation}
+\index{cache_inode_create.c@{cache\_\-inode\_\-create.c}!cache_inode_create@{cache\_\-inode\_\-create}}
+\index{cache_inode_create@{cache\_\-inode\_\-create}!cache_inode_create.c@{cache\_\-inode\_\-create.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ cache\_\-inode\_\-create (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, fsal\_\-name\_\-t $\ast$ {\em pname}, cache\_\-inode\_\-file\_\-type\_\-t {\em type}, fsal\_\-accessmode\_\-t {\em mode}, cache\_\-inode\_\-create\_\-arg\_\-t $\ast$ {\em pcreate\_\-arg}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__create_8c_a0}
+
+
+
+
+Definition at line 107 of file cache\_\-inode\_\-create.c.
+
+References cache\_\-inode\_\-add\_\-cached\_\-dirent(), cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-kill\_\-entry(), cache\_\-inode\_\-lookup(), cache\_\-inode\_\-new\_\-entry(), cache\_\-inode\_\-readdir\_\-populate(), and cache\_\-inode\_\-valid().

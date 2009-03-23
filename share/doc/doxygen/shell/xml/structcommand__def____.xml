@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structcommand__def____" kind="struct" prot="public">
+    <compoundname>command_def__</compoundname>
+    <includes refid="shell__types_8h" local="no">shell_types.h</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structcommand__def_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* command_def__::command_name</definition>
+        <argsstring></argsstring>
+        <name>command_name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="31" bodystart="31" bodyend="-1"/>
+        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
+        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcommand__def_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>int(*</type>
+        <definition>int(* command_def__::command_func)(int, char **, FILE *)</definition>
+        <argsstring>)(int, char **, FILE *)</argsstring>
+        <name>command_func</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="34"/>
+        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structcommand__def_____1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* command_def__::command_help</definition>
+        <argsstring></argsstring>
+        <name>command_help</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="37" bodystart="37" bodyend="-1"/>
+        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para>command definition </para>    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="28" bodystart="27" bodyend="40"/>
+    <listofallmembers>
+      <member refid="structcommand__def_____1o1" prot="public" virt="non-virtual"><scope>command_def__</scope><name>command_func</name></member>
+      <member refid="structcommand__def_____1o2" prot="public" virt="non-virtual"><scope>command_def__</scope><name>command_help</name></member>
+      <member refid="structcommand__def_____1o0" prot="public" virt="non-virtual"><scope>command_def__</scope><name>command_name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

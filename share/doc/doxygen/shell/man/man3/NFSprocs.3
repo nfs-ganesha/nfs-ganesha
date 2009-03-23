@@ -1,0 +1,1833 @@
+.TH "NFS protocols functions." 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+NFS protocols functions. \- 
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBnfs2_remote_Null\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Getattr\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Setattr\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Root\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Lookup\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Readlink\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Read\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Writecache\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Write\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Create\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Remove\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Rename\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Link\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Symlink\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Mkdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Rmdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Readdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs2_remote_Fsstat\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Null\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Getattr\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Setattr\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Lookup\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Readlink\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Read\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Write\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Create\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Remove\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Rename\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Link\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Symlink\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Mkdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Rmdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Readdir\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Fsstat\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Access\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Readdirplus\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Fsinfo\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Pathconf\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Commit\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs3_remote_Mknod\fP (CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs4_remote_COMPOUND\fP (CLIENT *clnt, COMPOUND4args *parg, COMPOUND4res *pres)"
+.br
+.ti -1c
+.RI "int \fBnfs4_remote_Null\fP (CLIENT *clnt)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_Mnt_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_Dump_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_Export_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_Null_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_Umnt_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt1_remote_UmntAll_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_Mnt_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_Dump_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_Export_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_Null_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_Umnt_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBmnt3_remote_UmntAll_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Null_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Getattr_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Setattr_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Lookup_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Read_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Write_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Create_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Mkdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Symlink_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Remove_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Rmdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Rename_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Link_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Fsstat_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Root_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Writecache_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Readdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs2_remote_Readlink_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Null_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Getattr_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Setattr_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Lookup_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Access_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Readlink_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Write_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Create_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Mkdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Symlink_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Mknod_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Remove_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Rmdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Rename_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Link_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Readdir_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Readdirplus_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Fsstat_Free\fP (nfs_res_t *resp)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Fsinfo_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Pathconf_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Commit_Free\fP (nfs_res_t *pres)"
+.br
+.ti -1c
+.RI "void \fBnfs3_remote_Read_Free\fP (nfs_res_t *resp)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "void mnt1_remote_Dump_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_Dump_Free: Frees the result structure allocated for mnt1_remote_Dump.
+.PP
+Frees the result structure allocated for mnt1_remote_Dump.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1542 of file nfs_remote_functions.c.
+.SS "void mnt1_remote_Export_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_Export_Free: Frees the result structure allocated for mnt1_remote_Export.
+.PP
+Frees the result structure allocated for mnt1_remote_Export.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1555 of file nfs_remote_functions.c.
+.SS "void mnt1_remote_Mnt_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_Mnt_Free: Frees the result structure allocated for mnt1_remote_Mnt.
+.PP
+Frees the result structure allocated for mnt1_remote_Mnt.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1529 of file nfs_remote_functions.c.
+.SS "void mnt1_remote_Null_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_Null_Free: Frees the result structure allocated for mnt1_remote_Null
+.PP
+Frees the result structure allocated for mnt1_remote_Null. Does Nothing in fact.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1516 of file nfs_remote_functions.c.
+.SS "void mnt1_remote_Umnt_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_Umnt_Free: Frees the result structure allocated for mnt1_remote_Umnt.
+.PP
+Frees the result structure allocated for mnt1_remote_Umnt.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1568 of file nfs_remote_functions.c.
+.SS "void mnt1_remote_UmntAll_Free (nfs_res_t * pres)"
+.PP
+mnt1_remote_UmntAll_Free: Frees the result structure allocated for mnt1_remote_UmntAll.
+.PP
+Frees the result structure allocated for mnt1_remote_UmntAll.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1581 of file nfs_remote_functions.c.
+.SS "void mnt3_remote_Dump_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_Dump_Free: Frees the result structure allocated for mnt3_remote_Dump.
+.PP
+Frees the result structure allocated for mnt3_remote_Dump.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1620 of file nfs_remote_functions.c.
+.SS "void mnt3_remote_Export_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_Export_Free: Frees the result structure allocated for mnt3_remote_Export.
+.PP
+Frees the result structure allocated for mnt3_remote_Export.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1633 of file nfs_remote_functions.c.
+.SS "void mnt3_remote_Mnt_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_Mnt_Free: Frees the result structure allocated for mnt3_remote_Mnt.
+.PP
+Frees the result structure allocated for mnt3_remote_Mnt.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1607 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_mount().
+.SS "void mnt3_remote_Null_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_Null_Free: Frees the result structure allocated for mnt3_remote_Null
+.PP
+Frees the result structure allocated for mnt3_remote_Null. Does Nothing in fact.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1594 of file nfs_remote_functions.c.
+.SS "void mnt3_remote_Umnt_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_Umnt_Free: Frees the result structure allocated for mnt3_remote_Umnt.
+.PP
+Frees the result structure allocated for mnt3_remote_Umnt.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1646 of file nfs_remote_functions.c.
+.PP
+Referenced by fn_nfs_remote_umount().
+.SS "void mnt3_remote_UmntAll_Free (nfs_res_t * pres)"
+.PP
+mnt3_remote_UmntAll_Free: Frees the result structure allocated for mnt3_remote_UmntAll.
+.PP
+Frees the result structure allocated for mnt3_remote_UmntAll.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1659 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Create (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Create: The NFS proc create function, v2.
+.PP
+The NFS proc create function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 662 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Create_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Create_Free: Frees the result structure allocated for nfs2_remote_Create.
+.PP
+Frees the result structure allocated for nfs2_remote_Create.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1750 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Fsstat (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Fsstat: The NFS proc statfs function, v2.
+.PP
+The NFS proc statfs function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 870 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Fsstat_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Fsstat_Free: Frees the result structure allocated for nfs2_remote_Fsstat.
+.PP
+Frees the result structure allocated for nfs2_remote_Fsstat.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1841 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Getattr (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Getattr: The NFS proc getattr function, v2.
+.PP
+The NFS proc getattr function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 456 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Getattr_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Getattr_Free: Frees the result structure allocated for nfs2_remote_Getattr.
+.PP
+Frees the result structure allocated for nfs2_remote_Getattr.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1685 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Link (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Link: The NFS proc link function, v2.
+.PP
+The NFS proc link function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 740 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Link_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Link_Free: Frees the result structure allocated for nfs2_remote_Link.
+.PP
+Frees the result structure allocated for nfs2_remote_Link.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1828 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Lookup (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Lookup: The NFS proc lookup function, v2.
+.PP
+The NFS proc lookup function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 533 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Lookup_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Lookup_Free: Frees the result structure allocated for nfs2_remote_Lookup.
+.PP
+Frees the result structure allocated for nfs2_remote_Lookup.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1711 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Mkdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Mkdir: The NFS proc mkdir function, v2.
+.PP
+The NFS proc mkdir function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 792 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Mkdir_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Mkdir_Free: Frees the result structure allocated for nfs2_remote_Mkdir.
+.PP
+Frees the result structure allocated for nfs2_remote_Mkdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1763 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Null (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Null: The NFS proc null function, v2.
+.PP
+The NFS proc null function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 431 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Null_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Null_Free: Frees the result structure allocated for nfs2_remote_Null.
+.PP
+Frees the result structure allocated for nfs2_remote_Null.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1672 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Read (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Read: The NFS proc read function, v2.
+.PP
+The NFS proc read function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 585 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Read_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Read_Free: Frees the result structure allocated for nfs2_remote_Read.
+.PP
+Frees the result structure allocated for nfs2_remote_Read.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1724 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Readdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Readdir: The NFS proc readdir function, v2.
+.PP
+The NFS proc readdir function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 844 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Readdir_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Readdir_Free: Frees the result structure allocated for nfs2_remote_Readdir.
+.PP
+Frees the result structure allocated for nfs2_remote_Readdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1880 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Readlink (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Readlink: The NFS proc readlink function, v2.
+.PP
+The NFS proc readlink function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 559 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Readlink_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Readlink_Free: Frees the result structure allocated for nfs2_remote_Readlink.
+.PP
+Frees the result structure allocated for nfs2_remote_Readlink.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1893 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Remove (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Remove: The NFS proc remove function, v2.
+.PP
+The NFS proc remove function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 688 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Remove_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Remove_Free: Frees the result structure allocated for nfs2_remote_Remove.
+.PP
+Frees the result structure allocated for nfs2_remote_Remove.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1789 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Rename (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Rename: The NFS proc rename function, v2.
+.PP
+The NFS proc rename function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 714 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Rename_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Rename_Free: Frees the result structure allocated for nfs2_remote_Rename.
+.PP
+Frees the result structure allocated for nfs2_remote_Rename.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1815 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Rmdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Rmdir: The NFS proc rmdir function, v2.
+.PP
+The NFS proc rmdir function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 818 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Rmdir_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Rmdir_Free: Frees the result structure allocated for nfs2_remote_Rmdir.
+.PP
+Frees the result structure allocated for nfs2_remote_Rmdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1802 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Root (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Root: The NFS proc root function, v2.
+.PP
+The NFS proc root function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 508 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Root_Free (nfs_res_t * pres)"
+.PP
+nfs2_remote_Root_Free: Frees the result structure allocated for nfs2_remote_Root.
+.PP
+Frees the result structure allocated for nfs2_remote_Root.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1854 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Setattr (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Setattr: The NFS proc setattr function, v2.
+.PP
+The NFS proc setattr function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 482 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Setattr_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Setattr_Free: Frees the result structure allocated for nfs2_remote_Setattr.
+.PP
+Frees the result structure allocated for nfs2_remote_Setattr.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1698 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Symlink (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Symlink: The NFS proc symlink function, v2.
+.PP
+The NFS proc symlink function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 766 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Symlink_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Symlink_Free: Frees the result structure allocated for nfs2_remote_Symlink.
+.PP
+Frees the result structure allocated for nfs2_remote_Symlink.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1776 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Write (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Write: The NFS proc write function, v2.
+.PP
+The NFS proc write function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 636 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Write_Free (nfs_res_t * resp)"
+.PP
+nfs2_remote_Write_Free: Frees the result structure allocated for nfs2_remote_Write.
+.PP
+Frees the result structure allocated for nfs2_remote_Write.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1737 of file nfs_remote_functions.c.
+.SS "int nfs2_remote_Writecache (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs2_remote_Writecache: The NFS proc writecache function, v2.
+.PP
+The NFS proc writecache function, v2.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 611 of file nfs_remote_functions.c.
+.SS "void nfs2_remote_Writecache_Free (nfs_res_t * pres)"
+.PP
+nfs2_remote_Writecache_Free: Frees the result structure allocated for nfs2_remote_Writecache.
+.PP
+Frees the result structure allocated for nfs2_remote_Writecache.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1867 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Access (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Access: The NFS proc access function, v3.
+.PP
+The NFS proc access function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1311 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_access().
+.SS "void nfs3_remote_Access_Free (nfs_res_t * pres)"
+.PP
+nfs3_remote_Access_Free: Frees the result structure allocated for nfs3_remote_Access.
+.PP
+Frees the result structure allocated for nfs3_remote_Access.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1958 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_access().
+.SS "int nfs3_remote_Commit (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Commit: The NFS proc commit function, v3.
+.PP
+The NFS proc commit function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1415 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Commit_Free (nfs_res_t * pres)"
+.PP
+nfs3_remote_Commit_Free: Frees the result structure allocated for nfs3_remote_Commit.
+.PP
+Frees the result structure allocated for nfs3_remote_Commit.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2166 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Create (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Create: The NFS proc create function, v3.
+.PP
+The NFS proc create function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1077 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_create().
+.SS "void nfs3_remote_Create_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Create_Free: Frees the result structure allocated for nfs3_remote_Create.
+.PP
+Frees the result structure allocated for nfs3_remote_Create.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1997 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_create().
+.SS "int nfs3_remote_Fsinfo (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Fsinfo: The NFS proc fsinfo function, v3.
+.PP
+The NFS proc fsinfo function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1363 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Fsinfo_Free (nfs_res_t * pres)"
+.PP
+nfs3_remote_Fsinfo_Free: Frees the result structure allocated for nfs3_remote_Fsinfo.
+.PP
+Frees the result structure allocated for nfs3_remote_Fsinfo.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2140 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Fsstat (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Fsstat: The NFS proc statfs function, v3.
+.PP
+The NFS proc statfs function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1285 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Fsstat_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Fsstat_Free: Frees the result structure allocated for nfs3_remote_Fsstat.
+.PP
+Frees the result structure allocated for nfs3_remote_Fsstat.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2127 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Getattr (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Getattr: The NFS proc getattr function, v3.
+.PP
+The NFS proc getattr function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 921 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_getattr().
+.SS "void nfs3_remote_Getattr_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Getattr_Free: Frees the result structure allocated for nfs3_remote_Getattr.
+.PP
+Frees the result structure allocated for nfs3_remote_Getattr.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1919 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_getattr().
+.SS "int nfs3_remote_Link (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Link: The NFS proc link function, v3.
+.PP
+The NFS proc link function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1155 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_link().
+.SS "void nfs3_remote_Link_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Link_Free: Frees the result structure allocated for nfs3_remote_Link.
+.PP
+Frees the result structure allocated for nfs3_remote_Link.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2088 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_link().
+.SS "int nfs3_remote_Lookup (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Lookup: The NFS proc lookup function, v3.
+.PP
+The NFS proc lookup function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 973 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_solvepath().
+.SS "void nfs3_remote_Lookup_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Lookup_Free: Frees the result structure allocated for nfs3_remote_Lookup.
+.PP
+Frees the result structure allocated for nfs3_remote_Lookup.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1945 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_solvepath().
+.SS "int nfs3_remote_Mkdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Mkdir: The NFS proc mkdir function, v3.
+.PP
+The NFS proc mkdir function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1207 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_mkdir().
+.SS "void nfs3_remote_Mkdir_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Mkdir_Free: Frees the result structure allocated for nfs3_remote_Mkdir.
+.PP
+Frees the result structure allocated for nfs3_remote_Mkdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2010 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_mkdir().
+.SS "int nfs3_remote_Mknod (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Mknod: The NFS proc mknod function, v3.
+.PP
+The NFS proc mknod function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1441 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Mknod_Free (nfs_res_t * pres)"
+.PP
+nfs3_remote_Mknod_Free: Frees the result structure allocated for nfs3_remote_Mknod.
+.PP
+Frees the result structure allocated for nfs3_remote_Mknod.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2036 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Null (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Null: The NFS proc null function, v3.
+.PP
+The NFS proc null function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 896 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Null_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Null_Free: Frees the result structure allocated for nfs3_remote_Null.
+.PP
+Frees the result structure allocated for nfs3_remote_Null.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1906 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Pathconf (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Pathconf: The NFS proc pathconf function, v3.
+.PP
+The NFS proc pathconf function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1389 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Pathconf_Free (nfs_res_t * pres)"
+.PP
+nfs3_remote_Pathconf_Free: Frees the result structure allocated for nfs3_remote_Pathconf.
+.PP
+Frees the result structure allocated for nfs3_remote_Pathconf.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2153 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Read (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Read: The NFS proc read function, v3.
+.PP
+The NFS proc read function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1025 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Read_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Read_Free: Frees the result structure allocated for nfs3_remote_Read.
+.PP
+Frees the result structure allocated for nfs3_remote_Read.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2179 of file nfs_remote_functions.c.
+.SS "int nfs3_remote_Readdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Readdir: The NFS proc readdir function, v3.
+.PP
+The NFS proc readdir function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1259 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readdir().
+.SS "void nfs3_remote_Readdir_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Readdir_Free: Frees the result structure allocated for nfs3_remote_Readdir.
+.PP
+Frees the result structure allocated for nfs3_remote_Readdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2101 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readdir(), and nfs_remote_readdir_free().
+.SS "int nfs3_remote_Readdirplus (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Readdirplus: The NFS proc readdirplus function, v3.
+.PP
+The NFS proc readdirplus function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1337 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readdirplus().
+.SS "void nfs3_remote_Readdirplus_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Readdirplus_Free: Frees the result structure allocated for nfs3_remote_Readdirplus.
+.PP
+Frees the result structure allocated for nfs3_remote_Readdirplus.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2114 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readdirplus(), and nfs_remote_readdirplus_free().
+.SS "int nfs3_remote_Readlink (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Readlink: The NFS proc readlink function, v3.
+.PP
+The NFS proc readlink function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 999 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readlink().
+.SS "void nfs3_remote_Readlink_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Readlink_Free: Frees the result structure allocated for nfs3_remote_Readlink.
+.PP
+Frees the result structure allocated for nfs3_remote_Readlink.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1971 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_readlink().
+.SS "int nfs3_remote_Remove (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Remove: The NFS proc remove function, v3.
+.PP
+The NFS proc remove function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1103 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_remove().
+.SS "void nfs3_remote_Remove_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Remove_Free: Frees the result structure allocated for nfs3_remote_Remove.
+.PP
+Frees the result structure allocated for nfs3_remote_Remove.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2049 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_remove().
+.SS "int nfs3_remote_Rename (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Rename: The NFS proc rename function, v3.
+.PP
+The NFS proc rename function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1129 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_rename().
+.SS "void nfs3_remote_Rename_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Rename_Free: Frees the result structure allocated for nfs3_remote_Rename.
+.PP
+Frees the result structure allocated for nfs3_remote_Rename.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2075 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_rename().
+.SS "int nfs3_remote_Rmdir (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Rmdir: The NFS proc rmdir function, v3.
+.PP
+The NFS proc rmdir function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1233 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_rmdir().
+.SS "void nfs3_remote_Rmdir_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Rmdir_Free: Frees the result structure allocated for nfs3_remote_Rmdir.
+.PP
+Frees the result structure allocated for nfs3_remote_Rmdir.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2062 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_rmdir().
+.SS "int nfs3_remote_Setattr (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Setattr: The NFS proc setattr function, v3.
+.PP
+The NFS proc setattr function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 947 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_setattr().
+.SS "void nfs3_remote_Setattr_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Setattr_Free: Frees the result structure allocated for nfs3_remote_Setattr.
+.PP
+Frees the result structure allocated for nfs3_remote_Setattr.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1932 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_setattr().
+.SS "int nfs3_remote_Symlink (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Symlink: The NFS proc symlink function, v3.
+.PP
+The NFS proc symlink function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1181 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_symlink().
+.SS "void nfs3_remote_Symlink_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Symlink_Free: Frees the result structure allocated for nfs3_remote_Symlink.
+.PP
+Frees the result structure allocated for nfs3_remote_Symlink.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 2023 of file nfs_remote_functions.c.
+.PP
+Referenced by nfs_remote_symlink().
+.SS "int nfs3_remote_Write (CLIENT * clnt, nfs_arg_t * parg, nfs_res_t * pres)"
+.PP
+nfs3_remote_Write: The NFS proc write function, v3.
+.PP
+The NFS proc write function, v3.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1051 of file nfs_remote_functions.c.
+.SS "void nfs3_remote_Write_Free (nfs_res_t * resp)"
+.PP
+nfs3_remote_Write_Free: Frees the result structure allocated for nfs3_remote_Write.
+.PP
+Frees the result structure allocated for nfs3_remote_Write.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIpres\fP [INOUT] Pointer to the result structure. 
+.RE
+.PP
+
+.PP
+Definition at line 1984 of file nfs_remote_functions.c.
+.SS "int nfs4_remote_COMPOUND (CLIENT * clnt, COMPOUND4args * parg, COMPOUND4res * pres)"
+.PP
+nfs4_remote_COMPOUND: The NFS proc compound function, v4.
+.PP
+The NFS proc compound function, v4.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.br
+\fIparg\fP [IN] 
+.br
+\fIpres\fP [OUT] 
+.RE
+.PP
+
+.PP
+Definition at line 1490 of file nfs_remote_functions.c.
+.SS "int nfs4_remote_Null (CLIENT * clnt)"
+.PP
+nfs4_remote_Null: The NFS proc null function, v4.
+.PP
+The NFS proc null function, v4.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIclnt\fP [IN] 
+.RE
+.PP
+
+.PP
+Definition at line 1465 of file nfs_remote_functions.c.

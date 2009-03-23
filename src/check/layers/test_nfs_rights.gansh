@@ -1,0 +1,187 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_EVENT"
+nfs_init -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+mount /
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+# je deviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 0777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=0777
+
+cd $chemin
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+print "------------ Je cree des repertoires -------------"
+
+mkdir test_rights_Ur    400
+mkdir test_rights_Uwx   300
+mkdir test_rights_Gr    740
+mkdir test_rights_Gwx   730
+mkdir test_rights_Or    774
+mkdir test_rights_Owx   773
+
+print "-------- Je tente diverses operations --------"
+
+# fail
+create test_rights_Ur/toto  755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail (no lookup rights)
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# ok
+ls test_rights_Ur
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+create test_rights_Uwx/toto 755
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail (no read rights)
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+
+print "------------ Je deviens " $USER2 " -------------"
+# je deviens user2
+su $USER2
+
+# fail (EACCES)
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Ur
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail
+create test_rights_Gr/toto 755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail 
+ls -l test_rights_Gr/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+#ok
+ls test_rights_Gr    
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+create test_rights_Gwx/toto 755
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+ls -l test_rights_Gwx/toto
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail
+ls test_rights_Gwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+
+print "------------ Je deviens " $USER3 " -------------"
+# je deviens USER3
+su $USER3
+
+# fail
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Ur
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Gr/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Gr    
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Gwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Gwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail
+create test_rights_Or/toto 755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail 
+ls -l test_rights_Or/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+#ok
+ls test_rights_Or    
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+#ok
+create test_rights_Owx/toto 755
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok (lookup granted)
+ls -ld test_rights_Owx/toto
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail
+ls test_rights_Owx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+print "------------ Je redeviens " $USER1 " -------------"
+# je deviens user1
+su $USER1
+
+print "------------ unlink -------------"
+
+unlink test_rights_Ur    
+unlink test_rights_Uwx/toto
+unlink test_rights_Uwx   
+unlink test_rights_Gr    
+unlink test_rights_Gwx/toto
+unlink test_rights_Gwx   
+unlink test_rights_Or    
+unlink test_rights_Owx/toto
+unlink test_rights_Owx

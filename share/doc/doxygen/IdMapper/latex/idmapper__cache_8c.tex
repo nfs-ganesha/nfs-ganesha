@@ -1,0 +1,594 @@
+\section{idmapper\_\-cache.c File Reference}
+\label{idmapper__cache_8c}\index{idmapper_cache.c@{idmapper\_\-cache.c}}
+Id mapping functions. 
+
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
+{\tt \#include \char`\"{}nfs\_\-exports.h\char`\"{}}\par
+{\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$strings.h$>$}\par
+{\tt \#include $<$pwd.h$>$}\par
+{\tt \#include $<$grp.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+size\_\-t {\bf strnlen} (const char $\ast$s, size\_\-t maxlen)
+\item 
+unsigned long {\bf idmapper\_\-value\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
+\item 
+unsigned long {\bf namemapper\_\-value\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
+\item 
+unsigned long {\bf idmapper\_\-rbt\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
+\item 
+unsigned long {\bf namemapper\_\-rbt\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
+\item 
+int {\bf compare\_\-idmapper} (hash\_\-buffer\_\-t $\ast$buff1, hash\_\-buffer\_\-t $\ast$buff2)
+\item 
+int {\bf compare\_\-namemapper} (hash\_\-buffer\_\-t $\ast$buff1, hash\_\-buffer\_\-t $\ast$buff2)
+\item 
+int {\bf display\_\-idmapper\_\-key} (hash\_\-buffer\_\-t $\ast$pbuff, char $\ast$str)
+\item 
+int {\bf display\_\-idmapper\_\-val} (hash\_\-buffer\_\-t $\ast$pbuff, char $\ast$str)
+\item 
+int {\bf idmap\_\-uid\_\-init} (nfs\_\-idmap\_\-cache\_\-parameter\_\-t param)
+\item 
+int {\bf idmap\_\-uname\_\-init} (nfs\_\-idmap\_\-cache\_\-parameter\_\-t param)
+\item 
+int {\bf idmap\_\-gid\_\-init} (nfs\_\-idmap\_\-cache\_\-parameter\_\-t param)
+\item 
+int {\bf idmap\_\-gname\_\-init} (nfs\_\-idmap\_\-cache\_\-parameter\_\-t param)
+\item 
+int {\bf idmap\_\-compute\_\-hash\_\-value} (char $\ast$name, uint32\_\-t $\ast$phashval)
+\item 
+int {\bf idmap\_\-add} (hash\_\-table\_\-t $\ast$ht, char $\ast$key, unsigned int val)
+\item 
+int {\bf namemap\_\-add} (hash\_\-table\_\-t $\ast$ht, unsigned int key, char $\ast$val)
+\item 
+int {\bf uidmap\_\-add} (char $\ast$key, unsigned int val)
+\item 
+int {\bf unamemap\_\-add} (unsigned int key, char $\ast$val)
+\item 
+int {\bf gidmap\_\-add} (char $\ast$key, unsigned int val)
+\item 
+int {\bf gnamemap\_\-add} (unsigned int key, char $\ast$val)
+\item 
+int {\bf idmap\_\-get} (hash\_\-table\_\-t $\ast$ht, char $\ast$key, unsigned long $\ast$pval)
+\item 
+int {\bf namemap\_\-get} (hash\_\-table\_\-t $\ast$ht, unsigned int key, char $\ast$pval)
+\item 
+int {\bf uidmap\_\-get} (char $\ast$key, unsigned long $\ast$pval)
+\item 
+int {\bf unamemap\_\-get} (unsigned int key, char $\ast$val)
+\item 
+int {\bf gidmap\_\-get} (char $\ast$key, unsigned long $\ast$pval)
+\item 
+int {\bf gnamemap\_\-get} (unsigned int key, char $\ast$val)
+\item 
+int {\bf idmap\_\-remove} (hash\_\-table\_\-t $\ast$ht, char $\ast$key)
+\item 
+int {\bf namemap\_\-remove} (hash\_\-table\_\-t $\ast$ht, unsigned int key)
+\item 
+int {\bf uidmap\_\-remove} (char $\ast$key)
+\item 
+int {\bf unamemap\_\-remove} (unsigned int key)
+\item 
+int {\bf gidmap\_\-remove} (char $\ast$key)
+\item 
+int {\bf gnamemap\_\-remove} (unsigned int key)
+\item 
+int {\bf idmap\_\-populate} (char $\ast$path, idmap\_\-type\_\-t maptype)
+\item 
+void {\bf idmap\_\-get\_\-stats} (idmap\_\-type\_\-t maptype, hash\_\-stat\_\-t $\ast$phstat, hash\_\-stat\_\-t $\ast$phstat\_\-reverse)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-pwnam}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-grnam}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-pwuid}
+\item 
+hash\_\-table\_\-t $\ast$ {\bf ht\_\-grgid}
+\item 
+nfs\_\-parameter\_\-t {\bf nfs\_\-param}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Id mapping functions. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\$Date\$ \end{Desc}
+\begin{Desc}
+\item[Version:]\$Revision\$ \end{Desc}
+{\bf idmapper\_\-cache.c}{\rm (p.\,\pageref{idmapper__cache_8c})} : Id mapping functions, passwd and groups cache management.
+
+Definition in file {\bf idmapper\_\-cache.c}.
+
+\subsection{Function Documentation}
+\index{idmapper_cache.c@{idmapper\_\-cache.c}!compare_idmapper@{compare\_\-idmapper}}
+\index{compare_idmapper@{compare\_\-idmapper}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-idmapper (hash\_\-buffer\_\-t $\ast$ {\em buff1}, hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{idmapper__cache_8c_a10}
+
+
+compare\_\-idmapper: compares the values stored in the key buffers.
+
+Compares the values stored in the key buffers. This function is to be used as 'compare\_\-key' field in the hashtable storing the nfs duplicated requests.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buff1}][IN] first key \item[{\em buff2}][IN] second key\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if keys are identifical, 1 if they are different. \end{Desc}
+
+
+Definition at line 191 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!compare_namemapper@{compare\_\-namemapper}}
+\index{compare_namemapper@{compare\_\-namemapper}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-namemapper (hash\_\-buffer\_\-t $\ast$ {\em buff1}, hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{idmapper__cache_8c_a11}
+
+
+
+
+Definition at line 196 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!display_idmapper_key@{display\_\-idmapper\_\-key}}
+\index{display_idmapper_key@{display\_\-idmapper\_\-key}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-idmapper\_\-key (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{idmapper__cache_8c_a12}
+
+
+display\_\-idmapper\_\-key: displays the entry key stored in the buffer.
+
+Displays the entry key stored in the buffer. This function is to be used as 'key\_\-to\_\-str' field in the hashtable storing the id mapper stuff
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buff1}][IN] buffer to display \item[{\em buff2}][OUT] output string\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]number of character written. \end{Desc}
+
+
+Definition at line 218 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!display_idmapper_val@{display\_\-idmapper\_\-val}}
+\index{display_idmapper_val@{display\_\-idmapper\_\-val}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-idmapper\_\-val (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{idmapper__cache_8c_a13}
+
+
+display\_\-idmapper\_\-val: displays the entry key stored in the buffer.
+
+Displays the entry key stored in the buffer. This function is to be used as 'val\_\-to\_\-str' field in the hashtable storing the id mapper stuff
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buff1}][IN] buffer to display \item[{\em buff2}][OUT] output string\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]number of character written. \end{Desc}
+
+
+Definition at line 237 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!gidmap_add@{gidmap\_\-add}}
+\index{gidmap_add@{gidmap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gidmap\_\-add (char $\ast$ {\em key}, unsigned int {\em val})}\label{idmapper__cache_8c_a23}
+
+
+
+
+Definition at line 526 of file idmapper\_\-cache.c.
+
+References ht\_\-grgid, ht\_\-grnam, idmap\_\-add(), and namemap\_\-add().
+
+Referenced by name2gid().\index{idmapper_cache.c@{idmapper\_\-cache.c}!gidmap_get@{gidmap\_\-get}}
+\index{gidmap_get@{gidmap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gidmap\_\-get (char $\ast$ {\em key}, unsigned long $\ast$ {\em pval})}\label{idmapper__cache_8c_a29}
+
+
+
+
+Definition at line 640 of file idmapper\_\-cache.c.
+
+References ht\_\-grnam, and idmap\_\-get().
+
+Referenced by name2gid().\index{idmapper_cache.c@{idmapper\_\-cache.c}!gidmap_remove@{gidmap\_\-remove}}
+\index{gidmap_remove@{gidmap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gidmap\_\-remove (char $\ast$ {\em key})}\label{idmapper__cache_8c_a35}
+
+
+
+
+Definition at line 727 of file idmapper\_\-cache.c.
+
+References ht\_\-grnam, and idmap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!gnamemap_add@{gnamemap\_\-add}}
+\index{gnamemap_add@{gnamemap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gnamemap\_\-add (unsigned int {\em key}, char $\ast$ {\em val})}\label{idmapper__cache_8c_a24}
+
+
+
+
+Definition at line 542 of file idmapper\_\-cache.c.
+
+References ht\_\-grgid, ht\_\-grnam, idmap\_\-add(), and namemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!gnamemap_get@{gnamemap\_\-get}}
+\index{gnamemap_get@{gnamemap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gnamemap\_\-get (unsigned int {\em key}, char $\ast$ {\em val})}\label{idmapper__cache_8c_a30}
+
+
+
+
+Definition at line 646 of file idmapper\_\-cache.c.
+
+References ht\_\-grgid, and namemap\_\-get().\index{idmapper_cache.c@{idmapper\_\-cache.c}!gnamemap_remove@{gnamemap\_\-remove}}
+\index{gnamemap_remove@{gnamemap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gnamemap\_\-remove (unsigned int {\em key})}\label{idmapper__cache_8c_a36}
+
+
+
+
+Definition at line 732 of file idmapper\_\-cache.c.
+
+References ht\_\-grgid, and namemap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_add@{idmap\_\-add}}
+\index{idmap_add@{idmap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-add (hash\_\-table\_\-t $\ast$ {\em ht}, char $\ast$ {\em key}, unsigned int {\em val})}\label{idmapper__cache_8c_a19}
+
+
+idmap\_\-add: Adds a value by key
+
+Adss a value by key.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}][INOUT] the hash table to be used \item[{\em key}][IN] the ip address requested \item[{\em val}][OUT] the value\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]ID\_\-MAPPER\_\-SUCCESS, ID\_\-MAPPER\_\-INSERT\_\-MALLOC\_\-ERROR, ID\_\-MAPPER\_\-INVALID\_\-ARGUMENT \end{Desc}
+
+
+Definition at line 430 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-add(), gnamemap\_\-add(), idmap\_\-populate(), uidmap\_\-add(), and unamemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_compute_hash_value@{idmap\_\-compute\_\-hash\_\-value}}
+\index{idmap_compute_hash_value@{idmap\_\-compute\_\-hash\_\-value}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-compute\_\-hash\_\-value (char $\ast$ {\em name}, uint32\_\-t $\ast$ {\em phashval})}\label{idmapper__cache_8c_a18}
+
+
+idmap\_\-compute\_\-hash\_\-value: computes the hash value, based on the string.
+
+Computes the computes the hash value, based on the string. 
+
+Definition at line 318 of file idmapper\_\-cache.c.
+
+References strnlen().
+
+Referenced by idmapper\_\-rbt\_\-hash\_\-func().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_get@{idmap\_\-get}}
+\index{idmap_get@{idmap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-get (hash\_\-table\_\-t $\ast$ {\em ht}, char $\ast$ {\em key}, unsigned long $\ast$ {\em pval})}\label{idmapper__cache_8c_a25}
+
+
+idmap\_\-get: gets a value by key
+
+Gets a value by key.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}][INOUT] the hash table to be used \item[{\em key}][IN] the ip address requested \item[{\em hostname}][OUT] the hostname\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]ID\_\-MAPPER\_\-SUCCESS or ID\_\-MAPPER\_\-NOT\_\-FOUND \end{Desc}
+
+
+Definition at line 571 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-get(), and uidmap\_\-get().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_get_stats@{idmap\_\-get\_\-stats}}
+\index{idmap_get_stats@{idmap\_\-get\_\-stats}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void idmap\_\-get\_\-stats (idmap\_\-type\_\-t {\em maptype}, hash\_\-stat\_\-t $\ast$ {\em phstat}, hash\_\-stat\_\-t $\ast$ {\em phstat\_\-reverse})}\label{idmapper__cache_8c_a38}
+
+
+idmap\_\-get\_\-stats: gets the hash table statistics for the idmap et the reverse id map
+
+Gets the hash table statistics for the idmap et the reverse idmap.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em maptype}][IN] type of the mapping to be queried (should be UIDMAP\_\-TYPE or GIDMAP\_\-TYPE) \item[{\em phstat}][OUT] pointer to the resulting stats for direct map. \item[{\em phstat}][OUT] pointer to the resulting stats for reverse map.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]nothing (void function)\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Get\-Stats \end{Desc}
+
+
+Definition at line 847 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_gid_init@{idmap\_\-gid\_\-init}}
+\index{idmap_gid_init@{idmap\_\-gid\_\-init}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-gid\_\-init (nfs\_\-idmap\_\-cache\_\-parameter\_\-t {\em param})}\label{idmapper__cache_8c_a16}
+
+
+idmap\_\-gid\_\-init: Inits the hashtable for GID mapping.
+
+Inits the hashtable for GID mapping.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}][IN] parameter used to init the gid map cache\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successful, -1 otherwise \end{Desc}
+
+
+Definition at line 287 of file idmapper\_\-cache.c.
+
+References ht\_\-grnam.\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_gname_init@{idmap\_\-gname\_\-init}}
+\index{idmap_gname_init@{idmap\_\-gname\_\-init}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-gname\_\-init (nfs\_\-idmap\_\-cache\_\-parameter\_\-t {\em param})}\label{idmapper__cache_8c_a17}
+
+
+
+
+Definition at line 298 of file idmapper\_\-cache.c.
+
+References ht\_\-grgid.\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_populate@{idmap\_\-populate}}
+\index{idmap_populate@{idmap\_\-populate}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-populate (char $\ast$ {\em path}, idmap\_\-type\_\-t {\em maptype})}\label{idmapper__cache_8c_a37}
+
+
+idmap\_\-populate\_\-by\_\-conf: Use the configuration file to populate the ID\_\-MAPPER.
+
+Use the configuration file to populate the ID\_\-MAPPER. 
+
+Definition at line 745 of file idmapper\_\-cache.c.
+
+References idmap\_\-add(), and namemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_remove@{idmap\_\-remove}}
+\index{idmap_remove@{idmap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-remove (hash\_\-table\_\-t $\ast$ {\em ht}, char $\ast$ {\em key})}\label{idmapper__cache_8c_a31}
+
+
+idmap\_\-remove: Tries to remove an entry for ID\_\-MAPPER
+
+Tries to remove an entry for ID\_\-MAPPER
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ht}][INOUT] the hash table to be used \item[{\em key}][IN] the key uncached.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the delete status \end{Desc}
+
+
+Definition at line 664 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-remove(), and uidmap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_uid_init@{idmap\_\-uid\_\-init}}
+\index{idmap_uid_init@{idmap\_\-uid\_\-init}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-uid\_\-init (nfs\_\-idmap\_\-cache\_\-parameter\_\-t {\em param})}\label{idmapper__cache_8c_a14}
+
+
+idmap\_\-uid\_\-init: Inits the hashtable for UID mapping.
+
+Inits the hashtable for UID mapping.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em param}][IN] parameter used to init the uid map cache\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if successful, -1 otherwise \end{Desc}
+
+
+Definition at line 254 of file idmapper\_\-cache.c.
+
+References ht\_\-pwnam.\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmap_uname_init@{idmap\_\-uname\_\-init}}
+\index{idmap_uname_init@{idmap\_\-uname\_\-init}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int idmap\_\-uname\_\-init (nfs\_\-idmap\_\-cache\_\-parameter\_\-t {\em param})}\label{idmapper__cache_8c_a15}
+
+
+
+
+Definition at line 265 of file idmapper\_\-cache.c.
+
+References ht\_\-pwuid.\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmapper_rbt_hash_func@{idmapper\_\-rbt\_\-hash\_\-func}}
+\index{idmapper_rbt_hash_func@{idmapper\_\-rbt\_\-hash\_\-func}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long idmapper\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{idmapper__cache_8c_a8}
+
+
+idmapper\_\-rbt\_\-hash\_\-func: computes the rbt value for the entry in the id mapper stuff.
+
+Computes the rbt value for the entry in the id mapper stuff.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em hparam}][IN] hash table parameter. \item[{\em buffcleff\mbox{[}in\mbox{]}}]pointer to the hash key buffer\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the computed rbt value.\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Init \end{Desc}
+
+
+Definition at line 163 of file idmapper\_\-cache.c.
+
+References idmap\_\-compute\_\-hash\_\-value().\index{idmapper_cache.c@{idmapper\_\-cache.c}!idmapper_value_hash_func@{idmapper\_\-value\_\-hash\_\-func}}
+\index{idmapper_value_hash_func@{idmapper\_\-value\_\-hash\_\-func}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long idmapper\_\-value\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{idmapper__cache_8c_a6}
+
+
+idmapper\_\-rbt\_\-hash\_\-func: computes the hash value for the entry in id mapper stuff
+
+Computes the hash value for the entry in id mapper stuff. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the Has\-Table\_\-$\ast$ function
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em hparam}][IN] hash table parameter. \item[{\em buffcleff\mbox{[}in\mbox{]}}]pointer to the hash key buffer\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the computed hash value.\end{Desc}
+\begin{Desc}
+\item[See also:]Hash\-Table\_\-Init \end{Desc}
+
+
+Definition at line 132 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!namemap_add@{namemap\_\-add}}
+\index{namemap_add@{namemap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int namemap\_\-add (hash\_\-table\_\-t $\ast$ {\em ht}, unsigned int {\em key}, char $\ast$ {\em val})}\label{idmapper__cache_8c_a20}
+
+
+
+
+Definition at line 461 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-add(), gnamemap\_\-add(), idmap\_\-populate(), uidmap\_\-add(), and unamemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!namemap_get@{namemap\_\-get}}
+\index{namemap_get@{namemap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int namemap\_\-get (hash\_\-table\_\-t $\ast$ {\em ht}, unsigned int {\em key}, char $\ast$ {\em pval})}\label{idmapper__cache_8c_a26}
+
+
+
+
+Definition at line 599 of file idmapper\_\-cache.c.
+
+Referenced by gnamemap\_\-get(), and unamemap\_\-get().\index{idmapper_cache.c@{idmapper\_\-cache.c}!namemap_remove@{namemap\_\-remove}}
+\index{namemap_remove@{namemap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int namemap\_\-remove (hash\_\-table\_\-t $\ast$ {\em ht}, unsigned int {\em key})}\label{idmapper__cache_8c_a32}
+
+
+
+
+Definition at line 689 of file idmapper\_\-cache.c.
+
+Referenced by gnamemap\_\-remove(), and unamemap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!namemapper_rbt_hash_func@{namemapper\_\-rbt\_\-hash\_\-func}}
+\index{namemapper_rbt_hash_func@{namemapper\_\-rbt\_\-hash\_\-func}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long namemapper\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{idmapper__cache_8c_a9}
+
+
+
+
+Definition at line 174 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!namemapper_value_hash_func@{namemapper\_\-value\_\-hash\_\-func}}
+\index{namemapper_value_hash_func@{namemapper\_\-value\_\-hash\_\-func}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long namemapper\_\-value\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{idmapper__cache_8c_a7}
+
+
+
+
+Definition at line 144 of file idmapper\_\-cache.c.\index{idmapper_cache.c@{idmapper\_\-cache.c}!strnlen@{strnlen}}
+\index{strnlen@{strnlen}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}size\_\-t strnlen (const char $\ast$ {\em s}, size\_\-t {\em maxlen})}\label{idmapper__cache_8c_a5}
+
+
+
+
+Referenced by idmap\_\-compute\_\-hash\_\-value(), and idmap\_\-computer\_\-hash\_\-value().\index{idmapper_cache.c@{idmapper\_\-cache.c}!uidmap_add@{uidmap\_\-add}}
+\index{uidmap_add@{uidmap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uidmap\_\-add (char $\ast$ {\em key}, unsigned int {\em val})}\label{idmapper__cache_8c_a21}
+
+
+
+
+Definition at line 494 of file idmapper\_\-cache.c.
+
+References ht\_\-pwnam, ht\_\-pwuid, idmap\_\-add(), and namemap\_\-add().
+
+Referenced by name2uid().\index{idmapper_cache.c@{idmapper\_\-cache.c}!uidmap_get@{uidmap\_\-get}}
+\index{uidmap_get@{uidmap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uidmap\_\-get (char $\ast$ {\em key}, unsigned long $\ast$ {\em pval})}\label{idmapper__cache_8c_a27}
+
+
+
+
+Definition at line 628 of file idmapper\_\-cache.c.
+
+References ht\_\-pwnam, and idmap\_\-get().
+
+Referenced by name2uid().\index{idmapper_cache.c@{idmapper\_\-cache.c}!uidmap_remove@{uidmap\_\-remove}}
+\index{uidmap_remove@{uidmap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uidmap\_\-remove (char $\ast$ {\em key})}\label{idmapper__cache_8c_a33}
+
+
+
+
+Definition at line 717 of file idmapper\_\-cache.c.
+
+References ht\_\-pwnam, and idmap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!unamemap_add@{unamemap\_\-add}}
+\index{unamemap_add@{unamemap\_\-add}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int unamemap\_\-add (unsigned int {\em key}, char $\ast$ {\em val})}\label{idmapper__cache_8c_a22}
+
+
+
+
+Definition at line 510 of file idmapper\_\-cache.c.
+
+References ht\_\-pwnam, ht\_\-pwuid, idmap\_\-add(), and namemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!unamemap_get@{unamemap\_\-get}}
+\index{unamemap_get@{unamemap\_\-get}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int unamemap\_\-get (unsigned int {\em key}, char $\ast$ {\em val})}\label{idmapper__cache_8c_a28}
+
+
+
+
+Definition at line 634 of file idmapper\_\-cache.c.
+
+References ht\_\-pwuid, and namemap\_\-get().\index{idmapper_cache.c@{idmapper\_\-cache.c}!unamemap_remove@{unamemap\_\-remove}}
+\index{unamemap_remove@{unamemap\_\-remove}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int unamemap\_\-remove (unsigned int {\em key})}\label{idmapper__cache_8c_a34}
+
+
+
+
+Definition at line 722 of file idmapper\_\-cache.c.
+
+References ht\_\-pwuid, and namemap\_\-remove().
+
+\subsection{Variable Documentation}
+\index{idmapper_cache.c@{idmapper\_\-cache.c}!ht_grgid@{ht\_\-grgid}}
+\index{ht_grgid@{ht\_\-grgid}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-grgid}}\label{idmapper__cache_8c_a3}
+
+
+
+
+Definition at line 112 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-add(), gnamemap\_\-add(), gnamemap\_\-get(), gnamemap\_\-remove(), and idmap\_\-gname\_\-init().\index{idmapper_cache.c@{idmapper\_\-cache.c}!ht_grnam@{ht\_\-grnam}}
+\index{ht_grnam@{ht\_\-grnam}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-grnam}}\label{idmapper__cache_8c_a1}
+
+
+
+
+Definition at line 110 of file idmapper\_\-cache.c.
+
+Referenced by gidmap\_\-add(), gidmap\_\-get(), gidmap\_\-remove(), gnamemap\_\-add(), and idmap\_\-gid\_\-init().\index{idmapper_cache.c@{idmapper\_\-cache.c}!ht_pwnam@{ht\_\-pwnam}}
+\index{ht_pwnam@{ht\_\-pwnam}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-pwnam}}\label{idmapper__cache_8c_a0}
+
+
+
+
+Definition at line 109 of file idmapper\_\-cache.c.
+
+Referenced by idmap\_\-uid\_\-init(), uidmap\_\-add(), uidmap\_\-get(), uidmap\_\-remove(), and unamemap\_\-add().\index{idmapper_cache.c@{idmapper\_\-cache.c}!ht_pwuid@{ht\_\-pwuid}}
+\index{ht_pwuid@{ht\_\-pwuid}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-pwuid}}\label{idmapper__cache_8c_a2}
+
+
+
+
+Definition at line 111 of file idmapper\_\-cache.c.
+
+Referenced by idmap\_\-uname\_\-init(), uidmap\_\-add(), unamemap\_\-add(), unamemap\_\-get(), and unamemap\_\-remove().\index{idmapper_cache.c@{idmapper\_\-cache.c}!nfs_param@{nfs\_\-param}}
+\index{nfs_param@{nfs\_\-param}!idmapper_cache.c@{idmapper\_\-cache.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{idmapper__cache_8c_a4}
+
+
+
+
+Definition at line 47 of file test\_\-idmapper.c.

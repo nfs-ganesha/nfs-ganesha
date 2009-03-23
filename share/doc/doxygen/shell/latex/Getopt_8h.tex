@@ -1,0 +1,97 @@
+\section{Getopt.h File Reference}
+\label{Getopt_8h}\index{Getopt.h@{Getopt.h}}
+Prototype for GANESHA's version of getopt, to avoid portability issues. 
+
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int {\bf Getopt} (int argc, char $\ast$argv[$\,$], char $\ast$opts)
+\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+int {\bf Opterr}
+\item 
+int {\bf Optind}
+\item 
+int {\bf Optopt}
+\item 
+char $\ast$ {\bf Optarg}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Prototype for GANESHA's version of getopt, to avoid portability issues. 
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]leibovic \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/02/02 09:05:30 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.1 \end{Desc}
+\end{Desc}
+
+
+\begin{Desc}
+\item[Log]{\bf Getopt.h}{\rm (p.\,\pageref{Getopt_8h})},v \end{Desc}
+Revision 1.1 2005/02/02 09:05:30 leibovic Adding our own version of getopt, to avoid portability issues.
+
+Definition in file {\bf Getopt.h}.
+
+\subsection{Function Documentation}
+\index{Getopt.h@{Getopt.h}!Getopt@{Getopt}}
+\index{Getopt@{Getopt}!Getopt.h@{Getopt.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Getopt (int {\em argc}, char $\ast$ {\em argv}[$\,$], char $\ast$ {\em opts})}\label{Getopt_8h_a4}
+
+
+
+
+Definition at line 128 of file Getopt.c.
+
+References ERR, Optarg, Optind, and Optopt.
+
+Referenced by fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cache\_\-init(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-gc(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-recover\_\-cache(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-init\_\-fs(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-init(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-remote\_\-create(), fn\_\-nfs\_\-remote\_\-hardlink(), fn\_\-nfs\_\-remote\_\-ln(), fn\_\-nfs\_\-remote\_\-ls(), fn\_\-nfs\_\-remote\_\-mkdir(), fn\_\-nfs\_\-remote\_\-rename(), fn\_\-nfs\_\-remote\_\-setattr(), fn\_\-nfs\_\-remote\_\-stat(), fn\_\-nfs\_\-remote\_\-unlink(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), fn\_\-nfs\_\-unlink(), fn\_\-rpc\_\-init(), main(), and util\_\-cmp().
+
+\subsection{Variable Documentation}
+\index{Getopt.h@{Getopt.h}!Optarg@{Optarg}}
+\index{Optarg@{Optarg}!Getopt.h@{Getopt.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf Optarg}}\label{Getopt_8h_a3}
+
+
+
+
+Definition at line 126 of file Getopt.c.
+
+Referenced by fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-write(), Getopt(), and main().\index{Getopt.h@{Getopt.h}!Opterr@{Opterr}}
+\index{Opterr@{Opterr}!Getopt.h@{Getopt.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf Opterr}}\label{Getopt_8h_a0}
+
+
+
+
+Definition at line 123 of file Getopt.c.
+
+Referenced by main(), and util\_\-cmp().\index{Getopt.h@{Getopt.h}!Optind@{Optind}}
+\index{Optind@{Optind}!Getopt.h@{Getopt.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf Optind}}\label{Getopt_8h_a1}
+
+
+
+
+Definition at line 124 of file Getopt.c.
+
+Referenced by fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cache\_\-init(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-recover\_\-cache(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-init\_\-fs(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-init(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-remote\_\-create(), fn\_\-nfs\_\-remote\_\-hardlink(), fn\_\-nfs\_\-remote\_\-ln(), fn\_\-nfs\_\-remote\_\-ls(), fn\_\-nfs\_\-remote\_\-mkdir(), fn\_\-nfs\_\-remote\_\-rename(), fn\_\-nfs\_\-remote\_\-setattr(), fn\_\-nfs\_\-remote\_\-stat(), fn\_\-nfs\_\-remote\_\-unlink(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), fn\_\-nfs\_\-unlink(), fn\_\-rpc\_\-init(), Getopt(), main(), and util\_\-cmp().\index{Getopt.h@{Getopt.h}!Optopt@{Optopt}}
+\index{Optopt@{Optopt}!Getopt.h@{Getopt.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int {\bf Optopt}}\label{Getopt_8h_a2}
+
+
+
+
+Definition at line 125 of file Getopt.c.
+
+Referenced by fn\_\-Cache\_\-inode\_\-access(), fn\_\-Cache\_\-inode\_\-cache\_\-init(), fn\_\-Cache\_\-inode\_\-create(), fn\_\-Cache\_\-inode\_\-data\_\-cache(), fn\_\-Cache\_\-inode\_\-flush\_\-cache(), fn\_\-Cache\_\-inode\_\-gc(), fn\_\-Cache\_\-inode\_\-link(), fn\_\-Cache\_\-inode\_\-ln(), fn\_\-Cache\_\-inode\_\-ls(), fn\_\-Cache\_\-inode\_\-mkdir(), fn\_\-Cache\_\-inode\_\-read(), fn\_\-Cache\_\-inode\_\-recover\_\-cache(), fn\_\-Cache\_\-inode\_\-refresh\_\-cache(), fn\_\-Cache\_\-inode\_\-release\_\-cache(), fn\_\-Cache\_\-inode\_\-rename(), fn\_\-Cache\_\-inode\_\-setattr(), fn\_\-Cache\_\-inode\_\-stat(), fn\_\-Cache\_\-inode\_\-unlink(), fn\_\-Cache\_\-inode\_\-write(), fn\_\-fsal\_\-access(), fn\_\-fsal\_\-cat(), fn\_\-fsal\_\-create(), fn\_\-fsal\_\-getxattr(), fn\_\-fsal\_\-hardlink(), fn\_\-fsal\_\-init\_\-fs(), fn\_\-fsal\_\-ln(), fn\_\-fsal\_\-ls(), fn\_\-fsal\_\-lsxattrs(), fn\_\-fsal\_\-mkdir(), fn\_\-fsal\_\-open(), fn\_\-fsal\_\-open\_\-byfileid(), fn\_\-fsal\_\-open\_\-byname(), fn\_\-fsal\_\-rcp(), fn\_\-fsal\_\-read(), fn\_\-fsal\_\-rename(), fn\_\-fsal\_\-setattr(), fn\_\-fsal\_\-stat(), fn\_\-fsal\_\-truncate(), fn\_\-fsal\_\-unlink(), fn\_\-fsal\_\-write(), fn\_\-nfs\_\-create(), fn\_\-nfs\_\-hardlink(), fn\_\-nfs\_\-init(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-mkdir(), fn\_\-nfs\_\-remote\_\-create(), fn\_\-nfs\_\-remote\_\-hardlink(), fn\_\-nfs\_\-remote\_\-ln(), fn\_\-nfs\_\-remote\_\-ls(), fn\_\-nfs\_\-remote\_\-mkdir(), fn\_\-nfs\_\-remote\_\-rename(), fn\_\-nfs\_\-remote\_\-setattr(), fn\_\-nfs\_\-remote\_\-stat(), fn\_\-nfs\_\-remote\_\-unlink(), fn\_\-nfs\_\-rename(), fn\_\-nfs\_\-setattr(), fn\_\-nfs\_\-stat(), fn\_\-nfs\_\-unlink(), fn\_\-rpc\_\-init(), Getopt(), main(), and util\_\-cmp().

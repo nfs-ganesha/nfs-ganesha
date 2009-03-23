@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="structnfs4__op__desc____" kind="struct" prot="public">
+    <compoundname>nfs4_op_desc__</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structnfs4__op__desc_____1o0" prot="public" static="no" volatile="no" mutable="no">
+        <type>char *</type>
+        <definition>char* nfs4_op_desc__::name</definition>
+        <argsstring></argsstring>
+        <name>name</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_Compound.c" line="125" bodystart="125" bodyend="-1"/>
+        <referencedby refid="nfs4__Compound_8c_1a4" compoundref="nfs4__Compound_8c" startline="202" endline="367">nfs4_Compound</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structnfs4__op__desc_____1o1" prot="public" static="no" volatile="no" mutable="no">
+        <type>unsigned int</type>
+        <definition>unsigned int nfs4_op_desc__::val</definition>
+        <argsstring></argsstring>
+        <name>val</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_Compound.c" line="126" bodystart="126" bodyend="-1"/>
+        <referencedby refid="nfs4__Compound_8c_1a4" compoundref="nfs4__Compound_8c" startline="202" endline="367">nfs4_Compound</referencedby>
+      </memberdef>
+      <memberdef kind="variable" id="structnfs4__op__desc_____1o2" prot="public" static="no" volatile="no" mutable="no">
+        <type>int(*</type>
+        <definition>int(* nfs4_op_desc__::funct)(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *)</definition>
+        <argsstring>)(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *)</argsstring>
+        <name>funct</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_Compound.c" line="129"/>
+        <referencedby refid="nfs4__Compound_8c_1a4" compoundref="nfs4__Compound_8c" startline="202" endline="367">nfs4_Compound</referencedby>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_Compound.c" line="124" bodystart="123" bodyend="130"/>
+    <listofallmembers>
+      <member refid="structnfs4__op__desc_____1o2" prot="public" virt="non-virtual"><scope>nfs4_op_desc__</scope><name>funct</name></member>
+      <member refid="structnfs4__op__desc_____1o0" prot="public" virt="non-virtual"><scope>nfs4_op_desc__</scope><name>name</name></member>
+      <member refid="structnfs4__op__desc_____1o1" prot="public" virt="non-virtual"><scope>nfs4_op_desc__</scope><name>val</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

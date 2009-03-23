@@ -1,0 +1,385 @@
+<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+  <compounddef id="shell__utils_8h" kind="file">
+    <compoundname>shell_utils.h</compoundname>
+    <includes refid="shell__types_8h" local="yes">shell_types.h</includes>
+    <includes local="no">stdio.h</includes>
+    <includedby refid="shell_8c" local="yes">shell.c</includedby>
+    <includedby refid="shell__utils_8c" local="yes">shell_utils.c</includedby>
+    <incdepgraph>
+      <node id="273">
+        <label>shell_utils.h</label>
+        <link refid="shell_utils.h"/>
+        <childnode refid="274" relation="include">
+        </childnode>
+        <childnode refid="275" relation="include">
+        </childnode>
+      </node>
+      <node id="274">
+        <label>shell_types.h</label>
+        <link refid="shell__types_8h"/>
+        <childnode refid="275" relation="include">
+        </childnode>
+      </node>
+      <node id="275">
+        <label>stdio.h</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="276">
+        <label>shell_utils.h</label>
+        <link refid="shell_utils.h"/>
+        <childnode refid="277" relation="include">
+        </childnode>
+        <childnode refid="278" relation="include">
+        </childnode>
+      </node>
+      <node id="277">
+        <label>shell.c</label>
+        <link refid="shell_8c"/>
+      </node>
+      <node id="278">
+        <label>shell_utils.c</label>
+        <link refid="shell__utils_8c"/>
+      </node>
+    </invincdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="shell__utils_8h_1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_timer</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_timer</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Timer management. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="42" bodystart="146" bodyend="241"/>
+        <references refid="Getopt_8c_1a0" compoundref="Getopt_8c" startline="111">NULL</references>
+        <references refid="cmd__tools_8h_1a0" compoundref="cmd__tools_8h" startline="263">print_timeval</references>
+        <references refid="cmd__tools_8h_1a24" compoundref="cmd__tools_8c" startline="1095" endline="1110">time_diff</references>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_sleep</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_sleep</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>System utils. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="50" bodystart="251" bodyend="286"/>
+        <references refid="cmd__tools_8h_1a10" compoundref="cmd__tools_8c" startline="211" endline="230">my_atoi</references>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_shell</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_shell</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="56" bodystart="291" bodyend="339"/>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_meminfo</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_meminfo</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="62" bodystart="344" bodyend="411"/>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_cmp</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_cmp</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>String utils </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="70" bodystart="419" bodyend="594"/>
+        <references refid="Getopt_8h_1a4" compoundref="Getopt_8c" startline="128" endline="179">Getopt</references>
+        <references refid="cmd__tools_8h_1a10" compoundref="cmd__tools_8c" startline="211" endline="230">my_atoi</references>
+        <references refid="Getopt_8c_1a3" compoundref="Getopt_8c" startline="123">Opterr</references>
+        <references refid="Getopt_8c_1a4" compoundref="Getopt_8c" startline="124">Optind</references>
+        <references refid="Getopt_8c_1a5" compoundref="Getopt_8c" startline="125">Optopt</references>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_diff</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_diff</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="75" bodystart="674" bodyend="690"/>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_wc</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_wc</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="80" bodystart="716" bodyend="732"/>
+      </memberdef>
+      <memberdef kind="function" id="shell__utils_8h_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int util_chomp</definition>
+        <argsstring>(int argc, char **argv, FILE *output)</argsstring>
+        <name>util_chomp</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>FILE *</type>
+          <declname>output</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="85" bodystart="736" bodyend="780"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="shell__utils_8h_1a0" prot="public" static="yes" volatile="no" mutable="no">
+        <type><ref refid="structcommand__def____" kindref="compound">command_def_t</ref></type>
+        <definition>command_def_t shell_utils[]</definition>
+        <argsstring>[]</argsstring>
+        <name>shell_utils</name>
+        <initializer>{
+  
+  {&quot;chomp&quot;,    util_chomp,       &quot;removes final newline character&quot;},
+  {&quot;cmp&quot;,      util_cmp,         &quot;compares two expressions&quot;},
+  {&quot;diff&quot;,     util_diff,        &quot;lists differences between two expressions&quot;},
+  {&quot;eq&quot;,       util_cmp,         &quot;test if two expressions are equal&quot;},      
+  {&quot;meminfo&quot;,  util_meminfo,     &quot;prints information about memory use&quot;},
+  {&quot;ne&quot;,       util_cmp,         &quot;test if two expressions are different&quot;},
+  {&quot;shell&quot;,    util_shell,       &quot;executes a real shell command&quot;},
+  {&quot;sleep&quot;,    util_sleep,       &quot;suspends script execution for some time&quot;},
+  {&quot;timer&quot;,    util_timer,       &quot;timer management command&quot;},
+  {&quot;wc&quot;,       util_wc,          &quot;counts the number of char/words/lines in a string&quot;},
+  
+  {NULL,NULL,NULL} 
+}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h" line="108" bodystart="94" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Miscellaneous build-in commands for shell. </para>    </briefdescription>
+    <detaileddescription>
+<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+</para></simplesect>
+<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/05/11 07:25:45 </para></simplesect>
+</para></simplesect>
+<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.3 </para></simplesect>
+</para></simplesect>
+<simplesect kind="rcs"><title>Log</title><para><ref refid="shell__utils_8h" kindref="compound">shell_utils.h</ref>,v </para></simplesect>
+Revision 1.3 2005/05/11 07:25:45 leibovic adding chomp util.</para><para>Revision 1.2 2005/05/09 14:54:43 leibovic Adding eq and ne.</para><para>Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para>    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"></codeline>
+<codeline lineno="24"><highlight class="preprocessor">#ifndef<sp/>_SHELL_UTILS_H</highlight></codeline>
+<codeline lineno="25"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_SHELL_UTILS_H</highlight></codeline>
+<codeline lineno="26"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="shell__types_8h" kindref="compound">shell_types.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight><highlight class="comment">/*----------------------------------*</highlight></codeline>
+<codeline lineno="33"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Utilities<sp/>commands.</highlight></codeline>
+<codeline lineno="34"><highlight class="comment"><sp/>*----------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a1" kindref="member">util_timer</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a2" kindref="member">util_sleep</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a3" kindref="member">util_shell</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a4" kindref="member">util_meminfo</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a5" kindref="member">util_cmp</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a6" kindref="member">util_diff</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a7" kindref="member">util_wc</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__utils_8h_1a8" kindref="member">util_chomp</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight><highlight class="comment">/*----------------------------------*</highlight></codeline>
+<codeline lineno="89"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Utilities<sp/>list.</highlight></codeline>
+<codeline lineno="90"><highlight class="comment"><sp/>*----------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>util<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref><sp/><sp/>shell_utils[]={</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;chomp&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/>util_chomp,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;removes<sp/>final<sp/>newline<sp/>character&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;cmp&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/>util_cmp,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;compares<sp/>two<sp/>expressions&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;diff&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/>util_diff,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;lists<sp/>differences<sp/>between<sp/>two<sp/>expressions&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;eq&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/>util_cmp,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;test<sp/>if<sp/>two<sp/>expressions<sp/>are<sp/>equal&quot;</highlight><highlight class="normal">},<sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;meminfo&quot;</highlight><highlight class="normal">,<sp/><sp/>util_meminfo,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;prints<sp/>information<sp/>about<sp/>memory<sp/>use&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;ne&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/>util_cmp,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;test<sp/>if<sp/>two<sp/>expressions<sp/>are<sp/>different&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;shell&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/>util_shell,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;executes<sp/>a<sp/>real<sp/>shell<sp/>command&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;sleep&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/>util_sleep,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;suspends<sp/>script<sp/>execution<sp/>for<sp/>some<sp/>time&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;timer&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/>util_timer,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;timer<sp/>management<sp/>command&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;wc&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/>util_wc,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;counts<sp/>the<sp/>number<sp/>of<sp/>char/words/lines<sp/>in<sp/>a<sp/>string&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/>{NULL,NULL,<ref refid="Getopt_8c_1a0" kindref="member">NULL</ref>}<sp/></highlight><highlight class="comment">/*<sp/>End<sp/>of<sp/>command<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+    </programlisting>
+    <location file="/opt/philippe/GANESHA/src/shell/shell_utils.h"/>
+  </compounddef>
+</doxygen>

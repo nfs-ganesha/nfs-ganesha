@@ -1,0 +1,145 @@
+\section{cache\_\-inode\_\-open\_\-close.c File Reference}
+\label{cache__inode__open__close_8c}\index{cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}}
+Removes an entry of any type. 
+
+{\tt \#include \char`\"{}fsal.h\char`\"{}}\par
+{\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
+{\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$sys/stat.h$>$}\par
+{\tt \#include $<$sys/param.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$strings.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-open} (cache\_\-entry\_\-t $\ast$pentry, cache\_\-inode\_\-client\_\-t $\ast$pclient, fsal\_\-openflags\_\-t openflags, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-open\_\-by\_\-name} (cache\_\-entry\_\-t $\ast$pentry\_\-dir, fsal\_\-name\_\-t $\ast$pname, cache\_\-entry\_\-t $\ast$pentry\_\-file, cache\_\-inode\_\-client\_\-t $\ast$pclient, fsal\_\-openflags\_\-t openflags, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-close} (cache\_\-entry\_\-t $\ast$pentry, cache\_\-inode\_\-client\_\-t $\ast$pclient, cache\_\-inode\_\-status\_\-t $\ast$pstatus)
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Removes an entry of any type. 
+
+vim:expandtab:shiftwidth=8:tabstop=8:
+
+Copyright CEA/DAM/DIF (2008) contributeur : Philippe DENIEL {\tt philippe.deniel@cea.fr} Thomas LEIBOVICI {\tt thomas.leibovici@cea.fr}
+
+Ce logiciel est un serveur implementant le protocole NFS.
+
+Ce logiciel est r\'{e}gi par la licence Ce\-CILL soumise au droit fran\c{c}ais et respectant les principes de diffusion des logiciels libres. Vous pouvez utiliser, modifier et/ou redistribuer ce programme sous les conditions de la licence Ce\-CILL telle que diffus\'{e}e par le CEA, le CNRS et l'INRIA sur le site \char`\"{}http://www.cecill.info\char`\"{}.
+
+En contrepartie de l'accessibilit\'{e} au code source et des droits de copie, de modification et de redistribution accord\'{e}s par cette licence, il n'est offert aux utilisateurs qu'une garantie limit\'{e}e. Pour les m\^{e}mes raisons, seule une responsabilit\'{e} restreinte p\`{e}se sur l'auteur du programme, le titulaire des droits patrimoniaux et les conc\'{e}dants successifs.
+
+A cet \'{e}gard l'attention de l'utilisateur est attir\'{e}e sur les risques associ\'{e}s au chargement, \`{a} l'utilisation, \`{a} la modification et/ou au d\'{e}veloppement et \`{a} la reproduction du logiciel par l'utilisateur \'{e}tant donn\'{e} sa sp\'{e}cificit\'{e} de logiciel libre, qui peut le rendre complexe \`{a} manipuler et qui le r\'{e}serve donc \`{a} des d\'{e}veloppeurs et des professionnels avertis poss\'{e}dant des connaissances informatiques approfondies. Les utilisateurs sont donc invit\'{e}s \`{a} charger et tester l'ad\'{e}quation du logiciel \`{a} leurs besoins dans des conditions permettant d'assurer la s\'{e}curit\'{e} de leurs syst\`{e}mes et ou de leurs donn\'{e}es et, plus g\'{e}n\'{e}ralement, \`{a} l'utiliser et l'exploiter dans les m\^{e}mes conditions de s\'{e}curit\'{e}.
+
+Le fait que vous puissiez acc\'{e}der \`{a} cet en-t\^{e}te signifie que vous avez pris connaissance de la licence Ce\-CILL, et que vous en avez accept\'{e} les termes.
+
+---------------------
+
+Copyright CEA/DAM/DIF (2005) Contributor: Philippe DENIEL {\tt philippe.deniel@cea.fr} Thomas LEIBOVICI {\tt thomas.leibovici@cea.fr}
+
+This software is a server that implements the NFS protocol.
+
+This software is governed by the Ce\-CILL license under French law and abiding by the rules of distribution of free software. You can use, modify and/ or redistribute the software under the terms of the Ce\-CILL license as circulated by CEA, CNRS and INRIA at the following URL \char`\"{}http://www.cecill.info\char`\"{}.
+
+As a counterpart to the access to the source code and rights to copy, modify and redistribute granted by the license, users are provided only with a limited warranty and the software's author, the holder of the economic rights, and the successive licensors have only limited liability.
+
+In this respect, the user's attention is drawn to the risks associated with loading, using, modifying and/or developing or reproducing the software by the user in light of its specific status of free software, that may mean that it is complicated to manipulate, and that also therefore means that it is reserved for developers and experienced professionals having in-depth computer knowledge. Users are therefore encouraged to load and test the software's suitability as regards their requirements in conditions enabling the security of their systems and/or data to be ensured and, more generally, to use and operate it in the same conditions as regards security.
+
+The fact that you are presently reading this means that you have had knowledge of the Ce\-CILL license and that you accept its terms. ---------------------------------------
+
+\begin{Desc}
+\item[Author:]\begin{Desc}
+\item[Author]deniel \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2005/11/28 17:02:27 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.20 \end{Desc}
+\end{Desc}
+{\bf cache\_\-inode\_\-rdwr.c}{\rm (p.\,\pageref{cache__inode__rdwr_8c})} : performs an IO on a REGULAR\_\-FILE.
+
+Definition in file {\bf cache\_\-inode\_\-open\_\-close.c}.
+
+\subsection{Function Documentation}
+\index{cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}!cache_inode_close@{cache\_\-inode\_\-close}}
+\index{cache_inode_close@{cache\_\-inode\_\-close}!cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-close (cache\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__open__close_8c_a2}
+
+
+cache\_\-inode\_\-close: closes the local fd in the FSAL.
+
+Closes the local fd in the FSAL.
+
+No lock management is done in this layer: the related pentry in the cache inode layer is locked and will prevent from concurent accesses.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] entry in file content layer whose content is to be accessed. \item[{\em pclient}][IN] ressource allocated by the client for the nfs management.  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
+
+
+Definition at line 370 of file cache\_\-inode\_\-open\_\-close.c.
+
+References cache\_\-inode\_\-error\_\-convert().
+
+Referenced by cache\_\-inode\_\-rdwr(), and cache\_\-inode\_\-valid().\index{cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}!cache_inode_open@{cache\_\-inode\_\-open}}
+\index{cache_inode_open@{cache\_\-inode\_\-open}!cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-open (cache\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-openflags\_\-t {\em openflags}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__open__close_8c_a0}
+
+
+cache\_\-content\_\-open: opens the local fd on the cache.
+
+Opens the fd on the FSAL
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] entry in file content layer whose content is to be accessed. \item[{\em pclient}][IN] ressource allocated by the client for the nfs management. \item[{\em openflags}][IN] flags to be used to open the file \item[{\em pcontent}][IN] FSAL operation context  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
+
+
+Definition at line 126 of file cache\_\-inode\_\-open\_\-close.c.
+
+References cache\_\-inode\_\-error\_\-convert().
+
+Referenced by cache\_\-inode\_\-rdwr().\index{cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}!cache_inode_open_by_name@{cache\_\-inode\_\-open\_\-by\_\-name}}
+\index{cache_inode_open_by_name@{cache\_\-inode\_\-open\_\-by\_\-name}!cache_inode_open_close.c@{cache\_\-inode\_\-open\_\-close.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-open\_\-by\_\-name (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dir}, fsal\_\-name\_\-t $\ast$ {\em pname}, cache\_\-entry\_\-t $\ast$ {\em pentry\_\-file}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-openflags\_\-t {\em openflags}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__open__close_8c_a1}
+
+
+cache\_\-content\_\-open: opens the local fd on the cache.
+
+Opens the fd on the FSAL
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry\_\-dir}][IN] parent entry for the file \item[{\em pname}][IN] name of the file to be opened in the parent directory \item[{\em pentry\_\-file}][IN] file entry to be opened \item[{\em pclient}][IN] ressource allocated by the client for the nfs management. \item[{\em openflags}][IN] flags to be used to open the file \item[{\em pcontent}][IN] FSAL operation context  [OUT] returned status.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
+
+
+Definition at line 226 of file cache\_\-inode\_\-open\_\-close.c.
+
+References cache\_\-inode\_\-error\_\-convert().

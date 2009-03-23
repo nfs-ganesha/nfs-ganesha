@@ -1,0 +1,211 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+print "------------ I am " $USER1 " -------------"
+# je deviens user1
+su $USER1
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+
+print "----- Creating files and directories -----"
+
+create fichier_access_0     000
+
+create fichier_access_Ur    400
+create fichier_access_Urw   600
+
+create fichier_access_UrwGr 640
+create fichier_access_UrwGrw 660
+
+create fichier_access_UrwGrwOr 664
+create fichier_access_UrwGrwOrw 666
+
+mkdir rep_access_0     000
+
+mkdir rep_access_Ur    400
+mkdir rep_access_Ux    100
+mkdir rep_access_Uw    200
+
+mkdir rep_access_Gr    040
+mkdir rep_access_Gx    010
+mkdir rep_access_Gw    020
+
+mkdir rep_access_Or    004
+mkdir rep_access_Ox    001
+mkdir rep_access_Ow    002
+
+# all perms should be denied
+
+access R fichier_access_0
+access W fichier_access_0
+access W fichier_access_Ur
+access  R  rep_access_0
+access  W  rep_access_0
+access  X  rep_access_0
+access  W  rep_access_Ur
+access  X  rep_access_Ur
+access  R  rep_access_Ux
+access  W  rep_access_Ux
+access  R  rep_access_Uw
+access  X  rep_access_Uw
+access  R  rep_access_Gr
+access  W  rep_access_Gr
+access  X  rep_access_Gr
+access  R  rep_access_Gx
+access  W  rep_access_Gx
+access  X  rep_access_Gx
+access  R  rep_access_Gw
+access  W  rep_access_Gw
+access  X  rep_access_Gw
+access  R  rep_access_Or
+access  W  rep_access_Or
+access  X  rep_access_Or
+access  R  rep_access_Ox
+access  W  rep_access_Ox
+access  X  rep_access_Ox
+access  R  rep_access_Ow
+access  W  rep_access_Ow
+access  X  rep_access_Ow
+
+
+print "------ I become " $USER2 " --------"
+
+su $USER2 
+
+access R fichier_access_0
+access W fichier_access_0
+access R fichier_access_Ur
+access W fichier_access_Ur
+access R fichier_access_Urw
+access W fichier_access_Urw
+access W fichier_access_UrwGr
+access  R  rep_access_0
+access  W  rep_access_0
+access  X  rep_access_0
+access  R  rep_access_Ur
+access  W  rep_access_Ur
+access  X  rep_access_Ur
+access  R  rep_access_Ux
+access  W  rep_access_Ux
+access  X  rep_access_Ux
+access  R  rep_access_Uw
+access  W  rep_access_Uw
+access  X  rep_access_Uw
+access  W  rep_access_Gr
+access  X  rep_access_Gr
+access  R  rep_access_Gx
+access  W  rep_access_Gx
+access  R  rep_access_Gw
+access  X  rep_access_Gw
+access  R  rep_access_Or
+access  W  rep_access_Or
+access  X  rep_access_Or
+access  R  rep_access_Ox
+access  W  rep_access_Ox
+access  X  rep_access_Ox
+access  R  rep_access_Ow
+access  W  rep_access_Ow
+access  X  rep_access_Ow
+
+
+print "------ I become " $USER3 " --------"
+
+su $USER3 
+
+access R fichier_access_0
+access W fichier_access_0
+access R fichier_access_Ur
+access W fichier_access_Ur
+access R fichier_access_Urw
+access W fichier_access_Urw
+access R fichier_access_UrwGr
+access W fichier_access_UrwGr
+access R fichier_access_UrwGrw
+access W fichier_access_UrwGrw
+access W fichier_access_UrwGrwOr
+access  R  rep_access_0
+access  W  rep_access_0
+access  X  rep_access_0
+access  R  rep_access_Ur
+access  W  rep_access_Ur
+access  X  rep_access_Ur
+access  R  rep_access_Ux
+access  W  rep_access_Ux
+access  X  rep_access_Ux
+access  R  rep_access_Uw
+access  W  rep_access_Uw
+access  X  rep_access_Uw
+access  R  rep_access_Gr
+access  W  rep_access_Gr
+access  X  rep_access_Gr
+access  R  rep_access_Gx
+access  W  rep_access_Gx
+access  X  rep_access_Gx
+access  R  rep_access_Gw
+access  W  rep_access_Gw
+access  X  rep_access_Gw
+access  W  rep_access_Or
+access  X  rep_access_Or
+access  R  rep_access_Ox
+access  W  rep_access_Ox
+access  R  rep_access_Ow
+access  X  rep_access_Ow
+
+
+print "------ I become " $USER1 " --------"
+
+su $USER1 
+
+print "----- unlink -----"
+
+unlink fichier_access_0     
+unlink fichier_access_Ur    
+unlink fichier_access_Urw   
+unlink fichier_access_UrwGr 
+unlink fichier_access_UrwGrw 
+unlink fichier_access_UrwGrwOr 
+unlink fichier_access_UrwGrwOrw 
+unlink rep_access_0     
+unlink rep_access_Ur    
+unlink rep_access_Ux    
+unlink rep_access_Uw   
+unlink rep_access_Gr    
+unlink rep_access_Gx    
+unlink rep_access_Gw   
+unlink rep_access_Or    
+unlink rep_access_Ox    
+unlink rep_access_Ow   

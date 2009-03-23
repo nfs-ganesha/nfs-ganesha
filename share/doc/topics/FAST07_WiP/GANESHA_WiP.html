@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.1.2  (Linux)">
+	<META NAME="CREATED" CONTENT="20061213;13192800">
+	<META NAME="CHANGED" CONTENT="20070125;16152300">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in; margin-left: 1.25in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 1in }
+		P { margin-bottom: 0.08in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P STYLE="margin-bottom: 0in"><FONT SIZE=4><B>GANESHA, a multi-usage
+with large cache NFSv4 server. </B></FONT>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT SIZE=2 STYLE="font-size: 11pt">	Work
+In Progress Submission. Contact: Philippe Deniel
+(philippe.deniel@cea.fr)</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>The NFSv4
+protocol is quite different from former versions of the NFS protocol:
+it provides enhanced caching capability and it is generic enough in
+its semantic to handle many different file systems. GANESHA is a NFS
+server which runs in  user space. Its design is oriented to take
+advantage of these two aspects: aggressive caching and capability to
+manage as many  different sets of data  as possible.</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>Caching is
+done for data and metadata.  Performance is a key point, it is
+addressed by building the  complete metadata cache within the memory.
+This cache is based on a associative addressing via hash tables based
+on Red-Black Trees based which scale like O( log(n) ). The GANESHA
+server runs in user space, this makes it possible to allocate huge
+pieces of memory (several Gigabytes). An internal mechanism (based
+upon Buddy Block paradigm)  optimizes memory use. One of the goal of
+the product is to keep several days of &quot;active inodes&quot; in
+memory.</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>GANESHA
+makes use of backend modules called &quot;File System Abstraction
+Layers&quot; or FSAL. A FSAL provides  all the necessary calls to
+access a file system. NFSv4 requires only a few &quot;mandatory&quot;
+attributes for files and directories, which makes it possible to
+address very basic file systems. Therefore, a FSAL can be built on
+top of sets of data organized as trees, where each entry has a name.
+For example, SNMP and LDAP meet the requirement for building a FSAL
+on top of them. They could be &quot;plugged&quot; into GANESHA if the
+right FSAL is developed.</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>Currently,
+GANESHA supports the two following FSAL:</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<UL>
+	<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0in">&ldquo;<FONT SIZE=2>HPSS
+	FSAL&rdquo;: with this module, GANESHA will provide NFS support to
+	HPSS (HPSS is an HSM developed by the DOE and IBM Government
+	Systems).  </FONT>
+	</P>
+</UL>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<UL>
+	<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>&quot;POSIX
+	FSAL&quot;: with this module, GANESHA will provide NFS support to
+	any file systems with no &ldquo;handle based&rdquo; APIs, through
+	the use of the standard POSIX calls. </FONT>
+	</P>
+</UL>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>The
+following FSAL are under development:</FONT></P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<UL>
+	<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>&quot;NFSv4
+	Client FSAL&quot;: if you have a FSAL that is a NFSv4 client with
+	GANESHA's aggressive caching, it will turn GANESHA into a NFSv4
+	proxy (by using NFSv4 file delegation and future NFSv4.1 directory
+	delegation);</FONT></P>
+</UL>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<UL>
+	<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0in">&ldquo;<FONT SIZE=2>SNMP
+	FSAL&rdquo;: with this FSAL, GANESHA will provide NFS access to
+	SNMP. MIBS related  information will be browsed like the /proc file
+	system. </FONT>
+	</P>
+</UL>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<UL>
+	<LI><P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>LDAP
+	FSAL: with this module, GANESHA will provide access to LDAP trees.
+	Accessing them will be similar to browsing the /proc filesystem. </FONT>
+	</P>
+</UL>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=JUSTIFY STYLE="margin-bottom: 0in"><FONT SIZE=2>GANESHA has
+been used in production on our site for one year. A website and a
+submission to Freshmeat and Sourceforge will be available in a few
+weeks. </FONT>
+</P>
+</BODY>
+</HTML>
