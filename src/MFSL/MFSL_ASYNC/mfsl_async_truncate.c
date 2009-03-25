@@ -143,9 +143,13 @@ fsal_status_t MFSAL_truncate_check_perms( mfsl_object_t                * filehan
 					  fsal_op_context_t            * p_context,
     					  mfsl_context_t               * p_mfsl_context )
 {
-  /* For the moment, no check... everybody's wellcome. This will change in later versions */
+  fsal_status_t fsal_status ;
 
-  /** @todo : put some stuff in this function */
+  fsal_status = FSAL_test_access( p_context, FSAL_W_OK, &pspecdata->async_attr ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+   return fsal_status ;
+
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_truncate_check_perms */
 

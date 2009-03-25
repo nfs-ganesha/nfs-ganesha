@@ -146,6 +146,9 @@ fsal_status_t  MFSL_Init(
 fsal_status_t MFSL_GetContext( mfsl_context_t     * pcontext,
                                fsal_op_context_t  * pfsal_context  ) ;
 
+fsal_status_t MFSL_RefreshContext( mfsl_context_t     * pcontext,
+                                   fsal_op_context_t  * pfsal_context  ) ;
+
 
 #endif /* ! _USE_SWIG */
 

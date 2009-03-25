@@ -146,12 +146,20 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  */
 fsal_status_t MFSAL_rename_check_perms( mfsl_object_t         * old_parentdir_handle, /* IN */
     			                fsal_name_t           * p_old_name,           /* IN */
+		                        fsal_attrib_list_t    * src_dir_attributes,   /* [ IN/OUT ] */
    			                mfsl_object_t         * new_parentdir_handle, /* IN */
     			                fsal_name_t           * p_new_name,           /* IN */
+    		           		fsal_attrib_list_t    * tgt_dir_attributes,   /* [ IN/OUT ] */  
     			                fsal_op_context_t     * p_context,            /* IN */
     			                mfsl_context_t        * p_mfsl_context        /* IN */ )
 {
-  /* For the moment, no check... everybody's wellcome. This will change in later versions */
+  fsal_status_t fsal_status ;
+
+  /* Check for the attributes first */
+  fsal_status = FSAL_rename_access( p_context, src_dir_attributes, tgt_dir_attributes ); 
+ 
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+   return fsal_status ; 
 
   /** @todo : put some stuff in this function */
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
@@ -247,9 +255,11 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
  
  
   fsal_status = MFSAL_rename_check_perms( old_parentdir_handle, 
-    			    		  p_old_name,           
+    			    		  p_old_name,       
+                                          src_dir_attributes,    
    			    		  new_parentdir_handle, 
-    			    		  p_new_name,          
+    			    		  p_new_name, 
+					  tgt_dir_attributes,         
     			    		  p_context,          
     			    		  p_mfsl_context ) ;
 
@@ -297,7 +307,7 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
   *tgt_dir_attributes = new_parentdir_pasyncdata->async_attr ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_link */
+} /* MFSL_rename */
 
 
 
