@@ -146,7 +146,12 @@ fsal_status_t MFSAL_link_check_perms( 	mfsl_object_t                * target_han
     					fsal_op_context_t            * p_context,         /* IN */
     					mfsl_context_t               * p_mfsl_context     /* IN */ )
 {
-  /* For the moment, no check... everybody's wellcome. This will change in later versions */
+  fsal_status_t fsal_status ;
+
+  fsal_status = FSAL_link_access( p_context, &dir_pspecdata->async_attr ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+   return fsal_status ;
 
   /** @todo : put some stuff in this function */
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );

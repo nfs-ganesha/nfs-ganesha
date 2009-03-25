@@ -137,13 +137,19 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handle,     /* IN */
+fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handle,        /* IN */
 				        mfsl_object_specific_data_t  * dir_pspecdata,     /* IN */
-    			                fsal_name_t                  * p_object_name,        /* IN */
+    			                fsal_name_t                  * p_object_name,     /* IN */
+    			    		fsal_attrib_list_t           * dir_attributes,    /* [ IN/OUT ] */ 
     					fsal_op_context_t            * p_context,         /* IN */
     					mfsl_context_t               * p_mfsl_context     /* IN */ )
 {
-  /* For the moment, no check... everybody's wellcome. This will change in later versions */
+  fsal_status_t fsal_status ;
+
+  fsal_status = FSAL_unlink_access( p_context, dir_attributes ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    return fsal_status ;
 
   /** @todo : put some stuff in this function */
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
@@ -174,15 +180,11 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
   mfsl_object_specific_data_t * dir_pasyncdata   = NULL ;
 
-  P( p_mfsl_context->lock ) ;
-
   GET_PREALLOC( pasyncopdesc,
                 p_mfsl_context->pool_async_op,
                 mfsl_param.nb_pre_async_op_desc,
                 mfsl_async_op_desc_t,
                 next_alloc ) ;
-
-  V( p_mfsl_context->lock ) ;
 
   if( pasyncopdesc == NULL )
     MFSL_return( ERR_FSAL_INVAL, 0 ) ;
@@ -197,16 +199,12 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   if( !mfsl_async_get_specdata( dir_handle, &dir_pasyncdata ) )
    {
 	/* Target is not yet asynchronous */
-	P( p_mfsl_context->lock ) ;
-
  	
   	GET_PREALLOC( dir_pasyncdata,
         	      p_mfsl_context->pool_spec_data,
                       mfsl_param.nb_pre_async_op_desc,
                	      mfsl_object_specific_data_t,
                	      next_alloc ) ;
-
-  	V( p_mfsl_context->lock ) ;
 
 	/* In this case use object_attributes parameter to initiate asynchronous object */
 	dir_pasyncdata->async_attr = *dir_attributes ;
@@ -215,6 +213,7 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   fsal_status = MFSAL_unlink_check_perms( dir_handle, 
 					  dir_pasyncdata, 
 					  p_object_name,
+					  dir_attributes,
 					  p_context, 
 					  p_mfsl_context ) ;
 
@@ -251,7 +250,7 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   *dir_attributes = dir_pasyncdata->async_attr ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_link */
+} /* MFSL_unlink */
 
 
 

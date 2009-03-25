@@ -209,7 +209,7 @@ int lru_inode_entry_to_str( LRU_data_t data, char * str)
  */
 int lru_data_entry_to_str( LRU_data_t data, char * str)
 {
-  return sprintf( str, "addr=%p,len=%u ", data.pdata, data.len ) ;
+  return sprintf( str, "addr=%p,len=%llu ", data.pdata, (unsigned long long)data.len ) ;
 } /* lru_data_entry_to_str */
 
 

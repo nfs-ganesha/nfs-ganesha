@@ -169,7 +169,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER ;
 void * rpc_tcp_socket_manager_thread( void * Arg )
 {
   int rc = 0 ;
-  int tcp_sock = (int)Arg ;
+  long int tcp_sock = (long int)Arg ;
 
   enum xprt_stat       stat;
   struct rpc_msg     * pmsg;
@@ -182,11 +182,11 @@ void * rpc_tcp_socket_manager_thread( void * Arg )
   int                  worker_index ;
   static char          my_name[MAXNAMLEN] ;
 
-  snprintf( my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%u", tcp_sock ) ; 
+  snprintf( my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock ) ; 
   SetNameFunction( my_name ) ;
 
   /* Calling dispatcher main loop */
-  DisplayLogLevel( NIV_DEBUG, "TCP SOCKET MANAGER Sock=%d(%p): Starting with pthread id #%p", tcp_sock, Arg, (caddr_t)pthread_self() ) ;
+  DisplayLogLevel( NIV_DEBUG, "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p", tcp_sock, Arg, (caddr_t)pthread_self() ) ;
 
           
 #ifndef _NO_BUDDY_SYSTEM
