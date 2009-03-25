@@ -4398,7 +4398,7 @@ int fn_fsal_read(
         ( p_seek_desc ? ( seek_desc.whence==FSAL_SEEK_SET ? "SET":
           seek_desc.whence==FSAL_SEEK_CUR ? "CUR":
           "END" ) : "DEFAULT" ),
-        ( p_seek_desc ? seek_desc.offset : 0LL ),
+        (long long)( p_seek_desc ? seek_desc.offset : 0LL ),
         total_bytes );
   }
   

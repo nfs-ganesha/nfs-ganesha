@@ -213,6 +213,68 @@ static unsigned int mfsl_async_choose_synclet( void )
   return synclet_chosen;
 } /* mfsl_async_choose_synclet */
 
+/**
+ * mfsl_async_synclet_refresher_thread: thread used for asynchronous cache inode management.
+ *
+ * This thread is used for managing asynchrous inode management
+ *
+ * @param IndexArg the index for the thread 
+ *
+ * @return Pointer to the result (but this function will mostly loop forever).
+ *
+ */
+void * mfsl_async_synclet_refresher_thread( void * Arg )
+{
+  int                         rc = 0 ;
+  unsigned int                i = 0 ;
+  fsal_status_t               fsal_status ;
+  fsal_export_context_t       fsal_export_context ;
+  fsal_op_context_t           fsal_context ;
+  mfsl_precreated_object_t  * pooldirs  = NULL ;
+  mfsl_precreated_object_t  * poolfiles = NULL ;
+
+  SetNameFunction( "MFSL_ASYNC Context refresher"  ) ;
+
+  if ( ( rc = BuddyInit( NULL )) != BUDDY_SUCCESS )
+    {
+      /* Failed init */
+      DisplayLog( "Memory manager could not be initialized, exiting..." ) ;
+      exit( 1 ) ;
+    }
+  DisplayLog( "Memory manager successfully initialized" ) ;
+
+  /* Init FSAL root fsal_op_context */
+  if( FSAL_IS_ERROR( FSAL_BuildExportContext( &fsal_export_context,
+					      NULL, 
+					      NULL ) ) ) 	
+   {
+      /* Failed init */
+      DisplayLog( "MFSL Synclet context could not build export context, exiting..." ) ;
+      exit( 1 ) ;
+   }
+
+  if( FSAL_IS_ERROR( FSAL_InitClientContext(  &fsal_context ) ) ) 
+   {
+      /* Failed init */
+      DisplayLog( "MFSL Synclet context could not build thread context, exiting..." ) ;
+      exit( 1 ) ;
+   }
+
+  if( FSAL_IS_ERROR( FSAL_GetClientContext( &fsal_context, 
+					    &fsal_export_context,
+                                            0,
+                                            0,
+ 					    NULL,
+					    0 ) ) )
+   {
+      /* Failed init */
+      DisplayLog( "could not build client context, exiting..." ) ;
+      exit( 1 ) ;
+   }
+
+  /* Showtime... */
+  DisplayLog( "Started..." ) ;
+} /* mfsl_async_synclet_refresher_thread */
 
 /**
  * mfsl_async_synclet_thread: thread used for asynchronous cache inode management.
@@ -329,6 +391,15 @@ void * mfsl_async_synclet_thread( void * Arg )
         DisplayLog( "Incoherency: released entry for asyncopdesc could not be tagged invalid") ;
       }
     V( synclet_data[index].mutex_op_lru ) ;
+
+  /* Init synclet context */
+  if( FSAL_IS_ERROR ( MFSL_ASYNC_RefreshSyncletContext( &synclet_data[index].synclet_context, 
+  		              	                        &synclet_data[index].root_fsal_context ) ) )
+   {
+      /* Failed init */
+      DisplayLog( "MFSL Synclet context could not be initialized, exiting..." ) ;
+      exit( 1 ) ;
+   }
 
     /************************************************* Ne pas oublier de cleaner les invalides */         
 

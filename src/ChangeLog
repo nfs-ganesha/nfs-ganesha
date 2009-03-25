@@ -126,9 +126,9 @@
 	- Bug fix: client's address was badly printed by the worker when nfs_export_check_access denied access
 	- Bug fix: syntax error in posix.ganesha.nfsd.conf configuration file example
 
-0.99.51 - Mon 23 Mar 2009
+0.99.51 - Fri 20 Mar 2009
         - MySQL can be used instead of PGSQL in FSAL_POSIX. It becomes the
-  	  ²default database for this FSAL.
+  	  default database for this FSAL.
 	- Bug Fix: Massive and parralel mount requests (e.g. : all nodes of a
 	  compute cluster starting at the same time after a maintenance) could
 	  lead to errors on client. This "denial of service" like trouble has
@@ -143,3 +143,8 @@
 	- MFSL_ASYNC: create has been made asynchronous
 	- New feature: very early alpha version of asynchronous metadata management is available via MFSL_ASYNC
 	  This is to be activated by using --with-mfsl=ASYNC at configure time. 
+
+0.99.52	-
+        - Bug Fix: possible race condition in cache_inode_readdir (badly placed rw_lock_downgrade) that could
+          lead in having cache_inode_readdir_populate called twice at the same time.
+        - 

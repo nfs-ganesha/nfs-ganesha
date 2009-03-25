@@ -104,6 +104,13 @@ fsal_status_t MFSAL_getattrs_check_perms( mfsl_object_t                * filehan
     					  mfsl_context_t               * p_mfsl_context,    /* IN */
     					  fsal_attrib_list_t           * object_attributes  /* IN */ )
 {
+  fsal_status_t fsal_status ;
+  
+  fsal_status = FSAL_test_access( p_context, FSAL_R_OK, object_attributes ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    return fsal_status ;
+
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_setattr_check_perms */
 

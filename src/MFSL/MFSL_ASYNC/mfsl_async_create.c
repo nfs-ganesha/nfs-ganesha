@@ -161,7 +161,12 @@ fsal_status_t MFSAL_create_check_perms( mfsl_object_t                * target_ha
     					mfsl_context_t               * p_mfsl_context,
 					fsal_attrib_list_t           * object_attributes )
 {
-  /* For the moment, no check... everybody's wellcome. This will change in later versions */
+  fsal_status_t fsal_status ;
+
+  fsal_status = FSAL_create_access( p_context, object_attributes ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) )
+    return fsal_status ;
 
   /** @todo : put some stuff in this function */
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
@@ -234,12 +239,15 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
    }
 
   /* Now get a pre-allocated directory from the synclet data */
+  P( p_mfsl_context->lock ) ;
   GET_PREALLOC_CONSTRUCT( pprecreated,
                           synclet_data[p_mfsl_context->synclet_index].synclet_context.pool_files,
                           mfsl_param.nb_pre_create_files,
 			  mfsl_precreated_object_t,
 			  next_alloc,
 			  constructor_preacreated_entries ) ;
+  synclet_data[p_mfsl_context->synclet_index].synclet_context.avail_pool_files -= 1 ;
+  V( p_mfsl_context->lock ) ;
 
 
   pnewfile_handle = &(pprecreated->mobject ) ;
@@ -289,7 +297,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   *object_handle = pprecreated->mobject ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_link */
+} /* MFSL_create */
 
 
 

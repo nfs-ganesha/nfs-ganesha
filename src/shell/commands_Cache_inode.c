@@ -128,7 +128,7 @@ static cache_entry_t * pentry_root ;
 /** Global (exported) variable : The cache hash table */
 hash_table_t * ht ;
 
-static cache_init = FALSE;
+static int cache_init = FALSE;
 
 /** Global variable : the garbagge policy to be used */
 static cache_inode_gc_policy_t gcpol ;
@@ -367,7 +367,7 @@ void Cache_inode_layer_SetLogLevel(int log_lvl  ){
 
 int lru_entry_to_str( LRU_data_t data, char * str)
 {
-  return sprintf( str, "%p (len=%u)", data.pdata, data.len ) ;
+  return sprintf( str, "%p (len=%llu)", data.pdata, (unsigned long long)data.len ) ;
 } /* lru_entry_to_str */
 
 int lru_clean_entry( LRU_entry_t * entry, void * adddata)
@@ -3857,7 +3857,7 @@ int fn_Cache_inode_read( int argc ,         /* IN : number of args in argv */
               ( seek_desc.whence==FSAL_SEEK_SET ? "SET":
                 seek_desc.whence==FSAL_SEEK_CUR ? "CUR":
                 "END" ),
-              seek_desc.offset,
+              (long long)seek_desc.offset,
               total_bytes );
     }
   
@@ -4325,7 +4325,7 @@ int fn_Cache_inode_write( int argc ,         /* IN : number of args in argv */
         ( seek_desc.whence==FSAL_SEEK_SET ? "SET":
           seek_desc.whence==FSAL_SEEK_CUR ? "CUR":
           "END" ),
-        seek_desc.offset);
+        (long long)seek_desc.offset);
   }
   
   /* variables initialisation */
