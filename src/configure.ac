@@ -480,6 +480,13 @@ case $MFSL in
 	
 esac
 
+# MFSL_ASYNC should not be used with HPSS
+if [[ $FSAL == "HPSS" ]] ; then
+  if [[ $MFSL == "ASYNC" ]] ; then 
+		AC_MSG_ERROR([FSAL_HPSS and MFSL_ASYNC are incompatible])
+  fi
+fi
+
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)

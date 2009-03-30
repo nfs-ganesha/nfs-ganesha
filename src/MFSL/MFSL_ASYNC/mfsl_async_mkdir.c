@@ -240,12 +240,12 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   /* Now get a pre-allocated directory from the synclet data */
   P( p_mfsl_context->lock ) ;
   GET_PREALLOC_CONSTRUCT( pprecreated,
-			  synclet_data[p_mfsl_context->synclet_index].synclet_context.pool_dirs,
+			  p_mfsl_context->pool_dirs,
                           mfsl_param.nb_pre_create_dirs,
 			  mfsl_precreated_object_t,
 			  next_alloc,
 			  constructor_preacreated_entries ) ;
-  synclet_data[p_mfsl_context->synclet_index].synclet_context.avail_pool_dirs -= 1 ;
+  p_mfsl_context->avail_pool_dirs -= 1 ;
   V( p_mfsl_context->lock ) ;
 
   pnewdir_handle = &(pprecreated->mobject ) ;
