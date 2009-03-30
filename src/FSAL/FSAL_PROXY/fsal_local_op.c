@@ -268,9 +268,9 @@ fsal_status_t FSAL_test_access(
  * this must be ensured by the cache_inode layer, using FSAL_getattrs,
  * for example.
  *
- * \param cred (in fsal_cred_t *) user's identifier.
- * \param candidate_attrbutes the attributes we want to set on the object
- * \param object_attributes (in fsal_attrib_list_t *) the cached attributes
+ * \param p_context  user's context.
+ * \param pcandidate_attrbutes the attributes we want to set on the object
+ * \param pobject_attributes (in fsal_attrib_list_t *) the cached attributes
  *        for the object.
  *
  * \return Major error codes :
@@ -281,12 +281,36 @@ fsal_status_t FSAL_test_access(
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 fsal_status_t FSAL_setattr_access(
-    fsal_op_context_t          * p_context,             /* IN */
-    fsal_attrib_list_t         * candidate_attributes,  /* IN */
-    fsal_attrib_list_t         * object_attributes      /* IN */
+    fsal_op_context_t          * p_context,              /* IN */
+    fsal_attrib_list_t         * pcandidate_attributes,  /* IN */
+    fsal_attrib_list_t         * pobject_attributes      /* IN */
 )
 {
-  Return( ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_setattr_access );
+  fsal_status_t  fsal_status ;
+  int            same_owner = FALSE ;
+  int            root_access = FALSE ;
+
+  /* sanity check */
+  if ( p_context == NULL || pcandidate_attributes == NULL ||  pobject_attributes == NULL )
+    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_setattr_access );
+
+  /* Root has full power... */
+  if ( p_context->user_credential.user == 0 )
+    Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_setattr_access );
+
+  /* Check for owner access */
+  if ( p_context->user_credential.user == pobject_attributes->owner )
+    {
+        same_owner = TRUE ;
+    }
+
+  if( !same_owner )
+    Return(ERR_FSAL_ACCESS ,0 , INDEX_FSAL_setattr_access );
+
+
+  /* If this point is reached, then access is granted */
+  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattr_access );
+
 } /* FSAL_test_setattr_access */
 
 /**

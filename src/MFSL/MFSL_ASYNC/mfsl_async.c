@@ -320,7 +320,7 @@ fsal_status_t MFSL_GetContext( mfsl_context_t     * pcontext,
   pcontext->log_outputs = log_outputs ;
 
   /* Preallocate files and dirs for this thread */
-  // status = MFSL_RefreshContext( pcontext, pfsal_context ) ;
+  status = MFSL_RefreshContext( pcontext, pfsal_context ) ;
 
   return status ;
 } /* MFSL_GetContext */
@@ -336,42 +336,6 @@ fsal_status_t MFSL_ASYNC_GetSyncletContext( mfsl_synclet_context_t  * pcontext,
   if( pthread_mutex_init( &pcontext->lock, NULL ) != 0 )
      MFSL_return( ERR_FSAL_SERVERFAULT, errno ) ;
 
-   P( pcontext->lock )  ;
-   STUFF_PREALLOC_CONSTRUCT( pcontext->pool_dirs,
-		             mfsl_param.nb_pre_create_dirs,
-		             mfsl_precreated_object_t,
-		             next_alloc,
- 			     constructor_preacreated_entries ) ;
-   pcontext->avail_pool_dirs = mfsl_param.nb_pre_create_dirs ;
-
-
-   STUFF_PREALLOC_CONSTRUCT( pcontext->pool_files,
-		             mfsl_param.nb_pre_create_files,
-		             mfsl_precreated_object_t,
-		             next_alloc,
-		 	     constructor_preacreated_entries ) ;
-   pcontext->avail_pool_files = mfsl_param.nb_pre_create_files ;
-
-   /* We need a fsal_op_context_t structure for managing files and directories */
-   DisplayLog( "Acquire new FSAL context for files and dirs pre-creation" ) ;
-
-   status =  mfsl_async_init_precreated_directories( pfsal_context, pcontext->pool_dirs ) ;
-   if( FSAL_IS_ERROR( status ) ) 
-   {
-     DisplayLog( "Could not acquire create preallocated directories" ) ;
-     V( pcontext->lock ) ;
-     return status ;
-   }
-
-   status =  mfsl_async_init_precreated_files( pfsal_context, pcontext->pool_files ) ;
-   if( FSAL_IS_ERROR( status ) ) 
-   {
-     DisplayLog( "Could not acquire create preallocated files" ) ;
-     V( pcontext->lock ) ;
-     return status ;
-   }
-
-   V( pcontext->lock ) ;
    return status;
 }
 
@@ -472,55 +436,6 @@ fsal_status_t MFSL_RefreshContext( mfsl_context_t     * pcontext,
   return status ;
 } /* MFSL_ASYNC_RefreshContext */
 
-fsal_status_t MFSL_ASYNC_RefreshSyncletContextDirs( mfsl_synclet_context_t  * pcontext,
-                                                    fsal_op_context_t       * pfsal_context  ) 
-{
-   fsal_status_t          status ;
-  
-   status.major = ERR_FSAL_NO_ERROR ;
-   status.minor = 0 ;
-
-   if( pcontext->pool_dirs == NULL )
-    {
-     STUFF_PREALLOC_CONSTRUCT( pcontext->pool_dirs,
-  		               mfsl_param.nb_pre_create_dirs,
-		               mfsl_precreated_object_t,
-		               next_alloc,
- 			       constructor_preacreated_entries ) ;
-     pcontext->avail_pool_dirs = mfsl_param.nb_pre_create_dirs ;
-
-     status =  mfsl_async_init_precreated_directories( pfsal_context, pcontext->pool_dirs ) ;
-     if( FSAL_IS_ERROR( status ) ) 
-      return status ;
-    }
-
-   return status;
-} /* MFSL_ASYNC_RefreshSyncletContextDirs */
-
-fsal_status_t MFSL_ASYNC_RefreshSyncletContextFiles( mfsl_synclet_context_t  * pcontext,
-                                                     fsal_op_context_t       * pfsal_context  ) 
-{
-   fsal_status_t          status ;
-  
-   status.major = ERR_FSAL_NO_ERROR ;
-   status.minor = 0 ;
-
-   if( pcontext->pool_files == NULL ) 
-    {
-     STUFF_PREALLOC_CONSTRUCT( pcontext->pool_files,
-  		               mfsl_param.nb_pre_create_files,
-		               mfsl_precreated_object_t,
-		               next_alloc,
-			       constructor_preacreated_entries ) ;
-     pcontext->avail_pool_files = mfsl_param.nb_pre_create_files ;
-     
-     status =  mfsl_async_init_precreated_files( pfsal_context, pcontext->pool_files ) ;
-     if( FSAL_IS_ERROR( status ) ) 
-       return status ;
-    }
-
-   return status;
-} /* MFSL_ASYNC_RefreshSyncletContextFiles */
 
 fsal_status_t MFSL_ASYNC_RefreshSyncletContext( mfsl_synclet_context_t  * pcontext,
                                                 fsal_op_context_t       * pfsal_context  ) 
@@ -530,22 +445,6 @@ fsal_status_t MFSL_ASYNC_RefreshSyncletContext( mfsl_synclet_context_t  * pconte
    status.major = ERR_FSAL_NO_ERROR ;
    status.minor = 0 ;
 
-   P ( pcontext->lock )  ;
-   if( pcontext->pool_dirs == NULL )
-    {
-      status = MFSL_ASYNC_RefreshSyncletContextDirs( pcontext, pfsal_context ) ;
-      if( FSAL_IS_ERROR( status ) ) 
-         return status ;
-    }
-
-   if( pcontext->pool_files == NULL ) 
-    {
-      status = MFSL_ASYNC_RefreshSyncletContextFiles( pcontext, pfsal_context ) ;
-      if( FSAL_IS_ERROR( status ) ) 
-         return status ;
-    }
-   V( pcontext->lock ) ;
-  
   return status ;
 } /* MFSL_ASYNC_RefreshSyncletContext */
 
@@ -874,7 +773,7 @@ fsal_status_t  MFSL_terminate( void )
    /** @todo A raw approach, something cleaner is to be done */
    DisplayLog( "MFSL_ASYNC_Terminate: sleeping for %u seconds", mfsl_param.adt_sleeptime + 2 ) ;
 
-   sleep( mfsl_param.adt_sleeptime  + 2 ) ;
+   // sleep( mfsl_param.adt_sleeptime  + 2 ) ;
 
    return status ;
 
