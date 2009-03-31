@@ -1,4 +1,4 @@
-all clean: refman.dvi
+all: clean refman.dvi
 
 ps: refman.ps
 

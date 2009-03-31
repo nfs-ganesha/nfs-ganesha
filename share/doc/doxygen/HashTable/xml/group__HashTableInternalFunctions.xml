@@ -1,11 +1,11 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="group__HashTableInternalFunctions" kind="group">
     <compoundname>HashTableInternalFunctions</compoundname>
     <title>HashTableInternalFunctions</title>
     <innergroup refid="group__HashTableExportedFunctions">HashTableExportedFunctions</innergroup>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1gf42a323dd4a2c336ce843bddf643be43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long simple_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -37,14 +37,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>the hash value</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1ga1" kindref="member">double_hash_func</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" kindref="member">double_hash_func</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="279" bodystart="278" bodyend="297"/>
-        <referencedby refid="test__cmchash__bugdelete_8c_1a13" compoundref="test__cmchash__bugdelete_8c" startline="227" endline="456">main</referencedby>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="279" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="278" bodyend="297"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long double_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -60,7 +59,7 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
-<para>double_hash_func: This function is used for double hashing, based on another hash function.</para><para>This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash  8 ) ) )  hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See &apos;Algorithm in C&apos;, Robert Sedjewick for more detail on this).</para><para><parameterlist kind="param"><parameteritem>
+<para>double_hash_func: This function is used for double hashing, based on another hash function.</para><para>This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash % 8 ) ) ) % hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See &apos;Algorithm in C&apos;, Robert Sedjewick for more detail on this).</para><para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
 <parametername>hparam</parametername>
 </parameternamelist>
@@ -76,13 +75,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>the hash value</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1ga1" kindref="member">double_hash_func</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" kindref="member">double_hash_func</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="316" bodystart="315" bodyend="330"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="316" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="315" bodyend="330"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1g1aca4ae1fbd881eb69310b3a18375321" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned int</type>
         <definition>unsigned int rbt_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -117,12 +116,11 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="346" bodystart="345" bodyend="351"/>
-        <referencedby refid="test__cmchash__bugdelete_8c_1a13" compoundref="test__cmchash__bugdelete_8c" startline="227" endline="456">main</referencedby>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="346" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="345" bodyend="350"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga3" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1gd335c3180914cbf36670bf1d7e08268c" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>hash_data_t *</type>
-        <definition>hash_data_t* PreAllocPdata</definition>
+        <definition>static hash_data_t* PreAllocPdata</definition>
         <argsstring>(int nb_alloc)</argsstring>
         <name>PreAllocPdata</name>
         <param>
@@ -141,15 +139,15 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>A pointer to the list of allocated pdata of NULL if allocation failed</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1ga0" kindref="member">HashTable_Init</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="368" bodystart="367" bodyend="388"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="367" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="366" bodyend="387"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga4" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>rbt_node *</type>
-        <definition>struct rbt_node* PreAllocNode</definition>
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1g01edca8af3a3cc28966940ddaa0d26a4" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>struct rbt_node *</type>
+        <definition>static struct rbt_node* PreAllocNode</definition>
         <argsstring>(int nb_alloc)</argsstring>
         <name>PreAllocNode</name>
         <param>
@@ -168,15 +166,15 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>A pointer to the list of allocated nodes of NULL if allocation failed</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1ga0" kindref="member">HashTable_Init</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="403" bodystart="402" bodyend="429"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="402" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="401" bodyend="426"/>
       </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga5" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1g5e2dec2ba7a8fbee0b32de46ceb427ac" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
-        <definition>int Key_Locate</definition>
+        <definition>static int Key_Locate</definition>
         <argsstring>(hash_table_t *ht, hash_buffer_t *buffkey, unsigned int hashval, int rbt_value, struct rbt_node **ppnode)</argsstring>
         <name>Key_Locate</name>
         <param>
@@ -243,7 +241,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/HashTable.c" line="448" bodystart="447" bodyend="489"/>
+        <location file="/export/GANESHA/src/HashTable/HashTable.c" line="445" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="444" bodyend="486"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

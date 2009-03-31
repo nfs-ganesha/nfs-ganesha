@@ -1,8 +1,10 @@
-.TH "cache_inode_readdir.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_readdir.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_readdir.c \- Reads the content of a directory. 
+cache_inode_readdir.c \- Reads the content of a directory.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -59,29 +61,29 @@ Reads the content of a directory.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/24 11:43:05 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.50 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_readdir.c\fP : Reads the content of a directory. Contains also the needed function for directory browsing.
+\fBcache_inode_readdir.c\fP : Reads the content of a directory. Contains also the needed function for directory browsing. 
 .PP
 Definition in file \fBcache_inode_readdir.c\fP.
 .SH "Function Documentation"
@@ -120,16 +122,10 @@ NULL if failed, see *pstatus for error's meaning.
 .PP
 
 .PP
-Definition at line 343 of file cache_inode_readdir.c.
-.PP
-References cache_inode_new_entry().
-.PP
-Referenced by cache_inode_create(), cache_inode_link(), cache_inode_lookup_sw(), cache_inode_readdir_populate(), and cache_inode_rename().
+Definition at line 348 of file cache_inode_readdir.c.
 .SS "cache_inode_status_t cache_inode_invalidate_all_cached_dirent (cache_entry_t * pentry_dir, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
 .PP
-Definition at line 608 of file cache_inode_readdir.c.
-.PP
-Referenced by cache_inode_readdir_populate().
+Definition at line 623 of file cache_inode_readdir.c.
 .SS "cache_entry_t* cache_inode_operate_cached_dirent (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_name_t * newname, cache_inode_dirent_op_t dirent_op, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_operate_cached_dirent: locates a dirent in the cached dirent, and perform an operation on it.
@@ -154,11 +150,7 @@ the found entry if its exists and NULL if it is not in the dirent arrays. REMOVE
 .PP
 
 .PP
-Definition at line 123 of file cache_inode_readdir.c.
-.PP
-References cache_inode_error_convert().
-.PP
-Referenced by cache_inode_remove_cached_dirent(), and cache_inode_rename_cached_dirent().
+Definition at line 127 of file cache_inode_readdir.c.
 .SS "cache_inode_status_t cache_inode_readdir (cache_entry_t * dir_pentry, unsigned int cookie, unsigned int nbwanted, unsigned int * pnbfound, unsigned int * pend_cookie, cache_inode_endofdir_t * peod_met, cache_inode_dir_entry_t * dirent_array, unsigned int * cookie_array, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_readdir: Reads partially a directory.
@@ -201,11 +193,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 976 of file cache_inode_readdir.c.
-.PP
-References cache_inode_access_no_mutex(), cache_inode_readdir_populate(), cache_inode_renew_entry(), and cache_inode_valid().
-.PP
-Referenced by main().
+Definition at line 1022 of file cache_inode_readdir.c.
 .SS "cache_inode_status_t cache_inode_readdir_populate (cache_entry_t * pentry_dir, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_readdir_populate: fully reads a directory in FSAL and caches the related entries.
@@ -227,11 +215,7 @@ fully reads a directory in FSAL and caches the related entries. No MT safety man
 .PP
 
 .PP
-Definition at line 752 of file cache_inode_readdir.c.
-.PP
-References cache_inode_add_cached_dirent(), cache_inode_error_convert(), cache_inode_fsal_type_convert(), cache_inode_invalidate_all_cached_dirent(), cache_inode_kill_entry(), and cache_inode_new_entry().
-.PP
-Referenced by cache_inode_create(), and cache_inode_readdir().
+Definition at line 767 of file cache_inode_readdir.c.
 .SS "cache_inode_status_t cache_inode_remove_cached_dirent (cache_entry_t * pentry_parent, fsal_name_t * pname, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_remove_cached_dirent: Removes a directory entry to a cached directory.
@@ -258,11 +242,7 @@ the same as *pstatus
 .PP
 
 .PP
-Definition at line 669 of file cache_inode_readdir.c.
-.PP
-References cache_inode_operate_cached_dirent().
-.PP
-Referenced by cache_inode_remove_sw(), and cache_inode_rename().
+Definition at line 684 of file cache_inode_readdir.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

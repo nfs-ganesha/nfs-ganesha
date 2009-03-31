@@ -1,6 +1,7 @@
 \section{fsal\_\-attrs.c File Reference}
-\label{fsal__attrs_8c}\index{fsal_attrs.c@{fsal\_\-attrs.c}}
-Attributes functions. 
+\label{fsal__attrs_8c}\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}}
+Attributes functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -19,25 +20,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-setattrs} (fsal\_\-handle\_\-t $\ast$p\_\-fileh
 Attributes functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/09/09 15:22:49 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.19 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-attrs.c}.
 
 \subsection{Function Documentation}
-\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_getattrs@{FSAL\_\-getattrs}}
-\index{FSAL_getattrs@{FSAL\_\-getattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-getattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_a0}
+\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}!FSAL\_\-getattrs@{FSAL\_\-getattrs}}
+\index{FSAL\_\-getattrs@{FSAL\_\-getattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection[{FSAL\_\-getattrs}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-getattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_6442b3db127420aba2d823d6591ede1c}
 
 
 FSAL\_\-getattrs: Get attributes for the object specified by its filehandle.
@@ -55,11 +56,11 @@ FSAL\_\-getattrs: Get attributes for the object specified by its filehandle.
 
 Definition at line 43 of file fsal\_\-attrs.c.
 
-References fsal\_\-internal\_\-get\-Path\-From\-Handle().
+References fsal\_\-internal\_\-getPathFromHandle().
 
-Referenced by FSAL\_\-access(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), and FSAL\_\-truncate().\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_setattrs@{FSAL\_\-setattrs}}
-\index{FSAL_setattrs@{FSAL\_\-setattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-setattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-attrib\_\-set}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_a1}
+Referenced by FSAL\_\-access(), FSAL\_\-GetXAttrAttrs(), FSAL\_\-ListXAttrs(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), and FSAL\_\-truncate().\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}!FSAL\_\-setattrs@{FSAL\_\-setattrs}}
+\index{FSAL\_\-setattrs@{FSAL\_\-setattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection[{FSAL\_\-setattrs}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-setattrs (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-attrib\_\-set}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__attrs_8c_442cd79a29486ae0adaeefd8a545424a}
 
 
 FSAL\_\-setattrs: Set attributes for the object specified by its filehandle.
@@ -75,6 +76,6 @@ FSAL\_\-setattrs: Set attributes for the object specified by its filehandle.
 \end{Desc}
 
 
-Definition at line 107 of file fsal\_\-attrs.c.
+Definition at line 106 of file fsal\_\-attrs.c.
 
-References fsal2unix\_\-mode(), FSAL\_\-getattrs(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), posix2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal2unix\_\-mode(), FSAL\_\-getattrs(), fsal\_\-internal\_\-getPathFromHandle(), posix2fsal\_\-error(), and TakeTokenFSCall().

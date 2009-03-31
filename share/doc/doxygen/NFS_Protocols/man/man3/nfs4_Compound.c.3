@@ -1,8 +1,10 @@
-.TH "nfs4_Compound.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_Compound.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -69,7 +71,7 @@ nfs4_Compound.c \- Routines used for managing the NFS4 COMPOUND functions.
 
 .in +1c
 .ti -1c
-.RI "typedef \fBnfs4_op_desc__\fP \fBnfs4_op_desc_t\fP"
+.RI "typedef struct \fBnfs4_op_desc__\fP \fBnfs4_op_desc_t\fP"
 .br
 .in -1c
 .SS "Functions"
@@ -98,36 +100,35 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/16 16:25:44 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.24 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_Compound.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs4_Compound.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs4_Compound.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define COMPOUND4_ARRAY   parg->arg_compound4.argarray"
 .PP
-Referenced by nfs4_Compound().
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBnfs4_op_desc__\fP  \fBnfs4_op_desc_t\fP"
@@ -157,7 +158,7 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 548 of file nfs4_Compound.c.
+Definition at line 580 of file nfs4_Compound.c.
 .SS "int nfs4_Compound (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
 .PP
 nfs4_COMPOUND: The NFS PROC4 COMPOUND
@@ -185,20 +186,19 @@ Implements the NFS PROC4 COMPOUND. This routine processes the content of the nfs
 .RS 4
 nfs4_op_<*> functions 
 .PP
-\fBnfs4_GetPseudoFs\fP
-.RE
-.PP
-.PP
-\fBTodo\fP
-.RS 4
-BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here
+\fBnfs4_GetPseudoFs\fP 
 .RE
 .PP
 
 .PP
-Definition at line 202 of file nfs4_Compound.c.
+\fBTodo\fP
+.RS 4
+BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here 
+.RE
 .PP
-References COMPOUND4_ARRAY, nfs4_op_desc__::funct, nfs4_op_desc__::name, nfs4_GetPseudoFs(), optab4index, utf82str(), and nfs4_op_desc__::val.
+
+.PP
+Definition at line 206 of file nfs4_Compound.c.
 .SS "void nfs4_Compound_Free (nfs_res_t * pres)"
 .PP
 nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
@@ -222,9 +222,7 @@ nothing (void function).
 .PP
 
 .PP
-Definition at line 382 of file nfs4_Compound.c.
-.PP
-References nfs4_op_access_Free(), nfs4_op_close_Free(), nfs4_op_commit_Free(), nfs4_op_create_Free(), nfs4_op_delegpurge_Free(), nfs4_op_delegreturn_Free(), nfs4_op_getattr_Free(), nfs4_op_illegal_Free(), nfs4_op_link_Free(), nfs4_op_lock_Free(), nfs4_op_lockt_Free(), nfs4_op_locku_Free(), nfs4_op_lookup_Free(), nfs4_op_lookupp_Free(), nfs4_op_nverify_Free(), nfs4_op_open_confirm_Free(), nfs4_op_open_downgrade_Free(), nfs4_op_open_Free(), nfs4_op_openattr_Free(), nfs4_op_putfh_Free(), nfs4_op_read_Free(), nfs4_op_readdir_Free(), nfs4_op_release_lockowner_Free(), nfs4_op_remove_Free(), nfs4_op_rename_Free(), nfs4_op_renew_Free(), nfs4_op_secinfo_Free(), nfs4_op_setclientid_Free(), nfs4_op_verify_Free(), and nfs4_op_write_Free().
+Definition at line 390 of file nfs4_Compound.c.
 .SH "Variable Documentation"
 .PP 
 .SS "const int \fBoptab4index\fP[]"
@@ -236,9 +234,7 @@ References nfs4_op_access_Free(), nfs4_op_close_Free(), nfs4_op_commit_Free(), n
                             24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39 }
 .fi
 .PP
-Definition at line 133 of file nfs4_Compound.c.
-.PP
-Referenced by nfs4_Compound().
+Definition at line 137 of file nfs4_Compound.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

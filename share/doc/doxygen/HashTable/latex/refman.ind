@@ -8,7 +8,7 @@
   \item {compare\_\-string\_\-buffer}
     \subitem {test\_\-cmchash.c}, 16
     \subitem {test\_\-cmchash\_\-bugdelete.c}, 18
-    \subitem {test\_\-configurable\_\-hash.c}, 21
+    \subitem {test\_\-configurable\_\-hash.c}, 20
   \item {CRITERE}
     \subitem {test\_\-cmchash.c}, 15
     \subitem {test\_\-cmchash\_\-bugdelete.c}, 17
@@ -23,7 +23,7 @@
   \item {display\_\-buff}
     \subitem {test\_\-cmchash.c}, 16
     \subitem {test\_\-cmchash\_\-bugdelete.c}, 18
-    \subitem {test\_\-configurable\_\-hash.c}, 21
+    \subitem {test\_\-configurable\_\-hash.c}, 20
   \item {do\_\-del}
     \subitem {test\_\-configurable\_\-hash.c}, 21
   \item {do\_\-get}
@@ -35,37 +35,35 @@
   \item {do\_\-test}
     \subitem {test\_\-configurable\_\-hash.c}, 21
   \item {double\_\-hash\_\-func}
-    \subitem {Hash\-Table\-Internal\-Functions}, 5
+    \subitem {HashTableInternalFunctions}, 5
 
   \indexspace
 
   \item {FALSE}
-    \subitem {Hash\-Table.c}, 14
+    \subitem {HashTable.c}, 14
 
   \indexspace
 
   \item {HashTable.c}, 11
-  \item {Hash\-Table.c}
     \subitem {FALSE}, 14
     \subitem {P}, 14
     \subitem {TRUE}, 14
     \subitem {V}, 14
   \item {HashTable\_\-Del}
-    \subitem {Hash\-Table\-Exported\-Functions}, 7
+    \subitem {HashTableExportedFunctions}, 7
   \item {HashTable\_\-Get}
-    \subitem {Hash\-Table\-Exported\-Functions}, 7
+    \subitem {HashTableExportedFunctions}, 7
   \item {HashTable\_\-GetSize}
-    \subitem {Hash\-Table\-Exported\-Functions}, 8
+    \subitem {HashTableExportedFunctions}, 8
   \item {HashTable\_\-GetStats}
-    \subitem {Hash\-Table\-Exported\-Functions}, 8
+    \subitem {HashTableExportedFunctions}, 8
   \item {HashTable\_\-Init}
-    \subitem {Hash\-Table\-Exported\-Functions}, 9
+    \subitem {HashTableExportedFunctions}, 9
   \item {HashTable\_\-Print}
-    \subitem {Hash\-Table\-Exported\-Functions}, 9
+    \subitem {HashTableExportedFunctions}, 9
   \item {HashTable\_\-Test\_\-And\_\-Set}
-    \subitem {Hash\-Table\-Exported\-Functions}, 9
+    \subitem {HashTableExportedFunctions}, 9
   \item {HashTableExportedFunctions}, 7
-  \item {Hash\-Table\-Exported\-Functions}
     \subitem {HashTable\_\-Del}, 7
     \subitem {HashTable\_\-Get}, 7
     \subitem {HashTable\_\-GetSize}, 8
@@ -74,7 +72,6 @@
     \subitem {HashTable\_\-Print}, 9
     \subitem {HashTable\_\-Test\_\-And\_\-Set}, 9
   \item {HashTableInternalFunctions}, 5
-  \item {Hash\-Table\-Internal\-Functions}
     \subitem {double\_\-hash\_\-func}, 5
     \subitem {rbt\_\-hash\_\-func}, 6
     \subitem {simple\_\-hash\_\-func}, 6
@@ -117,7 +114,7 @@
   \indexspace
 
   \item {P}
-    \subitem {Hash\-Table.c}, 14
+    \subitem {HashTable.c}, 14
   \item {PRIME}
     \subitem {test\_\-cmchash.c}, 16
     \subitem {test\_\-cmchash\_\-bugdelete.c}, 18
@@ -126,12 +123,12 @@
   \indexspace
 
   \item {rbt\_\-hash\_\-func}
-    \subitem {Hash\-Table\-Internal\-Functions}, 6
+    \subitem {HashTableInternalFunctions}, 6
 
   \indexspace
 
   \item {simple\_\-hash\_\-func}
-    \subitem {Hash\-Table\-Internal\-Functions}, 6
+    \subitem {HashTableInternalFunctions}, 6
   \item {STRSIZE}
     \subitem {test\_\-configurable\_\-hash.c}, 20
 
@@ -161,10 +158,10 @@
     \subitem {NB\_\-PREALLOC}, 18
     \subitem {PRIME}, 18
   \item {test\_\-configurable\_\-hash.c}, 19
-    \subitem {compare\_\-string\_\-buffer}, 21
+    \subitem {compare\_\-string\_\-buffer}, 20
     \subitem {CRITERE}, 19
     \subitem {CRITERE\_\-2}, 19
-    \subitem {display\_\-buff}, 21
+    \subitem {display\_\-buff}, 20
     \subitem {do\_\-del}, 21
     \subitem {do\_\-get}, 21
     \subitem {do\_\-new}, 21
@@ -181,11 +178,11 @@
     \subitem {PRIME}, 20
     \subitem {STRSIZE}, 20
   \item {TRUE}
-    \subitem {Hash\-Table.c}, 14
+    \subitem {HashTable.c}, 14
 
   \indexspace
 
   \item {V}
-    \subitem {Hash\-Table.c}, 14
+    \subitem {HashTable.c}, 14
 
 \end{theindex}

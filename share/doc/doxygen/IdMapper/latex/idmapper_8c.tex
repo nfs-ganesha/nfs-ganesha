@@ -1,9 +1,11 @@
 \section{idmapper.c File Reference}
 \label{idmapper_8c}\index{idmapper.c@{idmapper.c}}
-Id mapping functions. 
+Id mapping functions.  
+
 
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/svc.h$>$}\par
+{\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
 {\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
 {\tt \#include \char`\"{}nfs\_\-tools.h\char`\"{}}\par
 {\tt \#include $<$unistd.h$>$}\par
@@ -42,25 +44,25 @@ int {\bf utf82gid} (utf8string $\ast$utf8str, gid\_\-t $\ast$Gid)
 Id mapping functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 11:43:05 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.2 \end{Desc}
-\end{Desc}
-{\bf idmapper.c}{\rm (p.\,\pageref{idmapper_8c})} : Id mapping functions.
+\doxyref{idmapper.c}{p.}{idmapper_8c} : Id mapping functions. 
 
 Definition in file {\bf idmapper.c}.
 
 \subsection{Function Documentation}
 \index{idmapper.c@{idmapper.c}!gid2name@{gid2name}}
 \index{gid2name@{gid2name}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gid2name (char $\ast$ {\em name}, gid\_\-t {\em gid})}\label{idmapper_8c_a2}
+\subsubsection[{gid2name}]{\setlength{\rightskip}{0pt plus 5cm}int gid2name (char $\ast$ {\em name}, \/  gid\_\-t {\em gid})}\label{idmapper_8c_456e5412f4350f930f0e7f3ff08d8175}
 
 
 gid2name: convert a gid to a name.
@@ -74,11 +76,9 @@ convert a uid to a name.
 \end{Desc}
 return 1 if successful, 0 otherwise 
 
-Definition at line 185 of file idmapper.c.
-
-Referenced by gid2str().\index{idmapper.c@{idmapper.c}!gid2str@{gid2str}}
+Definition at line 213 of file idmapper.c.\index{idmapper.c@{idmapper.c}!gid2str@{gid2str}}
 \index{gid2str@{gid2str}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gid2str (gid\_\-t {\em gid}, char $\ast$ {\em str})}\label{idmapper_8c_a5}
+\subsubsection[{gid2str}]{\setlength{\rightskip}{0pt plus 5cm}int gid2str (gid\_\-t {\em gid}, \/  char $\ast$ {\em str})}\label{idmapper_8c_fae3ebfef77ae90051a3eeaa6fec9d1b}
 
 
 gid2ustr: convert a gid to a string.
@@ -94,13 +94,9 @@ Convert a gidonvert a gid to a string. to a string.
 \item[Returns:]the length of the utf8 buffer if succesfull, -1 if failed \end{Desc}
 
 
-Definition at line 272 of file idmapper.c.
-
-References gid2name().
-
-Referenced by gid2utf8().\index{idmapper.c@{idmapper.c}!gid2utf8@{gid2utf8}}
+Definition at line 312 of file idmapper.c.\index{idmapper.c@{idmapper.c}!gid2utf8@{gid2utf8}}
 \index{gid2utf8@{gid2utf8}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int gid2utf8 (gid\_\-t {\em gid}, utf8string $\ast$ {\em utf8str})}\label{idmapper_8c_a7}
+\subsubsection[{gid2utf8}]{\setlength{\rightskip}{0pt plus 5cm}int gid2utf8 (gid\_\-t {\em gid}, \/  utf8string $\ast$ {\em utf8str})}\label{idmapper_8c_64205dca7faae60fdcd79f168eb7e5ed}
 
 
 gid2utf8: converts a gid to a utf8 string descriptor.
@@ -116,11 +112,9 @@ Converts a gid to a utf8 string descriptor.
 \item[Returns:]the length of the utf8 buffer if succesfull, -1 if failed \end{Desc}
 
 
-Definition at line 321 of file idmapper.c.
-
-References gid2str().\index{idmapper.c@{idmapper.c}!name2gid@{name2gid}}
+Definition at line 379 of file idmapper.c.\index{idmapper.c@{idmapper.c}!name2gid@{name2gid}}
 \index{name2gid@{name2gid}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int name2gid (char $\ast$ {\em name}, gid\_\-t $\ast$ {\em pgid})}\label{idmapper_8c_a3}
+\subsubsection[{name2gid}]{\setlength{\rightskip}{0pt plus 5cm}int name2gid (char $\ast$ {\em name}, \/  gid\_\-t $\ast$ {\em pgid})}\label{idmapper_8c_c508c8f11443525ce257356a9042ac2a}
 
 
 name2gid: convert a name to a gid
@@ -134,13 +128,9 @@ convert a name to a gid
 \end{Desc}
 return 1 if successful, 0 otherwise 
 
-Definition at line 210 of file idmapper.c.
-
-References gidmap\_\-add(), and gidmap\_\-get().
-
-Referenced by utf82gid().\index{idmapper.c@{idmapper.c}!name2uid@{name2uid}}
+Definition at line 243 of file idmapper.c.\index{idmapper.c@{idmapper.c}!name2uid@{name2uid}}
 \index{name2uid@{name2uid}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int name2uid (char $\ast$ {\em name}, uid\_\-t $\ast$ {\em puid})}\label{idmapper_8c_a1}
+\subsubsection[{name2uid}]{\setlength{\rightskip}{0pt plus 5cm}int name2uid (char $\ast$ {\em name}, \/  uid\_\-t $\ast$ {\em puid})}\label{idmapper_8c_14133e9de01b4edd585a73dd55b9fcdc}
 
 
 name2uid: convert a name to a uid
@@ -154,13 +144,9 @@ convert a name to a uid
 \end{Desc}
 return 1 if successful, 0 otherwise 
 
-Definition at line 143 of file idmapper.c.
-
-References uidmap\_\-add(), and uidmap\_\-get().
-
-Referenced by utf82uid().\index{idmapper.c@{idmapper.c}!uid2name@{uid2name}}
+Definition at line 153 of file idmapper.c.\index{idmapper.c@{idmapper.c}!uid2name@{uid2name}}
 \index{uid2name@{uid2name}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uid2name (char $\ast$ {\em name}, uid\_\-t {\em uid})}\label{idmapper_8c_a0}
+\subsubsection[{uid2name}]{\setlength{\rightskip}{0pt plus 5cm}int uid2name (char $\ast$ {\em name}, \/  uid\_\-t {\em uid})}\label{idmapper_8c_4d9409b2a9e5ab0c16b121c4b9e7b63d}
 
 
 uid2name: convert a uid to a name.
@@ -174,11 +160,9 @@ convert a uid to a name.
 \end{Desc}
 return 1 if successful, 0 otherwise 
 
-Definition at line 120 of file idmapper.c.
-
-Referenced by uid2str().\index{idmapper.c@{idmapper.c}!uid2str@{uid2str}}
+Definition at line 124 of file idmapper.c.\index{idmapper.c@{idmapper.c}!uid2str@{uid2str}}
 \index{uid2str@{uid2str}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uid2str (uid\_\-t {\em uid}, char $\ast$ {\em str})}\label{idmapper_8c_a4}
+\subsubsection[{uid2str}]{\setlength{\rightskip}{0pt plus 5cm}int uid2str (uid\_\-t {\em uid}, \/  char $\ast$ {\em str})}\label{idmapper_8c_1996dd5ed838b035239b8d2be9effe38}
 
 
 uid2ustr: convert a uid to a string.
@@ -194,13 +178,9 @@ Convert a gidonvert a uid to a string. to a string.
 \item[Returns:]the length of the utf8 buffer if succesfull, -1 if failed \end{Desc}
 
 
-Definition at line 250 of file idmapper.c.
-
-References uid2name().
-
-Referenced by uid2utf8().\index{idmapper.c@{idmapper.c}!uid2utf8@{uid2utf8}}
+Definition at line 290 of file idmapper.c.\index{idmapper.c@{idmapper.c}!uid2utf8@{uid2utf8}}
 \index{uid2utf8@{uid2utf8}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int uid2utf8 (uid\_\-t {\em uid}, utf8string $\ast$ {\em utf8str})}\label{idmapper_8c_a6}
+\subsubsection[{uid2utf8}]{\setlength{\rightskip}{0pt plus 5cm}int uid2utf8 (uid\_\-t {\em uid}, \/  utf8string $\ast$ {\em utf8str})}\label{idmapper_8c_86b8d548095cb2b07ab6ee49d0f56b94}
 
 
 uid2utf8: converts a uid to a utf8 string descriptor.
@@ -216,11 +196,9 @@ Converts a uid to a utf8 string descriptor.
 \item[Returns:]the length of the utf8 buffer if succesfull, -1 if failed \end{Desc}
 
 
-Definition at line 296 of file idmapper.c.
-
-References uid2str().\index{idmapper.c@{idmapper.c}!utf82gid@{utf82gid}}
+Definition at line 336 of file idmapper.c.\index{idmapper.c@{idmapper.c}!utf82gid@{utf82gid}}
 \index{utf82gid@{utf82gid}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int utf82gid (utf8string $\ast$ {\em utf8str}, gid\_\-t $\ast$ {\em Gid})}\label{idmapper_8c_a9}
+\subsubsection[{utf82gid}]{\setlength{\rightskip}{0pt plus 5cm}int utf82gid (utf8string $\ast$ {\em utf8str}, \/  gid\_\-t $\ast$ {\em Gid})}\label{idmapper_8c_8ca153cdef0f9a18cd8b7c83e525867a}
 
 
 utf82gid: converts a utf8 string descriptorto a gid .
@@ -236,11 +214,9 @@ Converts a utf8 string descriptor to a gid .
 \item[Returns:]0 in all cases \end{Desc}
 
 
-Definition at line 380 of file idmapper.c.
-
-References name2gid().\index{idmapper.c@{idmapper.c}!utf82uid@{utf82uid}}
+Definition at line 455 of file idmapper.c.\index{idmapper.c@{idmapper.c}!utf82uid@{utf82uid}}
 \index{utf82uid@{utf82uid}!idmapper.c@{idmapper.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int utf82uid (utf8string $\ast$ {\em utf8str}, uid\_\-t $\ast$ {\em Uid})}\label{idmapper_8c_a8}
+\subsubsection[{utf82uid}]{\setlength{\rightskip}{0pt plus 5cm}int utf82uid (utf8string $\ast$ {\em utf8str}, \/  uid\_\-t $\ast$ {\em Uid})}\label{idmapper_8c_07a4b947f034d31f244415e9183ab523}
 
 
 utf82gid: converts a utf8 string descriptor to a uid .
@@ -256,6 +232,4 @@ Converts a utf8 string descriptor to a uid.
 \item[Returns:]0 if successful, 0 otherwise. \end{Desc}
 
 
-Definition at line 345 of file idmapper.c.
-
-References name2uid().
+Definition at line 421 of file idmapper.c.

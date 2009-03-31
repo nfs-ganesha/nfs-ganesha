@@ -1,10 +1,16 @@
-.TH "todo" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "todo" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-todo \- Todo List
+todo \- Todo List 
  
-.IP "\fBMember \fBcache_inode_rdwr\fP(cache_entry_t *pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, fsal_size_t *pio_size, fsal_attrib_list_t *pfsal_attr, caddr_t buffer, fsal_boolean_t *p_fsal_eof, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, cache_inode_status_t *pstatus) \fP" 1c
-: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte. 
+.IP "\fBMember \fBcache_inode_rdwr\fP \fP" 1c
+: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.
+.PP
+.PP
+.PP
+ 
+.IP "\fBMember \fBcache_inode_truncate_sw\fP \fP" 1c
+&pentry->object.file.open_fd.fd, 
 .PP
 

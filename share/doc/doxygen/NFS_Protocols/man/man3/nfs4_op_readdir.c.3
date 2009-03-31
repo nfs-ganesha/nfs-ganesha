@@ -1,4 +1,4 @@
-.TH "nfs4_op_readdir.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_readdir.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -84,14 +84,10 @@ nfs4_op_readdir.c \-
 .PP 
 .SS "#define arg_READDIR4   op->nfs_argop4_u.opreaddir"
 .PP
-Definition at line 109 of file nfs4_op_readdir.c.
-.PP
-Referenced by nfs4_op_readdir(), and nfs4_op_readdir_pseudo().
+Definition at line 112 of file nfs4_op_readdir.c.
 .SS "#define res_READDIR4   resp->nfs_resop4_u.opreaddir"
 .PP
-Definition at line 110 of file nfs4_op_readdir.c.
-.PP
-Referenced by nfs4_op_readdir(), and nfs4_op_readdir_pseudo().
+Definition at line 113 of file nfs4_op_readdir.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_readdir (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
@@ -116,11 +112,7 @@ NFS4_OK if ok, any other value show an error.
 .PP
 
 .PP
-Definition at line 126 of file nfs4_op_readdir.c.
-.PP
-References arg_READDIR4, nfs4_AllocateFH(), nfs4_Errno(), nfs4_Fattr_Check_Access_Bitmap(), nfs4_FSALattr_To_Fattr(), nfs4_op_readdir_pseudo(), res_READDIR4, and str2utf8().
-.PP
-Referenced by nfs4_op_readdir_pseudo().
+Definition at line 129 of file nfs4_op_readdir.c.
 .SS "void nfs4_op_readdir_Free (READDIR4res * resp)"
 .PP
 nfs4_op_readdir_Free: frees what was allocared to handle nfs4_op_readdir.
@@ -139,9 +131,14 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 463 of file nfs4_op_readdir.c.
+\fBTodo\fP
+.RS 4
+Fixeme , bad Free here Mem_Free( (char *)entries->attrs.attr_vals.attrlist4_val ) ; 
+.RE
 .PP
-Referenced by nfs4_Compound_Free().
+
+.PP
+Definition at line 460 of file nfs4_op_readdir.c.
 .SH "Variable Documentation"
 .PP 
 .SS "time_t \fBServerBootTime\fP"

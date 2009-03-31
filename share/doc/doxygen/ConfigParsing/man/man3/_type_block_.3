@@ -1,4 +1,4 @@
-.TH "_type_block_" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "_type_block_" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,32 +12,23 @@ _type_block_ \-
 
 .in +1c
 .ti -1c
-.RI "char \fBname\fP [MAXSTRLEN]"
+.RI "char \fBblock_name\fP [MAXSTRLEN]"
 .br
 .ti -1c
-.RI "\fBlist_affect\fP \fBlist_def\fP"
-.br
-.ti -1c
-.RI "\fB_type_block_\fP * \fBnext\fP"
+.RI "struct \fB_generic_item_\fP * \fBblock_content\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 96 of file analyse.h.
 .SH "Member Data Documentation"
 .PP 
-.SS "\fBlist_affect\fP \fB_type_block_::list_def\fP"
+.SS "struct \fB_generic_item_\fP* \fB_type_block_::block_content\fP\fC [read]\fP"
 .PP
-Definition at line 46 of file analyse.h.
+Definition at line 99 of file analyse.h.
+.SS "char \fB_type_block_::block_name\fP[MAXSTRLEN]"
 .PP
-Referenced by config_createblock(), config_GetKeyValue(), config_GetKeyValueByName(), config_GetNbKeys(), and config_print_list().
-.SS "char \fB_type_block_::name\fP[MAXSTRLEN]"
-.PP
-Definition at line 45 of file analyse.h.
-.PP
-Referenced by config_GetBlockIndexByName(), config_GetBlockName(), and config_print_list().
-.SS "struct \fB_type_block_\fP* \fB_type_block_::next\fP"
-.PP
-Definition at line 47 of file analyse.h.
-.PP
-Referenced by config_addblock(), config_free_list(), config_GetBlockIndexByName(), config_GetNbBlocks(), and config_print_list().
+Definition at line 98 of file analyse.h.
 
 .SH "Author"
 .PP 

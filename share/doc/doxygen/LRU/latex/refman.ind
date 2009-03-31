@@ -22,22 +22,21 @@
   \item {LENBUF}
     \subitem {test\_\-configurable\_\-lru.c}, 11
   \item {LRU\_\-apply\_\-function}
-    \subitem {LRUExported\-Functions}, 5
+    \subitem {LRUExportedFunctions}, 5
   \item {LRU\_\-gc\_\-invalid}
-    \subitem {LRUExported\-Functions}, 6
+    \subitem {LRUExportedFunctions}, 6
   \item {LRU\_\-Init}
-    \subitem {LRUExported\-Functions}, 6
+    \subitem {LRUExportedFunctions}, 6
   \item {LRU\_\-invalidate}
-    \subitem {LRUExported\-Functions}, 6
+    \subitem {LRUExportedFunctions}, 6
   \item {LRU\_\-invalidate\_\-by\_\-function}
-    \subitem {LRUExported\-Functions}, 7
+    \subitem {LRUExportedFunctions}, 7
   \item {LRU\_\-List.c}, 9
   \item {LRU\_\-new\_\-entry}
-    \subitem {LRUExported\-Functions}, 7
+    \subitem {LRUExportedFunctions}, 7
   \item {LRU\_\-Print}
-    \subitem {LRUExported\-Functions}, 8
+    \subitem {LRUExportedFunctions}, 8
   \item {LRUExportedFunctions}, 5
-  \item {LRUExported\-Functions}
     \subitem {LRU\_\-apply\_\-function}, 5
     \subitem {LRU\_\-gc\_\-invalid}, 6
     \subitem {LRU\_\-Init}, 6

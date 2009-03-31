@@ -1,9 +1,9 @@
 \section{cache\_\-content\_\-crash\_\-recover.c File Reference}
-\label{cache__content__crash__recover_8c}\index{cache_content_crash_recover.c@{cache\_\-content\_\-crash\_\-recover.c}}
+\label{cache__content__crash__recover_8c}\index{cache\_\-content\_\-crash\_\-recover.c@{cache\_\-content\_\-crash\_\-recover.c}}
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
@@ -23,9 +23,9 @@ cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-crash\_\-recover} (unsi
 
 
 \subsection{Function Documentation}
-\index{cache_content_crash_recover.c@{cache\_\-content\_\-crash\_\-recover.c}!cache_content_crash_recover@{cache\_\-content\_\-crash\_\-recover}}
-\index{cache_content_crash_recover@{cache\_\-content\_\-crash\_\-recover}!cache_content_crash_recover.c@{cache\_\-content\_\-crash\_\-recover.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-crash\_\-recover (unsigned short {\em exportid}, unsigned int {\em index}, unsigned int {\em mod}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient\_\-data}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient\_\-inode}, hash\_\-table\_\-t $\ast$ {\em ht}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__crash__recover_8c_a0}
+\index{cache\_\-content\_\-crash\_\-recover.c@{cache\_\-content\_\-crash\_\-recover.c}!cache\_\-content\_\-crash\_\-recover@{cache\_\-content\_\-crash\_\-recover}}
+\index{cache\_\-content\_\-crash\_\-recover@{cache\_\-content\_\-crash\_\-recover}!cache_content_crash_recover.c@{cache\_\-content\_\-crash\_\-recover.c}}
+\subsubsection[{cache\_\-content\_\-crash\_\-recover}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-crash\_\-recover (unsigned short {\em exportid}, \/  unsigned int {\em index}, \/  unsigned int {\em mod}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient\_\-data}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient\_\-inode}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__crash__recover_8c_263b98e54e97309e6e4681f23b161e18}
 
 
 cache\_\-content\_\-crash\_\-recover: recovers the data cache and the associated inode after a crash.
@@ -39,6 +39,4 @@ cache\_\-content\_\-crash\_\-recover: recovers the data cache and the associated
 \item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful. \end{Desc}
 
 
-Definition at line 118 of file cache\_\-content\_\-crash\_\-recover.c.
-
-References cache\_\-content\_\-get\_\-export\_\-id(), cache\_\-content\_\-get\_\-inum(), cache\_\-content\_\-local\_\-cache\_\-closedir(), cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter(), cache\_\-content\_\-local\_\-cache\_\-opendir(), cache\_\-content\_\-new\_\-entry(), cache\_\-content\_\-recover\_\-size(), and cache\_\-content\_\-valid().
+Definition at line 122 of file cache\_\-content\_\-crash\_\-recover.c.

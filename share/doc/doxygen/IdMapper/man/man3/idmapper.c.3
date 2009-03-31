@@ -1,14 +1,18 @@
-.TH "idmapper.c" 3 "9 Apr 2008" "Version 0.1" "Id Mapper" \" -*- nroff -*-
+.TH "idmapper.c" 3 "31 Mar 2009" "Version 0.1" "Id Mapper" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-idmapper.c \- Id mapping functions. 
+idmapper.c \- Id mapping functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
 \fC#include <rpc/rpc.h>\fP
 .br
 \fC#include <rpc/svc.h>\fP
+.br
+\fC#include 'stuff_alloc.h'\fP
 .br
 \fC#include 'nfs_core.h'\fP
 .br
@@ -69,29 +73,29 @@ Id mapping functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/24 11:43:05 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.2 
 .RE
 .PP
-.RE
-.PP
-\fBidmapper.c\fP : Id mapping functions.
+\fBidmapper.c\fP : Id mapping functions. 
 .PP
 Definition in file \fBidmapper.c\fP.
 .SH "Function Documentation"
@@ -111,9 +115,7 @@ convert a uid to a name.
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 185 of file idmapper.c.
-.PP
-Referenced by gid2str().
+Definition at line 213 of file idmapper.c.
 .SS "int gid2str (gid_t gid, char * str)"
 .PP
 gid2ustr: convert a gid to a string.
@@ -134,11 +136,7 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 272 of file idmapper.c.
-.PP
-References gid2name().
-.PP
-Referenced by gid2utf8().
+Definition at line 312 of file idmapper.c.
 .SS "int gid2utf8 (gid_t gid, utf8string * utf8str)"
 .PP
 gid2utf8: converts a gid to a utf8 string descriptor.
@@ -159,9 +157,7 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 321 of file idmapper.c.
-.PP
-References gid2str().
+Definition at line 379 of file idmapper.c.
 .SS "int name2gid (char * name, gid_t * pgid)"
 .PP
 name2gid: convert a name to a gid
@@ -177,11 +173,7 @@ convert a name to a gid
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 210 of file idmapper.c.
-.PP
-References gidmap_add(), and gidmap_get().
-.PP
-Referenced by utf82gid().
+Definition at line 243 of file idmapper.c.
 .SS "int name2uid (char * name, uid_t * puid)"
 .PP
 name2uid: convert a name to a uid
@@ -197,11 +189,7 @@ convert a name to a uid
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 143 of file idmapper.c.
-.PP
-References uidmap_add(), and uidmap_get().
-.PP
-Referenced by utf82uid().
+Definition at line 153 of file idmapper.c.
 .SS "int uid2name (char * name, uid_t uid)"
 .PP
 uid2name: convert a uid to a name.
@@ -217,9 +205,7 @@ convert a uid to a name.
 .PP
 return 1 if successful, 0 otherwise 
 .PP
-Definition at line 120 of file idmapper.c.
-.PP
-Referenced by uid2str().
+Definition at line 124 of file idmapper.c.
 .SS "int uid2str (uid_t uid, char * str)"
 .PP
 uid2ustr: convert a uid to a string.
@@ -240,11 +226,7 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 250 of file idmapper.c.
-.PP
-References uid2name().
-.PP
-Referenced by uid2utf8().
+Definition at line 290 of file idmapper.c.
 .SS "int uid2utf8 (uid_t uid, utf8string * utf8str)"
 .PP
 uid2utf8: converts a uid to a utf8 string descriptor.
@@ -265,9 +247,7 @@ the length of the utf8 buffer if succesfull, -1 if failed
 .PP
 
 .PP
-Definition at line 296 of file idmapper.c.
-.PP
-References uid2str().
+Definition at line 336 of file idmapper.c.
 .SS "int utf82gid (utf8string * utf8str, gid_t * Gid)"
 .PP
 utf82gid: converts a utf8 string descriptorto a gid .
@@ -288,9 +268,7 @@ Converts a utf8 string descriptor to a gid .
 .PP
 
 .PP
-Definition at line 380 of file idmapper.c.
-.PP
-References name2gid().
+Definition at line 455 of file idmapper.c.
 .SS "int utf82uid (utf8string * utf8str, uid_t * Uid)"
 .PP
 utf82gid: converts a utf8 string descriptor to a uid .
@@ -311,9 +289,7 @@ Converts a utf8 string descriptor to a uid.
 .PP
 
 .PP
-Definition at line 345 of file idmapper.c.
-.PP
-References name2uid().
+Definition at line 421 of file idmapper.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Id Mapper from the source code.

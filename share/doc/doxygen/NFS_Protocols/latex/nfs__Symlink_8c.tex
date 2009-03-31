@@ -1,14 +1,15 @@
 \section{nfs\_\-Symlink.c File Reference}
-\label{nfs__Symlink_8c}\index{nfs_Symlink.c@{nfs\_\-Symlink.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs__Symlink_8c}\index{nfs\_\-Symlink.c@{nfs\_\-Symlink.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -40,25 +41,25 @@ void {\bf nfs\_\-Symlink\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:54 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.17 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-Symlink.c}{\rm (p.\,\pageref{nfs__Symlink_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs\_\-Symlink.c}{p.}{nfs__Symlink_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs\_\-Symlink.c}.
 
 \subsection{Function Documentation}
-\index{nfs_Symlink.c@{nfs\_\-Symlink.c}!nfs_Symlink@{nfs\_\-Symlink}}
-\index{nfs_Symlink@{nfs\_\-Symlink}!nfs_Symlink.c@{nfs\_\-Symlink.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Symlink (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Symlink_8c_a0}
+\index{nfs\_\-Symlink.c@{nfs\_\-Symlink.c}!nfs\_\-Symlink@{nfs\_\-Symlink}}
+\index{nfs\_\-Symlink@{nfs\_\-Symlink}!nfs_Symlink.c@{nfs\_\-Symlink.c}}
+\subsubsection[{nfs\_\-Symlink}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Symlink (nfs\_\-arg\_\-t $\ast$ {\em parg}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  struct svc\_\-req $\ast$ {\em preq}, \/  nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Symlink_8c_b65e847e6497dd46ce39acac77a3a771}
 
 
 nfs\_\-Create: The NFS PROC2 and PROC3 SYMLINK
@@ -76,11 +77,9 @@ Implements the NFS PROC SYMLINK function (for V2 and V3).
  NFS\_\-REQ\_\-FAILED if failed and not retryable. \end{Desc}
 
 
-Definition at line 148 of file nfs\_\-Symlink.c.
-
-References nfs\_\-Fhandle\-To\-Cache(), nfs\_\-Retryable\-Error(), nfs\_\-Set\-Failed\-Status(), nfs\_\-Set\-Post\-Op\-Attr(), and nfs\_\-Set\-Wcc\-Data().\index{nfs_Symlink.c@{nfs\_\-Symlink.c}!nfs_Symlink_Free@{nfs\_\-Symlink\_\-Free}}
-\index{nfs_Symlink_Free@{nfs\_\-Symlink\_\-Free}!nfs_Symlink.c@{nfs\_\-Symlink.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Symlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Symlink_8c_a1}
+Definition at line 151 of file nfs\_\-Symlink.c.\index{nfs\_\-Symlink.c@{nfs\_\-Symlink.c}!nfs\_\-Symlink\_\-Free@{nfs\_\-Symlink\_\-Free}}
+\index{nfs\_\-Symlink\_\-Free@{nfs\_\-Symlink\_\-Free}!nfs_Symlink.c@{nfs\_\-Symlink.c}}
+\subsubsection[{nfs\_\-Symlink\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Symlink\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Symlink_8c_c429ad894745e072f1d528e5e043f7d9}
 
 
 nfs\_\-Symlink\_\-Free: Frees the result structure allocated for nfs\_\-Symlink.
@@ -94,4 +93,4 @@ Frees the result structure allocated for nfs\_\-Symlink.
 \end{Desc}
 
 
-Definition at line 368 of file nfs\_\-Symlink.c.
+Definition at line 426 of file nfs\_\-Symlink.c.

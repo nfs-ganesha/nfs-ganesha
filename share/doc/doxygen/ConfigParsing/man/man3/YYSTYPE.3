@@ -1,4 +1,4 @@
-.TH "YYSTYPE" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "YYSTYPE" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,67 +15,26 @@ YYSTYPE \-
 .RI "char \fBstr_val\fP [MAXSTRLEN]"
 .br
 .ti -1c
-.RI "\fBlist_block\fP * \fBlistbl\fP"
+.RI "\fBlist_items\fP * \fBlist\fP"
 .br
 .ti -1c
-.RI "\fBtype_block\fP * \fBblock\fP"
-.br
-.ti -1c
-.RI "\fBlist_affect\fP * \fBlistaf\fP"
-.br
-.ti -1c
-.RI "\fBtype_affect\fP * \fBaffectation\fP"
-.br
-.ti -1c
-.RI "\fBlist_block\fP * \fBlistbl\fP"
-.br
-.ti -1c
-.RI "\fBtype_block\fP * \fBblock\fP"
-.br
-.ti -1c
-.RI "\fBlist_affect\fP * \fBlistaf\fP"
-.br
-.ti -1c
-.RI "\fBtype_affect\fP * \fBaffectation\fP"
+.RI "\fBgeneric_item\fP * \fBitem\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 155 of file conf_yacc.c.
 .SH "Member Data Documentation"
 .PP 
-.SS "\fBtype_affect\fP* \fBYYSTYPE::affectation\fP"
+.SS "\fBgeneric_item\fP * \fBYYSTYPE::item\fP"
 .PP
-Definition at line 59 of file conf_yacc.h.
-.SS "\fBtype_affect\fP* \fBYYSTYPE::affectation\fP"
+Definition at line 160 of file conf_yacc.c.
+.SS "\fBlist_items\fP * \fBYYSTYPE::list\fP"
 .PP
-Definition at line 125 of file conf_yacc.c.
-.PP
-Referenced by yyparse().
-.SS "\fBtype_block\fP* \fBYYSTYPE::block\fP"
-.PP
-Definition at line 57 of file conf_yacc.h.
-.SS "\fBtype_block\fP* \fBYYSTYPE::block\fP"
-.PP
-Definition at line 123 of file conf_yacc.c.
-.PP
-Referenced by yyparse().
-.SS "\fBlist_affect\fP* \fBYYSTYPE::listaf\fP"
-.PP
-Definition at line 58 of file conf_yacc.h.
-.SS "\fBlist_affect\fP* \fBYYSTYPE::listaf\fP"
-.PP
-Definition at line 124 of file conf_yacc.c.
-.PP
-Referenced by yyparse().
-.SS "\fBlist_block\fP* \fBYYSTYPE::listbl\fP"
-.PP
-Definition at line 56 of file conf_yacc.h.
-.SS "\fBlist_block\fP* \fBYYSTYPE::listbl\fP"
-.PP
-Definition at line 122 of file conf_yacc.c.
-.PP
-Referenced by yyparse().
+Definition at line 159 of file conf_yacc.c.
 .SS "char \fBYYSTYPE::str_val\fP"
 .PP
-Definition at line 55 of file conf_yacc.h.
+Definition at line 158 of file conf_yacc.c.
 
 .SH "Author"
 .PP 

@@ -1,8 +1,10 @@
-.TH "fsal_internal.c" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_internal.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_internal.c \- Defines the datas that are to be accessed as extern by the fsal modules. 
+fsal_internal.c \- Defines the datas that are to be accessed as extern by the fsal modules.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -86,26 +88,26 @@ Defines the datas that are to be accessed as extern by the fsal modules.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/08 12:46:59 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.25 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.25 
 .RE
 .PP
 
@@ -135,7 +137,7 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 310 of file fsal_internal.c.
+Definition at line 311 of file fsal_internal.c.
 .SS "#define SET_BOOLEAN_PARAM(cfg, p_init_info, _field)"
 .PP
 \fBValue:\fP
@@ -158,7 +160,7 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 328 of file fsal_internal.c.
+Definition at line 329 of file fsal_internal.c.
 .SS "#define SET_INTEGER_PARAM(cfg, p_init_info, _field)"
 .PP
 \fBValue:\fP
@@ -183,7 +185,7 @@ switch( (p_init_info)->behaviors._field ){                    \
     }
 .fi
 .PP
-Definition at line 290 of file fsal_internal.c.
+Definition at line 291 of file fsal_internal.c.
 .SH "Function Documentation"
 .PP 
 .SS "fsal_boolean_t fsal_do_log (fsal_status_t status)"
@@ -192,7 +194,7 @@ fsal_do_log: Indicates if an FSAL error has to be traced into its log file in th
 .PP
 \fBParameters:\fP
 .RS 4
-\fIstatus(input):\fP The fsal status that is to be tested.
+\fIstatus(input),:\fP The fsal status that is to be tested.
 .RE
 .PP
 \fBReturns:\fP
@@ -205,7 +207,7 @@ FALSE if the error must not be traced except in NIV_FULL_DEBUG level.
 .PP
 
 .PP
-Definition at line 462 of file fsal_internal.c.
+Definition at line 465 of file fsal_internal.c.
 .SS "void fsal_increment_nbcall (int function_index, fsal_status_t status)"
 .PP
 fsal_increment_nbcall: Updates fonction call statistics.
@@ -224,7 +226,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 106 of file fsal_internal.c.
+Definition at line 107 of file fsal_internal.c.
 .PP
 References fsal_is_retryable().
 .SS "void fsal_internal_getstats (fsal_statistics_t * output_stats)"
@@ -243,7 +245,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 185 of file fsal_internal.c.
+Definition at line 186 of file fsal_internal.c.
 .PP
 Referenced by FSAL_get_stats().
 .SS "void fsal_internal_SetCredentialLifetime (fsal_uint_t lifetime_in)"
@@ -262,7 +264,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 242 of file fsal_internal.c.
+Definition at line 243 of file fsal_internal.c.
 .PP
 Referenced by FSAL_Init().
 .SS "void fsal_internal_SetReturnInconsistentDirent (fsal_uint_t bool_in)"
@@ -281,14 +283,14 @@ Nothing.
 .PP
 
 .PP
-Definition at line 257 of file fsal_internal.c.
+Definition at line 258 of file fsal_internal.c.
 .PP
 Referenced by FSAL_Init().
 .SS "void TakeTokenFSCall ()"
 .PP
 Used to limit the number of simultaneous calls to Filesystem. 
 .PP
-Definition at line 267 of file fsal_internal.c.
+Definition at line 268 of file fsal_internal.c.
 .PP
 Referenced by FSAL_access(), FSAL_close(), FSAL_create(), FSAL_dynamic_fsinfo(), FSAL_getattrs(), FSAL_link(), FSAL_lookup(), FSAL_lookupJunction(), FSAL_mkdir(), FSAL_open(), FSAL_read(), FSAL_readdir(), FSAL_readlink(), FSAL_rename(), FSAL_setattrs(), FSAL_symlink(), FSAL_truncate(), FSAL_unlink(), and FSAL_write().
 .SH "Author"

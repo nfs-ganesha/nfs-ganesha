@@ -1,8 +1,10 @@
-.TH "nfs_mnt_list.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_mnt_list.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_mnt_list.c \- routines for managing the mount list. 
+nfs_mnt_list.c \- routines for managing the mount list.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -99,26 +101,26 @@ routines for managing the mount list.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:03:03 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.7 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.7 
 .RE
 .PP
 \fBnfs_mnt_list.c\fP : routines for managing the mount list.
@@ -146,7 +148,7 @@ Revision 1.2 2005/08/03 13:13:59 deniel memset to zero before building the fileh
 .PP
 Revision 1.1 2005/08/03 06:57:54 deniel Added a libsupport for miscellaneous service functions
 .PP
-Revision 1.1 2005/07/20 11:49:47 deniel Mount protocol V1/V3 support almost complete
+Revision 1.1 2005/07/20 11:49:47 deniel Mount protocol V1/V3 support almost complete 
 .PP
 Definition in file \fBnfs_mnt_list.c\fP.
 .SH "Function Documentation"
@@ -171,9 +173,7 @@ Adds a client to the mount list.
 .PP
 
 .PP
-Definition at line 173 of file nfs_mnt_list.c.
-.PP
-References MNT_List_head, MNT_List_tail, and nfs_Print_MountList().
+Definition at line 177 of file nfs_mnt_list.c.
 .SS "mountlist nfs_Get_MountList (void)"
 .PP
 nfs_Get_MountList: Returns the mount list.
@@ -192,9 +192,7 @@ the mount list (NULL if mount list is empty)
 .PP
 
 .PP
-Definition at line 433 of file nfs_mnt_list.c.
-.PP
-References nfs_Print_MountList().
+Definition at line 439 of file nfs_mnt_list.c.
 .SS "int nfs_Init_MountList (void)"
 .PP
 nfs_Init_MountList: Initializes the mount list.
@@ -213,9 +211,7 @@ Initializes the mount list.
 .PP
 
 .PP
-Definition at line 409 of file nfs_mnt_list.c.
-.PP
-References MNT_List_head, MNT_List_tail, and nfs_Print_MountList().
+Definition at line 415 of file nfs_mnt_list.c.
 .SS "void nfs_Print_MountList (void)"
 .PP
 nfs_Print_MountList: Prints the mount list (for debugging purpose).
@@ -234,11 +230,7 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 453 of file nfs_mnt_list.c.
-.PP
-References MNT_List_head.
-.PP
-Referenced by nfs_Add_MountList_Entry(), nfs_Get_MountList(), nfs_Init_MountList(), nfs_Purge_MountList(), and nfs_Remove_MountList_Entry().
+Definition at line 459 of file nfs_mnt_list.c.
 .SS "int nfs_Purge_MountList (void)"
 .PP
 nfs_Purge_MountList: Purges the whole mount list.
@@ -257,9 +249,7 @@ Purges the whole mount list.
 .PP
 
 .PP
-Definition at line 367 of file nfs_mnt_list.c.
-.PP
-References MNT_List_head, MNT_List_tail, and nfs_Print_MountList().
+Definition at line 373 of file nfs_mnt_list.c.
 .SS "int nfs_Remove_MountList_Entry (char * hostname, char * dirpath)"
 .PP
 nfs_Remove_MountList_Entry: Removes a client to the mount list.
@@ -280,21 +270,15 @@ Removes a client to the mount list.
 .PP
 
 .PP
-Definition at line 286 of file nfs_mnt_list.c.
-.PP
-References MNT_List_head, MNT_List_tail, and nfs_Print_MountList().
+Definition at line 292 of file nfs_mnt_list.c.
 .SH "Variable Documentation"
 .PP 
 .SS "mountlist \fBMNT_List_head\fP = NULL"
 .PP
-Definition at line 158 of file nfs_mnt_list.c.
-.PP
-Referenced by nfs_Add_MountList_Entry(), nfs_Init_MountList(), nfs_Print_MountList(), nfs_Purge_MountList(), and nfs_Remove_MountList_Entry().
+Definition at line 162 of file nfs_mnt_list.c.
 .SS "mountlist \fBMNT_List_tail\fP = NULL"
 .PP
-Definition at line 159 of file nfs_mnt_list.c.
-.PP
-Referenced by nfs_Add_MountList_Entry(), nfs_Init_MountList(), nfs_Purge_MountList(), and nfs_Remove_MountList_Entry().
+Definition at line 163 of file nfs_mnt_list.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

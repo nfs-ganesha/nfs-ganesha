@@ -1,11 +1,12 @@
 \section{cache\_\-content\_\-cache\_\-behaviour.c File Reference}
-\label{cache__content__cache__behaviour_8c}\index{cache_content_cache_behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}}
-Management of the file content cache: choose if an entry in the metadata cache is to be cached or not. 
+\label{cache__content__cache__behaviour_8c}\index{cache\_\-content\_\-cache\_\-behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}}
+Management of the file content cache: choose if an entry in the metadata cache is to be cached or not.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
@@ -27,25 +28,25 @@ cache\_\-content\_\-caching\_\-type\_\-t {\bf cache\_\-content\_\-cache\_\-behav
 Management of the file content cache: choose if an entry in the metadata cache is to be cached or not. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/08/03 07:22:17 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.2 \end{Desc}
-\end{Desc}
-{\bf cache\_\-content\_\-cache\_\-behaviour.c}{\rm (p.\,\pageref{cache__content__cache__behaviour_8c})} : Choose if an entry in the metadata cache is to be cached or not.
+\doxyref{cache\_\-content\_\-cache\_\-behaviour.c}{p.}{cache__content__cache__behaviour_8c} : Choose if an entry in the metadata cache is to be cached or not. 
 
 Definition in file {\bf cache\_\-content\_\-cache\_\-behaviour.c}.
 
 \subsection{Function Documentation}
-\index{cache_content_cache_behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}!cache_content_cache_behaviour@{cache\_\-content\_\-cache\_\-behaviour}}
-\index{cache_content_cache_behaviour@{cache\_\-content\_\-cache\_\-behaviour}!cache_content_cache_behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-caching\_\-type\_\-t cache\_\-content\_\-cache\_\-behaviour (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, cache\_\-content\_\-policy\_\-data\_\-t $\ast$ {\em ppolicy\_\-data}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__cache__behaviour_8c_a0}
+\index{cache\_\-content\_\-cache\_\-behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}!cache\_\-content\_\-cache\_\-behaviour@{cache\_\-content\_\-cache\_\-behaviour}}
+\index{cache\_\-content\_\-cache\_\-behaviour@{cache\_\-content\_\-cache\_\-behaviour}!cache_content_cache_behaviour.c@{cache\_\-content\_\-cache\_\-behaviour.c}}
+\subsubsection[{cache\_\-content\_\-cache\_\-behaviour}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-caching\_\-type\_\-t cache\_\-content\_\-cache\_\-behaviour (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, \/  cache\_\-content\_\-policy\_\-data\_\-t $\ast$ {\em ppolicy\_\-data}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__cache__behaviour_8c_bdf8ef5c5ea280f2e8658170848bed83}
 
 
 cache\_\-content\_\-cache\_\-behaviour: chooses if a file is to be cached in data cache or not, basec o the caching policy.
@@ -63,4 +64,4 @@ No lock management is done in this layer: the related pentry in the cache inode 
 \item[Returns:]CACHE\_\-CONTENT\_\-FULLY\_\-CACHED if file is to be cached \end{Desc}
 
 
-Definition at line 56 of file cache\_\-content\_\-cache\_\-behaviour.c.
+Definition at line 59 of file cache\_\-content\_\-cache\_\-behaviour.c.

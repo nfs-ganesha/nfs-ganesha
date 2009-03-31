@@ -1,6 +1,7 @@
 \section{nfs\_\-tools.c File Reference}
-\label{nfs__tools_8c}\index{nfs_tools.c@{nfs\_\-tools.c}}
-Some tools very usefull in the nfs protocol implementation. 
+\label{nfs__tools_8c}\index{nfs\_\-tools.c@{nfs\_\-tools.c}}
+Some tools very usefull in the nfs protocol implementation.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$sys/socket.h$>$}\par
@@ -60,7 +61,7 @@ int {\bf lru\_\-inode\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\
 \item 
 int {\bf lru\_\-data\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\ast$adddata)
 \item 
-void {\bf socket\_\-setoptions} (int socket\-Fd)
+void {\bf socket\_\-setoptions} (int socketFd)
 \end{CompactItemize}
 
 
@@ -68,60 +69,74 @@ void {\bf socket\_\-setoptions} (int socket\-Fd)
 Some tools very usefull in the nfs protocol implementation. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/20 07:39:22 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.14 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-tools.c}{\rm (p.\,\pageref{nfs__tools_8c})} : Some tools very usefull in the nfs protocol implementation
+\doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation
+
+\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
+\item[Author]deniel \end{Desc}
+\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
+\item[Date]2006/01/20 07:39:22 \end{Desc}
+\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
+\item[Revision]1.43 \end{Desc}
+\doxyref{nfs\_\-tools.c}{p.}{nfs__tools_8c} : Some tools very usefull in the nfs protocol implementation 
 
 Definition in file {\bf nfs\_\-tools.c}.
 
 \subsection{Function Documentation}
-\index{nfs_tools.c@{nfs\_\-tools.c}!clean_cache@{clean\_\-cache}}
-\index{clean_cache@{clean\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-cache (LRU\_\-entry\_\-t $\ast$ {\em pentry}, void $\ast$ {\em addparam})}\label{nfs__tools_8c_a5}
+\index{nfs\_\-tools.c@{nfs\_\-tools.c}!clean\_\-cache@{clean\_\-cache}}
+\index{clean\_\-cache@{clean\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{clean\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-cache (LRU\_\-entry\_\-t $\ast$ {\em pentry}, \/  void $\ast$ {\em addparam})}\label{nfs__tools_8c_9c7c012283e03dc52eda904db37562ff}
 
 
 
 
-Definition at line 168 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!compare_cache@{compare\_\-cache}}
-\index{compare_cache@{compare\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em buff1}, hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__tools_8c_a3}
+Definition at line 174 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!compare\_\-cache@{compare\_\-cache}}
+\index{compare\_\-cache@{compare\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{compare\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em buff1}, \/  hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__tools_8c_2a033479a0d020e76de2586d26f8db5b}
 
 
 
 
-Definition at line 158 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!decimal_rbt_hash_func@{decimal\_\-rbt\_\-hash\_\-func}}
-\index{decimal_rbt_hash_func@{decimal\_\-rbt\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_a1}
+Definition at line 164 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-rbt\_\-hash\_\-func@{decimal\_\-rbt\_\-hash\_\-func}}
+\index{decimal\_\-rbt\_\-hash\_\-func@{decimal\_\-rbt\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{decimal\_\-rbt\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_85f4af1a161f534f296b85372fba0413}
 
 
 
 
-Definition at line 147 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!decimal_simple_hash_func@{decimal\_\-simple\_\-hash\_\-func}}
-\index{decimal_simple_hash_func@{decimal\_\-simple\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_a0}
+Definition at line 153 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!decimal\_\-simple\_\-hash\_\-func@{decimal\_\-simple\_\-hash\_\-func}}
+\index{decimal\_\-simple\_\-hash\_\-func@{decimal\_\-simple\_\-hash\_\-func}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{decimal\_\-simple\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long decimal\_\-simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__tools_8c_8decbd7a3557fd2c788ade7abed9a407}
 
 
 
 
-Definition at line 141 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!display_cache@{display\_\-cache}}
-\index{display_cache@{display\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{nfs__tools_8c_a2}
+Definition at line 147 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!display\_\-cache@{display\_\-cache}}
+\index{display\_\-cache@{display\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{display\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-cache (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_5eeaebff3f2862b2b16395d537bce1a1}
 
 
 
 
-Definition at line 153 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!lru_data_clean_entry@{lru\_\-data\_\-clean\_\-entry}}
-\index{lru_data_clean_entry@{lru\_\-data\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, void $\ast$ {\em adddata})}\label{nfs__tools_8c_a9}
+Definition at line 159 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-clean\_\-entry@{lru\_\-data\_\-clean\_\-entry}}
+\index{lru\_\-data\_\-clean\_\-entry@{lru\_\-data\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{lru\_\-data\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_1fff2fdd16477f241028cf536bc5ff2d}
 
 
 lru\_\-data\_\-clean\_\-entry: a function used to clean up a LRU entry during cache inode gc.
@@ -137,9 +152,9 @@ a function used to clean up a LRU entry during cache inode gc.
 \item[Returns:]0 if successful, other values show an error. \end{Desc}
 
 
-Definition at line 239 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!lru_data_entry_to_str@{lru\_\-data\_\-entry\_\-to\_\-str}}
-\index{lru_data_entry_to_str@{lru\_\-data\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{nfs__tools_8c_a7}
+Definition at line 245 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-data\_\-entry\_\-to\_\-str@{lru\_\-data\_\-entry\_\-to\_\-str}}
+\index{lru\_\-data\_\-entry\_\-to\_\-str@{lru\_\-data\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{lru\_\-data\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-data\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_738899949b8da5c9128e6296a7ad7043}
 
 
 lru\_\-data\_\-entry\_\-to\_\-str: printing function for internal worker's LRU.
@@ -155,9 +170,9 @@ printing function for internal worker's LRU.
 \item[Returns:]the length of the computed string of -1 if failed. \end{Desc}
 
 
-Definition at line 204 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!lru_inode_clean_entry@{lru\_\-inode\_\-clean\_\-entry}}
-\index{lru_inode_clean_entry@{lru\_\-inode\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, void $\ast$ {\em adddata})}\label{nfs__tools_8c_a8}
+Definition at line 210 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-clean\_\-entry@{lru\_\-inode\_\-clean\_\-entry}}
+\index{lru\_\-inode\_\-clean\_\-entry@{lru\_\-inode\_\-clean\_\-entry}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{lru\_\-inode\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{nfs__tools_8c_230b0440af10caba4b9c4697e23ac36a}
 
 
 lru\_\-inode\_\-clean\_\-entry: a function used to clean up a LRU entry during cache inode gc.
@@ -173,9 +188,9 @@ a function used to clean up a LRU entry during cache inode gc.
 \item[Returns:]0 if successful, other values show an error. \end{Desc}
 
 
-Definition at line 222 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!lru_inode_entry_to_str@{lru\_\-inode\_\-entry\_\-to\_\-str}}
-\index{lru_inode_entry_to_str@{lru\_\-inode\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{nfs__tools_8c_a6}
+Definition at line 228 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!lru\_\-inode\_\-entry\_\-to\_\-str@{lru\_\-inode\_\-entry\_\-to\_\-str}}
+\index{lru\_\-inode\_\-entry\_\-to\_\-str@{lru\_\-inode\_\-entry\_\-to\_\-str}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{lru\_\-inode\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_fc0713ab6f936fa664d7c92a1ecc79c3}
 
 
 lru\_\-inode\_\-entry\_\-to\_\-str: printing function for internal worker's LRU.
@@ -191,20 +206,18 @@ printing function for internal worker's LRU.
 \item[Returns:]the length of the computed string of -1 if failed. \end{Desc}
 
 
-Definition at line 187 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!print_cache@{print\_\-cache}}
-\index{print_cache@{print\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int print\_\-cache (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{nfs__tools_8c_a4}
+Definition at line 193 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!print\_\-cache@{print\_\-cache}}
+\index{print\_\-cache@{print\_\-cache}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{print\_\-cache}]{\setlength{\rightskip}{0pt plus 5cm}int print\_\-cache (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{nfs__tools_8c_9649b9bb0b478385d0c0a46cc96df5ff}
 
 
 
 
-Definition at line 163 of file nfs\_\-tools.c.\index{nfs_tools.c@{nfs\_\-tools.c}!socket_setoptions@{socket\_\-setoptions}}
-\index{socket_setoptions@{socket\_\-setoptions}!nfs_tools.c@{nfs\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void socket\_\-setoptions (int {\em socket\-Fd})}\label{nfs__tools_8c_a10}
+Definition at line 169 of file nfs\_\-tools.c.\index{nfs\_\-tools.c@{nfs\_\-tools.c}!socket\_\-setoptions@{socket\_\-setoptions}}
+\index{socket\_\-setoptions@{socket\_\-setoptions}!nfs_tools.c@{nfs\_\-tools.c}}
+\subsubsection[{socket\_\-setoptions}]{\setlength{\rightskip}{0pt plus 5cm}void socket\_\-setoptions (int {\em socketFd})}\label{nfs__tools_8c_724cb81161f478d63c680f3e1f3f3a62}
 
 
 
 
-Definition at line 245 of file nfs\_\-tools.c.
-
-Referenced by nfs\_\-Init\_\-svc().
+Definition at line 251 of file nfs\_\-tools.c.

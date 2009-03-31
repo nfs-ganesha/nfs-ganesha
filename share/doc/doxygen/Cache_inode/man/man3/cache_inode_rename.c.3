@@ -1,8 +1,10 @@
-.TH "cache_inode_rename.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_rename.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_rename.c \- Renames an entry. 
+cache_inode_rename.c \- Renames an entry.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -45,29 +47,29 @@ Renames an entry.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:27 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.20 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_rename.c\fP : Renames an entry.
+\fBcache_inode_rename.c\fP : Renames an entry. 
 .PP
 Definition in file \fBcache_inode_rename.c\fP.
 .SH "Function Documentation"
@@ -116,9 +118,7 @@ CACHE_INODE_NOT_FOUND source object does not exist
 .PP
 
 .PP
-Definition at line 179 of file cache_inode_rename.c.
-.PP
-References cache_inode_add_cached_dirent(), cache_inode_error_convert(), cache_inode_is_dir_empty(), cache_inode_kill_entry(), cache_inode_lookup_no_mutex(), cache_inode_remove_cached_dirent(), cache_inode_remove_no_mutex(), cache_inode_rename_cached_dirent(), and cache_inode_valid().
+Definition at line 180 of file cache_inode_rename.c.
 .SS "cache_inode_status_t cache_inode_rename_cached_dirent (cache_entry_t * pentry_parent, fsal_name_t * oldname, fsal_name_t * newname, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_rename_cached_dirent: renames an entry in the same directory.
@@ -147,11 +147,7 @@ the same as *pstatus
 .PP
 
 .PP
-Definition at line 122 of file cache_inode_rename.c.
-.PP
-References cache_inode_operate_cached_dirent().
-.PP
-Referenced by cache_inode_rename().
+Definition at line 126 of file cache_inode_rename.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

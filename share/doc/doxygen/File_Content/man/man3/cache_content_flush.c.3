@@ -1,4 +1,4 @@
-.TH "cache_content_flush.c" 3 "9 Apr 2008" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_flush.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -74,7 +74,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 124 of file cache_content_flush.c.
+Definition at line 128 of file cache_content_flush.c.
 .SS "cache_content_status_t cache_content_refresh (cache_content_entry_t * pentry, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_refresh_how_t how, cache_content_status_t * pstatus)"
 .PP
 cache_content_refresh: Refreshes the whole content of a file in the local cache to the FSAL data.
@@ -95,7 +95,6 @@ No lock management is done in this layer: the related pentry in the cache inode 
 CACHE_CONTENT_SUCCESS is successful .
 .RE
 .PP
-.PP
 \fBTodo\fP
 .RS 4
 : BUGAZOMEU: gestion de coherence de date a mettre en place 
@@ -103,12 +102,10 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 290 of file cache_content_flush.c.
-.PP
-Referenced by cache_content_new_entry().
+Definition at line 275 of file cache_content_flush.c.
 .SS "cache_content_status_t cache_content_sync_all (cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
 .PP
-Definition at line 420 of file cache_content_flush.c.
+Definition at line 405 of file cache_content_flush.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

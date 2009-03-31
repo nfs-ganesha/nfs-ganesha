@@ -1,24 +1,25 @@
-\section{Hash\-Table.c File Reference}
+\section{HashTable.c File Reference}
 \label{HashTable_8c}\index{HashTable.c@{HashTable.c}}
-Gestion des tables de hachage a base de Red/Black Trees. 
+Gestion des tables de hachage a base de Red/Black Trees.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include \char`\"{}RW\_\-Lock.h\char`\"{}}\par
-{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf TRUE}\ 1
+\#define {\bf TRUE}~1
 \item 
-\#define {\bf FALSE}\ 0
+\#define {\bf FALSE}~0
 \item 
-\#define {\bf P}(a)\ pthread\_\-mutex\_\-lock( \&a )
+\#define {\bf P}(a)~pthread\_\-mutex\_\-lock( \&a )
 \item 
-\#define {\bf V}(a)\ pthread\_\-mutex\_\-unlock( \&a )
+\#define {\bf V}(a)~pthread\_\-mutex\_\-unlock( \&a )
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -29,19 +30,19 @@ unsigned long {\bf double\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hp
 \item 
 unsigned int {\bf rbt\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam, hash\_\-buffer\_\-t $\ast$buffclef)
 \item 
-hash\_\-table\_\-t $\ast$ {\bf Hash\-Table\_\-Init} (hash\_\-parameter\_\-t hparam)
+hash\_\-table\_\-t $\ast$ {\bf HashTable\_\-Init} (hash\_\-parameter\_\-t hparam)
 \item 
-int {\bf Hash\-Table\_\-Test\_\-And\_\-Set} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval, hashtable\_\-set\_\-how\_\-t how)
+int {\bf HashTable\_\-Test\_\-And\_\-Set} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval, hashtable\_\-set\_\-how\_\-t how)
 \item 
-int {\bf Hash\-Table\_\-Get} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval)
+int {\bf HashTable\_\-Get} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$buffval)
 \item 
-int {\bf Hash\-Table\_\-Del} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffdata)
+int {\bf HashTable\_\-Del} (hash\_\-table\_\-t $\ast$ht, hash\_\-buffer\_\-t $\ast$buffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffkey, hash\_\-buffer\_\-t $\ast$p\_\-usedbuffdata)
 \item 
-void {\bf Hash\-Table\_\-Get\-Stats} (hash\_\-table\_\-t $\ast$ht, hash\_\-stat\_\-t $\ast$hstat)
+void {\bf HashTable\_\-GetStats} (hash\_\-table\_\-t $\ast$ht, hash\_\-stat\_\-t $\ast$hstat)
 \item 
-unsigned int {\bf Hash\-Table\_\-Get\-Size} (hash\_\-table\_\-t $\ast$ht)
+unsigned int {\bf HashTable\_\-GetSize} (hash\_\-table\_\-t $\ast$ht)
 \item 
-void {\bf Hash\-Table\_\-Print} (hash\_\-table\_\-t $\ast$ht)
+void {\bf HashTable\_\-Print} (hash\_\-table\_\-t $\ast$ht)
 \end{CompactItemize}
 
 
@@ -49,25 +50,25 @@ void {\bf Hash\-Table\_\-Print} (hash\_\-table\_\-t $\ast$ht)
 Gestion des tables de hachage a base de Red/Black Trees. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/31 09:12:06 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.41 \end{Desc}
-\end{Desc}
-{\bf Hash\-Table.c}{\rm (p.\,\pageref{HashTable_8c})} : gestion d'une table de hachage
+\doxyref{HashTable.c}{p.}{HashTable_8c} : gestion d'une table de hachage
 
 \begin{Desc}
-\item[Header]/cea/home/cvs/cvs/SHERPA/Base\-Cvs/GANESHA/src/Hash\-Table/Hash\-Table.c,v 1.41 2006/01/31 09:12:06 deniel Exp \end{Desc}
+\item[Header]/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/HashTable/HashTable.c,v 1.41 2006/01/31 09:12:06 deniel Exp \end{Desc}
 
 
 \begin{Desc}
-\item[Log]{\bf Hash\-Table.c}{\rm (p.\,\pageref{HashTable_8c})},v \end{Desc}
+\item[Log]\doxyref{HashTable.c}{p.}{HashTable_8c},v \end{Desc}
 Revision 1.41 2006/01/31 09:12:06 deniel First step in efence debugging
 
 Revision 1.40 2006/01/27 10:28:36 deniel Now support rpm
@@ -76,7 +77,7 @@ Revision 1.39 2006/01/24 13:47:31 leibovic Disabling prealloc checks when \_\-NO
 
 Revision 1.38 2006/01/20 07:39:22 leibovic Back to the previous version.
 
-Revision 1.36 2005/11/28 17:02:37 deniel Added Ce\-CILL headers
+Revision 1.36 2005/11/28 17:02:37 deniel Added CeCILL headers
 
 Revision 1.35 2005/11/10 07:53:24 deniel Corrected some memory leaks
 
@@ -84,7 +85,7 @@ Revision 1.34 2005/08/12 07:11:14 deniel Corrected cache\_\-inode\_\-readdir sem
 
 Revision 1.33 2005/08/03 08:51:43 deniel Added file exports.c in libsupport.a
 
-Revision 1.32 2005/08/03 07:22:17 deniel Added dependence management for Sem\-N
+Revision 1.32 2005/08/03 07:22:17 deniel Added dependence management for SemN
 
 Revision 1.31 2005/07/28 08:25:10 deniel Adding different ifdef statemement for additional debugging
 
@@ -94,9 +95,9 @@ Revision 1.29 2005/07/11 15:30:06 deniel Mount udp/tcp ok with NFSv4 on pseudo f
 
 Revision 1.28 2005/05/10 11:43:57 deniel Datacache and metadatacache are noewqw bounded
 
-Revision 1.27 2005/04/28 14:04:17 deniel Modified Hash\-Tabel\_\-Del prototype
+Revision 1.27 2005/04/28 14:04:17 deniel Modified HashTabel\_\-Del prototype
 
-Revision 1.26 2005/04/14 14:43:09 deniel Corrected a bug in Hash\-Table\_\-Test\_\-And\_\-Set (when several nodes have the same rbt value)
+Revision 1.26 2005/04/14 14:43:09 deniel Corrected a bug in HashTable\_\-Test\_\-And\_\-Set (when several nodes have the same rbt value)
 
 Revision 1.25 2005/03/02 10:56:59 deniel Corrected a bug in pdata management
 
@@ -104,7 +105,7 @@ Revision 1.24 2005/03/01 09:17:09 deniel Added doxygen tags
 
 Revision 1.23 2005/02/18 09:35:49 deniel Garbagge collection is ok for file (directory gc is not yet implemented)
 
-Revision 1.22 2004/12/15 16:18:35 deniel DEBUG behaviour in Hash\-Table\_\-Print is now the default behaviour
+Revision 1.22 2004/12/15 16:18:35 deniel DEBUG behaviour in HashTable\_\-Print is now the default behaviour
 
 Revision 1.21 2004/11/23 16:44:58 deniel Plenty of bugs corrected
 
@@ -118,7 +119,7 @@ Revision 1.17 2004/10/11 07:05:44 deniel Protection des tables de hachage par de
 
 Revision 1.16 2004/09/23 08:19:16 deniel Cleaning
 
-Revision 1.15 2004/08/26 06:52:58 deniel Bug tres con dans {\bf Hash\-Table.c}{\rm (p.\,\pageref{HashTable_8c})}, au niveau de hash\-Tabel\_\-Test\_\-And\_\-Set (mauvaise enclosure de \#ifdef)
+Revision 1.15 2004/08/26 06:52:58 deniel Bug tres con dans \doxyref{HashTable.c}{p.}{HashTable_8c}, au niveau de hashTabel\_\-Test\_\-And\_\-Set (mauvaise enclosure de ifdef)
 
 Revision 1.14 2004/08/25 06:21:24 deniel Mise en place du test configurable ok
 
@@ -152,37 +153,37 @@ Revision 1.4 2004/01/12 15:24:40 deniel Version finalisee
 
 Revision 1.2 2004/01/12 14:52:08 deniel Version presque finale (le del, le set et le get fonctionnent)
 
-Revision 1.1 2004/01/12 12:31:15 deniel Premiere version des fichiers de gestion de la table de hachage, en debug
+Revision 1.1 2004/01/12 12:31:15 deniel Premiere version des fichiers de gestion de la table de hachage, en debug 
 
-Definition in file {\bf Hash\-Table.c}.
+Definition in file {\bf HashTable.c}.
 
 \subsection{Define Documentation}
-\index{HashTable.c@{Hash\-Table.c}!FALSE@{FALSE}}
-\index{FALSE@{FALSE}!HashTable.c@{Hash\-Table.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FALSE\ 0}\label{HashTable_8c_a1}
+\index{HashTable.c@{HashTable.c}!FALSE@{FALSE}}
+\index{FALSE@{FALSE}!HashTable.c@{HashTable.c}}
+\subsubsection[{FALSE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FALSE~0}\label{HashTable_8c_a93f0eb578d23995850d61f7d61c55c1}
 
 
 
 
-Definition at line 242 of file Hash\-Table.c.\index{HashTable.c@{Hash\-Table.c}!P@{P}}
-\index{P@{P}!HashTable.c@{Hash\-Table.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define P(a)\ pthread\_\-mutex\_\-lock( \&a )}\label{HashTable_8c_a2}
+Definition at line 242 of file HashTable.c.\index{HashTable.c@{HashTable.c}!P@{P}}
+\index{P@{P}!HashTable.c@{HashTable.c}}
+\subsubsection[{P}]{\setlength{\rightskip}{0pt plus 5cm}\#define P(a)~pthread\_\-mutex\_\-lock( \&a )}\label{HashTable_8c_15abb4ae29738d2dd59f592b02ceccfd}
 
 
 
 
-Definition at line 246 of file Hash\-Table.c.\index{HashTable.c@{Hash\-Table.c}!TRUE@{TRUE}}
-\index{TRUE@{TRUE}!HashTable.c@{Hash\-Table.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define TRUE\ 1}\label{HashTable_8c_a0}
+Definition at line 246 of file HashTable.c.\index{HashTable.c@{HashTable.c}!TRUE@{TRUE}}
+\index{TRUE@{TRUE}!HashTable.c@{HashTable.c}}
+\subsubsection[{TRUE}]{\setlength{\rightskip}{0pt plus 5cm}\#define TRUE~1}\label{HashTable_8c_a8cecfc5c5c054d2875c03e77b7be15d}
 
 
 
 
-Definition at line 238 of file Hash\-Table.c.\index{HashTable.c@{Hash\-Table.c}!V@{V}}
-\index{V@{V}!HashTable.c@{Hash\-Table.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define V(a)\ pthread\_\-mutex\_\-unlock( \&a )}\label{HashTable_8c_a3}
+Definition at line 238 of file HashTable.c.\index{HashTable.c@{HashTable.c}!V@{V}}
+\index{V@{V}!HashTable.c@{HashTable.c}}
+\subsubsection[{V}]{\setlength{\rightskip}{0pt plus 5cm}\#define V(a)~pthread\_\-mutex\_\-unlock( \&a )}\label{HashTable_8c_751d733b0539d56fca1a17f94f54e605}
 
 
 
 
-Definition at line 250 of file Hash\-Table.c.
+Definition at line 250 of file HashTable.c.

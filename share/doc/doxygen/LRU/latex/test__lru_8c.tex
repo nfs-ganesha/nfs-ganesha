@@ -1,19 +1,19 @@
 \section{test\_\-lru.c File Reference}
-\label{test__lru_8c}\index{test_lru.c@{test\_\-lru.c}}
+\label{test__lru_8c}\index{test\_\-lru.c@{test\_\-lru.c}}
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$stdlib.h$>$}\par
 {\tt \#include $<$strings.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
-{\tt \#include \char`\"{}Buddy\-Malloc.h\char`\"{}}\par
+{\tt \#include \char`\"{}BuddyMalloc.h\char`\"{}}\par
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf PREALLOC}\ 10000
+\#define {\bf PREALLOC}~10000
 \item 
-\#define {\bf MAXTEST}\ 10
+\#define {\bf MAXTEST}~10
 \item 
-\#define {\bf KEPT\_\-ENTRY}\ 5
+\#define {\bf KEPT\_\-ENTRY}~5
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -27,23 +27,23 @@ int {\bf main} (int argc, char $\ast$argv[$\,$])
 
 
 \subsection{Define Documentation}
-\index{test_lru.c@{test\_\-lru.c}!KEPT_ENTRY@{KEPT\_\-ENTRY}}
-\index{KEPT_ENTRY@{KEPT\_\-ENTRY}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define KEPT\_\-ENTRY\ 5}\label{test__lru_8c_a2}
+\index{test\_\-lru.c@{test\_\-lru.c}!KEPT\_\-ENTRY@{KEPT\_\-ENTRY}}
+\index{KEPT\_\-ENTRY@{KEPT\_\-ENTRY}!test_lru.c@{test\_\-lru.c}}
+\subsubsection[{KEPT\_\-ENTRY}]{\setlength{\rightskip}{0pt plus 5cm}\#define KEPT\_\-ENTRY~5}\label{test__lru_8c_32947fb41aad50de0587ec096a0daebc}
 
 
 
 
-Definition at line 123 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!MAXTEST@{MAXTEST}}
+Definition at line 123 of file test\_\-lru.c.\index{test\_\-lru.c@{test\_\-lru.c}!MAXTEST@{MAXTEST}}
 \index{MAXTEST@{MAXTEST}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXTEST\ 10}\label{test__lru_8c_a1}
+\subsubsection[{MAXTEST}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAXTEST~10}\label{test__lru_8c_03d9dd35a7b43ebc597de16d46a0e845}
 
 
 
 
-Definition at line 122 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!PREALLOC@{PREALLOC}}
+Definition at line 122 of file test\_\-lru.c.\index{test\_\-lru.c@{test\_\-lru.c}!PREALLOC@{PREALLOC}}
 \index{PREALLOC@{PREALLOC}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define PREALLOC\ 10000}\label{test__lru_8c_a0}
+\subsubsection[{PREALLOC}]{\setlength{\rightskip}{0pt plus 5cm}\#define PREALLOC~10000}\label{test__lru_8c_9dadacd5ee41d21ea8974d66757983dd}
 
 
 
@@ -51,25 +51,23 @@ Definition at line 122 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!P
 Definition at line 121 of file test\_\-lru.c.
 
 \subsection{Function Documentation}
-\index{test_lru.c@{test\_\-lru.c}!clean_entry@{clean\_\-entry}}
-\index{clean_entry@{clean\_\-entry}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em pentry}, void $\ast$ {\em addparam})}\label{test__lru_8c_a4}
+\index{test\_\-lru.c@{test\_\-lru.c}!clean\_\-entry@{clean\_\-entry}}
+\index{clean\_\-entry@{clean\_\-entry}!test_lru.c@{test\_\-lru.c}}
+\subsubsection[{clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em pentry}, \/  void $\ast$ {\em addparam})}\label{test__lru_8c_ed3b7c3b1bdb635f3c7d88e630279b79}
 
 
 
 
-Definition at line 130 of file test\_\-lru.c.\index{test_lru.c@{test\_\-lru.c}!main@{main}}
+Definition at line 130 of file test\_\-lru.c.\index{test\_\-lru.c@{test\_\-lru.c}!main@{main}}
 \index{main@{main}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, char $\ast$ {\em argv}[$\,$])}\label{test__lru_8c_a5}
+\subsubsection[{main}]{\setlength{\rightskip}{0pt plus 5cm}int main (int {\em argc}, \/  char $\ast$ {\em argv}[$\,$])}\label{test__lru_8c_0ddf1224851353fc92bfbff6f499fa97}
 
 
 
 
-Definition at line 135 of file test\_\-lru.c.
-
-References LRU\_\-gc\_\-invalid(), LRU\_\-Init(), LRU\_\-invalidate(), LRU\_\-new\_\-entry(), and LRU\_\-Print().\index{test_lru.c@{test\_\-lru.c}!print_entry@{print\_\-entry}}
-\index{print_entry@{print\_\-entry}!test_lru.c@{test\_\-lru.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int print\_\-entry (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{test__lru_8c_a3}
+Definition at line 135 of file test\_\-lru.c.\index{test\_\-lru.c@{test\_\-lru.c}!print\_\-entry@{print\_\-entry}}
+\index{print\_\-entry@{print\_\-entry}!test_lru.c@{test\_\-lru.c}}
+\subsubsection[{print\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int print\_\-entry (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{test__lru_8c_ea38d63e4172f007b92d4bfeebb6b6d2}
 
 
 

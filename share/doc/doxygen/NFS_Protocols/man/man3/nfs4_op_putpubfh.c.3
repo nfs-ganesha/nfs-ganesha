@@ -1,8 +1,10 @@
-.TH "nfs4_op_putpubfh.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_putpubfh.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_putpubfh.c \- Routines used for managing the NFS4_OP_PUTPUBFH operation. 
+nfs4_op_putpubfh.c \- Routines used for managing the NFS4_OP_PUTPUBFH operation.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -84,29 +86,29 @@ Routines used for managing the NFS4_OP_PUTPUBFH operation.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:51 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.11 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_getfh.c\fP : Routines used for managing the NFS4_OP_PUTPUBFH operation.
+\fBnfs4_op_getfh.c\fP : Routines used for managing the NFS4_OP_PUTPUBFH operation. 
 .PP
 Definition in file \fBnfs4_op_putpubfh.c\fP.
 .SH "Define Documentation"
@@ -140,12 +142,10 @@ all the nfs4_op_<*> function
 .PP
 
 .PP
-Definition at line 185 of file nfs4_op_putpubfh.c.
+Definition at line 190 of file nfs4_op_putpubfh.c.
 .SS "#define res_PUTPUBFH4   resp->nfs_resop4_u.opputpubfh"
 .PP
-Definition at line 186 of file nfs4_op_putpubfh.c.
-.PP
-Referenced by nfs4_op_putpubfh().
+Definition at line 191 of file nfs4_op_putpubfh.c.
 .SH "Function Documentation"
 .PP 
 .SS "int CreatePUBFH4 (nfs_fh4 * fh, compound_data_t * data)"
@@ -173,16 +173,10 @@ NFS4_OK is successful, NFS4ERR_BADHANDLE otherwise (for an error).
 .PP
 
 .PP
-Definition at line 141 of file nfs4_op_putpubfh.c.
-.PP
-References nfs4_AllocateFH(), and nfs4_PseudoToFhandle().
-.PP
-Referenced by nfs4_op_putpubfh().
+Definition at line 144 of file nfs4_op_putpubfh.c.
 .SS "int nfs4_op_putpubfh (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 188 of file nfs4_op_putpubfh.c.
-.PP
-References CreatePUBFH4(), nfs4_AllocateFH(), and res_PUTPUBFH4.
+Definition at line 193 of file nfs4_op_putpubfh.c.
 .SS "void nfs4_op_putpubfh_Free (PUTPUBFH4res * resp)"
 .PP
 nfs4_op_putpubfh_Free: frees what was allocared to handle nfs4_op_putpubfh.
@@ -201,7 +195,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 266 of file nfs4_op_putpubfh.c.
+Definition at line 268 of file nfs4_op_putpubfh.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

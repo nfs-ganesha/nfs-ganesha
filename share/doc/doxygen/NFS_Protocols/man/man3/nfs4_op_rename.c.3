@@ -1,8 +1,10 @@
-.TH "nfs4_op_rename.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_rename.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_rename.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_op_rename.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -81,29 +83,29 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:51 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.15 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_rename.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs4_op_rename.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs4_op_rename.c\fP.
 .SH "Define Documentation"
@@ -130,21 +132,15 @@ NFS4_OK if successfull, other values show an error.
 .PP
 
 .PP
-Definition at line 138 of file nfs4_op_rename.c.
-.PP
-Referenced by nfs4_op_rename().
+Definition at line 141 of file nfs4_op_rename.c.
 .SS "#define res_RENAME4   resp->nfs_resop4_u.oprename"
 .PP
-Definition at line 139 of file nfs4_op_rename.c.
-.PP
-Referenced by nfs4_op_rename().
+Definition at line 142 of file nfs4_op_rename.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_rename (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 141 of file nfs4_op_rename.c.
-.PP
-References arg_RENAME4, nfs4_Errno(), nfs4_SetCompoundExport(), and res_RENAME4.
+Definition at line 144 of file nfs4_op_rename.c.
 .SS "void nfs4_op_rename_Free (RENAME4res * resp)"
 .PP
 nfs4_op_rename_Free: frees what was allocared to handle nfs4_op_rename.
@@ -163,9 +159,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 514 of file nfs4_op_rename.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 510 of file nfs4_op_rename.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

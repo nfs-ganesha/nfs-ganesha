@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="nfs4__op__openattr_8c" kind="file">
     <compoundname>nfs4_op_openattr.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -40,21 +40,6 @@
       </node>
       <node id="1013">
         <label>rpc/types.h</label>
-      </node>
-      <node id="1017">
-        <label>log_functions.h</label>
-      </node>
-      <node id="1020">
-        <label>nfs4.h</label>
-      </node>
-      <node id="1008">
-        <label>pthread.h</label>
-      </node>
-      <node id="1007">
-        <label>string.h</label>
-      </node>
-      <node id="1012">
-        <label>HashTable.h</label>
       </node>
       <node id="1005">
         <label>nfs4_op_openattr.c</label>
@@ -106,6 +91,21 @@
         <childnode refid="1028" relation="include">
         </childnode>
       </node>
+      <node id="1017">
+        <label>log_functions.h</label>
+      </node>
+      <node id="1020">
+        <label>nfs4.h</label>
+      </node>
+      <node id="1008">
+        <label>pthread.h</label>
+      </node>
+      <node id="1007">
+        <label>string.h</label>
+      </node>
+      <node id="1012">
+        <label>HashTable.h</label>
+      </node>
       <node id="1015">
         <label>rpc/auth.h</label>
       </node>
@@ -147,7 +147,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="nfs4__op__openattr_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__openattr_8c_129c4df70bdfdac4dd0b00e4a3162e450" prot="public" static="no">
         <name>arg_OPENATTR4</name>
         <initializer>op-&gt;nfs_argop4_u.opopenattr</initializer>
         <briefdescription>
@@ -179,9 +179,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="139" bodystart="139" bodyend="-1"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="142" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" bodystart="142" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="nfs4__op__openattr_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__openattr_8c_1032b1b16a03b803e6428e310330eb410" prot="public" static="no">
         <name>res_OPENATTR4</name>
         <initializer>resp-&gt;nfs_resop4_u.opopenattr</initializer>
         <briefdescription>
@@ -190,12 +190,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="140" bodystart="140" bodyend="-1"/>
-        <referencedby refid="nfs4__op__openattr_8c_1a2" compoundref="nfs4__op__openattr_8c" startline="142" endline="154">nfs4_op_openattr</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="143" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" bodystart="143" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs4__op__openattr_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__openattr_8c_136c9c5555087bce821e98f955e56147f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs4_op_openattr</definition>
         <argsstring>(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp)</argsstring>
@@ -218,10 +217,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="145" bodystart="142" bodyend="154"/>
-        <references refid="nfs4__op__openattr_8c_1a1" compoundref="nfs4__op__openattr_8c" startline="140">res_OPENATTR4</references>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="148" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" bodystart="145" bodyend="157"/>
       </memberdef>
-      <memberdef kind="function" id="nfs4__op__openattr_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__openattr_8c_1f065b976f38f38f6f207515e1103ac14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void nfs4_op_openattr_Free</definition>
         <argsstring>(OPENATTR4res *resp)</argsstring>
@@ -245,19 +243,18 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="168" bodystart="167" bodyend="171"/>
-        <referencedby refid="nfs4__Compound_8c_1a5" compoundref="nfs4__Compound_8c" startline="382" endline="533">nfs4_Compound_Free</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" line="171" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c" bodystart="170" bodyend="174"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Routines used for managing the NFS4 COMPOUND functions. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:51 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:51 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
 <ref refid="nfs4__op__openattr_8c" kindref="compound">nfs4_op_openattr.c</ref> : Routines used for managing the NFS4 COMPOUND functions.</para><para><simplesect kind="rcs"><title>Header</title><para>/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c,v 1.8 2005/11/28 17:02:51 deniel Exp </para></simplesect>
 </para>    </detaileddescription>
     <programlisting>
@@ -340,64 +337,67 @@
 <codeline lineno="89"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="91"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="101"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="106"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="111"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="139" refid="nfs4__op__openattr_8c_1a0" refkind="member"><highlight class="preprocessor">#define<sp/>arg_OPENATTR4<sp/>op-&gt;nfs_argop4_u.opopenattr</highlight></codeline>
-<codeline lineno="140" refid="nfs4__op__openattr_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_OPENATTR4<sp/>resp-&gt;nfs_resop4_u.opopenattr</highlight></codeline>
-<codeline lineno="141"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="142" refid="nfs4__op__openattr_8c_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_1a2" kindref="member">nfs4_op_openattr</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
-<codeline lineno="145"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcname[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs4_op_openattr&quot;</highlight><highlight class="normal"><sp/>;</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>are<sp/>not<sp/>supported<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_OPENATTR<sp/>;</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/><ref refid="nfs4__op__openattr_8c_1a1" kindref="member">res_OPENATTR4</ref>.status<sp/>=<sp/><sp/>NFS4ERR_NOTSUPP<sp/>;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_1a1" kindref="member">res_OPENATTR4</ref>.status;</highlight></codeline>
-<codeline lineno="154"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_openattr<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="95"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="104"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="114"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="142" refid="nfs4__op__openattr_8c_129c4df70bdfdac4dd0b00e4a3162e450" refkind="member"><highlight class="preprocessor">#define<sp/>arg_OPENATTR4<sp/>op-&gt;nfs_argop4_u.opopenattr</highlight></codeline>
+<codeline lineno="143" refid="nfs4__op__openattr_8c_1032b1b16a03b803e6428e310330eb410" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_OPENATTR4<sp/>resp-&gt;nfs_resop4_u.opopenattr</highlight></codeline>
+<codeline lineno="144"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="145" refid="nfs4__op__openattr_8c_136c9c5555087bce821e98f955e56147f" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_136c9c5555087bce821e98f955e56147f" kindref="member">nfs4_op_openattr</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
+<codeline lineno="148"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>__attribute__((<sp/>__unused__<sp/>))<sp/>funcname[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs4_op_openattr&quot;</highlight><highlight class="normal"><sp/>;</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"></highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_OPENATTR<sp/>;</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><ref refid="nfs4__op__openattr_8c_1032b1b16a03b803e6428e310330eb410" kindref="member">res_OPENATTR4</ref>.status<sp/>=<sp/><sp/>NFS4_OK<sp/>;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><ref refid="nfs4__op__openattr_8c_1032b1b16a03b803e6428e310330eb410" kindref="member">res_OPENATTR4</ref>.status<sp/>=<sp/><sp/><ref refid="nfs4__xattr_8c_19f1ad95bb2399d13e8aa7c737aeab1b4" kindref="member">nfs4_fh_to_xattrfh</ref>(<sp/>&amp;(data-&gt;currentFH),<sp/>&amp;(data-&gt;currentFH<sp/>)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="155"><highlight class="normal"></highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="167" refid="nfs4__op__openattr_8c_1a3" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_1a3" kindref="member">nfs4_op_openattr_Free</ref>(<sp/>OPENATTR4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
-<codeline lineno="168"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_openattr_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_1032b1b16a03b803e6428e310330eb410" kindref="member">res_OPENATTR4</ref>.status;</highlight></codeline>
+<codeline lineno="157"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_openattr<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"></highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="170" refid="nfs4__op__openattr_8c_1f065b976f38f38f6f207515e1103ac14" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__openattr_8c_1f065b976f38f38f6f207515e1103ac14" kindref="member">nfs4_op_openattr_Free</ref>(<sp/>OPENATTR4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
+<codeline lineno="171"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="174"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_openattr_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_openattr.c"/>
   </compounddef>
 </doxygen>

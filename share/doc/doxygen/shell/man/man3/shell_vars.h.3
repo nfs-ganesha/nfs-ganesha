@@ -1,8 +1,10 @@
-.TH "shell_vars.h" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_vars.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell_vars.h \- variables management for the shell. 
+shell_vars.h \- variables management for the shell.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -41,26 +43,26 @@ variables management for the shell.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/05/09 12:23:55 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.2 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.2 
 .RE
 .PP
 \fBLog\fP.RS 4
@@ -69,7 +71,7 @@ leibovic
 .PP
 Revision 1.2 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
 .PP
-Revision 1.1 2004/12/14 09:56:00 leibovic Variables management.
+Revision 1.1 2004/12/14 09:56:00 leibovic Variables management. 
 .PP
 Definition in file \fBshell_vars.h\fP.
 .SH "Define Documentation"
@@ -83,47 +85,34 @@ Definition at line 24 of file shell_vars.h.
 .PP
 free the resources used by a variable. 
 .PP
-Definition at line 337 of file shell_vars.c.
-.PP
-References shell_variable_t.
-.PP
-Referenced by shellcmd_unset().
+Definition at line 333 of file shell_vars.c.
 .SS "char* get_var_value (char * varname)"
 .PP
 returns the value for a variable, NULL if the variable doesn't exist. 
 .PP
-Definition at line 308 of file shell_vars.c.
-.PP
-References shell_variable_t, and shell_variable__::var_value.
-.PP
-Referenced by shell_GetPrompt(), shell_PrintError(), shell_PrintTrace(), and shell_SolveArgs().
+Definition at line 304 of file shell_vars.c.
 .SS "int is_authorized_varname (char * str)"
 .PP
 indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* 
 .PP
-Definition at line 276 of file shell_vars.c.
-.PP
-References IS_LETTER, IS_LETTER_CAP, and IS_NUMERIC.
-.PP
-Referenced by shellcmd_set().
+Definition at line 272 of file shell_vars.c.
 .SS "void print_varlist (FILE * output, int is_dlen)"
 .PP
 print var list. 
 .PP
-Definition at line 182 of file shell_vars.c.
+\fBParameters:\fP
+.RS 4
+\fIis_dlen,:\fP indicates if it prints the length of the data they contain.
+.RE
 .PP
-References shell_variable__::datalen, shell_variable_t, and shell_variable__::var_name.
+print var list. 
 .PP
-Referenced by shellcmd_varlist().
+Definition at line 179 of file shell_vars.c.
 .SS "int set_var_value (char * varname, char * var_value)"
 .PP
 set the value for a variable, and create it if necessary. 
 .PP
-Definition at line 321 of file shell_vars.c.
-.PP
-References shell_variable_t.
-.PP
-Referenced by shell_SetDbgLvl(), shell_SetInput(), shell_SetLayer(), shell_SetLine(), shell_SetPrompt(), shell_SetShellId(), shell_SetStatus(), shell_SetVerbose(), and shellcmd_set().
+Definition at line 317 of file shell_vars.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

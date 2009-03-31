@@ -1,8 +1,10 @@
-.TH "idmapper_cache.c" 3 "9 Apr 2008" "Version 0.1" "Id Mapper" \" -*- nroff -*-
+.TH "idmapper_cache.c" 3 "31 Mar 2009" "Version 0.1" "Id Mapper" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-idmapper_cache.c \- Id mapping functions. 
+idmapper_cache.c \- Id mapping functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -65,6 +67,9 @@ idmapper_cache.c \- Id mapping functions.
 .RI "int \fBidmap_uid_init\fP (nfs_idmap_cache_parameter_t param)"
 .br
 .ti -1c
+.RI "int \fBuidgidmap_init\fP (nfs_idmap_cache_parameter_t param)"
+.br
+.ti -1c
 .RI "int \fBidmap_uname_init\fP (nfs_idmap_cache_parameter_t param)"
 .br
 .ti -1c
@@ -81,6 +86,9 @@ idmapper_cache.c \- Id mapping functions.
 .br
 .ti -1c
 .RI "int \fBnamemap_add\fP (hash_table_t *ht, unsigned int key, char *val)"
+.br
+.ti -1c
+.RI "int \fBuidgidmap_add\fP (unsigned int key, unsigned int value)"
 .br
 .ti -1c
 .RI "int \fBuidmap_add\fP (char *key, unsigned int val)"
@@ -101,6 +109,9 @@ idmapper_cache.c \- Id mapping functions.
 .RI "int \fBnamemap_get\fP (hash_table_t *ht, unsigned int key, char *pval)"
 .br
 .ti -1c
+.RI "int \fBuidgidmap_get\fP (unsigned int key, unsigned int *pval)"
+.br
+.ti -1c
 .RI "int \fBuidmap_get\fP (char *key, unsigned long *pval)"
 .br
 .ti -1c
@@ -117,6 +128,9 @@ idmapper_cache.c \- Id mapping functions.
 .br
 .ti -1c
 .RI "int \fBnamemap_remove\fP (hash_table_t *ht, unsigned int key)"
+.br
+.ti -1c
+.RI "int \fBuidgidmap_remove\fP (unsigned int key)"
 .br
 .ti -1c
 .RI "int \fBuidmap_remove\fP (char *key)"
@@ -153,6 +167,9 @@ idmapper_cache.c \- Id mapping functions.
 .RI "hash_table_t * \fBht_grgid\fP"
 .br
 .ti -1c
+.RI "hash_table_t * \fBht_uidgid\fP"
+.br
+.ti -1c
 .RI "nfs_parameter_t \fBnfs_param\fP"
 .br
 .in -1c
@@ -162,10 +179,10 @@ Id mapping functions.
 
 \fBAuthor:\fP
 .RS 4
-\fBAuthor\fP.RS 4
-deniel 
 .RE
 .PP
+\fBAuthor\fP.RS 4
+deniel 
 .RE
 .PP
 \fBDate:\fP
@@ -175,10 +192,10 @@ $Date$
 .PP
 \fBVersion:\fP
 .RS 4
-$Revision$ 
+$Revision$ \fBidmapper_cache.c\fP : Id mapping functions, passwd and groups cache management. 
 .RE
 .PP
-\fBidmapper_cache.c\fP : Id mapping functions, passwd and groups cache management.
+
 .PP
 Definition in file \fBidmapper_cache.c\fP.
 .SH "Function Documentation"
@@ -203,10 +220,10 @@ Compares the values stored in the key buffers. This function is to be used as 'c
 .PP
 
 .PP
-Definition at line 191 of file idmapper_cache.c.
+Definition at line 200 of file idmapper_cache.c.
 .SS "int compare_namemapper (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
-Definition at line 196 of file idmapper_cache.c.
+Definition at line 205 of file idmapper_cache.c.
 .SS "int display_idmapper_key (hash_buffer_t * pbuff, char * str)"
 .PP
 display_idmapper_key: displays the entry key stored in the buffer.
@@ -227,7 +244,7 @@ number of character written.
 .PP
 
 .PP
-Definition at line 218 of file idmapper_cache.c.
+Definition at line 227 of file idmapper_cache.c.
 .SS "int display_idmapper_val (hash_buffer_t * pbuff, char * str)"
 .PP
 display_idmapper_val: displays the entry key stored in the buffer.
@@ -248,41 +265,25 @@ number of character written.
 .PP
 
 .PP
-Definition at line 237 of file idmapper_cache.c.
+Definition at line 246 of file idmapper_cache.c.
 .SS "int gidmap_add (char * key, unsigned int val)"
 .PP
-Definition at line 526 of file idmapper_cache.c.
-.PP
-References ht_grgid, ht_grnam, idmap_add(), and namemap_add().
-.PP
-Referenced by name2gid().
+Definition at line 569 of file idmapper_cache.c.
 .SS "int gidmap_get (char * key, unsigned long * pval)"
 .PP
-Definition at line 640 of file idmapper_cache.c.
-.PP
-References ht_grnam, and idmap_get().
-.PP
-Referenced by name2gid().
+Definition at line 718 of file idmapper_cache.c.
 .SS "int gidmap_remove (char * key)"
 .PP
-Definition at line 727 of file idmapper_cache.c.
-.PP
-References ht_grnam, and idmap_remove().
+Definition at line 824 of file idmapper_cache.c.
 .SS "int gnamemap_add (unsigned int key, char * val)"
 .PP
-Definition at line 542 of file idmapper_cache.c.
-.PP
-References ht_grgid, ht_grnam, idmap_add(), and namemap_add().
+Definition at line 585 of file idmapper_cache.c.
 .SS "int gnamemap_get (unsigned int key, char * val)"
 .PP
-Definition at line 646 of file idmapper_cache.c.
-.PP
-References ht_grgid, and namemap_get().
+Definition at line 724 of file idmapper_cache.c.
 .SS "int gnamemap_remove (unsigned int key)"
 .PP
-Definition at line 732 of file idmapper_cache.c.
-.PP
-References ht_grgid, and namemap_remove().
+Definition at line 829 of file idmapper_cache.c.
 .SS "int idmap_add (hash_table_t * ht, char * key, unsigned int val)"
 .PP
 idmap_add: Adds a value by key
@@ -305,20 +306,14 @@ ID_MAPPER_SUCCESS, ID_MAPPER_INSERT_MALLOC_ERROR, ID_MAPPER_INVALID_ARGUMENT
 .PP
 
 .PP
-Definition at line 430 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_add(), gnamemap_add(), idmap_populate(), uidmap_add(), and unamemap_add().
+Definition at line 450 of file idmapper_cache.c.
 .SS "int idmap_compute_hash_value (char * name, uint32_t * phashval)"
 .PP
 idmap_compute_hash_value: computes the hash value, based on the string.
 .PP
 Computes the computes the hash value, based on the string. 
 .PP
-Definition at line 318 of file idmapper_cache.c.
-.PP
-References strnlen().
-.PP
-Referenced by idmapper_rbt_hash_func().
+Definition at line 338 of file idmapper_cache.c.
 .SS "int idmap_get (hash_table_t * ht, char * key, unsigned long * pval)"
 .PP
 idmap_get: gets a value by key
@@ -341,9 +336,7 @@ ID_MAPPER_SUCCESS or ID_MAPPER_NOT_FOUND
 .PP
 
 .PP
-Definition at line 571 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_get(), and uidmap_get().
+Definition at line 614 of file idmapper_cache.c.
 .SS "void idmap_get_stats (idmap_type_t maptype, hash_stat_t * phstat, hash_stat_t * phstat_reverse)"
 .PP
 idmap_get_stats: gets the hash table statistics for the idmap et the reverse id map
@@ -371,7 +364,7 @@ HashTable_GetStats
 .PP
 
 .PP
-Definition at line 847 of file idmapper_cache.c.
+Definition at line 952 of file idmapper_cache.c.
 .SS "int idmap_gid_init (nfs_idmap_cache_parameter_t param)"
 .PP
 idmap_gid_init: Inits the hashtable for GID mapping.
@@ -390,23 +383,17 @@ Inits the hashtable for GID mapping.
 .PP
 
 .PP
-Definition at line 287 of file idmapper_cache.c.
-.PP
-References ht_grnam.
+Definition at line 307 of file idmapper_cache.c.
 .SS "int idmap_gname_init (nfs_idmap_cache_parameter_t param)"
 .PP
-Definition at line 298 of file idmapper_cache.c.
-.PP
-References ht_grgid.
+Definition at line 318 of file idmapper_cache.c.
 .SS "int idmap_populate (char * path, idmap_type_t maptype)"
 .PP
 idmap_populate_by_conf: Use the configuration file to populate the ID_MAPPER.
 .PP
 Use the configuration file to populate the ID_MAPPER. 
 .PP
-Definition at line 745 of file idmapper_cache.c.
-.PP
-References idmap_add(), and namemap_add().
+Definition at line 842 of file idmapper_cache.c.
 .SS "int idmap_remove (hash_table_t * ht, char * key)"
 .PP
 idmap_remove: Tries to remove an entry for ID_MAPPER
@@ -427,9 +414,7 @@ the delete status
 .PP
 
 .PP
-Definition at line 664 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_remove(), and uidmap_remove().
+Definition at line 742 of file idmapper_cache.c.
 .SS "int idmap_uid_init (nfs_idmap_cache_parameter_t param)"
 .PP
 idmap_uid_init: Inits the hashtable for UID mapping.
@@ -448,14 +433,10 @@ Inits the hashtable for UID mapping.
 .PP
 
 .PP
-Definition at line 254 of file idmapper_cache.c.
-.PP
-References ht_pwnam.
+Definition at line 263 of file idmapper_cache.c.
 .SS "int idmap_uname_init (nfs_idmap_cache_parameter_t param)"
 .PP
-Definition at line 265 of file idmapper_cache.c.
-.PP
-References ht_pwuid.
+Definition at line 285 of file idmapper_cache.c.
 .SS "unsigned long idmapper_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 idmapper_rbt_hash_func: computes the rbt value for the entry in the id mapper stuff.
@@ -481,9 +462,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 163 of file idmapper_cache.c.
-.PP
-References idmap_compute_hash_value().
+Definition at line 172 of file idmapper_cache.c.
 .SS "unsigned long idmapper_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 idmapper_rbt_hash_func: computes the hash value for the entry in id mapper stuff
@@ -509,90 +488,74 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 132 of file idmapper_cache.c.
+Definition at line 141 of file idmapper_cache.c.
 .SS "int namemap_add (hash_table_t * ht, unsigned int key, char * val)"
 .PP
-Definition at line 461 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_add(), gnamemap_add(), idmap_populate(), uidmap_add(), and unamemap_add().
+Definition at line 481 of file idmapper_cache.c.
 .SS "int namemap_get (hash_table_t * ht, unsigned int key, char * pval)"
 .PP
-Definition at line 599 of file idmapper_cache.c.
-.PP
-Referenced by gnamemap_get(), and unamemap_get().
+Definition at line 642 of file idmapper_cache.c.
 .SS "int namemap_remove (hash_table_t * ht, unsigned int key)"
 .PP
-Definition at line 689 of file idmapper_cache.c.
-.PP
-Referenced by gnamemap_remove(), and unamemap_remove().
+Definition at line 767 of file idmapper_cache.c.
 .SS "unsigned long namemapper_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 174 of file idmapper_cache.c.
+Definition at line 183 of file idmapper_cache.c.
 .SS "unsigned long namemapper_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 144 of file idmapper_cache.c.
+Definition at line 153 of file idmapper_cache.c.
 .SS "size_t strnlen (const char * s, size_t maxlen)"
 .PP
-Referenced by idmap_compute_hash_value(), and idmap_computer_hash_value().
+.SS "int uidgidmap_add (unsigned int key, unsigned int value)"
+.PP
+Definition at line 512 of file idmapper_cache.c.
+.SS "int uidgidmap_get (unsigned int key, unsigned int * pval)"
+.PP
+Definition at line 671 of file idmapper_cache.c.
+.SS "int uidgidmap_init (nfs_idmap_cache_parameter_t param)"
+.PP
+Definition at line 274 of file idmapper_cache.c.
+.SS "int uidgidmap_remove (unsigned int key)"
+.PP
+Definition at line 793 of file idmapper_cache.c.
 .SS "int uidmap_add (char * key, unsigned int val)"
 .PP
-Definition at line 494 of file idmapper_cache.c.
-.PP
-References ht_pwnam, ht_pwuid, idmap_add(), and namemap_add().
-.PP
-Referenced by name2uid().
+Definition at line 537 of file idmapper_cache.c.
 .SS "int uidmap_get (char * key, unsigned long * pval)"
 .PP
-Definition at line 628 of file idmapper_cache.c.
-.PP
-References ht_pwnam, and idmap_get().
-.PP
-Referenced by name2uid().
+Definition at line 706 of file idmapper_cache.c.
 .SS "int uidmap_remove (char * key)"
 .PP
-Definition at line 717 of file idmapper_cache.c.
-.PP
-References ht_pwnam, and idmap_remove().
+Definition at line 814 of file idmapper_cache.c.
 .SS "int unamemap_add (unsigned int key, char * val)"
 .PP
-Definition at line 510 of file idmapper_cache.c.
-.PP
-References ht_pwnam, ht_pwuid, idmap_add(), and namemap_add().
+Definition at line 553 of file idmapper_cache.c.
 .SS "int unamemap_get (unsigned int key, char * val)"
 .PP
-Definition at line 634 of file idmapper_cache.c.
-.PP
-References ht_pwuid, and namemap_get().
+Definition at line 712 of file idmapper_cache.c.
 .SS "int unamemap_remove (unsigned int key)"
 .PP
-Definition at line 722 of file idmapper_cache.c.
-.PP
-References ht_pwuid, and namemap_remove().
+Definition at line 819 of file idmapper_cache.c.
 .SH "Variable Documentation"
 .PP 
 .SS "hash_table_t* \fBht_grgid\fP"
 .PP
-Definition at line 112 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_add(), gnamemap_add(), gnamemap_get(), gnamemap_remove(), and idmap_gname_init().
+Definition at line 119 of file idmapper_cache.c.
 .SS "hash_table_t* \fBht_grnam\fP"
 .PP
-Definition at line 110 of file idmapper_cache.c.
-.PP
-Referenced by gidmap_add(), gidmap_get(), gidmap_remove(), gnamemap_add(), and idmap_gid_init().
+Definition at line 117 of file idmapper_cache.c.
 .SS "hash_table_t* \fBht_pwnam\fP"
 .PP
-Definition at line 109 of file idmapper_cache.c.
-.PP
-Referenced by idmap_uid_init(), uidmap_add(), uidmap_get(), uidmap_remove(), and unamemap_add().
+Definition at line 116 of file idmapper_cache.c.
 .SS "hash_table_t* \fBht_pwuid\fP"
 .PP
-Definition at line 111 of file idmapper_cache.c.
+Definition at line 118 of file idmapper_cache.c.
+.SS "hash_table_t* \fBht_uidgid\fP"
 .PP
-Referenced by idmap_uname_init(), uidmap_add(), unamemap_add(), unamemap_get(), and unamemap_remove().
+Definition at line 120 of file idmapper_cache.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 47 of file test_idmapper.c.
+Definition at line 50 of file test_idmapper.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Id Mapper from the source code.

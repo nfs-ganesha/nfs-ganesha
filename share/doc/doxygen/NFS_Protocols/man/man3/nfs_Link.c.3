@@ -1,8 +1,10 @@
-.TH "nfs_Link.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Link.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_Link.c \- everything that is needed to handle NFS PROC2-3 LINK. 
+nfs_Link.c \- everything that is needed to handle NFS PROC2-3 LINK.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -73,6 +75,8 @@ everything that is needed to handle NFS PROC2-3 LINK.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
@@ -81,17 +85,15 @@ deniel
 2006/01/24 11:43:05 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.16 
 .RE
 .PP
-.RE
-.PP
-nfs_Link - everything that is needed to handle NFS PROC2-3 LINK LINK Performs hardlink through NFS.
+nfs_Link - everything that is needed to handle NFS PROC2-3 LINK LINK Performs hardlink through NFS. 
 .PP
 Definition in file \fBnfs_Link.c\fP.
 .SH "Function Documentation"
@@ -130,9 +132,7 @@ NFS_REQ_OK if successfull
 .PP
 
 .PP
-Definition at line 146 of file nfs_Link.c.
-.PP
-References nfs_FhandleToCache(), nfs_RetryableError(), nfs_SetFailedStatus(), nfs_SetPostOpAttr(), and nfs_SetWccData().
+Definition at line 149 of file nfs_Link.c.
 .SS "void nfs_Link_Free (nfs_res_t * resp)"
 .PP
 nfs_Link_Free: Frees the result structure allocated for nfs_Link.
@@ -146,7 +146,7 @@ Frees the result structure allocated for nfs_Link.
 .PP
 
 .PP
-Definition at line 363 of file nfs_Link.c.
+Definition at line 366 of file nfs_Link.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

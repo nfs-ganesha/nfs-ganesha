@@ -1,4 +1,4 @@
-.TH "log_functions.c" 3 "9 Apr 2008" "Version 0.1" "Log Library" \" -*- nroff -*-
+.TH "log_functions.c" 3 "31 Mar 2009" "Version 0.1" "Log Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -156,13 +156,6 @@ log_functions.c \-
 .RI "#define \fBVA_ARG_ERREUR_T\fP   numero = va_arg( arguments, long ) ; label  = va_arg( arguments, char * ) ; msg    = va_arg( arguments, char *)"
 .br
 .in -1c
-.SS "Typedefs"
-
-.in +1c
-.ti -1c
-.RI "typedef \fBThreadLogContext_t\fP \fBThreadLogContext_t\fP"
-.br
-.in -1c
 .SS "Functions"
 
 .in +1c
@@ -292,110 +285,72 @@ log_functions.c \-
 .SS "#define CHANGE_CTX_FAMILY   12"
 .PP
 Definition at line 1150 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define CHANGE_ERR_FAMILY   11"
 .PP
 Definition at line 1149 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define CHAR_TYPE   3"
 .PP
 Definition at line 1130 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define CONTEXTE_LONG   4"
 .PP
 Definition at line 1142 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define CONTEXTE_SHORT   3"
 .PP
 Definition at line 1141 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define DOUBLE_TYPE   6"
 .PP
 Definition at line 1133 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERRCTX_LONG   10"
 .PP
 Definition at line 1148 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERRCTX_SHORT   9"
 .PP
 Definition at line 1147 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERREUR_LONG   6"
 .PP
 Definition at line 1144 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERREUR_SHORT   5"
 .PP
 Definition at line 1143 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERRNUM_LONG   8"
 .PP
 Definition at line 1146 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define ERRNUM_SHORT   7"
 .PP
 Definition at line 1145 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define EXTENDED_TYPE   8"
 .PP
 Definition at line 1137 of file log_functions.c.
 .SS "#define FLOAT_TYPE   5"
 .PP
 Definition at line 1132 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define INT_TYPE   1"
 .PP
 Definition at line 1128 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define Localtime_r   localtime_r"
 .PP
-Definition at line 176 of file log_functions.c.
+Definition at line 175 of file log_functions.c.
 .SS "#define LONG_LG   2"
 .PP
 Definition at line 1155 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define LONG_LONG_LG   3"
 .PP
 Definition at line 1156 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define LONG_TYPE   2"
 .PP
 Definition at line 1129 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define MAX_NUM_FAMILY   50"
 .PP
-Definition at line 104 of file log_functions.c.
+Definition at line 103 of file log_functions.c.
 .SS "#define MAX_STR_LEN   1024"
 .PP
-Definition at line 103 of file log_functions.c.
+Definition at line 102 of file log_functions.c.
 .SS "#define MAX_STR_TOK   1024"
 .PP
 Definition at line 1158 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define NO_LONG   0"
 .PP
 Definition at line 1153 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define NO_TYPE   0"
 .PP
 Definition at line 1127 of file log_functions.c.
@@ -404,180 +359,116 @@ Definition at line 1127 of file log_functions.c.
 Definition at line 1125 of file log_functions.c.
 .SS "#define P(_mutex_)   pthread_mutex_lock( &_mutex_)"
 .PP
-Definition at line 108 of file log_functions.c.
+Definition at line 107 of file log_functions.c.
 .SS "#define PATH_LEN   1024"
 .PP
-Definition at line 102 of file log_functions.c.
+Definition at line 101 of file log_functions.c.
 .SS "#define POINTEUR_TYPE   7"
 .PP
 Definition at line 1134 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define SHORT_LG   1"
 .PP
 Definition at line 1154 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define STATUS_LONG   2"
 .PP
 Definition at line 1140 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define STATUS_SHORT   1"
 .PP
 Definition at line 1139 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define STR_LEN_TXT   2048"
 .PP
-Definition at line 101 of file log_functions.c.
+Definition at line 100 of file log_functions.c.
 .SS "#define STRING_TYPE   4"
 .PP
 Definition at line 1131 of file log_functions.c.
-.PP
-Referenced by log_vsnprintf().
 .SS "#define UNUSED_SLOT   -1"
 .PP
-Definition at line 105 of file log_functions.c.
+Definition at line 104 of file log_functions.c.
 .SS "#define V(_mutex_)   pthread_mutex_unlock( &_mutex_ )"
 .PP
-Definition at line 109 of file log_functions.c.
+Definition at line 108 of file log_functions.c.
 .SS "#define VA_ARG_ERREUR_T   numero = va_arg( arguments, long ) ; label  = va_arg( arguments, char * ) ; msg    = va_arg( arguments, char *)"
-.PP
-.SH "Typedef Documentation"
-.PP 
-.SS "typedef struct \fBThreadLogContext_t\fP  \fBThreadLogContext_t\fP"
 .PP
 .SH "Function Documentation"
 .PP 
 .SS "int AddFamilyError (int num_family, char * name_family, family_error_t * tab_err)"
 .PP
 Definition at line 794 of file log_functions.c.
-.PP
-Referenced by main().
 .SS "int AddLogStreamJd (log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage)"
 .PP
 Definition at line 966 of file log_functions.c.
-.PP
-Referenced by Test1().
 .SS "int DisplayErrorFdLine (int fd, int num_family, int num_error, int status, int ma_ligne)"
 .PP
 Definition at line 943 of file log_functions.c.
-.PP
-References DisplayLogFd().
 .SS "int DisplayErrorFluxLine (FILE * flux, int num_family, int num_error, int status, int ma_ligne)"
 .PP
 Definition at line 933 of file log_functions.c.
-.PP
-References DisplayLogFlux().
 .SS "int DisplayErrorJdLine (log_t jd, int num_family, int num_error, int status, int ma_ligne)"
 .PP
 Definition at line 1113 of file log_functions.c.
-.PP
-References DisplayLogJd().
 .SS "int DisplayErrorLogLine (int num_family, int num_error, int status, int ma_ligne)"
 .PP
 Definition at line 953 of file log_functions.c.
-.PP
-References DisplayLog().
 .SS "int DisplayErrorStringLine (char * tampon, int num_family, int num_error, int status, int ma_ligne)"
 .PP
 Definition at line 923 of file log_functions.c.
-.PP
-References DisplayLogString().
-.PP
-Referenced by Test1().
 .SS "int DisplayLog (char * format,  ...)"
 .PP
 Definition at line 672 of file log_functions.c.
-.PP
-Referenced by DisplayErrorLogLine(), and Test1().
 .SS "int DisplayLogFd (int fd, char * format,  ...)"
 .PP
 Definition at line 545 of file log_functions.c.
-.PP
-Referenced by DisplayErrorFdLine(), and Test1().
 .SS "int DisplayLogFdLevel (int fd, int level, char * format,  ...)"
 .PP
 Definition at line 733 of file log_functions.c.
 .SS "int DisplayLogFlux (FILE * flux, char * format,  ...)"
 .PP
 Definition at line 569 of file log_functions.c.
-.PP
-Referenced by DisplayErrorFluxLine(), and Test1().
 .SS "int DisplayLogFluxLevel (FILE * flux, int level, char * format,  ...)"
 .PP
 Definition at line 714 of file log_functions.c.
 .SS "int DisplayLogJd (log_t jd, char * format,  ...)"
 .PP
 Definition at line 1071 of file log_functions.c.
-.PP
-Referenced by DisplayErrorJdLine().
 .SS "int DisplayLogJdLevel (log_t jd, int level, char * format,  ...)"
 .PP
 Definition at line 997 of file log_functions.c.
-.PP
-Referenced by Test1().
 .SS "int DisplayLogLevel (int level, char * format,  ...)"
 .PP
 Definition at line 751 of file log_functions.c.
 .SS "int DisplayLogPath (char * path, char * format,  ...)"
 .PP
 Definition at line 654 of file log_functions.c.
-.PP
-Referenced by Test1().
 .SS "int DisplayLogPathLevel (char * path, int level, char * format,  ...)"
 .PP
 Definition at line 770 of file log_functions.c.
 .SS "int DisplayLogString (char * chaine, char * format,  ...)"
 .PP
 Definition at line 523 of file log_functions.c.
-.PP
-Referenced by DisplayErrorStringLine(), and Test1().
 .SS "int DisplayLogStringLevel (char * tampon, int level, char * format,  ...)"
 .PP
 Definition at line 693 of file log_functions.c.
 .SS "int InitDebug (int level_to_set)"
 .PP
 Definition at line 456 of file log_functions.c.
-.PP
-References SetLevelDebug().
-.PP
-Referenced by main().
 .SS "int log_fprintf (FILE * file, char * format,  ...)"
 .PP
 Definition at line 1755 of file log_functions.c.
-.PP
-References log_vsnprintf().
 .SS "int log_printf (char * format,  ...)"
 .PP
 Definition at line 1780 of file log_functions.c.
-.PP
-References log_vfprintf().
 .SS "int log_snprintf (char * out, size_t n, char * format,  ...)"
 .PP
 Definition at line 1743 of file log_functions.c.
-.PP
-References log_vsnprintf().
 .SS "int log_sprintf (char * out, char * format,  ...)"
 .PP
 Definition at line 1731 of file log_functions.c.
-.PP
-Referenced by Test1().
 .SS "int log_vfprintf (FILE * file, char * format, va_list arguments)"
 .PP
 Definition at line 1769 of file log_functions.c.
-.PP
-References log_vsnprintf().
-.PP
-Referenced by log_printf().
 .SS "int log_vsnprintf (char * out, size_t taille, char * format, va_list arguments)"
 .PP
 Definition at line 1161 of file log_functions.c.
-.PP
-References CHANGE_CTX_FAMILY, CHANGE_ERR_FAMILY, CHAR_TYPE, CONTEXTE_LONG, CONTEXTE_SHORT, DOUBLE_TYPE, ERRCTX_LONG, ERRCTX_SHORT, ERREUR_LONG, ERREUR_SHORT, ERRNUM_LONG, ERRNUM_SHORT, FLOAT_TYPE, INT_TYPE, LONG_LG, LONG_LONG_LG, LONG_TYPE, MAX_STR_TOK, NO_LONG, POINTEUR_TYPE, SHORT_LG, STATUS_LONG, STATUS_SHORT, and STRING_TYPE.
-.PP
-Referenced by log_fprintf(), log_snprintf(), and log_vfprintf().
 .SS "int RemoveFamilyError (int num_family)"
 .PP
 Definition at line 822 of file log_functions.c.
@@ -593,53 +484,33 @@ Definition at line 270 of file log_functions.c.
 .SS "char* ReturnNameFamilyError (int num_family)"
 .PP
 Definition at line 837 of file log_functions.c.
-.PP
-Referenced by main().
 .SS "char* ReturnNameFileLog ()"
 .PP
 Definition at line 368 of file log_functions.c.
 .SS "char* ReturnNameFunction ()"
 .PP
 Definition at line 357 of file log_functions.c.
-.PP
-References ThreadLogContext_t::nom_fonction.
-.PP
-Referenced by Test1().
 .SS "char* ReturnNameHost ()"
 .PP
 Definition at line 347 of file log_functions.c.
-.PP
-Referenced by Test1().
 .SS "char* ReturnNamePgm ()"
 .PP
 Definition at line 338 of file log_functions.c.
 .SS "int SetLevelDebug (int level_to_set)"
 .PP
 Definition at line 415 of file log_functions.c.
-.PP
-Referenced by InitDebug().
 .SS "int SetNameFileLog (char * nom)"
 .PP
 Definition at line 325 of file log_functions.c.
-.PP
-Referenced by main().
 .SS "int SetNameFunction (char * nom)"
 .PP
 Definition at line 311 of file log_functions.c.
-.PP
-References ThreadLogContext_t::nom_fonction.
-.PP
-Referenced by Test1().
 .SS "int SetNameHost (char * nom)"
 .PP
 Definition at line 300 of file log_functions.c.
-.PP
-Referenced by main().
 .SS "int SetNamePgm (char * nom)"
 .PP
 Definition at line 286 of file log_functions.c.
-.PP
-Referenced by main().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Log Library from the source code.

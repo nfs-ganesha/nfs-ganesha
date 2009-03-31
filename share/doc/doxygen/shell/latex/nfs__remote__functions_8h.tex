@@ -1,5 +1,5 @@
 \section{nfs\_\-remote\_\-functions.h File Reference}
-\label{nfs__remote__functions_8h}\index{nfs_remote_functions.h@{nfs\_\-remote\_\-functions.h}}
+\label{nfs__remote__functions_8h}\index{nfs\_\-remote\_\-functions.h@{nfs\_\-remote\_\-functions.h}}
 {\tt \#include \char`\"{}nfs\_\-proto\_\-functions.h\char`\"{}}\par
 {\tt \#include $<$rpc/clnt.h$>$}\par
 \subsection*{Functions}
@@ -13,7 +13,7 @@ int {\bf mnt1\_\-remote\_\-Dump} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg,
 \item 
 int {\bf mnt1\_\-remote\_\-Umnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
-int {\bf mnt1\_\-remote\_\-Umnt\-All} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+int {\bf mnt1\_\-remote\_\-UmntAll} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
 int {\bf mnt1\_\-remote\_\-Export} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
@@ -25,7 +25,7 @@ int {\bf mnt3\_\-remote\_\-Dump} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg,
 \item 
 int {\bf mnt3\_\-remote\_\-Umnt} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
-int {\bf mnt3\_\-remote\_\-Umnt\-All} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
+int {\bf mnt3\_\-remote\_\-UmntAll} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
 int {\bf mnt3\_\-remote\_\-Export} (CLIENT $\ast$clnt, nfs\_\-arg\_\-t $\ast$parg, nfs\_\-res\_\-t $\ast$pres)
 \item 
@@ -123,7 +123,7 @@ void {\bf mnt1\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
 void {\bf mnt1\_\-remote\_\-Umnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
-void {\bf mnt1\_\-remote\_\-Umnt\-All\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+void {\bf mnt1\_\-remote\_\-UmntAll\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
 void {\bf mnt3\_\-remote\_\-Mnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
@@ -135,7 +135,7 @@ void {\bf mnt3\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
 void {\bf mnt3\_\-remote\_\-Umnt\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
-void {\bf mnt3\_\-remote\_\-Umnt\-All\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
+void {\bf mnt3\_\-remote\_\-UmntAll\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 \item 
 void {\bf nfs2\_\-remote\_\-Null\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
 \item 

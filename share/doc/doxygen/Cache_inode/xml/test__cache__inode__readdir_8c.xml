@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="test__cache__inode__readdir_8c" kind="file">
     <compoundname>test_cache_inode_readdir.c</compoundname>
     <includes local="yes">BuddyMalloc.h</includes>
@@ -15,50 +15,36 @@
     <includes local="no">strings.h</includes>
     <includes local="no">sys/types.h</includes>
     <incdepgraph>
-      <node id="424">
+      <node id="428">
         <label>LRU_List.h</label>
       </node>
-      <node id="422">
+      <node id="426">
         <label>fsal.h</label>
       </node>
-      <node id="430">
+      <node id="434">
         <label>stdlib.h</label>
       </node>
-      <node id="421">
+      <node id="425">
         <label>BuddyMalloc.h</label>
       </node>
-      <node id="425">
+      <node id="429">
         <label>log_functions.h</label>
       </node>
-      <node id="427">
+      <node id="431">
         <label>err_cache_inode.h</label>
       </node>
-      <node id="432">
+      <node id="436">
         <label>sys/types.h</label>
       </node>
-      <node id="429">
+      <node id="433">
         <label>unistd.h</label>
       </node>
-      <node id="431">
+      <node id="435">
         <label>strings.h</label>
       </node>
-      <node id="428">
-        <label>stuff_alloc.h</label>
-      </node>
-      <node id="426">
-        <label>err_fsal.h</label>
-      </node>
-      <node id="420">
+      <node id="424">
         <label>test_cache_inode_readdir.c</label>
         <link refid="test_cache_inode_readdir.c"/>
-        <childnode refid="421" relation="include">
-        </childnode>
-        <childnode refid="422" relation="include">
-        </childnode>
-        <childnode refid="423" relation="include">
-        </childnode>
-        <childnode refid="424" relation="include">
-        </childnode>
         <childnode refid="425" relation="include">
         </childnode>
         <childnode refid="426" relation="include">
@@ -75,13 +61,27 @@
         </childnode>
         <childnode refid="432" relation="include">
         </childnode>
+        <childnode refid="433" relation="include">
+        </childnode>
+        <childnode refid="434" relation="include">
+        </childnode>
+        <childnode refid="435" relation="include">
+        </childnode>
+        <childnode refid="436" relation="include">
+        </childnode>
       </node>
-      <node id="423">
+      <node id="432">
+        <label>stuff_alloc.h</label>
+      </node>
+      <node id="430">
+        <label>err_fsal.h</label>
+      </node>
+      <node id="427">
         <label>cache_inode.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="test__cache__inode__readdir_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="test__cache__inode__readdir_8c_1863b7cbf4c49b9bdda01992b993130a2" prot="public" static="no">
         <name>HPSS_SSM</name>
         <initializer>&quot;hpss_ssm&quot;</initializer>
         <briefdescription>
@@ -90,9 +90,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="104" bodystart="104" bodyend="-1"/>
+        <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="104" bodyfile="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" bodystart="104" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cache__inode__readdir_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="test__cache__inode__readdir_8c_1547201ff2674f71edbe3ba4ec6296d93" prot="public" static="no">
         <name>HPSS_KEYTAB</name>
         <initializer>&quot;/krb5/hpssserver.keytab&quot;</initializer>
         <briefdescription>
@@ -101,11 +101,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="105" bodystart="105" bodyend="-1"/>
+        <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="105" bodyfile="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" bodystart="105" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="test__cache__inode__readdir_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__cache__inode__readdir_8c_1d3e6e5506644e1986e6475939863ad3e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_entry_to_str</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -124,9 +124,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="108" bodystart="107" bodyend="114"/>
+        <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="108" bodyfile="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" bodystart="107" bodyend="114"/>
       </memberdef>
-      <memberdef kind="function" id="test__cache__inode__readdir_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__cache__inode__readdir_8c_127ecbab481a3103e078489a212a52e3f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int lru_clean_entry</definition>
         <argsstring>(LRU_entry_t *entry, void *adddata)</argsstring>
@@ -145,9 +145,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="117" bodystart="116" bodyend="119"/>
+        <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="117" bodyfile="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" bodystart="116" bodyend="119"/>
       </memberdef>
-      <memberdef kind="function" id="test__cache__inode__readdir_8c_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__cache__inode__readdir_8c_1e0665038b72011f5c680c660fcb59459" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type></type>
         <definition>main</definition>
         <argsstring>(int argc, char *argv[])</argsstring>
@@ -183,15 +183,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="135" bodystart="134" bodyend="558"/>
-        <references refid="cache__inode__init_8c_1a1" compoundref="cache__inode__init_8c" startline="147" endline="272">cache_inode_client_init</references>
-        <references refid="cache__inode__init_8c_1a0" compoundref="cache__inode__init_8c" startline="117" endline="131">cache_inode_init</references>
-        <references refid="cache__inode__lookup_8c_1a2" compoundref="cache__inode__lookup_8c" startline="471" endline="487">cache_inode_lookup</references>
-        <references refid="cache__inode__make__root_8c_1a0" compoundref="cache__inode__make__root_8c" startline="116" endline="150">cache_inode_make_root</references>
-        <references refid="cache__inode__misc_8c_1a15" compoundref="cache__inode__misc_8c" startline="1295" endline="1335">cache_inode_print_dir</references>
-        <references refid="cache__inode__readdir_8c_1a5" compoundref="cache__inode__readdir_8c" startline="976" endline="1316">cache_inode_readdir</references>
-        <references refid="test__cache__inode_8c_1a1" compoundref="test__cache__inode_8c" startline="106">HPSS_KEYTAB</references>
-        <references refid="test__cache__inode_8c_1a0" compoundref="test__cache__inode_8c" startline="105">HPSS_SSM</references>
+        <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" line="135" bodyfile="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c" bodystart="134" bodyend="558"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -293,10 +285,10 @@
 <codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;strings.h&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="103"><highlight class="normal"></highlight></codeline>
-<codeline lineno="104" refid="test__cache__inode__readdir_8c_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>HPSS_SSM<sp/>&quot;hpss_ssm&quot;</highlight></codeline>
-<codeline lineno="105" refid="test__cache__inode__readdir_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>HPSS_KEYTAB<sp/>&quot;/krb5/hpssserver.keytab&quot;</highlight></codeline>
+<codeline lineno="104" refid="test__cache__inode__readdir_8c_1863b7cbf4c49b9bdda01992b993130a2" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>HPSS_SSM<sp/>&quot;hpss_ssm&quot;</highlight></codeline>
+<codeline lineno="105" refid="test__cache__inode__readdir_8c_1547201ff2674f71edbe3ba4ec6296d93" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>HPSS_KEYTAB<sp/>&quot;/krb5/hpssserver.keytab&quot;</highlight></codeline>
 <codeline lineno="106"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107" refid="test__cache__inode__readdir_8c_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cache__inode__readlink_8c_1a2" kindref="member">lru_entry_to_str</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str)<sp/></highlight></codeline>
+<codeline lineno="107" refid="test__cache__inode__readdir_8c_1d3e6e5506644e1986e6475939863ad3e" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cache__inode_8c_1d3e6e5506644e1986e6475939863ad3e" kindref="member">lru_entry_to_str</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str)<sp/></highlight></codeline>
 <codeline lineno="108"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="109"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/>*<sp/>pentry<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
 <codeline lineno="110"><highlight class="normal"><sp/><sp/></highlight></codeline>
@@ -305,12 +297,12 @@
 <codeline lineno="113"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;Pentry:<sp/>Addr<sp/>%p,<sp/>state=%d&quot;</highlight><highlight class="normal">,<sp/>pentry,<sp/>pentry-&gt;internal_md.valid_state<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="114"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_entry_to_str<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="115"><highlight class="normal"></highlight></codeline>
-<codeline lineno="116" refid="test__cache__inode__readdir_8c_1a3" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cache__inode__readlink_8c_1a3" kindref="member">lru_clean_entry</ref>(<sp/>LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>adddata)<sp/></highlight></codeline>
+<codeline lineno="116" refid="test__cache__inode__readdir_8c_127ecbab481a3103e078489a212a52e3f" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cache__inode_8c_127ecbab481a3103e078489a212a52e3f" kindref="member">lru_clean_entry</ref>(<sp/>LRU_entry_t<sp/>*<sp/>entry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>adddata)<sp/></highlight></codeline>
 <codeline lineno="117"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="118"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
 <codeline lineno="119"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>lru_clean_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="120"><highlight class="normal"></highlight></codeline>
-<codeline lineno="134" refid="test__cache__inode__readdir_8c_1a4" refkind="member"><highlight class="normal"><ref refid="test__cache__inode__readlink_8c_1a4" kindref="member">main</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
+<codeline lineno="134" refid="test__cache__inode__readdir_8c_1e0665038b72011f5c680c660fcb59459" refkind="member"><highlight class="normal"><ref refid="test__cache__inode_8c_1e0665038b72011f5c680c660fcb59459" kindref="member">main</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
 <codeline lineno="135"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="136"><highlight class="normal"><sp/><sp/>log_t<sp/>log_desc_fsal<sp/>=<sp/>LOG_INITIALIZER;</highlight></codeline>
 <codeline lineno="137"><highlight class="normal"><sp/><sp/>log_t<sp/>log_desc_cache<sp/>=<sp/><sp/>LOG_INITIALIZER;</highlight></codeline>
@@ -438,13 +430,13 @@
 <codeline lineno="259"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="260"><highlight class="normal"><sp/><sp/>init_param.fs_specific_info.behaviors.PrincipalName<sp/>=<sp/>FSAL_INIT_FORCE_VALUE;</highlight></codeline>
 <codeline lineno="261"><highlight class="normal"><sp/><sp/>strncpy(init_param.fs_specific_info.hpss_config.PrincipalName,<sp/></highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="test__cache__inode_8c_1a0" kindref="member">HPSS_SSM</ref>,<sp/></highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="test__cache__inode_8c_1863b7cbf4c49b9bdda01992b993130a2" kindref="member">HPSS_SSM</ref>,<sp/></highlight></codeline>
 <codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HPSS_MAX_PRINCIPAL_NAME);<sp/><sp/></highlight></codeline>
 <codeline lineno="264"><highlight class="normal"></highlight></codeline>
 <codeline lineno="265"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="266"><highlight class="normal"><sp/><sp/>init_param.fs_specific_info.behaviors.KeytabPath<sp/>=<sp/>FSAL_INIT_FORCE_VALUE<sp/>;</highlight></codeline>
 <codeline lineno="267"><highlight class="normal"><sp/><sp/>strncpy(init_param.fs_specific_info.hpss_config.KeytabPath,</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="test__cache__inode_8c_1a1" kindref="member">HPSS_KEYTAB</ref>,</highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="test__cache__inode_8c_1547201ff2674f71edbe3ba4ec6296d93" kindref="member">HPSS_KEYTAB</ref>,</highlight></codeline>
 <codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HPSS_MAX_PATH_NAME);</highlight></codeline>
 <codeline lineno="270"><highlight class="normal"></highlight></codeline>
 <codeline lineno="271"><highlight class="normal"><sp/><sp/></highlight></codeline>
@@ -495,13 +487,13 @@
 <codeline lineno="316"><highlight class="normal"><sp/><sp/>cache_param.hparam.index_size<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>31<sp/>;</highlight></codeline>
 <codeline lineno="317"><highlight class="normal"><sp/><sp/>cache_param.hparam.alphabet_length<sp/><sp/>=<sp/>10<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>Buffer<sp/>seen<sp/>as<sp/>a<sp/>decimal<sp/>polynom<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="318"><highlight class="normal"><sp/><sp/>cache_param.hparam.nb_node_prealloc<sp/>=<sp/>100<sp/>;</highlight></codeline>
-<codeline lineno="319"><highlight class="normal"><sp/><sp/>cache_param.hparam.hash_func_key<sp/><sp/><sp/><sp/>=<sp/>cache_inode_fsal_hash_func<sp/>;</highlight></codeline>
-<codeline lineno="320"><highlight class="normal"><sp/><sp/>cache_param.hparam.hash_func_rbt<sp/><sp/><sp/><sp/>=<sp/>cache_inode_fsal_rbt_func<sp/>;</highlight></codeline>
-<codeline lineno="321"><highlight class="normal"><sp/><sp/>cache_param.hparam.compare_key<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>cache_inode_compare_key_fsal<sp/>;</highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/>cache_param.hparam.key_to_str<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>display_key<sp/>;</highlight></codeline>
-<codeline lineno="323"><highlight class="normal"><sp/><sp/>cache_param.hparam.val_to_str<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>display_value<sp/>;</highlight></codeline>
+<codeline lineno="319"><highlight class="normal"><sp/><sp/>cache_param.hparam.hash_func_key<sp/><sp/><sp/><sp/>=<sp/><ref refid="cache__inode__fsal__hash_8c_196432a10e9c3fa7f703086aaf1f91e6c" kindref="member">cache_inode_fsal_hash_func</ref><sp/>;</highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/>cache_param.hparam.hash_func_rbt<sp/><sp/><sp/><sp/>=<sp/><ref refid="cache__inode__fsal__hash_8c_11324e42666c99bd0b860ceb01867de73" kindref="member">cache_inode_fsal_rbt_func</ref><sp/>;</highlight></codeline>
+<codeline lineno="321"><highlight class="normal"><sp/><sp/>cache_param.hparam.compare_key<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/><ref refid="cache__inode__misc_8c_1b2ed61f21523805c300eae3d843ada57" kindref="member">cache_inode_compare_key_fsal</ref><sp/>;</highlight></codeline>
+<codeline lineno="322"><highlight class="normal"><sp/><sp/>cache_param.hparam.key_to_str<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/><ref refid="cache__inode__fsal__hash_8c_1b57b9991b37ed9c7d252a036cecc1eb2" kindref="member">display_key</ref><sp/>;</highlight></codeline>
+<codeline lineno="323"><highlight class="normal"><sp/><sp/>cache_param.hparam.val_to_str<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/><ref refid="cache__inode__fsal__hash_8c_1b57e58023e08c7ba4ac7611e100ada2c" kindref="member">display_value</ref><sp/>;</highlight></codeline>
 <codeline lineno="324"><highlight class="normal"></highlight></codeline>
-<codeline lineno="325"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>ht<sp/>=<sp/><ref refid="cache__inode__init_8c_1a0" kindref="member">cache_inode_init</ref>(<sp/>cache_param,<sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>ht<sp/>=<sp/><ref refid="cache__inode__init_8c_17329579dd0f4c0bc806e77e1c095c894" kindref="member">cache_inode_init</ref>(<sp/>cache_param,<sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
 <codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>log_desc_cache,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>%d<sp/>while<sp/>init<sp/>hash<sp/>&quot;</highlight><highlight class="normal">,<sp/>cache_status<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
@@ -517,15 +509,15 @@
 <codeline lineno="338"><highlight class="normal"><sp/><sp/>cache_client_param.nb_pre_state_v4<sp/>=<sp/>100<sp/>;</highlight></codeline>
 <codeline lineno="339"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="340"><highlight class="normal"><sp/><sp/>cache_client_param.lru_param.nb_entry_prealloc<sp/>=<sp/>1000<sp/>;</highlight></codeline>
-<codeline lineno="341"><highlight class="normal"><sp/><sp/>cache_client_param.lru_param.entry_to_str<sp/>=<sp/>lru_entry_to_str<sp/>;</highlight></codeline>
-<codeline lineno="342"><highlight class="normal"><sp/><sp/>cache_client_param.lru_param.clean_entry<sp/>=<sp/>lru_clean_entry<sp/>;</highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/>cache_client_param.lru_param.entry_to_str<sp/>=<sp/><ref refid="test__cache__inode_8c_1d3e6e5506644e1986e6475939863ad3e" kindref="member">lru_entry_to_str</ref><sp/>;</highlight></codeline>
+<codeline lineno="342"><highlight class="normal"><sp/><sp/>cache_client_param.lru_param.clean_entry<sp/>=<sp/><ref refid="test__cache__inode_8c_127ecbab481a3103e078489a212a52e3f" kindref="member">lru_clean_entry</ref><sp/>;</highlight></codeline>
 <codeline lineno="343"><highlight class="normal"></highlight></codeline>
 <codeline lineno="344"><highlight class="normal"><sp/><sp/>cache_client_param.grace_period_attr<sp/>=<sp/>0<sp/>;<sp/></highlight></codeline>
 <codeline lineno="345"><highlight class="normal"><sp/><sp/>cache_client_param.grace_period_link<sp/>=<sp/>0<sp/>;<sp/></highlight></codeline>
 <codeline lineno="346"><highlight class="normal"></highlight></codeline>
 <codeline lineno="347"><highlight class="normal"></highlight></codeline>
 <codeline lineno="348"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Init<sp/>the<sp/>cache_inode<sp/>client<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="349"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__init_8c_1a1" kindref="member">cache_inode_client_init</ref>(<sp/>&amp;client,<sp/>cache_client_param,<sp/>0<sp/>)<sp/>!=<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="349"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__init_8c_162f100ea6c5e866931aa71716bd9b675" kindref="member">cache_inode_client_init</ref>(<sp/>&amp;client,<sp/>cache_client_param,<sp/>0<sp/>)<sp/>!=<sp/>0<sp/>)</highlight></codeline>
 <codeline lineno="350"><highlight class="normal"><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="351"><highlight class="normal"></highlight></codeline>
 <codeline lineno="352"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Getting<sp/>the<sp/>root<sp/>of<sp/>the<sp/>FS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
@@ -545,16 +537,16 @@
 <codeline lineno="366"><highlight class="normal"><sp/><sp/>fsdata.handle<sp/>=<sp/>root_handle<sp/>;</highlight></codeline>
 <codeline lineno="367"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="368"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Cache<sp/>the<sp/>root<sp/>of<sp/>the<sp/>FS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="369"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_root<sp/>=<sp/><ref refid="cache__inode__make__root_8c_1a0" kindref="member">cache_inode_make_root</ref>(<sp/>&amp;fsdata,<sp/>1,<sp/>ht,<sp/>&amp;client,<sp/>&amp;cred,<sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="369"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_root<sp/>=<sp/><ref refid="cache__inode__make__root_8c_145d387b74ec77473e930aa8c758d5c72" kindref="member">cache_inode_make_root</ref>(<sp/>&amp;fsdata,<sp/>1,<sp/>ht,<sp/>&amp;client,<sp/>&amp;cred,<sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
 <codeline lineno="370"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="371"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>log_desc_cache,<sp/></highlight><highlight class="stringliteral">&quot;Error:<sp/>can&apos;t<sp/>init<sp/>fs&apos;s<sp/>root&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="372"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="373"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="374"><highlight class="normal"></highlight></codeline>
-<codeline lineno="375"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1a15" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="375"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1b405ebfdd83c07441a5f617862fd789a" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="376"><highlight class="normal"></highlight></codeline>
 <codeline lineno="377"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>readdir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="378"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_1a5" kindref="member">cache_inode_readdir</ref>(<sp/>cache_entry_root,</highlight></codeline>
+<codeline lineno="378"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_15d9d39cf09341c59eaeb64eaca634934" kindref="member">cache_inode_readdir</ref>(<sp/>cache_entry_root,</highlight></codeline>
 <codeline lineno="379"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>0,<sp/></highlight></codeline>
 <codeline lineno="380"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>100,</highlight></codeline>
 <codeline lineno="381"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;nbfound,</highlight></codeline>
@@ -573,7 +565,7 @@
 <codeline lineno="394"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>nbfound<sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="395"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>log_desc_cache,<sp/></highlight><highlight class="stringliteral">&quot;dirent_array[%d]<sp/>==&gt;<sp/>%s<sp/>|<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>i,<sp/>dirent_array[i].name.name,<sp/>dirent_array[i].pentry<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="396"><highlight class="normal"></highlight></codeline>
-<codeline lineno="397"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1a15" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="397"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1b405ebfdd83c07441a5f617862fd789a" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="398"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="399"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>looping<sp/>on<sp/>readir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="400"><highlight class="normal"><sp/><sp/>DisplayLogJd(<sp/>log_desc_cache,<sp/></highlight><highlight class="stringliteral">&quot;Loop<sp/>directory<sp/>in<sp/>several<sp/>pass&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
@@ -584,7 +576,7 @@
 <codeline lineno="405"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">do</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="406"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="407"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="408"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_1a5" kindref="member">cache_inode_readdir</ref>(<sp/>cache_entry_root,</highlight></codeline>
+<codeline lineno="408"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_15d9d39cf09341c59eaeb64eaca634934" kindref="member">cache_inode_readdir</ref>(<sp/>cache_entry_root,</highlight></codeline>
 <codeline lineno="409"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>begin_cookie,<sp/></highlight></codeline>
 <codeline lineno="410"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>2,<sp/></highlight></codeline>
 <codeline lineno="411"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;nbfound,</highlight></codeline>
@@ -609,7 +601,7 @@
 <codeline lineno="430"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="431"><highlight class="normal"><sp/><sp/>DisplayLogJd(<sp/>log_desc_cache,<sp/></highlight><highlight class="stringliteral">&quot;---------------------------------&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="432"><highlight class="normal"></highlight></codeline>
-<codeline lineno="433"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1a15" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="433"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1b405ebfdd83c07441a5f617862fd789a" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="434"><highlight class="normal"></highlight></codeline>
 <codeline lineno="435"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>A<sp/>lookup<sp/>in<sp/>the<sp/>root<sp/>fsal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="436"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(FSAL_IS_ERROR(<sp/>status<sp/>=<sp/>FSAL_str2name(<sp/></highlight><highlight class="stringliteral">&quot;cea&quot;</highlight><highlight class="normal">,<sp/>10,<sp/>&amp;name<sp/>)<sp/><sp/>)<sp/>)<sp/>)</highlight></codeline>
@@ -618,7 +610,7 @@
 <codeline lineno="439"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="440"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="441"><highlight class="normal"></highlight></codeline>
-<codeline lineno="442"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="442"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="443"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="444"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="445"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -631,7 +623,7 @@
 <codeline lineno="452"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="453"><highlight class="normal"></highlight></codeline>
 <codeline lineno="454"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lookup<sp/>a<sp/>second<sp/>time<sp/>(entry<sp/>should<sp/>now<sp/>be<sp/>cached)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="455"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup2<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="455"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup2<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="456"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="457"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="458"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -656,7 +648,7 @@
 <codeline lineno="477"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="478"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="479"><highlight class="normal"></highlight></codeline>
-<codeline lineno="480"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup3<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="480"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup3<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="481"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="482"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="483"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -668,7 +660,7 @@
 <codeline lineno="489"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="490"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="491"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="492"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup4<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="492"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup4<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="493"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="494"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="495"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -687,7 +679,7 @@
 <codeline lineno="508"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="509"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="510"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>A<sp/>lookup<sp/>in<sp/>the<sp/>root<sp/>fsal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="511"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1a15" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="511"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_1b405ebfdd83c07441a5f617862fd789a" kindref="member">cache_inode_print_dir</ref>(<sp/>cache_entry_root<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="512"><highlight class="normal"></highlight></codeline>
 <codeline lineno="513"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>A<sp/>lookup<sp/>in<sp/>the<sp/>root<sp/>fsal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="514"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(FSAL_IS_ERROR(<sp/>status<sp/>=<sp/>FSAL_str2name(<sp/></highlight><highlight class="stringliteral">&quot;cea&quot;</highlight><highlight class="normal">,<sp/>10,<sp/>&amp;name<sp/>)<sp/><sp/>)<sp/>)<sp/>)</highlight></codeline>
@@ -697,7 +689,7 @@
 <codeline lineno="518"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="519"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="520"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="521"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="521"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="522"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="523"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="524"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -716,7 +708,7 @@
 <codeline lineno="537"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="538"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="539"><highlight class="normal"></highlight></codeline>
-<codeline lineno="540"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
+<codeline lineno="540"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>cache_entry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>cache_entry_root,<sp/></highlight></codeline>
 <codeline lineno="541"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>name,<sp/></highlight></codeline>
 <codeline lineno="542"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;attrlookup,<sp/></highlight></codeline>
 <codeline lineno="543"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
@@ -737,6 +729,6 @@
 <codeline lineno="558"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>main<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="559"><highlight class="normal"><sp/><sp/></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/Cache_inode/test_cache_inode_readdir.c"/>
+    <location file="/export/GANESHA/src/Cache_inode/test_cache_inode_readdir.c"/>
   </compounddef>
 </doxygen>

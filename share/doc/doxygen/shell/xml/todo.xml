@@ -1,28 +1,28 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="todo" kind="page">
     <compoundname>todo</compoundname>
     <title>Todo List</title>
     <detaileddescription>
 <para><anchor id="todo_1_todo000002"/> <variablelist>
-<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a69" kindref="member">cmdnfs_fattr2</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
-<listitem><para></para><para></para></listitem>
-</variablelist>
-</para><para><anchor id="todo_1_todo000003"/> <variablelist>
-<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a82" kindref="member">cmdnfs_fattr3</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
-<listitem><para></para><para></para></listitem>
-</variablelist>
-</para><para><anchor id="todo_1_todo000001"/> <variablelist>
-<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1a67" kindref="member">cmdnfs_mountres3</ref> (cmdnfs_encodetype_t encodeflag, int argc, char **argv, int indent, FILE *out_stream, caddr_t p_nfs_struct) </term></varlistentry>
-<listitem><para>Convert status to error code</para></listitem>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_18c47e3ccd166d5afcca5f6e0a192e0a6" kindref="member">cmdnfs_fattr2</ref>  </term></varlistentry>
+<listitem><para></para></listitem>
 </variablelist>
 </para><para><anchor id="todo_1_todo000004"/> <variablelist>
-<varlistentry><term>Member <ref refid="commands__NFS_8c_1a18" kindref="member">InitNFSClient</ref> (cmdnfs_thr_info_t *p_thr_info) </term></varlistentry>
-<listitem><para>No secondary groups support.</para></listitem>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_1536c0eee765570250825fe9a296551a8" kindref="member">cmdnfs_fattr3</ref>  </term></varlistentry>
+<listitem><para></para></listitem>
 </variablelist>
-</para><para><anchor id="todo_1_todo000005"/> <variablelist>
-<varlistentry><term>Member <ref refid="commands__NFS_8c_1a21" kindref="member">nfs_init</ref> (char *filename, int flag_v, FILE *output) </term></varlistentry>
-<listitem><para>Are there other things to initialize ?</para></listitem>
+</para><para><anchor id="todo_1_todo000001"/> <variablelist>
+<varlistentry><term>Member <ref refid="cmd__nfstools_8c_19ed868c63dffa323487115ba3b7ed656" kindref="member">cmdnfs_mountres3</ref>  </term></varlistentry>
+<listitem><para>Convert status to error code </para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000006"/> <variablelist>
+<varlistentry><term>Member <ref refid="commands__NFS_8c_1aa0ab69e9940c48a351da4ffb6e60f6f" kindref="member">InitNFSClient</ref>  </term></varlistentry>
+<listitem><para>No secondary groups support. </para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000007"/> <variablelist>
+<varlistentry><term>Member <ref refid="commands__NFS_8c_1d22e2d1bf7f72368de2719c01d60f81e" kindref="member">nfs_init</ref>  </term></varlistentry>
+<listitem><para>Are there other things to initialize ? </para></listitem>
 </variablelist>
 </para>    </detaileddescription>
   </compounddef>

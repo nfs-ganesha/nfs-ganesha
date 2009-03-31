@@ -1,6 +1,7 @@
 \section{fsal\_\-truncate.c File Reference}
-\label{fsal__truncate_8c}\index{fsal_truncate.c@{fsal\_\-truncate.c}}
-Truncate function. 
+\label{fsal__truncate_8c}\index{fsal\_\-truncate.c@{fsal\_\-truncate.c}}
+Truncate function.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -8,7 +9,7 @@ Truncate function.
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-truncate} (fsal\_\-handle\_\-t $\ast$p\_\-filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-size\_\-t length, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)
+fsal\_\-status\_\-t {\bf FSAL\_\-truncate} (fsal\_\-handle\_\-t $\ast$p\_\-filehandle, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-size\_\-t length, fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-attrib\_\-list\_\-t $\ast$p\_\-object\_\-attributes)
 \end{CompactItemize}
 
 
@@ -16,25 +17,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-truncate} (fsal\_\-handle\_\-t $\ast$p\_\-fileh
 Truncate function. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/07/29 09:39:05 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.4 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-truncate.c}.
 
 \subsection{Function Documentation}
-\index{fsal_truncate.c@{fsal\_\-truncate.c}!FSAL_truncate@{FSAL\_\-truncate}}
-\index{FSAL_truncate@{FSAL\_\-truncate}!fsal_truncate.c@{fsal\_\-truncate.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-truncate (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-size\_\-t {\em length}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__truncate_8c_a0}
+\index{fsal\_\-truncate.c@{fsal\_\-truncate.c}!FSAL\_\-truncate@{FSAL\_\-truncate}}
+\index{FSAL\_\-truncate@{FSAL\_\-truncate}!fsal_truncate.c@{fsal\_\-truncate.c}}
+\subsubsection[{FSAL\_\-truncate}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-truncate (fsal\_\-handle\_\-t $\ast$ {\em p\_\-filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-size\_\-t {\em length}, \/  fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__truncate_8c_a3135c9d6a7637a1f583bd2752dd259e}
 
 
 FSAL\_\-truncate: Modify the data length of a regular file.
@@ -52,4 +53,4 @@ FSAL\_\-truncate: Modify the data length of a regular file.
 
 Definition at line 48 of file fsal\_\-truncate.c.
 
-References FSAL\_\-getattrs(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), posix2fsal\_\-error(), and Take\-Token\-FSCall().
+References FSAL\_\-getattrs(), fsal\_\-internal\_\-getPathFromHandle(), posix2fsal\_\-error(), and TakeTokenFSCall().

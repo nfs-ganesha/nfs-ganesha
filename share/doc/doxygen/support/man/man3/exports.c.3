@@ -1,8 +1,10 @@
-.TH "exports.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "exports.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-exports.c \- What is needed to parse the exports file. 
+exports.c \- What is needed to parse the exports file.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -45,6 +47,8 @@ exports.c \- What is needed to parse the exports file.
 \fC#include 'config_parsing.h'\fP
 .br
 \fC#include 'common_utils.h'\fP
+.br
+\fC#include 'nodelist.h'\fP
 .br
 \fC#include <stdlib.h>\fP
 .br
@@ -267,7 +271,7 @@ exports.c \- What is needed to parse the exports file.
 .RI "int \fBReadExports\fP (config_file_t in_config, exportlist_t **ppexportlist)"
 .br
 .ti -1c
-.RI "int \fBnfs_export_check_access\fP (unsigned int addr, struct svc_req *ptr_req, exportlist_t *pexport, unsigned int nfs_prog, unsigned int mnt_prog, hash_table_t *ht_ip_stats, nfs_ip_stats_t *ip_stats_pool, exportlist_client_entry_t *pclient_found)"
+.RI "int \fBnfs_export_check_access\fP (struct sockaddr_storage *pssaddr, struct svc_req *ptr_req, exportlist_t *pexport, unsigned int nfs_prog, unsigned int mnt_prog, hash_table_t *ht_ip_stats, nfs_ip_stats_t *ip_stats_pool, exportlist_client_entry_t *pclient_found)"
 .br
 .ti -1c
 .RI "int \fBnfs_export_create_root_entry\fP (exportlist_t *pexportlist, hash_table_t *ht)"
@@ -295,26 +299,23 @@ What is needed to parse the exports file.
 
 \fBAuthor:\fP
 .RS 4
-\fBAuthor\fP.RS 4
-leibovic 
-.RE
-.PP
+$Author$ 
 .RE
 .PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/08 12:50:40 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.33 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.33 
 .RE
 .PP
 \fBexports.c\fP : What is needed to parse the exports file.
@@ -323,246 +324,175 @@ leibovic
 /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/exports.c,v 1.33 2006/02/08 12:50:40 leibovic Exp 
 .RE
 .PP
-.PP
-\fBLog\fP.RS 4
-\fBexports.c\fP,v 
-.RE
-.PP
-Revision 1.33 2006/02/08 12:50:40 leibovic changing NIV_EVNMT to NIV_EVENT.
-.PP
-Revision 1.32 2006/01/24 13:49:12 leibovic Adding missing includes.
-.PP
-Revision 1.31 2006/01/23 16:45:27 leibovic Putting debug between ifdef _DEBUG_DISPATCH.
-.PP
-Revision 1.30 2006/01/23 16:16:00 leibovic Fixing bug about nfs clients.
-.PP
-Revision 1.29 2006/01/20 09:51:34 deniel Mountage Ok sur pinatubo1
-.PP
-Revision 1.28 2006/01/19 07:40:26 leibovic Better exportlist management (test whether iterator is null).
-.PP
-Revision 1.27 2006/01/18 07:29:11 leibovic Fixing bugs about exportlists.
-.PP
-Revision 1.26 2005/12/20 10:52:18 deniel exportlist is no longer dynamic but static
-.PP
-Revision 1.25 2005/12/07 14:28:00 deniel Support of stats via stats_thread was added
-.PP
-Revision 1.24 2005/12/02 09:26:38 deniel added getopt management
-.PP
-Revision 1.23 2005/11/30 09:16:08 deniel IP/stats cache per thread (no bottleneck) is complete
-.PP
-CacheSize Revision 1.22 2005/11/30 08:12:49 deniel Ip/stats in a very simple way
-.PP
-Revision 1.21 2005/11/29 13:38:17 deniel bottlenecked ip_stats
-.PP
-Revision 1.20 2005/11/28 17:03:02 deniel Added CeCILL headers
-.PP
-Revision 1.19 2005/11/21 09:54:55 leibovic Once for all thread's credential initialization.
-.PP
-Revision 1.18 2005/11/08 15:22:24 deniel WildCard and Netgroup entry for exportlist are now supported
-.PP
-Revision 1.17 2005/11/07 10:29:11 deniel authentication net and host is ok
-.PP
-Revision 1.16 2005/11/07 10:20:53 deniel Authentication on networks added
-.PP
-Revision 1.15 2005/11/07 09:03:39 deniel Implementing access security
-.PP
-Revision 1.14 2005/11/04 15:12:58 deniel Added basic authentication support
-.PP
-Revision 1.13 2005/10/14 10:33:22 deniel EEXISTS bug correctif in nfs_Mkdir
-.PP
-Revision 1.12 2005/10/14 09:24:05 leibovic YES/NO are no possible for boolean values in export file.
-.PP
-Revision 1.11 2005/10/13 14:55:47 leibovic Fixing bug for reading maxread, maxwrite, prefread, prefwrite, ...
-.PP
-Revision 1.10 2005/10/13 11:21:49 deniel corrected truncate bug
-.PP
-Revision 1.9 2005/10/10 14:27:54 deniel mnt_Mnt does not create root entries in Cache inode any more. This is done before the first request once the export list is read the first time .
-.PP
-Revision 1.8 2005/09/28 13:36:04 leibovic Fixed bug in filling clients' addresses.
-.PP
-Revision 1.7 2005/09/27 12:39:51 leibovic Too must entries exported.
-.PP
-Revision 1.6 2005/09/22 14:50:15 leibovic support of Sectype, NFS_protocols and Transport_Protocols options.
-.PP
-Revision 1.5 2005/09/22 13:38:44 leibovic Adding default security flavors.
-.PP
-Revision 1.4 2005/09/22 13:15:24 leibovic Export file parsing.
-.PP
-Revision 1.3 2005/08/08 15:23:08 deniel Bug for parsing cookie verifier
-.PP
-Revision 1.2 2005/08/03 13:13:59 deniel memset to zero before building the filehandles
-.PP
-Revision 1.1 2005/08/03 08:51:44 deniel Added file \fBexports.c\fP in libsupport.a
+
 .PP
 Definition in file \fBexports.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define CONF_EXPORT_ACCESS   'Access'"
 .PP
-Definition at line 246 of file exports.c.
+Definition at line 152 of file exports.c.
 .SS "#define CONF_EXPORT_ACCESSTYPE   'Access_Type'"
 .PP
-Definition at line 248 of file exports.c.
+Definition at line 154 of file exports.c.
 .SS "#define CONF_EXPORT_ANON_ROOT   'Anonymous_root_uid'"
 .PP
-Definition at line 249 of file exports.c.
+Definition at line 155 of file exports.c.
 .SS "#define CONF_EXPORT_FS_SPECIFIC   'FS_Specific'"
 .PP
-Definition at line 263 of file exports.c.
+Definition at line 169 of file exports.c.
 .SS "#define CONF_EXPORT_FS_TAG   'Tag'"
 .PP
-Definition at line 264 of file exports.c.
+Definition at line 170 of file exports.c.
 .SS "#define CONF_EXPORT_FSID   'Filesystem_id'"
 .PP
-Definition at line 258 of file exports.c.
+Definition at line 164 of file exports.c.
 .SS "#define CONF_EXPORT_ID   'Export_id'"
 .PP
-Definition at line 243 of file exports.c.
+Definition at line 149 of file exports.c.
 .SS "#define CONF_EXPORT_MAX_CACHE_SIZE   'MaxCacheSize'"
 .PP
-Definition at line 267 of file exports.c.
+Definition at line 173 of file exports.c.
 .SS "#define CONF_EXPORT_MAX_OFF_READ   'MaxOffsetRead'"
 .PP
-Definition at line 266 of file exports.c.
+Definition at line 172 of file exports.c.
 .SS "#define CONF_EXPORT_MAX_OFF_WRITE   'MaxOffsetWrite'"
 .PP
-Definition at line 265 of file exports.c.
+Definition at line 171 of file exports.c.
 .SS "#define CONF_EXPORT_MAX_READ   'MaxRead'"
 .PP
-Definition at line 253 of file exports.c.
+Definition at line 159 of file exports.c.
 .SS "#define CONF_EXPORT_MAX_WRITE   'MaxWrite'"
 .PP
-Definition at line 254 of file exports.c.
+Definition at line 160 of file exports.c.
 .SS "#define CONF_EXPORT_NFS_PROTO   'NFS_Protocols'"
 .PP
-Definition at line 250 of file exports.c.
+Definition at line 156 of file exports.c.
 .SS "#define CONF_EXPORT_NOSGID   'NOSGID'"
 .PP
-Definition at line 260 of file exports.c.
+Definition at line 166 of file exports.c.
 .SS "#define CONF_EXPORT_NOSUID   'NOSUID'"
 .PP
-Definition at line 259 of file exports.c.
+Definition at line 165 of file exports.c.
 .SS "#define CONF_EXPORT_PATH   'Path'"
 .PP
-Definition at line 244 of file exports.c.
+Definition at line 150 of file exports.c.
 .SS "#define CONF_EXPORT_PREF_READ   'PrefRead'"
 .PP
-Definition at line 255 of file exports.c.
+Definition at line 161 of file exports.c.
 .SS "#define CONF_EXPORT_PREF_READDIR   'PrefReaddir'"
 .PP
-Definition at line 257 of file exports.c.
+Definition at line 163 of file exports.c.
 .SS "#define CONF_EXPORT_PREF_WRITE   'PrefWrite'"
 .PP
-Definition at line 256 of file exports.c.
+Definition at line 162 of file exports.c.
 .SS "#define CONF_EXPORT_PRIVILEGED_PORT   'PrivilegedPort'"
 .PP
-Definition at line 261 of file exports.c.
+Definition at line 167 of file exports.c.
 .SS "#define CONF_EXPORT_PSEUDO   'Pseudo'"
 .PP
-Definition at line 247 of file exports.c.
+Definition at line 153 of file exports.c.
 .SS "#define CONF_EXPORT_ROOT   'Root_Access'"
 .PP
-Definition at line 245 of file exports.c.
+Definition at line 151 of file exports.c.
 .SS "#define CONF_EXPORT_SECTYPE   'SecType'"
 .PP
-Definition at line 252 of file exports.c.
+Definition at line 158 of file exports.c.
 .SS "#define CONF_EXPORT_TRANS_PROTO   'Transport_Protocols'"
 .PP
-Definition at line 251 of file exports.c.
+Definition at line 157 of file exports.c.
 .SS "#define CONF_EXPORT_USE_DATACACHE   'Cache_Data'"
 .PP
-Definition at line 262 of file exports.c.
+Definition at line 168 of file exports.c.
 .SS "#define CONF_LABEL_EXPORT   'EXPORT'"
 .PP
-Definition at line 240 of file exports.c.
-.PP
-Referenced by ReadExports().
+Definition at line 146 of file exports.c.
 .SS "#define DEFINED_TWICE_WARNING(_str_)   DisplayLog( 'NFS READ_EXPORT: WARNING: %s defined twice !!! (ignored)', _str_ )"
 .PP
-Definition at line 710 of file exports.c.
+Definition at line 646 of file exports.c.
 .SS "#define EXPORT_MAX_CLIENTLEN   256"
 .PP
 .SS "#define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS"
 .PP
 .SS "#define FLAG_EXPORT_ACCESSTYPE   0x00000020"
 .PP
-Definition at line 279 of file exports.c.
+Definition at line 185 of file exports.c.
 .SS "#define FLAG_EXPORT_ANON_ROOT   0x00000040"
 .PP
-Definition at line 280 of file exports.c.
+Definition at line 186 of file exports.c.
 .SS "#define FLAG_EXPORT_FS_SPECIFIC   0x00100000"
 .PP
-Definition at line 294 of file exports.c.
+Definition at line 200 of file exports.c.
 .SS "#define FLAG_EXPORT_FS_TAG   0x00200000"
 .PP
-Definition at line 295 of file exports.c.
+Definition at line 201 of file exports.c.
 .SS "#define FLAG_EXPORT_FSID   0x00008000"
 .PP
-Definition at line 289 of file exports.c.
+Definition at line 195 of file exports.c.
 .SS "#define FLAG_EXPORT_ID   0x00000001"
 .PP
 \fBTodo\fP
 .RS 4
-: add encrypt handles option
+: add encrypt handles option 
 .RE
 .PP
 
 .PP
-Definition at line 273 of file exports.c.
+Definition at line 179 of file exports.c.
 .SS "#define FLAG_EXPORT_MAX_CACHE_SIZE   0x01000000"
 .PP
-Definition at line 298 of file exports.c.
+Definition at line 204 of file exports.c.
 .SS "#define FLAG_EXPORT_MAX_OFF_READ   0x00800000"
 .PP
-Definition at line 297 of file exports.c.
+Definition at line 203 of file exports.c.
 .SS "#define FLAG_EXPORT_MAX_OFF_WRITE   0x00400000"
 .PP
-Definition at line 296 of file exports.c.
+Definition at line 202 of file exports.c.
 .SS "#define FLAG_EXPORT_MAX_READ   0x00000400"
 .PP
-Definition at line 284 of file exports.c.
+Definition at line 190 of file exports.c.
 .SS "#define FLAG_EXPORT_MAX_WRITE   0x00000800"
 .PP
-Definition at line 285 of file exports.c.
+Definition at line 191 of file exports.c.
 .SS "#define FLAG_EXPORT_NFS_PROTO   0x00000080"
 .PP
-Definition at line 281 of file exports.c.
+Definition at line 187 of file exports.c.
 .SS "#define FLAG_EXPORT_NOSGID   0x00020000"
 .PP
-Definition at line 291 of file exports.c.
+Definition at line 197 of file exports.c.
 .SS "#define FLAG_EXPORT_NOSUID   0x00010000"
 .PP
-Definition at line 290 of file exports.c.
+Definition at line 196 of file exports.c.
 .SS "#define FLAG_EXPORT_PATH   0x00000002"
 .PP
-Definition at line 274 of file exports.c.
+Definition at line 180 of file exports.c.
 .SS "#define FLAG_EXPORT_PREF_READ   0x00001000"
 .PP
-Definition at line 286 of file exports.c.
+Definition at line 192 of file exports.c.
 .SS "#define FLAG_EXPORT_PREF_READDIR   0x00004000"
 .PP
-Definition at line 288 of file exports.c.
+Definition at line 194 of file exports.c.
 .SS "#define FLAG_EXPORT_PREF_WRITE   0x00002000"
 .PP
-Definition at line 287 of file exports.c.
+Definition at line 193 of file exports.c.
 .SS "#define FLAG_EXPORT_PRIVILEGED_PORT   0x00040000"
 .PP
-Definition at line 292 of file exports.c.
+Definition at line 198 of file exports.c.
 .SS "#define FLAG_EXPORT_PSEUDO   0x00000010"
 .PP
-Definition at line 278 of file exports.c.
+Definition at line 184 of file exports.c.
 .SS "#define FLAG_EXPORT_ROOT_OR_ACCESS   0x00000004"
 .PP
-Definition at line 276 of file exports.c.
+Definition at line 182 of file exports.c.
 .SS "#define FLAG_EXPORT_SECTYPE   0x00000200"
 .PP
-Definition at line 283 of file exports.c.
+Definition at line 189 of file exports.c.
 .SS "#define FLAG_EXPORT_TRANS_PROTO   0x00000100"
 .PP
-Definition at line 282 of file exports.c.
+Definition at line 188 of file exports.c.
 .SS "#define FLAG_EXPORT_USE_DATACACHE   0x00080000"
 .PP
-Definition at line 293 of file exports.c.
+Definition at line 199 of file exports.c.
 .SS "#define MAX_NFSPROTO   10"
 .PP
 .SS "#define MAX_NFSPROTO_LEN   256"
@@ -577,31 +507,35 @@ Definition at line 293 of file exports.c.
 .PP
 .SS "#define STRCMP   strcasecmp"
 .PP
-Definition at line 238 of file exports.c.
-.PP
-Referenced by ReadExports().
+Definition at line 144 of file exports.c.
 .SH "Function Documentation"
 .PP 
 .SS "exportlist_t* BuildDefaultExport ()"
 .PP
+
+.PP
 \fBTodo\fP
 .RS 4
 set default values here 
+.RE
 .PP
-BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite
+.PP
+\fBTodo\fP
+.RS 4
+BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite 
 .RE
 .PP
 .PP
 Grant root access to all clients 
 .PP
-Definition at line 1855 of file exports.c.
+Definition at line 1848 of file exports.c.
 .SS "int local_lru_inode_clean_entry (LRU_entry_t * entry, void * adddata)"
 .PP
-Definition at line 305 of file exports.c.
+Definition at line 211 of file exports.c.
 .SS "int local_lru_inode_entry_to_str (LRU_data_t data, char * str)"
 .PP
-Definition at line 300 of file exports.c.
-.SS "int nfs_export_check_access (unsigned int addr, struct svc_req * ptr_req, exportlist_t * pexport, unsigned int nfs_prog, unsigned int mnt_prog, hash_table_t * ht_ip_stats, nfs_ip_stats_t * ip_stats_pool, exportlist_client_entry_t * pclient_found)"
+Definition at line 206 of file exports.c.
+.SS "int nfs_export_check_access (struct sockaddr_storage * pssaddr, struct svc_req * ptr_req, exportlist_t * pexport, unsigned int nfs_prog, unsigned int mnt_prog, hash_table_t * ht_ip_stats, nfs_ip_stats_t * ip_stats_pool, exportlist_client_entry_t * pclient_found)"
 .PP
 nfs_export_check_access: checks if a machine is authorized to access an export entry.
 .PP
@@ -609,7 +543,7 @@ Checks if a machine is authorized to access an export entry.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIaddr\fP [IN] address of the caller 
+\fIssaddr\fP [IN] the complete remote address (as a sockaddr_storage to be IPv6 compliant) 
 .br
 \fIptr_req\fP [IN] pointer to the related RPC request. 
 .br
@@ -628,15 +562,12 @@ Checks if a machine is authorized to access an export entry.
 .PP
 \fBReturns:\fP
 .RS 4
-TRUE if access in granted, FALSE otherwise.
+TRUE if access in granted, FALSE otherwise. 
 .RE
 .PP
+
 .PP
-BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS 
-.PP
-Definition at line 2030 of file exports.c.
-.PP
-References nfs_ip_name_add(), nfs_ip_name_get(), nfs_ip_stats_add(), and nfs_ip_stats_incr().
+Definition at line 2233 of file exports.c.
 .SS "int nfs_export_create_root_entry (exportlist_t * pexportlist, hash_table_t * ht)"
 .PP
 nfs_export_create_root_entry: create the root entries for the cached entries.
@@ -657,9 +588,7 @@ TRUE is successfull, FALSE if something wrong occured.
 .PP
 
 .PP
-Definition at line 2211 of file exports.c.
-.PP
-References nfs_param, recover_datacache_client, small_client, and small_client_param.
+Definition at line 2355 of file exports.c.
 .SS "int nfs_LookupNetworkAddr (char * host, unsigned long * netAddr, unsigned long * netMask)"
 .PP
 nfs_LookupNetworkAddr: determine network address from string.
@@ -693,7 +622,7 @@ gethostbyaddr
 .PP
 
 .PP
-Definition at line 443 of file exports.c.
+Definition at line 372 of file exports.c.
 .SS "int nfs_ParseConfLine (char * Argv[], int nbArgv, char * line, int(*)(char) separator_function, int(*)(char) endLine_func)"
 .PP
 nfs_ParseConfLine: parse a line with a settable separator and end of line
@@ -720,7 +649,7 @@ the number of object found
 .PP
 
 .PP
-Definition at line 325 of file exports.c.
+Definition at line 231 of file exports.c.
 .SS "int ReadExports (config_file_t in_config, exportlist_t ** ppexportlist)"
 .PP
 ReadExports: Read the export entries from the parsed configuration file. 
@@ -732,31 +661,20 @@ A negative value on error, the number of export entries else.
 .PP
 
 .PP
-Definition at line 1940 of file exports.c.
-.PP
-References CONF_LABEL_EXPORT, and STRCMP.
+Definition at line 1933 of file exports.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 146 of file test_clientid.c.
-.PP
-Referenced by nfs4_FSALToFhandle(), nfs4_Is_Fh_Expired(), nfs4_is_lease_expired(), nfs_client_id_add(), nfs_client_id_set(), nfs_export_create_root_entry(), nfs_ip_stats_add(), nfs_ip_stats_dump(), nfs_ip_stats_get(), nfs_ip_stats_incr(), nfs_ip_stats_remove(), and nfs_stat_update().
 .SS "cache_content_client_t \fBrecover_datacache_client\fP"
 .PP
-Definition at line 236 of file exports.c.
-.PP
-Referenced by nfs_export_create_root_entry().
+Definition at line 142 of file exports.c.
 .SS "cache_inode_client_t \fBsmall_client\fP"
 .PP
-Definition at line 234 of file exports.c.
-.PP
-Referenced by nfs_export_create_root_entry().
+Definition at line 140 of file exports.c.
 .SS "cache_inode_client_parameter_t \fBsmall_client_param\fP"
 .PP
-Definition at line 235 of file exports.c.
-.PP
-Referenced by nfs_export_create_root_entry().
+Definition at line 141 of file exports.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

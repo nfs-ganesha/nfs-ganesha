@@ -1,12 +1,16 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="todo" kind="page">
     <compoundname>todo</compoundname>
     <title>Todo List</title>
     <detaileddescription>
 <para><anchor id="todo_1_todo000001"/> <variablelist>
-<varlistentry><term>Member <ref refid="cache__inode__rdwr_8c_1a0" kindref="member">cache_inode_rdwr</ref> (cache_entry_t *pentry, cache_inode_io_direction_t read_or_write, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, fsal_size_t *pio_size, fsal_attrib_list_t *pfsal_attr, caddr_t buffer, fsal_boolean_t *p_fsal_eof, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, cache_inode_status_t *pstatus) </term></varlistentry>
-<listitem><para>: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte. </para></listitem>
+<varlistentry><term>Member <ref refid="cache__inode__rdwr_8c_1f3878e8cd9fc756551aa55064bd83a24" kindref="member">cache_inode_rdwr</ref>  </term></varlistentry>
+<listitem><para>: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.</para><para></para></listitem>
+</variablelist>
+</para><para><anchor id="todo_1_todo000002"/> <variablelist>
+<varlistentry><term>Member <ref refid="cache__inode__truncate_8c_147a841b1e374c1ae863334405a900e0f" kindref="member">cache_inode_truncate_sw</ref>  </term></varlistentry>
+<listitem><para>&amp;pentry-&gt;object.file.open_fd.fd, </para></listitem>
 </variablelist>
 </para>    </detaileddescription>
   </compounddef>

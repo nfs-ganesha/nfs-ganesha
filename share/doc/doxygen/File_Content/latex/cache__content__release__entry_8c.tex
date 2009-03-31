@@ -1,11 +1,12 @@
 \section{cache\_\-content\_\-release\_\-entry.c File Reference}
-\label{cache__content__release__entry_8c}\index{cache_content_release_entry.c@{cache\_\-content\_\-release\_\-entry.c}}
-Management of the file content cache: release an entry. 
+\label{cache__content__release__entry_8c}\index{cache\_\-content\_\-release\_\-entry.c@{cache\_\-content\_\-release\_\-entry.c}}
+Management of the file content cache: release an entry.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
@@ -29,25 +30,25 @@ cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-release\_\-entry} (cach
 Management of the file content cache: release an entry. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:33 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.7 \end{Desc}
-\end{Desc}
-{\bf cache\_\-content\_\-release\_\-entry.c}{\rm (p.\,\pageref{cache__content__release__entry_8c})} : Management of the file content cache: release an entry.
+\doxyref{cache\_\-content\_\-release\_\-entry.c}{p.}{cache__content__release__entry_8c} : Management of the file content cache: release an entry. 
 
 Definition in file {\bf cache\_\-content\_\-release\_\-entry.c}.
 
 \subsection{Function Documentation}
-\index{cache_content_release_entry.c@{cache\_\-content\_\-release\_\-entry.c}!cache_content_release_entry@{cache\_\-content\_\-release\_\-entry}}
-\index{cache_content_release_entry@{cache\_\-content\_\-release\_\-entry}!cache_content_release_entry.c@{cache\_\-content\_\-release\_\-entry.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-release\_\-entry (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__release__entry_8c_a0}
+\index{cache\_\-content\_\-release\_\-entry.c@{cache\_\-content\_\-release\_\-entry.c}!cache\_\-content\_\-release\_\-entry@{cache\_\-content\_\-release\_\-entry}}
+\index{cache\_\-content\_\-release\_\-entry@{cache\_\-content\_\-release\_\-entry}!cache_content_release_entry.c@{cache\_\-content\_\-release\_\-entry.c}}
+\subsubsection[{cache\_\-content\_\-release\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-release\_\-entry (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__release__entry_8c_522f958d762237dd8b8ec16010d873b5}
 
 
 cache\_\-content\_\-release\_\-entry: removes an entry from the cache and free the associated resources.
@@ -65,4 +66,4 @@ No lock management is done in this layer: the related pentry in the cache inode 
 \item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful, other values show an error. \end{Desc}
 
 
-Definition at line 127 of file cache\_\-content\_\-release\_\-entry.c.
+Definition at line 131 of file cache\_\-content\_\-release\_\-entry.c.

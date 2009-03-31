@@ -1,14 +1,15 @@
 \section{nfs\_\-Setattr.c File Reference}
-\label{nfs__Setattr_8c}\index{nfs_Setattr.c@{nfs\_\-Setattr.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs__Setattr_8c}\index{nfs\_\-Setattr.c@{nfs\_\-Setattr.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -39,25 +40,25 @@ void {\bf nfs\_\-Setattr\_\-Free} (nfs\_\-res\_\-t $\ast$resp)
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:54 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.17 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-Setattr.c}{\rm (p.\,\pageref{nfs__Setattr_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs\_\-Setattr.c}{p.}{nfs__Setattr_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs\_\-Setattr.c}.
 
 \subsection{Function Documentation}
-\index{nfs_Setattr.c@{nfs\_\-Setattr.c}!nfs_Setattr@{nfs\_\-Setattr}}
-\index{nfs_Setattr@{nfs\_\-Setattr}!nfs_Setattr.c@{nfs\_\-Setattr.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Setattr (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Setattr_8c_a0}
+\index{nfs\_\-Setattr.c@{nfs\_\-Setattr.c}!nfs\_\-Setattr@{nfs\_\-Setattr}}
+\index{nfs\_\-Setattr@{nfs\_\-Setattr}!nfs_Setattr.c@{nfs\_\-Setattr.c}}
+\subsubsection[{nfs\_\-Setattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Setattr (nfs\_\-arg\_\-t $\ast$ {\em parg}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  struct svc\_\-req $\ast$ {\em preq}, \/  nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Setattr_8c_c9a6bd415c80e92cba942eaaf4f0e4a1}
 
 
 nfs\_\-Create: The NFS PROC2 and PROC3 SETATTR
@@ -75,11 +76,9 @@ Implements the NFS PROC SETATTR function (for V2 and V3).
  NFS\_\-REQ\_\-FAILED if failed and not retryable. \end{Desc}
 
 
-Definition at line 144 of file nfs\_\-Setattr.c.
-
-References nfs2\_\-FSALattr\_\-To\_\-Fattr(), nfs2\_\-Sattr\_\-To\_\-FSALattr(), nfs3\_\-FSALattr\_\-To\_\-Fattr(), nfs3\_\-Sattr\_\-To\_\-FSALattr(), nfs\_\-Fhandle\-To\-Cache(), nfs\_\-Retryable\-Error(), nfs\_\-Set\-Failed\-Status(), and nfs\_\-Set\-Wcc\-Data().\index{nfs_Setattr.c@{nfs\_\-Setattr.c}!nfs_Setattr_Free@{nfs\_\-Setattr\_\-Free}}
-\index{nfs_Setattr_Free@{nfs\_\-Setattr\_\-Free}!nfs_Setattr.c@{nfs\_\-Setattr.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Setattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Setattr_8c_a1}
+Definition at line 147 of file nfs\_\-Setattr.c.\index{nfs\_\-Setattr.c@{nfs\_\-Setattr.c}!nfs\_\-Setattr\_\-Free@{nfs\_\-Setattr\_\-Free}}
+\index{nfs\_\-Setattr\_\-Free@{nfs\_\-Setattr\_\-Free}!nfs_Setattr.c@{nfs\_\-Setattr.c}}
+\subsubsection[{nfs\_\-Setattr\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Setattr\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Setattr_8c_cf6506705dd1f7ec8588283353783078}
 
 
 nfs\_\-Setattr\_\-Free: Frees the result structure allocated for nfs\_\-Setattr.
@@ -93,4 +92,4 @@ Frees the result structure allocated for nfs\_\-Setattr.
 \end{Desc}
 
 
-Definition at line 397 of file nfs\_\-Setattr.c.
+Definition at line 398 of file nfs\_\-Setattr.c.

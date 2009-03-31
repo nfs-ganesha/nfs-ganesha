@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="test__cmchash__bugdelete_8c" kind="file">
     <compoundname>test_cmchash_bugdelete.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -51,7 +51,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_103d9dd35a7b43ebc597de16d46a0e845" prot="public" static="no">
         <name>MAXTEST</name>
         <initializer>10000</initializer>
         <briefdescription>
@@ -60,9 +60,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="141" bodystart="141" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="141" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="141" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1428c97a2aa1643805f8b16275c702607" prot="public" static="no">
         <name>MAXDESTROY</name>
         <initializer>50</initializer>
         <briefdescription>
@@ -71,9 +71,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="142" bodystart="142" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="142" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="142" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a2" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_17d82597c4bd22fe023995390a5a90f95" prot="public" static="no">
         <name>MAXGET</name>
         <initializer>30</initializer>
         <briefdescription>
@@ -82,9 +82,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="143" bodystart="143" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="143" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="143" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a3" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_186ddf7c36b9a7e599bb04786c61b0370" prot="public" static="no">
         <name>NB_PREALLOC</name>
         <initializer>10000</initializer>
         <briefdescription>
@@ -93,9 +93,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="144" bodystart="144" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="144" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="144" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a4" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1c4add2a227a10511e0128d63952030e8" prot="public" static="no">
         <name>PRIME</name>
         <initializer>109</initializer>
         <briefdescription>
@@ -104,9 +104,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="145" bodystart="145" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="145" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="145" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a5" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1b2da1e226a5beeff3269ec19b1f2b0b9" prot="public" static="no">
         <name>CRITERE</name>
         <initializer>12</initializer>
         <briefdescription>
@@ -115,9 +115,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="146" bodystart="146" bodyend="-1"/>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="146" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="146" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1a6" prot="public" static="no">
+      <memberdef kind="define" id="test__cmchash__bugdelete_8c_1d449333f1ec8fe49765893cc1980d94d" prot="public" static="no">
         <name>CRITERE_2</name>
         <initializer>14</initializer>
         <briefdescription>
@@ -126,203 +126,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="147" bodystart="147" bodyend="-1"/>
-      </memberdef>
-      </sectiondef>
-      <sectiondef kind="func">
-      <memberdef kind="function" id="test__cmchash__bugdelete_8c_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>int</type>
-        <definition>int compare_string_buffer</definition>
-        <argsstring>(hash_buffer_t *buff1, hash_buffer_t *buff2)</argsstring>
-        <name>compare_string_buffer</name>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>buff1</declname>
-        </param>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>buff2</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="204" bodystart="203" bodyend="216"/>
-      </memberdef>
-      <memberdef kind="function" id="test__cmchash__bugdelete_8c_1a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>int</type>
-        <definition>int display_buff</definition>
-        <argsstring>(hash_buffer_t *pbuff, char *str)</argsstring>
-        <name>display_buff</name>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>pbuff</declname>
-        </param>
-        <param>
-          <type>char *</type>
-          <declname>str</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="219" bodystart="218" bodyend="221"/>
-      </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>unsigned long</type>
-        <definition>unsigned long simple_hash_func</definition>
-        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
-        <name>simple_hash_func</name>
-        <param>
-          <type>hash_parameter_t *</type>
-          <declname>p_hparam</declname>
-        </param>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>buffclef</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>simple_hash_func: A template hash function, which considers the hash key as a polynom</para><para>A template hash function, which considers the hash key as a polynom. we are supposed to managed string written with ht-&gt;alphabet_length different characters We turn the string into a binary by computing str[0]+str[1]*ht-&gt;alphabet_length+str[2]*ht-&gt;alphabet_length**2 + ... ... + str[N]*ht-&gt;alphabet_length**N Then we keep the modulo by index_size. This size has to be a prime integer for performance reason The polynome is computed with the Horner&apos;s method.</para><para><parameterlist kind="param"><parameteritem>
-<parameternamelist>
-<parametername>hparam</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
-</parameteritem>
-<parameteritem>
-<parameternamelist>
-<parametername>buffclef</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the key to compute the hash value on</para></parameterdescription>
-</parameteritem>
-</parameterlist>
-<simplesect kind="return"><para>the hash value</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1ga1" kindref="member">double_hash_func</ref> </para></simplesect>
-</para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="223" bodystart="278" bodyend="297"/>
-      </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>unsigned long</type>
-        <definition>unsigned long double_hash_func</definition>
-        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
-        <name>double_hash_func</name>
-        <param>
-          <type>hash_parameter_t *</type>
-          <declname>p_hparam</declname>
-        </param>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>buffclef</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>double_hash_func: This function is used for double hashing, based on another hash function.</para><para>This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash  8 ) ) )  hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See &apos;Algorithm in C&apos;, Robert Sedjewick for more detail on this).</para><para><parameterlist kind="param"><parameteritem>
-<parameternamelist>
-<parametername>hparam</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
-</parameteritem>
-<parameteritem>
-<parameternamelist>
-<parametername>buffclef</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the key to compute the hash value on</para></parameterdescription>
-</parameteritem>
-</parameterlist>
-<simplesect kind="return"><para>the hash value</para></simplesect>
-<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1ga1" kindref="member">double_hash_func</ref> </para></simplesect>
-</para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="224" bodystart="315" bodyend="330"/>
-      </memberdef>
-      <memberdef kind="function" id="group__HashTableInternalFunctions_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>unsigned long</type>
-        <definition>unsigned long rbt_hash_func</definition>
-        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
-        <name>rbt_hash_func</name>
-        <param>
-          <type>hash_parameter_t *</type>
-          <declname>p_hparam</declname>
-        </param>
-        <param>
-          <type>hash_buffer_t *</type>
-          <declname>buffclef</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>rbt_hash_func: Another hash junction, but to be used for the red-black trees managed internally.</para><para>This library uses red-black trees to store data. RB trees use key data too. The hash function has to be different than the one used for find the RB Tree, if not all the entry in the tree will have the same hash value which will lead to a very unbalanced tree</para><para><parameterlist kind="param"><parameteritem>
-<parameternamelist>
-<parametername>hparam</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
-</parameteritem>
-<parameteritem>
-<parameternamelist>
-<parametername>buffclef</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>the key to compute the hash value on</para></parameterdescription>
-</parameteritem>
-</parameterlist>
-<simplesect kind="return"><para>the hash value </para></simplesect>
-</para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="225" bodystart="345" bodyend="351"/>
-      </memberdef>
-      <memberdef kind="function" id="test__cmchash__bugdelete_8c_1a13" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>int</type>
-        <definition>int main</definition>
-        <argsstring>(int argc, char *argv[])</argsstring>
-        <name>main</name>
-        <param>
-          <type>int</type>
-          <declname>argc</declname>
-        </param>
-        <param>
-          <type>char *</type>
-          <declname>argv</declname>
-          <array>[]</array>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="228" bodystart="227" bodyend="456"/>
-        <references refid="test__cmchash__bugdelete_8c_1a7" compoundref="test__cmchash__bugdelete_8c" startline="148">bugdelete_key_array</references>
-        <references refid="test__cmchash_8c_1a6" compoundref="test__cmchash_8c" startline="147">CRITERE_2</references>
-        <references refid="group__HashTableExportedFunctions_1ga3" compoundref="HashTable_8c" startline="816" endline="877">HashTable_Del</references>
-        <references refid="group__HashTableExportedFunctions_1ga2" compoundref="HashTable_8c" startline="754" endline="796">HashTable_Get</references>
-        <references refid="group__HashTableExportedFunctions_1ga4" compoundref="HashTable_8c" startline="908" endline="970">HashTable_GetStats</references>
-        <references refid="group__HashTableExportedFunctions_1ga0" compoundref="HashTable_8c" startline="515" endline="597">HashTable_Init</references>
-        <references refid="group__HashTableExportedFunctions_1ga6" compoundref="HashTable_8c" startline="1015" endline="1060">HashTable_Print</references>
-        <references refid="group__HashTableExportedFunctions_1ga1" compoundref="HashTable_8c" startline="617" endline="733">HashTable_Test_And_Set</references>
-        <references refid="test__cmchash_8c_1a1" compoundref="test__cmchash_8c" startline="142">MAXDESTROY</references>
-        <references refid="test__cmchash_8c_1a2" compoundref="test__cmchash_8c" startline="143">MAXGET</references>
-        <references refid="test__cmchash_8c_1a0" compoundref="test__cmchash_8c" startline="141">MAXTEST</references>
-        <references refid="group__HashTableInternalFunctions_1ga2" compoundref="HashTable_8c" startline="345" endline="351">rbt_hash_func</references>
-        <references refid="group__HashTableInternalFunctions_1ga0" compoundref="HashTable_8c" startline="278" endline="297">simple_hash_func</references>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="147" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="147" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="var">
-      <memberdef kind="variable" id="test__cmchash__bugdelete_8c_1a7" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="test__cmchash__bugdelete_8c_1426533f981565eb7df9f73106f74eec5" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int bugdelete_key_array[]</definition>
         <argsstring>[]</argsstring>
@@ -385,8 +193,186 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="199" bodystart="148" bodyend="-1"/>
-        <referencedby refid="test__cmchash__bugdelete_8c_1a13" compoundref="test__cmchash__bugdelete_8c" startline="227" endline="456">main</referencedby>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="199" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="148" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="test__cmchash__bugdelete_8c_1f183d0c5e0c482d0f02845db8a2f785c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int compare_string_buffer</definition>
+        <argsstring>(hash_buffer_t *buff1, hash_buffer_t *buff2)</argsstring>
+        <name>compare_string_buffer</name>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>buff1</declname>
+        </param>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>buff2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="204" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="203" bodyend="216"/>
+      </memberdef>
+      <memberdef kind="function" id="test__cmchash__bugdelete_8c_1d9a0e7d500dc83e14095e7c90c40c5b9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int display_buff</definition>
+        <argsstring>(hash_buffer_t *pbuff, char *str)</argsstring>
+        <name>display_buff</name>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>pbuff</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>str</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="219" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="218" bodyend="221"/>
+      </memberdef>
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1gf42a323dd4a2c336ce843bddf643be43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>unsigned long</type>
+        <definition>unsigned long simple_hash_func</definition>
+        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
+        <name>simple_hash_func</name>
+        <param>
+          <type>hash_parameter_t *</type>
+          <declname>p_hparam</declname>
+        </param>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>buffclef</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>simple_hash_func: A template hash function, which considers the hash key as a polynom</para><para>A template hash function, which considers the hash key as a polynom. we are supposed to managed string written with ht-&gt;alphabet_length different characters We turn the string into a binary by computing str[0]+str[1]*ht-&gt;alphabet_length+str[2]*ht-&gt;alphabet_length**2 + ... ... + str[N]*ht-&gt;alphabet_length**N Then we keep the modulo by index_size. This size has to be a prime integer for performance reason The polynome is computed with the Horner&apos;s method.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>hparam</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>buffclef</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the key to compute the hash value on</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the hash value</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" kindref="member">double_hash_func</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="223" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="278" bodyend="297"/>
+      </memberdef>
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>unsigned long</type>
+        <definition>unsigned long double_hash_func</definition>
+        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
+        <name>double_hash_func</name>
+        <param>
+          <type>hash_parameter_t *</type>
+          <declname>p_hparam</declname>
+        </param>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>buffclef</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>double_hash_func: This function is used for double hashing, based on another hash function.</para><para>This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash % 8 ) ) ) % hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See &apos;Algorithm in C&apos;, Robert Sedjewick for more detail on this).</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>hparam</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>buffclef</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the key to compute the hash value on</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the hash value</para></simplesect>
+<simplesect kind="see"><para><ref refid="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" kindref="member">double_hash_func</ref> </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="224" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="315" bodyend="330"/>
+      </memberdef>
+      <memberdef kind="function" id="group__HashTableInternalFunctions_1g1aca4ae1fbd881eb69310b3a18375321" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>unsigned long</type>
+        <definition>unsigned long rbt_hash_func</definition>
+        <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
+        <name>rbt_hash_func</name>
+        <param>
+          <type>hash_parameter_t *</type>
+          <declname>p_hparam</declname>
+        </param>
+        <param>
+          <type>hash_buffer_t *</type>
+          <declname>buffclef</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>rbt_hash_func: Another hash junction, but to be used for the red-black trees managed internally.</para><para>This library uses red-black trees to store data. RB trees use key data too. The hash function has to be different than the one used for find the RB Tree, if not all the entry in the tree will have the same hash value which will lead to a very unbalanced tree</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>hparam</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the parameter structure that was used to define the hashtable </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>buffclef</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the key to compute the hash value on</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>the hash value </para></simplesect>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="225" bodyfile="/export/GANESHA/src/HashTable/HashTable.c" bodystart="345" bodyend="350"/>
+      </memberdef>
+      <memberdef kind="function" id="test__cmchash__bugdelete_8c_10ddf1224851353fc92bfbff6f499fa97" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int main</definition>
+        <argsstring>(int argc, char *argv[])</argsstring>
+        <name>main</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>argv</declname>
+          <array>[]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" line="228" bodyfile="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c" bodystart="227" bodyend="456"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -534,14 +520,14 @@
 <codeline lineno="138"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="139"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;MesureTemps.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="140"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141" refid="test__cmchash__bugdelete_8c_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAXTEST<sp/>10000<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Plus<sp/>grand<sp/>que<sp/>MAXDESTROY<sp/>!!<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="142" refid="test__cmchash__bugdelete_8c_1a1" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAXDESTROY<sp/>50</highlight></codeline>
-<codeline lineno="143" refid="test__cmchash__bugdelete_8c_1a2" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAXGET<sp/>30</highlight></codeline>
-<codeline lineno="144" refid="test__cmchash__bugdelete_8c_1a3" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>NB_PREALLOC<sp/>10000</highlight></codeline>
-<codeline lineno="145" refid="test__cmchash__bugdelete_8c_1a4" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>PRIME<sp/>109<sp/></highlight></codeline>
-<codeline lineno="146" refid="test__cmchash__bugdelete_8c_1a5" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>CRITERE<sp/>12<sp/></highlight></codeline>
-<codeline lineno="147" refid="test__cmchash__bugdelete_8c_1a6" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>CRITERE_2<sp/>14<sp/></highlight></codeline>
-<codeline lineno="148" refid="test__cmchash__bugdelete_8c_1a7" refkind="member"><highlight class="preprocessor"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cmchash__bugdelete_8c_1a7" kindref="member">bugdelete_key_array</ref>[]<sp/>=<sp/>{<sp/>4738,</highlight></codeline>
+<codeline lineno="141" refid="test__cmchash__bugdelete_8c_103d9dd35a7b43ebc597de16d46a0e845" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAXTEST<sp/>10000<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Plus<sp/>grand<sp/>que<sp/>MAXDESTROY<sp/>!!<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="142" refid="test__cmchash__bugdelete_8c_1428c97a2aa1643805f8b16275c702607" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAXDESTROY<sp/>50</highlight></codeline>
+<codeline lineno="143" refid="test__cmchash__bugdelete_8c_17d82597c4bd22fe023995390a5a90f95" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAXGET<sp/>30</highlight></codeline>
+<codeline lineno="144" refid="test__cmchash__bugdelete_8c_186ddf7c36b9a7e599bb04786c61b0370" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>NB_PREALLOC<sp/>10000</highlight></codeline>
+<codeline lineno="145" refid="test__cmchash__bugdelete_8c_1c4add2a227a10511e0128d63952030e8" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>PRIME<sp/>109<sp/></highlight></codeline>
+<codeline lineno="146" refid="test__cmchash__bugdelete_8c_1b2da1e226a5beeff3269ec19b1f2b0b9" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>CRITERE<sp/>12<sp/></highlight></codeline>
+<codeline lineno="147" refid="test__cmchash__bugdelete_8c_1d449333f1ec8fe49765893cc1980d94d" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>CRITERE_2<sp/>14<sp/></highlight></codeline>
+<codeline lineno="148" refid="test__cmchash__bugdelete_8c_1426533f981565eb7df9f73106f74eec5" refkind="member"><highlight class="preprocessor"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cmchash__bugdelete_8c_1426533f981565eb7df9f73106f74eec5" kindref="member">bugdelete_key_array</ref>[]<sp/>=<sp/>{<sp/>4738,</highlight></codeline>
 <codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>6483,</highlight></codeline>
 <codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>8393,</highlight></codeline>
 <codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>9661,</highlight></codeline>
@@ -596,7 +582,7 @@
 <codeline lineno="200"><highlight class="normal"></highlight></codeline>
 <codeline lineno="201"><highlight class="normal"></highlight></codeline>
 <codeline lineno="202"><highlight class="normal"></highlight></codeline>
-<codeline lineno="203" refid="test__cmchash__bugdelete_8c_1a8" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__configurable__hash_8c_1a11" kindref="member">compare_string_buffer</ref>(<sp/><sp/>hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2<sp/>)<sp/></highlight></codeline>
+<codeline lineno="203" refid="test__cmchash__bugdelete_8c_1f183d0c5e0c482d0f02845db8a2f785c" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cmchash_8c_1f183d0c5e0c482d0f02845db8a2f785c" kindref="member">compare_string_buffer</ref>(<sp/><sp/>hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2<sp/>)<sp/></highlight></codeline>
 <codeline lineno="204"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="205"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>if<sp/>one<sp/>of<sp/>teh<sp/>entries<sp/>are<sp/>NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="206"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>buff1-&gt;pdata<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
@@ -611,16 +597,16 @@
 <codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>This<sp/>line<sp/>should<sp/>never<sp/>be<sp/>reached<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="216"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="217"><highlight class="normal"></highlight></codeline>
-<codeline lineno="218" refid="test__cmchash__bugdelete_8c_1a9" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__configurable__hash_8c_1a12" kindref="member">display_buff</ref>(<sp/>hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>)</highlight></codeline>
+<codeline lineno="218" refid="test__cmchash__bugdelete_8c_1d9a0e7d500dc83e14095e7c90c40c5b9" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cmchash_8c_1d9a0e7d500dc83e14095e7c90c40c5b9" kindref="member">display_buff</ref>(<sp/>hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>)</highlight></codeline>
 <codeline lineno="219"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="220"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>snprintf(<sp/>str,<sp/>HASHTABLE_DISPLAY_STRLEN,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)pbuff-&gt;pdata<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="221"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="222"><highlight class="normal"></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1ga0" kindref="member">simple_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1ga1" kindref="member">double_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1ga2" kindref="member">rbt_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1gf42a323dd4a2c336ce843bddf643be43" kindref="member">simple_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1gee806584243af84ca21ae138d816a7e7" kindref="member">double_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="group__HashTableInternalFunctions_1g1aca4ae1fbd881eb69310b3a18375321" kindref="member">rbt_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="226"><highlight class="normal"></highlight></codeline>
-<codeline lineno="227" refid="test__cmchash__bugdelete_8c_1a13" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__configurable__hash_8c_1a21" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
+<codeline lineno="227" refid="test__cmchash__bugdelete_8c_10ddf1224851353fc92bfbff6f499fa97" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__cmchash_8c_10ddf1224851353fc92bfbff6f499fa97" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
 <codeline lineno="228"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="229"><highlight class="normal"><sp/><sp/>hash_table_t<sp/>*<sp/>ht<sp/>=<sp/>NULL<sp/><sp/>;</highlight></codeline>
 <codeline lineno="230"><highlight class="normal"><sp/><sp/>hash_parameter_t<sp/>hparam<sp/>;</highlight></codeline>
@@ -637,23 +623,23 @@
 <codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>tmpstr[10]<sp/>;</highlight></codeline>
 <codeline lineno="242"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>tmpstr2[10]<sp/>;</highlight></codeline>
 <codeline lineno="243"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>tmpstr3[10]<sp/>;</highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>strtab[MAXTEST][10]<sp/>;</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>strtab[<ref refid="test__cmchash_8c_103d9dd35a7b43ebc597de16d46a0e845" kindref="member">MAXTEST</ref>][10]<sp/>;</highlight></codeline>
 <codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>critere_recherche<sp/>=<sp/>0<sp/>;</highlight></codeline>
 <codeline lineno="246"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>random_val<sp/>=<sp/>0<sp/>;</highlight></codeline>
 <codeline lineno="247"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/>hparam.index_size<sp/>=<sp/>PRIME<sp/>;</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/>hparam.index_size<sp/>=<sp/><ref refid="test__cmchash_8c_1c4add2a227a10511e0128d63952030e8" kindref="member">PRIME</ref><sp/>;</highlight></codeline>
 <codeline lineno="249"><highlight class="normal"><sp/><sp/>hparam.alphabet_length<sp/>=<sp/>10<sp/>;</highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/>hparam.nb_node_prealloc<sp/>=<sp/>NB_PREALLOC<sp/>;</highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/>hparam.hash_func_key<sp/>=<sp/>simple_hash_func<sp/>;</highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/>hparam.hash_func_rbt<sp/>=<sp/>rbt_hash_func<sp/>;</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/>hparam.compare_key<sp/>=<sp/>compare_string_buffer<sp/>;</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/>hparam.key_to_str<sp/>=<sp/>display_buff<sp/>;</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/>hparam.val_to_str<sp/>=<sp/>display_buff<sp/>;</highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/>hparam.nb_node_prealloc<sp/>=<sp/><ref refid="test__cmchash_8c_186ddf7c36b9a7e599bb04786c61b0370" kindref="member">NB_PREALLOC</ref><sp/>;</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/>hparam.hash_func_key<sp/>=<sp/><ref refid="group__HashTableInternalFunctions_1gf42a323dd4a2c336ce843bddf643be43" kindref="member">simple_hash_func</ref><sp/>;</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/>hparam.hash_func_rbt<sp/>=<sp/><ref refid="group__HashTableInternalFunctions_1g1aca4ae1fbd881eb69310b3a18375321" kindref="member">rbt_hash_func</ref><sp/>;</highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/>hparam.compare_key<sp/>=<sp/><ref refid="test__cmchash_8c_1f183d0c5e0c482d0f02845db8a2f785c" kindref="member">compare_string_buffer</ref><sp/>;</highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/>hparam.key_to_str<sp/>=<sp/><ref refid="test__cmchash_8c_1d9a0e7d500dc83e14095e7c90c40c5b9" kindref="member">display_buff</ref><sp/>;</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/>hparam.val_to_str<sp/>=<sp/><ref refid="test__cmchash_8c_1d9a0e7d500dc83e14095e7c90c40c5b9" kindref="member">display_buff</ref><sp/>;</highlight></codeline>
 <codeline lineno="256"><highlight class="normal"></highlight></codeline>
 <codeline lineno="257"><highlight class="normal"><sp/><sp/>BuddyInit(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="258"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="259"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Init<sp/>de<sp/>la<sp/>table<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>ht<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga0" kindref="member">HashTable_Init</ref>(<sp/>hparam<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>ht<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1gb4e795677661542fc1a84e0ffd9ec41d" kindref="member">HashTable_Init</ref>(<sp/>hparam<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
 <codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>Mauvaise<sp/>init\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
@@ -662,7 +648,7 @@
 <codeline lineno="266"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;debut,<sp/>NULL);<sp/></highlight></codeline>
 <codeline lineno="267"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Creation<sp/>de<sp/>la<sp/>table\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="268"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>MAXTEST<sp/>;<sp/>i++<sp/>)</highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/><ref refid="test__cmchash_8c_103d9dd35a7b43ebc597de16d46a0e845" kindref="member">MAXTEST</ref><sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>sprintf(<sp/>strtab[i],<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/>i<sp/><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="272"><highlight class="normal"></highlight></codeline>
@@ -679,35 +665,35 @@
 <codeline lineno="283"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/><sp/></highlight></codeline>
 <codeline lineno="284"><highlight class="normal"></highlight></codeline>
 <codeline lineno="285"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;fin,<sp/>&amp;debut);</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>l&apos;insertion<sp/>de<sp/>%d<sp/>entrees:<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a0" kindref="member">MAXTEST</ref>,<sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>l&apos;insertion<sp/>de<sp/>%d<sp/>entrees:<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/>MAXTEST,<sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="287"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_HASHTABLE</highlight></codeline>
 <codeline lineno="288"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1ga6" kindref="member">HashTable_Print</ref>(<sp/>ht<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1g8403154cc1223657b499272deef394ae" kindref="member">HashTable_Print</ref>(<sp/>ht<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="290"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="291"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;=========================================\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="292"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="293"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Premier<sp/>test<sp/>simple:<sp/>verif<sp/>de<sp/>la<sp/>coherence<sp/>des<sp/>valeurs<sp/>lues<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="294"><highlight class="normal"><sp/><sp/>critere_recherche<sp/>=<sp/>CRITERE<sp/>;</highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/>critere_recherche<sp/>=<sp/><ref refid="test__cmchash_8c_1b2da1e226a5beeff3269ec19b1f2b0b9" kindref="member">CRITERE</ref><sp/>;</highlight></codeline>
 <codeline lineno="295"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="296"><highlight class="normal"><sp/><sp/>sprintf(<sp/>tmpstr,<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/>critere_recherche<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="297"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>strlen(<sp/>tmpstr<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="298"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>tmpstr<sp/>;</highlight></codeline>
 <codeline lineno="299"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="300"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;debut,<sp/>NULL);</highlight></codeline>
-<codeline lineno="301"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga2" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="301"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="302"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;fin,<sp/>&amp;debut);</highlight></codeline>
 <codeline lineno="303"><highlight class="normal"></highlight></codeline>
 <codeline lineno="304"><highlight class="normal"></highlight></codeline>
-<codeline lineno="305"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Maintenant,<sp/>j&apos;essaye<sp/>de<sp/>recuperer<sp/>%d<sp/>entrees<sp/>(prises<sp/>au<sp/>hasard,<sp/>ou<sp/>presque)<sp/>\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a2" kindref="member">MAXGET</ref><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Maintenant,<sp/>j&apos;essaye<sp/>de<sp/>recuperer<sp/>%d<sp/>entrees<sp/>(prises<sp/>au<sp/>hasard,<sp/>ou<sp/>presque)<sp/>\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_17d82597c4bd22fe023995390a5a90f95" kindref="member">MAXGET</ref><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="306"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;debut,<sp/>NULL);</highlight></codeline>
-<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>MAXGET<sp/>;<sp/>i++<sp/>)</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/><ref refid="test__cmchash_8c_17d82597c4bd22fe023995390a5a90f95" kindref="member">MAXGET</ref><sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="309"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>random_val<sp/>=<sp/>random()<sp/>%<sp/>MAXTEST<sp/>;</highlight></codeline>
 <codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>sprintf(<sp/>tmpstr,<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/>random_val<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey2.len<sp/>=<sp/>strlen(<sp/>tmpstr<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="312"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey2.pdata<sp/>=<sp/>tmpstr<sp/>;</highlight></codeline>
 <codeline lineno="313"><highlight class="normal"></highlight></codeline>
-<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga2" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey2,<sp/>&amp;buffval2<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey2,<sp/>&amp;buffval2<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="315"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_HASHTABLE</highlight></codeline>
 <codeline lineno="316"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;\tLecture<sp/><sp/>de<sp/>key<sp/>=<sp/>%s<sp/><sp/>--&gt;<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/>buffkey2.pdata,<sp/>buffval2.pdata<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="317"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
@@ -719,7 +705,7 @@
 <codeline lineno="323"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="325"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;fin,<sp/>&amp;debut);</highlight></codeline>
-<codeline lineno="326"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>lecture<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a2" kindref="member">MAXGET</ref>,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>lecture<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/>MAXGET,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="327"><highlight class="normal"></highlight></codeline>
 <codeline lineno="328"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="329"><highlight class="normal"><sp/><sp/></highlight></codeline>
@@ -738,19 +724,19 @@
 <codeline lineno="342"><highlight class="normal"><sp/><sp/>srandom(<sp/><sp/>getpid()<sp/><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="343"><highlight class="normal"></highlight></codeline>
 <codeline lineno="344"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;debut,<sp/>NULL);</highlight></codeline>
-<codeline lineno="345"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>MAXDESTROY<sp/>;<sp/>i++<sp/>)</highlight></codeline>
+<codeline lineno="345"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/><ref refid="test__cmchash_8c_1428c97a2aa1643805f8b16275c702607" kindref="member">MAXDESTROY</ref><sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>random_val<sp/>=<sp/><ref refid="test__cmchash__bugdelete_8c_1a7" kindref="member">bugdelete_key_array</ref>[i]<sp/>;</highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>random_val<sp/>=<sp/><ref refid="test__cmchash__bugdelete_8c_1426533f981565eb7df9f73106f74eec5" kindref="member">bugdelete_key_array</ref>[i]<sp/>;</highlight></codeline>
 <codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>sprintf(<sp/>tmpstr,<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/>random_val<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="349"><highlight class="normal"></highlight></codeline>
 <codeline lineno="350"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey.len<sp/>=<sp/>strlen(<sp/>tmpstr<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="351"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey.pdata<sp/>=<sp/>tmpstr<sp/>;</highlight></codeline>
 <codeline lineno="352"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;\t<sp/>J&apos;efface<sp/>%d<sp/>-&gt;<sp/>%d<sp/>|<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
 <codeline lineno="353"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>random_val,<sp/></highlight></codeline>
-<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__HashTableInternalFunctions_1ga0" kindref="member">simple_hash_func</ref>(<sp/>&amp;hparam,<sp/>&amp;buffkey<sp/>),</highlight></codeline>
-<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__HashTableInternalFunctions_1ga2" kindref="member">rbt_hash_func</ref>(<sp/>&amp;hparam,<sp/>&amp;buffkey<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__HashTableInternalFunctions_1gf42a323dd4a2c336ce843bddf643be43" kindref="member">simple_hash_func</ref>(<sp/>&amp;hparam,<sp/>&amp;buffkey<sp/>),</highlight></codeline>
+<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="group__HashTableInternalFunctions_1g1aca4ae1fbd881eb69310b3a18375321" kindref="member">rbt_hash_func</ref>(<sp/>&amp;hparam,<sp/>&amp;buffkey<sp/>)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="356"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="357"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga3" kindref="member">HashTable_Del</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>NULL,<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="357"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1gdda0535c9f1748795d9eeb2514f5458c" kindref="member">HashTable_Del</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>NULL,<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="358"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>rc<sp/>!=<sp/>HASHTABLE_SUCCESS<sp/>)</highlight></codeline>
 <codeline lineno="359"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="360"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Erreur<sp/>lors<sp/>de<sp/>la<sp/>destruction<sp/>de<sp/>%d<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/>random_val,<sp/>rc<sp/>)<sp/>;</highlight></codeline>
@@ -759,11 +745,11 @@
 <codeline lineno="363"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="364"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="365"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;fin,<sp/>&amp;debut);</highlight></codeline>
-<codeline lineno="366"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>la<sp/>destruction<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a1" kindref="member">MAXDESTROY</ref>,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="366"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>la<sp/>destruction<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/>MAXDESTROY,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="367"><highlight class="normal"></highlight></codeline>
 <codeline lineno="368"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="369"><highlight class="normal"></highlight></codeline>
-<codeline lineno="370"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Maintenant,<sp/>j&apos;essaye<sp/>de<sp/>recuperer<sp/>%d<sp/>entrees<sp/>(eventuellement<sp/>detruites)<sp/>\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a2" kindref="member">MAXGET</ref><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="370"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Maintenant,<sp/>j&apos;essaye<sp/>de<sp/>recuperer<sp/>%d<sp/>entrees<sp/>(eventuellement<sp/>detruites)<sp/>\n&quot;</highlight><highlight class="normal">,<sp/>MAXGET<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="371"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;debut,<sp/>NULL);</highlight></codeline>
 <codeline lineno="372"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>MAXGET<sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="373"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
@@ -772,17 +758,17 @@
 <codeline lineno="376"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey.len<sp/>=<sp/>strlen(<sp/>tmpstr<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="377"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>buffkey.pdata<sp/>=<sp/>tmpstr<sp/>;</highlight></codeline>
 <codeline lineno="378"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="379"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga2" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="379"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ge002d8403bd95e1ae432333bb16ae509" kindref="member">HashTable_Get</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="380"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="381"><highlight class="normal"><sp/><sp/>MesureTemps(&amp;fin,<sp/>&amp;debut);</highlight></codeline>
-<codeline lineno="382"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>lecture<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a2" kindref="member">MAXGET</ref>,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="382"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Duree<sp/>de<sp/>lecture<sp/>de<sp/>%d<sp/>elements<sp/>=<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/>MAXGET,<sp/><sp/>ConvertiTempsChaine(fin,<sp/>NULL)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="383"><highlight class="normal"></highlight></codeline>
 <codeline lineno="384"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="385"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Ecriture<sp/>d&apos;une<sp/>clef<sp/>en<sp/>double<sp/>\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="386"><highlight class="normal"><sp/><sp/>sprintf(<sp/>tmpstr,<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1a6" kindref="member">CRITERE_2</ref><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="386"><highlight class="normal"><sp/><sp/>sprintf(<sp/>tmpstr,<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/><ref refid="test__cmchash_8c_1d449333f1ec8fe49765893cc1980d94d" kindref="member">CRITERE_2</ref><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="387"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>strlen(<sp/>tmpstr<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="388"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>tmpstr<sp/>;</highlight></codeline>
-<codeline lineno="389"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1ga1" kindref="member">HashTable_Test_And_Set</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval,<sp/>HASHTABLE_SET_HOW_SET_NO_OVERWRITE<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="389"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/><ref refid="group__HashTableExportedFunctions_1g9fd137ceaac7ec4918a51b59d5e73031" kindref="member">HashTable_Test_And_Set</ref>(<sp/>ht,<sp/>&amp;buffkey,<sp/>&amp;buffval,<sp/>HASHTABLE_SET_HOW_SET_NO_OVERWRITE<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="390"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;La<sp/>valeur<sp/>doit<sp/>etre<sp/>HASHTABLE_ERROR_KEY_ALREADY_EXISTS<sp/><sp/>=<sp/>%d<sp/>--&gt;<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/>HASHTABLE_ERROR_KEY_ALREADY_EXISTS,<sp/>rc<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="391"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>rc<sp/>!=<sp/>HASHTABLE_ERROR_KEY_ALREADY_EXISTS<sp/>)</highlight></codeline>
 <codeline lineno="392"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
@@ -792,12 +778,12 @@
 <codeline lineno="396"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="397"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="398"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_HASHTABLE</highlight></codeline>
-<codeline lineno="399"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1ga6" kindref="member">HashTable_Print</ref>(<sp/>ht<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="399"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1g8403154cc1223657b499272deef394ae" kindref="member">HashTable_Print</ref>(<sp/>ht<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="400"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;-----------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="401"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="402"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="403"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Affichage<sp/>des<sp/>statistiques<sp/>de<sp/>la<sp/>table<sp/>\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="404"><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1ga4" kindref="member">HashTable_GetStats</ref>(<sp/>ht,<sp/>&amp;statistiques<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="404"><highlight class="normal"><sp/><sp/><ref refid="group__HashTableExportedFunctions_1g8cc973332d8c4a92258793acc228e084" kindref="member">HashTable_GetStats</ref>(<sp/>ht,<sp/>&amp;statistiques<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="405"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;<sp/>Nombre<sp/>d&apos;entrees<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/>statistiques.dynamic.nb_entries<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="406"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="407"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;<sp/><sp/><sp/>Operations<sp/>reussies<sp/><sp/>:<sp/>Set<sp/>=<sp/>%d,<sp/><sp/>Get<sp/>=<sp/>%d,<sp/><sp/>Del<sp/>=<sp/>%d,<sp/><sp/>Test<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
@@ -824,13 +810,13 @@
 <codeline lineno="428"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="429"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="430"><highlight class="normal"></highlight></codeline>
-<codeline lineno="431"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>statistiques.dynamic.ok.nb_get<sp/>+<sp/>statistiques.dynamic.notfound.nb_get<sp/>!=<sp/>2*<ref refid="test__cmchash_8c_1a2" kindref="member">MAXGET</ref><sp/>+<sp/>3<sp/>)</highlight></codeline>
+<codeline lineno="431"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>statistiques.dynamic.ok.nb_get<sp/>+<sp/>statistiques.dynamic.notfound.nb_get<sp/>!=<sp/>2*MAXGET<sp/>+<sp/>3<sp/>)</highlight></codeline>
 <codeline lineno="432"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="433"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>statistiques<sp/>incorrectes:<sp/>*.nb_get<sp/>\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="434"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="435"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="436"><highlight class="normal"></highlight></codeline>
-<codeline lineno="437"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>statistiques.dynamic.ok.nb_del<sp/>!=<sp/><ref refid="test__cmchash_8c_1a1" kindref="member">MAXDESTROY</ref><sp/>+1<sp/><sp/>||<sp/>statistiques.dynamic.notfound.nb_del<sp/>!=<sp/>1<sp/>)</highlight></codeline>
+<codeline lineno="437"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>statistiques.dynamic.ok.nb_del<sp/>!=<sp/>MAXDESTROY<sp/>+1<sp/><sp/>||<sp/>statistiques.dynamic.notfound.nb_del<sp/>!=<sp/>1<sp/>)</highlight></codeline>
 <codeline lineno="438"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="439"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>statistiques<sp/>incorrectes:<sp/>*.nb_del<sp/>\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="440"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
@@ -851,6 +837,6 @@
 <codeline lineno="455"><highlight class="normal"><sp/><sp/>exit(<sp/>0<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="456"><highlight class="normal">}</highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/HashTable/test_cmchash_bugdelete.c"/>
+    <location file="/export/GANESHA/src/HashTable/test_cmchash_bugdelete.c"/>
   </compounddef>
 </doxygen>

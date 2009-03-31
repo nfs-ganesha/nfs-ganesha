@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="shell__vars_8c" kind="file">
     <compoundname>shell_vars.c</compoundname>
     <includes local="no">HashTable.h</includes>
@@ -9,50 +9,50 @@
     <includes refid="shell__vars_8h" local="yes">shell_vars.h</includes>
     <includes local="yes">stuff_alloc.h</includes>
     <incdepgraph>
-      <node id="282">
+      <node id="306">
         <label>stdlib.h</label>
       </node>
-      <node id="279">
-        <label>shell_vars.c</label>
-        <link refid="shell_vars.c"/>
-        <childnode refid="280" relation="include">
-        </childnode>
-        <childnode refid="281" relation="include">
-        </childnode>
-        <childnode refid="282" relation="include">
-        </childnode>
-        <childnode refid="283" relation="include">
-        </childnode>
-        <childnode refid="284" relation="include">
-        </childnode>
-        <childnode refid="286" relation="include">
-        </childnode>
-      </node>
-      <node id="284">
-        <label>shell_vars.h</label>
-        <link refid="shell__vars_8h"/>
-        <childnode refid="285" relation="include">
-        </childnode>
-      </node>
-      <node id="283">
+      <node id="307">
         <label>string.h</label>
       </node>
-      <node id="280">
+      <node id="304">
         <label>HashTable.h</label>
       </node>
-      <node id="281">
+      <node id="305">
         <label>strings.h</label>
       </node>
-      <node id="286">
+      <node id="310">
         <label>stuff_alloc.h</label>
       </node>
-      <node id="285">
+      <node id="309">
         <label>stdio.h</label>
       </node>
+      <node id="303">
+        <label>shell_vars.c</label>
+        <link refid="shell_vars.c"/>
+        <childnode refid="304" relation="include">
+        </childnode>
+        <childnode refid="305" relation="include">
+        </childnode>
+        <childnode refid="306" relation="include">
+        </childnode>
+        <childnode refid="307" relation="include">
+        </childnode>
+        <childnode refid="308" relation="include">
+        </childnode>
+        <childnode refid="310" relation="include">
+        </childnode>
+      </node>
+      <node id="308">
+        <label>shell_vars.h</label>
+        <link refid="shell__vars_8h"/>
+        <childnode refid="309" relation="include">
+        </childnode>
+      </node>
     </incdepgraph>
-    <innerclass refid="structshell__variable____">shell_variable__</innerclass>
+    <innerclass refid="structshell__variable____" prot="public">shell_variable__</innerclass>
       <sectiondef kind="define">
-      <memberdef kind="define" id="shell__vars_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="shell__vars_8c_1468798f6d51390ba49a1677d81f9ad32" prot="public" static="no">
         <name>IS_LETTER</name>
         <param><defname>_c_</defname></param>
         <initializer>(((_c_) &gt;= &apos;a&apos;) &amp;&amp; ((_c_) &lt;= &apos;z&apos;))</initializer>
@@ -62,10 +62,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="269" bodystart="269" bodyend="-1"/>
-        <referencedby refid="shell__vars_8h_1a1" compoundref="shell__vars_8c" startline="276" endline="302">is_authorized_varname</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="265" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="265" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell__vars_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="shell__vars_8c_149ec4bff859e1395d2e50dda982afea7" prot="public" static="no">
         <name>IS_LETTER_CAP</name>
         <param><defname>_c_</defname></param>
         <initializer>(((_c_) &gt;= &apos;A&apos;) &amp;&amp; ((_c_) &lt;= &apos;Z&apos;))</initializer>
@@ -75,10 +74,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="270" bodystart="270" bodyend="-1"/>
-        <referencedby refid="shell__vars_8h_1a1" compoundref="shell__vars_8c" startline="276" endline="302">is_authorized_varname</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="266" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="266" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell__vars_8c_1a2" prot="public" static="no">
+      <memberdef kind="define" id="shell__vars_8c_13e34027c60cdb95d55d1923393b6ea30" prot="public" static="no">
         <name>IS_NUMERIC</name>
         <param><defname>_c_</defname></param>
         <initializer>(((_c_) &gt;= &apos;0&apos;) &amp;&amp; ((_c_) &lt;= &apos;9&apos;))</initializer>
@@ -88,13 +86,12 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="271" bodystart="271" bodyend="-1"/>
-        <referencedby refid="shell__vars_8h_1a1" compoundref="shell__vars_8c" startline="276" endline="302">is_authorized_varname</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="267" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="267" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="typedef">
-      <memberdef kind="typedef" id="shell__vars_8c_1a3" prot="public" static="no">
-        <type><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref></type>
+      <memberdef kind="typedef" id="shell__vars_8c_140d761086d51ee95186910c61cc99fd6" prot="public" static="no">
+        <type>struct <ref refid="structshell__variable____" kindref="compound">shell_variable__</ref></type>
         <definition>typedef struct shell_variable__  shell_variable_t</definition>
         <argsstring></argsstring>
         <name>shell_variable_t</name>
@@ -104,18 +101,42 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="129"/>
-        <referencedby refid="shell__vars_8h_1a4" compoundref="shell__vars_8c" startline="337" endline="348">free_var</referencedby>
-        <referencedby refid="shell__vars_8h_1a2" compoundref="shell__vars_8c" startline="308" endline="316">get_var_value</referencedby>
-        <referencedby refid="shell__vars_8h_1a5" compoundref="shell__vars_8c" startline="182" endline="193">print_varlist</referencedby>
-        <referencedby refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</referencedby>
-        <referencedby refid="shell__vars_8c_1a8" compoundref="shell__vars_8c" startline="170" endline="175">SetVarTable</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="129"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="shell__vars_8c_18f57932ffa3e6ede0cfdd67b1c08d6ff" prot="public" static="yes" mutable="no">
+        <type>pthread_key_t</type>
+        <definition>pthread_key_t thread_key</definition>
+        <argsstring></argsstring>
+        <name>thread_key</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="133" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="133" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="shell__vars_8c_1903e94b9925b177f24b6de44e87cb2ac" prot="public" static="yes" mutable="no">
+        <type>pthread_once_t</type>
+        <definition>pthread_once_t once_key</definition>
+        <argsstring></argsstring>
+        <name>once_key</name>
+        <initializer> PTHREAD_ONCE_INIT</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="134" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="134" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="shell__vars_8c_1a6" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1f1e49363f35a85580c49e2acd4bd62bc" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
-        <definition>void init_keys</definition>
+        <definition>static void init_keys</definition>
         <argsstring>(void)</argsstring>
         <name>init_keys</name>
         <param>
@@ -127,11 +148,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="140" bodystart="139" bodyend="146"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="140" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="139" bodyend="146"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a7" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_18e5ea5a038bbaf82d9b3363dff5d2679" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref> *</type>
-        <definition>shell_variable_t* GetVarTable</definition>
+        <definition>static shell_variable_t* GetVarTable</definition>
         <argsstring>()</argsstring>
         <name>GetVarTable</name>
         <briefdescription>
@@ -140,9 +161,9 @@
 <para>manages pthread_keys. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="152" bodystart="152" bodyend="167"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="152" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="152" bodyend="164"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1310e28d26e2146fdad72669a2d02be0c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void SetVarTable</definition>
         <argsstring>(shell_variable_t *var_table)</argsstring>
@@ -157,10 +178,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="171" bodystart="170" bodyend="175"/>
-        <references refid="shell__vars_8c_1a3">shell_variable_t</references>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="168" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="167" bodyend="172"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1108be7d3668f688da7ac24d2e95f89c6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_varlist</definition>
         <argsstring>(FILE *output, int is_dlen)</argsstring>
@@ -179,15 +199,11 @@
 <para>print var list. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="183" bodystart="182" bodyend="193"/>
-        <references refid="structshell__variable_____1o2" compoundref="shell__vars_8c" startline="126">shell_variable__::datalen</references>
-        <references refid="shell__vars_8c_1a3">shell_variable_t</references>
-        <references refid="structshell__variable_____1o0" compoundref="shell__vars_8c" startline="124">shell_variable__::var_name</references>
-        <referencedby refid="shell_8h_1a38" compoundref="shell_8c" startline="2201" endline="2226">shellcmd_varlist</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="180" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="179" bodyend="190"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a10" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1380ea6e29b6332018fa7be930cf3d2d4" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref> *</type>
-        <definition>shell_variable_t* find_var</definition>
+        <definition>static shell_variable_t* find_var</definition>
         <argsstring>(char *str)</argsstring>
         <name>find_var</name>
         <param>
@@ -200,11 +216,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="196" bodystart="196" bodyend="204"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="193" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="193" bodyend="201"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a11" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_131b650e98a1e1a71b970300ac1bda30b" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref> *</type>
-        <definition>shell_variable_t* create_var</definition>
+        <definition>static shell_variable_t* create_var</definition>
         <argsstring>(char *str)</argsstring>
         <name>create_var</name>
         <param>
@@ -217,11 +233,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="206" bodystart="206" bodyend="226"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="203" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="203" bodyend="222"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a12" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1670d65cdb7e6206b8428bd227f70e93e" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
-        <definition>void set_var</definition>
+        <definition>static void set_var</definition>
         <argsstring>(shell_variable_t *var, char *value)</argsstring>
         <name>set_var</name>
         <param>
@@ -238,11 +254,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="228" bodystart="228" bodyend="245"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="224" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="224" bodyend="241"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a13" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1ba24a643cd03c7d18765329c88e39adb" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
-        <definition>void del_var</definition>
+        <definition>static void del_var</definition>
         <argsstring>(shell_variable_t *var)</argsstring>
         <name>del_var</name>
         <param>
@@ -255,9 +271,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="247" bodystart="247" bodyend="267"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="243" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="243" bodyend="263"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1f857dc4843a1ef1f36d21b6060578470" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int is_authorized_varname</definition>
         <argsstring>(char *str)</argsstring>
@@ -272,13 +288,9 @@
 <para>indicates whether a name is authorized for a variable. A variable name must be in [a-zA-Z0-9._:]* </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="276" bodystart="276" bodyend="302"/>
-        <references refid="shell__vars_8c_1a0" compoundref="shell__vars_8c" startline="269">IS_LETTER</references>
-        <references refid="shell__vars_8c_1a1" compoundref="shell__vars_8c" startline="270">IS_LETTER_CAP</references>
-        <references refid="shell__vars_8c_1a2" compoundref="shell__vars_8c" startline="271">IS_NUMERIC</references>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="272" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="272" bodyend="298"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a15" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_129bc337d24deebcc1d223335830f03a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* get_var_value</definition>
         <argsstring>(char *varname)</argsstring>
@@ -293,15 +305,9 @@
 <para>returns the value for a variable, NULL if the variable doesn&apos;t exist. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="308" bodystart="308" bodyend="316"/>
-        <references refid="shell__vars_8c_1a3">shell_variable_t</references>
-        <references refid="structshell__variable_____1o1" compoundref="shell__vars_8c" startline="125">shell_variable__::var_value</references>
-        <referencedby refid="shell_8h_1a28" compoundref="shell_8c" startline="1724" endline="1727">shell_GetPrompt</referencedby>
-        <referencedby refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</referencedby>
-        <referencedby refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="304" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="304" bodyend="312"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a16" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_142c616a19301305c64bfd5abc4b45add" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int set_var_value</definition>
         <argsstring>(char *varname, char *var_value)</argsstring>
@@ -320,19 +326,9 @@
 <para>set the value for a variable, and create it if necessary. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="322" bodystart="321" bodyend="333"/>
-        <references refid="shell__vars_8c_1a3">shell_variable_t</references>
-        <referencedby refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
-        <referencedby refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</referencedby>
-        <referencedby refid="shell_8h_1a27" compoundref="shell_8c" startline="1703" endline="1716">shell_SetPrompt</referencedby>
-        <referencedby refid="shell_8h_1a29" compoundref="shell_8c" startline="1735" endline="1753">shell_SetShellId</referencedby>
-        <referencedby refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</referencedby>
-        <referencedby refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="318" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="317" bodyend="329"/>
       </memberdef>
-      <memberdef kind="function" id="shell__vars_8c_1a17" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell__vars_8c_1228c7f788656a8815ca10a5e942d3705" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int free_var</definition>
         <argsstring>(char *varname)</argsstring>
@@ -347,51 +343,20 @@
 <para>free the resources used by a variable. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="337" bodystart="337" bodyend="348"/>
-        <references refid="shell__vars_8c_1a3">shell_variable_t</references>
-        <referencedby refid="shell_8h_1a36" compoundref="shell_8c" startline="2115" endline="2174">shellcmd_unset</referencedby>
-      </memberdef>
-      </sectiondef>
-      <sectiondef kind="var">
-      <memberdef kind="variable" id="shell__vars_8c_1a4" prot="public" static="yes" volatile="no" mutable="no">
-        <type>pthread_key_t</type>
-        <definition>pthread_key_t thread_key</definition>
-        <argsstring></argsstring>
-        <name>thread_key</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="133" bodystart="133" bodyend="-1"/>
-      </memberdef>
-      <memberdef kind="variable" id="shell__vars_8c_1a5" prot="public" static="yes" volatile="no" mutable="no">
-        <type>pthread_once_t</type>
-        <definition>pthread_once_t once_key</definition>
-        <argsstring></argsstring>
-        <name>once_key</name>
-        <initializer> PTHREAD_ONCE_INIT</initializer>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c" line="134" bodystart="134" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell_vars.c" line="333" bodyfile="/export/GANESHA/src/shell/shell_vars.c" bodystart="333" bodyend="344"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>variables management for the shell. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2006/01/24 13:49:33 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2006/01/24 13:49:33 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
 <simplesect kind="rcs"><title>Log</title><para><ref refid="shell__vars_8c" kindref="compound">shell_vars.c</ref>,v </para></simplesect>
-Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>Revision 1.7 2005/11/28 17:03:01 deniel Added CeCILL headers</para><para>Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.5 2005/05/10 14:02:45 leibovic Removing adherence to BuddyMalloc.</para><para>Revision 1.4 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para><para>Revision 1.3 2005/05/03 08:06:23 leibovic Adding meminfo command.</para><para>Revision 1.2 2005/05/03 07:37:58 leibovic Using Mem_Alloc and Mem_Free.</para><para>Revision 1.1 2004/12/14 09:56:00 leibovic Variables management.</para>    </detaileddescription>
+Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>Revision 1.7 2005/11/28 17:03:01 deniel Added CeCILL headers</para><para>Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.5 2005/05/10 14:02:45 leibovic Removing adherence to BuddyMalloc.</para><para>Revision 1.4 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para><para>Revision 1.3 2005/05/03 08:06:23 leibovic Adding meminfo command.</para><para>Revision 1.2 2005/05/03 07:37:58 leibovic Using Mem_Alloc and Mem_Free.</para><para>Revision 1.1 2004/12/14 09:56:00 leibovic Variables management. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -477,16 +442,16 @@ Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>R
 <codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;strings.h&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="shell__vars_8h" kindref="compound">shell_vars.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="shell__vars_8h" kindref="compound" tooltip="variables management for the shell.">shell_vars.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="121"><highlight class="normal"></highlight></codeline>
 <codeline lineno="122"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>variable<sp/>struct<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="123" refid="structshell__variable____" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref><sp/>{<sp/><sp/></highlight></codeline>
-<codeline lineno="124" refid="structshell__variable_____1o0" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>var_name[MAX_VAR_LEN];<sp/></highlight></codeline>
-<codeline lineno="125" refid="structshell__variable_____1o1" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>var_value;<sp/></highlight><highlight class="comment">/*<sp/>mallocated<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="126" refid="structshell__variable_____1o2" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>datalen;</highlight></codeline>
-<codeline lineno="127" refid="structshell__variable_____1o3" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref><sp/>*<sp/>next;</highlight></codeline>
-<codeline lineno="128" refid="structshell__variable_____1o4" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref><sp/>*<sp/>prev;</highlight></codeline>
+<codeline lineno="124" refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><ref refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" kindref="member">var_name</ref>[<ref refid="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" kindref="member">MAX_VAR_LEN</ref>];<sp/></highlight></codeline>
+<codeline lineno="125" refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>;<sp/></highlight><highlight class="comment">/*<sp/>mallocated<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126" refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" kindref="member">datalen</ref>;</highlight></codeline>
+<codeline lineno="127" refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref><sp/>*<sp/><ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>;</highlight></codeline>
+<codeline lineno="128" refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__variable____" kindref="compound">shell_variable__</ref><sp/>*<sp/><ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref>;</highlight></codeline>
 <codeline lineno="129"><highlight class="normal">}<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref>;</highlight></codeline>
 <codeline lineno="130"><highlight class="normal"></highlight></codeline>
 <codeline lineno="131"><highlight class="normal"></highlight></codeline>
@@ -499,7 +464,7 @@ Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>R
 <codeline lineno="138"><highlight class="normal"></highlight></codeline>
 <codeline lineno="139"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>init_keys(<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>)</highlight></codeline>
 <codeline lineno="140"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pthread_key_create(<sp/>&amp;thread_key,<sp/><ref refid="Getopt_8c_1a0" kindref="member">NULL</ref><sp/>)<sp/>==<sp/>-1<sp/>)</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pthread_key_create(<sp/>&amp;thread_key,<sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref><sp/>)<sp/>==<sp/>-1<sp/>)</highlight></codeline>
 <codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>%d<sp/>creating<sp/>pthread<sp/>key<sp/>for<sp/>thread<sp/>%p<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
 <codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>errno,(caddr_t)pthread_self(),strerror(errno)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="144"><highlight class="normal"><sp/><sp/></highlight></codeline>
@@ -509,189 +474,185 @@ Revision 1.8 2006/01/24 13:49:33 leibovic Adding missing includes.</para><para>R
 <codeline lineno="148"><highlight class="normal"></highlight></codeline>
 <codeline lineno="152"><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>GetVarTable(){</highlight></codeline>
 <codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>p_current_thread_vars<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>first,<sp/>we<sp/>init<sp/>the<sp/>keys<sp/>if<sp/>this<sp/>is<sp/>the<sp/>first<sp/>time<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pthread_once(<sp/>&amp;once_key,<sp/>init_keys<sp/>)<sp/>!=<sp/>0<sp/>){</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>%d<sp/>calling<sp/>pthread_once<sp/>for<sp/>thread<sp/>%p<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>errno,(caddr_t)pthread_self(),strerror(errno)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NULL;</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*)pthread_getspecific(<sp/>thread_key<sp/>);</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="167"><highlight class="normal">}</highlight><highlight class="comment">/*<sp/>GetVarTable<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"></highlight></codeline>
-<codeline lineno="169"><highlight class="normal"></highlight></codeline>
-<codeline lineno="170" refid="shell__vars_8c_1a8" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1a8" kindref="member">SetVarTable</ref>(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var_table<sp/>)</highlight></codeline>
-<codeline lineno="171"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>set<sp/>the<sp/>specific<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/>pthread_setspecific(<sp/>thread_key<sp/>,<sp/>var_table<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>first,<sp/>we<sp/>init<sp/>the<sp/>keys<sp/>if<sp/>this<sp/>is<sp/>the<sp/>first<sp/>time<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pthread_once(<sp/>&amp;once_key,<sp/>init_keys<sp/>)<sp/>!=<sp/>0<sp/>){</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>%d<sp/>calling<sp/>pthread_once<sp/>for<sp/>thread<sp/>%p<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>errno,(caddr_t)pthread_self(),strerror(errno)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*)pthread_getspecific(<sp/>thread_key<sp/>);</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="164"><highlight class="normal">}</highlight><highlight class="comment">/*<sp/>GetVarTable<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"></highlight></codeline>
+<codeline lineno="166"><highlight class="normal"></highlight></codeline>
+<codeline lineno="167" refid="shell__vars_8c_1310e28d26e2146fdad72669a2d02be0c" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1310e28d26e2146fdad72669a2d02be0c" kindref="member">SetVarTable</ref>(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var_table<sp/>)</highlight></codeline>
+<codeline lineno="168"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>set<sp/>the<sp/>specific<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/>pthread_setspecific(<sp/>thread_key<sp/>,<sp/>var_table<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"></highlight></codeline>
+<codeline lineno="172"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"></highlight></codeline>
 <codeline lineno="174"><highlight class="normal"></highlight></codeline>
-<codeline lineno="175"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"></highlight></codeline>
-<codeline lineno="182" refid="shell__vars_8h_1a5" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8h_1a5" kindref="member">print_varlist</ref>(<sp/>FILE<sp/>*<sp/>output,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>is_dlen<sp/>)</highlight></codeline>
-<codeline lineno="183"><highlight class="normal">{<sp/><sp/></highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>current<sp/>=<sp/>GetVarTable();</highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(<sp/>current<sp/>){<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(is_dlen)<sp/>fprintf(output,<sp/></highlight><highlight class="stringliteral">&quot;\t%s<sp/>(%d<sp/>Bytes)\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>current-&gt;<ref refid="structshell__variable_____1o0" kindref="member">var_name</ref>,</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>current-&gt;<ref refid="structshell__variable_____1o2" kindref="member">datalen</ref><sp/>-<sp/>1<sp/>);</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>fprintf(output,<sp/></highlight><highlight class="stringliteral">&quot;\t%s\n&quot;</highlight><highlight class="normal">,current-&gt;<ref refid="structshell__variable_____1o0" kindref="member">var_name</ref>);</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/>current<sp/>=<sp/><sp/><sp/>current<sp/>-&gt;<sp/>next;<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="193"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>find_var(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str){<sp/><sp/></highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>current<sp/>=<sp/>GetVarTable();</highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(<sp/>current<sp/>){</highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!strncmp(<sp/>current-&gt;<ref refid="structshell__variable_____1o0" kindref="member">var_name</ref><sp/>,<sp/>str,<sp/>MAX_VAR_LEN))</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>current;</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/>current<sp/>=<sp/>current<sp/>-&gt;<sp/>next;</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NULL;<sp/><sp/></highlight></codeline>
-<codeline lineno="204"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="205"><highlight class="normal"></highlight></codeline>
-<codeline lineno="206"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>create_var(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>){</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>dlen;</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var_table<sp/>=<sp/>GetVarTable();</highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>remembers<sp/>name<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>new_item<sp/>=</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*)Mem_Alloc(</highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref>));</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/>strncpy(new_item-&gt;<ref refid="structshell__variable_____1o0" kindref="member">var_name</ref>,str,MAX_VAR_LEN);</highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref><sp/>=<sp/>NULL;</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1o2" kindref="member">datalen</ref><sp/>=<sp/>0;</highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>inserting<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var_table)<sp/>var_table-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref><sp/>=<sp/>new_item;<sp/><sp/></highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref><sp/>=<sp/>var_table;</highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref><sp/>=<sp/>NULL;</highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><ref refid="shell__vars_8c_1a8" kindref="member">SetVarTable</ref>(<sp/>new_item<sp/>);</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><sp/>new_item;</highlight></codeline>
-<codeline lineno="226"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="227"><highlight class="normal"></highlight></codeline>
-<codeline lineno="228"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>set_var(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var<sp/>,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>value<sp/>){</highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>dlen;</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>clears<sp/>old<sp/>value,<sp/>if<sp/>any<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>){</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/>Mem_Free(var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>);</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>=NULL;</highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o2" kindref="member">datalen</ref>=0;</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="238"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>alloc<sp/>and<sp/>set<sp/>new<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/>dlen<sp/>=<sp/>strlen(value)+1;</highlight></codeline>
-<codeline lineno="241"><highlight class="normal"><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o2" kindref="member">datalen</ref><sp/>=<sp/>dlen;</highlight></codeline>
-<codeline lineno="242"><highlight class="normal"><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref><sp/>=<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)Mem_Alloc(dlen);</highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/>strncpy(var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>,<sp/>value,<sp/>dlen);</highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="245"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="246"><highlight class="normal"></highlight></codeline>
-<codeline lineno="247"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>del_var(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var){</highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>remove<sp/>from<sp/>the<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref>){</highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref>-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref><sp/>=<sp/>var-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref>;</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="shell__vars_8c_1a8" kindref="member">SetVarTable</ref>(<sp/>var-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref><sp/>);</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"></highlight></codeline>
+<codeline lineno="179" refid="shell__vars_8h_1108be7d3668f688da7ac24d2e95f89c6" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1108be7d3668f688da7ac24d2e95f89c6" kindref="member">print_varlist</ref>(<sp/>FILE<sp/>*<sp/>output,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>is_dlen<sp/>)</highlight></codeline>
+<codeline lineno="180"><highlight class="normal">{<sp/><sp/></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>current<sp/>=<sp/>GetVarTable();</highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(<sp/>current<sp/>){<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(is_dlen)<sp/>fprintf(output,<sp/></highlight><highlight class="stringliteral">&quot;\t%s<sp/>(%d<sp/>Bytes)\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>current-&gt;<ref refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" kindref="member">var_name</ref>,</highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>current-&gt;<ref refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" kindref="member">datalen</ref><sp/>-<sp/>1<sp/>);</highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>fprintf(output,<sp/></highlight><highlight class="stringliteral">&quot;\t%s\n&quot;</highlight><highlight class="normal">,current-&gt;<ref refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" kindref="member">var_name</ref>);</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>current<sp/>=<sp/><sp/><sp/>current<sp/>-&gt;<sp/><ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>;<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="190"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"></highlight></codeline>
+<codeline lineno="193"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>find_var(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str){<sp/><sp/></highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>current<sp/>=<sp/>GetVarTable();</highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(<sp/>current<sp/>){</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!strncmp(<sp/>current-&gt;<ref refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" kindref="member">var_name</ref><sp/>,<sp/>str,<sp/><ref refid="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" kindref="member">MAX_VAR_LEN</ref>))</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>current;</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/>current<sp/>=<sp/>current<sp/>-&gt;<sp/><ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>;</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;<sp/><sp/></highlight></codeline>
+<codeline lineno="201"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"></highlight></codeline>
+<codeline lineno="203"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>create_var(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>){</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var_table<sp/>=<sp/>GetVarTable();</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>remembers<sp/>name<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>new_item<sp/>=</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*)Mem_Alloc(</highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref>));</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/>strncpy(new_item-&gt;<ref refid="structshell__variable_____14762c0a19f41db96e04d416d1cb58c21" kindref="member">var_name</ref>,str,<ref refid="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" kindref="member">MAX_VAR_LEN</ref>);</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref><sp/>=<sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" kindref="member">datalen</ref><sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>inserting<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var_table)<sp/>var_table-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref><sp/>=<sp/>new_item;<sp/><sp/></highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref><sp/>=<sp/>var_table;</highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/>new_item-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref><sp/>=<sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><ref refid="shell__vars_8c_1310e28d26e2146fdad72669a2d02be0c" kindref="member">SetVarTable</ref>(<sp/>new_item<sp/>);</highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><sp/>new_item;</highlight></codeline>
+<codeline lineno="222"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"></highlight></codeline>
+<codeline lineno="224"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>set_var(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var<sp/>,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>value<sp/>){</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>dlen;</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>clears<sp/>old<sp/>value,<sp/>if<sp/>any<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>){</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/>Mem_Free(var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>);</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>=<ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" kindref="member">datalen</ref>=0;</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>alloc<sp/>and<sp/>set<sp/>new<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/>dlen<sp/>=<sp/>strlen(value)+1;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/>var-&gt;<ref refid="structshell__variable_____16f5d028f344b6409880a78b60c6bdc1c" kindref="member">datalen</ref><sp/>=<sp/>dlen;</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref><sp/>=<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)Mem_Alloc(dlen);</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/>strncpy(var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>,<sp/>value,<sp/>dlen);</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="241"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"></highlight></codeline>
+<codeline lineno="243"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>del_var(<sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var){</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>remove<sp/>from<sp/>the<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref>){</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref>-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref><sp/>=<sp/>var-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>;</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="shell__vars_8c_1310e28d26e2146fdad72669a2d02be0c" kindref="member">SetVarTable</ref>(<sp/>var-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref><sp/>);</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>){</highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1df6c563db01cac7c20c4d761a6beaf11" kindref="member">next</ref>-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref><sp/>=<sp/>var-&gt;<ref refid="structshell__variable_____19879e881df74561b574d56c45814d3f3" kindref="member">prev</ref>;</highlight></codeline>
 <codeline lineno="255"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref>){</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/>var-&gt;<ref refid="structshell__variable_____1o3" kindref="member">next</ref>-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref><sp/>=<sp/>var-&gt;<ref refid="structshell__variable_____1o4" kindref="member">prev</ref>;</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>)</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/>Mem_Free(var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>);</highlight></codeline>
 <codeline lineno="260"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>)</highlight></codeline>
-<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/>Mem_Free(var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>);</highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/>Mem_Free((caddr_t)var);</highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="267"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"></highlight></codeline>
-<codeline lineno="269" refid="shell__vars_8c_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>IS_LETTER(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;a&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;z&apos;))</highlight></codeline>
-<codeline lineno="270" refid="shell__vars_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>IS_LETTER_CAP(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;A&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;Z&apos;))</highlight></codeline>
-<codeline lineno="271" refid="shell__vars_8c_1a2" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>IS_NUMERIC(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;0&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;9&apos;))</highlight></codeline>
-<codeline lineno="272"><highlight class="preprocessor"></highlight></codeline>
-<codeline lineno="276" refid="shell__vars_8h_1a1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8h_1a1" kindref="member">is_authorized_varname</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str){</highlight></codeline>
-<codeline lineno="277"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="278"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>len=0;</highlight></codeline>
-<codeline lineno="279"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="280"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>special<sp/>var<sp/>$?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="281"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!strcmp(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;?&quot;</highlight><highlight class="normal"><sp/>)<sp/>)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
-<codeline lineno="282"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(str[len])</highlight></codeline>
-<codeline lineno="284"><highlight class="normal"><sp/><sp/>{<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>c<sp/>=<sp/>str[len];</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!<ref refid="shell__vars_8c_1a0" kindref="member">IS_LETTER</ref>(c)<sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>!<ref refid="shell__vars_8c_1a1" kindref="member">IS_LETTER_CAP</ref>(c)<sp/><sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>!<ref refid="shell__vars_8c_1a2" kindref="member">IS_NUMERIC</ref>(c)<sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;.&apos;</highlight><highlight class="normal">)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;_&apos;</highlight><highlight class="normal">)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;:&apos;</highlight><highlight class="normal">))</highlight></codeline>
-<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;<sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="296"><highlight class="normal"><sp/><sp/><sp/><sp/>len++;</highlight></codeline>
-<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(len&gt;MAX_VAR_LEN)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
-<codeline lineno="298"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="299"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="300"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
-<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="302"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="303"><highlight class="normal"></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"></highlight></codeline>
-<codeline lineno="308" refid="shell__vars_8h_1a2" refkind="member"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="shell__vars_8h_1a2" kindref="member">get_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname){<sp/><sp/></highlight></codeline>
-<codeline lineno="309"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
-<codeline lineno="310"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var<sp/>=<sp/>find_var(varname))</highlight></codeline>
-<codeline lineno="311"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
-<codeline lineno="312"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>var-&gt;<ref refid="structshell__variable_____1o1" kindref="member">var_value</ref>;</highlight></codeline>
-<codeline lineno="313"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NULL;</highlight></codeline>
-<codeline lineno="315"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="316"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="317"><highlight class="normal"></highlight></codeline>
-<codeline lineno="321" refid="shell__vars_8h_1a3" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8h_1a3" kindref="member">set_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>var_value)</highlight></codeline>
-<codeline lineno="322"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="323"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
-<codeline lineno="324"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>the<sp/>value<sp/>doesn&apos;t<sp/>exist,<sp/>create<sp/>it<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="325"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!(var<sp/>=<sp/>find_var(varname))){<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/>var=create_var(<sp/>varname<sp/>);</highlight></codeline>
-<codeline lineno="327"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="328"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!var)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;<sp/><sp/></highlight></codeline>
-<codeline lineno="329"><highlight class="normal"><sp/><sp/>set_var(var,var_value);</highlight></codeline>
-<codeline lineno="330"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="331"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
-<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="333"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/>Mem_Free((caddr_t)var);</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="263"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="264"><highlight class="normal"></highlight></codeline>
+<codeline lineno="265" refid="shell__vars_8c_1468798f6d51390ba49a1677d81f9ad32" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>IS_LETTER(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;a&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;z&apos;))</highlight></codeline>
+<codeline lineno="266" refid="shell__vars_8c_149ec4bff859e1395d2e50dda982afea7" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>IS_LETTER_CAP(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;A&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;Z&apos;))</highlight></codeline>
+<codeline lineno="267" refid="shell__vars_8c_13e34027c60cdb95d55d1923393b6ea30" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>IS_NUMERIC(_c_)<sp/>(((_c_)<sp/>&gt;=<sp/>&apos;0&apos;)<sp/>&amp;&amp;<sp/>((_c_)<sp/>&lt;=<sp/>&apos;9&apos;))</highlight></codeline>
+<codeline lineno="268"><highlight class="preprocessor"></highlight></codeline>
+<codeline lineno="272" refid="shell__vars_8h_1f857dc4843a1ef1f36d21b6060578470" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1f857dc4843a1ef1f36d21b6060578470" kindref="member">is_authorized_varname</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str){</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="274"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>len=0;</highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>special<sp/>var<sp/>$?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="277"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!strcmp(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;?&quot;</highlight><highlight class="normal"><sp/>)<sp/>)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(str[len])</highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/>{<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>c<sp/>=<sp/>str[len];</highlight></codeline>
+<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!<ref refid="shell__vars_8c_1468798f6d51390ba49a1677d81f9ad32" kindref="member">IS_LETTER</ref>(c)<sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>!<ref refid="shell__vars_8c_149ec4bff859e1395d2e50dda982afea7" kindref="member">IS_LETTER_CAP</ref>(c)<sp/><sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>!<ref refid="shell__vars_8c_13e34027c60cdb95d55d1923393b6ea30" kindref="member">IS_NUMERIC</ref>(c)<sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;.&apos;</highlight><highlight class="normal">)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;_&apos;</highlight><highlight class="normal">)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(c!=<sp/></highlight><highlight class="charliteral">&apos;:&apos;</highlight><highlight class="normal">))</highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;<sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/>len++;</highlight></codeline>
+<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(len&gt;<ref refid="shell__vars_8h_1b88da9f4af960323f7db2e63b7491975" kindref="member">MAX_VAR_LEN</ref>)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="298"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="299"><highlight class="normal"></highlight></codeline>
+<codeline lineno="300"><highlight class="normal"></highlight></codeline>
+<codeline lineno="304" refid="shell__vars_8h_129bc337d24deebcc1d223335830f03a4" refkind="member"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="shell__vars_8c_129bc337d24deebcc1d223335830f03a4" kindref="member">get_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname){<sp/><sp/></highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(var<sp/>=<sp/>find_var(varname))</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>var-&gt;<ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>;</highlight></codeline>
+<codeline lineno="309"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>;</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="312"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="313"><highlight class="normal"></highlight></codeline>
+<codeline lineno="317" refid="shell__vars_8h_142c616a19301305c64bfd5abc4b45add" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_142c616a19301305c64bfd5abc4b45add" kindref="member">set_var_value</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="structshell__variable_____1529321e06f79480c4b0c485ef71442da" kindref="member">var_value</ref>)</highlight></codeline>
+<codeline lineno="318"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="319"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>the<sp/>value<sp/>doesn&apos;t<sp/>exist,<sp/>create<sp/>it<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="321"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!(var<sp/>=<sp/>find_var(varname))){<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/>var=create_var(<sp/>varname<sp/>);</highlight></codeline>
+<codeline lineno="323"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="324"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!var)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;<sp/><sp/></highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/>set_var(var,var_value);</highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="329"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="330"><highlight class="normal"></highlight></codeline>
+<codeline lineno="333" refid="shell__vars_8h_1228c7f788656a8815ca10a5e942d3705" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8c_1228c7f788656a8815ca10a5e942d3705" kindref="member">free_var</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname){</highlight></codeline>
 <codeline lineno="334"><highlight class="normal"></highlight></codeline>
-<codeline lineno="337" refid="shell__vars_8h_1a4" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell__vars_8h_1a4" kindref="member">free_var</ref>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>varname){</highlight></codeline>
-<codeline lineno="338"><highlight class="normal"></highlight></codeline>
-<codeline lineno="339"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
-<codeline lineno="340"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>the<sp/>value<sp/>doesn&apos;t<sp/>exist,<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="341"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!(var<sp/>=<sp/>find_var(varname))){</highlight></codeline>
-<codeline lineno="342"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
-<codeline lineno="343"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="344"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="345"><highlight class="normal"><sp/><sp/>del_var(var);</highlight></codeline>
-<codeline lineno="346"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
-<codeline lineno="347"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="348"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="349"><highlight class="normal"></highlight></codeline>
+<codeline lineno="335"><highlight class="normal"><sp/><sp/><ref refid="structshell__variable____" kindref="compound">shell_variable_t</ref><sp/>*<sp/>var;</highlight></codeline>
+<codeline lineno="336"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>the<sp/>value<sp/>doesn&apos;t<sp/>exist,<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="337"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!(var<sp/>=<sp/>find_var(varname))){</highlight></codeline>
+<codeline lineno="338"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;</highlight></codeline>
+<codeline lineno="339"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="340"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/>del_var(var);</highlight></codeline>
+<codeline lineno="342"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="343"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="344"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="345"><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/shell/shell_vars.c"/>
+    <location file="/export/GANESHA/src/shell/shell_vars.c"/>
   </compounddef>
 </doxygen>

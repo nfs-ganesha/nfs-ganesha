@@ -1,22 +1,26 @@
 \section{fsal\_\-init.c File Reference}
-\label{fsal__init_8c}\index{fsal_init.c@{fsal\_\-init.c}}
-Initialization functions. 
+\label{fsal__init_8c}\index{fsal\_\-init.c@{fsal\_\-init.c}}
+Initialization functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf SET\_\-BITMAP\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
+\#define \textbf{SET\_\-BITMAP\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
 \item 
-\#define {\bf SET\_\-INTEGER\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
+\#define \textbf{SET\_\-INTEGER\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
 \item 
-\#define {\bf SET\_\-STRING\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
+\#define \textbf{SET\_\-STRING\_\-PARAM}(api\_\-cfg, p\_\-init\_\-info, \_\-field)
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
 fsal\_\-status\_\-t {\bf FSAL\_\-Init} (fsal\_\-parameter\_\-t $\ast$init\_\-info)
+\item 
+fsal\_\-status\_\-t \textbf{FSAL\_\-terminate} ()\label{fsal__init_8c_dabe2f2fc596731b07948fb0f9ae51db}
+
 \end{CompactItemize}
 
 
@@ -24,30 +28,30 @@ fsal\_\-status\_\-t {\bf FSAL\_\-Init} (fsal\_\-parameter\_\-t $\ast$init\_\-inf
 Initialization functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 13:45:37 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.20 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-init.c}.
 
 \subsection{Define Documentation}
-\index{fsal_init.c@{fsal\_\-init.c}!SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}}
-\index{SET_BITMAP_PARAM@{SET\_\-BITMAP\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BITMAP\_\-PARAM(api\_\-cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__init_8c_a0}
+\index{fsal\_\-init.c@{fsal\_\-init.c}!SET\_\-BITMAP\_\-PARAM@{SET\_\-BITMAP\_\-PARAM}}
+\index{SET\_\-BITMAP\_\-PARAM@{SET\_\-BITMAP\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
+\subsubsection[{SET\_\-BITMAP\_\-PARAM}]{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-BITMAP\_\-PARAM(api\_\-cfg, \/  p\_\-init\_\-info, \/  \_\-field)}\label{fsal__init_8c_d4acf7e55a5ad7300edb9d27c5865001}
 
 
-{\bf Value:}
+\textbf{Value:}
 
-\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                \
+\begin{Code}\begin{verbatim}switch( (p_init_info)->behaviors._field ){                \
       case FSAL_INIT_FORCE_VALUE :                            \
         /* force the value in any case */                     \
         api_cfg._field = (p_init_info)->hpss_config._field;   \
@@ -62,17 +66,18 @@ Definition in file {\bf fsal\_\-init.c}.
         break;                                                \
     /* In the other cases, we keep the default value. */      \
     }                                                         \
-\end{verbatim}\normalsize 
+\end{verbatim}
+\end{Code}
 
 
-Definition at line 22 of file fsal\_\-init.c.\index{fsal_init.c@{fsal\_\-init.c}!SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}}
-\index{SET_INTEGER_PARAM@{SET\_\-INTEGER\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-INTEGER\_\-PARAM(api\_\-cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__init_8c_a1}
+Definition at line 22 of file fsal\_\-init.c.\index{fsal\_\-init.c@{fsal\_\-init.c}!SET\_\-INTEGER\_\-PARAM@{SET\_\-INTEGER\_\-PARAM}}
+\index{SET\_\-INTEGER\_\-PARAM@{SET\_\-INTEGER\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
+\subsubsection[{SET\_\-INTEGER\_\-PARAM}]{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-INTEGER\_\-PARAM(api\_\-cfg, \/  p\_\-init\_\-info, \/  \_\-field)}\label{fsal__init_8c_802153fcb81fd9f7b272dbf6eb477aec}
 
 
-{\bf Value:}
+\textbf{Value:}
 
-\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+\begin{Code}\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
         api_cfg._field = (p_init_info)->hpss_config._field;       \
@@ -89,35 +94,37 @@ Definition at line 22 of file fsal\_\-init.c.\index{fsal_init.c@{fsal\_\-init.c}
         break;                                                \
     /* In the other cases, we keep the default value. */          \
     }                                                             \
-\end{verbatim}\normalsize 
+\end{verbatim}
+\end{Code}
 
 
-Definition at line 40 of file fsal\_\-init.c.\index{fsal_init.c@{fsal\_\-init.c}!SET_STRING_PARAM@{SET\_\-STRING\_\-PARAM}}
-\index{SET_STRING_PARAM@{SET\_\-STRING\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-STRING\_\-PARAM(api\_\-cfg, p\_\-init\_\-info, \_\-field)}\label{fsal__init_8c_a2}
+Definition at line 40 of file fsal\_\-init.c.\index{fsal\_\-init.c@{fsal\_\-init.c}!SET\_\-STRING\_\-PARAM@{SET\_\-STRING\_\-PARAM}}
+\index{SET\_\-STRING\_\-PARAM@{SET\_\-STRING\_\-PARAM}!fsal_init.c@{fsal\_\-init.c}}
+\subsubsection[{SET\_\-STRING\_\-PARAM}]{\setlength{\rightskip}{0pt plus 5cm}\#define SET\_\-STRING\_\-PARAM(api\_\-cfg, \/  p\_\-init\_\-info, \/  \_\-field)}\label{fsal__init_8c_7e81fe711a5c74c6137e9ee255672ff7}
 
 
-{\bf Value:}
+\textbf{Value:}
 
-\footnotesize\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
+\begin{Code}\begin{verbatim}switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
       /* force the value in any case */                           \
       strcpy(api_cfg._field,(p_init_info)->hpss_config._field);   \
       break;                                                \
     /* In the other cases, we keep the default value. */          \
     }                                                             \
-\end{verbatim}\normalsize 
+\end{verbatim}
+\end{Code}
 
 
 Definition at line 60 of file fsal\_\-init.c.
 
 \subsection{Function Documentation}
-\index{fsal_init.c@{fsal\_\-init.c}!FSAL_Init@{FSAL\_\-Init}}
-\index{FSAL_Init@{FSAL\_\-Init}!fsal_init.c@{fsal\_\-init.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Init (fsal\_\-parameter\_\-t $\ast$ {\em init\_\-info})}\label{fsal__init_8c_a3}
+\index{fsal\_\-init.c@{fsal\_\-init.c}!FSAL\_\-Init@{FSAL\_\-Init}}
+\index{FSAL\_\-Init@{FSAL\_\-Init}!fsal_init.c@{fsal\_\-init.c}}
+\subsubsection[{FSAL\_\-Init}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Init (fsal\_\-parameter\_\-t $\ast$ {\em init\_\-info})}\label{fsal__init_8c_0be44bf9d728985f8631b3aa8911b36f}
 
 
-FSAL\_\-Init : Initializes the File\-System Abstraction Layer.
+FSAL\_\-Init : Initializes the FileSystem Abstraction Layer.
 
 \begin{Desc}
 \item[Parameters:]

@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="mnt__Umnt_8c" kind="file">
     <compoundname>mnt_Umnt.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -34,6 +34,51 @@
       </node>
       <node id="121">
         <label>cache_content.h</label>
+      </node>
+      <node id="107">
+        <label>fcntl.h</label>
+      </node>
+      <node id="111">
+        <label>rpc/types.h</label>
+      </node>
+      <node id="115">
+        <label>log_functions.h</label>
+      </node>
+      <node id="118">
+        <label>nfs4.h</label>
+      </node>
+      <node id="106">
+        <label>pthread.h</label>
+      </node>
+      <node id="105">
+        <label>string.h</label>
+      </node>
+      <node id="110">
+        <label>HashTable.h</label>
+      </node>
+      <node id="113">
+        <label>rpc/auth.h</label>
+      </node>
+      <node id="108">
+        <label>sys/file.h</label>
+      </node>
+      <node id="112">
+        <label>rpc/rpc.h</label>
+      </node>
+      <node id="122">
+        <label>nfs_exports.h</label>
+      </node>
+      <node id="119">
+        <label>nfs_core.h</label>
+      </node>
+      <node id="117">
+        <label>nfs23.h</label>
+      </node>
+      <node id="126">
+        <label>nfs_proto_functions.h</label>
+      </node>
+      <node id="116">
+        <label>stuff_alloc.h</label>
       </node>
       <node id="103">
         <label>mnt_Umnt.c</label>
@@ -85,51 +130,6 @@
         <childnode refid="126" relation="include">
         </childnode>
       </node>
-      <node id="107">
-        <label>fcntl.h</label>
-      </node>
-      <node id="111">
-        <label>rpc/types.h</label>
-      </node>
-      <node id="115">
-        <label>log_functions.h</label>
-      </node>
-      <node id="118">
-        <label>nfs4.h</label>
-      </node>
-      <node id="106">
-        <label>pthread.h</label>
-      </node>
-      <node id="105">
-        <label>string.h</label>
-      </node>
-      <node id="110">
-        <label>HashTable.h</label>
-      </node>
-      <node id="113">
-        <label>rpc/auth.h</label>
-      </node>
-      <node id="108">
-        <label>sys/file.h</label>
-      </node>
-      <node id="112">
-        <label>rpc/rpc.h</label>
-      </node>
-      <node id="122">
-        <label>nfs_exports.h</label>
-      </node>
-      <node id="119">
-        <label>nfs_core.h</label>
-      </node>
-      <node id="117">
-        <label>nfs23.h</label>
-      </node>
-      <node id="126">
-        <label>nfs_proto_functions.h</label>
-      </node>
-      <node id="116">
-        <label>stuff_alloc.h</label>
-      </node>
       <node id="104">
         <label>stdio.h</label>
       </node>
@@ -147,7 +147,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="func">
-      <memberdef kind="function" id="mnt__Umnt_8c_1a0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="mnt__Umnt_8c_13883b1bb2e80705838ca6153f07b0a7f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt_Umnt</definition>
         <argsstring>(nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres)</argsstring>
@@ -236,9 +236,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Umnt.c" line="142" bodystart="135" bodyend="164"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Umnt.c" line="146" bodyfile="/export/GANESHA/src/NFS_Protocols/mnt_Umnt.c" bodystart="139" bodyend="168"/>
       </memberdef>
-      <memberdef kind="function" id="mnt__Umnt_8c_1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="mnt__Umnt_8c_10aed32a96096e0a88bccd4698f103a9f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void mnt_Umnt_Free</definition>
         <argsstring>(nfs_res_t *pres)</argsstring>
@@ -261,18 +261,18 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Umnt.c" line="175" bodystart="174" bodyend="178"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Umnt.c" line="179" bodyfile="/export/GANESHA/src/NFS_Protocols/mnt_Umnt.c" bodystart="178" bodyend="182"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>MOUNTPROC_UMNT for Mount protocol v1 and v3. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/12/20 10:52:14 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.7 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/12/20 10:52:14 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.7 </para></simplesect>
 </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
@@ -354,76 +354,80 @@
 <codeline lineno="86"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="87"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="98"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="103"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="108"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight></codeline>
-<codeline lineno="135" refid="mnt__Umnt_8c_1a0" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="mnt__Umnt_8c_1a0" kindref="member">mnt_Umnt</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport<sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/>*<sp/>pclient<sp/></highlight><highlight class="comment">/*<sp/>INOUT<sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>INOUT<sp/><sp/>*/</highlight><highlight class="normal">,<sp/></highlight></codeline>
-<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>preq<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>OUT<sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"><sp/>)<sp/></highlight></codeline>
-<codeline lineno="142"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>hostname<sp/>;</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;REQUEST<sp/>PROCESSING:<sp/>Calling<sp/>mnt_Umnt&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo:<sp/>BUGAZOMEU;<sp/>seul<sp/>AUTHUNIX<sp/>est<sp/>supporte<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/>hostname=<sp/>((</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">authunix_parms<sp/>*)(preq-&gt;rq_clntcred))-&gt;aup_machname<sp/>;</highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>hostname<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;/!\\<sp/>|<sp/>UMOUNT:<sp/>NULL<sp/>passed<sp/>as<sp/>Umount<sp/>argument<sp/>!!!&quot;</highlight><highlight class="normal">)<sp/>;</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>BUGAZOMEU:<sp/>pas<sp/>de<sp/>verif<sp/>sur<sp/>le<sp/>path<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs_Remove_MountList_Entry(<sp/>hostname,<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;UMOUNT:<sp/>/!\\<sp/>|<sp/>Cannot<sp/>remove<sp/>mount<sp/>entry<sp/>for<sp/>client<sp/>%s&quot;</highlight><highlight class="normal">,<sp/>hostname<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;UMOUNT:<sp/>Client<sp/>%s<sp/>was<sp/>removed<sp/>from<sp/>mount<sp/>list&quot;</highlight><highlight class="normal">,<sp/>hostname<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Umnt<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"></highlight></codeline>
-<codeline lineno="174" refid="mnt__Umnt_8c_1a1" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Umnt_8c_1a1" kindref="member">mnt_Umnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
-<codeline lineno="175"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>do<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="178"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Umnt_Free<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="102"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="107"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="112"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight></codeline>
+<codeline lineno="139" refid="mnt__Umnt_8c_13883b1bb2e80705838ca6153f07b0a7f" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="mnt__Umnt_8c_13883b1bb2e80705838ca6153f07b0a7f" kindref="member">mnt_Umnt</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport<sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/>*<sp/>pclient<sp/></highlight><highlight class="comment">/*<sp/>INOUT<sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>INOUT<sp/><sp/>*/</highlight><highlight class="normal">,<sp/></highlight></codeline>
+<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>preq<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>OUT<sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"><sp/>)<sp/></highlight></codeline>
+<codeline lineno="146"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>hostname<sp/>;</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;REQUEST<sp/>PROCESSING:<sp/>Calling<sp/>mnt_Umnt&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo:<sp/>BUGAZOMEU;<sp/>seul<sp/>AUTHUNIX<sp/>est<sp/>supporte<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/>hostname=<sp/>((</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">authunix_parms<sp/>*)(preq-&gt;rq_clntcred))-&gt;aup_machname<sp/>;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>hostname<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;/!\\<sp/>|<sp/>UMOUNT:<sp/>NULL<sp/>passed<sp/>as<sp/>Umount<sp/>argument<sp/>!!!&quot;</highlight><highlight class="normal">)<sp/>;</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>BUGAZOMEU:<sp/>pas<sp/>de<sp/>verif<sp/>sur<sp/>le<sp/>path<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs_Remove_MountList_Entry(<sp/>hostname,<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;UMOUNT:<sp/>/!\\<sp/>|<sp/>Cannot<sp/>remove<sp/>mount<sp/>entry<sp/>for<sp/>client<sp/>%s&quot;</highlight><highlight class="normal">,<sp/>hostname<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;UMOUNT:<sp/>Client<sp/>%s<sp/>was<sp/>removed<sp/>from<sp/>mount<sp/>list&quot;</highlight><highlight class="normal">,<sp/>hostname<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Umnt<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"></highlight></codeline>
+<codeline lineno="178" refid="mnt__Umnt_8c_10aed32a96096e0a88bccd4698f103a9f" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Umnt_8c_10aed32a96096e0a88bccd4698f103a9f" kindref="member">mnt_Umnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
+<codeline lineno="179"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>do<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="182"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Umnt_Free<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Umnt.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/mnt_Umnt.c"/>
   </compounddef>
 </doxygen>

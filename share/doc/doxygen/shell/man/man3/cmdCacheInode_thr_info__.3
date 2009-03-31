@@ -1,4 +1,4 @@
-.TH "cmdCacheInode_thr_info__" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "cmdCacheInode_thr_info__" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -37,63 +37,48 @@ cmdCacheInode_thr_info__ \-
 .RI "cache_content_client_t \fBdc_client\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 141 of file commands_Cache_inode.c.
 .SH "Member Data Documentation"
 .PP 
 .SS "cache_inode_status_t \fBcmdCacheInode_thr_info__::cache_status\fP"
 .PP
 Thread specific variable: Last status from cache_inode layer 
 .PP
-Definition at line 365 of file commands_Cache_inode.c.
-.PP
-Referenced by cache_solvepath(), cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_gc(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_pwd(), fn_Cache_inode_read(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), and fn_Cache_inode_write().
+Definition at line 156 of file commands_Cache_inode.c.
 .SS "cache_inode_client_t \fBcmdCacheInode_thr_info__::client\fP"
 .PP
 Thread specific variable : the client for the cache 
 .PP
-Definition at line 377 of file commands_Cache_inode.c.
-.PP
-Referenced by cache_solvepath(), cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_callstat(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_gc(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), and fn_Cache_inode_write().
+Definition at line 168 of file commands_Cache_inode.c.
 .SS "fsal_op_context_t \fBcmdCacheInode_thr_info__::context\fP"
 .PP
 context for accessing the filesystem 
 .PP
-Definition at line 362 of file commands_Cache_inode.c.
-.PP
-Referenced by cache_solvepath(), cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_su(), fn_Cache_inode_unlink(), and fn_Cache_inode_write().
+Definition at line 153 of file commands_Cache_inode.c.
 .SS "char \fBcmdCacheInode_thr_info__::current_path\fP[FSAL_MAX_PATH_LEN]"
 .PP
 Thread specific variable : Current path 
 .PP
-Definition at line 373 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_pwd(), fn_Cache_inode_read(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), and fn_Cache_inode_write().
+Definition at line 164 of file commands_Cache_inode.c.
 .SS "cache_content_client_t \fBcmdCacheInode_thr_info__::dc_client\fP"
 .PP
-Definition at line 378 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init().
+Definition at line 169 of file commands_Cache_inode.c.
 .SS "fsal_export_context_t \fBcmdCacheInode_thr_info__::exp_context\fP"
 .PP
-Definition at line 359 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), and fn_Cache_inode_su().
+Definition at line 150 of file commands_Cache_inode.c.
 .SS "int \fBcmdCacheInode_thr_info__::is_client_init\fP"
 .PP
-Definition at line 367 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), and RetrieveInitializedContext().
+Definition at line 158 of file commands_Cache_inode.c.
 .SS "int \fBcmdCacheInode_thr_info__::is_thread_init\fP"
 .PP
-Definition at line 353 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), and RetrieveInitializedContext().
+Definition at line 144 of file commands_Cache_inode.c.
 .SS "cache_entry_t* \fBcmdCacheInode_thr_info__::pentry\fP"
 .PP
 Thread specific variable: current pentry 
 .PP
-Definition at line 370 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_pwd(), fn_Cache_inode_read(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), and fn_Cache_inode_write().
+Definition at line 161 of file commands_Cache_inode.c.
 
 .SH "Author"
 .PP 

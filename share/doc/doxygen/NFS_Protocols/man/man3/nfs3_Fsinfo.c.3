@@ -1,8 +1,10 @@
-.TH "nfs3_Fsinfo.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs3_Fsinfo.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs3_Fsinfo.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs3_Fsinfo.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -74,36 +76,35 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:49 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.11 
 .RE
 .PP
-.RE
-.PP
-\fBnfs3_Fsinfo.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs3_Fsinfo.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs3_Fsinfo.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define FSINFO_FIELD   pres->res_fsinfo3.FSINFO3res_u.resok"
 .PP
-Referenced by nfs3_Fsinfo().
 .SH "Function Documentation"
 .PP 
 .SS "int nfs3_Fsinfo (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
@@ -136,9 +137,7 @@ always NFS_REQ_OK (this routine does nothing)
 .PP
 
 .PP
-Definition at line 142 of file nfs3_Fsinfo.c.
-.PP
-References FSINFO_FIELD, and nfs_SetPostOpAttr().
+Definition at line 146 of file nfs3_Fsinfo.c.
 .SS "void nfs3_Fsinfo_Free (nfs_res_t * pres)"
 .PP
 nfs3_Fsinfo_Free: Frees the result structure allocated for nfs3_Fsinfo.
@@ -152,7 +151,7 @@ Frees the result structure allocated for nfs3_Fsinfo.
 .PP
 
 .PP
-Definition at line 241 of file nfs3_Fsinfo.c.
+Definition at line 243 of file nfs3_Fsinfo.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

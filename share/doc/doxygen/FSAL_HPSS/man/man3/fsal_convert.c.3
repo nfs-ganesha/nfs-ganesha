@@ -1,8 +1,10 @@
-.TH "fsal_convert.c" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_convert.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_convert.c \- HPSS-FSAL type translation functions. 
+fsal_convert.c \- HPSS-FSAL type translation functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -80,26 +82,26 @@ HPSS-FSAL type translation functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/08 12:46:59 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.32 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.32 
 .RE
 .PP
 
@@ -153,16 +155,21 @@ ERR_FSAL_ATTRNOTSUPP: Some of the asked attributes are not supported.
 .IP "\(bu" 2
 ERR_FSAL_INVAL: Some of the asked attributes are read-only.
 .IP "\(bu" 2
-ERR_FSAL_SERVERFAULT: Unexpected error.
+ERR_FSAL_SERVERFAULT: Unexpected error. 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: Define some constants for settable and supported attributes. 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: Define some constants for settable and supported attributes. 
-.PP
-ACL management
+ACL management 
 .RE
 .PP
 
@@ -311,14 +318,15 @@ ERR_FSAL_FAULT: NULL pointer passed as input parameter.
 .IP "\(bu" 2
 ERR_FSAL_ATTRNOTSUPP: One of the asked attributes is not supported.
 .IP "\(bu" 2
-ERR_FSAL_SERVERFAULT: Unexpected error.
+ERR_FSAL_SERVERFAULT: Unexpected error. 
 .PP
 .RE
 .PP
+
 .PP
 \fBTodo\fP
 .RS 4
-: This doesn't convert ACLs for the moment.
+: This doesn't convert ACLs for the moment. 
 .RE
 .PP
 
@@ -339,9 +347,10 @@ hpss2fsal_error : Convert HPSS error codes to FSAL error codes.
 .PP
 \fBReturns:\fP
 .RS 4
-The FSAL error code associated to hpss_errorcode.
+The FSAL error code associated to hpss_errorcode. 
 .RE
 .PP
+
 .PP
 \fBTodo\fP
 .RS 4

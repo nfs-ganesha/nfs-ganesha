@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-setclientid.c File Reference}
-\label{nfs4__op__setclientid_8c}\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation. 
+\label{nfs4__op__setclientid_8c}\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
+Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -29,9 +30,9 @@ Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf arg\_\-SETCLIENTID4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opsetclientid
+\#define {\bf arg\_\-SETCLIENTID4}~op $\rightarrow$ nfs\_\-argop4\_\-u.opsetclientid
 \item 
-\#define {\bf res\_\-SETCLIENTID4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetclientid
+\#define {\bf res\_\-SETCLIENTID4}~resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetclientid
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -43,7 +44,7 @@ void {\bf nfs4\_\-op\_\-setclientid\_\-Free} (SETCLIENTID4res $\ast$resp)
 \subsection*{Variables}
 \begin{CompactItemize}
 \item 
-time\_\-t {\bf Server\-Boot\-Time}
+time\_\-t {\bf ServerBootTime}
 \end{CompactItemize}
 
 
@@ -51,47 +52,43 @@ time\_\-t {\bf Server\-Boot\-Time}
 Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:52 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.9 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-setclientid.c}{\rm (p.\,\pageref{nfs4__op__setclientid_8c})} : Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation.
+\doxyref{nfs4\_\-op\_\-setclientid.c}{p.}{nfs4__op__setclientid_8c} : Routines used for managing the NFS4\_\-OP\_\-SETCLIENTID operation. 
 
 Definition in file {\bf nfs4\_\-op\_\-setclientid.c}.
 
 \subsection{Define Documentation}
-\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}!arg_SETCLIENTID4@{arg\_\-SETCLIENTID4}}
-\index{arg_SETCLIENTID4@{arg\_\-SETCLIENTID4}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-SETCLIENTID4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opsetclientid}\label{nfs4__op__setclientid_8c_a0}
+\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}!arg\_\-SETCLIENTID4@{arg\_\-SETCLIENTID4}}
+\index{arg\_\-SETCLIENTID4@{arg\_\-SETCLIENTID4}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
+\subsubsection[{arg\_\-SETCLIENTID4}]{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-SETCLIENTID4~op $\rightarrow$ nfs\_\-argop4\_\-u.opsetclientid}\label{nfs4__op__setclientid_8c_365a78f3dd3aaa4a0f81cd5f1defcd81}
+
+
+\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}!res\_\-SETCLIENTID4@{res\_\-SETCLIENTID4}}
+\index{res\_\-SETCLIENTID4@{res\_\-SETCLIENTID4}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
+\subsubsection[{res\_\-SETCLIENTID4}]{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-SETCLIENTID4~resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetclientid}\label{nfs4__op__setclientid_8c_0bbc4ff7bf1d583a0bd86d8b9147be17}
 
 
 
-
-Referenced by nfs4\_\-op\_\-setclientid().\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}!res_SETCLIENTID4@{res\_\-SETCLIENTID4}}
-\index{res_SETCLIENTID4@{res\_\-SETCLIENTID4}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-SETCLIENTID4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opsetclientid}\label{nfs4__op__setclientid_8c_a1}
-
-
-
-
-Referenced by nfs4\_\-op\_\-setclientid().
 
 \subsection{Function Documentation}
-\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}!nfs4_op_setclientid@{nfs4\_\-op\_\-setclientid}}
-\index{nfs4_op_setclientid@{nfs4\_\-op\_\-setclientid}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-setclientid (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__setclientid_8c_a3}
+\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}!nfs4\_\-op\_\-setclientid@{nfs4\_\-op\_\-setclientid}}
+\index{nfs4\_\-op\_\-setclientid@{nfs4\_\-op\_\-setclientid}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
+\subsubsection[{nfs4\_\-op\_\-setclientid}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-setclientid (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__setclientid_8c_42efb5642ce641dd7b4380ed7d0eafeb}
 
 
 nfs4\_\-op\_\-setclientid: The NFS4\_\-OP\_\-SETCLIENTID operation.
 
-Gets the current\-FH for the current compound requests.
+Gets the currentFH for the current compound requests.
 
 \begin{Desc}
 \item[Parameters:]
@@ -101,14 +98,12 @@ Gets the current\-FH for the current compound requests.
 \begin{Desc}
 \item[Returns:]NFS4\_\-OK if successfull, other values show an error.\end{Desc}
 \begin{Desc}
-\item[See also:]{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+\item[See also:]\doxyref{nfs4\_\-Compound}{p.}{nfs4__Compound_8c_a1516130248e7ae55d3c2e1bffe90016} \end{Desc}
 
 
-Definition at line 143 of file nfs4\_\-op\_\-setclientid.c.
-
-References arg\_\-SETCLIENTID4, res\_\-SETCLIENTID4, and Server\-Boot\-Time.\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}!nfs4_op_setclientid_Free@{nfs4\_\-op\_\-setclientid\_\-Free}}
-\index{nfs4_op_setclientid_Free@{nfs4\_\-op\_\-setclientid\_\-Free}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-setclientid\_\-Free (SETCLIENTID4res $\ast$ {\em resp})}\label{nfs4__op__setclientid_8c_a4}
+Definition at line 146 of file nfs4\_\-op\_\-setclientid.c.\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}!nfs4\_\-op\_\-setclientid\_\-Free@{nfs4\_\-op\_\-setclientid\_\-Free}}
+\index{nfs4\_\-op\_\-setclientid\_\-Free@{nfs4\_\-op\_\-setclientid\_\-Free}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
+\subsubsection[{nfs4\_\-op\_\-setclientid\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-setclientid\_\-Free (SETCLIENTID4res $\ast$ {\em resp})}\label{nfs4__op__setclientid_8c_46a601807c0e869612de03307b8b573e}
 
 
 nfs4\_\-op\_\-setclientid\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-setclientid.
@@ -124,13 +119,11 @@ Frees what was allocared to handle nfs4\_\-op\_\-setclientid.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 328 of file nfs4\_\-op\_\-setclientid.c.
-
-Referenced by nfs4\_\-Compound\_\-Free().
+Definition at line 325 of file nfs4\_\-op\_\-setclientid.c.
 
 \subsection{Variable Documentation}
-\index{nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}!ServerBootTime@{ServerBootTime}}
+\index{nfs4\_\-op\_\-setclientid.c@{nfs4\_\-op\_\-setclientid.c}!ServerBootTime@{ServerBootTime}}
 \index{ServerBootTime@{ServerBootTime}!nfs4_op_setclientid.c@{nfs4\_\-op\_\-setclientid.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Server\-Boot\-Time}}\label{nfs4__op__setclientid_8c_a2}
+\subsubsection[{ServerBootTime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf ServerBootTime}}\label{nfs4__op__setclientid_8c_7b4df488832bc1f60082b16b51472dc5}
 
 

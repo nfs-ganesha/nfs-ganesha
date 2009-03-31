@@ -413,9 +413,9 @@ void * mfsl_async_synclet_thread( void * Arg )
         exit( 1 ) ;
      }
 
+    /* Put the invalid entries back to pool (they have been managed */
     if( synclet_data[index].passcounter > mfsl_param.nb_before_gc )
      {
-        printf( "-----------> GC on op_lru\n" ) ;
  
 	if( LRU_gc_invalid( synclet_data[index].op_lru, NULL ) != LRU_LIST_SUCCESS )
 	  DisplayLog( "/!\\ : Could not gc on LRU list for pending asynchronous operations" ) ;
@@ -447,6 +447,7 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
   LRU_entry_t                  * pentry_synclet = NULL ;
   LRU_status_t                   lru_status ;
   unsigned int                   chosen_synclet = 0 ;  
+  unsigned int                   passcounter = 0 ;
 
   SetNameFunction( "MFSL_ASYNC ADT" ) ;
 
@@ -510,8 +511,18 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
 		LRU_invalidate( async_op_lru,  pentry_dispatch ) ;
             }
         }
+      
+       /* Increment the passcounter */
+       passcounter += 1 ;
 
-      /************************************************* Ne pas oublier de cleaner les invalides */         
+       /* Put the invalid entries back to pool (they have been managed */
+       if( passcounter > mfsl_param.nb_before_gc )
+        {
+           if( LRU_gc_invalid( async_op_lru, NULL ) != LRU_LIST_SUCCESS )
+             DisplayLog( "/!\\ : Could not gc on LRU list for not dispatched asynchronous operations" ) ;
+
+           passcounter = 0 ;
+         }
 
 
       V( mutex_async_list ) ;

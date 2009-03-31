@@ -1,8 +1,10 @@
-.TH "nfs_ip_stats.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_ip_stats.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_ip_stats.c \- The management of the IP stats per machines. 
+nfs_ip_stats.c \- The management of the IP stats per machines.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -67,9 +69,6 @@ nfs_ip_stats.c \- The management of the IP stats per machines.
 .ti -1c
 .RI "nfs_parameter_t \fBnfs_param\fP"
 .br
-.ti -1c
-.RI "unsigned int \fBexpiration_time\fP"
-.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -77,26 +76,26 @@ The management of the IP stats per machines.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/24 13:49:12 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.4 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.4 
 .RE
 .PP
 \fBnfs_ip_stats.c\fP : The management of the IP stats per machines.
@@ -114,7 +113,7 @@ Revision 1.4 2006/01/24 13:49:12 leibovic Adding missing includes.
 .PP
 Revision 1.3 2006/01/20 07:39:23 leibovic Back to the previous version.
 .PP
-Revision 1.1 2005/11/30 09:28:42 deniel IP/stats cache per thread (no bottleneck) is complete
+Revision 1.1 2005/11/30 09:28:42 deniel IP/stats cache per thread (no bottleneck) is complete 
 .PP
 Definition in file \fBnfs_ip_stats.c\fP.
 .SH "Function Documentation"
@@ -139,7 +138,7 @@ compare the ip address stored in the key buffers. This function is to be used as
 .PP
 
 .PP
-Definition at line 178 of file nfs_ip_stats.c.
+Definition at line 181 of file nfs_ip_stats.c.
 .SS "int display_ip_stats (hash_buffer_t * pbuff, char * str)"
 .PP
 display_ip_stats: displays the ip_stats stored in the buffer.
@@ -160,7 +159,7 @@ number of character written.
 .PP
 
 .PP
-Definition at line 199 of file nfs_ip_stats.c.
+Definition at line 202 of file nfs_ip_stats.c.
 .SS "unsigned long int ip_stats_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 ip_stats_rbt_hash_func: computes the rbt value for the entry in IP stats cache.
@@ -186,7 +185,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 159 of file nfs_ip_stats.c.
+Definition at line 162 of file nfs_ip_stats.c.
 .SS "unsigned long int ip_stats_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.
@@ -212,7 +211,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 137 of file nfs_ip_stats.c.
+Definition at line 140 of file nfs_ip_stats.c.
 .SS "hash_table_t* nfs_Init_ip_stats (nfs_ip_stats_parameter_t param)"
 .PP
 nfs_Init_ip_stats: Init the hashtable for IP stats cache.
@@ -260,11 +259,7 @@ IP_STATS_NETDB_ERROR if an error occured during the netdb query (via gethostbyad
 .PP
 
 .PP
-Definition at line 227 of file nfs_ip_stats.c.
-.PP
-References nfs_param.
-.PP
-Referenced by nfs_export_check_access().
+Definition at line 230 of file nfs_ip_stats.c.
 .SS "void nfs_ip_stats_dump (hash_table_t ** ht_ip_stats, unsigned int nb_worker, char * path_stat)"
 .PP
 nfs_ip_stats_dump: Dumps the IP Stats for each client to a file per client
@@ -284,8 +279,6 @@ nothing (void function).
 
 .PP
 Definition at line 493 of file nfs_ip_stats.c.
-.PP
-References nfs_ip_stats_get(), and nfs_param.
 .SS "int nfs_ip_stats_get (hash_table_t * ht_ip_stats, unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)"
 .PP
 nfs_ip_stats_get: gets the stats value.
@@ -304,11 +297,7 @@ the computed number of call for this ipaddr. Negative value is a failure
 .PP
 
 .PP
-Definition at line 381 of file nfs_ip_stats.c.
-.PP
-References nfs_param.
-.PP
-Referenced by nfs_ip_stats_dump().
+Definition at line 382 of file nfs_ip_stats.c.
 .SS "int nfs_ip_stats_incr (hash_table_t * ht_ip_stats, unsigned int ipaddr, unsigned int nfs_prog, unsigned int mnt_prog, struct svc_req * ptr_req)"
 .PP
 nfs_ip_stats_incr: increments the stats value.
@@ -327,11 +316,7 @@ the computed number of call for this ipaddr. Negative value is a failure
 .PP
 
 .PP
-Definition at line 302 of file nfs_ip_stats.c.
-.PP
-References nfs_param.
-.PP
-Referenced by nfs_export_check_access().
+Definition at line 303 of file nfs_ip_stats.c.
 .SS "int nfs_ip_stats_remove (hash_table_t * ht_ip_stats, int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)"
 .PP
 nfs_ip_stats_remove: Tries to remove an entry for ip_stats cache
@@ -352,17 +337,11 @@ the result previously set if *pstatus == IP_STATS_SUCCESS
 .PP
 
 .PP
-Definition at line 424 of file nfs_ip_stats.c.
-.PP
-References nfs_param.
+Definition at line 425 of file nfs_ip_stats.c.
 .SH "Variable Documentation"
 .PP 
-.SS "unsigned int \fBexpiration_time\fP"
-.PP
-Definition at line 118 of file nfs_ip_stats.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 146 of file test_clientid.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.
