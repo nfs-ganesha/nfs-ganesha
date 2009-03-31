@@ -1,0 +1,38 @@
+#! /bin/sh
+
+# Generate a table of contents for the proceedings, listing all of the
+# papers with their short authors.  Each entry in the table of contents
+# is a line like this:
+#
+# \item \textbf{Name of paper\hspace{\fill}pageno}\\
+#       \textit{A.N. Author}
+#
+# The data comes from two lines in each .aux file, which look like this:
+#
+# \@writefile{toc}{\contentsline {toctitle}{Name of Paper}{pageno}}
+# \@writefile{toc}{\contentsline {tocauthor}{A.N. Author}{pageno}}
+
+
+if [ $# -lt 2 ]; then
+    echo "usage: $0 output inputs..." >&2
+    exit 2
+fi
+
+output="$1"
+shift
+
+for auxfile in "$@"; do
+    titleline=$(sed -ne 's|\\@writefile{toc}{\\contentsline {toctitle}{||p' \
+	        "$auxfile" | sed -e 's/}}$//')
+    author=$(sed -ne 's|\\@writefile{toc}{\\contentsline {tocauthor}{||p' \
+	     "$auxfile" | sed -e 's/}{[0-9][0-9]*}}$//')
+
+    title=$(printf '%s\n' "$titleline" | sed -e 's/}{.*$//')
+    pageno=$(printf '%s\n' "$titleline" | sed -e 's/.*}{//')
+
+    printf '\\item \\textbf{%s\\hspace{\\fill}%s}\\\\\n' "$title" "$pageno"
+    printf '      \\textit{%s}\n' "$author"
+
+done > "$output"T
+
+./Texmf/move-if-change "$output"T "$output"

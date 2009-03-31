@@ -282,6 +282,8 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
   pasyncopdesc->op_func = MFSL_rename_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;
 
+  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+
   fsal_status = MFSL_async_post( pasyncopdesc ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
     return fsal_status ;

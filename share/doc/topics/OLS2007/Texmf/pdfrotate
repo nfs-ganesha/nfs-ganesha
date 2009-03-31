@@ -1,0 +1,216 @@
+#! /bin/sh
+##
+##  pdf90: A shell program to rotate all pages of PDF files
+##
+##  Author David Firth (http://www.warwick.ac.uk/go/dfirth)
+##    Modified to handle different angles by J.W. Lockhart
+##
+version=1.20jwl
+echo "This is $(basename $0) version ""$version"
+##
+##  Relies on pdflatex and the 'pdfpages' package (version 0.2e 
+##  or later).
+##
+#######################################################################
+##  CONFIGURATION: change this block as necessary
+##
+##  THESE SETTINGS WILL BE OVER-RIDDEN by any found at 
+##     /etc/pdfnup.conf
+##     /usr/share/etc/pdfnup.conf
+##     /usr/local/share/pdfnup.conf
+##     /usr/local/etc/pdfnup.conf
+##     ~/.pdfnup.conf
+##  (which are read in that order)
+##  
+##  First say where your "pdflatex" program lives:
+##
+pdflatex=pdflatex
+#pdflatex="pdflatex.exe"    ## this for Windows computers
+##
+##  Next a permitted location for temporary files on your system:
+##
+tempfileDir="/var/tmp" ## /var/tmp is standard on most unix systems
+#tempfileDir="C:/tmp"  ## use something like this under Windows
+##
+##  Now specify the default settings for pdf90:
+## 
+tidy=true              ## delete all temporary files immediately
+# Default angle to rotate, counter-clockwise.
+angle=270
+##
+##  END OF CONFIGURATION
+#######################################################################
+##
+##  Read the configuration file(s) if such exist:
+##
+for d in /etc /usr/share/etc /usr/local/share /usr/local/etc
+do if test -f $d/pdfnup.conf; then
+   echo "Reading site configuration from $d/pdfnup.conf"
+   source $d/pdfnup.conf
+   fi 
+done
+if test -f ~/.pdfnup.conf; then 
+   echo "Reading user defaults from ~/.pdfnup.conf";
+   source ~/.pdfnup.conf; 
+fi
+#######################################################################
+##
+##  Define the output of "pdf90 --help"
+##
+helptext="
+Usage: $(basename $0) args
+where args must include source pdf filename(s) and optionally also
+* a specific name for the output file, e.g. --outfile myrotatedfile.pdf 
+* one of --tidy true
+         --tidy false
+  according to whether or not temporary files should be deleted immediately.
+  If --tidy false is used, such files are left in $tempfileDir.
+
+Default arguments for you at this site are
+  --tidy $tidy 
+  --angle $angle
+  
+For information and version history see http://www.warwick.ac.uk/go/pdfjam
+"
+##
+##  Check that necessary LaTeX packages are installed
+##
+PATH=`dirname "$pdflatex"`:$PATH
+export PATH
+case `kpsewhich pdfpages.sty` in
+	"") echo "pdf90: pdfpages.sty not installed"; exit 1;;
+esac
+case `kpsewhich eso-pic.sty` in
+	"") echo \
+	    "pdf90: eso-pic.sty not installed (see the pdfpages manual)"
+	    exit 1;;
+esac
+case `kpsewhich everyshi.sty` in
+	"") echo \
+	    "pdf90: everyshi.sty not installed (see the pdfpages manual)"
+	    exit 1;;
+esac
+##
+##  Now do the argument loop...
+##
+sourcePath=
+outFile=
+inFiles=0
+newline='
+'
+while test -n "${1}"; do
+  case "${1}" in
+  	*.pdf) inFiles=`expr $inFiles + 1`;
+  	       sourcePath="$sourcePath$newline${1}";;
+  	--help) echo "$helptext";
+            exit 0;;
+ 	--outfile) outFile="${2}" 
+  	           case "$outFile" in
+  	           	*".pdf");;
+  	           	*) echo "pdf90: outfile name must end in .pdf"; 
+  	           	   exit 1;;
+  	           esac
+  	           shift;;
+  	--tidy) tidy="${2}"
+  	        shift;;
+        --angle)
+                angle="${2}"
+                shift;;
+  	*) echo "pdf90: unrecognised argument ${1}"; exit 1;;
+  esac
+  shift
+done
+if test $inFiles -gt 1 ; then
+  if test "$outFile" != "" ; then
+    echo "pdf90: --outfile cannot be used with multiple input files"; 
+    echo "pdf90: no files processed"
+    exit 1;
+  fi
+fi
+case "$sourcePath" in
+  "") echo "pdf90: no pdf source file specified
+For information on usage try \"pdf90 --help\""; exit 1;;
+esac
+OIFS=IFS
+IFS="$newline"
+for k in $sourcePath
+do
+  if test -f "$k"; then :; 
+    else echo "pdf90: ""$k"" does not exist, no files were processed"; 
+    exit 1;
+  fi
+done
+##
+##  That's the arguments done.
+##
+##
+##  Now work on the input file (or files in turn)
+##
+pwd=`pwd | sed 's/ /\\ /'`
+counter=0
+for inFile in $sourcePath
+do
+  counter=`expr $counter + 1`
+  echo "Processing $inFile..."
+  cd "$pwd"
+  pdfName=`basename "$inFile"`
+  sourceDir=`dirname "$inFile"` ; cd "$sourceDir" ; sourceDir=`pwd`
+  sourceFullPath="$sourceDir"/"$pdfName"
+  cd "$pwd"
+  case "$outFile" in
+	  "") ## no --outfile argument supplied
+	      outfileNameRoot=`echo "$pdfName" | sed 's/\.pdf$//'`-rotated;
+	      outfileDir="$sourceDir";
+	      outFile="$outfileNameRoot"".pdf";;
+	   *) ## --outfile argument was supplied
+	      outfileNameRoot=`basename "$outFile" | sed 's/\.pdf$//';`
+	      outfileDir=`dirname "$outFile"` ; 
+	      cd "$outfileDir" ; 
+	      outfileDir=`pwd` ;;
+  esac
+  case "$outfileDir"/"$outfileNameRoot"".pdf" in
+    $sourceFullPath) echo "pdf90: outfile and source cannot be the same";
+  	            exit 1;;
+    //"$outfileNameRoot"".pdf") outfileDir="";;  ## in case of output 
+  esac                                           ## to the root directory!
+  ##
+  ##  Now edit the temporary LaTeX input file
+  ##
+  uniqueName="$$"-"$counter"
+  ln -s "$sourceFullPath" "$tempfileDir"/"$uniqueName"source.pdf
+  texFile="$tempfileDir"/"$uniqueName".tex
+  msgFile="$tempfileDir"/"$uniqueName".msgs
+  (sed s*pdfname*"$tempfileDir"/"$uniqueName"source.pdf* <<EndTemplate
+\documentclass{article}
+\usepackage{pdfpages}
+\begin{document}
+\includepdf[pages=-,fitpaper=true,angle=${angle}]{pdfname}
+\end{document}
+EndTemplate
+) | sed 's/^[^b]egin/\\begin/' > $texFile
+  echo "  Temporary LaTeX file for this job is ""$texFile"
+  ##
+  ##  Now run pdflatex and tidy up
+  ##
+  echo "  Calling pdflatex..."
+  cd "$tempfileDir"
+  "$pdflatex" --interaction batchmode "$texFile" > "$msgFile"
+  if test -f "$tempfileDir"/"$uniqueName"".aux";  
+        ## ie if LaTeX didn't choke
+    then if $(dirname $0)/pdfCrop "$tempfileDir"/"$uniqueName".pdf \
+               "$outfileDir"/"$outfileNameRoot"".pdf"
+         then echo "  Finished: output is"\
+                   "$outfileDir"/"$outfileNameRoot"".pdf"
+         fi
+    case "$tidy" in
+      true) rm "$tempfileDir"/"$uniqueName"* 
+            ;;
+    esac
+    outFile=""
+  else echo "  Failed: output file not written"
+  fi 
+done
+IFS=OIFS
+
+
+

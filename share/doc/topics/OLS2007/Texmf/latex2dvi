@@ -1,0 +1,52 @@
+#! /bin/sh
+
+# This helper script runs pdflatex, LaTeX, and/or BibTeX in a loop until the output file
+# (DVI/PDF) stabilizes.
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 TEX-FILE" >&2
+    exit 2
+fi
+
+
+input="${1%.tex}"
+aux="$1".aux
+oaux="$1".oaux
+
+# Go through the procedure twice; once for LaTeX to
+# generate a stable DVI file, then once with pdflatex
+# to generate a stable PDF file.  We really do want both...
+
+for LATEX in latex pdflatex ; do
+  rm -f "$aux" "$oaux"
+
+  # Run LATEX once.  The output file we get from this is probably junk, but
+  # what we're interested in is the .aux file.  If it fails, abort.
+  echo "===================== first $LATEX run: $1 ===========================" 1>&2
+  echo "+ $LATEX -interaction=nonstopmode \"$input\""
+  $LATEX -interaction=nonstopmode "$input" || exit 1
+
+  # Determine whether we need to run BibTeX.  This (should) only ever have
+  # to be done once.  Again, if BibTeX fails, abort.
+  if grep -q bibdata "$aux"; then
+      echo "+ bibtex \"$input\""
+      bibtex "$input" || exit 1
+  fi
+
+  # Save the old .aux file.
+  cp "$aux" "$oaux"
+
+  # Now run LaTeX over and over again until the .aux file stops changing.
+  # We use \batchmode for these cycles - the user has already seen any
+  # diagnostics of interest.
+  while :; do
+      echo "===================== additional $LATEX run: $1 ==========================" 1>&2
+      echo "+ $LATEX -interaction=batchmode \"$input\""
+      $LATEX -interaction=batchmode "$input" || exit 1
+      if cmp -s "$aux" "$oaux"; then
+	  break
+      fi
+      cp "$aux" "$oaux"
+  done
+
+done

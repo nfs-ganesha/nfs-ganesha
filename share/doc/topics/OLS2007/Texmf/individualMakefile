@@ -1,0 +1,78 @@
+# Makefile for individual papers.  Very ugly hack; you may wish
+# to create something based on the Protomake file if you're not
+# well versed in GNU Make.
+
+# Instructions: edit Makefile.inc to list your targets, as usual.
+# This file should Just Work with it.
+
+# Tools - some of the dvi programs are from dviutils-1.0-9.rpm
+# pdftk is from the identically named package, pdftk.
+# You should not need either package for an individual paper.
+LATEX	  = latex
+BIBTEX	  = bibtex
+DVIPS	  = dvips
+DVIPDF	  = dvipdfm
+DVICONCAT = dviconcat
+# EXTRATEX  = /usr/share/texmf:
+
+
+# Set DIRS to be the current directory only.
+ifeq ($(DIRS),)
+DIRS := .
+endif
+## proceedings ProcSeq.mk
+
+# This creates a version of Makefile.inc that is suitable
+# for use in the current directory.  Kludgy but effective.
+SUBMAKES := $(DIRS:=/Makefile.inc.local)
+$(shell ../Texmf/createLocalInclude)
+include $(SUBMAKES)
+
+all: $(PAPERS)
+
+# $(space) expands to a single space.
+space := $(empty) $(empty)
+SEARCHPATH := $(subst $(space),:,$(DIRS)):  # intentional trailing colon
+
+# Render PDF and PostScript for each individual paper.
+PS  = $(PAPERS:.dvi=.ps)
+PDF = $(PAPERS:.dvi=.pdf)
+
+papers: $(PS) $(PDF)
+# proceedings: Proceedings.ps Proceedings.pdf
+
+clean:
+	rm -f $(PAPERS) $(PS) $(PDF)
+	rm -f $(PAPERS:.dvi=.aux) $(PAPERS:.dvi=.oaux) $(PAPERS:.dvi=.log)
+	rm -f $(PAPERS:.dvi=.bbl) $(PAPERS:.dvi=.blg)
+	rm -f $(PAPERS:.dvi=-proc.tex) $(PAPERS:.dvi=-proc.stmp)
+	rm -f $(PAPERS:.dvi=-proc.dvi) $(PAPERS:.dvi=-proc.log)
+	rm -f $(PAPERS:.dvi=-proc.aux) $(PAPERS:.dvi=-proc.oaux)
+	rm -f $(PAPERS:.dvi=-proc.bbl) $(PAPERS:.dvi=-proc.blg)
+
+
+# Pattern rules.  Generation of PDF/PS from DVI is straightforward.
+%.pdf: %.dvi
+	cd $(@D) && $(DVIPDF) -o $(@F) $(<F)
+
+%.ps: %.dvi
+	cd $(@D) && $(DVIPS) -q -o $(@F) $(<F)
+
+.fig.eps:
+	fig2dev -L eps $< >$@
+
+.fig.pdf:
+	fig2dev -L pdf $< >$@
+
+
+# Properly regenerating a .dvi file from the corresponding .tex file
+# requires running LaTeX (and possibly BibTeX) in a loop.  GNU make
+# cannot be coded to do this, so we have a helper script to do it.
+# We read the .aux files for nefarious purposes, so make needs to be
+# aware that this operation generates them too.
+%.dvi %.aux: %.tex
+	cd $(@D) && TEXINPUTS=../Texmf:$$TEXINPUTS ../Texmf/latex2dvi $(*F)
+
+.PHONY: all papers proceedings clean
+.SECONDARY:  # Never delete intermediate files.
+
