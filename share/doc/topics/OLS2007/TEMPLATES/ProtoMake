@@ -1,0 +1,47 @@
+###
+### This is from the 2004 OLS and GCC Templates and is no longer
+### necessary for building the 2005 Proceedings.
+### It is included (with minor changes) in case anyone finds it useful...
+###
+
+.SUFFIXES: .tex .dvi .aux .eps .fig .dia .ps .pdf .bib .bbl
+
+# TOP should be set to the presenter's last name (should match directory name)
+TOP=
+TEXFILES=$(TOP).tex
+FIGFILES:=$(wildcard *.fig)
+EPSFILES:=$(wildcard *.eps)
+EPSFILES+=$(FIGFILES:.fig=.eps)
+PDFFILES=$(EPSFILES:.eps=.pdf)
+
+.fig.eps:
+	fig2dev -L eps $< >$@
+
+.fig.pdf:
+	fig2dev -L pdf $< >$@
+
+.eps.pdf:
+	epstopdf $<
+
+all: $(TOP).ps $(TOP).pdf
+
+$(TOP).ps: $(TOP).dvi
+	dvips -o $(TOP).ps $(TOP)
+
+$(TOP).dvi: $(TEXFILES) $(EPSFILES)
+	TEXINPUTS=../Texmf:$$TEXINPUTS latex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS bibtex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS latex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS latex $(TOP)
+
+$(TOP).pdf: $(TEXFILES) $(PDFFILES)
+	TEXINPUTS=../Texmf:$$TEXINPUTS pdflatex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS bibtex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS pdflatex $(TOP) || true
+	TEXINPUTS=../Texmf:$$TEXINPUTS pdflatex $(TOP)
+
+clean:
+	rm -f *.aux *.dvi *.log 
+	rm -f $(TOP).ps $(TOP).pdf $(TOP).bbl $(TOP).blg
+
+

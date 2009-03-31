@@ -152,6 +152,7 @@ fsal_status_t  MFSL_async_post( mfsl_async_op_desc_t  * popdesc )
 fsal_status_t  mfsl_async_process_async_op( mfsl_async_op_desc_t  * pasyncopdesc )
 {
   fsal_status_t        fsal_status ;
+  mfsl_context_t     * pmfsl_context ;
 
   if( pasyncopdesc == NULL )
    {
@@ -167,6 +168,13 @@ fsal_status_t  mfsl_async_process_async_op( mfsl_async_op_desc_t  * pasyncopdesc
    {
      return fsal_status ; 
    }
+
+  /* Free the previously allocated structures */
+  pmfsl_context = (mfsl_context_t *)pasyncopdesc->ptr_mfsl_context ;
+
+  P( pmfsl_context->lock ) ;
+  RELEASE_PREALLOC( pasyncopdesc, pmfsl_context->pool_async_op, next_alloc ) ;
+  V( pmfsl_context->lock ) ;
 
   /* Regular exit */
   MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;

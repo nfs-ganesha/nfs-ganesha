@@ -263,6 +263,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   pasyncopdesc->op_res.create.attr.asked_attributes      = object_attributes->asked_attributes ;
   pasyncopdesc->op_res.create.attr.supported_attributes  = object_attributes->supported_attributes ;
 
+  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+
   if( FSAL_IS_ERROR( fsal_status ) )
    return fsal_status ;
 

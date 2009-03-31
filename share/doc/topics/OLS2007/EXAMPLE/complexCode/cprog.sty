@@ -1,0 +1,249 @@
+% This is CSTY.STY as received by email at december 1990
+%
+% The cprog macros allow programs in C, C++, Pascal, and Modula-2 to be
+% included directly into TeX documents.  Program text is set in a Roman
+% font, comments in slanted, and strings in typewriter.  Operators such as
+% <= are optionally combined into single symbols like $\le$.  Keywords are
+% *not* emphasised---I find this ugly and distracting.  (By purest
+% coincidence it would also be very hard to do.)
+%
+% These macros can be \input in plain TeX or used as a style file in LaTeX.
+% They provide a convenient alternative to tgrind, particularly for program
+% fragments embedded in documents.  Full instructions for use appear in the
+% macro package itself.
+%
+%
+% \'Eamonn McManus <emcmanus@cs.tcd.ie>   <emcmanus%cs.tcd.ie@cunyvm.cuny.edu>
+%
+% ASCII: !"#$%&'()*+,-./09:;<=>?@AZ[\]^_`az{|}~
+%
+ 
+% BEGIN: cprog.tex (or cprog.sty) - formatting of C programs
+% By \'Eamonn McManus <emcmanus@cs.tcd.ie>.  This file is not copyrighted.
+% $Id: cprog.tex,v 1.4 90/09/12 23:21:26 emcmanus Exp $
+ 
+% This allows C programs to be formatted directly by TeX.  It can be
+% invoked by \cprogfile{filename} or (in LaTeX) \begin{cprog} ...
+% \end{cprog} or (in plain TeX) \cprog ... \end{cprog}.  In LaTeX, the
+% alternative form \begin{cprog*} is allowed, where spaces in C strings
+% are printed using the `square u' character (like LaTeX {verbatim*}).
+% In plain TeX, you have to use \csname cprog*\endcsname for this (sorry).
+% If you are using \cprogfile, say \cprogttspacetrue beforehand if you
+% want this effect.
+ 
+% The formatting is (necessarily) simple.  C text is set in a normal Roman
+% font, comments in a slanted font, and strings in a typewriter font, with
+% spaces optionally made visible as the `square u' symbol.  Tabs are
+% expanded to four spaces (this does not look good when comments are
+% aligned to the right of program text).  Some pairs of input characters
+% appear as single output characters: << <= >> >= != -> are respectively
+% TeX's \ll \le \gg \ge \ne \rightarrow.  Say \cprogpairsfalse to disable
+% this.
+ 
+% You can escape to TeX within cprog text by defining an escape character.
+% The character @ is suitable for C and Pascal.  I have not tested other
+% characters so they may interact badly with their existing definitions here.
+% To define @ as the escape character, do \cprogescape@.  Then within text
+% you can do @ followed by TeX commands.  These commands will be in a TeX
+% group with the \catcodes of \{}% as normal.  The commands are terminated
+% by a newline, which is not considered part of the program text.
+ 
+% The fonts below can be changed to alter the setting of the various parts
+% of the program.  The \cprogbaselineskip parameter can be altered to
+% change the line spacing.  LaTeX's \baselinestretch is taken into account
+% too.  The indentation applied to the whole program is \cprogindent,
+% initially 0.  Before and after the program there are skips of
+% \beforecprogskip and \aftercprogskip; the default values are \parskip
+% and 0 respectively (since there will often be a \parskip after the
+% program anyway).
+ 
+% If the source text is Pascal or Modula-2, say \pascaltrue or \modulatrue
+% (respectively) before formatting it.  This makes (* *) be recognised for
+% comments instead of /* */.  Braces {} are also recognised for Pascal.
+% \pascalfalse or \modulafalse as appropriate restores the default of C.
+ 
+% This package works by making a large number of characters active.  Since
+% even spaces are active, it is possible to examine the next character in
+% a macro by making it a parameter, rather than using \futurelet as one
+% would normally do.  This is more convenient, but the coding does mean
+% that if the next character itself wants to examine a character it may
+% look at a token from the macro rather than the input text.  I think that
+% all cases that occur in practice have been looked after.
+ 
+% The macros could still do with some work.  For example, the big macro
+% defined with [] taking the place of {} could be recoded to use {} and so
+% be more legible.  The internal macros etc should have @ in their names,
+% and should be checked against LaTeX macros for clashes.
+ 
+% Allow multiple inclusion to go faster.
+ 
+\ifx\undefined\cprogsetup       % The whole file.
+ 
+% Define the fonts used for program text, comments, and strings.
+% Note that if \it is used for \ccommentfont, something will need to
+% be done about $ signs, which come out as pounds sterling.
+\let\ctextfont=\tt \let\ccommentfont=\sl \let\cstringfont=\tt
+ 
+% Parameters.  Unfortunately \newdimen is \outer (\outerness is a mistake)
+% so we need a subterfuge in case we are skipping the file.
+\csname newdimen\endcsname\cprogbaselineskip \cprogbaselineskip=\baselineskip
+\csname newdimen\endcsname\cprogindent \cprogindent=0pt
+\csname newdimen\endcsname\cprogwidth % Gets default=\hsize when cprog invoked.
+\csname newskip\endcsname\beforecprogskip \beforecprogskip=\parskip
+\csname newskip\endcsname\aftercprogskip \aftercprogskip=0pt
+\csname newif\endcsname\ifcprogttspace
+\csname newif\endcsname\ifcprogpairs \cprogpairstrue
+\csname newif\endcsname\ifpascal
+\csname newif\endcsname\ifmodula        % Same as Pascal but no {comments}.
+{\def\junk{\fi\fi\fi\fi}} % If skipping.
+ 
+\let\cprogesc\relax
+\begingroup \catcode`~=\active
+\gdef\cprogescape#1{%
+    {\catcode`~=\active \uccode`~=`#1 \aftergroup\cprogescont
+     \uppercase{\aftergroup~}}}
+\gdef\cprogescont#1{%
+    \def\cprogesc{%
+        \makeactive#1\def#1{%
+           \begingroup \catcode`\\0 \catcode`{1 \catcode`}2 \catcode`\%14
+           \catcode` 10 \clinegroup{}}}}
+\endgroup
+ 
+\def\makeactive#1{\catcode`#1=\active} \def\makeother#1{\catcode`#1=12}
+{\obeyspaces\gdef\activespace{ } \obeylines\gdef\activecr{^^M}}
+{\catcode`|=\catcode`\\ \makeactive\\ |gdef|activebackslash{\}}
+{\catcode9=\active \gdef\activetab{^^I}}
+ 
+% The following group makes many characters active, so that their catcodes
+% in the \cprogchars macro are active, allowing them to be defined.  We
+% could alternatively define more stuff like \activebackslash and use
+% \expandafter or (carefully) \edef to expand these in the macro.
+\begingroup
+\catcode`[=\catcode`{ \catcode`]=\catcode`}
+\makeactive! \makeactive" \makeactive' \makeactive( \makeactive* \makeactive-
+\makeactive/ \makeactive< \makeactive> \makeactive? \makeactive^ \makeactive_
+\makeactive\{ \makeactive| \makeactive\}
+\gdef\activestar[*]
+\gdef\cprogchars[%
+    \makeother##\makeother$\makeother&\makeother\%\makeother^%
+    \makeactive"\makeactive'\makeactive*\makeactive?\makeactive{\makeactive}%
+    \makeactive}\makeactive\\\makeactive_\expandafter\makeactive\activetab%
+    \makeactive!\makeactive<\makeactive>\makeactive-\makeactive|%
+    \ifcprogpairs
+      \def!##1[\ifx=##1$\ne$\else\string!\null##1\fi]%
+      \def-##1[\ifx>##1$\rightarrow$\else$\string-$##1\fi]%
+      % We use \aftergroup in < and > to deal with the fact that #1 might
+      % itself examine the following character.
+      \def<##1[[$\ifx<##1\ll$\else\ifx=##1\le$\else
+        \ifx>##1\ifpascal\ne$\else\string<$\aftergroup>\fi
+        \else \string<$\aftergroup##1\fi\fi\fi]]%
+      \def>##1[[$\ifx>##1\gg$\else\ifx=##1\ge$\else
+        \string>$\aftergroup##1\fi\fi]]%
+    \else \def![\string!\null]% Avoid !` ligature.
+      \def-[$\string-$]\def<[$\string<$]\def>[$\string>$]%
+    \fi
+    \def?[\string?\null]% Avoid ?` ligature.
+    \def"[\cquote"[\tt\string"]]\def'[\cquote'[\tt\ttquote]]\def*[$\string*$]%
+    \ifmodula \pascaltrue \fi   % Except that {...} is used for sets.
+    \ifpascal
+      \ifmodula \dulllbrace \else
+        \def{[\begingroup \dulllbrace{\ccommentsetup\def}[\/\endgroup }]]%
+      \fi \makeactive(\let(=\pascalcomment \makeactive^\def^[$\uparrow$]%
+    \else \dulllbrace\makeactive/\let/=\ccomment
+    \fi
+    \def}[$\}$]\def|[$\string|$]\def~[$\sim$]\let_\_%
+    \expandafter\def\activebackslash[$\backslash$]%
+    \obeyspaces \expandafter\def\activespace[\leavevmode\space]%
+    \expandafter\def\activetab[\ \ \ \ ]%
+    \obeylines \expandafter\def\activecr[\strut\par]]
+\gdef\cprogarg[\expandafter\def\activebackslash##1[\ifx##1e\let\next\cprogend
+    \else$\backslash$\let\next##1\fi\next]\eatcr]
+\gdef\cprogend nd#1{cprog#2}[\endcprogarg]      % #1 can be space, #2 *.
+\gdef\dulllbrace[\def{[$\{$]]
+\endgroup
+ 
+\chardef\ttquote=13     % Undirected single quote.
+\begingroup \makeactive" \makeactive' \makeactive!
+\gdef\cquote#1#2{% #1 is the quote, " or ', #2 how to set it.
+    \begingroup #2\cstringfont \makeactive\\%
+    \ifpascal \makeother\\\makeother^%
+    \else \expandafter\let\activebackslash\quotebackslash
+    \fi
+    \expandafter\edef\activespace{\ifcprogttspace\char`\ \else\ \fi}%
+    \expandafter\let\activecr=\unclosedstring
+    \def!{\string!\null}% No !` ligature.
+    \makeother*\makeother-\makeother/\makeother<\makeother>%
+    \makeother_\makeother\{\makeother\}\makeother|\makeother~%
+    \ifx"#1\let'\ttquote \else \makeother"\fi
+    \def#1{#2\endgroup}}
+\endgroup
+\csname newhelp\endcsname\cprogunclosedstr{%
+A string or character constant earlier in the line was unclosed.^^JSo
+I'm closing it now.}
+\def\unclosedstring{%
+    \escapechar-1%
+    \errhelp\cprogunclosedstr
+    \errmessage{Unclosed string}%
+    \endgroup}
+\newlinechar=`^^J
+\def\quotebackslash#1{\char`\\%
+    \expandafter\ifx\activecr#1\strut\par
+    \else\if'\noexpand#1\ttquote\else\string#1\fi\fi}
+ 
+% In a comment, we shrink the width of the opening / to that of a space so
+% that the stars in multiline comments will line up.  We also shrink the
+% closing * for symmetry, but not in Pascal where it looks nasty.
+% Note that \end{cprog} is not recognised in strings or comments.
+\def\spacebox#1{\leavevmode \hbox to \spaceskip{#1\hss}}
+ 
+\begingroup \makeactive* \makeactive! \makeother/
+\gdef\ccommentsetup{\ccommentfont \makeother-\makeother'\makeother"\makeother/%
+     \def!{\string!\null}\expandafter\def\activebackslash{$\backslash$}}
+\gdef\ccomment#1{%
+     \let\next\relax
+     \ifx#1*\bgroup \ccommentsetup
+       \spacebox{\ctextfont\string/}*%
+       \makeactive*\def*{\commentstar/}%
+     \else\if\noexpand#1/\begingroup //\ccommentsetup \clinegroup\activecr
+     \else \string/\let\next#1%
+     \fi\fi\next}
+\gdef\pascalcomment#1{%
+     \ifx#1*\bgroup \ccommentsetup \let\next\dulllbrace \makeother(%
+       \spacebox{\ctextfont\string(}*\makeactive*\def*{\commentstar)}%
+     \else (\let\next#1\fi \next}
+\obeylines \long\gdef\clinegroup#1#2^^M{#2\endgroup#1}%
+\endgroup
+\def\commentstar#1#2{%
+    {\if#1\noexpand#2\egroup \ifpascal\else\aftergroup\spacebox\fi\fi}{$*$}#2}
+ 
+% We usually have an active ^^M after \cprog or \begin{cprog}.
+\def\eatcr#1{{\expandafter\ifx\activecr#1\else\aftergroup#1\fi}}
+ 
+% Expand to stretch and shrink (plus and minus) of parameter #1.
+\def\stretchshrink#1{\expandafter\eatdimenpart\the#1 \end}
+\def\eatdimenpart#1 #2\end{#2}
+ 
+\ifx\undefined\baselinestretch \def\baselinestretch{1}\fi
+ 
+\def\cprogsetup{\ctextfont \cprogchars \parskip=0pt\stretchshrink\parskip
+    \ifdim \cprogwidth=0pt \else \hsize\cprogwidth \fi
+    \cprogesc \spaceskip\fontdimen2\font \xspaceskip\spaceskip
+    \baselineskip=\baselinestretch\cprogbaselineskip \parindent=\cprogindent
+    \vskip\beforecprogskip}
+\def\endcprog{\endgroup \vskip\aftercprogskip}
+\def\cprogfile#1{\begingroup \cprogsetup \input#1\endcprog}
+\def\cprog{\begingroup \cprogttspacefalse \cprogsetup \cprogarg}
+% Like {verbatim*}, {cprog*} uses `square u' for spaces in quoted strings.
+\expandafter\def\csname cprog*\endcsname{%
+        \begingroup \cprogttspacetrue \cprogsetup \cprogarg}
+\expandafter\let\csname endcprog*\endcsname=\endcprog
+% In LaTeX we need to call \end{cprog} properly to close the environment,
+% whereas in plain TeX this will end the job.  The test for LaTeX is not
+% bulletproof, but most plain TeX documents don't refer to the LaTeX logo.
+\ifx\undefined\LaTeX \let\endcprogarg=\endcprog
+\else \def\endcprogarg{\ifcprogttspace\end{cprog*}\else\end{cprog}\fi}
+\fi
+ 
+\fi     % \ifx\undefined\cprogsetup
+ 
+\endinput
