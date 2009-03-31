@@ -255,6 +255,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
   
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_CREATE ;
+
   pasyncopdesc->op_args.create.pfsal_handle_dirdest      = &parent_directory_handle->handle ;
   pasyncopdesc->op_args.create.precreate_name            = pprecreated->name ;
   pasyncopdesc->op_args.create.filename                  = *p_dirname ;

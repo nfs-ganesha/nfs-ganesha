@@ -890,7 +890,7 @@ void * worker_thread( void * IndexArg )
     }
   DisplayLog( "NFS WORKER #%d: Cache Inode client successfully initialized", index ) ;
  
-#ifdef _USE_MFSL_ASYNC
+#ifdef _USE_MFSL
   if( FSAL_IS_ERROR( MFSL_GetContext(  &pmydata->cache_inode_client.mfsl_context,
                                        &pmydata->thread_fsal_context  ) ) )
     {
@@ -1205,6 +1205,23 @@ void * worker_thread( void * IndexArg )
 
           pmydata->gc_in_progress = FALSE ; 
 	}
+
+#ifdef _USE_MFSL
+  /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is 
+   * set as "making garbagge collection" to avoid new requests to come in its pending queue */
+  pmydata->gc_in_progress = TRUE ;
+
+  if( FSAL_IS_ERROR( MFSL_RefreshContext( &pmydata->cache_inode_client.mfsl_context,
+                                          &pmydata->thread_fsal_context  ) ) )
+    {
+      /* Failed init */
+      DisplayLog( "NFS  WORKER #%d: Error regreshing MFSL context", index ) ;
+      exit( 1 ) ;
+    }
+
+  pmydata->gc_in_progress = FALSE ;
+
+#endif
 
 
     } /* while( 1 ) */
