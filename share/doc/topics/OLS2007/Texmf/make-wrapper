@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [ $# -eq 2 ]; then
+    output="${2%.stmp}.tex"
+    page=1
+elif [ $# -eq 3 ]; then
+    output="${3%.stmp}.tex"
+    page=$(sed -ne 's:^\\newlabel{NextPage}{{}{\([0-9][0-9]*\)}}$:\1:p' "$2")
+else
+    echo "usage: $0 defs-file [prior-aux-file] output" >&2
+    exit 2
+fi
+
+# Kludge.  Once you know how big Frontmatter.pdf is, insert
+# its pagecount here, should be pdfinfo + 1:
+FrontCount=${FrontCount:-11}
+if [ $page -eq 1 ]; then
+   page=$FrontCount
+fi
+
+defs="$1"
+wrapped="${output%-proc.tex}.tex"
+wrapped="${wrapped#*/}"
+{
+    cat "$defs"
+    echo '\def\ProcPage{'$page'}'
+    echo '\input' "$wrapped"
+} > "${output}T"
+
+./Texmf/move-if-change "${output}T" "$output"
+exit 0
+

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+function die {
+   echo "$1"
+   exit 1
+}
+
+for i in latex dvips pdflatex pdfcrop ; do
+   type -a $i >/dev/null 2>&1
+   if [ $? -ne 0 ]; then
+      echo "ERROR: $0 requires program: $i"
+      exit 1
+   fi
+done
+
+StartDir=$PWD
+for tex in $@ ; do
+  b=$(basename ${tex} .tex)
+  dir=$(dirname ${tex})
+  cd "$dir"
+  # Generate EPS first
+  latex "$b"
+  [ $? -ne 0 ] && die "latex failed"
+  dvips -E -o "${b}.eps" "${b}"
+
+  # Generate best possible PDF
+  pdflatex "$b"
+  [ $? -ne 0 ] && die "pdflatex failed"
+  rm -f "${b}-tmp.pdf"
+  mv "${b}.pdf" "${b}-tmp.pdf"
+  pdfcrop "${b}-tmp.pdf" "${b}.pdf"
+  [ $? -eq 0 ] && rm -f "${b}-tmp.pdf"
+  rm -f "${b}.aux" "${b}.log"
+
+  cd "${StartDir}"
+done
+exit 0
+

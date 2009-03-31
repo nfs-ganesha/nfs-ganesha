@@ -267,6 +267,8 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   pasyncopdesc->op_func = MFSL_mkdir_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;
 
+  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+
   fsal_status = MFSL_async_post( pasyncopdesc ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
     return fsal_status ;

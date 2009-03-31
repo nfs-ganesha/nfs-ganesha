@@ -1,0 +1,763 @@
+\documentclass[final]{ols}
+\usepackage{url}
+\usepackage{zrl}
+\usepackage{framed}
+\usepackage{color}
+\definecolor{shadecolor}{rgb}{0.9,0.9,0.9}
+
+\providecommand{\XFname}{OLS}
+\providecommand{\XFuname}{papers2007}
+\providecommand{\XFaddr}{linuxsymposium}
+\providecommand{\XFyear}{2007}
+\providecommand{\XFjwlA}{lockhart}
+\providecommand{\XFjwlDomA}{redhat.com}
+\providecommand{\XFjwlB}{jw.lockhart}
+\providecommand{\XFjwlDomB}{comcast.net}
+% Search for XFdep for conference/year changes
+
+\begin{document}
+
+% Required: Do not print the date.
+\date{}
+
+\title{Formatting Tips and Tricks} 
+\subtitle{Some potentially helpful examples}
+
+\author{
+John W.\ Lockhart \\
+{\em Red Hat, Inc.}\\
+{\tt\normalsize {\XFjwlA}{@}{\XFjwlDomA}}\\
+\and
+Optional Second Author\\
+{\em Second Institution}\\
+{\tt\normalsize another@address.for.email.com}\\
+} % end author section
+\shortauthor{J.W.\ Lockhart}
+
+\maketitle
+
+% Required: Suppress page numbers on title page
+\thispagestyle{empty}
+
+\section*{Abstract}
+This example paper contains tips and tricks to ensure that what you
+write is what appears in the \textit{Proceedings} with as little
+editing as possible.  The most important parts are at the end; please
+read them.  (Okay, okay:  Section~\ref{lockhart-subrules} and
+Figure~\ref{lockhart-fig1}.)
+
+If you are new to {\LaTeX}, please read this paper in its entirety,
+and check out its source and any other \texttt{.tex} files in the
+\texttt{\small EXAMPLE} directory.  Reading \texttt{\small
+EXAMPLE/EXAMPLE.tex} side by side with this PDF should be helpful.
+
+%%% ******** XFdep: year
+If you have a paper from the Linux Symposium or GCC Summit
+(2002--2005), and would like to crib from its final formatting, please
+drop me a note and I'll be happy to send along the edited source.
+The 2006 papers and sources should be publicly and anonymously available at
+\url{http://ols2006.108.redhat.com}. 
+The final edited form of this year's source will appear at
+\url{http://ols.108.redhat.com}. 
+
+The tree was created based on the information on the conference
+website.  If you don't have a subdirectory, create one along the same
+lines.  Blank materials are in the \texttt{\small TEMPLATES}
+directory; \texttt{ProtoMake} and \texttt{Blank.tex} are probably the
+most interesting files.  Likewise, if your Abstract was available when
+I looked, it has been included.  Feel free to edit it; it's just there
+to get you started and to provide an example of how to properly
+include files should you need to.
+
+Please note that we generate both PDF and Postscript output for the
+papers, so both \texttt{pdflatex} and \texttt{latex} will be used in the
+process.  This happens automagically if you use the supplied build system;
+you just need to ensure that both Postscript and PDF versions of your
+graphics are available.  Note that using a non-Linux system is possible,
+but will likely cause you additional work and possible compatibility
+issues.  This is especially important when it comes to graphics and
+embedded fonts.
+
+\section{New This Year}
+\begin{itemize}
+\item Authors can submit papers and updates directly into the formatting
+source control system.  See Figure~\ref{lockhart-fig-svn} and
+\url{http://ols.108.redhat.com} for details; you will need an account on
+\texttt{108} since the papers are not publicly available until after the
+conference. 
+\item The \texttt{108} site also hosts a number of mailing lists which are
+useful for formatting questions and tips.
+\item The current reference system for OLS builds is running Fedora
+Core~6.  The \texttt{dviutils} package is required for full builds, and
+may be found on the \texttt{108} website if needed.
+\end{itemize}
+
+\begin{figure*}[hbt]
+\begin{shaded}
+If you have created an account, sent mail to \texttt{lockhart} at
+\texttt{redhat} dot \texttt{com} for access, and received a welcome note,
+proceed as follows.  This example assumes that  your \texttt{108} username
+is \texttt{itsme}, and avoids checking out all the papers in the tree.
+\begin{center}
+\begin{small}
+\begin{verbatim}
+# First check out the top-level directory
+$ svn checkout https://ols.108.redhat.com/svn/ols/trunk/ols2007 \
+  ols2007 --username itsme --non-recursive
+$ cd ols2007
+# Use the makefile to grab the rest of the templates
+$ make update-templates
+# Discover which directory has been set up for your paper.
+# The tool is especially useful if your last name is Brown... :-)
+$ ./Showtree.sh | grep -i MyLastName
+# Then update to check out the skeletal paper.
+$ svn update mylastname
+$ cd mylastname
+# Start editing.  To submit or update, just ensure that you're
+# in the ols2007/mylastname directory, and then:
+$ svn update
+\end{verbatim}
+\end{small}
+\caption{Setting up and Using Subversion with OLS Papers}
+\label{lockhart-fig-svn}
+\end{center}
+\end{shaded}
+\end{figure*}
+
+\section{Simple Formatting Tricks}
+
+\LaTeX\ is just a fancy markup language\ldots \textit{most} of the
+time.
+
+Some of the more common font and layout conventions follow:
+\begin{itemize}
+\item \texttt{texttt} produces \texttt{typewriter} style.
+\item \texttt{textit} produces \textit{italics}.
+\item \texttt{textbf} produces \textbf{boldface}.
+\item \texttt{textsc} produces \textsc{small caps}.
+\item \texttt{\textit{Font}} \textbf{\textsc{styles}} can be
+      \textit{\textbf{combined}}\footnote{Often eye-breakingly. Restraint is Good.}
+\end{itemize}
+
+Paragraphs
+   can  be      awfully messy
+in the source, and even
+% what, a comment?
+have comments interspersed.  Be careful with % unintentional
+percent signs---75\% of the time you'll accidentally comment out the
+rest of the text on the line.
+
+Unescaped dollar signs will put you into math mode, so be likewise
+careful.  Of course, that's sometimes exactly where you \textit{want}
+to be.
+
+Tildes do not produce tildes in \LaTeX ---think instead of
+\textsc{html}'s \texttt{\&nbsp;} and you'll get the picture.  Instead,
+you can use \texttt{{\textbackslash}{\~{}}\{\}} or
+\texttt{{\textbackslash}textasciitilde} to produce a tilde.  
+Table~\ref{lockhart-tab1} provides a list of characters that require
+special handling.  Note that tables may ``float''---that is, {\LaTeX}
+might move your table to a place where it all fits on a single page,
+rather than putting it exactly where you have included it in your
+source.  Be aware that it's easier to include references to tables and
+figures than it is to force each into a particular position and adjust
+the surrounding typesetting.
+%
+% that's 
+%    \~{} 
+% or
+%    \textasciitilde
+% for a tilde (without all the extra typesetting).
+% Escape anything but a backslash by using a backslash.  Backslash
+% itself is \textbackslash (as seen above).
+
+\begin{table}[!th]
+\begin{shaded}
+\centering
+\begin{small}
+\begin{tabular}[b]{c|c|p{2.3cm}}
+Char & Command & Otherwise \\
+\hline
+% #
+\# & \texttt{{\textbackslash}\#} & argument number \tabularnewline
+\hline
+% $
+\$  & \texttt{{\textbackslash}\$} & toggle math mode \tabularnewline
+\hline
+% %
+\%  & \texttt{{\textbackslash}\%} & comment: ignore rest of line \tabularnewline
+\hline
+% &
+\&  & \texttt{{\textbackslash}\&} & tabstop \tabularnewline
+\hline
+% _
+\_  & \texttt{{\textbackslash}{\_}} & subscript in math mode \tabularnewline
+\hline
+% {
+\{ & \texttt{{\textbackslash}\{} & open environment \tabularnewline
+\hline
+% }
+\} & \texttt{{\textbackslash}\}} & close environment \tabularnewline
+\hline
+% ~
+{\~{}}       & \texttt{{\textbackslash}{\~{}}\{\}} & non-breaking space \tabularnewline
+{\textasciitilde}       & \texttt{{\textbackslash}textasciitilde} & non-breaking space \tabularnewline
+\hline
+% \
+{\textbackslash} & \texttt{{\textbackslash}textbackslash} & begin command \tabularnewline
+\end{tabular}
+\end{small}
+\caption{{\LaTeX} characters that require special handling}
+\label{lockhart-tab1}
+\end{shaded}
+\end{table}
+
+\subsection{New Macros}\label{lockhart-newmacros}
+
+A number of macros based on the \texttt{url} package are available
+for this year.  They are:
+\begin{itemize}
+\item \ident{ident} -- intended for identifiers,
+  \texttt{{\textbackslash}ident\{some\_text\}} sets the text in
+  \texttt{tt} and may break the line at any punctuation.  Spaces are deleted.
+\item \ident{lident} -- intended for long identifiers, this works the
+  same as \ident{ident}, but sets the text in a smaller font.
+\item \ident{code} -- intended for short excerpts of code, this works
+  like \ident{ident}, except that spaces are preserved.  Lines are not
+  broken on spaces.
+\item \ident{lcode} -- intended for longer excerpts of code, this works
+  like \ident{code}, except that text is set in a smaller font.  This
+  probably does not work correctly for multi-line code fragments;
+  consider using the \texttt{cprog} package for that.
+\item \ident{brcode} -- intended for excerpts of source code, this works
+  like \ident{code}, except that line breaks may occur at spaces.
+\item \ident{lbrcode} -- intended for excerpts of source code, this works
+  like \ident{brcode}, except that text is set in a smaller font.
+\end{itemize}
+
+Examples are shown in Table~\ref{lockhart-macro-examples}.
+
+\begin{table*}[tb]
+\begin{shaded}
+\begin{itemize}
+\item \verb|\ident{a_long_identifier}| --- this example in turn yields \ident{a_long_identifier}
+
+\item \texttt{{\textbackslash}lident|An\_Even Lon ger Identifier|} --- this
+  in turn
+  yields \lident|An_Even Lon ger Identifier|
+
+\item \verb|\lcode{int un_useful(int *a) { return *a; }}| --- this
+  yields
+  \lcode{int un_useful(int *a) { return *a; }}
+
+\item \verb|\lbrcode{int un_useful(int *a) { return *a; }}| --- this
+  yields
+  \lbrcode{int un_useful(int *a) { return *a; }}
+
+\end{itemize}
+\caption{Examples of New Macros}
+\label{lockhart-macro-examples}
+\end{shaded}
+\end{table*}
+
+Many thanks go to Zack Weinberg for studying prior years' templates and
+proceeding to write the \texttt{ols.cls} class and other crucial bits of
+infrastructure for 2005.  We continue to use this system, with a few minor
+tweaks to its features.  So if you started writing using last year's
+templates, you should be fine with this set.
+
+The document class for your paper can be one of \texttt{final},
+\texttt{galley}, or \texttt{draft}.  This year's default is
+\texttt{final}, since the \texttt{galley} option confused more people
+than it helped.  Please be sure to submit your paper using the
+\texttt{final} class.  The differences are:
+
+\begin{itemize}
+
+\item \texttt{galley} --- All ``this doesn't fit'' warnings are
+suppressed, and references are printed as textual keys rather than as
+numbers.  This is because when you're working on the paper and have
+the TeX in front of you along with a printout, it's often easier to
+use ``See Section [whatever-I-called-it]'' than ``See Section 8.''
+That way, you can just search the .tex file for the section by name to
+make changes, since there's no ``Section 8'' in said \texttt{.tex}
+file\ldots
+
+\item \texttt{proof} --- All ``this doesn't fit'' warnings are active,
+as are references.  Overfull hboxes make ugly black blobs in the
+margin.  You can use this mode to tidy up formatting after you're done
+writing.  This mode is the same as the article class's ``draft'' mode.
+
+\item \texttt{final} --- All warnings and references are active, and
+the paper produced will be similar to the one which will be
+published (but without headers, final page numbers, and such).
+\end{itemize}
+
+\section{Typesetting conventions}
+
+You shouldn't have to worry too much here, but I'll illustrate a few
+things.
+
+Quotation marks, both `single' and ``double,'' look good in body text,
+while other \texttt{"styles"} might look better for other uses.  Note
+that when you're typesetting for a compiler, punctuation goes outside
+the \texttt{"quotation marks",} but punctuation is placed
+\textit{inside} the quotation marks for ``narrative.''
+If you are one of those who like to introduce a bunch of ``terms,'' each
+one in ``quotes,'' please use italics for the first instance of each
+\textit{term} instead. 
+
+There are multiple flavors of dashes---the em dash, the en--dash, the
+oft-used hyphen, and the minus sign (math mode: $2x - 3$).  Note that
+the preceding sentence contains them all.
+
+\subsection{Choices for uniformity}
+
+For source code, we have chosen the common style of not beginning a
+line with a comma.  The compiler doesn't care, but keeping the printed
+page consistent between papers is useful.
+
+%% The \linebreak[0] command can be used, but it's very very painful.
+%% See the "New Macros" section for a better alternative.
+Identifiers may need to be split between lines, so we use a typewriter font
+and mark up the string appropriately:
+\texttt{sys\_\linebreak[0]sched\_\linebreak[0]yield()} or
+\texttt{\small A\_\linebreak[0]REALLY\_\linebreak[0]LONG\_\linebreak[0]IDENTIFIER\_\linebreak[0]THAT\_\linebreak[0]NEEDS\_\linebreak[0]TO\_\linebreak[0]BE\_\linebreak[0]THIS\_\linebreak[0]LONG}
+would be good examples.\footnote{Alternatively, see the macros in
+Section~\ref{lockhart-newmacros}.}  To tell {\LaTeX} that an unhyphenated line
+break is okay if required, just use \texttt{{\textbackslash}linebreak[0]}.
+
+\subsection{Points of English}
+
+A few nitpicks:
+\begin{enumerate}
+\item \textit{it's} is a macro which expands to \textit{it is}.  It
+      has no other meaning. 
+\item \textit{its} is possessive.
+\item Items in a series are:  \textit{a}, \textit{b}\textbf{,} and \textit{c}.  
+      Never \textit{a}, \textit{b} and \textit{c}.  This rule makes it
+      much simpler when you must use complex values of (for example)
+      \textit{b}.  For truly long constructs, you may use a semicolon
+      as a delimiter rather than a comma.
+\item Some phrases should be hyphenated---for instance, when you're
+  using an adjective to modify another adjective, or a noun that
+  appears before another.  A high-performance system; a win-win
+  situation; a high-level loop transformation; a slow-moving train,
+  but a slowly moving car; that sort of thing.  Most of the time,
+  people will still be able to parse the results easily if the sentence isn't
+  perfect. 
+\item Be happy, know your homonyms.  There, they're, their.  To, two,
+      too.  Your, you're.  And so forth.  Spelling checkers show their
+      limitations on this\ldots
+\end{enumerate}
+
+Of course, proofreading is a wonderful thing, and every bit of it you
+(or any guinea pigs you can persuade) do is a Good Thing.  I'll
+correct what I notice, but I have only two eyes and there's a lot of
+margin-crunching formatting to be done.  There are certain
+times, often with non-native speakers, where I'm not clear on the
+meaning.  If I catch something like that in time, I'll ask; if not,
+chances are that I'll keep my hands off of the section in question so
+as not to insert a woefully incorrect meaning. 
+
+\section{Tools}
+
+It helps to have the following installed on your system:
+\begin{itemize}
+
+\item \textbf{\texttt{tetex}}.  The most common \TeX\ package for Linux.
+  Related useful packages include \textbf{\texttt{dviutils}}, \textbf{\texttt{xdvi}},
+  \textbf{\texttt{dvips}}, and \textbf{\texttt{ghostscript}}.  Be aware that
+  certain distributions package \texttt{pdflatex} separately.
+
+\item \textbf{\texttt{transfig}}.  Graphics in \texttt{.fig} format,
+  useful for figures. 
+
+\item \textbf{\texttt{dia}}.  Useful for figures.  Other commonly used
+  graphics programs include \textbf{\texttt{transfig}}, \textbf{\texttt{xfig}},
+  \textbf{\texttt{inkscape}}, and \textbf{\texttt{OpenOffice.org}}
+  \textbf{\texttt{transfig}}.  Please note that your export options are
+  crucial, and 
+  that we recommend sending along the original, native file as well.
+  You should aim for portability: for instance, certain OpenOffice
+  versions let you choose between EPS with Pango fonts, or EPS --- you
+  want the non-Pango EPS for portable printing.
+
+\item \textbf{\texttt{ImageMagick}}.  Great for photographs and graphics
+  manipulation \& conversion, especially the \texttt{convert} program.
+
+\item \textbf{\texttt{xpdf}}, \textbf{\texttt{evince}}, \textbf{\texttt{kpdf}}, or
+  \textbf{\texttt{acroread}} for viewing PDF files.  Other viewers can also do
+  a nice job. 
+
+\item \textbf{\texttt{pdftk}} if you wish to concatenate PDF pages or
+  perform several other tasks with PDFs.  This package is required for
+  building the final Proceedings.
+
+\item \textbf{\texttt{gnuplot}} for drawing graphs based on large
+  quantities of numeric data.
+
+\item \textbf{\texttt{dviconcat}} is required for building the entire
+  Proceedings, and can be had from the \textit{dviutils} package,
+  available on \url{http://ols.108.redhat.com} or available as source,
+  Debian, or SuSE packages (possibly other distros).
+
+\item \textbf{\texttt{emacs}} is my editor of choice, in part due to its
+``LaTeX Fill'' mode, which does a very nice job of handling markup and
+syntax, with automatic line wraps.  Please check to see if your editor of
+choice has a mode for editing {\LaTeX} files; it could save you from
+tracking down syntax errors and such.  (I also use and enjoy
+\texttt{gvim}, especially its \textit{diff} mode.)
+
+\end{itemize}
+
+Beware any program that cannot export structured graphics, or has
+troubles respecting standards.  These are most commonly found on
+non-Linux systems; with some of these, you may be better off
+printing to a hypothetical Apple Laserwriter on \texttt{FILE:} and
+converting the proceeds than in trying to rely on the program doing
+anything remotely sane and portable.
+
+\section{Examples}
+
+Some examples from previous conferences have been included
+in this package; hopefully they'll be useful in handling code
+examples.  Reducing everything to \texttt{footnotesize} or setting it
+\texttt{verbatim} won't magically make it fit on the page, alas.  Have
+a look in the \texttt{EXAMPLE} directory to find these items:
+\begin{itemize}
+\item {\raggedright \texttt{\small bibli\-og\-raphy.tex}, \texttt{\small bibli\-og\-ra\-phy2.tex}, and
+  \texttt{\small ref\-er\-ences.tex}.  Different ways of citing any relevant
+  works external to your paper.}
+\item \texttt{conditional.tex}.  If you have {\LaTeX} code that works
+  only by itself and need to do conditional processing, here's an example.
+\item \texttt{\small complexCode/complexFigure.tex}.  An example of a complex
+  figure containing side-by-side C code.
+\item \texttt{figures.tex}.  Different ways of doing figures.
+\item \texttt{includegraphics.tex}.  Different ways to include graphics.
+\item \texttt{legalese.tex}.  Legal disclaimers.
+\item \texttt{multipleAuthors.tex}.  Formatting examples for multiple authors.
+\item \texttt{tables.tex}.  Different ways to do tables.
+\end{itemize}
+
+\subsection{Bad Examples}
+
+A prior year's paper gave the example of setting \texttt{verbatim}
+sections in \texttt{tt}.  Repetitiously and redundantly enough, that's
+the default.  So, please, no instances of
+\begin{verbatim}
+  {\tt
+  \begin{verbatim}
+   ...
+\end{verbatim}
+
+\begin{small}
+\centering
+\textbf{Corrected.}  You might, however, wish to do something like this instead:
+\begin{verbatim}
+  \begin{small}
+  \centering
+  \textbf{Corrected.}  You ...
+  \begin{verbatim}
+    ...
+\end{verbatim}
+\end{small}
+Of course, check the source of this document
+(\lident{EXAMPLE/myPaper.tex}) for more ideas.  Valid font sizes, for
+instance, include \texttt{normalsize}, \texttt{small},
+\texttt{footnotesize}, \texttt{scriptsize}, and \texttt{tiny}.  Please
+don't use anything larger than \texttt{normalsize}.
+
+
+Another extant bad example is the practice of ending paragraphs with a
+double backslash (\texttt{\textbackslash\textbackslash}) \textit{and}
+a blank line.  This creates unwanted, superfluous whitespace between
+paragraphs.  \LaTeX\ is, believe it or not, supposed to be easy.  Just
+leave one or more blank lines between paragraphs and you'll be fine.
+
+
+\section{Style packages}
+
+You
+will find some additional useful packages in the \texttt{Texmf}
+directory.  The empty papers are set up to use the
+\texttt{url}, \texttt{zrl}, and \texttt{graphicx} packages by default,
+in hopes that this will be useful for most papers.
+
+You may also find it helpful to set the \texttt{TEXINPUTS} environment
+variable as follows:
+\begin{center}
+{\footnotesize \texttt{export TEXINPUTS='.//:\$\{LOCALTEX\}//:'}}
+\end{center}
+%
+% or for those of you who'd like to cut'n'paste from the source:
+% export TEXINPUTS='.//:${LOCALTEX}//:'
+%
+Adding the above to your \texttt{\textasciitilde/.bashrc} can
+save you the trouble of typing it for future runs.  The build system
+uses this setup by default.
+
+To build your paper, you should be able to \texttt{cd} to the toplevel
+directory (the one that contains your individual directory) 
+and type the following at a shell prompt:
+
+\begin{small}
+\begin{verbatim}
+ DIRS=yourname make
+\end{verbatim}
+\end{small}
+
+Ambitious authors are encouraged to install the \texttt{dviutils}
+and \texttt{pdftk} packages and type \texttt{make} from the top-level directory.
+If all goes well, you'll get something that looks quite like the finished \textit{Proceedings}.
+
+\section{Graphics and Symbols}
+
+For importing graphics, don't forget to omit any file extensions.
+That's because \texttt{latex} and \texttt{pdflatex} look for
+different formats.  The output formats we generate are PDF, PS, and
+DVI; you will thus want to generate both EPS and PDF copies of any
+figures that use structured graphics.
+
+The easiest ways to get special symbols such as
+Registered\textregistered\ and Trademark\texttrademark\ 
+is to use the \LaTeX2e\ \texttt{{\textbackslash}text} constructs:
+thus, \texttt{{\textbackslash}textregistered} and 
+\texttt{{\textbackslash}texttrademark}.
+
+We generally try to leave a small margin around each figure, and thus
+use constructs such as those in Figure~\ref{lockhart-fig-igfx} for a
+full-width or full-column picture. 
+
+\begin{figure*}[htb]
+\begin{shaded}
+\begin{center}
+\begin{small}
+\begin{verbatim}
+% By omitting the extension,
+%  - pdflatex finds jwl-page-fig.pdf and jwl-col-fig.pdf
+%  - latex finds jwl-page-fig.eps and jwl-col-fig.eps
+
+% Full pagewidth figure, spanning both columns:
+\begin{figure*}
+\includegraphics[width=0.9\textwidth]{jwl-page-fig}
+\caption{The caption appears beneath the figure}
+\label{jwl-page-fig-label}
+\end{figure*}
+
+% Single-column figure:
+\begin{figure}
+\includegraphics[width=0.9\columnwidth]{jwl-col-fig}
+\end{figure}
+\end{verbatim}
+\end{small}
+\caption{How to use \texttt{includegraphics}}
+\label{lockhart-fig-igfx}
+\end{center}
+\end{shaded}
+\end{figure*}
+
+Please note that the \texttt{.eps} and \texttt{.pdf} extensions have been omitted.
+latex will automatically search for the former; pdflatex, the latter.
+Adding an extension will break one tool or the other.  For the full
+page width, use \texttt{figure*}; otherwise, use \texttt{figure}.  See
+Figure~\ref{lockhart-fig-igfx} for the example.
+
+This year's Proceedings will be in color (or, if you prefer, 
+\textit{colour}).  If you choose to use color graphics and figures,
+please do so effectively, drawing attention to important information
+and distinctions in your paper.  A single box or letter doesn't
+usually add much information, but does squander resources needlessly.
+
+Please avoid using bitmapped graphics unless you have no other choice
+(for instance, a JPG photograph).  Structured graphics always produce
+better printed output.
+
+\section{\TeX\ References}
+
+If you aren't familiar with {\LaTeX}, there are many sources of
+information available.  Your distribution might have additional
+documentation in \brcode{/usr/share/texmf}, or you might find manuals
+for a package (such as \texttt{cprog}) at {\small\url{http://www.ctan.org}}.
+
+If you are completely new to {\TeX} and {\LaTeX}, you will probably
+find it highly useful to visit \texttt{\small http://www.tug.org/} and
+especially \texttt{\small http://www.tug.org/begin.html} for online
+and paper references.
+
+For a free and extremely useful document, try:
+\texttt{\small http://www.tug.org\linebreak[0]/tex-archive\linebreak[0]/info\linebreak[0]/lshort\linebreak[0]/english\linebreak[0]/lshort.pdf}.  
+Note that translations\footnote{French, for instance:
+\url{http://www.tug.org/tex-archive/info/lshort/french/flshort-3.20.pdf};
+note also that this section of the Example paper shows different ways
+of handling URLs.}
+are available, for those more comfortable in something other than
+English: 
+\texttt{\small http://www.tug.org\linebreak[0]/tex-archive\linebreak[0]/info\linebreak[0]/lshort/}
+
+%%% Cut'n'paste versions of those URLs:
+% http://www.tug.org/tex-archive/info/lshort/english/lshort.pdf
+% http://www.tug.org/tex-archive/info/lshort/french/flshort-3.20.pdf
+% http://www.tug.org/tex-archive/info/lshort/
+
+I tend to use \textit{A Guide to \LaTeX} (Kopka \& Daly, ISBN 0-201-39825-7) and the
+\textit{\LaTeX\ Graphics Companion} (Goossens, Rahtz, \& Mittelbach)
+the most these days.
+
+You are also welcome to send questions to me at
+\texttt{{\XFjwlA}{@}{\XFjwlDomA}} (work) or
+\texttt{{\XFjwlB}{@}{\XFjwlDomB}} (home).
+%
+% {}'s begin a new environment in TeX, as in C.
+% A few extra {}'s might let an email address escape notice 
+% by spammers' collecting 'bots, should the .tex file wind 
+% up on a website somewhere at some point.
+%
+
+As usual, please refrain from submitting anything remotely resembling
+a Microsoft Word \texttt{.doc} file\ldots \texttt{<grimace>}.  It's a
+\textit{lot} easier for me to fix up plain ASCII text and
+convert/insert accompanying graphics, if you find yourself terminally
+confused or in a dire emergency.
+
+\begin{figure}[!ht]
+\begin{shaded}
+\begin{center}
+\hrule
+\vspace*{2mm}
+\textbf{\textsc{Submitting a Paper}}
+\begin{footnotesize}
+%% **************** XFdep ******************
+\begin{verbatim}
+  cd ols2007
+  make clean
+  tar zcf yourLastName.tar.gz \
+      yourLastName
+\end{verbatim}
+
+E-mail the resulting tarball to
+\texttt{{\XFuname}{@}{\XFaddr}{.}org}.
+\end{footnotesize}
+\vspace*{2mm}
+\hrule
+
+\caption{Submitting a paper}
+\label{lockhart-fig1}
+
+\end{center}
+\end{shaded}
+\end{figure}
+
+\section{Build Issues}
+
+\subsection{PDF from EPS}
+
+To make PDF graphics from your EPS files, you can adjust your
+\texttt{Makefile.inc} to run \texttt{epstopdf} (which is generally part of the
+\texttt{tetex} package on most distros) automatically.  Here's an
+approach that would work for an author named \texttt{auth}\ldots
+
+Modify \texttt{\small{\XFname}{\XFyear}/author/Makefile.inc} in the following fashion
+(keeping in mind that those aren't leading spaces, but tabs):
+
+\begin{scriptsize}
+\begin{verbatim}
+## Add any additional .tex or .eps files below:
+auth/auth.dvi author/auth-proc.dvi: \
+    auth/auth.tex author/auth-abstract.tex \
+    auth/auth-figure1.eps \
+    auth/auth-figure1.pdf \
+    auth/auth-figure2.eps \
+    auth/auth-figure2.pdf 
+
+auth/auth-%.pdf: auth/auth-%.eps
+    epstopdf $<
+\end{verbatim} %$
+\end{scriptsize}
+
+Doing a \texttt{make} on the toplevel will get you an
+\texttt{author-proc.pdf} file, which is pretty much how it'll look in
+the finished Proceedings.  Feel free to delete the other authors'
+directories in your tree.
+
+
+\section{Simple rules to keep your formatting team happy}
+\label{lockhart-subrules}
+\begin{enumerate}
+\item To submit your paper, either use SVN, or just \texttt{make clean} in your
+  directory, \texttt{tar} it up, and send the resulting gzipped tarball to
+  \texttt{{\XFuname}{@}{\XFaddr}.org}.
+  See Figure~\ref{lockhart-fig1} for an example.
+\item Updates.  If you need to change something, please send both
+  a patch and an updated tarball.  The most convenient form depends on
+  how many changes have been made since you submitted your paper.
+  However, if your change is trivial---a line or two, for instance---a
+  simple email will do.  
+\item Use the existing directory structure, please.  The directory
+  names are intended to be the last name of the presenter (lowercase,
+  punctuation omitted); the main paper should be
+  \texttt{lastname.tex} and any additional files should be
+  \texttt{lastname-file.extension}.   This is basically to keep
+  the file owners straight, and to allow us the option to
+  instruct {\LaTeX} to search the entire (sub)directory hierarchy for
+  input files.  You don't want someone else's file by mistake, right?
+  Putting your name on it helps to keep things straight.  The same
+  goes for \verb|\label{}| and \verb|\ref{}| commands.
+\item Omit file extensions and pathnames in your {\LaTeX} source,
+  please.  By omitting the path and just saying
+  \texttt{{\textbackslash}input\{lockhart-abstract\}}, 
+  a paper can be built from both its directory and from its
+  parent directory.  For graphics, omitting the extension lets
+  \texttt{latex} or 
+  \texttt{pdflatex} pick its preferred input format for the best
+  possible results.
+\item No proprietary document/graphics formats, please.  This
+  especially means MS 
+  Office, Visio, or other such tools.  \LaTeX\ can, however, import
+  EPS and PDF, if you can save in those formats.  Although you can convert
+  a bitmap into EPS/PDF, please don't do so.  If you have screenshots or
+  photos, PNG or JPG can be used.  Everything else should be structured
+  graphics only.
+\item Originals, please.  For example, if you have photographs, send
+  along the full-resolution JPG (crop out any undesired elements if
+  necessary, but use the maximum resolution).  For diagrams, please
+  send the XFig or Dia files. 
+  This ensures the best possible print quality.  Printing will be in
+  black and white, but the online PDF's will be in full color.  Your
+  screen is probably about 72dpi, but the typesetter is probably using
+  something that's at least 1200dpi.  The more resolution, the better.
+  (If, however, your originals are outrageously huge, feel free to ask!)
+  Since hardcopy will be printed in Ottawa, the papersize will be
+  North American ``letter.''  Please keep that in mind if you are
+  concerned about page breaks and such.
+\item Do \textbf{\textit{not}} use sans-serif fonts, or go changing
+  global font sizes.  We're using 12-point Times Roman for body text.
+  Likewise, please don't go haywire with italics.  I once received a
+  huge collection of tables, each of which set the font size and face
+  on an item-by-item basis.  \textit{Incorrectly}.  
+\item Those of you who like to begin lines of code with commas:  as
+  previously mentioned, we're
+  typesetting the code with the comma attached to the preceding
+  identifier (as most publishers do).  Feel free to post your
+  preferred version to the web and to refer to it in the paper.
+\item If possible, please avoid trivial new macros.  Should you need
+  to add something, though, please use
+  \texttt{{\textbackslash}providecommand} rather than
+  \texttt{{\textbackslash}newcommand}, and try for a relatively
+  unique name (papers tend to blur together during long editing sessions).
+\item Trivia note:  generally speaking, it takes longer to edit a
+  submission from a {\TeX}spert than plain, unmarked ASCII.  If you
+  consider yourself a {\LaTeX} expert and love to write fancy new
+  commands, please consider contributing clean-ups or well-tested
+  new features for the infrastructure rather than customizing the
+  daylights out of your submission.  Thanks!
+\end{enumerate}
+
+This paper builds correctly on Fedora Core 6 and Red Hat Enterprise Linux
+5.  Other distributions haven't been tested, but should work.  If you run
+into problems, please let me know so that I can try to make it work.
+
+And remember, it's only typesetting, not rocket science.  Or hacking
+compilers or kernels.  \texttt{:-)}  Have some fun along the way\ldots
+
+\end{document}
