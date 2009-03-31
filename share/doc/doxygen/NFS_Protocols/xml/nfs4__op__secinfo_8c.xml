@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="nfs4__op__secinfo_8c" kind="file">
     <compoundname>nfs4_op_secinfo.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -68,15 +68,6 @@
       <node id="1360">
         <label>nfs_exports.h</label>
       </node>
-      <node id="1357">
-        <label>nfs_core.h</label>
-      </node>
-      <node id="1354">
-        <label>nfs23.h</label>
-      </node>
-      <node id="1362">
-        <label>nfs_proto_functions.h</label>
-      </node>
       <node id="1340">
         <label>nfs4_op_secinfo.c</label>
         <link refid="nfs4_op_secinfo.c"/>
@@ -127,6 +118,15 @@
         <childnode refid="1363" relation="include">
         </childnode>
       </node>
+      <node id="1357">
+        <label>nfs_core.h</label>
+      </node>
+      <node id="1354">
+        <label>nfs23.h</label>
+      </node>
+      <node id="1362">
+        <label>nfs_proto_functions.h</label>
+      </node>
       <node id="1353">
         <label>stuff_alloc.h</label>
       </node>
@@ -147,7 +147,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="nfs4__op__secinfo_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__secinfo_8c_1a05fd20176f38c810c72fb93a548760c" prot="public" static="no">
         <name>arg_SECINFO4</name>
         <initializer>op-&gt;nfs_argop4_u.opsecinfo</initializer>
         <briefdescription>
@@ -179,9 +179,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="138" bodystart="138" bodyend="-1"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="141" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" bodystart="141" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="nfs4__op__secinfo_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" prot="public" static="no">
         <name>res_SECINFO4</name>
         <initializer>resp-&gt;nfs_resop4_u.opsecinfo</initializer>
         <briefdescription>
@@ -190,12 +190,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="139" bodystart="139" bodyend="-1"/>
-        <referencedby refid="nfs4__op__secinfo_8c_1a2" compoundref="nfs4__op__secinfo_8c" startline="141" endline="164">nfs4_op_secinfo</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="142" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" bodystart="142" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs4__op__secinfo_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__secinfo_8c_15f0f8fc7563a8b01b0dec139d4cb9b73" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs4_op_secinfo</definition>
         <argsstring>(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp)</argsstring>
@@ -218,10 +217,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="144" bodystart="141" bodyend="164"/>
-        <references refid="nfs4__op__secinfo_8c_1a1" compoundref="nfs4__op__secinfo_8c" startline="139">res_SECINFO4</references>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="147" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" bodystart="144" bodyend="167"/>
       </memberdef>
-      <memberdef kind="function" id="nfs4__op__secinfo_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__secinfo_8c_1a3352471af44539548e9878d87d5abc6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void nfs4_op_secinfo_Free</definition>
         <argsstring>(SECINFO4res *resp)</argsstring>
@@ -245,20 +243,19 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="178" bodystart="177" bodyend="181"/>
-        <referencedby refid="nfs4__Compound_8c_1a5" compoundref="nfs4__Compound_8c" startline="382" endline="533">nfs4_Compound_Free</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" line="181" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c" bodystart="180" bodyend="184"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Routines used for managing the NFS4 COMPOUND functions. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:52 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
-</para></simplesect>
-<ref refid="nfs4__op__secinfo_8c" kindref="compound">nfs4_op_secinfo.c</ref> : Routines used for managing the NFS4 COMPOUND functions.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:52 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
+<ref refid="nfs4__op__secinfo_8c" kindref="compound">nfs4_op_secinfo.c</ref> : Routines used for managing the NFS4 COMPOUND functions. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -339,76 +336,79 @@
 <codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="100"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="105"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="110"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="138" refid="nfs4__op__secinfo_8c_1a0" refkind="member"><highlight class="preprocessor">#define<sp/>arg_SECINFO4<sp/>op-&gt;nfs_argop4_u.opsecinfo</highlight></codeline>
-<codeline lineno="139" refid="nfs4__op__secinfo_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_SECINFO4<sp/>resp-&gt;nfs_resop4_u.opsecinfo</highlight></codeline>
-<codeline lineno="140"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="141" refid="nfs4__op__secinfo_8c_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_1a2" kindref="member">nfs4_op_secinfo</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
-<codeline lineno="144"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcname[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs4_op_secinfo&quot;</highlight><highlight class="normal"><sp/>;</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="147"><highlight class="normal"></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_SECINFO<sp/>;</highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.status<sp/>=<sp/><sp/>NFS4_OK<sp/><sp/>;</highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val<sp/>=<sp/>(secinfo4<sp/>*)Mem_Alloc(<sp/>2*</highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>secinfo4<sp/>)<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.status<sp/>=<sp/>NFS4ERR_SERVERFAULT<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.status<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>the<sp/>moment,<sp/>we<sp/>just<sp/>have<sp/>AUTH_NONE<sp/>and<sp/>AUTH_UNIX,<sp/>and<sp/>this<sp/>needs<sp/>no<sp/>secinfo<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val[0].flavor<sp/>=<sp/>AUTH_UNIX<sp/>;</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val[1].flavor<sp/>=<sp/>AUTH_NONE<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_len<sp/>=<sp/>2<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_1a1" kindref="member">res_SECINFO4</ref>.status;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_secinfo<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"></highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="177" refid="nfs4__op__secinfo_8c_1a3" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_1a3" kindref="member">nfs4_op_secinfo_Free</ref>(<sp/>SECINFO4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
-<codeline lineno="178"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="181"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_secinfo_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="94"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="103"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="108"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="141" refid="nfs4__op__secinfo_8c_1a05fd20176f38c810c72fb93a548760c" refkind="member"><highlight class="preprocessor">#define<sp/>arg_SECINFO4<sp/>op-&gt;nfs_argop4_u.opsecinfo</highlight></codeline>
+<codeline lineno="142" refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_SECINFO4<sp/>resp-&gt;nfs_resop4_u.opsecinfo</highlight></codeline>
+<codeline lineno="143"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="144" refid="nfs4__op__secinfo_8c_15f0f8fc7563a8b01b0dec139d4cb9b73" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_15f0f8fc7563a8b01b0dec139d4cb9b73" kindref="member">nfs4_op_secinfo</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
+<codeline lineno="147"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>__attribute__((<sp/>__unused__<sp/>))<sp/>funcname[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs4_op_secinfo&quot;</highlight><highlight class="normal"><sp/>;</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="150"><highlight class="normal"></highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_SECINFO<sp/>;</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.status<sp/>=<sp/><sp/>NFS4_OK<sp/><sp/>;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val<sp/>=<sp/>(secinfo4<sp/>*)Mem_Alloc(<sp/>2*</highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>secinfo4<sp/>)<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.status<sp/>=<sp/>NFS4ERR_SERVERFAULT<sp/>;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.status<sp/>;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>the<sp/>moment,<sp/>we<sp/>just<sp/>have<sp/>AUTH_NONE<sp/>and<sp/>AUTH_UNIX,<sp/>and<sp/>this<sp/>needs<sp/>no<sp/>secinfo<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val[0].flavor<sp/>=<sp/>AUTH_UNIX<sp/>;</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_val[1].flavor<sp/>=<sp/>AUTH_NONE<sp/>;</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.SECINFO4res_u.resok4.SECINFO4resok_len<sp/>=<sp/>2<sp/>;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_12294c45e87a0739bdd7d96c4e88ca3d4" kindref="member">res_SECINFO4</ref>.status;</highlight></codeline>
+<codeline lineno="167"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_secinfo<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="180" refid="nfs4__op__secinfo_8c_1a3352471af44539548e9878d87d5abc6" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__secinfo_8c_1a3352471af44539548e9878d87d5abc6" kindref="member">nfs4_op_secinfo_Free</ref>(<sp/>SECINFO4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
+<codeline lineno="181"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="184"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_secinfo_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_secinfo.c"/>
   </compounddef>
 </doxygen>

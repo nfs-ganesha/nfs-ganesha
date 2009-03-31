@@ -1,8 +1,10 @@
-.TH "cache_inode_lookup.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_lookup.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_lookup.c \- Perform lookup through the cache. 
+cache_inode_lookup.c \- Perform lookup through the cache.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -50,29 +52,29 @@ Perform lookup through the cache.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:26 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.33 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_lookup.c\fP : Perform lookup through the cache.
+\fBcache_inode_lookup.c\fP : Perform lookup through the cache. 
 .PP
 Definition in file \fBcache_inode_lookup.c\fP.
 .SH "Function Documentation"
@@ -111,11 +113,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 471 of file cache_inode_lookup.c.
-.PP
-References cache_inode_lookup_sw().
-.PP
-Referenced by cache_inode_create(), cache_inode_link(), and main().
+Definition at line 493 of file cache_inode_lookup.c.
 .SS "cache_entry_t* cache_inode_lookup_no_mutex (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_lookup_no_mutex: looks up for a name in a directory indicated by a cached entry (no mutex management).
@@ -150,11 +148,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 434 of file cache_inode_lookup.c.
-.PP
-References cache_inode_lookup_sw().
-.PP
-Referenced by cache_inode_rename().
+Definition at line 456 of file cache_inode_lookup.c.
 .SS "cache_entry_t* cache_inode_lookup_sw (cache_entry_t * pentry_parent, fsal_name_t * pname, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
 .PP
 cache_inode_lookup_sw: looks up for a name in a directory indicated by a cached entry.
@@ -191,11 +185,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 124 of file cache_inode_lookup.c.
-.PP
-References cache_inode_access_no_mutex(), cache_inode_add_cached_dirent(), cache_inode_error_convert(), cache_inode_fsal_type_convert(), cache_inode_get_attributes(), cache_inode_kill_entry(), cache_inode_lookupp_no_mutex(), cache_inode_new_entry(), and cache_inode_valid().
-.PP
-Referenced by cache_inode_lookup(), cache_inode_lookup_no_mutex(), and cache_inode_remove_sw().
+Definition at line 128 of file cache_inode_lookup.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

@@ -1,8 +1,10 @@
-.TH "cache_inode_truncate.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_truncate.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_truncate.c \- Truncates a regular file. 
+cache_inode_truncate.c \- Truncates a regular file.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -50,29 +52,29 @@ Truncates a regular file.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:28 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.19 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_truncate.c\fP : Truncates a regular file.
+\fBcache_inode_truncate.c\fP : Truncates a regular file. 
 .PP
 Definition in file \fBcache_inode_truncate.c\fP.
 .SH "Function Documentation"
@@ -111,9 +113,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 298 of file cache_inode_truncate.c.
-.PP
-References cache_inode_truncate_sw().
+Definition at line 315 of file cache_inode_truncate.c.
 .SS "cache_inode_status_t cache_inode_truncate_no_mutex (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_truncate_no_mutex: truncates a regular file specified by its cache entry (no mutex management).
@@ -148,9 +148,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 262 of file cache_inode_truncate.c.
-.PP
-References cache_inode_truncate_sw().
+Definition at line 279 of file cache_inode_truncate.c.
 .SS "cache_inode_status_t cache_inode_truncate_sw (cache_entry_t * pentry, fsal_size_t length, fsal_attrib_list_t * pattr, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
 .PP
 cache_inode_truncate_sw: truncates a regular file specified by its cache entry.
@@ -187,11 +185,14 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 126 of file cache_inode_truncate.c.
+\fBTodo\fP
+.RS 4
+&pentry->object.file.open_fd.fd, 
+.RE
 .PP
-References cache_inode_error_convert(), cache_inode_kill_entry(), and cache_inode_valid().
+
 .PP
-Referenced by cache_inode_truncate(), and cache_inode_truncate_no_mutex().
+Definition at line 130 of file cache_inode_truncate.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

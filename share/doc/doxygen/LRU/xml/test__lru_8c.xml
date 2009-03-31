@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="test__lru_8c" kind="file">
     <compoundname>test_lru.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -18,6 +18,12 @@
       <node id="19">
         <label>BuddyMalloc.h</label>
       </node>
+      <node id="18">
+        <label>string.h</label>
+      </node>
+      <node id="17">
+        <label>strings.h</label>
+      </node>
       <node id="14">
         <label>test_lru.c</label>
         <link refid="test_lru.c"/>
@@ -34,18 +40,12 @@
         <childnode refid="20" relation="include">
         </childnode>
       </node>
-      <node id="18">
-        <label>string.h</label>
-      </node>
-      <node id="17">
-        <label>strings.h</label>
-      </node>
       <node id="15">
         <label>stdio.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="test__lru_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="test__lru_8c_19dadacd5ee41d21ea8974d66757983dd" prot="public" static="no">
         <name>PREALLOC</name>
         <initializer>10000</initializer>
         <briefdescription>
@@ -54,9 +54,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="121" bodystart="121" bodyend="-1"/>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="121" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="121" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__lru_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="test__lru_8c_103d9dd35a7b43ebc597de16d46a0e845" prot="public" static="no">
         <name>MAXTEST</name>
         <initializer>10</initializer>
         <briefdescription>
@@ -65,9 +65,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="122" bodystart="122" bodyend="-1"/>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="122" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="122" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__lru_8c_1a2" prot="public" static="no">
+      <memberdef kind="define" id="test__lru_8c_132947fb41aad50de0587ec096a0daebc" prot="public" static="no">
         <name>KEPT_ENTRY</name>
         <initializer>5</initializer>
         <briefdescription>
@@ -76,11 +76,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="123" bodystart="123" bodyend="-1"/>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="123" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="123" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="test__lru_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__lru_8c_1ea38d63e4172f007b92d4bfeebb6b6d2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int print_entry</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -99,9 +99,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="126" bodystart="125" bodyend="128"/>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="126" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="125" bodyend="128"/>
       </memberdef>
-      <memberdef kind="function" id="test__lru_8c_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__lru_8c_1ed3b7c3b1bdb635f3c7d88e630279b79" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int clean_entry</definition>
         <argsstring>(LRU_entry_t *pentry, void *addparam)</argsstring>
@@ -120,9 +120,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="131" bodystart="130" bodyend="133"/>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="131" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="130" bodyend="133"/>
       </memberdef>
-      <memberdef kind="function" id="test__lru_8c_1a5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__lru_8c_10ddf1224851353fc92bfbff6f499fa97" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int main</definition>
         <argsstring>(int argc, char *argv[])</argsstring>
@@ -142,12 +142,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c" line="136" bodystart="135" bodyend="203"/>
-        <references refid="group__LRUExportedFunctions_1ga3" compoundref="LRU__List_8c" startline="318" endline="376">LRU_gc_invalid</references>
-        <references refid="group__LRUExportedFunctions_1ga0" compoundref="LRU__List_8c" startline="180" endline="220">LRU_Init</references>
-        <references refid="group__LRUExportedFunctions_1ga1" compoundref="LRU__List_8c" startline="236" endline="245">LRU_invalidate</references>
-        <references refid="group__LRUExportedFunctions_1ga2" compoundref="LRU__List_8c" startline="260" endline="305">LRU_new_entry</references>
-        <references refid="group__LRUExportedFunctions_1ga6" compoundref="LRU__List_8c" startline="493" endline="504">LRU_Print</references>
+        <location file="/export/GANESHA/src/LRU/test_lru.c" line="136" bodyfile="/export/GANESHA/src/LRU/test_lru.c" bodystart="135" bodyend="203"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -275,21 +270,21 @@
 <codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;BuddyMalloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="120"><highlight class="normal"></highlight></codeline>
-<codeline lineno="121" refid="test__lru_8c_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>PREALLOC<sp/>10000</highlight></codeline>
-<codeline lineno="122" refid="test__lru_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAXTEST<sp/>10<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="123" refid="test__lru_8c_1a2" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>KEPT_ENTRY<sp/>5</highlight></codeline>
+<codeline lineno="121" refid="test__lru_8c_19dadacd5ee41d21ea8974d66757983dd" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>PREALLOC<sp/>10000</highlight></codeline>
+<codeline lineno="122" refid="test__lru_8c_103d9dd35a7b43ebc597de16d46a0e845" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAXTEST<sp/>10<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="123" refid="test__lru_8c_132947fb41aad50de0587ec096a0daebc" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>KEPT_ENTRY<sp/>5</highlight></codeline>
 <codeline lineno="124"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="125" refid="test__lru_8c_1a3" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__lru_8c_1a3" kindref="member">print_entry</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str<sp/>)</highlight></codeline>
+<codeline lineno="125" refid="test__lru_8c_1ea38d63e4172f007b92d4bfeebb6b6d2" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__lru_8c_1ea38d63e4172f007b92d4bfeebb6b6d2" kindref="member">print_entry</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str<sp/>)</highlight></codeline>
 <codeline lineno="126"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="127"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>snprintf(<sp/>str,<sp/>LRU_DISPLAY_STRLEN,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)data.pdata<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="128"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>print_entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="129"><highlight class="normal"></highlight></codeline>
-<codeline lineno="130" refid="test__lru_8c_1a4" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__lru_8c_1a4" kindref="member">clean_entry</ref>(<sp/><sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)</highlight></codeline>
+<codeline lineno="130" refid="test__lru_8c_1ed3b7c3b1bdb635f3c7d88e630279b79" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__lru_8c_1ed3b7c3b1bdb635f3c7d88e630279b79" kindref="member">clean_entry</ref>(<sp/><sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)</highlight></codeline>
 <codeline lineno="131"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="132"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
 <codeline lineno="133"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cleanentry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="134"><highlight class="normal"></highlight></codeline>
-<codeline lineno="135" refid="test__lru_8c_1a5" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__lru_8c_1a5" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
+<codeline lineno="135" refid="test__lru_8c_10ddf1224851353fc92bfbff6f499fa97" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__configurable__lru_8c_10ddf1224851353fc92bfbff6f499fa97" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
 <codeline lineno="136"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="137"><highlight class="normal"><sp/><sp/>LRU_list_t<sp/>*<sp/>plru<sp/>;</highlight></codeline>
 <codeline lineno="138"><highlight class="normal"><sp/><sp/>LRU_parameter_t<sp/>param<sp/>;</highlight></codeline>
@@ -297,27 +292,27 @@
 <codeline lineno="140"><highlight class="normal"><sp/><sp/>LRU_entry_t<sp/>*<sp/>kept_entry<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
 <codeline lineno="141"><highlight class="normal"><sp/><sp/>LRU_status_t<sp/>status<sp/>=<sp/>0<sp/>;</highlight></codeline>
 <codeline lineno="142"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i<sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>strtab[MAXTEST][10]<sp/>;</highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>strtab[<ref refid="test__configurable__lru_8c_103d9dd35a7b43ebc597de16d46a0e845" kindref="member">MAXTEST</ref>][10]<sp/>;</highlight></codeline>
 <codeline lineno="144"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/>param.nb_entry_prealloc<sp/>=<sp/><sp/>PREALLOC<sp/>;</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/>param.entry_to_str<sp/>=<sp/>print_entry<sp/>;</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/>param.clean_entry<sp/>=<sp/>clean_entry<sp/>;</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/>param.nb_entry_prealloc<sp/>=<sp/><sp/><ref refid="test__configurable__lru_8c_19dadacd5ee41d21ea8974d66757983dd" kindref="member">PREALLOC</ref><sp/>;</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/>param.entry_to_str<sp/>=<sp/><ref refid="test__lru_8c_1ea38d63e4172f007b92d4bfeebb6b6d2" kindref="member">print_entry</ref><sp/>;</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/>param.clean_entry<sp/>=<sp/><ref refid="test__lru_8c_1ed3b7c3b1bdb635f3c7d88e630279b79" kindref="member">clean_entry</ref><sp/>;</highlight></codeline>
 <codeline lineno="148"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="149"><highlight class="normal"><sp/><sp/>BuddyInit(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>plru<sp/>=<sp/><ref refid="group__LRUExportedFunctions_1ga0" kindref="member">LRU_Init</ref>(<sp/>param,<sp/>&amp;status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>plru<sp/>=<sp/><ref refid="group__LRUExportedFunctions_1g5c11aa9a651e67795871ff66d540c86e" kindref="member">LRU_Init</ref>(<sp/>param,<sp/>&amp;status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
 <codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>Mauvaise<sp/>init\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/><sp/></highlight></codeline>
 <codeline lineno="156"><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>MAXTEST<sp/>;<sp/>i++<sp/>)</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/><ref refid="test__configurable__lru_8c_103d9dd35a7b43ebc597de16d46a0e845" kindref="member">MAXTEST</ref><sp/>;<sp/>i++<sp/>)</highlight></codeline>
 <codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="159"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_LRU</highlight></codeline>
 <codeline lineno="160"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Ajout<sp/>de<sp/>l&apos;entree<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/>i<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="161"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="162"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>sprintf(<sp/>strtab[i],<sp/></highlight><highlight class="stringliteral">&quot;%d&quot;</highlight><highlight class="normal">,<sp/>i<sp/><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>entry<sp/>=<sp/><ref refid="group__LRUExportedFunctions_1ga2" kindref="member">LRU_new_entry</ref>(<sp/>plru,<sp/>&amp;status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>entry<sp/>=<sp/><ref refid="group__LRUExportedFunctions_1gc3cdaf55a44b7b59956d18e4f842e313" kindref="member">LRU_new_entry</ref>(<sp/>plru,<sp/>&amp;status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
 <codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="165"><highlight class="normal"></highlight></codeline>
 <codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>Mauvais<sp/>ajout<sp/>d&apos;entree,<sp/>status<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/>status<sp/>)<sp/>;</highlight></codeline>
@@ -327,29 +322,29 @@
 <codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>entry-&gt;buffdata.pdata<sp/>=<sp/>strtab[i]<sp/>;</highlight></codeline>
 <codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>entry-&gt;buffdata.len<sp/>=<sp/><sp/>strlen(<sp/>strtab[i]<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>i<sp/>==<sp/>KEPT_ENTRY<sp/>)<sp/>kept_entry<sp/>=<sp/>entry<sp/>;</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>i<sp/>==<sp/><ref refid="test__lru_8c_132947fb41aad50de0587ec096a0daebc" kindref="member">KEPT_ENTRY</ref><sp/>)<sp/>kept_entry<sp/>=<sp/>entry<sp/>;</highlight></codeline>
 <codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>printing<sp/>the<sp/>table<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="177"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_LRU</highlight></codeline>
-<codeline lineno="178"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1ga6" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="178"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1gab0cf057112f447b98e47151ff834220" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="179"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="180"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1ga1" kindref="member">LRU_invalidate</ref>(<sp/>plru,<sp/>kept_entry<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1g1ae86980b1af3955da609b1be7e2a059" kindref="member">LRU_invalidate</ref>(<sp/>plru,<sp/>kept_entry<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="182"><highlight class="normal"></highlight></codeline>
 <codeline lineno="183"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_LRU</highlight></codeline>
-<codeline lineno="184"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1ga6" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="184"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1gab0cf057112f447b98e47151ff834220" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="185"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="186"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="187"><highlight class="normal"></highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="group__LRUExportedFunctions_1ga3" kindref="member">LRU_gc_invalid</ref>(<sp/>plru,<sp/>NULL<sp/>)<sp/>!=<sp/>LRU_LIST_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="group__LRUExportedFunctions_1geaff4bce3efdf4087b96ba83912388bd" kindref="member">LRU_gc_invalid</ref>(<sp/>plru,<sp/>NULL<sp/>)<sp/>!=<sp/>LRU_LIST_SUCCESS<sp/>)</highlight></codeline>
 <codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;Test<sp/>ECHOUE<sp/>:<sp/>Mauvais<sp/>gc\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/><sp/></highlight></codeline>
 <codeline lineno="193"><highlight class="normal"></highlight></codeline>
 <codeline lineno="194"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_LRU</highlight></codeline>
-<codeline lineno="195"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1ga6" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="195"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="group__LRUExportedFunctions_1gab0cf057112f447b98e47151ff834220" kindref="member">LRU_Print</ref>(<sp/><sp/>plru<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="196"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="197"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Tous<sp/>les<sp/>tests<sp/>sont<sp/>ok<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
@@ -359,6 +354,6 @@
 <codeline lineno="202"><highlight class="normal"><sp/><sp/>exit(<sp/>0<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="203"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>main<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/LRU/test_lru.c"/>
+    <location file="/export/GANESHA/src/LRU/test_lru.c"/>
   </compounddef>
 </doxygen>

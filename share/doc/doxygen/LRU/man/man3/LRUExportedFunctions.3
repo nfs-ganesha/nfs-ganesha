@@ -1,4 +1,4 @@
-.TH "LRUExportedFunctions" 3 "9 Apr 2008" "Version 0.1" "LRu List Library" \" -*- nroff -*-
+.TH "LRUExportedFunctions" 3 "31 Mar 2009" "Version 0.1" "LRu List Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -59,7 +59,7 @@ LRU_LIST_SUCCESS if ok, other values shows an error
 .PP
 
 .PP
-Definition at line 447 of file LRU_List.c.
+Definition at line 451 of file LRU_List.c.
 .SS "int LRU_gc_invalid (LRU_list_t * plru, void * cleanparam)"
 .PP
 LRU_gc_invalid : garbagge collection for invalid entries.
@@ -84,8 +84,6 @@ An integer to contain the status for the operation.
 
 .PP
 Definition at line 318 of file LRU_List.c.
-.PP
-Referenced by do_gc(), and main().
 .SS "LRU_list_t* LRU_Init (LRU_parameter_t lru_param, LRU_status_t * pstatus)"
 .PP
 LRU_Init: Init the LRU list.
@@ -112,8 +110,6 @@ PreAllocEntry
 
 .PP
 Definition at line 180 of file LRU_List.c.
-.PP
-Referenced by main().
 .SS "int LRU_invalidate (LRU_list_t * plru, LRU_entry_t * pentry)"
 .PP
 LRU_invalidate: Tag an entry as invalid.
@@ -140,8 +136,6 @@ LRU_LIST_SUCCESS if successfull, other values show an error.
 
 .PP
 Definition at line 236 of file LRU_List.c.
-.PP
-Referenced by do_invalidate(), LRU_invalidate_by_function(), and main().
 .SS "int LRU_invalidate_by_function (LRU_list_t * plru, int(*)(LRU_entry_t *, void *addparam) testfunc, void * addparam)"
 .PP
 LRU_invalidate_by_function: Browse the lru to test if entries should ne invalidated.
@@ -171,9 +165,7 @@ LRU_LIST_SUCCESS if ok, other values shows an error
 .PP
 
 .PP
-Definition at line 394 of file LRU_List.c.
-.PP
-References LRU_invalidate().
+Definition at line 395 of file LRU_List.c.
 .SS "LRU_entry_t* LRU_new_entry (LRU_list_t * plru, LRU_status_t * pstatus)"
 .PP
 LRU_new_entry : acquire a new entry from the pool.
@@ -200,8 +192,6 @@ PreAllocEntry
 
 .PP
 Definition at line 260 of file LRU_List.c.
-.PP
-Referenced by do_new(), and main().
 .SS "void LRU_Print (LRU_list_t * plru)"
 .PP
 HashTable_Print: Print information about the LRU (mostly for debugging purpose).
@@ -220,6 +210,7 @@ none (returns void).
 .PP
 
 .PP
-Definition at line 493 of file LRU_List.c.
-.PP
-Referenced by main().
+Definition at line 497 of file LRU_List.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LRu List Library from the source code.

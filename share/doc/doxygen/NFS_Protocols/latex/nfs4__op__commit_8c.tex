@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-commit.c File Reference}
-\label{nfs4__op__commit_8c}\index{nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs4__op__commit_8c}\index{nfs4\_\-op\_\-commit.c@{nfs4\_\-op\_\-commit.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -29,9 +30,9 @@ Routines used for managing the NFS4 COMPOUND functions.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf arg\_\-COMMIT4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opcommit
+\#define {\bf arg\_\-COMMIT4}~op $\rightarrow$ nfs\_\-argop4\_\-u.opcommit
 \item 
-\#define {\bf res\_\-COMMIT4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opcommit
+\#define {\bf res\_\-COMMIT4}~resp $\rightarrow$ nfs\_\-resop4\_\-u.opcommit
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -46,25 +47,25 @@ void {\bf nfs4\_\-op\_\-commit\_\-Free} (COMMIT4res $\ast$resp)
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:50 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-commit.c}{\rm (p.\,\pageref{nfs4__op__commit_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs4\_\-op\_\-commit.c}{p.}{nfs4__op__commit_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs4\_\-op\_\-commit.c}.
 
 \subsection{Define Documentation}
-\index{nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}!arg_COMMIT4@{arg\_\-COMMIT4}}
-\index{arg_COMMIT4@{arg\_\-COMMIT4}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-COMMIT4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opcommit}\label{nfs4__op__commit_8c_a0}
+\index{nfs4\_\-op\_\-commit.c@{nfs4\_\-op\_\-commit.c}!arg\_\-COMMIT4@{arg\_\-COMMIT4}}
+\index{arg\_\-COMMIT4@{arg\_\-COMMIT4}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
+\subsubsection[{arg\_\-COMMIT4}]{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-COMMIT4~op $\rightarrow$ nfs\_\-argop4\_\-u.opcommit}\label{nfs4__op__commit_8c_2bd08350f2decb4ddbee68e3c2ccd0ce}
 
 
 nfs4\_\-op\_\-commit: Implemtation of NFS4\_\-OP\_\-COMMIT
@@ -80,32 +81,26 @@ Implemtation of NFS4\_\-OP\_\-COMMIT. This is usually made for cache validator i
 \item[Returns:]NFS4\_\-OK \end{Desc}
 
 
-Definition at line 140 of file nfs4\_\-op\_\-commit.c.
-
-Referenced by nfs4\_\-op\_\-commit().\index{nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}!res_COMMIT4@{res\_\-COMMIT4}}
-\index{res_COMMIT4@{res\_\-COMMIT4}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-COMMIT4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opcommit}\label{nfs4__op__commit_8c_a1}
+Definition at line 143 of file nfs4\_\-op\_\-commit.c.\index{nfs4\_\-op\_\-commit.c@{nfs4\_\-op\_\-commit.c}!res\_\-COMMIT4@{res\_\-COMMIT4}}
+\index{res\_\-COMMIT4@{res\_\-COMMIT4}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
+\subsubsection[{res\_\-COMMIT4}]{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-COMMIT4~resp $\rightarrow$ nfs\_\-resop4\_\-u.opcommit}\label{nfs4__op__commit_8c_581b0317fbe8af33617817fa10ef218e}
 
 
 
 
-Definition at line 141 of file nfs4\_\-op\_\-commit.c.
-
-Referenced by nfs4\_\-op\_\-commit().
+Definition at line 144 of file nfs4\_\-op\_\-commit.c.
 
 \subsection{Function Documentation}
-\index{nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}!nfs4_op_commit@{nfs4\_\-op\_\-commit}}
-\index{nfs4_op_commit@{nfs4\_\-op\_\-commit}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-commit (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__commit_8c_a2}
+\index{nfs4\_\-op\_\-commit.c@{nfs4\_\-op\_\-commit.c}!nfs4\_\-op\_\-commit@{nfs4\_\-op\_\-commit}}
+\index{nfs4\_\-op\_\-commit@{nfs4\_\-op\_\-commit}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
+\subsubsection[{nfs4\_\-op\_\-commit}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-commit (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__commit_8c_df0b8f05386e088b737004938a0cf20b}
 
 
 
 
-Definition at line 143 of file nfs4\_\-op\_\-commit.c.
-
-References arg\_\-COMMIT4, and res\_\-COMMIT4.\index{nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}!nfs4_op_commit_Free@{nfs4\_\-op\_\-commit\_\-Free}}
-\index{nfs4_op_commit_Free@{nfs4\_\-op\_\-commit\_\-Free}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-commit\_\-Free (COMMIT4res $\ast$ {\em resp})}\label{nfs4__op__commit_8c_a3}
+Definition at line 146 of file nfs4\_\-op\_\-commit.c.\index{nfs4\_\-op\_\-commit.c@{nfs4\_\-op\_\-commit.c}!nfs4\_\-op\_\-commit\_\-Free@{nfs4\_\-op\_\-commit\_\-Free}}
+\index{nfs4\_\-op\_\-commit\_\-Free@{nfs4\_\-op\_\-commit\_\-Free}!nfs4_op_commit.c@{nfs4\_\-op\_\-commit.c}}
+\subsubsection[{nfs4\_\-op\_\-commit\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-commit\_\-Free (COMMIT4res $\ast$ {\em resp})}\label{nfs4__op__commit_8c_4d7dfc9df40cb8cd08fda3209d46490a}
 
 
 nfs4\_\-op\_\-commit\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-commit.
@@ -121,6 +116,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-commit.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 212 of file nfs4\_\-op\_\-commit.c.
-
-Referenced by nfs4\_\-Compound\_\-Free().
+Definition at line 215 of file nfs4\_\-op\_\-commit.c.

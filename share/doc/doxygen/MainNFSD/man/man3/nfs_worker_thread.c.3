@@ -1,8 +1,10 @@
-.TH "nfs_worker_thread.c" 3 "9 Apr 2008" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_worker_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_worker_thread.c \- The file that contain the 'worker_thread' routine for the nfsd. 
+nfs_worker_thread.c \- The file that contain the 'worker_thread' routine for the nfsd.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -57,13 +59,6 @@ nfs_worker_thread.c \- The file that contain the 'worker_thread' routine for the
 \fC#include 'SemN.h'\fP
 .br
 
-.SS "Classes"
-
-.in +1c
-.ti -1c
-.RI "struct \fBsvc_callout\fP"
-.br
-.in -1c
 .SS "Defines"
 
 .in +1c
@@ -118,6 +113,9 @@ nfs_worker_thread.c \- The file that contain the 'worker_thread' routine for the
 .RI "int \fBetat_xprt\fP [FD_SETSIZE]"
 .br
 .ti -1c
+.RI "int \fBnfs_do_terminate\fP = FALSE"
+.br
+.ti -1c
 .RI "const nfs_function_desc_t \fBnfs2_func_desc\fP []"
 .br
 .ti -1c
@@ -149,27 +147,24 @@ $Date$
 .PP
 \fBVersion:\fP
 .RS 4
-$Revision$ 
+$Revision$ \fBnfs_worker_thread.c\fP : The file that contain the 'worker_thread' routine for the nfsd (and all the related stuff). 
 .RE
 .PP
-\fBnfs_worker_thread.c\fP : The file that contain the 'worker_thread' routine for the nfsd (and all the related stuff).
+
 .PP
 Definition in file \fBnfs_worker_thread.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define NULL_SVC   ((struct svc_callout *)0)"
 .PP
-Definition at line 127 of file nfs_worker_thread.c.
+Definition at line 133 of file nfs_worker_thread.c.
 .SS "#define SVCAUTH_PRIVATE(auth)   ((struct \fBsvc_rpc_gss_data\fP *)(auth)->svc_ah_private)"
 .PP
-Definition at line 128 of file nfs_worker_thread.c.
-.PP
-Referenced by Gssrpc__svcauth_gss(), and Svcauth_gss_get_principal().
+Definition at line 134 of file nfs_worker_thread.c.
 .SH "Function Documentation"
 .PP 
 .SS "enum auth_stat _authenticate (register struct svc_req * rqst, struct rpc_msg * msg)"
 .PP
-Referenced by Svc_getreqset(), and worker_thread().
 .SS "int nfs_Init_worker_data (nfs_worker_data_t * pdata)"
 .PP
 nfs_Init_worker_data: Init the data associated with a worker instance.
@@ -190,9 +185,7 @@ This function is used to init the nfs_worker_data for a worker thread. These dat
 .PP
 
 .PP
-Definition at line 718 of file nfs_worker_thread.c.
-.PP
-References nfs_param.
+Definition at line 769 of file nfs_worker_thread.c.
 .SS "void* worker_thread (void * IndexArg)"
 .PP
 worker_thread: The main function for a worker thread
@@ -211,27 +204,21 @@ Pointer to the result (but this function will mostly loop forever).
 .PP
 
 .PP
-Definition at line 773 of file nfs_worker_thread.c.
-.PP
-References _authenticate(), condvar_xprt, etat_xprt, lock_nb_current_gc_workers, mutex_cond_xprt, nb_current_gc_workers, nfs_dupreq_gc_function(), nfs_param, Rpcsecgss__authenticate(), and workers_data.
+Definition at line 822 of file nfs_worker_thread.c.
 .SH "Variable Documentation"
 .PP 
 .SS "pthread_cond_t \fBcondvar_xprt\fP[FD_SETSIZE]"
 .PP
-Definition at line 73 of file Svc_tcp_gssrpc.c.
+Definition at line 77 of file Svc_tcp_gssrpc.c.
 .SS "int \fBetat_xprt\fP[FD_SETSIZE]"
 .PP
-Definition at line 74 of file Svc_tcp_gssrpc.c.
+Definition at line 78 of file Svc_tcp_gssrpc.c.
 .SS "hash_table_t* \fBht_dupreq\fP"
 .PP
-Definition at line 136 of file nfs_dupreq.c.
-.PP
-Referenced by clean_entry_dupreq(), nfs_dupreq_add(), nfs_dupreq_get(), nfs_dupreq_get_stats(), and nfs_Init_dupreq().
+Definition at line 140 of file nfs_dupreq.c.
 .SS "pthread_mutex_t \fBlock_nb_current_gc_workers\fP"
 .PP
-Definition at line 160 of file nfs_rpc_dispatcher_thread.c.
-.PP
-Referenced by nfs_Init_gc_counter(), and worker_thread().
+Definition at line 180 of file nfs_rpc_dispatcher_thread.c.
 .SS "const nfs_function_desc_t \fBmnt1_func_desc\fP[]"
 .PP
 \fBInitial value:\fP
@@ -248,9 +235,7 @@ Referenced by nfs_Init_gc_counter(), and worker_thread().
 }
 .fi
 .PP
-Definition at line 215 of file nfs_worker_thread.c.
-.PP
-Referenced by clean_entry_dupreq().
+Definition at line 224 of file nfs_worker_thread.c.
 .SS "const nfs_function_desc_t \fBmnt3_func_desc\fP[]"
 .PP
 \fBInitial value:\fP
@@ -267,17 +252,13 @@ Referenced by clean_entry_dupreq().
 }
 .fi
 .PP
-Definition at line 225 of file nfs_worker_thread.c.
-.PP
-Referenced by clean_entry_dupreq().
+Definition at line 234 of file nfs_worker_thread.c.
 .SS "pthread_mutex_t \fBmutex_cond_xprt\fP[FD_SETSIZE]"
 .PP
-Definition at line 72 of file Svc_tcp_gssrpc.c.
+Definition at line 76 of file Svc_tcp_gssrpc.c.
 .SS "unsigned int \fBnb_current_gc_workers\fP"
 .PP
-Definition at line 159 of file nfs_rpc_dispatcher_thread.c.
-.PP
-Referenced by nfs_Init_gc_counter(), and worker_thread().
+Definition at line 179 of file nfs_rpc_dispatcher_thread.c.
 .SS "const nfs_function_desc_t \fBnfs2_func_desc\fP[]"
 .PP
 \fBInitial value:\fP
@@ -306,9 +287,7 @@ Referenced by nfs_Init_gc_counter(), and worker_thread().
 }
 .fi
 .PP
-Definition at line 160 of file nfs_worker_thread.c.
-.PP
-Referenced by clean_entry_dupreq().
+Definition at line 169 of file nfs_worker_thread.c.
 .SS "const nfs_function_desc_t \fBnfs3_func_desc\fP[]"
 .PP
 \fBInitial value:\fP
@@ -341,9 +320,7 @@ Referenced by clean_entry_dupreq().
 }
 .fi
 .PP
-Definition at line 182 of file nfs_worker_thread.c.
-.PP
-Referenced by clean_entry_dupreq().
+Definition at line 191 of file nfs_worker_thread.c.
 .SS "const nfs_function_desc_t \fBnfs4_func_desc\fP[]"
 .PP
 \fBInitial value:\fP
@@ -356,18 +333,19 @@ Referenced by clean_entry_dupreq().
 }
 .fi
 .PP
-Definition at line 209 of file nfs_worker_thread.c.
+Definition at line 218 of file nfs_worker_thread.c.
+.SS "int \fBnfs_do_terminate\fP = FALSE"
 .PP
-Referenced by clean_entry_dupreq().
+Definition at line 165 of file nfs_worker_thread.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 130 of file nfs_init.c.
+Definition at line 135 of file nfs_init.c.
 .SS "nfs_worker_data_t* \fBworkers_data\fP"
 .PP
-Definition at line 132 of file nfs_init.c.
+Definition at line 137 of file nfs_init.c.
 .SS "SVCXPRT** \fBXports\fP"
 .PP
-Definition at line 66 of file Svc_gssrpc.c.
+Definition at line 70 of file Svc_gssrpc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

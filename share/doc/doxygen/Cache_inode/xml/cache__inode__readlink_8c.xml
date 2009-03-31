@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="cache__inode__readlink_8c" kind="file">
     <compoundname>cache_inode_readlink.c</compoundname>
     <includes local="yes">LRU_List.h</includes>
@@ -14,13 +14,36 @@
     <includes local="no">time.h</includes>
     <includes local="no">pthread.h</includes>
     <incdepgraph>
-      <node id="256">
+      <node id="259">
+        <label>LRU_List.h</label>
+      </node>
+      <node id="263">
+        <label>fsal.h</label>
+      </node>
+      <node id="260">
+        <label>log_functions.h</label>
+      </node>
+      <node id="269">
+        <label>pthread.h</label>
+      </node>
+      <node id="266">
+        <label>sys/types.h</label>
+      </node>
+      <node id="262">
+        <label>HashTable.h</label>
+      </node>
+      <node id="265">
+        <label>unistd.h</label>
+      </node>
+      <node id="267">
+        <label>sys/param.h</label>
+      </node>
+      <node id="268">
+        <label>time.h</label>
+      </node>
+      <node id="258">
         <label>cache_inode_readlink.c</label>
         <link refid="cache_inode_readlink.c"/>
-        <childnode refid="257" relation="include">
-        </childnode>
-        <childnode refid="258" relation="include">
-        </childnode>
         <childnode refid="259" relation="include">
         </childnode>
         <childnode refid="260" relation="include">
@@ -39,43 +62,20 @@
         </childnode>
         <childnode refid="267" relation="include">
         </childnode>
-      </node>
-      <node id="257">
-        <label>LRU_List.h</label>
-      </node>
-      <node id="261">
-        <label>fsal.h</label>
-      </node>
-      <node id="258">
-        <label>log_functions.h</label>
-      </node>
-      <node id="267">
-        <label>pthread.h</label>
+        <childnode refid="268" relation="include">
+        </childnode>
+        <childnode refid="269" relation="include">
+        </childnode>
       </node>
       <node id="264">
-        <label>sys/types.h</label>
-      </node>
-      <node id="260">
-        <label>HashTable.h</label>
-      </node>
-      <node id="263">
-        <label>unistd.h</label>
-      </node>
-      <node id="265">
-        <label>sys/param.h</label>
-      </node>
-      <node id="266">
-        <label>time.h</label>
-      </node>
-      <node id="262">
         <label>cache_inode.h</label>
       </node>
-      <node id="259">
+      <node id="261">
         <label>HashData.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="func">
-      <memberdef kind="function" id="cache__inode__readlink_8c_1a0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cache__inode__readlink_8c_1feec746fc915d85bcf0c4c0da36b5aec" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_status_t</type>
         <definition>cache_inode_status_t cache_inode_readlink</definition>
         <argsstring>(cache_entry_t *pentry, fsal_path_t *plink_content, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, cache_inode_status_t *pstatus)</argsstring>
@@ -110,23 +110,19 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_readlink.c" line="110" bodystart="104" bodyend="188"/>
-        <references refid="cache__inode__misc_8c_1a5" compoundref="cache__inode__misc_8c" startline="726" endline="801">cache_inode_error_convert</references>
-        <references refid="cache__inode__misc_8c_1a19" compoundref="cache__inode__misc_8c" startline="1521" endline="1687">cache_inode_kill_entry</references>
-        <references refid="cache__inode__renew__entry_8c_1a0" compoundref="cache__inode__renew__entry_8c" startline="123" endline="513">cache_inode_renew_entry</references>
-        <references refid="cache__inode__misc_8c_1a6" compoundref="cache__inode__misc_8c" startline="818" endline="940">cache_inode_valid</references>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_readlink.c" line="114" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_readlink.c" bodystart="108" bodyend="192"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Reads a symlink. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/12/05 09:02:36 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.16 </para></simplesect>
-</para></simplesect>
-<ref refid="cache__inode__readlink_8c" kindref="compound">cache_inode_readlink.c</ref> : Reads a symlink.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/12/05 09:02:36 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.16 </para></simplesect>
+<ref refid="cache__inode__readlink_8c" kindref="compound">cache_inode_readlink.c</ref> : Reads a symlink. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -207,106 +203,110 @@
 <codeline lineno="87"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="89"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="104" refid="cache__inode__readlink_8c_1a0" refkind="member"><highlight class="normal">cache_inode_status_t<sp/><ref refid="cache__inode__readlink_8c_1a0" kindref="member">cache_inode_readlink</ref>(<sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry,<sp/></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_path_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>plink_content<sp/>,</highlight></codeline>
-<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,<sp/><sp/></highlight><highlight class="comment">/*<sp/>Unused,<sp/>kept<sp/>for<sp/>protototype&apos;s<sp/>homogeneity<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
-<codeline lineno="110"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="111"><highlight class="normal"><sp/><sp/>fsal_status_t<sp/>fsal_status<sp/>;</highlight></codeline>
-<codeline lineno="112"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>return<sp/>default<sp/>to<sp/>CACHE_INODE_SUCCESS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.nb_call_total<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="118"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.func_stats.nb_call[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="91"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">/*<sp/>_SOLARIS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="108" refid="cache__inode__readlink_8c_1feec746fc915d85bcf0c4c0da36b5aec" refkind="member"><highlight class="normal">cache_inode_status_t<sp/><ref refid="cache__inode__readlink_8c_1feec746fc915d85bcf0c4c0da36b5aec" kindref="member">cache_inode_readlink</ref>(<sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry,<sp/></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_path_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>plink_content<sp/>,</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,<sp/><sp/></highlight><highlight class="comment">/*<sp/>Unused,<sp/>kept<sp/>for<sp/>protototype&apos;s<sp/>homogeneity<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
+<codeline lineno="114"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/>fsal_status_t<sp/>fsal_status<sp/>;</highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>return<sp/>default<sp/>to<sp/>CACHE_INODE_SUCCESS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
 <codeline lineno="119"><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"><sp/><sp/>P(<sp/>pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="122"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.nb_call_total<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.func_stats.nb_call[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
 <codeline lineno="123"><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__renew__entry_8c_1a0" kindref="member">cache_inode_renew_entry</ref>(<sp/>pentry,<sp/>NULL,<sp/>ht,<sp/>pclient,<sp/>pcontext,<sp/>pstatus<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="125"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry-&gt;lock<sp/>)<sp/>;<sp/></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="130"><highlight class="normal"></highlight></codeline>
-<codeline lineno="131"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry-&gt;internal_md.type<sp/>)</highlight></codeline>
-<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
-<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
-<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="142"><highlight class="normal"></highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status<sp/>=<sp/>FSAL_pathcpy(<sp/>plink_content,<sp/>&amp;(pentry-&gt;object.symlink.content)<sp/>)<sp/><sp/>;</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>FSAL_IS_ERROR(<sp/>fsal_status<sp/>)<sp/>)<sp/></highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a5" kindref="member">cache_inode_error_convert</ref>(<sp/>fsal_status<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"></highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>fsal_status.major<sp/>==<sp/>ERR_FSAL_STALE<sp/>)</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>kill_status<sp/>;</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/>P_w(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__renew__entry_8c_1b3bd703b64c45c38be9399213255e9b8" kindref="member">cache_inode_renew_entry</ref>(<sp/>pentry,<sp/>NULL,<sp/>ht,<sp/>pclient,<sp/>pcontext,<sp/>pstatus<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_w(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;<sp/></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>RW_Lock<sp/>obtained<sp/>as<sp/>writer<sp/>turns<sp/>to<sp/>reader<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/>rw_lock_downgrade(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry-&gt;internal_md.type<sp/>)</highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
+<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_r(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"></highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status<sp/>=<sp/>FSAL_pathcpy(<sp/>plink_content,<sp/>&amp;(pentry-&gt;object.symlink.content)<sp/>)<sp/><sp/>;</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>FSAL_IS_ERROR(<sp/>fsal_status<sp/>)<sp/>)<sp/></highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1aa50487b9b403fd85b4a845de1a3df69" kindref="member">cache_inode_error_convert</ref>(<sp/>fsal_status<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>V_r(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="159"><highlight class="normal"></highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_readlink:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"></highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1a19" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_readlink:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_FSAL_ESTALE<sp/>;</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"></highlight></codeline>
-<codeline lineno="176"><highlight class="normal"></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a6" kindref="member">cache_inode_valid</ref>(<sp/>pentry,<sp/>CACHE_INODE_OP_GET,<sp/>pclient<sp/>)<sp/>;<sp/><sp/></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/>V(<sp/>pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stat<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>*pstatus<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_success[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="188"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_readlink<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>fsal_status.major<sp/>==<sp/>ERR_FSAL_STALE<sp/>)</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>kill_status<sp/>;</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"></highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_readlink:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"></highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1ed59b090dbed68c7eca3a1b5514a11c5" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_readlink:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_FSAL_ESTALE<sp/>;</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"></highlight></codeline>
+<codeline lineno="180"><highlight class="normal"></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>entry<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a34ae3526aa5eb8bc0f96e54a3fe8861" kindref="member">cache_inode_valid</ref>(<sp/>pentry,<sp/>CACHE_INODE_OP_GET,<sp/>pclient<sp/>)<sp/>;<sp/><sp/></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/>V_r(<sp/>&amp;pentry-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stat<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>*pstatus<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_success[CACHE_INODE_READLINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="192"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_readlink<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_readlink.c"/>
+    <location file="/export/GANESHA/src/Cache_inode/cache_inode_readlink.c"/>
   </compounddef>
 </doxygen>

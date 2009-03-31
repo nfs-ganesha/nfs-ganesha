@@ -1,12 +1,13 @@
 \section{cache\_\-content\_\-misc.c File Reference}
-\label{cache__content__misc_8c}\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-Management of the file content cache: miscellaneous functions. 
+\label{cache__content__misc_8c}\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}}
+Management of the file content cache: miscellaneous functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
@@ -17,19 +18,18 @@ Management of the file content cache: miscellaneous functions.
 {\tt \#include $<$time.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
-{\tt \#include $<$sys/vfs.h$>$}\par
 {\tt \#include $<$libgen.h$>$}\par
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf ALPHABET\_\-LEN}\ 16
+\#define {\bf ALPHABET\_\-LEN}~16
 \item 
-\#define {\bf PRIME\_\-16BITS}\ 65521
+\#define {\bf PRIME\_\-16BITS}~65521
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-short {\bf Hash\-File\-ID4} (u\_\-int64\_\-t fileid4)
+short {\bf HashFileID4} (u\_\-int64\_\-t fileid4)
 \item 
 cache\_\-content\_\-status\_\-t {\bf cache\_\-content\_\-create\_\-name} (char $\ast$path, cache\_\-content\_\-nametype\_\-t type, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-entry\_\-t $\ast$pentry\_\-inode, cache\_\-content\_\-client\_\-t $\ast$pclient)
 \item 
@@ -74,40 +74,38 @@ unsigned int {\bf cache\_\-content\_\-dir\_\-errno}
 Management of the file content cache: miscellaneous functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/18 07:29:11 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.14 \end{Desc}
-\end{Desc}
-{\bf cache\_\-content\_\-misc.c}{\rm (p.\,\pageref{cache__content__misc_8c})} : Management of the file content cache, miscellaneous functions.
+\doxyref{cache\_\-content\_\-misc.c}{p.}{cache__content__misc_8c} : Management of the file content cache, miscellaneous functions. 
 
 Definition in file {\bf cache\_\-content\_\-misc.c}.
 
 \subsection{Define Documentation}
-\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!ALPHABET_LEN@{ALPHABET\_\-LEN}}
-\index{ALPHABET_LEN@{ALPHABET\_\-LEN}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define ALPHABET\_\-LEN\ 16}\label{cache__content__misc_8c_a0}
+\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!ALPHABET\_\-LEN@{ALPHABET\_\-LEN}}
+\index{ALPHABET\_\-LEN@{ALPHABET\_\-LEN}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{ALPHABET\_\-LEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define ALPHABET\_\-LEN~16}\label{cache__content__misc_8c_1527a76432d0b61b445ab8a14a59f821}
 
 
-
-
-Referenced by Hash\-File\-ID4().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!PRIME_16BITS@{PRIME\_\-16BITS}}
-\index{PRIME_16BITS@{PRIME\_\-16BITS}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define PRIME\_\-16BITS\ 65521}\label{cache__content__misc_8c_a1}
+\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!PRIME\_\-16BITS@{PRIME\_\-16BITS}}
+\index{PRIME\_\-16BITS@{PRIME\_\-16BITS}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{PRIME\_\-16BITS}]{\setlength{\rightskip}{0pt plus 5cm}\#define PRIME\_\-16BITS~65521}\label{cache__content__misc_8c_f835625f13c0a3237a12d62b51932d49}
 
 
 
 
 \subsection{Function Documentation}
-\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_check_threshold@{cache\_\-content\_\-check\_\-threshold}}
-\index{cache_content_check_threshold@{cache\_\-content\_\-check\_\-threshold}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-check\_\-threshold (char $\ast$ {\em datacache\_\-path}, unsigned int {\em threshold\_\-min}, unsigned int {\em threshold\_\-max}, int $\ast$ {\em p\_\-bool\_\-overflow}, unsigned long $\ast$ {\em p\_\-blocks\_\-to\_\-lwm})}\label{cache__content__misc_8c_a15}
+\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-check\_\-threshold@{cache\_\-content\_\-check\_\-threshold}}
+\index{cache\_\-content\_\-check\_\-threshold@{cache\_\-content\_\-check\_\-threshold}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-check\_\-threshold}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-check\_\-threshold (char $\ast$ {\em datacache\_\-path}, \/  unsigned int {\em threshold\_\-min}, \/  unsigned int {\em threshold\_\-max}, \/  int $\ast$ {\em p\_\-bool\_\-overflow}, \/  unsigned long $\ast$ {\em p\_\-blocks\_\-to\_\-lwm})}\label{cache__content__misc_8c_9ed29d26f2626db68ba4e64feb82f399}
 
 
 cache\_\-content\_\-check\_\-threshold: check datacache filesystem's threshold.
@@ -127,11 +125,9 @@ CACHE\_\-CONTENT\_\-INVALID\_\-ARGUMENT if some argument has an unexpected value
 CACHE\_\-CONTENT\_\-LOCAL\_\-CACHE\_\-ERROR if an error occured while getting informations from datacache filesystem. \end{Desc}
 
 
-Definition at line 650 of file cache\_\-content\_\-misc.c.
-
-Referenced by main().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_create_name@{cache\_\-content\_\-create\_\-name}}
-\index{cache_content_create_name@{cache\_\-content\_\-create\_\-name}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-create\_\-name (char $\ast$ {\em path}, cache\_\-content\_\-nametype\_\-t {\em type}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient})}\label{cache__content__misc_8c_a4}
+Definition at line 633 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-create\_\-name@{cache\_\-content\_\-create\_\-name}}
+\index{cache\_\-content\_\-create\_\-name@{cache\_\-content\_\-create\_\-name}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-create\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-create\_\-name (char $\ast$ {\em path}, \/  cache\_\-content\_\-nametype\_\-t {\em type}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient})}\label{cache__content__misc_8c_558daea3079689a6b6fb6d88aee83436}
 
 
 cache\_\-content\_\-create\_\-name: Creates a name in the local fs for a cached entry.
@@ -147,13 +143,9 @@ Creates a name in the local fs for a cached entry and creates the directories th
 \item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS if operation is a success, other values show an error. \end{Desc}
 
 
-Definition at line 150 of file cache\_\-content\_\-misc.c.
-
-References Hash\-File\-ID4().
-
-Referenced by cache\_\-content\_\-new\_\-entry(), and cache\_\-content\_\-test\_\-cached().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_error_convert@{cache\_\-content\_\-error\_\-convert}}
-\index{cache_content_error_convert@{cache\_\-content\_\-error\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-content\_\-error\_\-convert (cache\_\-content\_\-status\_\-t {\em status})}\label{cache__content__misc_8c_a10}
+Definition at line 165 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-error\_\-convert@{cache\_\-content\_\-error\_\-convert}}
+\index{cache\_\-content\_\-error\_\-convert@{cache\_\-content\_\-error\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-error\_\-convert}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-content\_\-error\_\-convert (cache\_\-content\_\-status\_\-t {\em status})}\label{cache__content__misc_8c_eb24a6ba9e91d72989466f52e7529a57}
 
 
 cache\_\-content\_\-error\_\-convert: Converts a cache\_\-content\_\-status to a cache\_\-inode\_\-status.
@@ -169,9 +161,9 @@ Converts a cache\_\-content\_\-status to a cache\_\-inode\_\-status.
 \item[Returns:]a cache\_\-inode\_\-status\_\-t resulting from the conversion. \end{Desc}
 
 
-Definition at line 400 of file cache\_\-content\_\-misc.c.\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_fsal_seek_convert@{cache\_\-content\_\-fsal\_\-seek\_\-convert}}
-\index{cache_content_fsal_seek_convert@{cache\_\-content\_\-fsal\_\-seek\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-fsal\_\-seek\_\-convert (fsal\_\-seek\_\-t {\em seek}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_a11}
+Definition at line 414 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-fsal\_\-seek\_\-convert@{cache\_\-content\_\-fsal\_\-seek\_\-convert}}
+\index{cache\_\-content\_\-fsal\_\-seek\_\-convert@{cache\_\-content\_\-fsal\_\-seek\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-fsal\_\-seek\_\-convert}]{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-fsal\_\-seek\_\-convert (fsal\_\-seek\_\-t {\em seek}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_96da5495accf749026fbf64f3c1c87ed}
 
 
 cache\_\-content\_\-fsal\_\-seek\_\-convert: converts a fsal\_\-seek\_\-t to unix offet.
@@ -187,11 +179,9 @@ Converts a fsal\_\-seek\_\-t to unix offet. Non absolulte fsal\_\-seek\_\-t will
 \item[Returns:]the converted value. \end{Desc}
 
 
-Definition at line 459 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-rdwr().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_fsal_size_convert@{cache\_\-content\_\-fsal\_\-size\_\-convert}}
-\index{cache_content_fsal_size_convert@{cache\_\-content\_\-fsal\_\-size\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}size\_\-t cache\_\-content\_\-fsal\_\-size\_\-convert (fsal\_\-size\_\-t {\em size}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_a12}
+Definition at line 473 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-fsal\_\-size\_\-convert@{cache\_\-content\_\-fsal\_\-size\_\-convert}}
+\index{cache\_\-content\_\-fsal\_\-size\_\-convert@{cache\_\-content\_\-fsal\_\-size\_\-convert}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-fsal\_\-size\_\-convert}]{\setlength{\rightskip}{0pt plus 5cm}size\_\-t cache\_\-content\_\-fsal\_\-size\_\-convert (fsal\_\-size\_\-t {\em size}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_c8190cf8e2db21b75f6d74d1648de866}
 
 
 cache\_\-content\_\-fsal\_\-size\_\-convert: converts a fsal\_\-size\_\-t to unix size.
@@ -207,11 +197,9 @@ Converts a fsal\_\-seek\_\-t to unix size.
 \item[Returns:]the converted value. \end{Desc}
 
 
-Definition at line 486 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-rdwr().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_get_cached_size@{cache\_\-content\_\-get\_\-cached\_\-size}}
-\index{cache_content_get_cached_size@{cache\_\-content\_\-get\_\-cached\_\-size}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-get\_\-cached\_\-size (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__content__misc_8c_a9}
+Definition at line 500 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-get\_\-cached\_\-size@{cache\_\-content\_\-get\_\-cached\_\-size}}
+\index{cache\_\-content\_\-get\_\-cached\_\-size@{cache\_\-content\_\-get\_\-cached\_\-size}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-get\_\-cached\_\-size}]{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-get\_\-cached\_\-size (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__content__misc_8c_b856d8b9a1b91fa69af22146bd4f1305}
 
 
 cache\_\-content\_\-get\_\-cached\_\-size: recovers the size of a data cached file.
@@ -227,9 +215,9 @@ Recovers the size of a data cached file.
 \item[Returns:]the recovered size (as a off\_\-t) or -1 is failed. \end{Desc}
 
 
-Definition at line 372 of file cache\_\-content\_\-misc.c.\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_get_datapath@{cache\_\-content\_\-get\_\-datapath}}
-\index{cache_content_get_datapath@{cache\_\-content\_\-get\_\-datapath}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-get\_\-datapath (char $\ast$ {\em basepath}, u\_\-int64\_\-t {\em inum}, char $\ast$ {\em datapath})}\label{cache__content__misc_8c_a7}
+Definition at line 386 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-get\_\-datapath@{cache\_\-content\_\-get\_\-datapath}}
+\index{cache\_\-content\_\-get\_\-datapath@{cache\_\-content\_\-get\_\-datapath}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-get\_\-datapath}]{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-get\_\-datapath (char $\ast$ {\em basepath}, \/  u\_\-int64\_\-t {\em inum}, \/  char $\ast$ {\em datapath})}\label{cache__content__misc_8c_abf4ddbf1dd5475f61c90a6eb0b3fffe}
 
 
 cache\_\-content\_\-get\_\-datapath : recovers the path for a file of a specified inum.
@@ -243,13 +231,9 @@ cache\_\-content\_\-get\_\-datapath : recovers the path for a file of a specifie
 \item[Returns:]0 if OK, or -1 is failed. \end{Desc}
 
 
-Definition at line 304 of file cache\_\-content\_\-misc.c.
-
-References Hash\-File\-ID4().
-
-Referenced by cache\_\-content\_\-emergency\_\-flush(), and cache\_\-content\_\-recover\_\-size().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_get_export_id@{cache\_\-content\_\-get\_\-export\_\-id}}
-\index{cache_content_get_export_id@{cache\_\-content\_\-get\_\-export\_\-id}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-get\_\-export\_\-id (char $\ast$ {\em dirname})}\label{cache__content__misc_8c_a5}
+Definition at line 319 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-get\_\-export\_\-id@{cache\_\-content\_\-get\_\-export\_\-id}}
+\index{cache\_\-content\_\-get\_\-export\_\-id@{cache\_\-content\_\-get\_\-export\_\-id}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-get\_\-export\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-get\_\-export\_\-id (char $\ast$ {\em dirname})}\label{cache__content__misc_8c_d90cf34ec0cf809d6c35ddd7bb46cfb9}
 
 
 cache\_\-content\_\-get\_\-export\_\-id: gets an export id from an export dirname.
@@ -265,11 +249,9 @@ Gets an export id from an export dirname.
 \item[Returns:]-1 if failed, the export\_\-id if successfull. \end{Desc}
 
 
-Definition at line 242 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-crash\_\-recover().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_get_inum@{cache\_\-content\_\-get\_\-inum}}
-\index{cache_content_get_inum@{cache\_\-content\_\-get\_\-inum}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}u\_\-int64\_\-t cache\_\-content\_\-get\_\-inum (char $\ast$ {\em filename})}\label{cache__content__misc_8c_a6}
+Definition at line 257 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-get\_\-inum@{cache\_\-content\_\-get\_\-inum}}
+\index{cache\_\-content\_\-get\_\-inum@{cache\_\-content\_\-get\_\-inum}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-get\_\-inum}]{\setlength{\rightskip}{0pt plus 5cm}u\_\-int64\_\-t cache\_\-content\_\-get\_\-inum (char $\ast$ {\em filename})}\label{cache__content__misc_8c_6b96dfc7a98b14cb192f08b17c5b5b93}
 
 
 cache\_\-content\_\-get\_\-inum: gets an inode number fronm a cache filename.
@@ -285,11 +267,9 @@ Gets an inode number fronm a cache filename.
 \item[Returns:]0 if failed, the inum if successfull. \end{Desc}
 
 
-Definition at line 267 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-crash\_\-recover(), and cache\_\-content\_\-emergency\_\-flush().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_local_cache_closedir@{cache\_\-content\_\-local\_\-cache\_\-closedir}}
-\index{cache_content_local_cache_closedir@{cache\_\-content\_\-local\_\-cache\_\-closedir}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-content\_\-local\_\-cache\_\-closedir (cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em directory})}\label{cache__content__misc_8c_a19}
+Definition at line 282 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-local\_\-cache\_\-closedir@{cache\_\-content\_\-local\_\-cache\_\-closedir}}
+\index{cache\_\-content\_\-local\_\-cache\_\-closedir@{cache\_\-content\_\-local\_\-cache\_\-closedir}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-local\_\-cache\_\-closedir}]{\setlength{\rightskip}{0pt plus 5cm}void cache\_\-content\_\-local\_\-cache\_\-closedir (cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em directory})}\label{cache__content__misc_8c_f5c7ef164385697883f6b9f15e656320}
 
 
 cache\_\-content\_\-local\_\-cache\_\-closedir: Close a local cache directory associated to an export entry.
@@ -303,11 +283,9 @@ cache\_\-content\_\-local\_\-cache\_\-closedir: Close a local cache directory as
 \item[Returns:]nothing (void function) \end{Desc}
 
 
-Definition at line 1034 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-crash\_\-recover(), and cache\_\-content\_\-emergency\_\-flush().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_local_cache_dir_iter@{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter}}
-\index{cache_content_local_cache_dir_iter@{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter (cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em directory}, struct dirent $\ast$ {\em pdir\_\-entry}, unsigned int {\em index}, unsigned int {\em mod})}\label{cache__content__misc_8c_a18}
+Definition at line 1020 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter@{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter}}
+\index{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter@{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter}]{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter (cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em directory}, \/  struct dirent $\ast$ {\em pdir\_\-entry}, \/  unsigned int {\em index}, \/  unsigned int {\em mod})}\label{cache__content__misc_8c_f3b048f895eb9a6432ef2fe8a08ce1a8}
 
 
 cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter: iterate on a local cache directory to get the entry one by one
@@ -321,13 +299,9 @@ cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter: iterate on a local cache dire
 \item[Returns:]TRUE if OK, FALSE if NOK. \end{Desc}
 
 
-Definition at line 827 of file cache\_\-content\_\-misc.c.
-
-References cache\_\-content\_\-dir\_\-errno.
-
-Referenced by cache\_\-content\_\-crash\_\-recover(), and cache\_\-content\_\-emergency\_\-flush().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_local_cache_opendir@{cache\_\-content\_\-local\_\-cache\_\-opendir}}
-\index{cache_content_local_cache_opendir@{cache\_\-content\_\-local\_\-cache\_\-opendir}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-local\_\-cache\_\-opendir (char $\ast$ {\em cache\_\-dir}, cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em pdirectory})}\label{cache__content__misc_8c_a16}
+Definition at line 813 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-local\_\-cache\_\-opendir@{cache\_\-content\_\-local\_\-cache\_\-opendir}}
+\index{cache\_\-content\_\-local\_\-cache\_\-opendir@{cache\_\-content\_\-local\_\-cache\_\-opendir}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-local\_\-cache\_\-opendir}]{\setlength{\rightskip}{0pt plus 5cm}int cache\_\-content\_\-local\_\-cache\_\-opendir (char $\ast$ {\em cache\_\-dir}, \/  cache\_\-content\_\-dirinfo\_\-t $\ast$ {\em pdirectory})}\label{cache__content__misc_8c_67e093fa4348ca6fd0a9151b7af9d4db}
 
 
 cache\_\-content\_\-local\_\-cache\_\-opendir: Open a local cache directory associated to an export entry.
@@ -341,13 +315,9 @@ cache\_\-content\_\-local\_\-cache\_\-opendir: Open a local cache directory asso
 \item[Returns:]the handle to the directory or NULL is failed \end{Desc}
 
 
-Definition at line 729 of file cache\_\-content\_\-misc.c.
-
-References cache\_\-content\_\-dir\_\-errno.
-
-Referenced by cache\_\-content\_\-crash\_\-recover(), and cache\_\-content\_\-emergency\_\-flush().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_prepare_directories@{cache\_\-content\_\-prepare\_\-directories}}
-\index{cache_content_prepare_directories@{cache\_\-content\_\-prepare\_\-directories}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-prepare\_\-directories (exportlist\_\-t $\ast$ {\em pexportlist}, char $\ast$ {\em cache\_\-dir}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_a13}
+Definition at line 716 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-prepare\_\-directories@{cache\_\-content\_\-prepare\_\-directories}}
+\index{cache\_\-content\_\-prepare\_\-directories@{cache\_\-content\_\-prepare\_\-directories}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-prepare\_\-directories}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-prepare\_\-directories (exportlist\_\-t $\ast$ {\em pexportlist}, \/  char $\ast$ {\em cache\_\-dir}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_5a36f1db8fd5661e4bb0107148a30aef}
 
 
 cache\_\-content\_\-prepare\_\-directories: do the mkdir to set the data cache directories
@@ -363,9 +333,9 @@ do the mkdir to set the data cache directories.
 \item[Returns:]the status for the operation \end{Desc}
 
 
-Definition at line 508 of file cache\_\-content\_\-misc.c.\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_recover_size@{cache\_\-content\_\-recover\_\-size}}
-\index{cache_content_recover_size@{cache\_\-content\_\-recover\_\-size}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-recover\_\-size (char $\ast$ {\em basepath}, u\_\-int64\_\-t {\em inum})}\label{cache__content__misc_8c_a8}
+Definition at line 522 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-recover\_\-size@{cache\_\-content\_\-recover\_\-size}}
+\index{cache\_\-content\_\-recover\_\-size@{cache\_\-content\_\-recover\_\-size}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-recover\_\-size}]{\setlength{\rightskip}{0pt plus 5cm}off\_\-t cache\_\-content\_\-recover\_\-size (char $\ast$ {\em basepath}, \/  u\_\-int64\_\-t {\em inum})}\label{cache__content__misc_8c_2b1831ed9c563dbae4271b982bde20e4}
 
 
 cache\_\-content\_\-recover\_\-size: recovers the size of a data cached file.
@@ -381,13 +351,9 @@ Recovers the size of a data cached file.
 \item[Returns:]the recovered size (as a off\_\-t) or -1 is failed. \end{Desc}
 
 
-Definition at line 337 of file cache\_\-content\_\-misc.c.
-
-References cache\_\-content\_\-get\_\-datapath().
-
-Referenced by cache\_\-content\_\-crash\_\-recover().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_test_cached@{cache\_\-content\_\-test\_\-cached}}
-\index{cache_content_test_cached@{cache\_\-content\_\-test\_\-cached}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-test\_\-cached (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_a17}
+Definition at line 352 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-test\_\-cached@{cache\_\-content\_\-test\_\-cached}}
+\index{cache\_\-content\_\-test\_\-cached@{cache\_\-content\_\-test\_\-cached}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-test\_\-cached}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-test\_\-cached (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__misc_8c_f44594b42282710727bc9f55d88d062b}
 
 
 cache\_\-content\_\-test\_\-cached: Tests if a given pentry\_\-inode has already an associated data cache
@@ -403,11 +369,9 @@ Tests if a given pentry\_\-inode has already an associated data cache. This is u
 \item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS if entry is found, CACHE\_\-CONTENT\_\-NOT\_\-FOUND if not found \end{Desc}
 
 
-Definition at line 773 of file cache\_\-content\_\-misc.c.
-
-References cache\_\-content\_\-create\_\-name().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_valid@{cache\_\-content\_\-valid}}
-\index{cache_content_valid@{cache\_\-content\_\-valid}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-valid (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, cache\_\-inode\_\-op\_\-t {\em op}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient})}\label{cache__content__misc_8c_a14}
+Definition at line 760 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-valid@{cache\_\-content\_\-valid}}
+\index{cache\_\-content\_\-valid@{cache\_\-content\_\-valid}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-valid}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-status\_\-t cache\_\-content\_\-valid (cache\_\-content\_\-entry\_\-t $\ast$ {\em pentry}, \/  cache\_\-inode\_\-op\_\-t {\em op}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient})}\label{cache__content__misc_8c_cf68a0b9bcb53d6e1e07e928d4cb0c19}
 
 
 cache\_\-content\_\-valid: validates an entry to update its garbagge status.
@@ -426,29 +390,21 @@ Validates an error to update its garbagge status. Entry is supposed to be locked
 CACHE\_\-INODE\_\-LRU\_\-ERROR if an errorr occured in LRU management. \end{Desc}
 
 
-Definition at line 560 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-crash\_\-recover(), and cache\_\-content\_\-rdwr().\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!HashFileID4@{HashFileID4}}
+Definition at line 574 of file cache\_\-content\_\-misc.c.\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!HashFileID4@{HashFileID4}}
 \index{HashFileID4@{HashFileID4}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}short Hash\-File\-ID4 (u\_\-int64\_\-t {\em fileid4})}\label{cache__content__misc_8c_a3}
+\subsubsection[{HashFileID4}]{\setlength{\rightskip}{0pt plus 5cm}short HashFileID4 (u\_\-int64\_\-t {\em fileid4})}\label{cache__content__misc_8c_0dbffec9b48e227fd67f483c26524901}
 
 
 
 
-Definition at line 118 of file cache\_\-content\_\-misc.c.
-
-References ALPHABET\_\-LEN.
-
-Referenced by cache\_\-content\_\-create\_\-name(), and cache\_\-content\_\-get\_\-datapath().
+Definition at line 133 of file cache\_\-content\_\-misc.c.
 
 \subsection{Variable Documentation}
-\index{cache_content_misc.c@{cache\_\-content\_\-misc.c}!cache_content_dir_errno@{cache\_\-content\_\-dir\_\-errno}}
-\index{cache_content_dir_errno@{cache\_\-content\_\-dir\_\-errno}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf cache\_\-content\_\-dir\_\-errno}}\label{cache__content__misc_8c_a2}
+\index{cache\_\-content\_\-misc.c@{cache\_\-content\_\-misc.c}!cache\_\-content\_\-dir\_\-errno@{cache\_\-content\_\-dir\_\-errno}}
+\index{cache\_\-content\_\-dir\_\-errno@{cache\_\-content\_\-dir\_\-errno}!cache_content_misc.c@{cache\_\-content\_\-misc.c}}
+\subsubsection[{cache\_\-content\_\-dir\_\-errno}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf cache\_\-content\_\-dir\_\-errno}}\label{cache__content__misc_8c_3190a93bcc417fc913470e3a2481e44e}
 
 
 
 
-Definition at line 111 of file cache\_\-content\_\-misc.c.
-
-Referenced by cache\_\-content\_\-emergency\_\-flush(), cache\_\-content\_\-local\_\-cache\_\-dir\_\-iter(), and cache\_\-content\_\-local\_\-cache\_\-opendir().
+Definition at line 126 of file cache\_\-content\_\-misc.c.

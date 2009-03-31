@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-create.c File Reference}
-\label{nfs4__op__create_8c}\index{nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs4__op__create_8c}\index{nfs4\_\-op\_\-create.c@{nfs4\_\-op\_\-create.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -29,9 +30,9 @@ Routines used for managing the NFS4 COMPOUND functions.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf arg\_\-CREATE4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opcreate
+\#define {\bf arg\_\-CREATE4}~op $\rightarrow$ nfs\_\-argop4\_\-u.opcreate
 \item 
-\#define {\bf res\_\-CREATE4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opcreate
+\#define {\bf res\_\-CREATE4}~resp $\rightarrow$ nfs\_\-resop4\_\-u.opcreate
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -46,25 +47,25 @@ void {\bf nfs4\_\-op\_\-create\_\-Free} (CREATE4res $\ast$resp)
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:50 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.18 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-create.c}{\rm (p.\,\pageref{nfs4__op__create_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs4\_\-op\_\-create.c}{p.}{nfs4__op__create_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs4\_\-op\_\-create.c}.
 
 \subsection{Define Documentation}
-\index{nfs4_op_create.c@{nfs4\_\-op\_\-create.c}!arg_CREATE4@{arg\_\-CREATE4}}
-\index{arg_CREATE4@{arg\_\-CREATE4}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-CREATE4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opcreate}\label{nfs4__op__create_8c_a0}
+\index{nfs4\_\-op\_\-create.c@{nfs4\_\-op\_\-create.c}!arg\_\-CREATE4@{arg\_\-CREATE4}}
+\index{arg\_\-CREATE4@{arg\_\-CREATE4}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
+\subsubsection[{arg\_\-CREATE4}]{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-CREATE4~op $\rightarrow$ nfs\_\-argop4\_\-u.opcreate}\label{nfs4__op__create_8c_0036d26ee840ced9230aca1525101561}
 
 
 nfs4\_\-op\_\-create: NFS4\_\-OP\_\-CREATE, creates a non-regular entry.
@@ -80,32 +81,26 @@ NFS4\_\-OP\_\-CREATE, creates a non-regular entry.
 \item[Returns:]NFS4\_\-OK if successfull, other values show an error. \end{Desc}
 
 
-Definition at line 138 of file nfs4\_\-op\_\-create.c.
-
-Referenced by nfs4\_\-op\_\-create().\index{nfs4_op_create.c@{nfs4\_\-op\_\-create.c}!res_CREATE4@{res\_\-CREATE4}}
-\index{res_CREATE4@{res\_\-CREATE4}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-CREATE4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opcreate}\label{nfs4__op__create_8c_a1}
+Definition at line 141 of file nfs4\_\-op\_\-create.c.\index{nfs4\_\-op\_\-create.c@{nfs4\_\-op\_\-create.c}!res\_\-CREATE4@{res\_\-CREATE4}}
+\index{res\_\-CREATE4@{res\_\-CREATE4}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
+\subsubsection[{res\_\-CREATE4}]{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-CREATE4~resp $\rightarrow$ nfs\_\-resop4\_\-u.opcreate}\label{nfs4__op__create_8c_4ad6f20357c4e3605a5ed12fb9420b2c}
 
 
 
 
-Definition at line 139 of file nfs4\_\-op\_\-create.c.
-
-Referenced by nfs4\_\-op\_\-create().
+Definition at line 142 of file nfs4\_\-op\_\-create.c.
 
 \subsection{Function Documentation}
-\index{nfs4_op_create.c@{nfs4\_\-op\_\-create.c}!nfs4_op_create@{nfs4\_\-op\_\-create}}
-\index{nfs4_op_create@{nfs4\_\-op\_\-create}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-create (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__create_8c_a2}
+\index{nfs4\_\-op\_\-create.c@{nfs4\_\-op\_\-create.c}!nfs4\_\-op\_\-create@{nfs4\_\-op\_\-create}}
+\index{nfs4\_\-op\_\-create@{nfs4\_\-op\_\-create}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
+\subsubsection[{nfs4\_\-op\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-create (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__create_8c_14e6b2793f5ad0021dff58ef37bbf3f1}
 
 
 
 
-Definition at line 141 of file nfs4\_\-op\_\-create.c.
-
-References arg\_\-CREATE4, nfs4\_\-Allocate\-FH(), nfs4\_\-Errno(), nfs4\_\-Fattr\_\-Check\_\-Access(), nfs4\_\-Fattr\_\-Supported(), nfs4\_\-Fattr\_\-To\_\-FSAL\_\-attr(), res\_\-CREATE4, and utf82str().\index{nfs4_op_create.c@{nfs4\_\-op\_\-create.c}!nfs4_op_create_Free@{nfs4\_\-op\_\-create\_\-Free}}
-\index{nfs4_op_create_Free@{nfs4\_\-op\_\-create\_\-Free}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-create\_\-Free (CREATE4res $\ast$ {\em resp})}\label{nfs4__op__create_8c_a3}
+Definition at line 144 of file nfs4\_\-op\_\-create.c.\index{nfs4\_\-op\_\-create.c@{nfs4\_\-op\_\-create.c}!nfs4\_\-op\_\-create\_\-Free@{nfs4\_\-op\_\-create\_\-Free}}
+\index{nfs4\_\-op\_\-create\_\-Free@{nfs4\_\-op\_\-create\_\-Free}!nfs4_op_create.c@{nfs4\_\-op\_\-create.c}}
+\subsubsection[{nfs4\_\-op\_\-create\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-create\_\-Free (CREATE4res $\ast$ {\em resp})}\label{nfs4__op__create_8c_a25337e227f4f42614cc57cf72c0dc57}
 
 
 nfs4\_\-op\_\-create\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-create.
@@ -121,6 +116,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-create.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 612 of file nfs4\_\-op\_\-create.c.
-
-Referenced by nfs4\_\-Compound\_\-Free().
+Definition at line 610 of file nfs4\_\-op\_\-create.c.

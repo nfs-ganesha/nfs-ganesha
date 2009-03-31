@@ -1,4 +1,4 @@
-.TH "nfs_Lookup.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Lookup.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -83,7 +83,7 @@ Frees the result structure allocated for nfs_Lookup.
 .PP
 
 .PP
-Definition at line 309 of file nfs_Lookup.c.
+Definition at line 348 of file nfs_Lookup.c.
 .SS "void nfs3_Lookup_Free (nfs_res_t * resp)"
 .PP
 nfs_Lookup_Free: Frees the result structure allocated for nfs_Lookup.
@@ -97,7 +97,7 @@ Frees the result structure allocated for nfs_Lookup.
 .PP
 
 .PP
-Definition at line 295 of file nfs_Lookup.c.
+Definition at line 334 of file nfs_Lookup.c.
 .SS "int nfs_Lookup (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
 .PP
 nfs_Lookup: The NFS PROC2 and PROC3 LOOKUP
@@ -128,9 +128,7 @@ always NFS_REQ_OK (this routine does nothing)
 .PP
 
 .PP
-Definition at line 144 of file nfs_Lookup.c.
-.PP
-References nfs2_FSALattr_To_Fattr(), nfs_FhandleToCache(), nfs_RetryableError(), nfs_SetFailedStatus(), and nfs_SetPostOpAttr().
+Definition at line 147 of file nfs_Lookup.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

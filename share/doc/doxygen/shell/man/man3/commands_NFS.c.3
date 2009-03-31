@@ -1,8 +1,10 @@
-.TH "commands_NFS.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "commands_NFS.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-commands_NFS.c \- calls to NFSv2, NFSv3, MNTv1, MNTv3 commands. 
+commands_NFS.c \- calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -67,10 +69,10 @@ commands_NFS.c \- calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.
 
 .in +1c
 .ti -1c
-.RI "typedef \fBshell_fh3__\fP \fBshell_fh3_t\fP"
+.RI "typedef struct \fBshell_fh3__\fP \fBshell_fh3_t\fP"
 .br
 .ti -1c
-.RI "typedef \fBcmdnfs_thr_info__\fP \fBcmdnfs_thr_info_t\fP"
+.RI "typedef struct \fBcmdnfs_thr_info__\fP \fBcmdnfs_thr_info_t\fP"
 .br
 .in -1c
 .SS "Functions"
@@ -180,26 +182,26 @@ calls to NFSv2, NFSv3, MNTv1, MNTv3 commands.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/23 07:42:53 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.34 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.34 
 .RE
 .PP
 \fBLog\fP.RS 4
@@ -272,7 +274,7 @@ Revision 1.3 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
 .PP
 Revision 1.2 2005/03/04 10:12:15 leibovic New debug functions.
 .PP
-Revision 1.1 2005/01/21 09:40:31 leibovic Integrating NFS and MNT protocol commands.
+Revision 1.1 2005/01/21 09:40:31 leibovic Integrating NFS and MNT protocol commands. 
 .PP
 Definition in file \fBcommands_NFS.c\fP.
 .SH "Define Documentation"
@@ -285,227 +287,165 @@ Definition in file \fBcommands_NFS.c\fP.
 .PP 
 .SS "typedef struct \fBcmdnfs_thr_info__\fP  \fBcmdnfs_thr_info_t\fP"
 .PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_id(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_su(), fn_nfs_umount(), fn_nfs_unlink(), GetNFSClient(), and InitNFSClient().
 .SS "typedef struct \fBshell_fh3__\fP  \fBshell_fh3_t\fP"
 .PP
-Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_remote_cd(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_ls(), fn_nfs_remote_mkdir(), fn_nfs_remote_mount(), fn_nfs_remote_rename(), fn_nfs_remote_setattr(), fn_nfs_remote_stat(), fn_nfs_remote_umount(), fn_nfs_remote_unlink(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_unlink(), nfs_remote_access(), nfs_remote_create(), nfs_remote_getattr(), nfs_remote_link(), nfs_remote_mkdir(), nfs_remote_mount(), nfs_remote_readdir(), nfs_remote_readdirplus(), nfs_remote_readlink(), nfs_remote_remove(), nfs_remote_rename(), nfs_remote_rmdir(), nfs_remote_setattr(), nfs_remote_solvepath(), and nfs_remote_symlink().
 .SH "Function Documentation"
 .PP 
 .SS "int fn_MNT1_command (int argc, char ** argv, FILE * output)"
 .PP
 process MNT1 protocol's command. 
 .PP
-Definition at line 623 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+Definition at line 628 of file commands_NFS.c.
 .SS "int fn_MNT3_command (int argc, char ** argv, FILE * output)"
 .PP
 process MNT3 protocol's command. 
 .PP
-Definition at line 727 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+Definition at line 732 of file commands_NFS.c.
 .SS "int fn_NFS2_command (int argc, char ** argv, FILE * output)"
 .PP
 process NFS2 protocol's command. 
 .PP
-Definition at line 828 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+Definition at line 833 of file commands_NFS.c.
 .SS "int fn_NFS3_command (int argc, char ** argv, FILE * output)"
 .PP
 process NFS3 protocol's command. 
 .PP
-Definition at line 947 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_funcdesc_t, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_funcdesc__::func_call, cmdnfs_funcdesc__::func_decode, cmdnfs_funcdesc__::func_encode, cmdnfs_funcdesc__::func_free, cmdnfs_funcdesc__::func_help, cmdnfs_funcdesc__::func_name, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_thread_init, NULL, and pexportlist.
+Definition at line 952 of file commands_NFS.c.
 .SS "int fn_nfs_cd (int argc, char ** argv, FILE * output)"
 .PP
 change current path 
 .PP
 Definition at line 2682 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), cmdnfs_thr_info__::is_mounted_path, and shell_fh3_t.
 .SS "int fn_nfs_create (int argc, char ** argv, FILE * output)"
 .PP
 create a file 
 .PP
 Definition at line 2768 of file commands_NFS.c.
-.PP
-References atomode(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
 .SS "int fn_nfs_hardlink (int argc, char ** argv, FILE * output)"
 .PP
 proceed a hardlink command. 
 .PP
-Definition at line 3415 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+Definition at line 3418 of file commands_NFS.c.
 .SS "int fn_nfs_id (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 3965 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::context, GetNFSClient(), InitNFSClient(), and cmdnfs_thr_info__::is_thread_init.
+Definition at line 3958 of file commands_NFS.c.
 .SS "int fn_nfs_init (int argc, char ** argv, FILE * output)"
 .PP
 Init nfs layer 
 .PP
-Definition at line 536 of file commands_NFS.c.
-.PP
-References Getopt(), nfs_init(), Optind, and Optopt.
+Definition at line 541 of file commands_NFS.c.
 .SS "int fn_nfs_ln (int argc, char ** argv, FILE * output)"
 .PP
 proceed an ln command. 
 .PP
-Definition at line 3548 of file commands_NFS.c.
-.PP
-References CMDNFS_ENCODE, cmdnfs_sattr3(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, NULL, Optind, Optopt, shell_fh3_t, and split_path().
+Definition at line 3551 of file commands_NFS.c.
 .SS "int fn_nfs_ls (int argc, char ** argv, FILE * output)"
 .PP
 proceed an ls command using NFS protocol NFS 
 .PP
-Definition at line 2341 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, nfs_readdirplus_free(), Optind, Optopt, print_nfs_attributes(), print_nfsitem_line(), and shell_fh3_t.
+Definition at line 2343 of file commands_NFS.c.
 .SS "int fn_nfs_mkdir (int argc, char ** argv, FILE * output)"
 .PP
 create a directory 
 .PP
 Definition at line 2895 of file commands_NFS.c.
-.PP
-References atomode(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
 .SS "int fn_nfs_mount (int argc, char ** argv, FILE * output)"
 .PP
 mount a path to browse it. 
 .PP
-Definition at line 2100 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_mounted_path, cmdnfs_thr_info__::is_thread_init, cmdnfs_thr_info__::mounted_path, cmdnfs_thr_info__::mounted_path_hdl, NULL, and pexportlist.
+Definition at line 2105 of file commands_NFS.c.
 .SS "int fn_nfs_pwd (int argc, char ** argv, FILE * output)"
 .PP
 prints current path 
 .PP
-Definition at line 2306 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), and cmdnfs_thr_info__::is_mounted_path.
+Definition at line 2309 of file commands_NFS.c.
 .SS "int fn_nfs_rename (int argc, char ** argv, FILE * output)"
 .PP
 proceed a rename command. 
 .PP
-Definition at line 3278 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
+Definition at line 3281 of file commands_NFS.c.
 .SS "int fn_nfs_setattr (int argc, char ** argv, FILE * output)"
 .PP
 setattr 
 .PP
 Definition at line 3153 of file commands_NFS.c.
-.PP
-References CMDNFS_ENCODE, cmdnfs_sattr3(), cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, NULL, Optind, Optopt, and shell_fh3_t.
 .SS "int fn_nfs_stat (int argc, char ** argv, FILE * output)"
 .PP
 proceed an ls command using NFS protocol NFS 
 .PP
-Definition at line 3689 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, shell_fh3__::data_len, shell_fh3__::data_val, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, print_nfs_attributes(), and shell_fh3_t.
+Definition at line 3692 of file commands_NFS.c.
 .SS "int fn_nfs_su (int argc, char ** argv, FILE * output)"
 .PP
 change thread credentials. 
 .PP
-Definition at line 3861 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::context, cmdnfs_thr_info__::exp_context, GetNFSClient(), getugroups(), InitNFSClient(), cmdnfs_thr_info__::is_thread_init, MAX_GRPS, my_atoi(), and print_fsal_status().
+Definition at line 3854 of file commands_NFS.c.
 .SS "int fn_nfs_umount (int argc, char ** argv, FILE * output)"
 .PP
 umount a mounted path. 
 .PP
-Definition at line 2211 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cmdnfs_thr_info__::client, cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, GetNFSClient(), ht, InitNFSClient(), cmdnfs_thr_info__::is_mounted_path, cmdnfs_thr_info__::is_thread_init, cmdnfs_thr_info__::mounted_path, NULL, and pexportlist.
+Definition at line 2216 of file commands_NFS.c.
 .SS "int fn_nfs_unlink (int argc, char ** argv, FILE * output)"
 .PP
 unlink a file 
 .PP
 Definition at line 3021 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::current_path, cmdnfs_thr_info__::current_path_hdl, GetNFSClient(), Getopt(), cmdnfs_thr_info__::is_mounted_path, Optind, Optopt, shell_fh3_t, and split_path().
 .SS "\fBcmdnfs_thr_info_t\fP* GetNFSClient ()"
 .PP
-Definition at line 337 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info_t, cmdnfs_thr_info__::is_mounted_path, and cmdnfs_thr_info__::is_thread_init.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_id(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_su(), fn_nfs_umount(), and fn_nfs_unlink().
+Definition at line 341 of file commands_NFS.c.
 .SS "int InitNFSClient (\fBcmdnfs_thr_info_t\fP * p_thr_info)"
 .PP
+
+.PP
 \fBTodo\fP
 .RS 4
-No secondary groups support.
+No secondary groups support. 
 .RE
 .PP
 
 .PP
-Definition at line 383 of file commands_NFS.c.
-.PP
-References cmdnfs_thr_info__::authunix_struct, cache_client_param, cmdnfs_thr_info__::client, cmdnfs_thr_info_t, cmdnfs_thr_info__::context, datacache_client_param, cmdnfs_thr_info__::dc_client, cmdnfs_thr_info__::exp_context, cmdnfs_thr_info__::is_thread_init, and NULL.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_id(), fn_nfs_mount(), fn_nfs_su(), and fn_nfs_umount().
+Definition at line 384 of file commands_NFS.c.
 .SS "int nfs_init (char * filename, int flag_v, FILE * output)"
 .PP
+
+.PP
 \fBTodo\fP
 .RS 4
-Are there other things to initialize ?
+Are there other things to initialize ? 
 .RE
 .PP
 
 .PP
-Definition at line 466 of file commands_NFS.c.
-.PP
-References ht, nfs_param, and pexportlist.
-.PP
-Referenced by fn_nfs_init().
+Definition at line 474 of file commands_NFS.c.
 .SS "void nfs_layer_SetLogLevel (int log_lvl)"
 .PP
-Definition at line 450 of file commands_NFS.c.
+Definition at line 458 of file commands_NFS.c.
 .SS "void nfs_readdirplus_free (nfs_res_t * to_free)"
 .PP
-Definition at line 1510 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_ls().
+Definition at line 1515 of file commands_NFS.c.
 .SH "Variable Documentation"
 .PP 
 .SS "cache_inode_client_parameter_t \fBcache_client_param\fP"
 .PP
 Global (exported) variable : init parameters for clients. 
 .PP
-Definition at line 346 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), and InitNFSClient().
+Definition at line 137 of file commands_Cache_inode.c.
 .SS "cache_content_client_parameter_t \fBdatacache_client_param\fP"
 .PP
-Definition at line 347 of file commands_Cache_inode.c.
-.PP
-Referenced by cacheinode_init(), and InitNFSClient().
+Definition at line 138 of file commands_Cache_inode.c.
 .SS "exportlist_t \fBexportlist\fP[128]"
 .PP
-Definition at line 273 of file commands_NFS.c.
+Definition at line 277 of file commands_NFS.c.
 .SS "hash_table_t* \fBht\fP"
 .PP
 Global (exported) variable : The cache hash table 
 .PP
-Definition at line 340 of file commands_Cache_inode.c.
-.PP
-Referenced by cache_solvepath(), cacheinode_init(), fn_Cache_inode_access(), fn_Cache_inode_cache_init(), fn_Cache_inode_callstat(), fn_Cache_inode_cd(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_gc(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_pwd(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_su(), fn_Cache_inode_unlink(), fn_Cache_inode_write(), fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and nfs_init().
+Definition at line 129 of file commands_Cache_inode.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 220 of file commands_NFS.c.
-.PP
-Referenced by nfs_init().
+Definition at line 224 of file commands_NFS.c.
 .SS "exportlist_t* \fBpexportlist\fP = \fBexportlist\fP"
 .PP
-Definition at line 274 of file commands_NFS.c.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and nfs_init().
+Definition at line 278 of file commands_NFS.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

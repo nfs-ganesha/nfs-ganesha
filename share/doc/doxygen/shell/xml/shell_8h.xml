@@ -1,47 +1,47 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="shell_8h" kind="file">
     <compoundname>shell.h</compoundname>
     <includes refid="shell__types_8h" local="yes">shell_types.h</includes>
     <includedby refid="main_8c" local="yes">main.c</includedby>
     <includedby refid="shell_8c" local="yes">shell.c</includedby>
     <incdepgraph>
-      <node id="241">
-        <label>shell_types.h</label>
-        <link refid="shell__types_8h"/>
-        <childnode refid="242" relation="include">
-        </childnode>
-      </node>
-      <node id="240">
+      <node id="263">
         <label>shell.h</label>
         <link refid="shell.h"/>
-        <childnode refid="241" relation="include">
+        <childnode refid="264" relation="include">
         </childnode>
       </node>
-      <node id="242">
+      <node id="264">
+        <label>shell_types.h</label>
+        <link refid="shell__types_8h"/>
+        <childnode refid="265" relation="include">
+        </childnode>
+      </node>
+      <node id="265">
         <label>stdio.h</label>
       </node>
     </incdepgraph>
     <invincdepgraph>
-      <node id="244">
+      <node id="267">
         <label>main.c</label>
         <link refid="main_8c"/>
       </node>
-      <node id="245">
+      <node id="268">
         <label>shell.c</label>
         <link refid="shell_8c"/>
       </node>
-      <node id="243">
+      <node id="266">
         <label>shell.h</label>
         <link refid="shell.h"/>
-        <childnode refid="244" relation="include">
+        <childnode refid="267" relation="include">
         </childnode>
-        <childnode refid="245" relation="include">
+        <childnode refid="268" relation="include">
         </childnode>
       </node>
     </invincdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="shell_8h_1a0" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_109a3b394b8602092d58347b791158062" prot="public" static="no">
         <name>MAX_LINE_LEN</name>
         <initializer>1024</initializer>
         <briefdescription>
@@ -50,10 +50,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="41" bodystart="41" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="41" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="41" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell_8h_1a1" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_129b7451465deac204c5f7cb1f9c6e1fc" prot="public" static="no">
         <name>MAX_ARGS</name>
         <initializer>256</initializer>
         <briefdescription>
@@ -62,9 +61,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="42" bodystart="42" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="42" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="42" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell_8h_1a2" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_1e7ec926bd777cab05e33c25429d2f68e" prot="public" static="no">
         <name>SHELL_SUCCESS</name>
         <initializer>0</initializer>
         <briefdescription>
@@ -73,9 +72,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="49" bodystart="49" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="49" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="49" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell_8h_1a3" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_17664f5e184e9b41ac92e033f7b8d885d" prot="public" static="no">
         <name>SHELL_ERROR</name>
         <initializer>-1</initializer>
         <briefdescription>
@@ -84,9 +83,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="50" bodystart="50" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="50" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="50" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell_8h_1a4" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_1dd182c422eb915de7f9c9913f405b55b" prot="public" static="no">
         <name>SHELL_NOT_FOUND</name>
         <initializer>-2</initializer>
         <briefdescription>
@@ -95,9 +94,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="51" bodystart="51" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="51" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="51" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="shell_8h_1a5" prot="public" static="no">
+      <memberdef kind="define" id="shell_8h_1e57f36c670720db06c26bf88a9f17a5b" prot="public" static="no">
         <name>SHELL_SYNTAX_ERROR</name>
         <initializer>-22</initializer>
         <briefdescription>
@@ -106,11 +105,26 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="52" bodystart="52" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="52" bodyfile="/export/GANESHA/src/shell/shell.h" bodystart="52" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="shell_8h_11e3eb6c0416edacc075dcb2c77cba33d" prot="public" static="no" mutable="no">
+        <type>char *</type>
+        <definition>char* shell_special_vars[]</definition>
+        <argsstring>[]</argsstring>
+        <name>shell_special_vars</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>List of the shell special variables </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/shell/shell.h" line="167" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="197" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="shell_8h_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1c0d310f037d01a4a5b18a3d1cf98dd60" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_Init</definition>
         <argsstring>(int verbose, char *input_file, char *prompt, int shell_index)</argsstring>
@@ -145,19 +159,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="66" bodystart="358" bodyend="433"/>
-        <references refid="Getopt_8c_1a0" compoundref="Getopt_8c" startline="111">NULL</references>
-        <references refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</references>
-        <references refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</references>
-        <references refid="shell_8h_1a27" compoundref="shell_8c" startline="1703" endline="1716">shell_SetPrompt</references>
-        <references refid="shell_8h_1a29" compoundref="shell_8c" startline="1735" endline="1753">shell_SetShellId</references>
-        <references refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="main_8c_1a4" compoundref="main_8c" startline="138">verbose</references>
-        <referencedby refid="main_8c_1a5" compoundref="main_8c" startline="142" endline="171">LaunchShell</referencedby>
-        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="66" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="407" bodyend="486"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1271d58bff569ae83aaca4c6545537c82" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_Launch</definition>
         <argsstring>()</argsstring>
@@ -165,25 +169,12 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
-<para>Run the interpreter. </para>        </detaileddescription>
+<para>Launch the interpreter.</para><para>Run the interpreter. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="71" bodystart="473" bodyend="518"/>
-        <references refid="structshell__state_____1o0" compoundref="shell__types_8h" startline="62">shell_state__::input_stream</references>
-        <references refid="structshell__state_____1o1" compoundref="shell__types_8h" startline="63">shell_state__::interactive</references>
-        <references refid="shell_8h_1a0" compoundref="shell_8h" startline="41">MAX_LINE_LEN</references>
-        <references refid="shell_8h_1a12" compoundref="shell_8c" startline="1090" endline="1109">shell_CleanArgs</references>
-        <references refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</references>
-        <references refid="shell_8h_1a31" compoundref="shell_8c" startline="1790" endline="1793">shell_GetLine</references>
-        <references refid="shell_8h_1a11" compoundref="shell_8c" startline="695" endline="719">shell_ParseLine</references>
-        <references refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</references>
-        <references refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</references>
-        <references refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <referencedby refid="main_8c_1a5" compoundref="main_8c" startline="142" endline="171">LaunchShell</referencedby>
-        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="71" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="535" bodyend="580"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a10" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1e15db0838c4622e178a261efb83bf2b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_BarrierInit</definition>
         <argsstring>(int nb_threads)</argsstring>
@@ -198,12 +189,9 @@
 <para>Initialize the barrier for shell synchronization routines. The number of threads to wait for is given as parameter. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="78" bodystart="209" bodyend="226"/>
-        <references refid="shell_8c_1a3" compoundref="shell_8c" startline="187">P</references>
-        <references refid="shell_8c_1a4" compoundref="shell_8c" startline="188">V</references>
-        <referencedby refid="main_8c_1a6" compoundref="main_8c" startline="174" endline="432">main</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="78" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="259" bodyend="276"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_14e27122a4ac0f624fd479497156da7fe" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_ParseLine</definition>
         <argsstring>(char *in_out_line, char **out_arglist, int *p_argcount)</argsstring>
@@ -249,11 +237,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="97" bodystart="695" bodyend="719"/>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="97" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="757" bodyend="781"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_19bb7a4a254006386f1135857f11d01e4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void shell_CleanArgs</definition>
         <argsstring>(int argc, char **in_out_argv, int *in_allocated)</argsstring>
@@ -292,17 +278,38 @@
 <parametername>in_allocated</parametername>
 </parameternamelist>
 <parameterdescription>
+<para>Indicates which tokens must be freed.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>0 if no errors.</para></simplesect>
+shell_CleanArgs: Free allocated arguments.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>argc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The number of command line tokens. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>in_out_argv</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The list of command line tokens (modified). </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>in_allocated</parametername>
+</parameternamelist>
+<parameterdescription>
 <para>Indicates which tokens must be freed. </para></parameterdescription>
 </parameteritem>
 </parameterlist>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="111" bodystart="1090" bodyend="1109"/>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="111" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1152" bodyend="1171"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a13" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_108079380ae3f2e90dd30c836469eb476" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SolveArgs</definition>
         <argsstring>(int argc, char **in_out_argv, int *out_allocated)</argsstring>
@@ -348,19 +355,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="125" bodystart="804" bodyend="1076"/>
-        <references refid="shell__vars_8h_1a2" compoundref="shell__vars_8c" startline="308" endline="316">get_var_value</references>
-        <references refid="shell_8c_1a0" compoundref="shell_8c" startline="173">MAX_OUTPUT_LEN</references>
-        <references refid="shell_8h_1a12" compoundref="shell_8c" startline="1090" endline="1109">shell_CleanArgs</references>
-        <references refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</references>
-        <references refid="shell_8h_1a11" compoundref="shell_8c" startline="695" endline="719">shell_ParseLine</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="125" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="866" bodyend="1138"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_110dd9a60b110b6c798b902af2378e212" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_Execute</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -380,7 +377,30 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
-<para>shell_Execute: Commands dispatcher.</para><para><parameterlist kind="param"><parameteritem>
+<para>shell_Execute: Execute a command.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>argc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The number of arguments of this command. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>argv</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The arguments for this command. </para></parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>output</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The output stream of this command.</para></parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>The returned status of this command.</para></simplesect>
+shell_Execute: Commands dispatcher.</para><para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
 <parametername>argc</parametername>
 </parameternamelist>
@@ -406,25 +426,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="139" bodystart="1123" bodyend="1243"/>
-        <references refid="structcommand__def_____1o1">command_def__::command_func</references>
-        <references refid="structlayer__def_____1o1" compoundref="shell__types_8h" startline="50">layer_def__::command_list</references>
-        <references refid="structcommand__def_____1o0" compoundref="shell__types_8h" startline="31">command_def__::command_name</references>
-        <references refid="shell__types_8h_1a1">layer_def_t</references>
-        <references refid="structlayer__def_____1o3">layer_def__::setlog_func</references>
-        <references refid="shell_8h_1a24">shell_GetDbgLvl</references>
-        <references refid="shell_8h_1a18" compoundref="shell_8c" startline="1366" endline="1371">shell_GetLayer</references>
-        <references refid="shell_8h_1a22" compoundref="shell_8c" startline="1490" endline="1493">shell_GetVerbose</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
-        <referencedby refid="shell_8h_1a33" compoundref="shell_8c" startline="1879" endline="1968">shellcmd_if</referencedby>
-        <referencedby refid="shell_8h_1a39" compoundref="shell_8c" startline="2231" endline="2274">shellcmd_time</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="139" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1185" bodyend="1305"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a15" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_118ca6567e360fb3becf28c1e64b8c617" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void shell_PrintError</definition>
         <argsstring>(shell_state_t *context, char *error_msg)</argsstring>
@@ -443,29 +447,9 @@
 <para>shell_PrintError: Prints an error. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="151" bodystart="1257" bodyend="1268"/>
-        <references refid="shell__vars_8h_1a2" compoundref="shell__vars_8c" startline="308" endline="316">get_var_value</references>
-        <references refid="shell_8h_1a31" compoundref="shell_8c" startline="1790" endline="1793">shell_GetLine</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
-        <referencedby refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</referencedby>
-        <referencedby refid="shell_8h_1a27" compoundref="shell_8c" startline="1703" endline="1716">shell_SetPrompt</referencedby>
-        <referencedby refid="shell_8h_1a29" compoundref="shell_8c" startline="1735" endline="1753">shell_SetShellId</referencedby>
-        <referencedby refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</referencedby>
-        <referencedby refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
-        <referencedby refid="shell_8h_1a41" compoundref="shell_8c" startline="2306" endline="2339">shellcmd_barrier</referencedby>
-        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
-        <referencedby refid="shell_8h_1a34" compoundref="shell_8c" startline="1973" endline="1998">shellcmd_interactive</referencedby>
-        <referencedby refid="shell_8h_1a40" compoundref="shell_8c" startline="2278" endline="2302">shellcmd_quit</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
-        <referencedby refid="shell_8h_1a36" compoundref="shell_8c" startline="2115" endline="2174">shellcmd_unset</referencedby>
-        <referencedby refid="shell_8h_1a38" compoundref="shell_8c" startline="2201" endline="2226">shellcmd_varlist</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="151" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1319" bodyend="1330"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a16" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1b3fcf0204b77c7bf2d1464eaff1a1b6f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void shell_PrintTrace</definition>
         <argsstring>(shell_state_t *context, char *msg)</argsstring>
@@ -484,16 +468,9 @@
 <para>shell_PrintTrace: Prints a verbose trace. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="157" bodystart="1275" bodyend="1291"/>
-        <references refid="shell__vars_8h_1a2" compoundref="shell__vars_8c" startline="308" endline="316">get_var_value</references>
-        <references refid="shell_8h_1a31" compoundref="shell_8c" startline="1790" endline="1793">shell_GetLine</references>
-        <references refid="shell_8h_1a22" compoundref="shell_8c" startline="1490" endline="1493">shell_GetVerbose</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="157" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1337" bodyend="1353"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a17" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1451b3514751a63ed4efd5d209e2e268b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetLayer</definition>
         <argsstring>(shell_state_t *context, char *layer_name)</argsstring>
@@ -513,18 +490,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="192" bodystart="1306" bodyend="1358"/>
-        <references refid="structshell__state_____1o2" compoundref="shell__types_8h" startline="64">shell_state__::layer</references>
-        <references refid="shell__types_8h_1a1">layer_def_t</references>
-        <references refid="structlayer__def_____1o0" compoundref="shell__types_8h" startline="49">layer_def__::layer_name</references>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="176" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1368" bodyend="1420"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a18" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_187cc52ddf5ce6b0b8b6ea2655fe846cf" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref> *</type>
         <definition>layer_def_t* shell_GetLayer</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -539,14 +507,9 @@
 <para>shell_GetLayer: Retrieves the current active layer (internal use). </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="199" bodystart="1366" bodyend="1371"/>
-        <references refid="structshell__state_____1o2" compoundref="shell__types_8h" startline="64">shell_state__::layer</references>
-        <references refid="shell__types_8h_1a1">layer_def_t</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="183" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1428" bodyend="1433"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a19" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1203bdb77c7bc5de688f3eabc1b70c16a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetStatus</definition>
         <argsstring>(shell_state_t *context, int returned_status)</argsstring>
@@ -565,17 +528,9 @@
 <para>shell_SetStatus Set the special variables $? and $STATUS. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="206" bodystart="1378" bodyend="1409"/>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="structshell__state_____1o3" compoundref="shell__types_8h" startline="65">shell_state__::status</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="190" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1440" bodyend="1471"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a20" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1bad4a8ae0b0a2e36b9285c330a6fb973" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_GetStatus</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -590,11 +545,9 @@
 <para>shell_GetStatus Get the special variables $? or $STATUS (internal use). </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="213" bodystart="1416" bodyend="1419"/>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="structshell__state_____1o3" compoundref="shell__types_8h" startline="65">shell_state__::status</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="197" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1478" bodyend="1481"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a21" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1fd975f5d6931ed03c6a3f65c6c2a0a2b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetVerbose</definition>
         <argsstring>(shell_state_t *context, char *str_verbose)</argsstring>
@@ -613,16 +566,9 @@
 <para>shell_SetVerbose Set the special variable $VERBOSE. </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="220" bodystart="1426" bodyend="1483"/>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <references refid="structshell__state_____1o4" compoundref="shell__types_8h" startline="66">shell_state__::verbose</references>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="204" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1488" bodyend="1545"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a22" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_120edf96684135c0d368f0b2c868e2271" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_GetVerbose</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -637,14 +583,9 @@
 <para>shell_GetVerbose Get the special variable $VERBOSE (internal use). </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="227" bodystart="1490" bodyend="1493"/>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="structshell__state_____1o4" compoundref="shell__types_8h" startline="66">shell_state__::verbose</references>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</referencedby>
-        <referencedby refid="shell_8h_1a38" compoundref="shell_8c" startline="2201" endline="2226">shellcmd_varlist</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="211" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1552" bodyend="1555"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a23" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_19566cc8471ed064191fab46360448790" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetDbgLvl</definition>
         <argsstring>(shell_state_t *context, char *str_debug_level)</argsstring>
@@ -663,16 +604,9 @@
 <para>shell_SetDbgLvl Set the special variables $DEBUG_LEVEL and $DBG_LVL </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="234" bodystart="1500" bodyend="1550"/>
-        <references refid="structshell__state_____1o5" compoundref="shell__types_8h" startline="67">shell_state__::debug_level</references>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="218" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1562" bodyend="1612"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a24" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1235034ca83e42ceb0f655b647ade0a2e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_GetDbgLvl</definition>
         <argsstring>()</argsstring>
@@ -683,10 +617,9 @@
 <para>shell_GetDbgLvl Get the special variable $DEBUG_LEVEL and $DBG_LVL (internal use). </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="241"/>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="225"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a25" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_19b53e69fbe0514fd49aa9f8da1a2a331" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>FILE *</type>
         <definition>FILE* shell_GetInputStream</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -701,11 +634,9 @@
 <para>shell_GetInputStream Get the input stream for reading commands (internal use). </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="248" bodystart="1688" bodyend="1694"/>
-        <references refid="structshell__state_____1o0" compoundref="shell__types_8h" startline="62">shell_state__::input_stream</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="232" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1750" bodyend="1756"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a26" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_19b5002423a565157f01c09748f87cf75" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetInput</definition>
         <argsstring>(shell_state_t *context, char *file_name)</argsstring>
@@ -723,7 +654,8 @@
         <detaileddescription>
 <para>shell_SetInput Set the input for reading commands and set the value of $INPUT and $INTERACTIVE.</para><para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
-<parametername>file_name:</parametername>
+<parametername>file_name</parametername>
+<parametername>:</parametername>
 </parameternamelist>
 <parameterdescription>
 <para>a script file or NULL for reading from stdin. </para></parameterdescription>
@@ -732,20 +664,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="260" bodystart="1573" bodyend="1680"/>
-        <references refid="structshell__state_____1o0" compoundref="shell__types_8h" startline="62">shell_state__::input_stream</references>
-        <references refid="structshell__state_____1o1" compoundref="shell__types_8h" startline="63">shell_state__::interactive</references>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</references>
-        <references refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
-        <referencedby refid="shell_8h_1a34" compoundref="shell_8c" startline="1973" endline="1998">shellcmd_interactive</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="244" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1635" bodyend="1742"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a27" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1baa1753ce1fbddda297f2c4234f90082" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetPrompt</definition>
         <argsstring>(shell_state_t *context, char *str_prompt)</argsstring>
@@ -764,15 +685,9 @@
 <para>shell_SetPrompt Set the special variable $PROMPT </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="268" bodystart="1703" bodyend="1716"/>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
-        <referencedby refid="shell_8h_1a35" compoundref="shell_8c" startline="2003" endline="2110">shellcmd_set</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="252" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1765" bodyend="1778"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a28" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_144bbab19233a13358d0ea0ecc8250575" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>char *</type>
         <definition>char* shell_GetPrompt</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -787,11 +702,9 @@
 <para>shell_GetPrompt Get the special variable $PROMPT </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="275" bodystart="1724" bodyend="1727"/>
-        <references refid="shell__vars_8h_1a2" compoundref="shell__vars_8c" startline="308" endline="316">get_var_value</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="259" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1786" bodyend="1789"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a29" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_174327c02354c2791d81e49b207b82882" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetShellId</definition>
         <argsstring>(shell_state_t *context, int shell_index)</argsstring>
@@ -810,14 +723,9 @@
 <para>shell_SetShellId Set the special variable $SHELLID </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="282" bodystart="1735" bodyend="1753"/>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="266" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1797" bodyend="1815"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a30" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_145ff35a9de18915830a83de3bd62f2a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_SetLine</definition>
         <argsstring>(shell_state_t *context, int lineno)</argsstring>
@@ -836,16 +744,9 @@
 <para>shell_SetLine Set the special variable $LINE </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="289" bodystart="1761" bodyend="1782"/>
-        <references refid="structshell__state_____1o6" compoundref="shell__types_8h" startline="68">shell_state__::line</references>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="273" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1823" bodyend="1844"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a31" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_170c732e9d24a5285ce46c7812e213bd0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shell_GetLine</definition>
         <argsstring>(shell_state_t *context)</argsstring>
@@ -860,14 +761,9 @@
 <para>shell_GetLine Get the special variable $LINE </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="296" bodystart="1790" bodyend="1793"/>
-        <references refid="structshell__state_____1o6" compoundref="shell__types_8h" startline="68">shell_state__::line</references>
-        <references refid="shell__types_8h_1a2">shell_state_t</references>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</referencedby>
-        <referencedby refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</referencedby>
+        <location file="/export/GANESHA/src/shell/shell.h" line="280" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1852" bodyend="1855"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a32" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1899a09f6793b7f4710e8e99a60a8bc5e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_help</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -890,17 +786,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="308" bodystart="1802" bodyend="1875"/>
-        <references refid="structcommand__def_____1o2" compoundref="shell__types_8h" startline="37">command_def__::command_help</references>
-        <references refid="structlayer__def_____1o1" compoundref="shell__types_8h" startline="50">layer_def__::command_list</references>
-        <references refid="structcommand__def_____1o0" compoundref="shell__types_8h" startline="31">command_def__::command_name</references>
-        <references refid="shell__types_8h_1a1">layer_def_t</references>
-        <references refid="structlayer__def_____1o0" compoundref="shell__types_8h" startline="49">layer_def__::layer_name</references>
-        <references refid="shell_8h_1a18" compoundref="shell_8c" startline="1366" endline="1371">shell_GetLayer</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="292" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1864" bodyend="1937"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a33" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1ad4894a22c4fb42b1c283550b645a08e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_if</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -923,10 +811,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="315" bodystart="1879" bodyend="1968"/>
-        <references refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="299" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="1941" bodyend="2030"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a34" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_165d6f4320066d4ebbd24d495c3197db3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_interactive</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -949,13 +836,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="322" bodystart="1973" bodyend="1998"/>
-        <references refid="Getopt_8c_1a0" compoundref="Getopt_8c" startline="111">NULL</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="306" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2035" bodyend="2060"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a35" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_12c49685b957c7ac4d00a3ec0f0054225" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_set</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -978,22 +861,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="329" bodystart="2003" bodyend="2110"/>
-        <references refid="cmd__tools_8h_1a17" compoundref="cmd__tools_8c" startline="1115" endline="1126">concat</references>
-        <references refid="shell__vars_8h_1a1" compoundref="shell__vars_8c" startline="276" endline="302">is_authorized_varname</references>
-        <references refid="shell_8c_1a0" compoundref="shell_8c" startline="173">MAX_OUTPUT_LEN</references>
-        <references refid="cmd__tools_8h_1a10" compoundref="cmd__tools_8c" startline="211" endline="230">my_atoi</references>
-        <references refid="shell__vars_8h_1a3" compoundref="shell__vars_8c" startline="321" endline="333">set_var_value</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</references>
-        <references refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</references>
-        <references refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</references>
-        <references refid="shell_8h_1a27" compoundref="shell_8c" startline="1703" endline="1716">shell_SetPrompt</references>
-        <references refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</references>
-        <references refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="313" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2065" bodyend="2172"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a36" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_115fa32a0d835185c2c4a70a37ba0c700" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_unset</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1016,12 +886,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="336" bodystart="2115" bodyend="2174"/>
-        <references refid="shell__vars_8h_1a4" compoundref="shell__vars_8c" startline="337" endline="348">free_var</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="320" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2177" bodyend="2236"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a37" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_110a8c42cadb842e426fea11044c8ca09" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_print</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1044,9 +911,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="343" bodystart="2179" bodyend="2196"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="327" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2241" bodyend="2258"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a38" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_11ad9c62ea92ab2d02f5f2eb5d5c1fcb6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_varlist</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1069,13 +936,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="350" bodystart="2201" bodyend="2226"/>
-        <references refid="shell__vars_8h_1a5" compoundref="shell__vars_8c" startline="182" endline="193">print_varlist</references>
-        <references refid="shell_8h_1a22" compoundref="shell_8c" startline="1490" endline="1493">shell_GetVerbose</references>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="334" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2263" bodyend="2288"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a39" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1aa214b88c7f47effc68fad8d6d833305" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_time</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1098,13 +961,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="357" bodystart="2231" bodyend="2274"/>
-        <references refid="Getopt_8c_1a0" compoundref="Getopt_8c" startline="111">NULL</references>
-        <references refid="cmd__tools_8h_1a0" compoundref="cmd__tools_8h" startline="263">print_timeval</references>
-        <references refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</references>
-        <references refid="cmd__tools_8h_1a24" compoundref="cmd__tools_8c" startline="1095" endline="1110">time_diff</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="341" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2293" bodyend="2336"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a40" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1d21971f2f359ed0dab17c56affe4666e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_quit</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1127,11 +986,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="364" bodystart="2278" bodyend="2302"/>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="348" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2340" bodyend="2364"/>
       </memberdef>
-      <memberdef kind="function" id="shell_8h_1a41" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="shell_8h_1c90cbb87117d5e2de6759b6689d93d81" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int shellcmd_barrier</definition>
         <argsstring>(int argc, char **argv, FILE *output)</argsstring>
@@ -1154,118 +1011,70 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="371" bodystart="2306" bodyend="2339"/>
-        <references refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</references>
-        <references refid="shell_8c_1a1" compoundref="shell_8c" startline="175">TRACEBUFFSIZE</references>
+        <location file="/export/GANESHA/src/shell/shell.h" line="355" bodyfile="/export/GANESHA/src/shell/shell.c" bodystart="2368" bodyend="2401"/>
       </memberdef>
-      </sectiondef>
-      <sectiondef kind="var">
-      <memberdef kind="variable" id="shell_8h_1a6" prot="public" static="yes" volatile="no" mutable="no">
-        <type>char *</type>
-        <definition>char* shell_special_vars[]</definition>
-        <argsstring>[]</argsstring>
-        <name>shell_special_vars</name>
-        <initializer>
-{
-  &quot;INPUT&quot;,       
-  &quot;INTERACTIVE&quot;, 
-  &quot;LAYER&quot;,             
-  &quot;STATUS&quot;,      
-  &quot;?&quot;,           
-  &quot;VERBOSE&quot;,           
-  &quot;DEBUG_LEVEL&quot;, 
-  &quot;DBG_LVL&quot;,     
-  &quot;PROMPT&quot;,      
-  &quot;LINE&quot;,        
-  
-  
-   
-   NULL
-}</initializer>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>List of the shell special variables </para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="183" bodystart="167" bodyend="-1"/>
-      </memberdef>
-      <memberdef kind="variable" id="shell_8h_1a7" prot="public" static="yes" volatile="no" mutable="no">
+      <memberdef kind="function" id="shell_8h_1fd3bcf4814bcca57535f99fb0598f3af" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="structcommand__def____" kindref="compound">command_def_t</ref></type>
-        <definition>command_def_t shell_commands[]</definition>
-        <argsstring>[]</argsstring>
-        <name>shell_commands</name>
-        <initializer>{
-  
-  {&quot;barrier&quot;,      shellcmd_barrier,     &quot;synchronization in a multi-thread shell&quot;},
-  {&quot;echo&quot;,         shellcmd_print,       &quot;print one or more arguments&quot;},
-  {&quot;exit&quot;,         shellcmd_quit,        &quot;exit this shell&quot;},
-  {&quot;help&quot;,         shellcmd_help,        &quot;print this help&quot;},
-  {&quot;if&quot;,           shellcmd_if,          &quot;conditionnal execution&quot;},
-  {&quot;interactive&quot;,  shellcmd_interactive, &quot;close script file and start interactive mode&quot;},
-  {&quot;print&quot;,        shellcmd_print,       &quot;print one or more arguments&quot;},
-  {&quot;quit&quot;,         shellcmd_quit,        &quot;exit this shell&quot;},
-  {&quot;set&quot;,          shellcmd_set,         &quot;set the value of a shell variable&quot;},
-  {&quot;time&quot;,         shellcmd_time,        &quot;measures the time for executing a command&quot;},
-  {&quot;unset&quot;,        shellcmd_unset,       &quot;free a shell variable&quot;},
-  {&quot;varlist&quot;,      shellcmd_varlist,     &quot;print the list of shell variables&quot;},
-  
-  {NULL,NULL,NULL} 
-}</initializer>
+        <definition>static command_def_t __attribute__</definition>
+        <argsstring>((__unused__)) shell_commands[]</argsstring>
+        <name>__attribute__</name>
+        <param>
+          <type>(__unused__)</type>
+        </param>
         <briefdescription>
         </briefdescription>
         <detaileddescription>
 <para>List of the shell commands </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell.h" line="392" bodystart="376" bodyend="-1"/>
+        <location file="/export/GANESHA/src/shell/shell.h" line="376"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Internal routines for the shell. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2006/02/23 07:42:53 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.7 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2006/02/23 07:42:53 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.7 </para></simplesect>
 <simplesect kind="rcs"><title>Log</title><para><ref refid="shell_8h" kindref="compound">shell.h</ref>,v </para></simplesect>
-Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.</para><para>Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.5 2005/07/25 12:50:46 leibovic Adding thr_create and thr_join commands.</para><para>Revision 1.4 2005/05/27 12:01:48 leibovic Adding write command.</para><para>Revision 1.3 2005/05/11 15:53:37 leibovic Adding time function.</para><para>Revision 1.2 2005/05/09 14:54:59 leibovic Adding if.</para><para>Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para>    </detaileddescription>
+Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.</para><para>Revision 1.6 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.5 2005/07/25 12:50:46 leibovic Adding thr_create and thr_join commands.</para><para>Revision 1.4 2005/05/27 12:01:48 leibovic Adding write command.</para><para>Revision 1.3 2005/05/11 15:53:37 leibovic Adding time function.</para><para>Revision 1.2 2005/05/09 14:54:59 leibovic Adding if.</para><para>Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"></codeline>
 <codeline lineno="35"><highlight class="preprocessor">#ifndef<sp/>_SHELL_H</highlight></codeline>
 <codeline lineno="36"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>_SHELL_H</highlight></codeline>
 <codeline lineno="37"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="38"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="shell__types_8h" kindref="compound">shell_types.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="shell__types_8h" kindref="compound" tooltip="Internal routines for the shell.">shell_types.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="39"><highlight class="normal"></highlight></codeline>
 <codeline lineno="40"><highlight class="normal"></highlight></codeline>
-<codeline lineno="41" refid="shell_8h_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAX_LINE_LEN<sp/><sp/><sp/><sp/><sp/><sp/>1024</highlight></codeline>
-<codeline lineno="42" refid="shell_8h_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAX_ARGS<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>256</highlight></codeline>
+<codeline lineno="41" refid="shell_8h_109a3b394b8602092d58347b791158062" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAX_LINE_LEN<sp/><sp/><sp/><sp/><sp/><sp/>1024</highlight></codeline>
+<codeline lineno="42" refid="shell_8h_129b7451465deac204c5f7cb1f9c6e1fc" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>MAX_ARGS<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>256</highlight></codeline>
 <codeline lineno="43"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="44"><highlight class="normal"></highlight></codeline>
 <codeline lineno="45"><highlight class="normal"></highlight><highlight class="comment">/*------------------------------------------------------------------</highlight></codeline>
 <codeline lineno="46"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Internal<sp/>error<sp/>codes.</highlight></codeline>
 <codeline lineno="47"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="48"><highlight class="normal"></highlight></codeline>
-<codeline lineno="49" refid="shell_8h_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>SHELL_SUCCESS<sp/>0</highlight></codeline>
-<codeline lineno="50" refid="shell_8h_1a3" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_ERROR<sp/><sp/>-1</highlight></codeline>
-<codeline lineno="51" refid="shell_8h_1a4" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_NOT_FOUND<sp/>-2</highlight></codeline>
-<codeline lineno="52" refid="shell_8h_1a5" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_SYNTAX_ERROR<sp/>-22</highlight></codeline>
+<codeline lineno="49" refid="shell_8h_1e7ec926bd777cab05e33c25429d2f68e" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>SHELL_SUCCESS<sp/>0</highlight></codeline>
+<codeline lineno="50" refid="shell_8h_17664f5e184e9b41ac92e033f7b8d885d" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_ERROR<sp/><sp/>-1</highlight></codeline>
+<codeline lineno="51" refid="shell_8h_1dd182c422eb915de7f9c9913f405b55b" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_NOT_FOUND<sp/>-2</highlight></codeline>
+<codeline lineno="52" refid="shell_8h_1e57f36c670720db06c26bf88a9f17a5b" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>SHELL_SYNTAX_ERROR<sp/>-22</highlight></codeline>
 <codeline lineno="53"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="54"><highlight class="normal"></highlight><highlight class="comment">/*------------------------------------------------------------------</highlight></codeline>
 <codeline lineno="55"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Main<sp/>shell<sp/>routines.</highlight></codeline>
 <codeline lineno="56"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="57"><highlight class="normal"></highlight></codeline>
-<codeline lineno="63"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a8" kindref="member">shell_Init</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>verbose,</highlight></codeline>
+<codeline lineno="63"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1c0d310f037d01a4a5b18a3d1cf98dd60" kindref="member">shell_Init</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="main_8c_10b2caeb4b6f130be43e5a2f0267dd453" kindref="member">verbose</ref>,</highlight></codeline>
 <codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>input_file,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>prompt,</highlight></codeline>
 <codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>shell_index<sp/>);</highlight></codeline>
 <codeline lineno="67"><highlight class="normal"></highlight></codeline>
-<codeline lineno="71"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1a18" kindref="member">shell_Launch</ref>();</highlight></codeline>
+<codeline lineno="71"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1271d58bff569ae83aaca4c6545537c82" kindref="member">shell_Launch</ref>();</highlight></codeline>
 <codeline lineno="72"><highlight class="normal"></highlight></codeline>
 <codeline lineno="73"><highlight class="normal"></highlight></codeline>
-<codeline lineno="78"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a10" kindref="member">shell_BarrierInit</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nb_threads<sp/>);</highlight></codeline>
+<codeline lineno="78"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1e15db0838c4622e178a261efb83bf2b1" kindref="member">shell_BarrierInit</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>nb_threads<sp/>);</highlight></codeline>
 <codeline lineno="79"><highlight class="normal"></highlight></codeline>
 <codeline lineno="80"><highlight class="normal"></highlight></codeline>
 <codeline lineno="81"><highlight class="normal"></highlight></codeline>
@@ -1273,17 +1082,17 @@ Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.</para><para
 <codeline lineno="83"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Parsing<sp/>and<sp/>execution<sp/>routines.</highlight></codeline>
 <codeline lineno="84"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="85"><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a11" kindref="member">shell_ParseLine</ref>(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>in_out_line,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>out_arglist,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>p_argcount<sp/>);</highlight></codeline>
+<codeline lineno="97"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_14e27122a4ac0f624fd479497156da7fe" kindref="member">shell_ParseLine</ref>(<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>in_out_line,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>out_arglist,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>p_argcount<sp/>);</highlight></codeline>
 <codeline lineno="98"><highlight class="normal"></highlight></codeline>
 <codeline lineno="99"><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a12" kindref="member">shell_CleanArgs</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>in_out_argv,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>in_allocated<sp/>);</highlight></codeline>
+<codeline lineno="111"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8c_19bb7a4a254006386f1135857f11d01e4" kindref="member">shell_CleanArgs</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>in_out_argv,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>in_allocated<sp/>);</highlight></codeline>
 <codeline lineno="112"><highlight class="normal"></highlight></codeline>
 <codeline lineno="113"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a13" kindref="member">shell_SolveArgs</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>in_out_argv,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>out_allocated<sp/>);</highlight></codeline>
+<codeline lineno="125"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_108079380ae3f2e90dd30c836469eb476" kindref="member">shell_SolveArgs</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>in_out_argv,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>out_allocated<sp/>);</highlight></codeline>
 <codeline lineno="126"><highlight class="normal"></highlight></codeline>
 <codeline lineno="127"><highlight class="normal"></highlight></codeline>
 <codeline lineno="128"><highlight class="normal"></highlight></codeline>
-<codeline lineno="139"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a14" kindref="member">shell_Execute</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv,<sp/>FILE<sp/>*<sp/>output<sp/>);</highlight></codeline>
+<codeline lineno="139"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_110dd9a60b110b6c798b902af2378e212" kindref="member">shell_Execute</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv,<sp/>FILE<sp/>*<sp/>output<sp/>);</highlight></codeline>
 <codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="141"><highlight class="normal"></highlight></codeline>
 <codeline lineno="142"><highlight class="normal"></highlight></codeline>
@@ -1291,9 +1100,9 @@ Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.</para><para
 <codeline lineno="144"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Shell<sp/>ouput<sp/>routines.</highlight></codeline>
 <codeline lineno="145"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="146"><highlight class="normal"></highlight></codeline>
-<codeline lineno="151"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a15" kindref="member">shell_PrintError</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>error_msg<sp/>);</highlight></codeline>
+<codeline lineno="151"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8c_118ca6567e360fb3becf28c1e64b8c617" kindref="member">shell_PrintError</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>error_msg<sp/>);</highlight></codeline>
 <codeline lineno="152"><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a16" kindref="member">shell_PrintTrace</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>msg<sp/>);</highlight></codeline>
+<codeline lineno="157"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1b3fcf0204b77c7bf2d1464eaff1a1b6f" kindref="member">shell_PrintTrace</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>msg<sp/>);</highlight></codeline>
 <codeline lineno="158"><highlight class="normal"></highlight></codeline>
 <codeline lineno="159"><highlight class="normal"></highlight></codeline>
 <codeline lineno="160"><highlight class="normal"></highlight><highlight class="comment">/*------------------------------------------------------------------</highlight></codeline>
@@ -1301,172 +1110,156 @@ Revision 1.7 2006/02/23 07:42:53 leibovic Adding -n option to shell.</para><para
 <codeline lineno="162"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="163"><highlight class="normal"></highlight></codeline>
 <codeline lineno="164"><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>shell_special_vars[]<sp/>=</highlight></codeline>
-<codeline lineno="168"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;INPUT&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>a<sp/>filename<sp/>or<sp/>&lt;stdin&gt;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;INTERACTIVE&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="comment">/*<sp/>Indicates<sp/>if<sp/>we<sp/>are<sp/>in<sp/>interactive<sp/>mode<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;LAYER&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>current<sp/>layer<sp/>*/</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;STATUS&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Last<sp/>command<sp/>status<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;?&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>idem<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;VERBOSE&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>shel<sp/>verbose<sp/>mode<sp/>*/</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;DEBUG_LEVEL&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="comment">/*<sp/>layer<sp/>debug<sp/>level<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;DBG_LVL&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>idem<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;PROMPT&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>shell<sp/>prompt<sp/>string<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight><highlight class="stringliteral">&quot;LINE&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>line<sp/>number<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>end<sp/>of<sp/>special<sp/>vars<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><ref refid="Getopt_8c_1a0" kindref="member">NULL</ref></highlight></codeline>
-<codeline lineno="183"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="167"><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><ref refid="shell_8c_11e3eb6c0416edacc075dcb2c77cba33d" kindref="member">shell_special_vars</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"></highlight></codeline>
+<codeline lineno="176"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1451b3514751a63ed4efd5d209e2e268b" kindref="member">shell_SetLayer</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>layer_name<sp/>);</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"></highlight></codeline>
+<codeline lineno="178"><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref><sp/>*<sp/><ref refid="shell_8c_187cc52ddf5ce6b0b8b6ea2655fe846cf" kindref="member">shell_GetLayer</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context);</highlight></codeline>
 <codeline lineno="184"><highlight class="normal"></highlight></codeline>
 <codeline lineno="185"><highlight class="normal"></highlight></codeline>
-<codeline lineno="192"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a17" kindref="member">shell_SetLayer</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>layer_name<sp/>);</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"></highlight></codeline>
-<codeline lineno="194"><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref><sp/>*<sp/><ref refid="shell_8h_1a18" kindref="member">shell_GetLayer</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context);</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"></highlight></codeline>
-<codeline lineno="201"><highlight class="normal"></highlight></codeline>
-<codeline lineno="206"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a19" kindref="member">shell_SetStatus</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>returned_status<sp/>);</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"></highlight></codeline>
-<codeline lineno="208"><highlight class="normal"></highlight></codeline>
-<codeline lineno="213"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a20" kindref="member">shell_GetStatus</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"></highlight></codeline>
-<codeline lineno="220"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a21" kindref="member">shell_SetVerbose</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_verbose<sp/>);</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"></highlight></codeline>
-<codeline lineno="222"><highlight class="normal"></highlight></codeline>
-<codeline lineno="227"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a22" kindref="member">shell_GetVerbose</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"></highlight></codeline>
-<codeline lineno="229"><highlight class="normal"></highlight></codeline>
-<codeline lineno="234"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a23" kindref="member">shell_SetDbgLvl</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_debug_level<sp/>);</highlight></codeline>
+<codeline lineno="190"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1203bdb77c7bc5de688f3eabc1b70c16a" kindref="member">shell_SetStatus</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>returned_status<sp/>);</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"></highlight></codeline>
+<codeline lineno="197"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1bad4a8ae0b0a2e36b9285c330a6fb973" kindref="member">shell_GetStatus</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"></highlight></codeline>
+<codeline lineno="204"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1fd975f5d6931ed03c6a3f65c6c2a0a2b" kindref="member">shell_SetVerbose</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_verbose<sp/>);</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"></highlight></codeline>
+<codeline lineno="206"><highlight class="normal"></highlight></codeline>
+<codeline lineno="211"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_120edf96684135c0d368f0b2c868e2271" kindref="member">shell_GetVerbose</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"></highlight></codeline>
+<codeline lineno="213"><highlight class="normal"></highlight></codeline>
+<codeline lineno="218"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_19566cc8471ed064191fab46360448790" kindref="member">shell_SetDbgLvl</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_debug_level<sp/>);</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"></highlight></codeline>
+<codeline lineno="225"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1e8266753e0ec315e4f060c49f70dfc24" kindref="member">shell_GetDbgLvl</ref>();</highlight></codeline>
+<codeline lineno="226"><highlight class="normal"></highlight></codeline>
+<codeline lineno="227"><highlight class="normal"></highlight></codeline>
+<codeline lineno="232"><highlight class="normal">FILE<sp/>*<sp/><ref refid="shell_8c_19b53e69fbe0514fd49aa9f8da1a2a331" kindref="member">shell_GetInputStream</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"></highlight></codeline>
+<codeline lineno="234"><highlight class="normal"></highlight></codeline>
 <codeline lineno="235"><highlight class="normal"></highlight></codeline>
-<codeline lineno="236"><highlight class="normal"></highlight></codeline>
-<codeline lineno="241"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a24" kindref="member">shell_GetDbgLvl</ref>();</highlight></codeline>
-<codeline lineno="242"><highlight class="normal"></highlight></codeline>
-<codeline lineno="243"><highlight class="normal"></highlight></codeline>
-<codeline lineno="248"><highlight class="normal">FILE<sp/>*<sp/><ref refid="shell_8h_1a25" kindref="member">shell_GetInputStream</ref>(<ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
-<codeline lineno="249"><highlight class="normal"></highlight></codeline>
-<codeline lineno="250"><highlight class="normal"></highlight></codeline>
-<codeline lineno="251"><highlight class="normal"></highlight></codeline>
-<codeline lineno="260"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a26" kindref="member">shell_SetInput</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>file_name<sp/>);</highlight></codeline>
+<codeline lineno="244"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_19b5002423a565157f01c09748f87cf75" kindref="member">shell_SetInput</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>file_name<sp/>);</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"></highlight></codeline>
+<codeline lineno="246"><highlight class="normal"></highlight></codeline>
+<codeline lineno="247"><highlight class="normal"></highlight></codeline>
+<codeline lineno="252"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1baa1753ce1fbddda297f2c4234f90082" kindref="member">shell_SetPrompt</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_prompt<sp/>);</highlight></codeline>
+<codeline lineno="253"><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"></highlight></codeline>
+<codeline lineno="259"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="shell_8c_144bbab19233a13358d0ea0ecc8250575" kindref="member">shell_GetPrompt</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
+<codeline lineno="260"><highlight class="normal"></highlight></codeline>
 <codeline lineno="261"><highlight class="normal"></highlight></codeline>
-<codeline lineno="262"><highlight class="normal"></highlight></codeline>
-<codeline lineno="263"><highlight class="normal"></highlight></codeline>
-<codeline lineno="268"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a27" kindref="member">shell_SetPrompt</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str_prompt<sp/>);</highlight></codeline>
-<codeline lineno="269"><highlight class="normal"></highlight></codeline>
-<codeline lineno="270"><highlight class="normal"></highlight></codeline>
-<codeline lineno="275"><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="shell_8h_1a28" kindref="member">shell_GetPrompt</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
-<codeline lineno="276"><highlight class="normal"></highlight></codeline>
-<codeline lineno="277"><highlight class="normal"></highlight></codeline>
-<codeline lineno="282"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a29" kindref="member">shell_SetShellId</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>shell_index<sp/>);</highlight></codeline>
-<codeline lineno="283"><highlight class="normal"></highlight></codeline>
-<codeline lineno="284"><highlight class="normal"></highlight></codeline>
-<codeline lineno="289"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a30" kindref="member">shell_SetLine</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>lineno<sp/>);</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"></highlight></codeline>
-<codeline lineno="291"><highlight class="normal"></highlight></codeline>
-<codeline lineno="296"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a31" kindref="member">shell_GetLine</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
-<codeline lineno="297"><highlight class="normal"></highlight></codeline>
-<codeline lineno="298"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="299"><highlight class="normal"></highlight><highlight class="comment">/*------------------------------------------------------------------</highlight></codeline>
-<codeline lineno="300"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Shell<sp/>commands.</highlight></codeline>
-<codeline lineno="301"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="302"><highlight class="normal"></highlight></codeline>
-<codeline lineno="303"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a32" kindref="member">shellcmd_help</ref>(</highlight></codeline>
-<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="307"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="309"><highlight class="normal"></highlight></codeline>
-<codeline lineno="310"><highlight class="normal"></highlight></codeline>
-<codeline lineno="311"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a33" kindref="member">shellcmd_if</ref>(</highlight></codeline>
-<codeline lineno="312"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="313"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="315"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="316"><highlight class="normal"></highlight></codeline>
-<codeline lineno="317"><highlight class="normal"></highlight></codeline>
-<codeline lineno="318"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a34" kindref="member">shellcmd_interactive</ref>(</highlight></codeline>
-<codeline lineno="319"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="323"><highlight class="normal"></highlight></codeline>
-<codeline lineno="324"><highlight class="normal"></highlight></codeline>
-<codeline lineno="325"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a35" kindref="member">shellcmd_set</ref>(</highlight></codeline>
-<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="329"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="330"><highlight class="normal"></highlight></codeline>
-<codeline lineno="331"><highlight class="normal"></highlight></codeline>
-<codeline lineno="332"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a36" kindref="member">shellcmd_unset</ref>(</highlight></codeline>
-<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="335"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="336"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="337"><highlight class="normal"></highlight></codeline>
-<codeline lineno="338"><highlight class="normal"></highlight></codeline>
-<codeline lineno="339"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a37" kindref="member">shellcmd_print</ref>(</highlight></codeline>
-<codeline lineno="340"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="341"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="342"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="343"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="344"><highlight class="normal"></highlight></codeline>
-<codeline lineno="345"><highlight class="normal"></highlight></codeline>
-<codeline lineno="346"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a38" kindref="member">shellcmd_varlist</ref>(</highlight></codeline>
-<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="349"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="350"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="351"><highlight class="normal"></highlight></codeline>
-<codeline lineno="352"><highlight class="normal"></highlight></codeline>
-<codeline lineno="353"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a39" kindref="member">shellcmd_time</ref>(</highlight></codeline>
-<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="356"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="357"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="358"><highlight class="normal"></highlight></codeline>
-<codeline lineno="359"><highlight class="normal"></highlight></codeline>
-<codeline lineno="360"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a40" kindref="member">shellcmd_quit</ref>(</highlight></codeline>
-<codeline lineno="361"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="362"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="363"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="364"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="365"><highlight class="normal"></highlight></codeline>
-<codeline lineno="366"><highlight class="normal"></highlight></codeline>
-<codeline lineno="367"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8h_1a41" kindref="member">shellcmd_barrier</ref>(</highlight></codeline>
-<codeline lineno="368"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="369"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="370"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="371"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="372"><highlight class="normal"></highlight></codeline>
-<codeline lineno="373"><highlight class="normal"></highlight></codeline>
-<codeline lineno="376"><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref><sp/><sp/>shell_commands[]={</highlight></codeline>
-<codeline lineno="377"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="378"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;barrier&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_barrier,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;synchronization<sp/>in<sp/>a<sp/>multi-thread<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="379"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;echo&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_print,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>one<sp/>or<sp/>more<sp/>arguments&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="380"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;exit&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_quit,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;exit<sp/>this<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="381"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;help&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_help,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>this<sp/>help&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="382"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;if&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_if,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;conditionnal<sp/>execution&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="383"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;interactive&quot;</highlight><highlight class="normal">,<sp/><sp/>shellcmd_interactive,<sp/></highlight><highlight class="stringliteral">&quot;close<sp/>script<sp/>file<sp/>and<sp/>start<sp/>interactive<sp/>mode&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="384"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;print&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_print,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>one<sp/>or<sp/>more<sp/>arguments&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="385"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;quit&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_quit,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;exit<sp/>this<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="386"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;set&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_set,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;set<sp/>the<sp/>value<sp/>of<sp/>a<sp/>shell<sp/>variable&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="387"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;time&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_time,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;measures<sp/>the<sp/>time<sp/>for<sp/>executing<sp/>a<sp/>command&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="388"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;unset&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_unset,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;free<sp/>a<sp/>shell<sp/>variable&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="389"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;varlist&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/>shellcmd_varlist,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>the<sp/>list<sp/>of<sp/>shell<sp/>variables&quot;</highlight><highlight class="normal">},</highlight></codeline>
-<codeline lineno="390"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="391"><highlight class="normal"><sp/><sp/>{NULL,NULL,<ref refid="Getopt_8c_1a0" kindref="member">NULL</ref>}<sp/></highlight><highlight class="comment">/*<sp/>End<sp/>of<sp/>command<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="392"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="393"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="394"><highlight class="normal"></highlight></codeline>
-<codeline lineno="395"><highlight class="normal"></highlight></codeline>
-<codeline lineno="396"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@todo:<sp/>if,<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="397"><highlight class="normal"></highlight></codeline>
-<codeline lineno="398"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="399"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="266"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_174327c02354c2791d81e49b207b82882" kindref="member">shell_SetShellId</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>shell_index<sp/>);</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"></highlight></codeline>
+<codeline lineno="268"><highlight class="normal"></highlight></codeline>
+<codeline lineno="273"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_145ff35a9de18915830a83de3bd62f2a1" kindref="member">shell_SetLine</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>lineno<sp/>);</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"></highlight></codeline>
+<codeline lineno="275"><highlight class="normal"></highlight></codeline>
+<codeline lineno="280"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_170c732e9d24a5285ce46c7812e213bd0" kindref="member">shell_GetLine</ref>(<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref><sp/>*<sp/>context<sp/>);</highlight></codeline>
+<codeline lineno="281"><highlight class="normal"></highlight></codeline>
+<codeline lineno="282"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="283"><highlight class="normal"></highlight><highlight class="comment">/*------------------------------------------------------------------</highlight></codeline>
+<codeline lineno="284"><highlight class="comment"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Shell<sp/>commands.</highlight></codeline>
+<codeline lineno="285"><highlight class="comment"><sp/>*-----------------------------------------------------------------*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="286"><highlight class="normal"></highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="288"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1899a09f6793b7f4710e8e99a60a8bc5e" kindref="member">shellcmd_help</ref>(</highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="293"><highlight class="normal"></highlight></codeline>
+<codeline lineno="294"><highlight class="normal"></highlight></codeline>
+<codeline lineno="295"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1ad4894a22c4fb42b1c283550b645a08e" kindref="member">shellcmd_if</ref>(</highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="299"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="300"><highlight class="normal"></highlight></codeline>
+<codeline lineno="301"><highlight class="normal"></highlight></codeline>
+<codeline lineno="302"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_165d6f4320066d4ebbd24d495c3197db3" kindref="member">shellcmd_interactive</ref>(</highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"></highlight></codeline>
+<codeline lineno="309"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_12c49685b957c7ac4d00a3ec0f0054225" kindref="member">shellcmd_set</ref>(</highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="312"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="313"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="314"><highlight class="normal"></highlight></codeline>
+<codeline lineno="315"><highlight class="normal"></highlight></codeline>
+<codeline lineno="316"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_115fa32a0d835185c2c4a70a37ba0c700" kindref="member">shellcmd_unset</ref>(</highlight></codeline>
+<codeline lineno="317"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="318"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="319"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="321"><highlight class="normal"></highlight></codeline>
+<codeline lineno="322"><highlight class="normal"></highlight></codeline>
+<codeline lineno="323"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_110a8c42cadb842e426fea11044c8ca09" kindref="member">shellcmd_print</ref>(</highlight></codeline>
+<codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="328"><highlight class="normal"></highlight></codeline>
+<codeline lineno="329"><highlight class="normal"></highlight></codeline>
+<codeline lineno="330"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_11ad9c62ea92ab2d02f5f2eb5d5c1fcb6" kindref="member">shellcmd_varlist</ref>(</highlight></codeline>
+<codeline lineno="331"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="335"><highlight class="normal"></highlight></codeline>
+<codeline lineno="336"><highlight class="normal"></highlight></codeline>
+<codeline lineno="337"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1aa214b88c7f47effc68fad8d6d833305" kindref="member">shellcmd_time</ref>(</highlight></codeline>
+<codeline lineno="338"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="339"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="340"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="342"><highlight class="normal"></highlight></codeline>
+<codeline lineno="343"><highlight class="normal"></highlight></codeline>
+<codeline lineno="344"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1d21971f2f359ed0dab17c56affe4666e" kindref="member">shellcmd_quit</ref>(</highlight></codeline>
+<codeline lineno="345"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="349"><highlight class="normal"></highlight></codeline>
+<codeline lineno="350"><highlight class="normal"></highlight></codeline>
+<codeline lineno="351"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="shell_8c_1c90cbb87117d5e2de6759b6689d93d81" kindref="member">shellcmd_barrier</ref>(</highlight></codeline>
+<codeline lineno="352"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc<sp/>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>number<sp/>of<sp/>args<sp/>in<sp/>argv<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="353"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv<sp/>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>arg<sp/>list<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FILE<sp/>*<sp/>output<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/>:<sp/>output<sp/>stream<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="356"><highlight class="normal"></highlight></codeline>
+<codeline lineno="357"><highlight class="normal"></highlight></codeline>
+<codeline lineno="360"><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref><sp/><sp/>__attribute__((<sp/>__unused__<sp/>))<sp/>shell_commands[]={</highlight></codeline>
+<codeline lineno="361"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="362"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;barrier&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1c90cbb87117d5e2de6759b6689d93d81" kindref="member">shellcmd_barrier</ref>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;synchronization<sp/>in<sp/>a<sp/>multi-thread<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="363"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;echo&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_110a8c42cadb842e426fea11044c8ca09" kindref="member">shellcmd_print</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>one<sp/>or<sp/>more<sp/>arguments&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="364"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;exit&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1d21971f2f359ed0dab17c56affe4666e" kindref="member">shellcmd_quit</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;exit<sp/>this<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="365"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;help&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1899a09f6793b7f4710e8e99a60a8bc5e" kindref="member">shellcmd_help</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>this<sp/>help&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="366"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;if&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1ad4894a22c4fb42b1c283550b645a08e" kindref="member">shellcmd_if</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;conditionnal<sp/>execution&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="367"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;interactive&quot;</highlight><highlight class="normal">,<sp/><sp/><ref refid="shell_8c_165d6f4320066d4ebbd24d495c3197db3" kindref="member">shellcmd_interactive</ref>,<sp/></highlight><highlight class="stringliteral">&quot;close<sp/>script<sp/>file<sp/>and<sp/>start<sp/>interactive<sp/>mode&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="368"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;print&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_110a8c42cadb842e426fea11044c8ca09" kindref="member">shellcmd_print</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>one<sp/>or<sp/>more<sp/>arguments&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="369"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;quit&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1d21971f2f359ed0dab17c56affe4666e" kindref="member">shellcmd_quit</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;exit<sp/>this<sp/>shell&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="370"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;set&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_12c49685b957c7ac4d00a3ec0f0054225" kindref="member">shellcmd_set</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;set<sp/>the<sp/>value<sp/>of<sp/>a<sp/>shell<sp/>variable&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="371"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;time&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_1aa214b88c7f47effc68fad8d6d833305" kindref="member">shellcmd_time</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;measures<sp/>the<sp/>time<sp/>for<sp/>executing<sp/>a<sp/>command&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="372"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;unset&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_115fa32a0d835185c2c4a70a37ba0c700" kindref="member">shellcmd_unset</ref>,<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;free<sp/>a<sp/>shell<sp/>variable&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="373"><highlight class="normal"><sp/><sp/>{</highlight><highlight class="stringliteral">&quot;varlist&quot;</highlight><highlight class="normal">,<sp/><sp/><sp/><sp/><sp/><sp/><ref refid="shell_8c_11ad9c62ea92ab2d02f5f2eb5d5c1fcb6" kindref="member">shellcmd_varlist</ref>,<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;print<sp/>the<sp/>list<sp/>of<sp/>shell<sp/>variables&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="374"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="375"><highlight class="normal"><sp/><sp/>{<ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>,<ref refid="Getopt_8c_1070d2ce7b6bb7e5c05602aa8c308d0c4" kindref="member">NULL</ref>,NULL}<sp/></highlight><highlight class="comment">/*<sp/>End<sp/>of<sp/>command<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="376"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="377"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="378"><highlight class="normal"></highlight></codeline>
+<codeline lineno="379"><highlight class="normal"></highlight></codeline>
+<codeline lineno="380"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@todo:<sp/>if,<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="381"><highlight class="normal"></highlight></codeline>
+<codeline lineno="382"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="383"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/shell/shell.h"/>
+    <location file="/export/GANESHA/src/shell/shell.h"/>
   </compounddef>
 </doxygen>

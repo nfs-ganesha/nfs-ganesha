@@ -1,6 +1,7 @@
 \section{nfs\_\-filehandle\_\-mgmt.c File Reference}
-\label{nfs__filehandle__mgmt_8c}\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-Some tools for managing the file handles. 
+\label{nfs__filehandle__mgmt_8c}\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+Some tools for managing the file handles.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$sys/types.h$>$}\par
@@ -32,25 +33,29 @@ Some tools for managing the file handles.
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-int {\bf nfs4\_\-Fhandle\-To\-FSAL} (nfs\_\-fh4 $\ast$pfh4, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
+int {\bf nfs4\_\-FhandleToFSAL} (nfs\_\-fh4 $\ast$pfh4, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
 \item 
-int {\bf nfs3\_\-Fhandle\-To\-FSAL} (nfs\_\-fh3 $\ast$pfh3, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
+int {\bf nfs3\_\-FhandleToFSAL} (nfs\_\-fh3 $\ast$pfh3, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
 \item 
-int {\bf nfs2\_\-Fhandle\-To\-FSAL} (fhandle2 $\ast$pfh2, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
+int {\bf nfs2\_\-FhandleToFSAL} (fhandle2 $\ast$pfh2, fsal\_\-handle\_\-t $\ast$pfsalhandle, fsal\_\-op\_\-context\_\-t $\ast$pcontext)
 \item 
-int {\bf nfs4\_\-FSALTo\-Fhandle} (nfs\_\-fh4 $\ast$pfh4, fsal\_\-handle\_\-t $\ast$pfsalhandle, compound\_\-data\_\-t $\ast$data)
+int {\bf nfs4\_\-FSALToFhandle} (nfs\_\-fh4 $\ast$pfh4, fsal\_\-handle\_\-t $\ast$pfsalhandle, compound\_\-data\_\-t $\ast$data)
 \item 
-int {\bf nfs3\_\-FSALTo\-Fhandle} (nfs\_\-fh3 $\ast$pfh3, fsal\_\-handle\_\-t $\ast$pfsalhandle, exportlist\_\-t $\ast$pexport)
+int {\bf nfs3\_\-FSALToFhandle} (nfs\_\-fh3 $\ast$pfh3, fsal\_\-handle\_\-t $\ast$pfsalhandle, exportlist\_\-t $\ast$pexport)
 \item 
-int {\bf nfs2\_\-FSALTo\-Fhandle} (fhandle2 $\ast$pfh2, fsal\_\-handle\_\-t $\ast$pfsalhandle, exportlist\_\-t $\ast$pexport)
+int {\bf nfs2\_\-FSALToFhandle} (fhandle2 $\ast$pfh2, fsal\_\-handle\_\-t $\ast$pfsalhandle, exportlist\_\-t $\ast$pexport)
 \item 
-short {\bf nfs4\_\-Fhandle\-To\-Export\-Id} (nfs\_\-fh4 $\ast$pfh4)
+short {\bf nfs4\_\-FhandleToExportId} (nfs\_\-fh4 $\ast$pfh4)
 \item 
-short {\bf nfs3\_\-Fhandle\-To\-Export\-Id} (nfs\_\-fh3 $\ast$pfh3)
+short {\bf nfs3\_\-FhandleToExportId} (nfs\_\-fh3 $\ast$pfh3)
 \item 
-short {\bf nfs2\_\-Fhandle\-To\-Export\-Id} (fhandle2 $\ast$pfh2)
+short {\bf nfs2\_\-FhandleToExportId} (fhandle2 $\ast$pfh2)
+\item 
+int {\bf nfs3\_\-Is\_\-Fh\_\-Xattr} (nfs\_\-fh3 $\ast$pfh)
 \item 
 int {\bf nfs4\_\-Is\_\-Fh\_\-Empty} (nfs\_\-fh4 $\ast$pfh)
+\item 
+int {\bf nfs4\_\-Is\_\-Fh\_\-Xattr} (nfs\_\-fh4 $\ast$pfh)
 \item 
 int {\bf nfs4\_\-Is\_\-Fh\_\-Pseudo} (nfs\_\-fh4 $\ast$pfh)
 \item 
@@ -58,11 +63,11 @@ int {\bf nfs4\_\-Is\_\-Fh\_\-Expired} (nfs\_\-fh4 $\ast$pfh)
 \item 
 int {\bf nfs4\_\-Is\_\-Fh\_\-Invalid} (nfs\_\-fh4 $\ast$pfh)
 \item 
-unsigned long {\bf nfs2\_\-Fhandle\-Check\-Sum} (file\_\-handle\_\-v2\_\-t $\ast$pfh)
+unsigned int {\bf nfs2\_\-FhandleCheckSum} (file\_\-handle\_\-v2\_\-t $\ast$pfh)
 \item 
-unsigned long {\bf nfs3\_\-Fhandle\-Check\-Sum} (file\_\-handle\_\-v3\_\-t $\ast$pfh)
+unsigned long long {\bf nfs3\_\-FhandleCheckSum} (file\_\-handle\_\-v3\_\-t $\ast$pfh)
 \item 
-unsigned long {\bf nfs4\_\-Fhandle\-Check\-Sum} (file\_\-handle\_\-v4\_\-t $\ast$pfh)
+unsigned long long {\bf nfs4\_\-FhandleCheckSum} (file\_\-handle\_\-v4\_\-t $\ast$pfh)
 \item 
 void {\bf print\_\-fhandle2} (fhandle2 fh)
 \item 
@@ -87,7 +92,7 @@ void {\bf nfs4\_\-sprint\_\-fhandle} (nfs\_\-fh4 $\ast$fh4p, char $\ast$outstr)
 \subsection*{Variables}
 \begin{CompactItemize}
 \item 
-time\_\-t {\bf Server\-Boot\-Time}
+time\_\-t {\bf ServerBootTime}
 \item 
 nfs\_\-parameter\_\-t {\bf nfs\_\-param}
 \end{CompactItemize}
@@ -97,30 +102,30 @@ nfs\_\-parameter\_\-t {\bf nfs\_\-param}
 Some tools for managing the file handles. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 11:43:05 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.12 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-filehandle\_\-mgmt.c}{\rm (p.\,\pageref{nfs__filehandle__mgmt_8c})} : Some tools for managing the file handles.
+\doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c} : Some tools for managing the file handles.
 
 \begin{Desc}
-\item[Header]/cea/S/home/cvs/cvs/SHERPA/Base\-Cvs/GANESHA/src/support/nfs\_\-filehandle\_\-mgmt.c,v 1.12 2006/01/24 11:43:05 deniel Exp \end{Desc}
+\item[Header]/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs\_\-filehandle\_\-mgmt.c,v 1.12 2006/01/24 11:43:05 deniel Exp \end{Desc}
 
 
 \begin{Desc}
-\item[Log]{\bf nfs\_\-filehandle\_\-mgmt.c}{\rm (p.\,\pageref{nfs__filehandle__mgmt_8c})},v \end{Desc}
+\item[Log]\doxyref{nfs\_\-filehandle\_\-mgmt.c}{p.}{nfs__filehandle__mgmt_8c},v \end{Desc}
 Revision 1.12 2006/01/24 11:43:05 deniel Code cleaning in progress
 
 Revision 1.11 2006/01/11 08:12:18 deniel Added bug track and warning for badly formed handles
 
-Revision 1.10 2005/11/28 17:03:03 deniel Added Ce\-CILL headers
+Revision 1.10 2005/11/28 17:03:03 deniel Added CeCILL headers
 
 Revision 1.9 2005/09/07 08:58:30 deniel NFSv2 FH was only 31 byte long instead of 32
 
@@ -128,7 +133,7 @@ Revision 1.8 2005/09/07 08:16:07 deniel The checksum is filled with zeros before
 
 Revision 1.7 2005/08/11 12:37:28 deniel Added statistics management
 
-Revision 1.6 2005/08/09 12:35:37 leibovic setting file\_\-handle to 0 in nfs3\_\-FSALTo\-Fhandle, before writting into it.
+Revision 1.6 2005/08/09 12:35:37 leibovic setting file\_\-handle to 0 in nfs3\_\-FSALToFhandle, before writting into it.
 
 Revision 1.5 2005/08/08 14:09:25 leibovic setting checksum to 0 before writting in it.
 
@@ -146,17 +151,17 @@ Revision 1.3 2005/07/26 07:39:15 deniel Integration of NFSv2/NFSv3 In progress
 
 Revision 1.2 2005/07/21 09:18:42 deniel Structure of the file handles was redefined
 
-Revision 1.1 2005/07/20 12:56:54 deniel Reorganisation of the source files
+Revision 1.1 2005/07/20 12:56:54 deniel Reorganisation of the source files 
 
 Definition in file {\bf nfs\_\-filehandle\_\-mgmt.c}.
 
 \subsection{Function Documentation}
-\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2_FhandleCheckSum@{nfs2\_\-FhandleCheckSum}}
-\index{nfs2_FhandleCheckSum@{nfs2\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long nfs2\_\-Fhandle\-Check\-Sum (file\_\-handle\_\-v2\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a15}
+\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleCheckSum@{nfs2\_\-FhandleCheckSum}}
+\index{nfs2\_\-FhandleCheckSum@{nfs2\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs2\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int nfs2\_\-FhandleCheckSum (file\_\-handle\_\-v2\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_fe358eed3215d37db0bf13e69270e2d3}
 
 
-nfs2\_\-Fhandle\-Check\-Sum
+nfs2\_\-FhandleCheckSum
 
 Computes the checksum associated with a nfsv2 file handle.
 
@@ -169,14 +174,12 @@ Computes the checksum associated with a nfsv2 file handle.
 \item[Returns:]the computed checksum. \end{Desc}
 
 
-Definition at line 672 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs2\_\-Fhandle\-To\-FSAL(), and nfs2\_\-FSALTo\-Fhandle().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2_FhandleToExportId@{nfs2\_\-FhandleToExportId}}
-\index{nfs2_FhandleToExportId@{nfs2\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}short nfs2\_\-Fhandle\-To\-Export\-Id (fhandle2 $\ast$ {\em pfh2})}\label{nfs__filehandle__mgmt_8c_a10}
+Definition at line 730 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToExportId@{nfs2\_\-FhandleToExportId}}
+\index{nfs2\_\-FhandleToExportId@{nfs2\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs2\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs2\_\-FhandleToExportId (fhandle2 $\ast$ {\em pfh2})}\label{nfs__filehandle__mgmt_8c_4e15ee51a5126d013954cb8ddf34b62b}
 
 
-nfs2\_\-Fhandle\-To\-Export\-Id
+nfs2\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv2
 
@@ -189,12 +192,12 @@ This routine extracts the export id from the file handle NFSv2
 \item[Returns:]the export id. \end{Desc}
 
 
-Definition at line 542 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2_FhandleToFSAL@{nfs2\_\-FhandleToFSAL}}
-\index{nfs2_FhandleToFSAL@{nfs2\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-Fhandle\-To\-FSAL (fhandle2 $\ast$ {\em pfh2}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a4}
+Definition at line 556 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FhandleToFSAL@{nfs2\_\-FhandleToFSAL}}
+\index{nfs2\_\-FhandleToFSAL@{nfs2\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs2\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FhandleToFSAL (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_778946079c6c9ae6ec341476e2a882d2}
 
 
-nfs2\_\-Fhandle\-To\-FSAL: converts a nfs2 file handle to a FSAL file handle.
+nfs2\_\-FhandleToFSAL: converts a nfs2 file handle to a FSAL file handle.
 
 Converts a nfs2 file handle to a FSAL file handle.
 
@@ -207,14 +210,12 @@ Converts a nfs2 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 289 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs2\_\-Fhandle\-Check\-Sum(), print\_\-buff(), and print\_\-fhandle2().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2_FSALToFhandle@{nfs2\_\-FSALToFhandle}}
-\index{nfs2_FSALToFhandle@{nfs2\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FSALTo\-Fhandle (fhandle2 $\ast$ {\em pfh2}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_a7}
+Definition at line 297 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs2\_\-FSALToFhandle@{nfs2\_\-FSALToFhandle}}
+\index{nfs2\_\-FSALToFhandle@{nfs2\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs2\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs2\_\-FSALToFhandle (fhandle2 $\ast$ {\em pfh2}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_474e4d9f932d603dc25c3f49a00edbe2}
 
 
-nfs2\_\-FSALTo\-Fhandle: converts a FSAL file handle to a nfs2 file handle.
+nfs2\_\-FSALToFhandle: converts a FSAL file handle to a nfs2 file handle.
 
 Converts a nfs2 file handle to a FSAL file handle.
 
@@ -227,14 +228,12 @@ Converts a nfs2 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 443 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs2\_\-Fhandle\-Check\-Sum(), print\_\-buff(), and print\_\-fhandle2().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3_FhandleCheckSum@{nfs3\_\-FhandleCheckSum}}
-\index{nfs3_FhandleCheckSum@{nfs3\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long nfs3\_\-Fhandle\-Check\-Sum (file\_\-handle\_\-v3\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a16}
+Definition at line 457 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleCheckSum@{nfs3\_\-FhandleCheckSum}}
+\index{nfs3\_\-FhandleCheckSum@{nfs3\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs3\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long long nfs3\_\-FhandleCheckSum (file\_\-handle\_\-v3\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_0bc52bbfb9029cc09160f14f08422bb1}
 
 
-nfs3\_\-Fhandle\-Check\-Sum
+nfs3\_\-FhandleCheckSum
 
 Computes the checksum associated with a nfsv3 file handle.
 
@@ -247,14 +246,12 @@ Computes the checksum associated with a nfsv3 file handle.
 \item[Returns:]the computed checksum. \end{Desc}
 
 
-Definition at line 692 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs3\_\-Fhandle\-To\-FSAL(), and nfs3\_\-FSALTo\-Fhandle().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3_FhandleToExportId@{nfs3\_\-FhandleToExportId}}
-\index{nfs3_FhandleToExportId@{nfs3\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}short nfs3\_\-Fhandle\-To\-Export\-Id (nfs\_\-fh3 $\ast$ {\em pfh3})}\label{nfs__filehandle__mgmt_8c_a9}
+Definition at line 750 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToExportId@{nfs3\_\-FhandleToExportId}}
+\index{nfs3\_\-FhandleToExportId@{nfs3\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs3\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs3\_\-FhandleToExportId (nfs\_\-fh3 $\ast$ {\em pfh3})}\label{nfs__filehandle__mgmt_8c_8453425f543449aa0b989e06731395f3}
 
 
-nfs3\_\-Fhandle\-To\-Export\-Id
+nfs3\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv3
 
@@ -267,14 +264,12 @@ This routine extracts the export id from the file handle NFSv3
 \item[Returns:]the export id. \end{Desc}
 
 
-Definition at line 515 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References print\_\-buff().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3_FhandleToFSAL@{nfs3\_\-FhandleToFSAL}}
-\index{nfs3_FhandleToFSAL@{nfs3\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Fhandle\-To\-FSAL (nfs\_\-fh3 $\ast$ {\em pfh3}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a3}
+Definition at line 529 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FhandleToFSAL@{nfs3\_\-FhandleToFSAL}}
+\index{nfs3\_\-FhandleToFSAL@{nfs3\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs3\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FhandleToFSAL (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_31cf854436824a6294d676d9caeef45e}
 
 
-nfs3\_\-Fhandle\-To\-FSAL: converts a nfs3 file handle to a FSAL file handle.
+nfs3\_\-FhandleToFSAL: converts a nfs3 file handle to a FSAL file handle.
 
 Converts a nfs3 file handle to a FSAL file handle.
 
@@ -287,14 +282,12 @@ Converts a nfs3 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 244 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs3\_\-Fhandle\-Check\-Sum(), print\_\-buff(), and print\_\-fhandle3().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3_FSALToFhandle@{nfs3\_\-FSALToFhandle}}
-\index{nfs3_FSALToFhandle@{nfs3\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FSALTo\-Fhandle (nfs\_\-fh3 $\ast$ {\em pfh3}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_a6}
+Definition at line 248 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-FSALToFhandle@{nfs3\_\-FSALToFhandle}}
+\index{nfs3\_\-FSALToFhandle@{nfs3\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs3\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-FSALToFhandle (nfs\_\-fh3 $\ast$ {\em pfh3}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  exportlist\_\-t $\ast$ {\em pexport})}\label{nfs__filehandle__mgmt_8c_28ace18419e381b0bf3d17215e47f34f}
 
 
-nfs3\_\-FSALTo\-Fhandle: converts a FSAL file handle to a nfs3 file handle.
+nfs3\_\-FSALToFhandle: converts a FSAL file handle to a nfs3 file handle.
 
 Converts a nfs3 file handle to a FSAL file handle.
 
@@ -307,14 +300,30 @@ Converts a nfs3 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 389 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs3\_\-Fhandle\-Check\-Sum(), print\_\-buff(), and print\_\-fhandle3().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_FhandleCheckSum@{nfs4\_\-FhandleCheckSum}}
-\index{nfs4_FhandleCheckSum@{nfs4\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long nfs4\_\-Fhandle\-Check\-Sum (file\_\-handle\_\-v4\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a17}
+Definition at line 400 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs3\_\-Is\_\-Fh\_\-Xattr@{nfs3\_\-Is\_\-Fh\_\-Xattr}}
+\index{nfs3\_\-Is\_\-Fh\_\-Xattr@{nfs3\_\-Is\_\-Fh\_\-Xattr}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs3\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh3 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_668b574eeda3bc36c6b891636a37a82d}
 
 
-nfs4\_\-Fhandle\-Check\-Sum
+nfs4\_\-Is\_\-Fh\_\-Xattr
+
+This routine is used to test is a fh refers to a Xattr related stuff
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pfh}][IN] file handle to test.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
+
+
+Definition at line 579 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleCheckSum@{nfs4\_\-FhandleCheckSum}}
+\index{nfs4\_\-FhandleCheckSum@{nfs4\_\-FhandleCheckSum}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-FhandleCheckSum}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long long nfs4\_\-FhandleCheckSum (file\_\-handle\_\-v4\_\-t $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_776df7ad1fba8644dbc2015134ffeada}
+
+
+nfs4\_\-FhandleCheckSum
 
 Computes the checksum associated with a nfsv4 file handle.
 
@@ -327,14 +336,12 @@ Computes the checksum associated with a nfsv4 file handle.
 \item[Returns:]the computed checksum. \end{Desc}
 
 
-Definition at line 712 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs4\_\-Fhandle\-To\-FSAL(), and nfs4\_\-FSALTo\-Fhandle().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_FhandleToExportId@{nfs4\_\-FhandleToExportId}}
-\index{nfs4_FhandleToExportId@{nfs4\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}short nfs4\_\-Fhandle\-To\-Export\-Id (nfs\_\-fh4 $\ast$ {\em pfh4})}\label{nfs__filehandle__mgmt_8c_a8}
+Definition at line 770 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToExportId@{nfs4\_\-FhandleToExportId}}
+\index{nfs4\_\-FhandleToExportId@{nfs4\_\-FhandleToExportId}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-FhandleToExportId}]{\setlength{\rightskip}{0pt plus 5cm}short nfs4\_\-FhandleToExportId (nfs\_\-fh4 $\ast$ {\em pfh4})}\label{nfs__filehandle__mgmt_8c_bd252dd5f6d20c1b81760f8b2185e35d}
 
 
-nfs4\_\-Fhandle\-To\-Export\-Id
+nfs4\_\-FhandleToExportId
 
 This routine extracts the export id from the file handle NFSv4
 
@@ -347,12 +354,12 @@ This routine extracts the export id from the file handle NFSv4
 \item[Returns:]the export id. \end{Desc}
 
 
-Definition at line 491 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_FhandleToFSAL@{nfs4\_\-FhandleToFSAL}}
-\index{nfs4_FhandleToFSAL@{nfs4\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Fhandle\-To\-FSAL (nfs\_\-fh4 $\ast$ {\em pfh4}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_a2}
+Definition at line 505 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FhandleToFSAL@{nfs4\_\-FhandleToFSAL}}
+\index{nfs4\_\-FhandleToFSAL@{nfs4\_\-FhandleToFSAL}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-FhandleToFSAL}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FhandleToFSAL (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__filehandle__mgmt_8c_81434184a7fe8e65bced9b1be7ae95b8}
 
 
-nfs4\_\-Fhandle\-To\-FSAL: converts a nfs4 file handle to a FSAL file handle.
+nfs4\_\-FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
 
 Converts a nfs4 file handle to a FSAL file handle.
 
@@ -365,14 +372,12 @@ Converts a nfs4 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 194 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs4\_\-Fhandle\-Check\-Sum(), print\_\-buff(), and print\_\-fhandle4().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_FSALToFhandle@{nfs4\_\-FSALToFhandle}}
-\index{nfs4_FSALToFhandle@{nfs4\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FSALTo\-Fhandle (nfs\_\-fh4 $\ast$ {\em pfh4}, fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_a5}
+Definition at line 198 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-FSALToFhandle@{nfs4\_\-FSALToFhandle}}
+\index{nfs4\_\-FSALToFhandle@{nfs4\_\-FSALToFhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-FSALToFhandle}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-FSALToFhandle (nfs\_\-fh4 $\ast$ {\em pfh4}, \/  fsal\_\-handle\_\-t $\ast$ {\em pfsalhandle}, \/  compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_3c39bdd89b373290fb7050bf6faded41}
 
 
-nfs4\_\-FSALTo\-Fhandle: converts a FSAL file handle to a nfs4 file handle.
+nfs4\_\-FSALToFhandle: converts a FSAL file handle to a nfs4 file handle.
 
 Converts a nfs4 file handle to a FSAL file handle.
 
@@ -385,11 +390,9 @@ Converts a nfs4 file handle to a FSAL file handle.
 \item[Returns:]1 if successful, 0 otherwise \end{Desc}
 
 
-Definition at line 327 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs4\_\-Fhandle\-Check\-Sum(), and nfs\_\-param.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_Is_Fh_Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}}
-\index{nfs4_Is_Fh_Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Empty (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a11}
+Definition at line 335 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}}
+\index{nfs4\_\-Is\_\-Fh\_\-Empty@{nfs4\_\-Is\_\-Fh\_\-Empty}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Empty}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Empty (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_ea877e7eb396fbb3c64ff2eb789cf5fc}
 
 
 nfs4\_\-Is\_\-Fh\_\-Empty
@@ -405,9 +408,9 @@ This routine is used to test if a fh is empty (contains no data).
 \item[Returns:]NFS4\_\-OK if successfull, NFS4ERR\_\-NOFILEHANDLE is fh is empty. \end{Desc}
 
 
-Definition at line 566 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_Is_Fh_Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}}
-\index{nfs4_Is_Fh_Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Expired (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a13}
+Definition at line 602 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}}
+\index{nfs4\_\-Is\_\-Fh\_\-Expired@{nfs4\_\-Is\_\-Fh\_\-Expired}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Expired}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Expired (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_5dd8010e82ca42c8cfb5afd636426813}
 
 
 nfs4\_\-Is\_\-Fh\_\-Expired
@@ -423,11 +426,9 @@ This routine is used to test if a fh is expired
 \item[Returns:]NFS4\_\-OK if successfull. All the FH are persistent for now. \end{Desc}
 
 
-Definition at line 613 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References nfs\_\-param.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_Is_Fh_Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}}
-\index{nfs4_Is_Fh_Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Invalid (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a14}
+Definition at line 671 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}}
+\index{nfs4\_\-Is\_\-Fh\_\-Invalid@{nfs4\_\-Is\_\-Fh\_\-Invalid}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Invalid}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Invalid (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_c9471373d4493abc215f5d8b86783764}
 
 
 nfs4\_\-Is\_\-Fh\_\-Invalid
@@ -443,9 +444,9 @@ This routine is used to test if a fh is invalid.
 \item[Returns:]NFS4\_\-OK if successfull. \end{Desc}
 
 
-Definition at line 646 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_Is_Fh_Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}}
-\index{nfs4_Is_Fh_Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Pseudo (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_a12}
+Definition at line 704 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}}
+\index{nfs4\_\-Is\_\-Fh\_\-Pseudo@{nfs4\_\-Is\_\-Fh\_\-Pseudo}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Pseudo}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Pseudo (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_517dfc86532641b32ac7c178aeb30c46}
 
 
 nfs4\_\-Is\_\-Fh\_\-Pseudo
@@ -461,9 +462,27 @@ This routine is used to test if a fh refers to pseudo fs
 \item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
 
 
-Definition at line 589 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4_sprint_fhandle@{nfs4\_\-sprint\_\-fhandle}}
-\index{nfs4_sprint_fhandle@{nfs4\_\-sprint\_\-fhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-sprint\_\-fhandle (nfs\_\-fh4 $\ast$ {\em fh4p}, char $\ast$ {\em outstr})}\label{nfs__filehandle__mgmt_8c_a27}
+Definition at line 647 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-Is\_\-Fh\_\-Xattr@{nfs4\_\-Is\_\-Fh\_\-Xattr}}
+\index{nfs4\_\-Is\_\-Fh\_\-Xattr@{nfs4\_\-Is\_\-Fh\_\-Xattr}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-Is\_\-Fh\_\-Xattr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-Is\_\-Fh\_\-Xattr (nfs\_\-fh4 $\ast$ {\em pfh})}\label{nfs__filehandle__mgmt_8c_342a0d49502947ec34dffa7b6b95f505}
+
+
+nfs4\_\-Is\_\-Fh\_\-Xattr
+
+This routine is used to test is a fh refers to a Xattr related stuff
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pfh}][IN] file handle to test.\end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if in pseudo fh, FALSE otherwise \end{Desc}
+
+
+Definition at line 624 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs4\_\-sprint\_\-fhandle@{nfs4\_\-sprint\_\-fhandle}}
+\index{nfs4\_\-sprint\_\-fhandle@{nfs4\_\-sprint\_\-fhandle}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs4\_\-sprint\_\-fhandle}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-sprint\_\-fhandle (nfs\_\-fh4 $\ast$ {\em fh4p}, \/  char $\ast$ {\em outstr})}\label{nfs__filehandle__mgmt_8c_03954b5fee52c62dbcdcbc85c8f08377}
 
 
 nfs4\_\-sprint\_\-fhandle : converts a file handle v4 to a string.
@@ -479,9 +498,9 @@ Converts a file handle v4 to a string. This will be used mostly for debugging pu
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 885 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print_buff@{print\_\-buff}}
-\index{print_buff@{print\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-buff (char $\ast$ {\em buff}, int {\em len})}\label{nfs__filehandle__mgmt_8c_a24}
+Definition at line 943 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-buff@{print\_\-buff}}
+\index{print\_\-buff@{print\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{print\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-buff (char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_10b1bdddf21fc52b0bf2e6c0cbce35dc}
 
 
 print\_\-buff
@@ -497,11 +516,9 @@ This routine prints the content of a buffer.
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 826 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs2\_\-Fhandle\-To\-FSAL(), nfs2\_\-FSALTo\-Fhandle(), nfs3\_\-Fhandle\-To\-Export\-Id(), nfs3\_\-Fhandle\-To\-FSAL(), nfs3\_\-FSALTo\-Fhandle(), and nfs4\_\-Fhandle\-To\-FSAL().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print_compound_fh@{print\_\-compound\_\-fh}}
-\index{print_compound_fh@{print\_\-compound\_\-fh}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-compound\_\-fh (compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_a26}
+Definition at line 884 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-compound\_\-fh@{print\_\-compound\_\-fh}}
+\index{print\_\-compound\_\-fh@{print\_\-compound\_\-fh}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{print\_\-compound\_\-fh}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-compound\_\-fh (compound\_\-data\_\-t $\ast$ {\em data})}\label{nfs__filehandle__mgmt_8c_8c353da8213f21121f211cfe38f7bea3}
 
 
 print\_\-compound\_\-fh
@@ -517,11 +534,9 @@ This routine prints all the file handle within a compoud request's data structur
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 856 of file nfs\_\-filehandle\_\-mgmt.c.
-
-References print\_\-fhandle4().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print_fhandle2@{print\_\-fhandle2}}
-\index{print_fhandle2@{print\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle2 (fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_a18}
+Definition at line 914 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle2@{print\_\-fhandle2}}
+\index{print\_\-fhandle2@{print\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{print\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle2 (fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_10e06247348b27f316d070800abc4721}
 
 
 print\_\-fhandle2
@@ -537,11 +552,9 @@ This routine prints a NFSv2 file handle (for debugging purpose)
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 733 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs2\_\-Fhandle\-To\-FSAL(), and nfs2\_\-FSALTo\-Fhandle().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print_fhandle3@{print\_\-fhandle3}}
-\index{print_fhandle3@{print\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle3 (nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a20}
+Definition at line 791 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle3@{print\_\-fhandle3}}
+\index{print\_\-fhandle3@{print\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{print\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle3 (nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a2081ffe155d2ced8a1c6acc7bf819dd}
 
 
 print\_\-fhandle3
@@ -557,11 +570,9 @@ This routine prints a NFSv3 file handle (for debugging purpose)
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 763 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs3\_\-Fhandle\-To\-FSAL(), and nfs3\_\-FSALTo\-Fhandle().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print_fhandle4@{print\_\-fhandle4}}
-\index{print_fhandle4@{print\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle4 (nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_a22}
+Definition at line 821 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!print\_\-fhandle4@{print\_\-fhandle4}}
+\index{print\_\-fhandle4@{print\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{print\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-fhandle4 (nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_dab5d456a2e0014569528c181a620fc1}
 
 
 print\_\-fhandle4
@@ -577,48 +588,44 @@ This routine prints a NFSv4 file handle (for debugging purpose)
 \item[Returns:]nothing (void function). \end{Desc}
 
 
-Definition at line 794 of file nfs\_\-filehandle\_\-mgmt.c.
-
-Referenced by nfs4\_\-Fhandle\-To\-FSAL(), and print\_\-compound\_\-fh().\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint_buff@{sprint\_\-buff}}
-\index{sprint_buff@{sprint\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-buff (char $\ast$ {\em str}, char $\ast$ {\em buff}, int {\em len})}\label{nfs__filehandle__mgmt_8c_a25}
+Definition at line 852 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-buff@{sprint\_\-buff}}
+\index{sprint\_\-buff@{sprint\_\-buff}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{sprint\_\-buff}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-buff (char $\ast$ {\em str}, \/  char $\ast$ {\em buff}, \/  int {\em len})}\label{nfs__filehandle__mgmt_8c_4fd593aa6e94740c4152538b3c956e3a}
 
 
 
 
-Definition at line 836 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint_fhandle2@{sprint\_\-fhandle2}}
-\index{sprint_fhandle2@{sprint\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle2 (char $\ast$ {\em str}, fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_a19}
+Definition at line 894 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle2@{sprint\_\-fhandle2}}
+\index{sprint\_\-fhandle2@{sprint\_\-fhandle2}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{sprint\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle2 (char $\ast$ {\em str}, \/  fhandle2 {\em fh})}\label{nfs__filehandle__mgmt_8c_55fc7459348089cdbd9e800fb6a6b5e5}
 
 
 
 
-Definition at line 743 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint_fhandle3@{sprint\_\-fhandle3}}
-\index{sprint_fhandle3@{sprint\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle3 (char $\ast$ {\em str}, nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_a21}
+Definition at line 801 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle3@{sprint\_\-fhandle3}}
+\index{sprint\_\-fhandle3@{sprint\_\-fhandle3}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{sprint\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle3 (char $\ast$ {\em str}, \/  nfs\_\-fh3 {\em fh})}\label{nfs__filehandle__mgmt_8c_4955bd04be3b76f2569c6b77d88fc313}
 
 
 
 
-Definition at line 773 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint_fhandle4@{sprint\_\-fhandle4}}
-\index{sprint_fhandle4@{sprint\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle4 (char $\ast$ {\em str}, nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_a23}
+Definition at line 831 of file nfs\_\-filehandle\_\-mgmt.c.\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!sprint\_\-fhandle4@{sprint\_\-fhandle4}}
+\index{sprint\_\-fhandle4@{sprint\_\-fhandle4}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{sprint\_\-fhandle4}]{\setlength{\rightskip}{0pt plus 5cm}void sprint\_\-fhandle4 (char $\ast$ {\em str}, \/  nfs\_\-fh4 {\em fh})}\label{nfs__filehandle__mgmt_8c_38f80116c3a5d6583931831df4cb64ca}
 
 
 
 
-Definition at line 804 of file nfs\_\-filehandle\_\-mgmt.c.
+Definition at line 862 of file nfs\_\-filehandle\_\-mgmt.c.
 
 \subsection{Variable Documentation}
-\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs_param@{nfs\_\-param}}
-\index{nfs_param@{nfs\_\-param}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__filehandle__mgmt_8c_a1}
+\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!nfs\_\-param@{nfs\_\-param}}
+\index{nfs\_\-param@{nfs\_\-param}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
+\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__filehandle__mgmt_8c_eb8fc46586993cf210777049fca03969}
 
 
-
-
-Definition at line 146 of file test\_\-clientid.c.\index{nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!ServerBootTime@{ServerBootTime}}
+\index{nfs\_\-filehandle\_\-mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}!ServerBootTime@{ServerBootTime}}
 \index{ServerBootTime@{ServerBootTime}!nfs_filehandle_mgmt.c@{nfs\_\-filehandle\_\-mgmt.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Server\-Boot\-Time}}\label{nfs__filehandle__mgmt_8c_a0}
+\subsubsection[{ServerBootTime}]{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf ServerBootTime}}\label{nfs__filehandle__mgmt_8c_7b4df488832bc1f60082b16b51472dc5}
 
 

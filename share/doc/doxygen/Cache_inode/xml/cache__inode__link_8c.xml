@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="cache__inode__link_8c" kind="file">
     <compoundname>cache_inode_link.c</compoundname>
     <includes local="yes">LRU_List.h</includes>
@@ -14,15 +14,6 @@
     <includes local="no">time.h</includes>
     <includes local="no">pthread.h</includes>
     <incdepgraph>
-      <node id="109">
-        <label>LRU_List.h</label>
-      </node>
-      <node id="113">
-        <label>fsal.h</label>
-      </node>
-      <node id="110">
-        <label>log_functions.h</label>
-      </node>
       <node id="108">
         <label>cache_inode_link.c</label>
         <link refid="cache_inode_link.c"/>
@@ -48,6 +39,15 @@
         </childnode>
         <childnode refid="119" relation="include">
         </childnode>
+      </node>
+      <node id="109">
+        <label>LRU_List.h</label>
+      </node>
+      <node id="113">
+        <label>fsal.h</label>
+      </node>
+      <node id="110">
+        <label>log_functions.h</label>
       </node>
       <node id="119">
         <label>pthread.h</label>
@@ -75,7 +75,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="func">
-      <memberdef kind="function" id="cache__inode__link_8c_1a0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cache__inode__link_8c_1e9ac636b446dd30f945c858e3d6eb8fb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_status_t</type>
         <definition>cache_inode_status_t cache_inode_link</definition>
         <argsstring>(cache_entry_t *pentry_src, cache_entry_t *pentry_dir_dest, fsal_name_t *plink_name, fsal_attrib_list_t *pattr, hash_table_t *ht, cache_inode_client_t *pclient, fsal_op_context_t *pcontext, cache_inode_status_t *pstatus)</argsstring>
@@ -179,24 +179,19 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_link.c" line="133" bodystart="125" bodyend="377"/>
-        <references refid="cache__inode__readdir_8c_1a1" compoundref="cache__inode__readdir_8c" startline="343" endline="593">cache_inode_add_cached_dirent</references>
-        <references refid="cache__inode__misc_8c_1a5" compoundref="cache__inode__misc_8c" startline="726" endline="801">cache_inode_error_convert</references>
-        <references refid="cache__inode__misc_8c_1a19" compoundref="cache__inode__misc_8c" startline="1521" endline="1687">cache_inode_kill_entry</references>
-        <references refid="cache__inode__lookup_8c_1a2" compoundref="cache__inode__lookup_8c" startline="471" endline="487">cache_inode_lookup</references>
-        <references refid="cache__inode__misc_8c_1a6" compoundref="cache__inode__misc_8c" startline="818" endline="940">cache_inode_valid</references>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_link.c" line="137" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_link.c" bodystart="129" bodyend="386"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Creation of an hardlink. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:26 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.16 </para></simplesect>
-</para></simplesect>
-<ref refid="cache__inode__link_8c" kindref="compound">cache_inode_link.c</ref> : Creation of an hardlink.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:26 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.16 </para></simplesect>
+<ref refid="cache__inode__link_8c" kindref="compound">cache_inode_link.c</ref> : Creation of an hardlink. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -277,273 +272,282 @@
 <codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125" refid="cache__inode__link_8c_1a0" refkind="member"><highlight class="normal">cache_inode_status_t<sp/><ref refid="cache__inode__link_8c_1a0" kindref="member">cache_inode_link</ref>(<sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry_src,<sp/></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry_dir_dest,<sp/></highlight></codeline>
-<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_name_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>plink_name,<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/>*<sp/>pattr,<sp/></highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,</highlight></codeline>
-<codeline lineno="130"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/>*<sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/></highlight></codeline>
-<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
-<codeline lineno="133"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/>fsal_status_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status<sp/>;</highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>;</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>;</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>link_attributes<sp/>;</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/>cache_inode_status_t<sp/><sp/><sp/><sp/>status<sp/>;</highlight></codeline>
-<codeline lineno="139"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="140"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_lookup<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>lookup_attributes<sp/>;</highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>key<sp/>;</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>value<sp/>;</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/>cache_inode_fsal_data_t<sp/>fsdata<sp/>;</highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/>fsal_size_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_size<sp/>;</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/>fsal_size_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_spaceused<sp/>;</highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/>fsal_time_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_mtime<sp/>;</highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>return<sp/>default<sp/>to<sp/>CACHE_INODE_SUCCESS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.nb_call_total<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.func_stats.nb_call[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Is<sp/>the<sp/>destination<sp/>a<sp/>directory<sp/>?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pentry_dir_dest-&gt;internal_md.type<sp/>!=<sp/>DIR_BEGINNING<sp/>&amp;&amp;</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_dir_dest-&gt;internal_md.type<sp/>!=<sp/>DIR_CONTINUE<sp/>)</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Bad<sp/>type<sp/>....<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Check<sp/>if<sp/>an<sp/>entry<sp/>of<sp/>the<sp/>same<sp/>name<sp/>doesn&apos;t<sp/>exist<sp/>in<sp/>the<sp/>destination<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_1a2" kindref="member">cache_inode_lookup</ref>(<sp/>pentry_dir_dest,<sp/></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>plink_name,<sp/></highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;lookup_attributes,</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,<sp/></highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pstatus<sp/>)<sp/>)<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>exists<sp/>such<sp/>an<sp/>entry...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_ENTRY_EXISTS<sp/>;</highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">/*<sp/>_SOLARIS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight></codeline>
+<codeline lineno="129" refid="cache__inode__link_8c_1e9ac636b446dd30f945c858e3d6eb8fb" refkind="member"><highlight class="normal">cache_inode_status_t<sp/><ref refid="cache__inode__link_8c_1e9ac636b446dd30f945c858e3d6eb8fb" kindref="member">cache_inode_link</ref>(<sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry_src,<sp/></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry_dir_dest,<sp/></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_name_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>plink_name,<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/>*<sp/>pattr,<sp/></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/>*<sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/></highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
+<codeline lineno="137"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="138"><highlight class="normal"><sp/><sp/>fsal_status_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status<sp/>;</highlight></codeline>
+<codeline lineno="139"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>;</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>;</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>link_attributes<sp/>;</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_MFSL</highlight></codeline>
+<codeline lineno="143"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>dirdest_attributes<sp/>;</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="145"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>cache_inode_status_t<sp/><sp/><sp/><sp/>status<sp/>;</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_lookup<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>lookup_attributes<sp/>;</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/>fsal_size_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_size<sp/>;</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/>fsal_size_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_spaceused<sp/>;</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/>fsal_time_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>save_mtime<sp/>;</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>return<sp/>default<sp/>to<sp/>CACHE_INODE_SUCCESS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"></highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.nb_call_total<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/>pclient-&gt;stat.func_stats.nb_call[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"></highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Is<sp/>the<sp/>destination<sp/>a<sp/>directory<sp/>?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pentry_dir_dest-&gt;internal_md.type<sp/>!=<sp/>DIR_BEGINNING<sp/>&amp;&amp;</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_dir_dest-&gt;internal_md.type<sp/>!=<sp/>DIR_CONTINUE<sp/>)</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Bad<sp/>type<sp/>....<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Check<sp/>if<sp/>an<sp/>entry<sp/>of<sp/>the<sp/>same<sp/>name<sp/>doesn&apos;t<sp/>exist<sp/>in<sp/>the<sp/>destination<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_lookup<sp/>=<sp/><ref refid="cache__inode__lookup_8c_15d22f10048ff18cc8d528398af6d8cf6" kindref="member">cache_inode_lookup</ref>(<sp/>pentry_dir_dest,<sp/></highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>plink_name,<sp/></highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;lookup_attributes,</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,<sp/></highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pstatus<sp/>)<sp/>)<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>exists<sp/>such<sp/>an<sp/>entry...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_ENTRY_EXISTS<sp/>;</highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
 <codeline lineno="183"><highlight class="normal"></highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>pentry<sp/>to<sp/>be<sp/>hardlinked<sp/>can&apos;t<sp/>be<sp/>a<sp/>DIR_BEGINNING<sp/>or<sp/>a<sp/>DIR_CONTINUE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>DIR_BEGINNING<sp/>||</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>DIR_CONTINUE<sp/>)</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Bad<sp/>type<sp/>....<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="191"><highlight class="normal"></highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>At<sp/>this<sp/>point,<sp/>we<sp/>know<sp/>that<sp/>the<sp/>entry<sp/>does<sp/>not<sp/>exist<sp/>in<sp/>destination<sp/>directory,<sp/>we<sp/>know<sp/>that<sp/>the<sp/></highlight></codeline>
-<codeline lineno="196"><highlight class="comment"><sp/><sp/><sp/>*<sp/>destination<sp/>is<sp/>actually<sp/>a<sp/>directory<sp/>and<sp/>that<sp/>the<sp/>source<sp/>is<sp/>no<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/>P(<sp/>pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>target<sp/>dir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/>P(<sp/>pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Get<sp/>the<sp/>handles<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>)</highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:</highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.file.handle<sp/>;</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.symlink.handle<sp/>;</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lock<sp/>the<sp/>related<sp/>dir_begin<sp/>(dir<sp/>begin<sp/>are<sp/>garbagge<sp/>collected<sp/>AFTER<sp/>their<sp/>related<sp/>dir_cont)</highlight></codeline>
-<codeline lineno="221"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>this<sp/>means<sp/>that<sp/>if<sp/>a<sp/>DIR_CONTINUE<sp/>exists,<sp/>its<sp/>pdir<sp/>pointer<sp/>is<sp/>not<sp/>endless<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>P(<sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.special_obj.handle<sp/>;</highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"></highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;WARNING:<sp/>unknown<sp/>source<sp/>pentry<sp/>type:<sp/>internal_md.type=%d,<sp/>line<sp/>%d<sp/>in<sp/>file<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;internal_md.type,<sp/>__LINE__,<sp/>__FILE__<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
-<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="241"><highlight class="normal"></highlight></codeline>
-<codeline lineno="242"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_dir_dest-&gt;internal_md.type<sp/>)</highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
-<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>=<sp/>pentry_dir_dest-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
-<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="247"><highlight class="normal"></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lock<sp/>the<sp/>related<sp/>dir_begin<sp/>(dir<sp/>begin<sp/>are<sp/>garbagge<sp/>collected<sp/>AFTER<sp/>their<sp/>related<sp/>dir_cont)</highlight></codeline>
-<codeline lineno="250"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>this<sp/>means<sp/>that<sp/>if<sp/>a<sp/>DIR_CONTINUE<sp/>exists,<sp/>its<sp/>pdir<sp/>pointer<sp/>is<sp/>not<sp/>endless<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>P(<sp/>pentry_dir_dest-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry_dir_dest-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>object<sp/>is<sp/>a<sp/>data<sp/>cached<sp/>regular<sp/>file,<sp/>keeps<sp/>it<sp/>mtime<sp/>and<sp/>size,<sp/>STEP<sp/>1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>REGULAR_FILE<sp/>)<sp/><sp/>&amp;&amp;<sp/><sp/>(<sp/>pentry_src-&gt;object.file.pentry_content<sp/>!=<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_mtime<sp/><sp/><sp/><sp/><sp/>=<sp/>pentry_src-&gt;object.file.attributes.mtime<sp/>;</highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_size<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>pentry_src-&gt;object.file.attributes.filesize<sp/>;</highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_spaceused<sp/>=<sp/>pentry_src-&gt;object.file.attributes.spaceused<sp/>;</highlight></codeline>
-<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Do<sp/>the<sp/>link<sp/>at<sp/>FSAL<sp/>level<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/>link_attributes.asked_attributes<sp/>=<sp/>pclient-&gt;attrmask;</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"><sp/><sp/>fsal_status<sp/>=<sp/>FSAL_link(<sp/>&amp;handle_src,<sp/>&amp;handle_dest,<sp/>plink_name,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>FSAL_IS_ERROR(<sp/>fsal_status<sp/>)<sp/>)<sp/></highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a5" kindref="member">cache_inode_error_convert</ref>(<sp/>fsal_status<sp/>)<sp/>;<sp/></highlight></codeline>
-<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/><sp/>pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="273"><highlight class="normal"></highlight></codeline>
-<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>fsal_status.major<sp/>==<sp/>ERR_FSAL_STALE<sp/>)</highlight></codeline>
-<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>kill_status<sp/>;</highlight></codeline>
-<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>;</highlight></codeline>
-<codeline lineno="278"><highlight class="normal"></highlight></codeline>
-<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>at<sp/>least<sp/>one<sp/>in<sp/><sp/>pentry<sp/>=<sp/>%p<sp/>and<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
-<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src,<sp/>pentry_dir_dest<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="281"><highlight class="normal"></highlight></codeline>
-<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Use<sp/>FSAL_getattrs<sp/>to<sp/>find<sp/>which<sp/>entry<sp/>is<sp/>staled<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>=<sp/>FSAL_getattrs(<sp/><sp/>&amp;handle_src,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>getattr_status.major<sp/>==<sp/>ERR_FSAL_ACCESS<sp/>)</highlight></codeline>
-<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry_src<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="186"><highlight class="normal"></highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>pentry<sp/>to<sp/>be<sp/>hardlinked<sp/>can&apos;t<sp/>be<sp/>a<sp/>DIR_BEGINNING<sp/>or<sp/>a<sp/>DIR_CONTINUE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>DIR_BEGINNING<sp/>||</highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>DIR_CONTINUE<sp/>)</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Bad<sp/>type<sp/>....<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>At<sp/>this<sp/>point,<sp/>we<sp/>know<sp/>that<sp/>the<sp/>entry<sp/>does<sp/>not<sp/>exist<sp/>in<sp/>destination<sp/>directory,<sp/>we<sp/>know<sp/>that<sp/>the<sp/></highlight></codeline>
+<codeline lineno="199"><highlight class="comment"><sp/><sp/><sp/>*<sp/>destination<sp/>is<sp/>actually<sp/>a<sp/>directory<sp/>and<sp/>that<sp/>the<sp/>source<sp/>is<sp/>no<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/>P_w(<sp/>&amp;pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Lock<sp/>the<sp/>target<sp/>dir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/>P_w(<sp/>&amp;pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Get<sp/>the<sp/>handles<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>)</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.file.handle<sp/>;</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.symlink.handle<sp/>;</highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lock<sp/>the<sp/>related<sp/>dir_begin<sp/>(dir<sp/>begin<sp/>are<sp/>garbagge<sp/>collected<sp/>AFTER<sp/>their<sp/>related<sp/>dir_cont)</highlight></codeline>
+<codeline lineno="224"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>this<sp/>means<sp/>that<sp/>if<sp/>a<sp/>DIR_CONTINUE<sp/>exists,<sp/>its<sp/>pdir<sp/>pointer<sp/>is<sp/>not<sp/>endless<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>P_r(<sp/>&amp;pentry_src-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_r(<sp/>&amp;pentry_src-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_src<sp/>=<sp/><sp/>pentry_src-&gt;object.special_obj.handle<sp/>;</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"></highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;WARNING:<sp/>unknown<sp/>source<sp/>pentry<sp/>type:<sp/>internal_md.type=%d,<sp/>line<sp/>%d<sp/>in<sp/>file<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;internal_md.type,<sp/>__LINE__,<sp/>__FILE__<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_BAD_TYPE<sp/>;</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_dir_dest-&gt;internal_md.type<sp/>)</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_BEGINNING:</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>=<sp/>pentry_dir_dest-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="250"><highlight class="normal"></highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>DIR_CONTINUE:</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>lock<sp/>the<sp/>related<sp/>dir_begin<sp/>(dir<sp/>begin<sp/>are<sp/>garbagge<sp/>collected<sp/>AFTER<sp/>their<sp/>related<sp/>dir_cont)</highlight></codeline>
+<codeline lineno="253"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>this<sp/>means<sp/>that<sp/>if<sp/>a<sp/>DIR_CONTINUE<sp/>exists,<sp/>its<sp/>pdir<sp/>pointer<sp/>is<sp/>not<sp/>endless<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>P_r(<sp/>&amp;pentry_dir_dest-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>handle_dest<sp/>=<sp/><sp/>pentry_src-&gt;object.dir_cont.pdir_begin-&gt;object.dir_begin.handle<sp/>;</highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_r(<sp/>&amp;pentry_dir_dest-&gt;object.dir_cont.pdir_begin-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>object<sp/>is<sp/>a<sp/>data<sp/>cached<sp/>regular<sp/>file,<sp/>keeps<sp/>it<sp/>mtime<sp/>and<sp/>size,<sp/>STEP<sp/>1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>REGULAR_FILE<sp/>)<sp/><sp/>&amp;&amp;<sp/><sp/>(<sp/>pentry_src-&gt;object.file.pentry_content<sp/>!=<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_mtime<sp/><sp/><sp/><sp/><sp/>=<sp/>pentry_src-&gt;object.file.attributes.mtime<sp/>;</highlight></codeline>
+<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_size<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>pentry_src-&gt;object.file.attributes.filesize<sp/>;</highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>save_spaceused<sp/>=<sp/>pentry_src-&gt;object.file.attributes.spaceused<sp/>;</highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Do<sp/>the<sp/>link<sp/>at<sp/>FSAL<sp/>level<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/>link_attributes.asked_attributes<sp/>=<sp/>pclient-&gt;attrmask;</highlight></codeline>
+<codeline lineno="270"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_MFSL</highlight></codeline>
+<codeline lineno="271"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_18b74ff8be25748ce96f1d6258409d27d" kindref="member">cache_inode_get_attributes</ref>(<sp/>pentry_src,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/><ref refid="cache__inode__misc_8c_18b74ff8be25748ce96f1d6258409d27d" kindref="member">cache_inode_get_attributes</ref>(<sp/>pentry_dir_dest,<sp/>&amp;dirdest_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/>fsal_status<sp/>=<sp/>MFSL_link(<sp/>&amp;pentry_src-&gt;mobject,<sp/>&amp;pentry_dir_dest-&gt;mobject,<sp/>plink_name,<sp/>pcontext,<sp/>&amp;pclient-&gt;mfsl_context,<sp/>&amp;link_attributes,<sp/>&amp;dirdest_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="275"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>fsal_status<sp/>=<sp/>FSAL_link(<sp/>&amp;handle_src,<sp/>&amp;handle_dest,<sp/>plink_name,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="277"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>FSAL_IS_ERROR(<sp/>fsal_status<sp/>)<sp/>)<sp/></highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1aa50487b9b403fd85b4a845de1a3df69" kindref="member">cache_inode_error_convert</ref>(<sp/>fsal_status<sp/>)<sp/>;<sp/></highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_w(<sp/>&amp;pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_w(<sp/>&amp;pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="282"><highlight class="normal"></highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>fsal_status.major<sp/>==<sp/>ERR_FSAL_STALE<sp/>)</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_status_t<sp/>kill_status<sp/>;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_status_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>;</highlight></codeline>
 <codeline lineno="287"><highlight class="normal"></highlight></codeline>
-<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1a19" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry_src,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry_src,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="291"><highlight class="normal"></highlight></codeline>
-<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>=<sp/>FSAL_getattrs(<sp/><sp/>&amp;handle_dest,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>at<sp/>least<sp/>one<sp/>in<sp/><sp/>pentry<sp/>=<sp/>%p<sp/>and<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src,<sp/>pentry_dir_dest<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="290"><highlight class="normal"></highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Use<sp/>FSAL_getattrs<sp/>to<sp/>find<sp/>which<sp/>entry<sp/>is<sp/>staled<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>=<sp/>FSAL_getattrs(<sp/><sp/>&amp;handle_src,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>getattr_status.major<sp/>==<sp/>ERR_FSAL_ACCESS<sp/>)</highlight></codeline>
 <codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry_dir_dest<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry_src<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="296"><highlight class="normal"></highlight></codeline>
-<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1a19" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry_dir_dest,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry_dir_dest,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1ed59b090dbed68c7eca3a1b5514a11c5" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry_src,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry_src,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="299"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="300"><highlight class="normal"></highlight></codeline>
-<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="302"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_FSAL_ESTALE<sp/>;</highlight></codeline>
-<codeline lineno="303"><highlight class="normal"></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="306"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>object<sp/>is<sp/>a<sp/>data<sp/>cached<sp/>regular<sp/>file,<sp/>keeps<sp/>it<sp/>mtime<sp/>and<sp/>size,<sp/>STEP<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="308"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>REGULAR_FILE<sp/>)<sp/><sp/>&amp;&amp;<sp/><sp/>(<sp/>pentry_src-&gt;object.file.pentry_content<sp/>!=<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="309"><highlight class="normal"><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.mtime<sp/><sp/><sp/><sp/><sp/>=<sp/><sp/>save_mtime<sp/><sp/><sp/><sp/><sp/>;<sp/></highlight></codeline>
-<codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.filesize<sp/><sp/>=<sp/><sp/>save_size<sp/><sp/><sp/><sp/><sp/><sp/>;<sp/></highlight></codeline>
-<codeline lineno="312"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.spaceused<sp/>=<sp/><sp/>save_spaceused<sp/>;</highlight></codeline>
-<codeline lineno="313"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="314"><highlight class="normal"></highlight></codeline>
+<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>getattr_status<sp/>=<sp/>FSAL_getattrs(<sp/><sp/>&amp;handle_dest,<sp/>pcontext,<sp/>&amp;link_attributes<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="302"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>getattr_status.major<sp/>==<sp/>ERR_FSAL_ACCESS<sp/>)</highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Stale<sp/>FSAL<sp/>File<sp/>Handle<sp/>detected<sp/>for<sp/>pentry<sp/>=<sp/>%p&quot;</highlight><highlight class="normal">,<sp/>pentry_dir_dest<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="305"><highlight class="normal"></highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__misc_8c_1ed59b090dbed68c7eca3a1b5514a11c5" kindref="member">cache_inode_kill_entry</ref>(<sp/>pentry_dir_dest,<sp/>ht,<sp/>pclient,<sp/>&amp;kill_status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_link:<sp/>Could<sp/>not<sp/>kill<sp/>entry<sp/>%p,<sp/>status<sp/>=<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>pentry_dir_dest,<sp/>kill_status<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="309"><highlight class="normal"></highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_FSAL_ESTALE<sp/>;</highlight></codeline>
+<codeline lineno="312"><highlight class="normal"></highlight></codeline>
+<codeline lineno="313"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="315"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="316"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Update<sp/>cached<sp/>attributes<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="317"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>)</highlight></codeline>
-<codeline lineno="318"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="319"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:</highlight></codeline>
-<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.file.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
-<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="323"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
-<codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.symlink.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
-<codeline lineno="325"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
-<codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
-<codeline lineno="329"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
-<codeline lineno="330"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
-<codeline lineno="331"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.special_obj.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
-<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="335"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="336"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;WARNING:<sp/>Major<sp/>type<sp/>incoherency<sp/>line<sp/>%d<sp/>in<sp/>file<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
-<codeline lineno="337"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>__LINE__,<sp/>__FILE__<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="338"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="339"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="340"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="341"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>the<sp/>new<sp/>entry<sp/>in<sp/>the<sp/>destination<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="342"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_1a1" kindref="member">cache_inode_add_cached_dirent</ref>(<sp/>pentry_dir_dest,<sp/></highlight></codeline>
-<codeline lineno="343"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>plink_name,<sp/></highlight></codeline>
-<codeline lineno="344"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src,</highlight></codeline>
-<codeline lineno="345"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NULL,<sp/></highlight></codeline>
-<codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
-<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,</highlight></codeline>
-<codeline lineno="349"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="350"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="351"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/><sp/>pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="352"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V(<sp/>pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="353"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
-<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="355"><highlight class="normal"></highlight></codeline>
-<codeline lineno="356"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Regular<sp/>exit<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="357"><highlight class="normal"></highlight></codeline>
-<codeline lineno="358"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>return<sp/>the<sp/>attributes<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="359"><highlight class="normal"><sp/><sp/>*pattr<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
-<codeline lineno="360"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="361"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Validate<sp/>the<sp/>entries<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="362"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a6" kindref="member">cache_inode_valid</ref>(<sp/>pentry_src,<sp/>CACHE_INODE_OP_SET,<sp/>pclient<sp/>)<sp/>;<sp/><sp/></highlight></codeline>
-<codeline lineno="363"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="364"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>target<sp/>dir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="365"><highlight class="normal"><sp/><sp/>V(<sp/><sp/>pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="316"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>object<sp/>is<sp/>a<sp/>data<sp/>cached<sp/>regular<sp/>file,<sp/>keeps<sp/>it<sp/>mtime<sp/>and<sp/>size,<sp/>STEP<sp/>2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="317"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry_src-&gt;internal_md.type<sp/>==<sp/>REGULAR_FILE<sp/>)<sp/><sp/>&amp;&amp;<sp/><sp/>(<sp/>pentry_src-&gt;object.file.pentry_content<sp/>!=<sp/>NULL<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="318"><highlight class="normal"><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="319"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.mtime<sp/><sp/><sp/><sp/><sp/>=<sp/><sp/>save_mtime<sp/><sp/><sp/><sp/><sp/>;<sp/></highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.filesize<sp/><sp/>=<sp/><sp/>save_size<sp/><sp/><sp/><sp/><sp/><sp/>;<sp/></highlight></codeline>
+<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>link_attributes.spaceused<sp/>=<sp/><sp/>save_spaceused<sp/>;</highlight></codeline>
+<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="323"><highlight class="normal"></highlight></codeline>
+<codeline lineno="324"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Update<sp/>cached<sp/>attributes<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pentry_src-&gt;internal_md.type<sp/>)</highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>REGULAR_FILE:</highlight></codeline>
+<codeline lineno="329"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.file.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
+<codeline lineno="330"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="331"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SYMBOLIC_LINK:</highlight></codeline>
+<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.symlink.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
+<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="335"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="336"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>CHARACTER_FILE:</highlight></codeline>
+<codeline lineno="337"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>BLOCK_FILE:</highlight></codeline>
+<codeline lineno="338"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>SOCKET_FILE:</highlight></codeline>
+<codeline lineno="339"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>FIFO_FILE:</highlight></codeline>
+<codeline lineno="340"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src-&gt;object.special_obj.attributes<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="342"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="343"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="344"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="345"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;WARNING:<sp/>Major<sp/>type<sp/>incoherency<sp/>line<sp/>%d<sp/>in<sp/>file<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight></codeline>
+<codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>__LINE__,<sp/>__FILE__<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="349"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="350"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>the<sp/>new<sp/>entry<sp/>in<sp/>the<sp/>destination<sp/>directory<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="351"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="cache__inode__readdir_8c_1437c76e1551d0a257f91caf58b4e62c3" kindref="member">cache_inode_add_cached_dirent</ref>(<sp/>pentry_dir_dest,<sp/></highlight></codeline>
+<codeline lineno="352"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>plink_name,<sp/></highlight></codeline>
+<codeline lineno="353"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry_src,</highlight></codeline>
+<codeline lineno="354"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NULL,<sp/></highlight></codeline>
+<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
+<codeline lineno="356"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="357"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,</highlight></codeline>
+<codeline lineno="358"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;status<sp/>)<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="359"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="360"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_w(<sp/>&amp;pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="361"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>V_w(<sp/>&amp;pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="362"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;</highlight></codeline>
+<codeline lineno="363"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="364"><highlight class="normal"></highlight></codeline>
+<codeline lineno="365"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Regular<sp/>exit<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="366"><highlight class="normal"></highlight></codeline>
-<codeline lineno="367"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="368"><highlight class="normal"><sp/><sp/>V(<sp/>pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="369"><highlight class="normal"></highlight></codeline>
-<codeline lineno="370"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="371"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>*pstatus<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="372"><highlight class="normal"><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="373"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="374"><highlight class="normal"><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_success[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="367"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>return<sp/>the<sp/>attributes<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="368"><highlight class="normal"><sp/><sp/>*pattr<sp/>=<sp/>link_attributes<sp/>;</highlight></codeline>
+<codeline lineno="369"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="370"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Validate<sp/>the<sp/>entries<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="371"><highlight class="normal"><sp/><sp/>*pstatus<sp/>=<sp/><ref refid="cache__inode__misc_8c_1a34ae3526aa5eb8bc0f96e54a3fe8861" kindref="member">cache_inode_valid</ref>(<sp/>pentry_src,<sp/>CACHE_INODE_OP_SET,<sp/>pclient<sp/>)<sp/>;<sp/><sp/></highlight></codeline>
+<codeline lineno="372"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="373"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>target<sp/>dir<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="374"><highlight class="normal"><sp/><sp/>V_w(<sp/>&amp;pentry_dir_dest-&gt;lock<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="375"><highlight class="normal"></highlight></codeline>
-<codeline lineno="376"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;<sp/></highlight></codeline>
-<codeline lineno="377"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="376"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Release<sp/>the<sp/>source<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="377"><highlight class="normal"><sp/><sp/>V_w(<sp/>&amp;pentry_src-&gt;lock<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="378"><highlight class="normal"></highlight></codeline>
+<codeline lineno="379"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="380"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>*pstatus<sp/>!=<sp/>CACHE_INODE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="381"><highlight class="normal"><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_err_retryable[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="382"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="383"><highlight class="normal"><sp/><sp/><sp/><sp/>pclient-&gt;stat.func_stats.nb_success[CACHE_INODE_LINK]<sp/>+=<sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="384"><highlight class="normal"></highlight></codeline>
+<codeline lineno="385"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*pstatus<sp/>;<sp/></highlight></codeline>
+<codeline lineno="386"><highlight class="normal">}</highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_link.c"/>
+    <location file="/export/GANESHA/src/Cache_inode/cache_inode_link.c"/>
   </compounddef>
 </doxygen>

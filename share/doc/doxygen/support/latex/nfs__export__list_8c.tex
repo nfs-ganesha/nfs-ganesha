@@ -1,6 +1,7 @@
 \section{nfs\_\-export\_\-list.c File Reference}
-\label{nfs__export__list_8c}\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-routines for managing the export list. 
+\label{nfs__export__list_8c}\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}}
+routines for managing the export list.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$sys/types.h$>$}\par
@@ -16,7 +17,6 @@ routines for managing the export list.
 {\tt \#include $<$sys/file.h$>$}\par
 {\tt \#include $<$pwd.h$>$}\par
 {\tt \#include $<$grp.h$>$}\par
-{\tt \#include $<$gssapi/gssapi.h$>$}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -52,36 +52,36 @@ const char $\ast$ {\bf Rpc\_\-gss\_\-svc\_\-name} [$\,$] = \{ \char`\"{}no name\
 routines for managing the export list. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/20 13:44:57 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.13 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-export\_\-list.c}{\rm (p.\,\pageref{nfs__export__list_8c})} : routines for managing the export list.
+\doxyref{nfs\_\-export\_\-list.c}{p.}{nfs__export__list_8c} : routines for managing the export list.
 
 \begin{Desc}
-\item[Header]/cea/S/home/cvs/cvs/SHERPA/Base\-Cvs/GANESHA/src/support/nfs\_\-export\_\-list.c,v 1.13 2006/01/20 13:44:57 deniel Exp \end{Desc}
+\item[Header]/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs\_\-export\_\-list.c,v 1.13 2006/01/20 13:44:57 deniel Exp \end{Desc}
 
 
 \begin{Desc}
-\item[Log]{\bf nfs\_\-export\_\-list.c}{\rm (p.\,\pageref{nfs__export__list_8c})},v \end{Desc}
+\item[Log]\doxyref{nfs\_\-export\_\-list.c}{p.}{nfs__export__list_8c},v \end{Desc}
 Revision 1.13 2006/01/20 13:44:57 deniel alt\_\-groups are now handled
 
 Revision 1.12 2006/01/19 07:40:26 leibovic Better exportlist management (test whether iterator is null).
 
 Revision 1.11 2005/12/20 10:52:18 deniel exportlist is no longer dynamic but static
 
-Revision 1.10 2005/11/28 17:03:03 deniel Added Ce\-CILL headers
+Revision 1.10 2005/11/28 17:03:03 deniel Added CeCILL headers
 
 Revision 1.9 2005/11/21 15:04:34 leibovic Displaying acquired Credential.
 
-Revision 1.8 2005/11/21 11:32:07 deniel Got ride of nfs\_\-Set\-Post\-Op\-Fh3 because of memory leaks
+Revision 1.8 2005/11/21 11:32:07 deniel Got ride of nfs\_\-SetPostOpFh3 because of memory leaks
 
 Revision 1.7 2005/11/21 09:54:55 leibovic Once for all thread's credential initialization.
 
@@ -97,14 +97,14 @@ Revision 1.2 2005/08/03 13:13:59 deniel memset to zero before building the fileh
 
 Revision 1.1 2005/08/03 06:57:54 deniel Added a libsupport for miscellaneous service functions
 
-Revision 1.2 2005/08/02 13:49:43 deniel Ok NFSv3
+Revision 1.2 2005/08/02 13:49:43 deniel Ok NFSv3 
 
 Definition in file {\bf nfs\_\-export\_\-list.c}.
 
 \subsection{Function Documentation}
-\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}!nfs_build_fsal_context@{nfs\_\-build\_\-fsal\_\-context}}
-\index{nfs_build_fsal_context@{nfs\_\-build\_\-fsal\_\-context}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-build\_\-fsal\_\-context (struct svc\_\-req $\ast$ {\em ptr\_\-req}, exportlist\_\-client\_\-entry\_\-t $\ast$ {\em pexport\_\-client}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__export__list_8c_a3}
+\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}!nfs\_\-build\_\-fsal\_\-context@{nfs\_\-build\_\-fsal\_\-context}}
+\index{nfs\_\-build\_\-fsal\_\-context@{nfs\_\-build\_\-fsal\_\-context}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
+\subsubsection[{nfs\_\-build\_\-fsal\_\-context}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-build\_\-fsal\_\-context (struct svc\_\-req $\ast$ {\em ptr\_\-req}, \/  exportlist\_\-client\_\-entry\_\-t $\ast$ {\em pexport\_\-client}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext})}\label{nfs__export__list_8c_2d2a54fafe9078d277dd35daeca1559b}
 
 
 nfs\_\-build\_\-fsal\_\-context: Builds the FSAL context according to the request and the export entry.
@@ -120,9 +120,9 @@ Builds the FSAL credentials according to the request and the export entry.
 \item[Returns:]TRUE if successful, FALSE otherwise \end{Desc}
 
 
-Definition at line 290 of file nfs\_\-export\_\-list.c.\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}!nfs_compare_clientcred@{nfs\_\-compare\_\-clientcred}}
-\index{nfs_compare_clientcred@{nfs\_\-compare\_\-clientcred}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-compare\_\-clientcred (nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred1}, nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred2})}\label{nfs__export__list_8c_a4}
+Definition at line 295 of file nfs\_\-export\_\-list.c.\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}!nfs\_\-compare\_\-clientcred@{nfs\_\-compare\_\-clientcred}}
+\index{nfs\_\-compare\_\-clientcred@{nfs\_\-compare\_\-clientcred}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
+\subsubsection[{nfs\_\-compare\_\-clientcred}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-compare\_\-clientcred (nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred1}, \/  nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred2})}\label{nfs__export__list_8c_092a50c55308780f5296a0689708a7a3}
 
 
 nfs\_\-compare\_\-rpc\_\-cred: Compares two RPC creds
@@ -136,9 +136,9 @@ nfs\_\-compare\_\-rpc\_\-cred: Compares two RPC creds
 \item[Returns:]TRUE if same, FALSE otherwise \end{Desc}
 
 
-Definition at line 430 of file nfs\_\-export\_\-list.c.\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}!nfs_Get_export_by_id@{nfs\_\-Get\_\-export\_\-by\_\-id}}
-\index{nfs_Get_export_by_id@{nfs\_\-Get\_\-export\_\-by\_\-id}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ nfs\_\-Get\_\-export\_\-by\_\-id (exportlist\_\-t $\ast$ {\em exportroot}, unsigned short {\em exportid})}\label{nfs__export__list_8c_a2}
+Definition at line 453 of file nfs\_\-export\_\-list.c.\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}!nfs\_\-Get\_\-export\_\-by\_\-id@{nfs\_\-Get\_\-export\_\-by\_\-id}}
+\index{nfs\_\-Get\_\-export\_\-by\_\-id@{nfs\_\-Get\_\-export\_\-by\_\-id}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
+\subsubsection[{nfs\_\-Get\_\-export\_\-by\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ nfs\_\-Get\_\-export\_\-by\_\-id (exportlist\_\-t $\ast$ {\em exportroot}, \/  unsigned short {\em exportid})}\label{nfs__export__list_8c_7ccd248588595588755f71322288a8df}
 
 
 nfs\_\-Get\_\-export\_\-by\_\-id: Gets an export entry from its export id.
@@ -154,21 +154,21 @@ exportroot [IN] the root for the export list \begin{Desc}
 \item[Returns:]the pointer to the pointer to the export list or NULL if failed. \end{Desc}
 
 
-Definition at line 256 of file nfs\_\-export\_\-list.c.\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}!nfs_rpc_req2client_cred@{nfs\_\-rpc\_\-req2client\_\-cred}}
-\index{nfs_rpc_req2client_cred@{nfs\_\-rpc\_\-req2client\_\-cred}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-rpc\_\-req2client\_\-cred (struct svc\_\-req $\ast$ {\em reqp}, nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred})}\label{nfs__export__list_8c_a5}
+Definition at line 261 of file nfs\_\-export\_\-list.c.\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}!nfs\_\-rpc\_\-req2client\_\-cred@{nfs\_\-rpc\_\-req2client\_\-cred}}
+\index{nfs\_\-rpc\_\-req2client\_\-cred@{nfs\_\-rpc\_\-req2client\_\-cred}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
+\subsubsection[{nfs\_\-rpc\_\-req2client\_\-cred}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-rpc\_\-req2client\_\-cred (struct svc\_\-req $\ast$ {\em reqp}, \/  nfs\_\-client\_\-cred\_\-t $\ast$ {\em pcred})}\label{nfs__export__list_8c_5b5ea3e846260e2960ae8cf64f6b42de}
 
 
 
 
-Definition at line 458 of file nfs\_\-export\_\-list.c.
+Definition at line 481 of file nfs\_\-export\_\-list.c.
 
 \subsection{Variable Documentation}
-\index{nfs_export_list.c@{nfs\_\-export\_\-list.c}!Rpc_gss_svc_name@{Rpc\_\-gss\_\-svc\_\-name}}
-\index{Rpc_gss_svc_name@{Rpc\_\-gss\_\-svc\_\-name}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}const char$\ast$ {\bf Rpc\_\-gss\_\-svc\_\-name}[$\,$] = \{ \char`\"{}no name\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-NONE\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-INTEGRITY\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-PRIVACY\char`\"{} \}}\label{nfs__export__list_8c_a0}
+\index{nfs\_\-export\_\-list.c@{nfs\_\-export\_\-list.c}!Rpc\_\-gss\_\-svc\_\-name@{Rpc\_\-gss\_\-svc\_\-name}}
+\index{Rpc\_\-gss\_\-svc\_\-name@{Rpc\_\-gss\_\-svc\_\-name}!nfs_export_list.c@{nfs\_\-export\_\-list.c}}
+\subsubsection[{Rpc\_\-gss\_\-svc\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}const char$\ast$ {\bf Rpc\_\-gss\_\-svc\_\-name}[$\,$] = \{ \char`\"{}no name\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-NONE\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-INTEGRITY\char`\"{}, \char`\"{}RPCSEC\_\-GSS\_\-SVC\_\-PRIVACY\char`\"{} \}}\label{nfs__export__list_8c_b5a338ff30b5ba262794a1e2e73c400d}
 
 
 
 
-Definition at line 195 of file nfs\_\-export\_\-list.c.
+Definition at line 200 of file nfs\_\-export\_\-list.c.

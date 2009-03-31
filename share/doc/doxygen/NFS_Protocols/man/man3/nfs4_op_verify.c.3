@@ -1,8 +1,10 @@
-.TH "nfs4_op_verify.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_verify.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_verify.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_op_verify.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -81,29 +83,29 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/05 15:14:52 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.14 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_verify.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs4_op_verify.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs4_op_verify.c\fP.
 .SH "Define Documentation"
@@ -130,21 +132,15 @@ NFS4_OK
 .PP
 
 .PP
-Definition at line 140 of file nfs4_op_verify.c.
-.PP
-Referenced by nfs4_op_verify().
+Definition at line 143 of file nfs4_op_verify.c.
 .SS "#define res_VERIFY4   resp->nfs_resop4_u.opverify"
 .PP
-Definition at line 141 of file nfs4_op_verify.c.
-.PP
-Referenced by nfs4_op_verify().
+Definition at line 144 of file nfs4_op_verify.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_verify (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 143 of file nfs4_op_verify.c.
-.PP
-References arg_VERIFY4, nfs4_Fattr_Check_Access(), nfs4_Fattr_cmp(), nfs4_Fattr_Supported(), nfs4_FSALattr_To_Fattr(), and res_VERIFY4.
+Definition at line 146 of file nfs4_op_verify.c.
 .SS "void nfs4_op_verify_Free (VERIFY4res * resp)"
 .PP
 nfs4_op_verify_Free: frees what was allocared to handle nfs4_op_verify.
@@ -163,9 +159,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 250 of file nfs4_op_verify.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 249 of file nfs4_op_verify.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

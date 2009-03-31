@@ -1,6 +1,7 @@
 \section{fsal\_\-rename.c File Reference}
-\label{fsal__rename_8c}\index{fsal_rename.c@{fsal\_\-rename.c}}
-object renaming/moving function. 
+\label{fsal__rename_8c}\index{fsal\_\-rename.c@{fsal\_\-rename.c}}
+object renaming/moving function.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -17,25 +18,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-rename} (fsal\_\-handle\_\-t $\ast$old\_\-paren
 object renaming/moving function. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 13:45:37 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.9 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-rename.c}.
 
 \subsection{Function Documentation}
-\index{fsal_rename.c@{fsal\_\-rename.c}!FSAL_rename@{FSAL\_\-rename}}
-\index{FSAL_rename@{FSAL\_\-rename}!fsal_rename.c@{fsal\_\-rename.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-rename (fsal\_\-handle\_\-t $\ast$ {\em old\_\-parentdir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-old\_\-name}, fsal\_\-handle\_\-t $\ast$ {\em new\_\-parentdir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-new\_\-name}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em src\_\-dir\_\-attributes}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em tgt\_\-dir\_\-attributes})}\label{fsal__rename_8c_a0}
+\index{fsal\_\-rename.c@{fsal\_\-rename.c}!FSAL\_\-rename@{FSAL\_\-rename}}
+\index{FSAL\_\-rename@{FSAL\_\-rename}!fsal_rename.c@{fsal\_\-rename.c}}
+\subsubsection[{FSAL\_\-rename}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-rename (fsal\_\-handle\_\-t $\ast$ {\em old\_\-parentdir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-old\_\-name}, \/  fsal\_\-handle\_\-t $\ast$ {\em new\_\-parentdir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-new\_\-name}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em src\_\-dir\_\-attributes}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em tgt\_\-dir\_\-attributes})}\label{fsal__rename_8c_46b44db12a7817ac3d1fd88cce209d4a}
 
 
 FSAL\_\-rename: Change name and/or parent dir of a filesystem object.
@@ -53,4 +54,4 @@ FSAL\_\-rename: Change name and/or parent dir of a filesystem object.
 
 Definition at line 66 of file fsal\_\-rename.c.
 
-References FSAL\_\-getattrs(), FSAL\_\-handlecmp(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References FSAL\_\-getattrs(), FSAL\_\-handlecmp(), hpss2fsal\_\-error(), and TakeTokenFSCall().

@@ -1,11 +1,12 @@
 \section{cache\_\-inode\_\-readdir.c File Reference}
-\label{cache__inode__readdir_8c}\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-Reads the content of a directory. 
+\label{cache__inode__readdir_8c}\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}}
+Reads the content of a directory.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
@@ -35,25 +36,25 @@ cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-readdir} (cache\_\-entry\_\
 Reads the content of a directory. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 11:43:05 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.50 \end{Desc}
-\end{Desc}
-{\bf cache\_\-inode\_\-readdir.c}{\rm (p.\,\pageref{cache__inode__readdir_8c})} : Reads the content of a directory. Contains also the needed function for directory browsing.
+\doxyref{cache\_\-inode\_\-readdir.c}{p.}{cache__inode__readdir_8c} : Reads the content of a directory. Contains also the needed function for directory browsing. 
 
 Definition in file {\bf cache\_\-inode\_\-readdir.c}.
 
 \subsection{Function Documentation}
-\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_add_cached_dirent@{cache\_\-inode\_\-add\_\-cached\_\-dirent}}
-\index{cache_inode_add_cached_dirent@{cache\_\-inode\_\-add\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-add\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, fsal\_\-name\_\-t $\ast$ {\em pname}, cache\_\-entry\_\-t $\ast$ {\em pentry\_\-added}, cache\_\-entry\_\-t $\ast$$\ast$ {\em ppentry\_\-next}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a1}
+\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-add\_\-cached\_\-dirent@{cache\_\-inode\_\-add\_\-cached\_\-dirent}}
+\index{cache\_\-inode\_\-add\_\-cached\_\-dirent@{cache\_\-inode\_\-add\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-add\_\-cached\_\-dirent}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-add\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, \/  fsal\_\-name\_\-t $\ast$ {\em pname}, \/  cache\_\-entry\_\-t $\ast$ {\em pentry\_\-added}, \/  cache\_\-entry\_\-t $\ast$$\ast$ {\em ppentry\_\-next}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_437c76e1551d0a257f91caf58b4e62c3}
 
 
 cache\_\-inode\_\-add\_\-cached\_\-dirent: Adds a directory entry to a cached directory.
@@ -72,22 +73,16 @@ Adds a directory entry to a cached directory. This is use when creating a new en
 NULL if failed, see $\ast$pstatus for error's meaning. \end{Desc}
 
 
-Definition at line 343 of file cache\_\-inode\_\-readdir.c.
-
-References cache\_\-inode\_\-new\_\-entry().
-
-Referenced by cache\_\-inode\_\-create(), cache\_\-inode\_\-link(), cache\_\-inode\_\-lookup\_\-sw(), cache\_\-inode\_\-readdir\_\-populate(), and cache\_\-inode\_\-rename().\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_invalidate_all_cached_dirent@{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent}}
-\index{cache_inode_invalidate_all_cached_dirent@{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dir}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a2}
+Definition at line 348 of file cache\_\-inode\_\-readdir.c.\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent@{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent}}
+\index{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent@{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dir}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_27a1cb34bb5e4e4849e27a40d30fe5ca}
 
 
 
 
-Definition at line 608 of file cache\_\-inode\_\-readdir.c.
-
-Referenced by cache\_\-inode\_\-readdir\_\-populate().\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_operate_cached_dirent@{cache\_\-inode\_\-operate\_\-cached\_\-dirent}}
-\index{cache_inode_operate_cached_dirent@{cache\_\-inode\_\-operate\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ cache\_\-inode\_\-operate\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, fsal\_\-name\_\-t $\ast$ {\em pname}, fsal\_\-name\_\-t $\ast$ {\em newname}, cache\_\-inode\_\-dirent\_\-op\_\-t {\em dirent\_\-op}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a0}
+Definition at line 623 of file cache\_\-inode\_\-readdir.c.\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-operate\_\-cached\_\-dirent@{cache\_\-inode\_\-operate\_\-cached\_\-dirent}}
+\index{cache\_\-inode\_\-operate\_\-cached\_\-dirent@{cache\_\-inode\_\-operate\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-operate\_\-cached\_\-dirent}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ cache\_\-inode\_\-operate\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, \/  fsal\_\-name\_\-t $\ast$ {\em pname}, \/  fsal\_\-name\_\-t $\ast$ {\em newname}, \/  cache\_\-inode\_\-dirent\_\-op\_\-t {\em dirent\_\-op}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_66255500063dd27f5185d2ce6d520f03}
 
 
 cache\_\-inode\_\-operate\_\-cached\_\-dirent: locates a dirent in the cached dirent, and perform an operation on it.
@@ -103,18 +98,14 @@ Looks up for an dirent in the cached dirent. Thus function searches only in the 
 \item[Returns:]the found entry if its exists and NULL if it is not in the dirent arrays. REMOVE always returns NULL. \end{Desc}
 
 
-Definition at line 123 of file cache\_\-inode\_\-readdir.c.
-
-References cache\_\-inode\_\-error\_\-convert().
-
-Referenced by cache\_\-inode\_\-remove\_\-cached\_\-dirent(), and cache\_\-inode\_\-rename\_\-cached\_\-dirent().\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_readdir@{cache\_\-inode\_\-readdir}}
-\index{cache_inode_readdir@{cache\_\-inode\_\-readdir}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-readdir (cache\_\-entry\_\-t $\ast$ {\em dir\_\-pentry}, unsigned int {\em cookie}, unsigned int {\em nbwanted}, unsigned int $\ast$ {\em pnbfound}, unsigned int $\ast$ {\em pend\_\-cookie}, cache\_\-inode\_\-endofdir\_\-t $\ast$ {\em peod\_\-met}, cache\_\-inode\_\-dir\_\-entry\_\-t $\ast$ {\em dirent\_\-array}, unsigned int $\ast$ {\em cookie\_\-array}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a5}
+Definition at line 127 of file cache\_\-inode\_\-readdir.c.\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-readdir@{cache\_\-inode\_\-readdir}}
+\index{cache\_\-inode\_\-readdir@{cache\_\-inode\_\-readdir}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-readdir}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-readdir (cache\_\-entry\_\-t $\ast$ {\em dir\_\-pentry}, \/  unsigned int {\em cookie}, \/  unsigned int {\em nbwanted}, \/  unsigned int $\ast$ {\em pnbfound}, \/  unsigned int $\ast$ {\em pend\_\-cookie}, \/  cache\_\-inode\_\-endofdir\_\-t $\ast$ {\em peod\_\-met}, \/  cache\_\-inode\_\-dir\_\-entry\_\-t $\ast$ {\em dirent\_\-array}, \/  unsigned int $\ast$ {\em cookie\_\-array}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_5d9d39cf09341c59eaeb64eaca634934}
 
 
 cache\_\-inode\_\-readdir: Reads partially a directory.
 
-Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before. This is the only function in the {\bf cache\_\-inode\_\-readdir.c}{\rm (p.\,\pageref{cache__inode__readdir_8c})} file that manages MT safety on a dir chain.
+Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before. This is the only function in the \doxyref{cache\_\-inode\_\-readdir.c}{p.}{cache__inode__readdir_8c} file that manages MT safety on a dir chain.
 
 \begin{Desc}
 \item[Parameters:]
@@ -131,13 +122,9 @@ CACHE\_\-INODE\_\-BAD\_\-TYPE if entry is not related to a directory\par
 CACHE\_\-INODE\_\-LRU\_\-ERROR if allocation error occured when validating the entry \end{Desc}
 
 
-Definition at line 976 of file cache\_\-inode\_\-readdir.c.
-
-References cache\_\-inode\_\-access\_\-no\_\-mutex(), cache\_\-inode\_\-readdir\_\-populate(), cache\_\-inode\_\-renew\_\-entry(), and cache\_\-inode\_\-valid().
-
-Referenced by main().\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_readdir_populate@{cache\_\-inode\_\-readdir\_\-populate}}
-\index{cache_inode_readdir_populate@{cache\_\-inode\_\-readdir\_\-populate}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-readdir\_\-populate (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dir}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a4}
+Definition at line 1022 of file cache\_\-inode\_\-readdir.c.\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-readdir\_\-populate@{cache\_\-inode\_\-readdir\_\-populate}}
+\index{cache\_\-inode\_\-readdir\_\-populate@{cache\_\-inode\_\-readdir\_\-populate}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-readdir\_\-populate}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-readdir\_\-populate (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dir}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_0a573314a8df7bc535b520984186e7a8}
 
 
 cache\_\-inode\_\-readdir\_\-populate: fully reads a directory in FSAL and caches the related entries.
@@ -151,13 +138,9 @@ fully reads a directory in FSAL and caches the related entries. No MT safety man
 \end{Desc}
 
 
-Definition at line 752 of file cache\_\-inode\_\-readdir.c.
-
-References cache\_\-inode\_\-add\_\-cached\_\-dirent(), cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-fsal\_\-type\_\-convert(), cache\_\-inode\_\-invalidate\_\-all\_\-cached\_\-dirent(), cache\_\-inode\_\-kill\_\-entry(), and cache\_\-inode\_\-new\_\-entry().
-
-Referenced by cache\_\-inode\_\-create(), and cache\_\-inode\_\-readdir().\index{cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}!cache_inode_remove_cached_dirent@{cache\_\-inode\_\-remove\_\-cached\_\-dirent}}
-\index{cache_inode_remove_cached_dirent@{cache\_\-inode\_\-remove\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, fsal\_\-name\_\-t $\ast$ {\em pname}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_a3}
+Definition at line 767 of file cache\_\-inode\_\-readdir.c.\index{cache\_\-inode\_\-readdir.c@{cache\_\-inode\_\-readdir.c}!cache\_\-inode\_\-remove\_\-cached\_\-dirent@{cache\_\-inode\_\-remove\_\-cached\_\-dirent}}
+\index{cache\_\-inode\_\-remove\_\-cached\_\-dirent@{cache\_\-inode\_\-remove\_\-cached\_\-dirent}!cache_inode_readdir.c@{cache\_\-inode\_\-readdir.c}}
+\subsubsection[{cache\_\-inode\_\-remove\_\-cached\_\-dirent}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, \/  fsal\_\-name\_\-t $\ast$ {\em pname}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__readdir_8c_178b13cb3bc86c43460277e232b4168c}
 
 
 cache\_\-inode\_\-remove\_\-cached\_\-dirent: Removes a directory entry to a cached directory.
@@ -173,8 +156,4 @@ Removes a directory entry to a cached directory. No MT safety managed here !!
 \item[Returns:]the same as $\ast$pstatus \end{Desc}
 
 
-Definition at line 669 of file cache\_\-inode\_\-readdir.c.
-
-References cache\_\-inode\_\-operate\_\-cached\_\-dirent().
-
-Referenced by cache\_\-inode\_\-remove\_\-sw(), and cache\_\-inode\_\-rename().
+Definition at line 684 of file cache\_\-inode\_\-readdir.c.

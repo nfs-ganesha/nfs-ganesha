@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-restorefh.c File Reference}
-\label{nfs4__op__restorefh_8c}\index{nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
-Routines used for managing the NFS4\_\-OP\_\-RESTOREFH operation (number 31). 
+\label{nfs4__op__restorefh_8c}\index{nfs4\_\-op\_\-restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
+Routines used for managing the NFS4\_\-OP\_\-RESTOREFH operation (number 31).  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -39,25 +40,25 @@ void {\bf nfs4\_\-op\_\-restorefh\_\-Free} (RESTOREFH4res $\ast$resp)
 Routines used for managing the NFS4\_\-OP\_\-RESTOREFH operation (number 31). 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/05 15:14:52 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-restorefh.c}{\rm (p.\,\pageref{nfs4__op__restorefh_8c})} : Routines used for managing the NFS4\_\-OP\_\-RESTOREFH operation.
+\doxyref{nfs4\_\-op\_\-restorefh.c}{p.}{nfs4__op__restorefh_8c} : Routines used for managing the NFS4\_\-OP\_\-RESTOREFH operation. 
 
 Definition in file {\bf nfs4\_\-op\_\-restorefh.c}.
 
 \subsection{Function Documentation}
-\index{nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}!nfs4_op_restorefh@{nfs4\_\-op\_\-restorefh}}
-\index{nfs4_op_restorefh@{nfs4\_\-op\_\-restorefh}!nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-restorefh (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__restorefh_8c_a0}
+\index{nfs4\_\-op\_\-restorefh.c@{nfs4\_\-op\_\-restorefh.c}!nfs4\_\-op\_\-restorefh@{nfs4\_\-op\_\-restorefh}}
+\index{nfs4\_\-op\_\-restorefh@{nfs4\_\-op\_\-restorefh}!nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
+\subsubsection[{nfs4\_\-op\_\-restorefh}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-restorefh (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__restorefh_8c_db474bb1ac6d20d3be83928b2dcf7fe2}
 
 
 nfs4\_\-op\_\-restorefh: The NFS4\_\-OP\_\-RESTOREFH operation.
@@ -74,14 +75,12 @@ This functions handles the NFS4\_\-OP\_\-RESTOREFH operation in NFSv4. This func
 \begin{Desc}
 \item[See also:]all the nfs4\_\-op\_\-$<$$\ast$$>$ function 
 
-{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+\doxyref{nfs4\_\-Compound}{p.}{nfs4__Compound_8c_a1516130248e7ae55d3c2e1bffe90016} \end{Desc}
 
 
-Definition at line 142 of file nfs4\_\-op\_\-restorefh.c.
-
-References nfs4\_\-Set\-Compound\-Export().\index{nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}!nfs4_op_restorefh_Free@{nfs4\_\-op\_\-restorefh\_\-Free}}
-\index{nfs4_op_restorefh_Free@{nfs4\_\-op\_\-restorefh\_\-Free}!nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-restorefh\_\-Free (RESTOREFH4res $\ast$ {\em resp})}\label{nfs4__op__restorefh_8c_a1}
+Definition at line 145 of file nfs4\_\-op\_\-restorefh.c.\index{nfs4\_\-op\_\-restorefh.c@{nfs4\_\-op\_\-restorefh.c}!nfs4\_\-op\_\-restorefh\_\-Free@{nfs4\_\-op\_\-restorefh\_\-Free}}
+\index{nfs4\_\-op\_\-restorefh\_\-Free@{nfs4\_\-op\_\-restorefh\_\-Free}!nfs4_op_restorefh.c@{nfs4\_\-op\_\-restorefh.c}}
+\subsubsection[{nfs4\_\-op\_\-restorefh\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-restorefh\_\-Free (RESTOREFH4res $\ast$ {\em resp})}\label{nfs4__op__restorefh_8c_d330b0f6777d5a7e68f9ce6b7657716f}
 
 
 nfs4\_\-op\_\-restorefh\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-restorefh.
@@ -97,4 +96,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-restorefh.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 215 of file nfs4\_\-op\_\-restorefh.c.
+Definition at line 220 of file nfs4\_\-op\_\-restorefh.c.

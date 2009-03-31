@@ -1,8 +1,10 @@
-.TH "nfs_file_content_gc_thread.c" 3 "9 Apr 2008" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_file_content_gc_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_file_content_gc_thread.c \- The file that contain the 'file_content_gc_thread' routine for the nfsd. 
+nfs_file_content_gc_thread.c \- The file that contain the 'file_content_gc_thread' routine for the nfsd.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -83,10 +85,19 @@ nfs_file_content_gc_thread.c \- The file that contain the 'file_content_gc_threa
 .RI "cache_content_client_t \fBrecover_datacache_client\fP"
 .br
 .ti -1c
-.RI "nfs_worker_data_t \fBfcc_gc_data\fP"
+.RI "char \fBganesha_exec_path\fP [MAXPATHLEN]"
 .br
 .ti -1c
-.RI "fsal_op_context_t \fBfsal_context\fP"
+.RI "char \fBconfig_path\fP [MAXPATHLEN]"
+.br
+.ti -1c
+.RI "char \fBfcc_log_path\fP [MAXPATHLEN]"
+.br
+.ti -1c
+.RI "int \fBfcc_debug_level\fP"
+.br
+.ti -1c
+.RI "nfs_worker_data_t \fBfcc_gc_data\fP"
 .br
 .ti -1c
 .RI "unsigned int \fBforce_flush_by_signal\fP"
@@ -108,52 +119,49 @@ $Date$
 .PP
 \fBVersion:\fP
 .RS 4
-$Revision$ 
+$Revision$ \fBnfs_file_content_gc_thread.c\fP : The file that contain the 'admin_thread' routine for the nfsd. 
 .RE
 .PP
-\fBnfs_file_content_gc_thread.c\fP : The file that contain the 'admin_thread' routine for the nfsd.
+
 .PP
 Definition in file \fBnfs_file_content_gc_thread.c\fP.
 .SH "Function Documentation"
 .PP 
 .SS "int ___cache_content_invalidate_flushed (LRU_entry_t * plru_entry, void * addparam)"
 .PP
-Definition at line 138 of file nfs_file_content_gc_thread.c.
+Definition at line 147 of file nfs_file_content_gc_thread.c.
 .SS "int file_content_gc_manage_entry (LRU_entry_t * plru_entry, void * addparam)"
 .PP
-Definition at line 167 of file nfs_file_content_gc_thread.c.
-.PP
-References fcc_gc_data, and fsal_context.
-.PP
-Referenced by file_content_gc_thread().
+Definition at line 176 of file nfs_file_content_gc_thread.c.
 .SS "void* file_content_gc_thread (void * IndexArg)"
 .PP
-Definition at line 197 of file nfs_file_content_gc_thread.c.
-.PP
-References fcc_gc_data, file_content_gc_manage_entry(), force_flush_by_signal, fsal_context, nfs_param, recover_datacache_client, and workers_data.
+Definition at line 207 of file nfs_file_content_gc_thread.c.
 .SH "Variable Documentation"
 .PP 
+.SS "char \fBconfig_path\fP[MAXPATHLEN]"
+.PP
+Definition at line 155 of file nfs_init.c.
+.SS "int \fBfcc_debug_level\fP"
+.PP
 .SS "nfs_worker_data_t \fBfcc_gc_data\fP"
 .PP
-Definition at line 132 of file nfs_file_content_gc_thread.c.
+Definition at line 141 of file nfs_file_content_gc_thread.c.
+.SS "char \fBfcc_log_path\fP[MAXPATHLEN]"
 .PP
-Referenced by file_content_gc_manage_entry(), and file_content_gc_thread().
 .SS "unsigned int \fBforce_flush_by_signal\fP"
 .PP
-Definition at line 136 of file nfs_file_content_gc_thread.c.
+Definition at line 145 of file nfs_file_content_gc_thread.c.
+.SS "char \fBganesha_exec_path\fP[MAXPATHLEN]"
 .PP
-Referenced by file_content_gc_thread().
-.SS "fsal_op_context_t \fBfsal_context\fP"
-.PP
-Definition at line 133 of file nfs_file_content_gc_thread.c.
+Definition at line 121 of file fuse_binding.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 130 of file nfs_init.c.
+Definition at line 135 of file nfs_init.c.
 .SS "cache_content_client_t \fBrecover_datacache_client\fP"
 .PP
 .SS "nfs_worker_data_t* \fBworkers_data\fP"
 .PP
-Definition at line 132 of file nfs_init.c.
+Definition at line 137 of file nfs_init.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

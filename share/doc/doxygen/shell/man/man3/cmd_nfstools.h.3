@@ -1,8 +1,10 @@
-.TH "cmd_nfstools.h" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "cmd_nfstools.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cmd_nfstools.h \- nfs tools for ganeshell. 
+cmd_nfstools.h \- nfs tools for ganeshell.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -35,10 +37,10 @@ cmd_nfstools.h \- nfs tools for ganeshell.
 .RI "typedef int(* \fBcmdnfs_encoding_func_t\fP )(\fBcmdnfs_encodetype_t\fP, int, char **, int, FILE *, caddr_t)"
 .br
 .ti -1c
-.RI "typedef \fBcmdnfs_funcdesc__\fP \fBcmdnfs_funcdesc_t\fP"
+.RI "typedef struct \fBcmdnfs_funcdesc__\fP \fBcmdnfs_funcdesc_t\fP"
 .br
 .ti -1c
-.RI "typedef \fBcmdnfsremote_funcdesc__\fP \fBcmdnfsremote_funcdesc_t\fP"
+.RI "typedef struct \fBcmdnfsremote_funcdesc__\fP \fBcmdnfsremote_funcdesc_t\fP"
 .br
 .in -1c
 .SS "Enumerations"
@@ -223,26 +225,26 @@ nfs tools for ganeshell.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/18 17:03:35 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.22 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.22 
 .RE
 .PP
 \fBLog\fP.RS 4
@@ -291,7 +293,7 @@ Revision 1.3 2005/08/03 12:51:16 leibovic MNT3 protocol OK.
 .PP
 Revision 1.2 2005/08/03 11:51:10 leibovic MNT1 protocol OK.
 .PP
-Revision 1.1 2005/08/03 08:16:23 leibovic Adding nfs layer structures.
+Revision 1.1 2005/08/03 08:16:23 leibovic Adding nfs layer structures. 
 .PP
 Definition in file \fBcmd_nfstools.h\fP.
 .SH "Typedef Documentation"
@@ -303,15 +305,13 @@ Definition in file \fBcmd_nfstools.h\fP.
 Definition at line 104 of file cmd_nfstools.h.
 .SS "typedef struct \fBcmdnfs_funcdesc__\fP  \fBcmdnfs_funcdesc_t\fP"
 .PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), and fn_NFS3_command().
 .SS "typedef struct \fBcmdnfsremote_funcdesc__\fP  \fBcmdnfsremote_funcdesc_t\fP"
 .PP
-Referenced by fn_MNT1_remote_command(), fn_MNT3_remote_command(), fn_NFS2_remote_command(), and fn_NFS3_remote_command().
 .SH "Enumeration Type Documentation"
 .PP 
 .SS "enum \fBcmdnfs_encodetype__\fP"
 .PP
-\fBEnumeration values: \fP
+\fBEnumerator: \fP
 .in +1c
 .TP
 \fB\fICMDNFS_ENCODE \fP\fP
@@ -326,312 +326,198 @@ Definition at line 94 of file cmd_nfstools.h.
 .PP 
 .SS "int cmdnfs_ACCESS3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2833 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
+Definition at line 2832 of file cmd_nfstools.c.
 .SS "int cmdnfs_ACCESS3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2909 of file cmd_nfstools.c.
-.PP
-References ACCESS3_FAIL_ATTRS, ACCESS3_OK_ACCESS, ACCESS3_OK_ATTRS, CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), and NULL.
+Definition at line 2908 of file cmd_nfstools.c.
 .SS "int cmdnfs_ATTR2res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 821 of file cmd_nfstools.c.
-.PP
-References ATTR2_ATTRIBUTES, CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fattr2(), CMDNFS_FREE, cmdnfs_nfsstat2(), and NULL.
+Definition at line 823 of file cmd_nfstools.c.
 .SS "int cmdnfs_CREATE2args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1237 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs2(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_sattr2(), and NULL.
+Definition at line 1241 of file cmd_nfstools.c.
 .SS "int cmdnfs_CREATE3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2993 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs3(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_sattr3(), and NULL.
+Definition at line 2992 of file cmd_nfstools.c.
 .SS "int cmdnfs_CREATE3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3190 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), cmdnfs_postopfh3(), cmdnfs_wccdata(), CREATE3_FAIL_WCC, CREATE3_OK_ATTRS, CREATE3_OK_FH, CREATE3_OK_WCC, and NULL.
+Definition at line 3189 of file cmd_nfstools.c.
 .SS "int cmdnfs_DIROP2res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 879 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fattr2(), cmdnfs_fhandle2(), CMDNFS_FREE, cmdnfs_nfsstat2(), DIROP2_ATTRIBUTES, DIROP2_HANDLE, and NULL.
+Definition at line 881 of file cmd_nfstools.c.
 .SS "int cmdnfs_diropargs2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 938 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_dirpath(), CMDNFS_ENCODE, cmdnfs_fhandle2(), CMDNFS_FREE, and NULL.
-.PP
-Referenced by cmdnfs_CREATE2args(), and cmdnfs_RENAME2args().
+Definition at line 940 of file cmd_nfstools.c.
 .SS "int cmdnfs_diropargs3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1926 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_dirpath(), CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
-.PP
-Referenced by cmdnfs_CREATE3args(), cmdnfs_LINK3args(), cmdnfs_MKDIR3args(), cmdnfs_RENAME3args(), and cmdnfs_SYMLINK3args().
+Definition at line 1925 of file cmd_nfstools.c.
 .SS "int cmdnfs_dirpath (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 203 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, and CMDNFS_FREE.
-.PP
-Referenced by cmdnfs_diropargs2(), cmdnfs_diropargs3(), cmdnfs_SYMLINK3args(), fn_nfs_mount(), fn_nfs_remote_umount(), fn_nfs_umount(), and nfs_remote_mount().
+Definition at line 209 of file cmd_nfstools.c.
 .SS "int cmdnfs_exports (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 503 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and NULL.
+Definition at line 509 of file cmd_nfstools.c.
 .SS "int cmdnfs_fattr2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
+
+.PP
+\fBTodo\fP
+.RS 4
+.RE
+.PP
+.PP
 \fBTodo\fP
 .RS 4
 .RE
 .PP
 
 .PP
-Definition at line 746 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and Localtime_r().
-.PP
-Referenced by cmdnfs_ATTR2res(), and cmdnfs_DIROP2res().
+Definition at line 750 of file cmd_nfstools.c.
 .SS "int cmdnfs_fattr3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
+
+.PP
+\fBTodo\fP
+.RS 4
+.RE
+.PP
+.PP
 \fBTodo\fP
 .RS 4
 .RE
 .PP
 
 .PP
-Definition at line 1591 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and Localtime_r().
-.PP
-Referenced by cmdnfs_GETATTR3res(), and cmdnfs_postopattr().
+Definition at line 1592 of file cmd_nfstools.c.
 .SS "int cmdnfs_fhandle2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 255 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and SIZE_STR_NFSHANDLE2.
-.PP
-Referenced by cmdnfs_DIROP2res(), cmdnfs_diropargs2(), cmdnfs_fhstatus2(), cmdnfs_READDIR2args(), and cmdnfs_SETATTR2args().
+Definition at line 261 of file cmd_nfstools.c.
 .SS "int cmdnfs_fhandle3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 567 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and SIZE_STR_NFSHANDLE3.
-.PP
-Referenced by cmdnfs_ACCESS3args(), cmdnfs_diropargs3(), cmdnfs_LINK3args(), cmdnfs_LOOKUP3res(), cmdnfs_mountres3(), cmdnfs_postopfh3(), cmdnfs_READDIR3args(), cmdnfs_READDIRPLUS3args(), cmdnfs_SETATTR3args(), and nfs_remote_solvepath().
+Definition at line 573 of file cmd_nfstools.c.
 .SS "int cmdnfs_fhstatus2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 323 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle2(), CMDNFS_FREE, cmdnfs_nfsstat2(), and NULL.
+Definition at line 329 of file cmd_nfstools.c.
 .SS "int cmdnfs_FSINFO3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 4224 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), FSINFO3_FAIL_ATTRS, FSINFO3_OK_ATTRS, FSINFO3_OK_INFO, and NULL.
+Definition at line 4216 of file cmd_nfstools.c.
 .SS "int cmdnfs_FSSTAT3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2760 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), FSSTAT3_FAIL_ATTRS, FSSTAT3_OK, and NULL.
+Definition at line 2759 of file cmd_nfstools.c.
 .SS "int cmdnfs_GETATTR3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1872 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fattr3(), CMDNFS_FREE, cmdnfs_nfsstat3(), GETATTR3_ATTRIBUTES, and NULL.
+Definition at line 1871 of file cmd_nfstools.c.
 .SS "int cmdnfs_LINK3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3914 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs3(), CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
+Definition at line 3908 of file cmd_nfstools.c.
 .SS "int cmdnfs_LINK3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3971 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), cmdnfs_wccdata(), LINK3_FAIL_ATTRS, LINK3_FAIL_WCC, LINK3_OK_ATTRS, LINK3_OK_WCC, and NULL.
+Definition at line 3964 of file cmd_nfstools.c.
 .SS "int cmdnfs_LOOKUP3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2056 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), LOOKUP3_FAIL_DIRATTR, LOOKUP3_OK_DIRATTR, LOOKUP3_OK_HANDLE, LOOKUP3_OK_OBJATTR, and NULL.
+Definition at line 2055 of file cmd_nfstools.c.
 .SS "int cmdnfs_MKDIR3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3272 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs3(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_sattr3(), and NULL.
+Definition at line 3271 of file cmd_nfstools.c.
 .SS "int cmdnfs_MKDIR3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3344 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), cmdnfs_postopfh3(), cmdnfs_wccdata(), MKDIR3_FAIL_WCC, MKDIR3_OK_ATTRS, MKDIR3_OK_FH, MKDIR3_OK_WCC, and NULL.
+Definition at line 3342 of file cmd_nfstools.c.
 .SS "int cmdnfs_mountlist (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 449 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and NULL.
+Definition at line 455 of file cmd_nfstools.c.
 .SS "int cmdnfs_mountres3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
+.PP
+
 .PP
 \fBTodo\fP
 .RS 4
-Convert status to error code
+Convert status to error code 
 .RE
 .PP
 
 .PP
-Definition at line 646 of file cmd_nfstools.c.
-.PP
-References AUTH_FLAVORS, CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, MNT_HANDLE, and NULL.
+Definition at line 652 of file cmd_nfstools.c.
 .SS "int cmdnfs_nfsstat2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 711 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, and CMDNFS_FREE.
-.PP
-Referenced by cmdnfs_ATTR2res(), cmdnfs_DIROP2res(), cmdnfs_fhstatus2(), cmdnfs_READDIR2res(), cmdnfs_READLINK2res(), and cmdnfs_STATFS2res().
+Definition at line 717 of file cmd_nfstools.c.
 .SS "int cmdnfs_nfsstat3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1557 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, and CMDNFS_FREE.
-.PP
-Referenced by cmdnfs_ACCESS3res(), cmdnfs_CREATE3res(), cmdnfs_FSINFO3res(), cmdnfs_FSSTAT3res(), cmdnfs_GETATTR3res(), cmdnfs_LINK3res(), cmdnfs_LOOKUP3res(), cmdnfs_MKDIR3res(), cmdnfs_PATHCONF3res(), cmdnfs_READDIR3res(), cmdnfs_READDIRPLUS3res(), cmdnfs_READLINK3res(), cmdnfs_REMOVE3res(), cmdnfs_RENAME3res(), cmdnfs_RMDIR3res(), cmdnfs_SETATTR3res(), and cmdnfs_SYMLINK3res().
+Definition at line 1560 of file cmd_nfstools.c.
 .SS "int cmdnfs_PATHCONF3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 4321 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), NULL, PATHCONF3_FAIL_ATTRS, PATHCONF3_OK_ATTRS, and PATHCONF3_OK_INFO.
+Definition at line 4313 of file cmd_nfstools.c.
 .SS "int cmdnfs_postopattr (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1973 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fattr3(), CMDNFS_FREE, and NULL.
-.PP
-Referenced by cmdnfs_ACCESS3res(), cmdnfs_CREATE3res(), cmdnfs_FSINFO3res(), cmdnfs_FSSTAT3res(), cmdnfs_LINK3res(), cmdnfs_LOOKUP3res(), cmdnfs_MKDIR3res(), cmdnfs_PATHCONF3res(), cmdnfs_READDIR3res(), cmdnfs_READDIRPLUS3res(), cmdnfs_READLINK3res(), cmdnfs_SYMLINK3res(), and cmdnfs_wccdata().
+Definition at line 1972 of file cmd_nfstools.c.
 .SS "int cmdnfs_postopfh3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2012 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
-.PP
-Referenced by cmdnfs_CREATE3res(), cmdnfs_MKDIR3res(), and cmdnfs_SYMLINK3res().
+Definition at line 2011 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIR2args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1336 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle2(), CMDNFS_FREE, my_atoi(), and NULL.
+Definition at line 1340 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIR2res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1447 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat2(), and NULL.
+Definition at line 1450 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIR3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2262 of file cmd_nfstools.c.
-.PP
-References ato64(), CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
+Definition at line 2261 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIR3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2353 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), NULL, READDIR3_FAIL, and READDIR3_OK.
+Definition at line 2352 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIRPLUS3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2429 of file cmd_nfstools.c.
-.PP
-References ato64(), CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, and NULL.
+Definition at line 2428 of file cmd_nfstools.c.
 .SS "int cmdnfs_READDIRPLUS3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2610 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), NULL, READDIRPLUS3_FAIL, and READDIRPLUS3_OK.
+Definition at line 2609 of file cmd_nfstools.c.
 .SS "int cmdnfs_READLINK2res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 988 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat2(), NULL, and READLINKRES_PATH.
+Definition at line 990 of file cmd_nfstools.c.
 .SS "int cmdnfs_READLINK3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 2690 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), NULL, READLINK3_FAIL_ATTRS, READLINK3_OK_ATTRS, and READLINK3_OK_DATA.
+Definition at line 2689 of file cmd_nfstools.c.
 .SS "int cmdnfs_REMOVE3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3429 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_wccdata(), NULL, REMOVE3_FAIL_WCC, and REMOVE3_OK_WCC.
+Definition at line 3427 of file cmd_nfstools.c.
 .SS "int cmdnfs_RENAME2args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1506 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs2(), CMDNFS_ENCODE, CMDNFS_FREE, and NULL.
+Definition at line 1509 of file cmd_nfstools.c.
 .SS "int cmdnfs_RENAME3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3775 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs3(), CMDNFS_ENCODE, CMDNFS_FREE, and NULL.
+Definition at line 3770 of file cmd_nfstools.c.
 .SS "int cmdnfs_RENAME3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3832 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_wccdata(), NULL, RENAME3_FAIL_FROMWCC, RENAME3_FAIL_TOWCC, RENAME3_OK_FROMWCC, and RENAME3_OK_TOWCC.
+Definition at line 3826 of file cmd_nfstools.c.
 .SS "int cmdnfs_RMDIR3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3498 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_wccdata(), NULL, RMDIR3_FAIL_WCC, and RMDIR3_OK_WCC.
+Definition at line 3496 of file cmd_nfstools.c.
 .SS "int cmdnfs_sattr2 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1037 of file cmd_nfstools.c.
-.PP
-References ato64(), atomode(), atotime(), CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and my_atoi().
-.PP
-Referenced by cmdnfs_CREATE2args(), and cmdnfs_SETATTR2args().
+Definition at line 1039 of file cmd_nfstools.c.
 .SS "int cmdnfs_sattr3 (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1666 of file cmd_nfstools.c.
-.PP
-References ato64(), atomode(), atotime(), CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, and my_atoi().
-.PP
-Referenced by cmdnfs_CREATE3args(), cmdnfs_MKDIR3args(), cmdnfs_SETATTR3args(), cmdnfs_SYMLINK3args(), fn_nfs_ln(), fn_nfs_remote_ln(), fn_nfs_remote_setattr(), fn_nfs_setattr(), nfs_remote_create(), and nfs_remote_mkdir().
+Definition at line 1665 of file cmd_nfstools.c.
 .SS "int cmdnfs_SETATTR2args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 1285 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle2(), CMDNFS_FREE, cmdnfs_sattr2(), and NULL.
+Definition at line 1289 of file cmd_nfstools.c.
 .SS "int cmdnfs_SETATTR3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3640 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, cmdnfs_fhandle3(), CMDNFS_FREE, cmdnfs_sattr3(), cmdnfs_sattrguard3(), and NULL.
+Definition at line 3636 of file cmd_nfstools.c.
 .SS "int cmdnfs_SETATTR3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 3707 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_wccdata(), NULL, SETATTR3_FAIL_WCC, and SETATTR3_OK_WCC.
+Definition at line 3702 of file cmd_nfstools.c.
 .SS "int cmdnfs_STATFS2res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 382 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat2(), and NULL.
+Definition at line 388 of file cmd_nfstools.c.
 .SS "int cmdnfs_SYMLINK3args (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 4056 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, cmdnfs_diropargs3(), cmdnfs_dirpath(), CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_sattr3(), and NULL.
+Definition at line 4049 of file cmd_nfstools.c.
 .SS "int cmdnfs_SYMLINK3res (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 4138 of file cmd_nfstools.c.
-.PP
-References CMDNFS_DECODE, CMDNFS_ENCODE, CMDNFS_FREE, cmdnfs_nfsstat3(), cmdnfs_postopattr(), cmdnfs_postopfh3(), cmdnfs_wccdata(), NULL, SYMLINK3_FAIL_WCC, SYMLINK3_OK_ATTRS, SYMLINK3_OK_FH, and SYMLINK3_OK_WCC.
+Definition at line 4130 of file cmd_nfstools.c.
 .SS "int cmdnfs_void (\fBcmdnfs_encodetype_t\fP encodeflag, int argc, char ** argv, int indent, FILE * out_stream, caddr_t p_nfs_struct)"
 .PP
-Definition at line 190 of file cmd_nfstools.c.
+Definition at line 196 of file cmd_nfstools.c.
 .SS "void print_nfs_attributes (fattr3 * attrs, FILE * output)"
 .PP
 print_nfs_attributes: print an fattr3 to a given output file.
@@ -650,9 +536,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 4500 of file cmd_nfstools.c.
-.PP
-Referenced by fn_nfs_ls(), fn_nfs_remote_ls(), fn_nfs_remote_stat(), and fn_nfs_stat().
+Definition at line 4491 of file cmd_nfstools.c.
 .SS "void print_nfsitem_line (FILE * out, fattr3 * attrib, char * name, char * target)"
 .PP
 print_nfsitem_line: Prints a nfs element on one line, like the Unix ls command.
@@ -675,11 +559,7 @@ Nothing.
 .PP
 
 .PP
-Definition at line 4416 of file cmd_nfstools.c.
-.PP
-References print_mask, and time2str().
-.PP
-Referenced by fn_nfs_ls(), and fn_nfs_remote_ls().
+Definition at line 4408 of file cmd_nfstools.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

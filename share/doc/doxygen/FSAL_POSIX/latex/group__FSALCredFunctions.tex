@@ -3,12 +3,12 @@
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Build\-Export\-Context} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-export\_\-context, fsal\_\-path\_\-t $\ast$p\_\-export\_\-path, char $\ast$fs\_\-specific\_\-options)
+fsal\_\-status\_\-t {\bf FSAL\_\-BuildExportContext} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-export\_\-context, fsal\_\-path\_\-t $\ast$p\_\-export\_\-path, char $\ast$fs\_\-specific\_\-options)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Init\-Client\-Context} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-thr\_\-context)\label{group__FSALCredFunctions_ga1}
+fsal\_\-status\_\-t \textbf{FSAL\_\-InitClientContext} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-thr\_\-context)\label{group__FSALCredFunctions_g9f4ac7f916d29b4a28556332e735143c}
 
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Get\-Client\-Context} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-thr\_\-context, fsal\_\-export\_\-context\_\-t $\ast$p\_\-export\_\-context, fsal\_\-uid\_\-t uid, fsal\_\-gid\_\-t gid, fsal\_\-gid\_\-t $\ast$alt\_\-groups, fsal\_\-count\_\-t nb\_\-alt\_\-groups)
+fsal\_\-status\_\-t {\bf FSAL\_\-GetClientContext} (fsal\_\-op\_\-context\_\-t $\ast$p\_\-thr\_\-context, fsal\_\-export\_\-context\_\-t $\ast$p\_\-export\_\-context, fsal\_\-uid\_\-t uid, fsal\_\-gid\_\-t gid, fsal\_\-gid\_\-t $\ast$alt\_\-groups, fsal\_\-count\_\-t nb\_\-alt\_\-groups)
 \end{CompactItemize}
 
 
@@ -16,19 +16,19 @@ fsal\_\-status\_\-t {\bf FSAL\_\-Get\-Client\-Context} (fsal\_\-op\_\-context\_\
 Those functions handle security contexts (credentials). 
 
 \subsection{Function Documentation}
-\index{FSALCredFunctions@{FSALCred\-Functions}!FSAL_BuildExportContext@{FSAL\_\-BuildExportContext}}
-\index{FSAL_BuildExportContext@{FSAL\_\-BuildExportContext}!FSALCredFunctions@{FSALCred\-Functions}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Build\-Export\-Context (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-export\_\-context}, fsal\_\-path\_\-t $\ast$ {\em p\_\-export\_\-path}, char $\ast$ {\em fs\_\-specific\_\-options})}\label{group__FSALCredFunctions_ga0}
+\index{FSALCredFunctions@{FSALCredFunctions}!FSAL\_\-BuildExportContext@{FSAL\_\-BuildExportContext}}
+\index{FSAL\_\-BuildExportContext@{FSAL\_\-BuildExportContext}!FSALCredFunctions@{FSALCredFunctions}}
+\subsubsection[{FSAL\_\-BuildExportContext}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-BuildExportContext (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-export\_\-context}, \/  fsal\_\-path\_\-t $\ast$ {\em p\_\-export\_\-path}, \/  char $\ast$ {\em fs\_\-specific\_\-options})}\label{group__FSALCredFunctions_g8fc1d622ba0c6a798b1cc667bf273311}
 
 
 Parse FS specific option string to build the export entry option. 
 
-Definition at line 89 of file fsal\_\-context.c.\index{FSALCredFunctions@{FSALCred\-Functions}!FSAL_GetClientContext@{FSAL\_\-GetClientContext}}
-\index{FSAL_GetClientContext@{FSAL\_\-GetClientContext}!FSALCredFunctions@{FSALCred\-Functions}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Get\-Client\-Context (fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-thr\_\-context}, fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-export\_\-context}, fsal\_\-uid\_\-t {\em uid}, fsal\_\-gid\_\-t {\em gid}, fsal\_\-gid\_\-t $\ast$ {\em alt\_\-groups}, fsal\_\-count\_\-t {\em nb\_\-alt\_\-groups})}\label{group__FSALCredFunctions_ga2}
+Definition at line 89 of file fsal\_\-context.c.\index{FSALCredFunctions@{FSALCredFunctions}!FSAL\_\-GetClientContext@{FSAL\_\-GetClientContext}}
+\index{FSAL\_\-GetClientContext@{FSAL\_\-GetClientContext}!FSALCredFunctions@{FSALCredFunctions}}
+\subsubsection[{FSAL\_\-GetClientContext}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-GetClientContext (fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-thr\_\-context}, \/  fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-export\_\-context}, \/  fsal\_\-uid\_\-t {\em uid}, \/  fsal\_\-gid\_\-t {\em gid}, \/  fsal\_\-gid\_\-t $\ast$ {\em alt\_\-groups}, \/  fsal\_\-count\_\-t {\em nb\_\-alt\_\-groups})}\label{group__FSALCredFunctions_gc9d7f36333e895d045a6e484589fda10}
 
 
-FSAL\_\-Get\-User\-Cred : Get a user credential from its uid.
+FSAL\_\-GetUserCred : Get a user credential from its uid.
 
 \begin{Desc}
 \item[Parameters:]
@@ -41,4 +41,4 @@ FSAL\_\-Get\-User\-Cred : Get a user credential from its uid.
 \end{Desc}
 
 
-Definition at line 164 of file fsal\_\-context.c.
+Definition at line 163 of file fsal\_\-context.c.

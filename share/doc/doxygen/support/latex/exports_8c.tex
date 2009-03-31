@@ -1,6 +1,7 @@
 \section{exports.c File Reference}
 \label{exports_8c}\index{exports.c@{exports.c}}
-What is needed to parse the exports file. 
+What is needed to parse the exports file.  
+
 
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
@@ -22,6 +23,7 @@ What is needed to parse the exports file.
 {\tt \#include \char`\"{}nfs\_\-dupreq.h\char`\"{}}\par
 {\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
 {\tt \#include \char`\"{}common\_\-utils.h\char`\"{}}\par
+{\tt \#include \char`\"{}nodelist.h\char`\"{}}\par
 {\tt \#include $<$stdlib.h$>$}\par
 {\tt \#include $<$fnmatch.h$>$}\par
 {\tt \#include $<$sys/socket.h$>$}\par
@@ -32,125 +34,125 @@ What is needed to parse the exports file.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf STRCMP}\ strcasecmp
+\#define {\bf STRCMP}~strcasecmp
 \item 
-\#define {\bf CONF\_\-LABEL\_\-EXPORT}\ \char`\"{}EXPORT\char`\"{}
+\#define {\bf CONF\_\-LABEL\_\-EXPORT}~\char`\"{}EXPORT\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-ID}\ \char`\"{}Export\_\-id\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-ID}~\char`\"{}Export\_\-id\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PATH}\ \char`\"{}Path\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PATH}~\char`\"{}Path\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-ROOT}\ \char`\"{}Root\_\-Access\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-ROOT}~\char`\"{}Root\_\-Access\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-ACCESS}\ \char`\"{}Access\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-ACCESS}~\char`\"{}Access\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PSEUDO}\ \char`\"{}Pseudo\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PSEUDO}~\char`\"{}Pseudo\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-ACCESSTYPE}\ \char`\"{}Access\_\-Type\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-ACCESSTYPE}~\char`\"{}Access\_\-Type\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-ANON\_\-ROOT}\ \char`\"{}Anonymous\_\-root\_\-uid\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-ANON\_\-ROOT}~\char`\"{}Anonymous\_\-root\_\-uid\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-NFS\_\-PROTO}\ \char`\"{}NFS\_\-Protocols\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-NFS\_\-PROTO}~\char`\"{}NFS\_\-Protocols\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-TRANS\_\-PROTO}\ \char`\"{}Transport\_\-Protocols\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-TRANS\_\-PROTO}~\char`\"{}Transport\_\-Protocols\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-SECTYPE}\ \char`\"{}Sec\-Type\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-SECTYPE}~\char`\"{}SecType\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-READ}\ \char`\"{}Max\-Read\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-READ}~\char`\"{}MaxRead\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-WRITE}\ \char`\"{}Max\-Write\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-WRITE}~\char`\"{}MaxWrite\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-READ}\ \char`\"{}Pref\-Read\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-READ}~\char`\"{}PrefRead\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-WRITE}\ \char`\"{}Pref\-Write\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-WRITE}~\char`\"{}PrefWrite\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-READDIR}\ \char`\"{}Pref\-Readdir\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PREF\_\-READDIR}~\char`\"{}PrefReaddir\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-FSID}\ \char`\"{}Filesystem\_\-id\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-FSID}~\char`\"{}Filesystem\_\-id\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-NOSUID}\ \char`\"{}NOSUID\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-NOSUID}~\char`\"{}NOSUID\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-NOSGID}\ \char`\"{}NOSGID\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-NOSGID}~\char`\"{}NOSGID\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}\ \char`\"{}Privileged\-Port\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}~\char`\"{}PrivilegedPort\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-USE\_\-DATACACHE}\ \char`\"{}Cache\_\-Data\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-USE\_\-DATACACHE}~\char`\"{}Cache\_\-Data\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}\ \char`\"{}FS\_\-Specific\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}~\char`\"{}FS\_\-Specific\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-FS\_\-TAG}\ \char`\"{}Tag\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-FS\_\-TAG}~\char`\"{}Tag\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}\ \char`\"{}Max\-Offset\-Write\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}~\char`\"{}MaxOffsetWrite\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}\ \char`\"{}Max\-Offset\-Read\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}~\char`\"{}MaxOffsetRead\char`\"{}
 \item 
-\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}\ \char`\"{}Max\-Cache\-Size\char`\"{}
+\#define {\bf CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}~\char`\"{}MaxCacheSize\char`\"{}
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-ID}\ 0x00000001
+\#define {\bf FLAG\_\-EXPORT\_\-ID}~0x00000001
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PATH}\ 0x00000002
+\#define {\bf FLAG\_\-EXPORT\_\-PATH}~0x00000002
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}\ 0x00000004
+\#define {\bf FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}~0x00000004
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PSEUDO}\ 0x00000010
+\#define {\bf FLAG\_\-EXPORT\_\-PSEUDO}~0x00000010
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-ACCESSTYPE}\ 0x00000020
+\#define {\bf FLAG\_\-EXPORT\_\-ACCESSTYPE}~0x00000020
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-ANON\_\-ROOT}\ 0x00000040
+\#define {\bf FLAG\_\-EXPORT\_\-ANON\_\-ROOT}~0x00000040
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-NFS\_\-PROTO}\ 0x00000080
+\#define {\bf FLAG\_\-EXPORT\_\-NFS\_\-PROTO}~0x00000080
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}\ 0x00000100
+\#define {\bf FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}~0x00000100
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-SECTYPE}\ 0x00000200
+\#define {\bf FLAG\_\-EXPORT\_\-SECTYPE}~0x00000200
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-READ}\ 0x00000400
+\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-READ}~0x00000400
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-WRITE}\ 0x00000800
+\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-WRITE}~0x00000800
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-READ}\ 0x00001000
+\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-READ}~0x00001000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-WRITE}\ 0x00002000
+\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-WRITE}~0x00002000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-READDIR}\ 0x00004000
+\#define {\bf FLAG\_\-EXPORT\_\-PREF\_\-READDIR}~0x00004000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-FSID}\ 0x00008000
+\#define {\bf FLAG\_\-EXPORT\_\-FSID}~0x00008000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-NOSUID}\ 0x00010000
+\#define {\bf FLAG\_\-EXPORT\_\-NOSUID}~0x00010000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-NOSGID}\ 0x00020000
+\#define {\bf FLAG\_\-EXPORT\_\-NOSGID}~0x00020000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}\ 0x00040000
+\#define {\bf FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}~0x00040000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}\ 0x00080000
+\#define {\bf FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}~0x00080000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}\ 0x00100000
+\#define {\bf FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}~0x00100000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-FS\_\-TAG}\ 0x00200000
+\#define {\bf FLAG\_\-EXPORT\_\-FS\_\-TAG}~0x00200000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}\ 0x00400000
+\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}~0x00400000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}\ 0x00800000
+\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}~0x00800000
 \item 
-\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}\ 0x01000000
+\#define {\bf FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}~0x01000000
 \item 
-\#define {\bf DEFINED\_\-TWICE\_\-WARNING}(\_\-str\_\-)\ Display\-Log( \char`\"{}NFS READ\_\-EXPORT: WARNING: \%s defined twice !!! (ignored)\char`\"{}, \_\-str\_\- )
+\#define {\bf DEFINED\_\-TWICE\_\-WARNING}(\_\-str\_\-)~DisplayLog( \char`\"{}NFS READ\_\-EXPORT: WARNING: \%s defined twice !!! (ignored)\char`\"{}, \_\-str\_\- )
 \item 
-\#define {\bf EXPORT\_\-MAX\_\-CLIENTS}\ EXPORTS\_\-NB\_\-MAX\_\-CLIENTS
+\#define {\bf EXPORT\_\-MAX\_\-CLIENTS}~EXPORTS\_\-NB\_\-MAX\_\-CLIENTS
 \item 
-\#define {\bf EXPORT\_\-MAX\_\-CLIENTLEN}\ 256
+\#define {\bf EXPORT\_\-MAX\_\-CLIENTLEN}~256
 \item 
-\#define {\bf MAX\_\-NFSPROTO}\ 10
+\#define {\bf MAX\_\-NFSPROTO}~10
 \item 
-\#define {\bf MAX\_\-NFSPROTO\_\-LEN}\ 256
+\#define {\bf MAX\_\-NFSPROTO\_\-LEN}~256
 \item 
-\#define {\bf MAX\_\-TRANSPROTO}\ 10
+\#define {\bf MAX\_\-TRANSPROTO}~10
 \item 
-\#define {\bf MAX\_\-TRANSPROTO\_\-LEN}\ 256
+\#define {\bf MAX\_\-TRANSPROTO\_\-LEN}~256
 \item 
-\#define {\bf MAX\_\-SECTYPE}\ 10
+\#define {\bf MAX\_\-SECTYPE}~10
 \item 
-\#define {\bf MAX\_\-SECTYPE\_\-LEN}\ 256
+\#define {\bf MAX\_\-SECTYPE\_\-LEN}~256
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -159,15 +161,15 @@ int {\bf local\_\-lru\_\-inode\_\-entry\_\-to\_\-str} (LRU\_\-data\_\-t data, ch
 \item 
 int {\bf local\_\-lru\_\-inode\_\-clean\_\-entry} (LRU\_\-entry\_\-t $\ast$entry, void $\ast$adddata)
 \item 
-int {\bf nfs\_\-Parse\-Conf\-Line} (char $\ast$Argv[$\,$], int nb\-Argv, char $\ast$line, int($\ast$separator\_\-function)(char), int($\ast$end\-Line\_\-func)(char))
+int {\bf nfs\_\-ParseConfLine} (char $\ast$Argv[$\,$], int nbArgv, char $\ast$line, int($\ast$separator\_\-function)(char), int($\ast$endLine\_\-func)(char))
 \item 
-int {\bf nfs\_\-Lookup\-Network\-Addr} (char $\ast$host, unsigned long $\ast$net\-Addr, unsigned long $\ast$net\-Mask)
+int {\bf nfs\_\-LookupNetworkAddr} (char $\ast$host, unsigned long $\ast$netAddr, unsigned long $\ast$netMask)
 \item 
-exportlist\_\-t $\ast$ {\bf Build\-Default\-Export} ()
+exportlist\_\-t $\ast$ {\bf BuildDefaultExport} ()
 \item 
-int {\bf Read\-Exports} (config\_\-file\_\-t in\_\-config, exportlist\_\-t $\ast$$\ast$ppexportlist)
+int {\bf ReadExports} (config\_\-file\_\-t in\_\-config, exportlist\_\-t $\ast$$\ast$ppexportlist)
 \item 
-int {\bf nfs\_\-export\_\-check\_\-access} (unsigned int addr, struct svc\_\-req $\ast$ptr\_\-req, exportlist\_\-t $\ast$pexport, unsigned int nfs\_\-prog, unsigned int mnt\_\-prog, hash\_\-table\_\-t $\ast$ht\_\-ip\_\-stats, nfs\_\-ip\_\-stats\_\-t $\ast$ip\_\-stats\_\-pool, exportlist\_\-client\_\-entry\_\-t $\ast$pclient\_\-found)
+int {\bf nfs\_\-export\_\-check\_\-access} (struct sockaddr\_\-storage $\ast$pssaddr, struct svc\_\-req $\ast$ptr\_\-req, exportlist\_\-t $\ast$pexport, unsigned int nfs\_\-prog, unsigned int mnt\_\-prog, hash\_\-table\_\-t $\ast$ht\_\-ip\_\-stats, nfs\_\-ip\_\-stats\_\-t $\ast$ip\_\-stats\_\-pool, exportlist\_\-client\_\-entry\_\-t $\ast$pclient\_\-found)
 \item 
 int {\bf nfs\_\-export\_\-create\_\-root\_\-entry} (exportlist\_\-t $\ast$pexportlist, hash\_\-table\_\-t $\ast$ht)
 \end{CompactItemize}
@@ -188,537 +190,467 @@ cache\_\-content\_\-client\_\-t {\bf recover\_\-datacache\_\-client}
 What is needed to parse the exports file. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
-\item[Author]leibovic \end{Desc}
-\end{Desc}
+\item[Author:]\$Author\$ \end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/02/08 12:50:40 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.33 \end{Desc}
-\end{Desc}
-{\bf exports.c}{\rm (p.\,\pageref{exports_8c})} : What is needed to parse the exports file.
+\doxyref{exports.c}{p.}{exports_8c} : What is needed to parse the exports file.
 
 \begin{Desc}
-\item[Header]/cea/home/cvs/cvs/SHERPA/Base\-Cvs/GANESHA/src/support/exports.c,v 1.33 2006/02/08 12:50:40 leibovic Exp \end{Desc}
+\item[Header]/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/exports.c,v 1.33 2006/02/08 12:50:40 leibovic Exp \end{Desc}
 
-
-\begin{Desc}
-\item[Log]{\bf exports.c}{\rm (p.\,\pageref{exports_8c})},v \end{Desc}
-Revision 1.33 2006/02/08 12:50:40 leibovic changing NIV\_\-EVNMT to NIV\_\-EVENT.
-
-Revision 1.32 2006/01/24 13:49:12 leibovic Adding missing includes.
-
-Revision 1.31 2006/01/23 16:45:27 leibovic Putting debug between ifdef \_\-DEBUG\_\-DISPATCH.
-
-Revision 1.30 2006/01/23 16:16:00 leibovic Fixing bug about nfs clients.
-
-Revision 1.29 2006/01/20 09:51:34 deniel Mountage Ok sur pinatubo1
-
-Revision 1.28 2006/01/19 07:40:26 leibovic Better exportlist management (test whether iterator is null).
-
-Revision 1.27 2006/01/18 07:29:11 leibovic Fixing bugs about exportlists.
-
-Revision 1.26 2005/12/20 10:52:18 deniel exportlist is no longer dynamic but static
-
-Revision 1.25 2005/12/07 14:28:00 deniel Support of stats via stats\_\-thread was added
-
-Revision 1.24 2005/12/02 09:26:38 deniel added getopt management
-
-Revision 1.23 2005/11/30 09:16:08 deniel IP/stats cache per thread (no bottleneck) is complete
-
-Cache\-Size Revision 1.22 2005/11/30 08:12:49 deniel Ip/stats in a very simple way
-
-Revision 1.21 2005/11/29 13:38:17 deniel bottlenecked ip\_\-stats
-
-Revision 1.20 2005/11/28 17:03:02 deniel Added Ce\-CILL headers
-
-Revision 1.19 2005/11/21 09:54:55 leibovic Once for all thread's credential initialization.
-
-Revision 1.18 2005/11/08 15:22:24 deniel Wild\-Card and Netgroup entry for exportlist are now supported
-
-Revision 1.17 2005/11/07 10:29:11 deniel authentication net and host is ok
-
-Revision 1.16 2005/11/07 10:20:53 deniel Authentication on networks added
-
-Revision 1.15 2005/11/07 09:03:39 deniel Implementing access security
-
-Revision 1.14 2005/11/04 15:12:58 deniel Added basic authentication support
-
-Revision 1.13 2005/10/14 10:33:22 deniel EEXISTS bug correctif in nfs\_\-Mkdir
-
-Revision 1.12 2005/10/14 09:24:05 leibovic YES/NO are no possible for boolean values in export file.
-
-Revision 1.11 2005/10/13 14:55:47 leibovic Fixing bug for reading maxread, maxwrite, prefread, prefwrite, ...
-
-Revision 1.10 2005/10/13 11:21:49 deniel corrected truncate bug
-
-Revision 1.9 2005/10/10 14:27:54 deniel mnt\_\-Mnt does not create root entries in Cache inode any more. This is done before the first request once the export list is read the first time .
-
-Revision 1.8 2005/09/28 13:36:04 leibovic Fixed bug in filling clients' addresses.
-
-Revision 1.7 2005/09/27 12:39:51 leibovic Too must entries exported.
-
-Revision 1.6 2005/09/22 14:50:15 leibovic support of Sectype, NFS\_\-protocols and Transport\_\-Protocols options.
-
-Revision 1.5 2005/09/22 13:38:44 leibovic Adding default security flavors.
-
-Revision 1.4 2005/09/22 13:15:24 leibovic Export file parsing.
-
-Revision 1.3 2005/08/08 15:23:08 deniel Bug for parsing cookie verifier
-
-Revision 1.2 2005/08/03 13:13:59 deniel memset to zero before building the filehandles
-
-Revision 1.1 2005/08/03 08:51:44 deniel Added file {\bf exports.c}{\rm (p.\,\pageref{exports_8c})} in libsupport.a
 
 Definition in file {\bf exports.c}.
 
 \subsection{Define Documentation}
-\index{exports.c@{exports.c}!CONF_EXPORT_ACCESS@{CONF\_\-EXPORT\_\-ACCESS}}
-\index{CONF_EXPORT_ACCESS@{CONF\_\-EXPORT\_\-ACCESS}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ACCESS\ \char`\"{}Access\char`\"{}}\label{exports_8c_a5}
+\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-ACCESS@{CONF\_\-EXPORT\_\-ACCESS}}
+\index{CONF\_\-EXPORT\_\-ACCESS@{CONF\_\-EXPORT\_\-ACCESS}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-ACCESS}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ACCESS~\char`\"{}Access\char`\"{}}\label{exports_8c_80c82bd9f2fc8f491561c6b9ed92372b}
 
 
 
 
-Definition at line 246 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_ACCESSTYPE@{CONF\_\-EXPORT\_\-ACCESSTYPE}}
-\index{CONF_EXPORT_ACCESSTYPE@{CONF\_\-EXPORT\_\-ACCESSTYPE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ACCESSTYPE\ \char`\"{}Access\_\-Type\char`\"{}}\label{exports_8c_a7}
+Definition at line 152 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-ACCESSTYPE@{CONF\_\-EXPORT\_\-ACCESSTYPE}}
+\index{CONF\_\-EXPORT\_\-ACCESSTYPE@{CONF\_\-EXPORT\_\-ACCESSTYPE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-ACCESSTYPE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ACCESSTYPE~\char`\"{}Access\_\-Type\char`\"{}}\label{exports_8c_2508d24d4f3d5757c5bd12dc051daea1}
 
 
 
 
-Definition at line 248 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_ANON_ROOT@{CONF\_\-EXPORT\_\-ANON\_\-ROOT}}
-\index{CONF_EXPORT_ANON_ROOT@{CONF\_\-EXPORT\_\-ANON\_\-ROOT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ANON\_\-ROOT\ \char`\"{}Anonymous\_\-root\_\-uid\char`\"{}}\label{exports_8c_a8}
+Definition at line 154 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-ANON\_\-ROOT@{CONF\_\-EXPORT\_\-ANON\_\-ROOT}}
+\index{CONF\_\-EXPORT\_\-ANON\_\-ROOT@{CONF\_\-EXPORT\_\-ANON\_\-ROOT}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-ANON\_\-ROOT}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ANON\_\-ROOT~\char`\"{}Anonymous\_\-root\_\-uid\char`\"{}}\label{exports_8c_f733049473b2ff41ed10d2c2fb4867d1}
 
 
 
 
-Definition at line 249 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_FS_SPECIFIC@{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}}
-\index{CONF_EXPORT_FS_SPECIFIC@{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FS\_\-SPECIFIC\ \char`\"{}FS\_\-Specific\char`\"{}}\label{exports_8c_a22}
+Definition at line 155 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-FS\_\-SPECIFIC@{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}}
+\index{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC@{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-FS\_\-SPECIFIC}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FS\_\-SPECIFIC~\char`\"{}FS\_\-Specific\char`\"{}}\label{exports_8c_e4f38f9e57f9d58d80372786d372ee64}
 
 
 
 
-Definition at line 263 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_FS_TAG@{CONF\_\-EXPORT\_\-FS\_\-TAG}}
-\index{CONF_EXPORT_FS_TAG@{CONF\_\-EXPORT\_\-FS\_\-TAG}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FS\_\-TAG\ \char`\"{}Tag\char`\"{}}\label{exports_8c_a23}
+Definition at line 169 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-FS\_\-TAG@{CONF\_\-EXPORT\_\-FS\_\-TAG}}
+\index{CONF\_\-EXPORT\_\-FS\_\-TAG@{CONF\_\-EXPORT\_\-FS\_\-TAG}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-FS\_\-TAG}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FS\_\-TAG~\char`\"{}Tag\char`\"{}}\label{exports_8c_c6e53a9911b340293355c063ae5574d0}
 
 
 
 
-Definition at line 264 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_FSID@{CONF\_\-EXPORT\_\-FSID}}
-\index{CONF_EXPORT_FSID@{CONF\_\-EXPORT\_\-FSID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FSID\ \char`\"{}Filesystem\_\-id\char`\"{}}\label{exports_8c_a17}
+Definition at line 170 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-FSID@{CONF\_\-EXPORT\_\-FSID}}
+\index{CONF\_\-EXPORT\_\-FSID@{CONF\_\-EXPORT\_\-FSID}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-FSID}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-FSID~\char`\"{}Filesystem\_\-id\char`\"{}}\label{exports_8c_ccf41ea676835a67ad1e4eeea2566424}
 
 
 
 
-Definition at line 258 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_ID@{CONF\_\-EXPORT\_\-ID}}
-\index{CONF_EXPORT_ID@{CONF\_\-EXPORT\_\-ID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ID\ \char`\"{}Export\_\-id\char`\"{}}\label{exports_8c_a2}
+Definition at line 164 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-ID@{CONF\_\-EXPORT\_\-ID}}
+\index{CONF\_\-EXPORT\_\-ID@{CONF\_\-EXPORT\_\-ID}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-ID}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ID~\char`\"{}Export\_\-id\char`\"{}}\label{exports_8c_b94bf190de287e6c0b549f56831a6bfc}
 
 
 
 
-Definition at line 243 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_MAX_CACHE_SIZE@{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}}
-\index{CONF_EXPORT_MAX_CACHE_SIZE@{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE\ \char`\"{}Max\-Cache\-Size\char`\"{}}\label{exports_8c_a26}
+Definition at line 149 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE@{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}}
+\index{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE@{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE~\char`\"{}MaxCacheSize\char`\"{}}\label{exports_8c_5150a2e3e3beaec8647203dc02e5b6c2}
 
 
 
 
-Definition at line 267 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_MAX_OFF_READ@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}}
-\index{CONF_EXPORT_MAX_OFF_READ@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ\ \char`\"{}Max\-Offset\-Read\char`\"{}}\label{exports_8c_a25}
+Definition at line 173 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}}
+\index{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-READ~\char`\"{}MaxOffsetRead\char`\"{}}\label{exports_8c_3bd8666f98f27b36ebd0a6a450b7f9f4}
 
 
 
 
-Definition at line 266 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_MAX_OFF_WRITE@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}}
-\index{CONF_EXPORT_MAX_OFF_WRITE@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE\ \char`\"{}Max\-Offset\-Write\char`\"{}}\label{exports_8c_a24}
+Definition at line 172 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}}
+\index{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE@{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE~\char`\"{}MaxOffsetWrite\char`\"{}}\label{exports_8c_3a670fd1a21a2a00178bc75c63438a53}
 
 
 
 
-Definition at line 265 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_MAX_READ@{CONF\_\-EXPORT\_\-MAX\_\-READ}}
-\index{CONF_EXPORT_MAX_READ@{CONF\_\-EXPORT\_\-MAX\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-READ\ \char`\"{}Max\-Read\char`\"{}}\label{exports_8c_a12}
+Definition at line 171 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-MAX\_\-READ@{CONF\_\-EXPORT\_\-MAX\_\-READ}}
+\index{CONF\_\-EXPORT\_\-MAX\_\-READ@{CONF\_\-EXPORT\_\-MAX\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-MAX\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-READ~\char`\"{}MaxRead\char`\"{}}\label{exports_8c_e399dded8076cfefbd1d1378d4b5f950}
 
 
 
 
-Definition at line 253 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_MAX_WRITE@{CONF\_\-EXPORT\_\-MAX\_\-WRITE}}
-\index{CONF_EXPORT_MAX_WRITE@{CONF\_\-EXPORT\_\-MAX\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-WRITE\ \char`\"{}Max\-Write\char`\"{}}\label{exports_8c_a13}
+Definition at line 159 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-MAX\_\-WRITE@{CONF\_\-EXPORT\_\-MAX\_\-WRITE}}
+\index{CONF\_\-EXPORT\_\-MAX\_\-WRITE@{CONF\_\-EXPORT\_\-MAX\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-MAX\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-MAX\_\-WRITE~\char`\"{}MaxWrite\char`\"{}}\label{exports_8c_21cbd717137845e927d8de98aa2b12d5}
 
 
 
 
-Definition at line 254 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_NFS_PROTO@{CONF\_\-EXPORT\_\-NFS\_\-PROTO}}
-\index{CONF_EXPORT_NFS_PROTO@{CONF\_\-EXPORT\_\-NFS\_\-PROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NFS\_\-PROTO\ \char`\"{}NFS\_\-Protocols\char`\"{}}\label{exports_8c_a9}
+Definition at line 160 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-NFS\_\-PROTO@{CONF\_\-EXPORT\_\-NFS\_\-PROTO}}
+\index{CONF\_\-EXPORT\_\-NFS\_\-PROTO@{CONF\_\-EXPORT\_\-NFS\_\-PROTO}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-NFS\_\-PROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NFS\_\-PROTO~\char`\"{}NFS\_\-Protocols\char`\"{}}\label{exports_8c_c62dabb0d08ad7e0daa74199225bd6bb}
 
 
 
 
-Definition at line 250 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_NOSGID@{CONF\_\-EXPORT\_\-NOSGID}}
-\index{CONF_EXPORT_NOSGID@{CONF\_\-EXPORT\_\-NOSGID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NOSGID\ \char`\"{}NOSGID\char`\"{}}\label{exports_8c_a19}
+Definition at line 156 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-NOSGID@{CONF\_\-EXPORT\_\-NOSGID}}
+\index{CONF\_\-EXPORT\_\-NOSGID@{CONF\_\-EXPORT\_\-NOSGID}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-NOSGID}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NOSGID~\char`\"{}NOSGID\char`\"{}}\label{exports_8c_cd6fc018ff7183e979ca5cca2fa37004}
 
 
 
 
-Definition at line 260 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_NOSUID@{CONF\_\-EXPORT\_\-NOSUID}}
-\index{CONF_EXPORT_NOSUID@{CONF\_\-EXPORT\_\-NOSUID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NOSUID\ \char`\"{}NOSUID\char`\"{}}\label{exports_8c_a18}
+Definition at line 166 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-NOSUID@{CONF\_\-EXPORT\_\-NOSUID}}
+\index{CONF\_\-EXPORT\_\-NOSUID@{CONF\_\-EXPORT\_\-NOSUID}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-NOSUID}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-NOSUID~\char`\"{}NOSUID\char`\"{}}\label{exports_8c_db9fd2fe035c4076723e7d72bfed1867}
 
 
 
 
-Definition at line 259 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PATH@{CONF\_\-EXPORT\_\-PATH}}
-\index{CONF_EXPORT_PATH@{CONF\_\-EXPORT\_\-PATH}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PATH\ \char`\"{}Path\char`\"{}}\label{exports_8c_a3}
+Definition at line 165 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PATH@{CONF\_\-EXPORT\_\-PATH}}
+\index{CONF\_\-EXPORT\_\-PATH@{CONF\_\-EXPORT\_\-PATH}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PATH}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PATH~\char`\"{}Path\char`\"{}}\label{exports_8c_f6fa389924355236b798575059dc7a1a}
 
 
 
 
-Definition at line 244 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PREF_READ@{CONF\_\-EXPORT\_\-PREF\_\-READ}}
-\index{CONF_EXPORT_PREF_READ@{CONF\_\-EXPORT\_\-PREF\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-READ\ \char`\"{}Pref\-Read\char`\"{}}\label{exports_8c_a14}
+Definition at line 150 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PREF\_\-READ@{CONF\_\-EXPORT\_\-PREF\_\-READ}}
+\index{CONF\_\-EXPORT\_\-PREF\_\-READ@{CONF\_\-EXPORT\_\-PREF\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PREF\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-READ~\char`\"{}PrefRead\char`\"{}}\label{exports_8c_12d6d6096769d701cce836c64c8439a2}
 
 
 
 
-Definition at line 255 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PREF_READDIR@{CONF\_\-EXPORT\_\-PREF\_\-READDIR}}
-\index{CONF_EXPORT_PREF_READDIR@{CONF\_\-EXPORT\_\-PREF\_\-READDIR}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-READDIR\ \char`\"{}Pref\-Readdir\char`\"{}}\label{exports_8c_a16}
+Definition at line 161 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PREF\_\-READDIR@{CONF\_\-EXPORT\_\-PREF\_\-READDIR}}
+\index{CONF\_\-EXPORT\_\-PREF\_\-READDIR@{CONF\_\-EXPORT\_\-PREF\_\-READDIR}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PREF\_\-READDIR}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-READDIR~\char`\"{}PrefReaddir\char`\"{}}\label{exports_8c_55c2519e7c608b5d5678a814266b09c6}
 
 
 
 
-Definition at line 257 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PREF_WRITE@{CONF\_\-EXPORT\_\-PREF\_\-WRITE}}
-\index{CONF_EXPORT_PREF_WRITE@{CONF\_\-EXPORT\_\-PREF\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-WRITE\ \char`\"{}Pref\-Write\char`\"{}}\label{exports_8c_a15}
+Definition at line 163 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PREF\_\-WRITE@{CONF\_\-EXPORT\_\-PREF\_\-WRITE}}
+\index{CONF\_\-EXPORT\_\-PREF\_\-WRITE@{CONF\_\-EXPORT\_\-PREF\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PREF\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PREF\_\-WRITE~\char`\"{}PrefWrite\char`\"{}}\label{exports_8c_3e6dbe64a166249407322bf42a931b73}
 
 
 
 
-Definition at line 256 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PRIVILEGED_PORT@{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}}
-\index{CONF_EXPORT_PRIVILEGED_PORT@{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT\ \char`\"{}Privileged\-Port\char`\"{}}\label{exports_8c_a20}
+Definition at line 162 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT@{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}}
+\index{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT@{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PRIVILEGED\_\-PORT~\char`\"{}PrivilegedPort\char`\"{}}\label{exports_8c_f79ea0415875b00862d2a6d5795bb1a6}
 
 
 
 
-Definition at line 261 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_PSEUDO@{CONF\_\-EXPORT\_\-PSEUDO}}
-\index{CONF_EXPORT_PSEUDO@{CONF\_\-EXPORT\_\-PSEUDO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PSEUDO\ \char`\"{}Pseudo\char`\"{}}\label{exports_8c_a6}
+Definition at line 167 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-PSEUDO@{CONF\_\-EXPORT\_\-PSEUDO}}
+\index{CONF\_\-EXPORT\_\-PSEUDO@{CONF\_\-EXPORT\_\-PSEUDO}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-PSEUDO}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-PSEUDO~\char`\"{}Pseudo\char`\"{}}\label{exports_8c_1c4ed2424faacbfe3c87c33ca36cd1ae}
 
 
 
 
-Definition at line 247 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_ROOT@{CONF\_\-EXPORT\_\-ROOT}}
-\index{CONF_EXPORT_ROOT@{CONF\_\-EXPORT\_\-ROOT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ROOT\ \char`\"{}Root\_\-Access\char`\"{}}\label{exports_8c_a4}
+Definition at line 153 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-ROOT@{CONF\_\-EXPORT\_\-ROOT}}
+\index{CONF\_\-EXPORT\_\-ROOT@{CONF\_\-EXPORT\_\-ROOT}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-ROOT}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-ROOT~\char`\"{}Root\_\-Access\char`\"{}}\label{exports_8c_cc44b9b72168ded65665bd19dcf1a1c6}
 
 
 
 
-Definition at line 245 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_SECTYPE@{CONF\_\-EXPORT\_\-SECTYPE}}
-\index{CONF_EXPORT_SECTYPE@{CONF\_\-EXPORT\_\-SECTYPE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-SECTYPE\ \char`\"{}Sec\-Type\char`\"{}}\label{exports_8c_a11}
+Definition at line 151 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-SECTYPE@{CONF\_\-EXPORT\_\-SECTYPE}}
+\index{CONF\_\-EXPORT\_\-SECTYPE@{CONF\_\-EXPORT\_\-SECTYPE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-SECTYPE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-SECTYPE~\char`\"{}SecType\char`\"{}}\label{exports_8c_1178906ca3280748940455dbfba3b69b}
 
 
 
 
-Definition at line 252 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_TRANS_PROTO@{CONF\_\-EXPORT\_\-TRANS\_\-PROTO}}
-\index{CONF_EXPORT_TRANS_PROTO@{CONF\_\-EXPORT\_\-TRANS\_\-PROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-TRANS\_\-PROTO\ \char`\"{}Transport\_\-Protocols\char`\"{}}\label{exports_8c_a10}
+Definition at line 158 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-TRANS\_\-PROTO@{CONF\_\-EXPORT\_\-TRANS\_\-PROTO}}
+\index{CONF\_\-EXPORT\_\-TRANS\_\-PROTO@{CONF\_\-EXPORT\_\-TRANS\_\-PROTO}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-TRANS\_\-PROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-TRANS\_\-PROTO~\char`\"{}Transport\_\-Protocols\char`\"{}}\label{exports_8c_31a251d1d1ce8ea8ab123970fd769c57}
 
 
 
 
-Definition at line 251 of file exports.c.\index{exports.c@{exports.c}!CONF_EXPORT_USE_DATACACHE@{CONF\_\-EXPORT\_\-USE\_\-DATACACHE}}
-\index{CONF_EXPORT_USE_DATACACHE@{CONF\_\-EXPORT\_\-USE\_\-DATACACHE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-USE\_\-DATACACHE\ \char`\"{}Cache\_\-Data\char`\"{}}\label{exports_8c_a21}
+Definition at line 157 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-EXPORT\_\-USE\_\-DATACACHE@{CONF\_\-EXPORT\_\-USE\_\-DATACACHE}}
+\index{CONF\_\-EXPORT\_\-USE\_\-DATACACHE@{CONF\_\-EXPORT\_\-USE\_\-DATACACHE}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-EXPORT\_\-USE\_\-DATACACHE}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-EXPORT\_\-USE\_\-DATACACHE~\char`\"{}Cache\_\-Data\char`\"{}}\label{exports_8c_7dec366cc66b0cbc772ae78f189662fd}
 
 
 
 
-Definition at line 262 of file exports.c.\index{exports.c@{exports.c}!CONF_LABEL_EXPORT@{CONF\_\-LABEL\_\-EXPORT}}
-\index{CONF_LABEL_EXPORT@{CONF\_\-LABEL\_\-EXPORT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-LABEL\_\-EXPORT\ \char`\"{}EXPORT\char`\"{}}\label{exports_8c_a1}
+Definition at line 168 of file exports.c.\index{exports.c@{exports.c}!CONF\_\-LABEL\_\-EXPORT@{CONF\_\-LABEL\_\-EXPORT}}
+\index{CONF\_\-LABEL\_\-EXPORT@{CONF\_\-LABEL\_\-EXPORT}!exports.c@{exports.c}}
+\subsubsection[{CONF\_\-LABEL\_\-EXPORT}]{\setlength{\rightskip}{0pt plus 5cm}\#define CONF\_\-LABEL\_\-EXPORT~\char`\"{}EXPORT\char`\"{}}\label{exports_8c_2b39bcef333c31661f1dae002cd85275}
 
 
 
 
-Definition at line 240 of file exports.c.
+Definition at line 146 of file exports.c.\index{exports.c@{exports.c}!DEFINED\_\-TWICE\_\-WARNING@{DEFINED\_\-TWICE\_\-WARNING}}
+\index{DEFINED\_\-TWICE\_\-WARNING@{DEFINED\_\-TWICE\_\-WARNING}!exports.c@{exports.c}}
+\subsubsection[{DEFINED\_\-TWICE\_\-WARNING}]{\setlength{\rightskip}{0pt plus 5cm}\#define DEFINED\_\-TWICE\_\-WARNING(\_\-str\_\-)~DisplayLog( \char`\"{}NFS READ\_\-EXPORT: WARNING: \%s defined twice !!! (ignored)\char`\"{}, \_\-str\_\- )}\label{exports_8c_0629fde7e0c14dd3c22b6c40074a3d9e}
 
-Referenced by Read\-Exports().\index{exports.c@{exports.c}!DEFINED_TWICE_WARNING@{DEFINED\_\-TWICE\_\-WARNING}}
-\index{DEFINED_TWICE_WARNING@{DEFINED\_\-TWICE\_\-WARNING}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define DEFINED\_\-TWICE\_\-WARNING(\_\-str\_\-)\ Display\-Log( \char`\"{}NFS READ\_\-EXPORT: WARNING: \%s defined twice !!! (ignored)\char`\"{}, \_\-str\_\- )}\label{exports_8c_a51}
 
 
 
+Definition at line 646 of file exports.c.\index{exports.c@{exports.c}!EXPORT\_\-MAX\_\-CLIENTLEN@{EXPORT\_\-MAX\_\-CLIENTLEN}}
+\index{EXPORT\_\-MAX\_\-CLIENTLEN@{EXPORT\_\-MAX\_\-CLIENTLEN}!exports.c@{exports.c}}
+\subsubsection[{EXPORT\_\-MAX\_\-CLIENTLEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define EXPORT\_\-MAX\_\-CLIENTLEN~256}\label{exports_8c_67ff8b38c088a8de9add18f9e19d3908}
 
-Definition at line 710 of file exports.c.\index{exports.c@{exports.c}!EXPORT_MAX_CLIENTLEN@{EXPORT\_\-MAX\_\-CLIENTLEN}}
-\index{EXPORT_MAX_CLIENTLEN@{EXPORT\_\-MAX\_\-CLIENTLEN}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define EXPORT\_\-MAX\_\-CLIENTLEN\ 256}\label{exports_8c_a53}
 
+\index{exports.c@{exports.c}!EXPORT\_\-MAX\_\-CLIENTS@{EXPORT\_\-MAX\_\-CLIENTS}}
+\index{EXPORT\_\-MAX\_\-CLIENTS@{EXPORT\_\-MAX\_\-CLIENTS}!exports.c@{exports.c}}
+\subsubsection[{EXPORT\_\-MAX\_\-CLIENTS}]{\setlength{\rightskip}{0pt plus 5cm}\#define EXPORT\_\-MAX\_\-CLIENTS~EXPORTS\_\-NB\_\-MAX\_\-CLIENTS}\label{exports_8c_d8f7ee580dfd1fed581a3744eb916570}
 
-\index{exports.c@{exports.c}!EXPORT_MAX_CLIENTS@{EXPORT\_\-MAX\_\-CLIENTS}}
-\index{EXPORT_MAX_CLIENTS@{EXPORT\_\-MAX\_\-CLIENTS}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define EXPORT\_\-MAX\_\-CLIENTS\ EXPORTS\_\-NB\_\-MAX\_\-CLIENTS}\label{exports_8c_a52}
 
+\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-ACCESSTYPE@{FLAG\_\-EXPORT\_\-ACCESSTYPE}}
+\index{FLAG\_\-EXPORT\_\-ACCESSTYPE@{FLAG\_\-EXPORT\_\-ACCESSTYPE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-ACCESSTYPE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ACCESSTYPE~0x00000020}\label{exports_8c_f3570c1d3f84007fb042087015c4665c}
 
-\index{exports.c@{exports.c}!FLAG_EXPORT_ACCESSTYPE@{FLAG\_\-EXPORT\_\-ACCESSTYPE}}
-\index{FLAG_EXPORT_ACCESSTYPE@{FLAG\_\-EXPORT\_\-ACCESSTYPE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ACCESSTYPE\ 0x00000020}\label{exports_8c_a31}
 
 
 
+Definition at line 185 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-ANON\_\-ROOT@{FLAG\_\-EXPORT\_\-ANON\_\-ROOT}}
+\index{FLAG\_\-EXPORT\_\-ANON\_\-ROOT@{FLAG\_\-EXPORT\_\-ANON\_\-ROOT}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-ANON\_\-ROOT}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ANON\_\-ROOT~0x00000040}\label{exports_8c_1c16dfdf78e4fa7cb19532c84d10dd7d}
 
-Definition at line 279 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_ANON_ROOT@{FLAG\_\-EXPORT\_\-ANON\_\-ROOT}}
-\index{FLAG_EXPORT_ANON_ROOT@{FLAG\_\-EXPORT\_\-ANON\_\-ROOT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ANON\_\-ROOT\ 0x00000040}\label{exports_8c_a32}
 
 
 
+Definition at line 186 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC@{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}}
+\index{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC@{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC~0x00100000}\label{exports_8c_4cf507910e4f391dfcd1eef5cef905a2}
 
-Definition at line 280 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_FS_SPECIFIC@{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}}
-\index{FLAG_EXPORT_FS_SPECIFIC@{FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FS\_\-SPECIFIC\ 0x00100000}\label{exports_8c_a46}
 
 
 
+Definition at line 200 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-FS\_\-TAG@{FLAG\_\-EXPORT\_\-FS\_\-TAG}}
+\index{FLAG\_\-EXPORT\_\-FS\_\-TAG@{FLAG\_\-EXPORT\_\-FS\_\-TAG}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-FS\_\-TAG}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FS\_\-TAG~0x00200000}\label{exports_8c_425c056c5ef3ad7946d55a0dc0833cc9}
 
-Definition at line 294 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_FS_TAG@{FLAG\_\-EXPORT\_\-FS\_\-TAG}}
-\index{FLAG_EXPORT_FS_TAG@{FLAG\_\-EXPORT\_\-FS\_\-TAG}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FS\_\-TAG\ 0x00200000}\label{exports_8c_a47}
 
 
 
+Definition at line 201 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-FSID@{FLAG\_\-EXPORT\_\-FSID}}
+\index{FLAG\_\-EXPORT\_\-FSID@{FLAG\_\-EXPORT\_\-FSID}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-FSID}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FSID~0x00008000}\label{exports_8c_e114565ae0c93ab23bec029772dc8d8d}
 
-Definition at line 295 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_FSID@{FLAG\_\-EXPORT\_\-FSID}}
-\index{FLAG_EXPORT_FSID@{FLAG\_\-EXPORT\_\-FSID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-FSID\ 0x00008000}\label{exports_8c_a41}
 
 
 
-
-Definition at line 289 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_ID@{FLAG\_\-EXPORT\_\-ID}}
-\index{FLAG_EXPORT_ID@{FLAG\_\-EXPORT\_\-ID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ID\ 0x00000001}\label{exports_8c_a27}
+Definition at line 195 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-ID@{FLAG\_\-EXPORT\_\-ID}}
+\index{FLAG\_\-EXPORT\_\-ID@{FLAG\_\-EXPORT\_\-ID}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-ID}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ID~0x00000001}\label{exports_8c_ca2e60412a34e98414621c338612f85c}
 
 
 \begin{Desc}
-\item[{\bf Todo}]: add encrypt handles option\end{Desc}
+\item[{\bf Todo}]: add encrypt handles option \end{Desc}
 
 
-Definition at line 273 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_MAX_CACHE_SIZE@{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}}
-\index{FLAG_EXPORT_MAX_CACHE_SIZE@{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE\ 0x01000000}\label{exports_8c_a50}
+Definition at line 179 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE@{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}}
+\index{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE@{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-CACHE\_\-SIZE~0x01000000}\label{exports_8c_a7c61bc7a69cc314ecda6ff986171331}
 
 
 
 
-Definition at line 298 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_MAX_OFF_READ@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}}
-\index{FLAG_EXPORT_MAX_OFF_READ@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ\ 0x00800000}\label{exports_8c_a49}
+Definition at line 204 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}}
+\index{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-READ~0x00800000}\label{exports_8c_e288a0d60c9c7a98484713a8585094fa}
 
 
 
 
-Definition at line 297 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_MAX_OFF_WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}}
-\index{FLAG_EXPORT_MAX_OFF_WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE\ 0x00400000}\label{exports_8c_a48}
+Definition at line 203 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}}
+\index{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-OFF\_\-WRITE~0x00400000}\label{exports_8c_16d19b6a6c70dbcc77abb277b4fa46a7}
 
 
 
 
-Definition at line 296 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_MAX_READ@{FLAG\_\-EXPORT\_\-MAX\_\-READ}}
-\index{FLAG_EXPORT_MAX_READ@{FLAG\_\-EXPORT\_\-MAX\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-READ\ 0x00000400}\label{exports_8c_a36}
+Definition at line 202 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-MAX\_\-READ@{FLAG\_\-EXPORT\_\-MAX\_\-READ}}
+\index{FLAG\_\-EXPORT\_\-MAX\_\-READ@{FLAG\_\-EXPORT\_\-MAX\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-MAX\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-READ~0x00000400}\label{exports_8c_6a2eb960f086ed7f16b661bbd1c4c406}
 
 
 
 
-Definition at line 284 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_MAX_WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-WRITE}}
-\index{FLAG_EXPORT_MAX_WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-WRITE\ 0x00000800}\label{exports_8c_a37}
+Definition at line 190 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-MAX\_\-WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-WRITE}}
+\index{FLAG\_\-EXPORT\_\-MAX\_\-WRITE@{FLAG\_\-EXPORT\_\-MAX\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-MAX\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-MAX\_\-WRITE~0x00000800}\label{exports_8c_03bfc531b790466622a7eb17172628ee}
 
 
 
 
-Definition at line 285 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_NFS_PROTO@{FLAG\_\-EXPORT\_\-NFS\_\-PROTO}}
-\index{FLAG_EXPORT_NFS_PROTO@{FLAG\_\-EXPORT\_\-NFS\_\-PROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NFS\_\-PROTO\ 0x00000080}\label{exports_8c_a33}
+Definition at line 191 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-NFS\_\-PROTO@{FLAG\_\-EXPORT\_\-NFS\_\-PROTO}}
+\index{FLAG\_\-EXPORT\_\-NFS\_\-PROTO@{FLAG\_\-EXPORT\_\-NFS\_\-PROTO}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-NFS\_\-PROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NFS\_\-PROTO~0x00000080}\label{exports_8c_5534fddaf3980782d47bb7c659006aef}
 
 
 
 
-Definition at line 281 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_NOSGID@{FLAG\_\-EXPORT\_\-NOSGID}}
-\index{FLAG_EXPORT_NOSGID@{FLAG\_\-EXPORT\_\-NOSGID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NOSGID\ 0x00020000}\label{exports_8c_a43}
+Definition at line 187 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-NOSGID@{FLAG\_\-EXPORT\_\-NOSGID}}
+\index{FLAG\_\-EXPORT\_\-NOSGID@{FLAG\_\-EXPORT\_\-NOSGID}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-NOSGID}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NOSGID~0x00020000}\label{exports_8c_389ac9fca5e0b440ee91f0860ae446a0}
 
 
 
 
-Definition at line 291 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_NOSUID@{FLAG\_\-EXPORT\_\-NOSUID}}
-\index{FLAG_EXPORT_NOSUID@{FLAG\_\-EXPORT\_\-NOSUID}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NOSUID\ 0x00010000}\label{exports_8c_a42}
+Definition at line 197 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-NOSUID@{FLAG\_\-EXPORT\_\-NOSUID}}
+\index{FLAG\_\-EXPORT\_\-NOSUID@{FLAG\_\-EXPORT\_\-NOSUID}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-NOSUID}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-NOSUID~0x00010000}\label{exports_8c_602c22912f2999e68e9f1811211350d5}
 
 
 
 
-Definition at line 290 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PATH@{FLAG\_\-EXPORT\_\-PATH}}
-\index{FLAG_EXPORT_PATH@{FLAG\_\-EXPORT\_\-PATH}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PATH\ 0x00000002}\label{exports_8c_a28}
+Definition at line 196 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PATH@{FLAG\_\-EXPORT\_\-PATH}}
+\index{FLAG\_\-EXPORT\_\-PATH@{FLAG\_\-EXPORT\_\-PATH}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PATH}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PATH~0x00000002}\label{exports_8c_e594637fda61af34bcc6056038612dab}
 
 
 
 
-Definition at line 274 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PREF_READ@{FLAG\_\-EXPORT\_\-PREF\_\-READ}}
-\index{FLAG_EXPORT_PREF_READ@{FLAG\_\-EXPORT\_\-PREF\_\-READ}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-READ\ 0x00001000}\label{exports_8c_a38}
+Definition at line 180 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PREF\_\-READ@{FLAG\_\-EXPORT\_\-PREF\_\-READ}}
+\index{FLAG\_\-EXPORT\_\-PREF\_\-READ@{FLAG\_\-EXPORT\_\-PREF\_\-READ}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PREF\_\-READ}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-READ~0x00001000}\label{exports_8c_d47d26b4caefdf00eab35b65b7139894}
 
 
 
 
-Definition at line 286 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PREF_READDIR@{FLAG\_\-EXPORT\_\-PREF\_\-READDIR}}
-\index{FLAG_EXPORT_PREF_READDIR@{FLAG\_\-EXPORT\_\-PREF\_\-READDIR}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-READDIR\ 0x00004000}\label{exports_8c_a40}
+Definition at line 192 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PREF\_\-READDIR@{FLAG\_\-EXPORT\_\-PREF\_\-READDIR}}
+\index{FLAG\_\-EXPORT\_\-PREF\_\-READDIR@{FLAG\_\-EXPORT\_\-PREF\_\-READDIR}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PREF\_\-READDIR}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-READDIR~0x00004000}\label{exports_8c_053dff574b31aae6fab294c4630455fe}
 
 
 
 
-Definition at line 288 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PREF_WRITE@{FLAG\_\-EXPORT\_\-PREF\_\-WRITE}}
-\index{FLAG_EXPORT_PREF_WRITE@{FLAG\_\-EXPORT\_\-PREF\_\-WRITE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-WRITE\ 0x00002000}\label{exports_8c_a39}
+Definition at line 194 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PREF\_\-WRITE@{FLAG\_\-EXPORT\_\-PREF\_\-WRITE}}
+\index{FLAG\_\-EXPORT\_\-PREF\_\-WRITE@{FLAG\_\-EXPORT\_\-PREF\_\-WRITE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PREF\_\-WRITE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PREF\_\-WRITE~0x00002000}\label{exports_8c_c128f68fa8000ce39d5851403ac907db}
 
 
 
 
-Definition at line 287 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PRIVILEGED_PORT@{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}}
-\index{FLAG_EXPORT_PRIVILEGED_PORT@{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT\ 0x00040000}\label{exports_8c_a44}
+Definition at line 193 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT@{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}}
+\index{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT@{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PRIVILEGED\_\-PORT~0x00040000}\label{exports_8c_71f2fb10452ad68dd5090544ecae357c}
 
 
 
 
-Definition at line 292 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_PSEUDO@{FLAG\_\-EXPORT\_\-PSEUDO}}
-\index{FLAG_EXPORT_PSEUDO@{FLAG\_\-EXPORT\_\-PSEUDO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PSEUDO\ 0x00000010}\label{exports_8c_a30}
+Definition at line 198 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-PSEUDO@{FLAG\_\-EXPORT\_\-PSEUDO}}
+\index{FLAG\_\-EXPORT\_\-PSEUDO@{FLAG\_\-EXPORT\_\-PSEUDO}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-PSEUDO}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-PSEUDO~0x00000010}\label{exports_8c_536df8cad0d3bfc2117aea820615a721}
 
 
 
 
-Definition at line 278 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_ROOT_OR_ACCESS@{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}}
-\index{FLAG_EXPORT_ROOT_OR_ACCESS@{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS\ 0x00000004}\label{exports_8c_a29}
+Definition at line 184 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS@{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}}
+\index{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS@{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-ROOT\_\-OR\_\-ACCESS~0x00000004}\label{exports_8c_9a1e00da4e8c8673e97fbadc86f2d8dd}
 
 
 
 
-Definition at line 276 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_SECTYPE@{FLAG\_\-EXPORT\_\-SECTYPE}}
-\index{FLAG_EXPORT_SECTYPE@{FLAG\_\-EXPORT\_\-SECTYPE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-SECTYPE\ 0x00000200}\label{exports_8c_a35}
+Definition at line 182 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-SECTYPE@{FLAG\_\-EXPORT\_\-SECTYPE}}
+\index{FLAG\_\-EXPORT\_\-SECTYPE@{FLAG\_\-EXPORT\_\-SECTYPE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-SECTYPE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-SECTYPE~0x00000200}\label{exports_8c_e80bfbe42ffe30c5671b11646227f820}
 
 
 
 
-Definition at line 283 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_TRANS_PROTO@{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}}
-\index{FLAG_EXPORT_TRANS_PROTO@{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-TRANS\_\-PROTO\ 0x00000100}\label{exports_8c_a34}
+Definition at line 189 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-TRANS\_\-PROTO@{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}}
+\index{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO@{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-TRANS\_\-PROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-TRANS\_\-PROTO~0x00000100}\label{exports_8c_713ec0135cfabe173c1cc21808c32270}
 
 
 
 
-Definition at line 282 of file exports.c.\index{exports.c@{exports.c}!FLAG_EXPORT_USE_DATACACHE@{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}}
-\index{FLAG_EXPORT_USE_DATACACHE@{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-USE\_\-DATACACHE\ 0x00080000}\label{exports_8c_a45}
+Definition at line 188 of file exports.c.\index{exports.c@{exports.c}!FLAG\_\-EXPORT\_\-USE\_\-DATACACHE@{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}}
+\index{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE@{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}!exports.c@{exports.c}}
+\subsubsection[{FLAG\_\-EXPORT\_\-USE\_\-DATACACHE}]{\setlength{\rightskip}{0pt plus 5cm}\#define FLAG\_\-EXPORT\_\-USE\_\-DATACACHE~0x00080000}\label{exports_8c_b22181037ee0c3e405fbebe62a0e6818}
 
 
 
 
-Definition at line 293 of file exports.c.\index{exports.c@{exports.c}!MAX_NFSPROTO@{MAX\_\-NFSPROTO}}
-\index{MAX_NFSPROTO@{MAX\_\-NFSPROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-NFSPROTO\ 10}\label{exports_8c_a54}
+Definition at line 199 of file exports.c.\index{exports.c@{exports.c}!MAX\_\-NFSPROTO@{MAX\_\-NFSPROTO}}
+\index{MAX\_\-NFSPROTO@{MAX\_\-NFSPROTO}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-NFSPROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-NFSPROTO~10}\label{exports_8c_c1eaecd3a3303ad5981960bea3b525d3}
 
 
-\index{exports.c@{exports.c}!MAX_NFSPROTO_LEN@{MAX\_\-NFSPROTO\_\-LEN}}
-\index{MAX_NFSPROTO_LEN@{MAX\_\-NFSPROTO\_\-LEN}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-NFSPROTO\_\-LEN\ 256}\label{exports_8c_a55}
+\index{exports.c@{exports.c}!MAX\_\-NFSPROTO\_\-LEN@{MAX\_\-NFSPROTO\_\-LEN}}
+\index{MAX\_\-NFSPROTO\_\-LEN@{MAX\_\-NFSPROTO\_\-LEN}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-NFSPROTO\_\-LEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-NFSPROTO\_\-LEN~256}\label{exports_8c_b315d2ac5daf1b568788724dd25e39c9}
 
 
-\index{exports.c@{exports.c}!MAX_SECTYPE@{MAX\_\-SECTYPE}}
-\index{MAX_SECTYPE@{MAX\_\-SECTYPE}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-SECTYPE\ 10}\label{exports_8c_a58}
+\index{exports.c@{exports.c}!MAX\_\-SECTYPE@{MAX\_\-SECTYPE}}
+\index{MAX\_\-SECTYPE@{MAX\_\-SECTYPE}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-SECTYPE}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-SECTYPE~10}\label{exports_8c_4bd3c9dd204fb9f9713d37422db3a7ba}
 
 
-\index{exports.c@{exports.c}!MAX_SECTYPE_LEN@{MAX\_\-SECTYPE\_\-LEN}}
-\index{MAX_SECTYPE_LEN@{MAX\_\-SECTYPE\_\-LEN}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-SECTYPE\_\-LEN\ 256}\label{exports_8c_a59}
+\index{exports.c@{exports.c}!MAX\_\-SECTYPE\_\-LEN@{MAX\_\-SECTYPE\_\-LEN}}
+\index{MAX\_\-SECTYPE\_\-LEN@{MAX\_\-SECTYPE\_\-LEN}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-SECTYPE\_\-LEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-SECTYPE\_\-LEN~256}\label{exports_8c_b3ce1fdfd1d1a5568a86f274677d4d7e}
 
 
-\index{exports.c@{exports.c}!MAX_TRANSPROTO@{MAX\_\-TRANSPROTO}}
-\index{MAX_TRANSPROTO@{MAX\_\-TRANSPROTO}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-TRANSPROTO\ 10}\label{exports_8c_a56}
+\index{exports.c@{exports.c}!MAX\_\-TRANSPROTO@{MAX\_\-TRANSPROTO}}
+\index{MAX\_\-TRANSPROTO@{MAX\_\-TRANSPROTO}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-TRANSPROTO}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-TRANSPROTO~10}\label{exports_8c_8b711f76f5b59df087a3077dea09e7b0}
 
 
-\index{exports.c@{exports.c}!MAX_TRANSPROTO_LEN@{MAX\_\-TRANSPROTO\_\-LEN}}
-\index{MAX_TRANSPROTO_LEN@{MAX\_\-TRANSPROTO\_\-LEN}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-TRANSPROTO\_\-LEN\ 256}\label{exports_8c_a57}
+\index{exports.c@{exports.c}!MAX\_\-TRANSPROTO\_\-LEN@{MAX\_\-TRANSPROTO\_\-LEN}}
+\index{MAX\_\-TRANSPROTO\_\-LEN@{MAX\_\-TRANSPROTO\_\-LEN}!exports.c@{exports.c}}
+\subsubsection[{MAX\_\-TRANSPROTO\_\-LEN}]{\setlength{\rightskip}{0pt plus 5cm}\#define MAX\_\-TRANSPROTO\_\-LEN~256}\label{exports_8c_cc6852411f8118e61e07c29ae995d921}
 
 
 \index{exports.c@{exports.c}!STRCMP@{STRCMP}}
 \index{STRCMP@{STRCMP}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STRCMP\ strcasecmp}\label{exports_8c_a0}
+\subsubsection[{STRCMP}]{\setlength{\rightskip}{0pt plus 5cm}\#define STRCMP~strcasecmp}\label{exports_8c_1ffef5879101d778f17a377e0d8b0e00}
 
 
 
 
-Definition at line 238 of file exports.c.
-
-Referenced by Read\-Exports().
+Definition at line 144 of file exports.c.
 
 \subsection{Function Documentation}
 \index{exports.c@{exports.c}!BuildDefaultExport@{BuildDefaultExport}}
 \index{BuildDefaultExport@{BuildDefaultExport}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ Build\-Default\-Export ()}\label{exports_8c_a72}
+\subsubsection[{BuildDefaultExport}]{\setlength{\rightskip}{0pt plus 5cm}exportlist\_\-t$\ast$ BuildDefaultExport ()}\label{exports_8c_aa1bb8702893d7715b137cd98bb73b8b}
+
+
 
 
 \begin{Desc}
-\item[{\bf Todo}]set default values here 
+\item[{\bf Todo}]set default values here \end{Desc}
 
-BUGAZOMEU : temporaire, bug de parsing Max\-Read/Max\-Write\end{Desc}
+
+\begin{Desc}
+\item[{\bf Todo}]BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite \end{Desc}
 
 
 Grant root access to all clients 
 
-Definition at line 1855 of file exports.c.\index{exports.c@{exports.c}!local_lru_inode_clean_entry@{local\_\-lru\_\-inode\_\-clean\_\-entry}}
-\index{local_lru_inode_clean_entry@{local\_\-lru\_\-inode\_\-clean\_\-entry}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int local\_\-lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, void $\ast$ {\em adddata})}\label{exports_8c_a66}
+Definition at line 1848 of file exports.c.\index{exports.c@{exports.c}!local\_\-lru\_\-inode\_\-clean\_\-entry@{local\_\-lru\_\-inode\_\-clean\_\-entry}}
+\index{local\_\-lru\_\-inode\_\-clean\_\-entry@{local\_\-lru\_\-inode\_\-clean\_\-entry}!exports.c@{exports.c}}
+\subsubsection[{local\_\-lru\_\-inode\_\-clean\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int local\_\-lru\_\-inode\_\-clean\_\-entry (LRU\_\-entry\_\-t $\ast$ {\em entry}, \/  void $\ast$ {\em adddata})}\label{exports_8c_07450c7243a8be7b2a78d0f47a8ea0a0}
 
 
 
 
-Definition at line 305 of file exports.c.\index{exports.c@{exports.c}!local_lru_inode_entry_to_str@{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str}}
-\index{local_lru_inode_entry_to_str@{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int local\_\-lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, char $\ast$ {\em str})}\label{exports_8c_a65}
+Definition at line 211 of file exports.c.\index{exports.c@{exports.c}!local\_\-lru\_\-inode\_\-entry\_\-to\_\-str@{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str}}
+\index{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str@{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str}!exports.c@{exports.c}}
+\subsubsection[{local\_\-lru\_\-inode\_\-entry\_\-to\_\-str}]{\setlength{\rightskip}{0pt plus 5cm}int local\_\-lru\_\-inode\_\-entry\_\-to\_\-str (LRU\_\-data\_\-t {\em data}, \/  char $\ast$ {\em str})}\label{exports_8c_a7b646dac86cb55783d5be02b55872a8}
 
 
 
 
-Definition at line 300 of file exports.c.\index{exports.c@{exports.c}!nfs_export_check_access@{nfs\_\-export\_\-check\_\-access}}
-\index{nfs_export_check_access@{nfs\_\-export\_\-check\_\-access}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-export\_\-check\_\-access (unsigned int {\em addr}, struct svc\_\-req $\ast$ {\em ptr\_\-req}, exportlist\_\-t $\ast$ {\em pexport}, unsigned int {\em nfs\_\-prog}, unsigned int {\em mnt\_\-prog}, hash\_\-table\_\-t $\ast$ {\em ht\_\-ip\_\-stats}, nfs\_\-ip\_\-stats\_\-t $\ast$ {\em ip\_\-stats\_\-pool}, exportlist\_\-client\_\-entry\_\-t $\ast$ {\em pclient\_\-found})}\label{exports_8c_a74}
+Definition at line 206 of file exports.c.\index{exports.c@{exports.c}!nfs\_\-export\_\-check\_\-access@{nfs\_\-export\_\-check\_\-access}}
+\index{nfs\_\-export\_\-check\_\-access@{nfs\_\-export\_\-check\_\-access}!exports.c@{exports.c}}
+\subsubsection[{nfs\_\-export\_\-check\_\-access}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-export\_\-check\_\-access (struct sockaddr\_\-storage $\ast$ {\em pssaddr}, \/  struct svc\_\-req $\ast$ {\em ptr\_\-req}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  unsigned int {\em nfs\_\-prog}, \/  unsigned int {\em mnt\_\-prog}, \/  hash\_\-table\_\-t $\ast$ {\em ht\_\-ip\_\-stats}, \/  nfs\_\-ip\_\-stats\_\-t $\ast$ {\em ip\_\-stats\_\-pool}, \/  exportlist\_\-client\_\-entry\_\-t $\ast$ {\em pclient\_\-found})}\label{exports_8c_8933113eeb9269be574ef2d137bc9c73}
 
 
 nfs\_\-export\_\-check\_\-access: checks if a machine is authorized to access an export entry.
@@ -728,19 +660,15 @@ Checks if a machine is authorized to access an export entry.
 \begin{Desc}
 \item[Parameters:]
 \begin{description}
-\item[{\em addr}][IN] address of the caller \item[{\em ptr\_\-req}][IN] pointer to the related RPC request. \item[{\em pexpprt}][IN] related export entry (if found, NULL otherwise). \item[{\em nfs\_\-prog}][IN] number for the NFS program. \item[{\em mnt\_\-program}][IN] number for the MOUNT program. \item[{\em ht\_\-ip\_\-stats}][INOUT] IP/stats hash table \item[{\em ip\_\-stats\_\-pool}][INOUT] IP/stats pool \item[{\em pclient\_\-found}][OUT] pointer to client entry found in export list, NULL if nothing was found.\end{description}
+\item[{\em ssaddr}][IN] the complete remote address (as a sockaddr\_\-storage to be IPv6 compliant) \item[{\em ptr\_\-req}][IN] pointer to the related RPC request. \item[{\em pexpprt}][IN] related export entry (if found, NULL otherwise). \item[{\em nfs\_\-prog}][IN] number for the NFS program. \item[{\em mnt\_\-program}][IN] number for the MOUNT program. \item[{\em ht\_\-ip\_\-stats}][INOUT] IP/stats hash table \item[{\em ip\_\-stats\_\-pool}][INOUT] IP/stats pool \item[{\em pclient\_\-found}][OUT] pointer to client entry found in export list, NULL if nothing was found.\end{description}
 \end{Desc}
 \begin{Desc}
-\item[Returns:]TRUE if access in granted, FALSE otherwise.\end{Desc}
+\item[Returns:]TRUE if access in granted, FALSE otherwise. \end{Desc}
 
 
-BUGAZOMEU a completer lors de l'integration de RPCSEC\_\-GSS 
-
-Definition at line 2030 of file exports.c.
-
-References nfs\_\-ip\_\-name\_\-add(), nfs\_\-ip\_\-name\_\-get(), nfs\_\-ip\_\-stats\_\-add(), and nfs\_\-ip\_\-stats\_\-incr().\index{exports.c@{exports.c}!nfs_export_create_root_entry@{nfs\_\-export\_\-create\_\-root\_\-entry}}
-\index{nfs_export_create_root_entry@{nfs\_\-export\_\-create\_\-root\_\-entry}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-export\_\-create\_\-root\_\-entry (exportlist\_\-t $\ast$ {\em pexportlist}, hash\_\-table\_\-t $\ast$ {\em ht})}\label{exports_8c_a75}
+Definition at line 2233 of file exports.c.\index{exports.c@{exports.c}!nfs\_\-export\_\-create\_\-root\_\-entry@{nfs\_\-export\_\-create\_\-root\_\-entry}}
+\index{nfs\_\-export\_\-create\_\-root\_\-entry@{nfs\_\-export\_\-create\_\-root\_\-entry}!exports.c@{exports.c}}
+\subsubsection[{nfs\_\-export\_\-create\_\-root\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-export\_\-create\_\-root\_\-entry (exportlist\_\-t $\ast$ {\em pexportlist}, \/  hash\_\-table\_\-t $\ast$ {\em ht})}\label{exports_8c_813a8e1ccdd675855cdb06af746ee3a3}
 
 
 nfs\_\-export\_\-create\_\-root\_\-entry: create the root entries for the cached entries.
@@ -756,14 +684,12 @@ Create the root entries for the cached entries.
 \item[Returns:]TRUE is successfull, FALSE if something wrong occured. \end{Desc}
 
 
-Definition at line 2211 of file exports.c.
-
-References nfs\_\-param, recover\_\-datacache\_\-client, small\_\-client, and small\_\-client\_\-param.\index{exports.c@{exports.c}!nfs_LookupNetworkAddr@{nfs\_\-LookupNetworkAddr}}
-\index{nfs_LookupNetworkAddr@{nfs\_\-LookupNetworkAddr}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Lookup\-Network\-Addr (char $\ast$ {\em host}, unsigned long $\ast$ {\em net\-Addr}, unsigned long $\ast$ {\em net\-Mask})}\label{exports_8c_a69}
+Definition at line 2355 of file exports.c.\index{exports.c@{exports.c}!nfs\_\-LookupNetworkAddr@{nfs\_\-LookupNetworkAddr}}
+\index{nfs\_\-LookupNetworkAddr@{nfs\_\-LookupNetworkAddr}!exports.c@{exports.c}}
+\subsubsection[{nfs\_\-LookupNetworkAddr}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-LookupNetworkAddr (char $\ast$ {\em host}, \/  unsigned long $\ast$ {\em netAddr}, \/  unsigned long $\ast$ {\em netMask})}\label{exports_8c_428c41f407da1346d3a4d849f346795b}
 
 
-nfs\_\-Lookup\-Network\-Addr: determine network address from string.
+nfs\_\-LookupNetworkAddr: determine network address from string.
 
 This routine is converting a valid host name is both literal or dotted format into a valid netdb structure. If it could not successfull, NULL is returned by the function.
 
@@ -772,7 +698,7 @@ Assumptions: Dotted host address are 4 hex, decimal, or octal numbers in base 25
 \begin{Desc}
 \item[Parameters:]
 \begin{description}
-\item[{\em host}][IN] hostname or dotted address, within a string literal. \item[{\em net\-Addr}][OUT] return address \item[{\em net\-Mask}][OUT] return address mask\end{description}
+\item[{\em host}][IN] hostname or dotted address, within a string literal. \item[{\em netAddr}][OUT] return address \item[{\em netMask}][OUT] return address mask\end{description}
 \end{Desc}
 \begin{Desc}
 \item[Returns:]0 if successfull, other values show an error\end{Desc}
@@ -784,72 +710,60 @@ gethostbyname
 gethostbyaddr \end{Desc}
 
 
-Definition at line 443 of file exports.c.\index{exports.c@{exports.c}!nfs_ParseConfLine@{nfs\_\-ParseConfLine}}
-\index{nfs_ParseConfLine@{nfs\_\-ParseConfLine}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Parse\-Conf\-Line (char $\ast$ {\em Argv}[$\,$], int {\em nb\-Argv}, char $\ast$ {\em line}, int($\ast$)(char) {\em separator\_\-function}, int($\ast$)(char) {\em end\-Line\_\-func})}\label{exports_8c_a67}
+Definition at line 372 of file exports.c.\index{exports.c@{exports.c}!nfs\_\-ParseConfLine@{nfs\_\-ParseConfLine}}
+\index{nfs\_\-ParseConfLine@{nfs\_\-ParseConfLine}!exports.c@{exports.c}}
+\subsubsection[{nfs\_\-ParseConfLine}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-ParseConfLine (char $\ast$ {\em Argv}[$\,$], \/  int {\em nbArgv}, \/  char $\ast$ {\em line}, \/  int($\ast$)(char) {\em separator\_\-function}, \/  int($\ast$)(char) {\em endLine\_\-func})}\label{exports_8c_ef21b5456f34dbc2b86bc1d5bac2f33b}
 
 
-nfs\_\-Parse\-Conf\-Line: parse a line with a settable separator and end of line
+nfs\_\-ParseConfLine: parse a line with a settable separator and end of line
 
 parse a line with a settable separator and end of line .
 
 \begin{Desc}
 \item[Parameters:]
 \begin{description}
-\item[{\em Argv}][OUT] result array \item[{\em nb\-Argv}][IN] allocated number of entries in the Argv \item[{\em line}][IN] input line \item[{\em separator\_\-function}][IN] function used to identify a separator \item[{\em end\-Line\_\-func}][IN] function used to identify an end of line\end{description}
+\item[{\em Argv}][OUT] result array \item[{\em nbArgv}][IN] allocated number of entries in the Argv \item[{\em line}][IN] input line \item[{\em separator\_\-function}][IN] function used to identify a separator \item[{\em endLine\_\-func}][IN] function used to identify an end of line\end{description}
 \end{Desc}
 \begin{Desc}
 \item[Returns:]the number of object found \end{Desc}
 
 
-Definition at line 325 of file exports.c.\index{exports.c@{exports.c}!ReadExports@{ReadExports}}
+Definition at line 231 of file exports.c.\index{exports.c@{exports.c}!ReadExports@{ReadExports}}
 \index{ReadExports@{ReadExports}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int Read\-Exports (config\_\-file\_\-t {\em in\_\-config}, exportlist\_\-t $\ast$$\ast$ {\em ppexportlist})}\label{exports_8c_a73}
+\subsubsection[{ReadExports}]{\setlength{\rightskip}{0pt plus 5cm}int ReadExports (config\_\-file\_\-t {\em in\_\-config}, \/  exportlist\_\-t $\ast$$\ast$ {\em ppexportlist})}\label{exports_8c_b5584d41aec9023681ec0535bbf6cfeb}
 
 
-Read\-Exports: Read the export entries from the parsed configuration file. \begin{Desc}
+ReadExports: Read the export entries from the parsed configuration file. \begin{Desc}
 \item[Returns:]A negative value on error, the number of export entries else. \end{Desc}
 
 
-Definition at line 1940 of file exports.c.
-
-References CONF\_\-LABEL\_\-EXPORT, and STRCMP.
+Definition at line 1933 of file exports.c.
 
 \subsection{Variable Documentation}
-\index{exports.c@{exports.c}!nfs_param@{nfs\_\-param}}
-\index{nfs_param@{nfs\_\-param}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{exports_8c_a60}
+\index{exports.c@{exports.c}!nfs\_\-param@{nfs\_\-param}}
+\index{nfs\_\-param@{nfs\_\-param}!exports.c@{exports.c}}
+\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{exports_8c_eb8fc46586993cf210777049fca03969}
+
+
+\index{exports.c@{exports.c}!recover\_\-datacache\_\-client@{recover\_\-datacache\_\-client}}
+\index{recover\_\-datacache\_\-client@{recover\_\-datacache\_\-client}!exports.c@{exports.c}}
+\subsubsection[{recover\_\-datacache\_\-client}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-t {\bf recover\_\-datacache\_\-client}}\label{exports_8c_f0f0bc95454d83859c215b5a0684bce9}
 
 
 
 
-Definition at line 146 of file test\_\-clientid.c.
-
-Referenced by nfs4\_\-FSALTo\-Fhandle(), nfs4\_\-Is\_\-Fh\_\-Expired(), nfs4\_\-is\_\-lease\_\-expired(), nfs\_\-client\_\-id\_\-add(), nfs\_\-client\_\-id\_\-set(), nfs\_\-export\_\-create\_\-root\_\-entry(), nfs\_\-ip\_\-stats\_\-add(), nfs\_\-ip\_\-stats\_\-dump(), nfs\_\-ip\_\-stats\_\-get(), nfs\_\-ip\_\-stats\_\-incr(), nfs\_\-ip\_\-stats\_\-remove(), and nfs\_\-stat\_\-update().\index{exports.c@{exports.c}!recover_datacache_client@{recover\_\-datacache\_\-client}}
-\index{recover_datacache_client@{recover\_\-datacache\_\-client}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-client\_\-t {\bf recover\_\-datacache\_\-client}}\label{exports_8c_a63}
+Definition at line 142 of file exports.c.\index{exports.c@{exports.c}!small\_\-client@{small\_\-client}}
+\index{small\_\-client@{small\_\-client}!exports.c@{exports.c}}
+\subsubsection[{small\_\-client}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-t {\bf small\_\-client}}\label{exports_8c_c7cbfe85be8b57ad3fabe22973367fff}
 
 
 
 
-Definition at line 236 of file exports.c.
-
-Referenced by nfs\_\-export\_\-create\_\-root\_\-entry().\index{exports.c@{exports.c}!small_client@{small\_\-client}}
-\index{small_client@{small\_\-client}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-t {\bf small\_\-client}}\label{exports_8c_a61}
+Definition at line 140 of file exports.c.\index{exports.c@{exports.c}!small\_\-client\_\-param@{small\_\-client\_\-param}}
+\index{small\_\-client\_\-param@{small\_\-client\_\-param}!exports.c@{exports.c}}
+\subsubsection[{small\_\-client\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-parameter\_\-t {\bf small\_\-client\_\-param}}\label{exports_8c_a014efeb8419be63bc14052eadb01306}
 
 
 
 
-Definition at line 234 of file exports.c.
-
-Referenced by nfs\_\-export\_\-create\_\-root\_\-entry().\index{exports.c@{exports.c}!small_client_param@{small\_\-client\_\-param}}
-\index{small_client_param@{small\_\-client\_\-param}!exports.c@{exports.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-client\_\-parameter\_\-t {\bf small\_\-client\_\-param}}\label{exports_8c_a62}
-
-
-
-
-Definition at line 235 of file exports.c.
-
-Referenced by nfs\_\-export\_\-create\_\-root\_\-entry().
+Definition at line 141 of file exports.c.

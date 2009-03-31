@@ -1,8 +1,10 @@
-.TH "nfs4_op_openattr.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_openattr.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_openattr.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_op_openattr.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -79,26 +81,26 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:51 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.8 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.8 
 .RE
 .PP
 \fBnfs4_op_openattr.c\fP : Routines used for managing the NFS4 COMPOUND functions.
@@ -134,19 +136,15 @@ NFS4_OK
 .PP
 
 .PP
-Definition at line 139 of file nfs4_op_openattr.c.
+Definition at line 142 of file nfs4_op_openattr.c.
 .SS "#define res_OPENATTR4   resp->nfs_resop4_u.opopenattr"
 .PP
-Definition at line 140 of file nfs4_op_openattr.c.
-.PP
-Referenced by nfs4_op_openattr().
+Definition at line 143 of file nfs4_op_openattr.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_openattr (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 142 of file nfs4_op_openattr.c.
-.PP
-References res_OPENATTR4.
+Definition at line 145 of file nfs4_op_openattr.c.
 .SS "void nfs4_op_openattr_Free (OPENATTR4res * resp)"
 .PP
 nfs4_op_openattr_Free: frees what was allocared to handle nfs4_op_openattr.
@@ -165,9 +163,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 167 of file nfs4_op_openattr.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 170 of file nfs4_op_openattr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

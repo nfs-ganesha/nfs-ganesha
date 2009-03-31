@@ -1,77 +1,77 @@
-\contentsline {chapter}{\numberline {1}Hash Table Library Module Index}{1}
-\contentsline {section}{\numberline {1.1}Hash Table Library Modules}{1}
-\contentsline {chapter}{\numberline {2}Hash Table Library File Index}{3}
-\contentsline {section}{\numberline {2.1}Hash Table Library File List}{3}
-\contentsline {chapter}{\numberline {3}Hash Table Library Module Documentation}{5}
-\contentsline {section}{\numberline {3.1}Hash\discretionary {-}{}{}Table\discretionary {-}{}{}Internal\discretionary {-}{}{}Functions}{5}
+\contentsline {chapter}{\numberline {1}Module Index}{1}
+\contentsline {section}{\numberline {1.1}Modules}{1}
+\contentsline {chapter}{\numberline {2}File Index}{3}
+\contentsline {section}{\numberline {2.1}File List}{3}
+\contentsline {chapter}{\numberline {3}Module Documentation}{5}
+\contentsline {section}{\numberline {3.1}HashTableInternalFunctions}{5}
 \contentsline {subsection}{\numberline {3.1.1}Function Documentation}{5}
-\contentsline {subsubsection}{\numberline {3.1.1.1}\setlength {\rightskip }{0pt plus 5cm}unsigned long double\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func (hash\_\discretionary {-}{}{}parameter\_\discretionary {-}{}{}t $\ast $ {\em p\_\discretionary {-}{}{}hparam}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffclef})}{5}
-\contentsline {subsubsection}{\numberline {3.1.1.2}\setlength {\rightskip }{0pt plus 5cm}unsigned int rbt\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func (hash\_\discretionary {-}{}{}parameter\_\discretionary {-}{}{}t $\ast $ {\em p\_\discretionary {-}{}{}hparam}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffclef})}{6}
-\contentsline {subsubsection}{\numberline {3.1.1.3}\setlength {\rightskip }{0pt plus 5cm}unsigned long simple\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func (hash\_\discretionary {-}{}{}parameter\_\discretionary {-}{}{}t $\ast $ {\em p\_\discretionary {-}{}{}hparam}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffclef})}{6}
-\contentsline {section}{\numberline {3.2}Hash\discretionary {-}{}{}Table\discretionary {-}{}{}Exported\discretionary {-}{}{}Functions}{7}
+\contentsline {subsubsection}{\numberline {3.1.1.1}double\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func}{5}
+\contentsline {subsubsection}{\numberline {3.1.1.2}rbt\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func}{6}
+\contentsline {subsubsection}{\numberline {3.1.1.3}simple\_\discretionary {-}{}{}hash\_\discretionary {-}{}{}func}{6}
+\contentsline {section}{\numberline {3.2}HashTableExportedFunctions}{7}
 \contentsline {subsection}{\numberline {3.2.1}Function Documentation}{7}
-\contentsline {subsubsection}{\numberline {3.2.1.1}\setlength {\rightskip }{0pt plus 5cm}int Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Del (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffkey}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em p\_\discretionary {-}{}{}usedbuffkey}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em p\_\discretionary {-}{}{}usedbuffdata})}{7}
-\contentsline {subsubsection}{\numberline {3.2.1.2}\setlength {\rightskip }{0pt plus 5cm}int Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Get (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffkey}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffval})}{7}
-\contentsline {subsubsection}{\numberline {3.2.1.3}\setlength {\rightskip }{0pt plus 5cm}unsigned int Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Get\discretionary {-}{}{}Size (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht})}{8}
-\contentsline {subsubsection}{\numberline {3.2.1.4}\setlength {\rightskip }{0pt plus 5cm}void Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Get\discretionary {-}{}{}Stats (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, hash\_\discretionary {-}{}{}stat\_\discretionary {-}{}{}t $\ast $ {\em hstat})}{8}
-\contentsline {subsubsection}{\numberline {3.2.1.5}\setlength {\rightskip }{0pt plus 5cm}hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t$\ast $ Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Init (hash\_\discretionary {-}{}{}parameter\_\discretionary {-}{}{}t {\em hparam})}{9}
-\contentsline {subsubsection}{\numberline {3.2.1.6}\setlength {\rightskip }{0pt plus 5cm}void Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Print (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht})}{9}
-\contentsline {subsubsection}{\numberline {3.2.1.7}\setlength {\rightskip }{0pt plus 5cm}int Hash\discretionary {-}{}{}Table\_\discretionary {-}{}{}Test\_\discretionary {-}{}{}And\_\discretionary {-}{}{}Set (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffkey}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buffval}, hashtable\_\discretionary {-}{}{}set\_\discretionary {-}{}{}how\_\discretionary {-}{}{}t {\em how})}{10}
-\contentsline {chapter}{\numberline {4}Hash Table Library File Documentation}{11}
-\contentsline {section}{\numberline {4.1}Hash\discretionary {-}{}{}Table.c File Reference}{11}
+\contentsline {subsubsection}{\numberline {3.2.1.1}HashTable\_\discretionary {-}{}{}Del}{7}
+\contentsline {subsubsection}{\numberline {3.2.1.2}HashTable\_\discretionary {-}{}{}Get}{7}
+\contentsline {subsubsection}{\numberline {3.2.1.3}HashTable\_\discretionary {-}{}{}GetSize}{8}
+\contentsline {subsubsection}{\numberline {3.2.1.4}HashTable\_\discretionary {-}{}{}GetStats}{8}
+\contentsline {subsubsection}{\numberline {3.2.1.5}HashTable\_\discretionary {-}{}{}Init}{9}
+\contentsline {subsubsection}{\numberline {3.2.1.6}HashTable\_\discretionary {-}{}{}Print}{9}
+\contentsline {subsubsection}{\numberline {3.2.1.7}HashTable\_\discretionary {-}{}{}Test\_\discretionary {-}{}{}And\_\discretionary {-}{}{}Set}{10}
+\contentsline {chapter}{\numberline {4}File Documentation}{11}
+\contentsline {section}{\numberline {4.1}HashTable.c File Reference}{11}
 \contentsline {subsection}{\numberline {4.1.1}Detailed Description}{12}
 \contentsline {subsection}{\numberline {4.1.2}Define Documentation}{14}
-\contentsline {subsubsection}{\numberline {4.1.2.1}\setlength {\rightskip }{0pt plus 5cm}\#define FALSE\ 0}{14}
-\contentsline {subsubsection}{\numberline {4.1.2.2}\setlength {\rightskip }{0pt plus 5cm}\#define P(a)\ pthread\_\discretionary {-}{}{}mutex\_\discretionary {-}{}{}lock( \&a )}{14}
-\contentsline {subsubsection}{\numberline {4.1.2.3}\setlength {\rightskip }{0pt plus 5cm}\#define TRUE\ 1}{14}
-\contentsline {subsubsection}{\numberline {4.1.2.4}\setlength {\rightskip }{0pt plus 5cm}\#define V(a)\ pthread\_\discretionary {-}{}{}mutex\_\discretionary {-}{}{}unlock( \&a )}{14}
+\contentsline {subsubsection}{\numberline {4.1.2.1}FALSE}{14}
+\contentsline {subsubsection}{\numberline {4.1.2.2}P}{14}
+\contentsline {subsubsection}{\numberline {4.1.2.3}TRUE}{14}
+\contentsline {subsubsection}{\numberline {4.1.2.4}V}{14}
 \contentsline {section}{\numberline {4.2}test\_\discretionary {-}{}{}cmchash.c File Reference}{15}
 \contentsline {subsection}{\numberline {4.2.1}Define Documentation}{15}
-\contentsline {subsubsection}{\numberline {4.2.1.1}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\ 12}{15}
-\contentsline {subsubsection}{\numberline {4.2.1.2}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\_\discretionary {-}{}{}2\ 14}{15}
-\contentsline {subsubsection}{\numberline {4.2.1.3}\setlength {\rightskip }{0pt plus 5cm}\#define MAXDESTROY\ 50}{15}
-\contentsline {subsubsection}{\numberline {4.2.1.4}\setlength {\rightskip }{0pt plus 5cm}\#define MAXGET\ 30}{16}
-\contentsline {subsubsection}{\numberline {4.2.1.5}\setlength {\rightskip }{0pt plus 5cm}\#define MAXTEST\ 10000}{16}
-\contentsline {subsubsection}{\numberline {4.2.1.6}\setlength {\rightskip }{0pt plus 5cm}\#define NB\_\discretionary {-}{}{}PREALLOC\ 10000}{16}
-\contentsline {subsubsection}{\numberline {4.2.1.7}\setlength {\rightskip }{0pt plus 5cm}\#define PRIME\ 109}{16}
+\contentsline {subsubsection}{\numberline {4.2.1.1}CRITERE}{15}
+\contentsline {subsubsection}{\numberline {4.2.1.2}CRITERE\_\discretionary {-}{}{}2}{15}
+\contentsline {subsubsection}{\numberline {4.2.1.3}MAXDESTROY}{15}
+\contentsline {subsubsection}{\numberline {4.2.1.4}MAXGET}{16}
+\contentsline {subsubsection}{\numberline {4.2.1.5}MAXTEST}{16}
+\contentsline {subsubsection}{\numberline {4.2.1.6}NB\_\discretionary {-}{}{}PREALLOC}{16}
+\contentsline {subsubsection}{\numberline {4.2.1.7}PRIME}{16}
 \contentsline {subsection}{\numberline {4.2.2}Function Documentation}{16}
-\contentsline {subsubsection}{\numberline {4.2.2.1}\setlength {\rightskip }{0pt plus 5cm}int compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff1}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff2})}{16}
-\contentsline {subsubsection}{\numberline {4.2.2.2}\setlength {\rightskip }{0pt plus 5cm}int display\_\discretionary {-}{}{}buff (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em pbuff}, char $\ast $ {\em str})}{16}
-\contentsline {subsubsection}{\numberline {4.2.2.3}\setlength {\rightskip }{0pt plus 5cm}int main (int {\em argc}, char $\ast $ {\em argv}[$\,$])}{16}
+\contentsline {subsubsection}{\numberline {4.2.2.1}compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer}{16}
+\contentsline {subsubsection}{\numberline {4.2.2.2}display\_\discretionary {-}{}{}buff}{16}
+\contentsline {subsubsection}{\numberline {4.2.2.3}main}{16}
 \contentsline {section}{\numberline {4.3}test\_\discretionary {-}{}{}cmchash\_\discretionary {-}{}{}bugdelete.c File Reference}{17}
 \contentsline {subsection}{\numberline {4.3.1}Define Documentation}{17}
-\contentsline {subsubsection}{\numberline {4.3.1.1}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\ 12}{17}
-\contentsline {subsubsection}{\numberline {4.3.1.2}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\_\discretionary {-}{}{}2\ 14}{17}
-\contentsline {subsubsection}{\numberline {4.3.1.3}\setlength {\rightskip }{0pt plus 5cm}\#define MAXDESTROY\ 50}{18}
-\contentsline {subsubsection}{\numberline {4.3.1.4}\setlength {\rightskip }{0pt plus 5cm}\#define MAXGET\ 30}{18}
-\contentsline {subsubsection}{\numberline {4.3.1.5}\setlength {\rightskip }{0pt plus 5cm}\#define MAXTEST\ 10000}{18}
-\contentsline {subsubsection}{\numberline {4.3.1.6}\setlength {\rightskip }{0pt plus 5cm}\#define NB\_\discretionary {-}{}{}PREALLOC\ 10000}{18}
-\contentsline {subsubsection}{\numberline {4.3.1.7}\setlength {\rightskip }{0pt plus 5cm}\#define PRIME\ 109}{18}
+\contentsline {subsubsection}{\numberline {4.3.1.1}CRITERE}{17}
+\contentsline {subsubsection}{\numberline {4.3.1.2}CRITERE\_\discretionary {-}{}{}2}{17}
+\contentsline {subsubsection}{\numberline {4.3.1.3}MAXDESTROY}{18}
+\contentsline {subsubsection}{\numberline {4.3.1.4}MAXGET}{18}
+\contentsline {subsubsection}{\numberline {4.3.1.5}MAXTEST}{18}
+\contentsline {subsubsection}{\numberline {4.3.1.6}NB\_\discretionary {-}{}{}PREALLOC}{18}
+\contentsline {subsubsection}{\numberline {4.3.1.7}PRIME}{18}
 \contentsline {subsection}{\numberline {4.3.2}Function Documentation}{18}
-\contentsline {subsubsection}{\numberline {4.3.2.1}\setlength {\rightskip }{0pt plus 5cm}int compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff1}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff2})}{18}
-\contentsline {subsubsection}{\numberline {4.3.2.2}\setlength {\rightskip }{0pt plus 5cm}int display\_\discretionary {-}{}{}buff (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em pbuff}, char $\ast $ {\em str})}{18}
-\contentsline {subsubsection}{\numberline {4.3.2.3}\setlength {\rightskip }{0pt plus 5cm}int main (int {\em argc}, char $\ast $ {\em argv}[$\,$])}{18}
+\contentsline {subsubsection}{\numberline {4.3.2.1}compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer}{18}
+\contentsline {subsubsection}{\numberline {4.3.2.2}display\_\discretionary {-}{}{}buff}{18}
+\contentsline {subsubsection}{\numberline {4.3.2.3}main}{18}
 \contentsline {subsection}{\numberline {4.3.3}Variable Documentation}{18}
-\contentsline {subsubsection}{\numberline {4.3.3.1}\setlength {\rightskip }{0pt plus 5cm}int {\bf bugdelete\_\discretionary {-}{}{}key\_\discretionary {-}{}{}array}[$\,$]}{18}
+\contentsline {subsubsection}{\numberline {4.3.3.1}bugdelete\_\discretionary {-}{}{}key\_\discretionary {-}{}{}array}{18}
 \contentsline {section}{\numberline {4.4}test\_\discretionary {-}{}{}configurable\_\discretionary {-}{}{}hash.c File Reference}{19}
 \contentsline {subsection}{\numberline {4.4.1}Define Documentation}{19}
-\contentsline {subsubsection}{\numberline {4.4.1.1}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\ 12}{19}
-\contentsline {subsubsection}{\numberline {4.4.1.2}\setlength {\rightskip }{0pt plus 5cm}\#define CRITERE\_\discretionary {-}{}{}2\ 14}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.3}\setlength {\rightskip }{0pt plus 5cm}\#define LENBUF\ 256}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.4}\setlength {\rightskip }{0pt plus 5cm}\#define MAXDESTROY\ 5}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.5}\setlength {\rightskip }{0pt plus 5cm}\#define MAXGET\ 3}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.6}\setlength {\rightskip }{0pt plus 5cm}\#define MAXTEST\ 10000}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.7}\setlength {\rightskip }{0pt plus 5cm}\#define Mem\_\discretionary {-}{}{}Alloc(a)\ Buddy\discretionary {-}{}{}Malloc( a )}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.8}\setlength {\rightskip }{0pt plus 5cm}\#define Mem\_\discretionary {-}{}{}Free(a)\ Buddy\discretionary {-}{}{}Free( a )}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.9}\setlength {\rightskip }{0pt plus 5cm}\#define NB\_\discretionary {-}{}{}PREALLOC\ 10000}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.10}\setlength {\rightskip }{0pt plus 5cm}\#define PRIME\ 3}{20}
-\contentsline {subsubsection}{\numberline {4.4.1.11}\setlength {\rightskip }{0pt plus 5cm}\#define STRSIZE\ 10}{20}
-\contentsline {subsection}{\numberline {4.4.2}Function Documentation}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.1}\setlength {\rightskip }{0pt plus 5cm}int compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff1}, hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em buff2})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.2}\setlength {\rightskip }{0pt plus 5cm}int display\_\discretionary {-}{}{}buff (hash\_\discretionary {-}{}{}buffer\_\discretionary {-}{}{}t $\ast $ {\em pbuff}, char $\ast $ {\em str})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.3}\setlength {\rightskip }{0pt plus 5cm}int do\_\discretionary {-}{}{}del (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, int {\em key})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.4}\setlength {\rightskip }{0pt plus 5cm}int do\_\discretionary {-}{}{}get (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, int {\em key}, int $\ast $ {\em pval})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.5}\setlength {\rightskip }{0pt plus 5cm}int do\_\discretionary {-}{}{}new (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, int {\em key}, int {\em val})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.6}\setlength {\rightskip }{0pt plus 5cm}int do\_\discretionary {-}{}{}set (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, int {\em key}, int {\em val})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.7}\setlength {\rightskip }{0pt plus 5cm}int do\_\discretionary {-}{}{}test (hash\_\discretionary {-}{}{}table\_\discretionary {-}{}{}t $\ast $ {\em ht}, int {\em key})}{21}
-\contentsline {subsubsection}{\numberline {4.4.2.8}\setlength {\rightskip }{0pt plus 5cm}int main (int {\em argc}, char $\ast $ {\em argv}[$\,$])}{21}
+\contentsline {subsubsection}{\numberline {4.4.1.1}CRITERE}{19}
+\contentsline {subsubsection}{\numberline {4.4.1.2}CRITERE\_\discretionary {-}{}{}2}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.3}LENBUF}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.4}MAXDESTROY}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.5}MAXGET}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.6}MAXTEST}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.7}Mem\_\discretionary {-}{}{}Alloc}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.8}Mem\_\discretionary {-}{}{}Free}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.9}NB\_\discretionary {-}{}{}PREALLOC}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.10}PRIME}{20}
+\contentsline {subsubsection}{\numberline {4.4.1.11}STRSIZE}{20}
+\contentsline {subsection}{\numberline {4.4.2}Function Documentation}{20}
+\contentsline {subsubsection}{\numberline {4.4.2.1}compare\_\discretionary {-}{}{}string\_\discretionary {-}{}{}buffer}{20}
+\contentsline {subsubsection}{\numberline {4.4.2.2}display\_\discretionary {-}{}{}buff}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.3}do\_\discretionary {-}{}{}del}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.4}do\_\discretionary {-}{}{}get}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.5}do\_\discretionary {-}{}{}new}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.6}do\_\discretionary {-}{}{}set}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.7}do\_\discretionary {-}{}{}test}{21}
+\contentsline {subsubsection}{\numberline {4.4.2.8}main}{21}

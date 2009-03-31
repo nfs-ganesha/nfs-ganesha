@@ -1,8 +1,10 @@
-.TH "nfs_Read.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Read.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_Read.c \- Routines used for managing the NFS READ request. 
+nfs_Read.c \- Routines used for managing the NFS READ request.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -76,29 +78,29 @@ Routines used for managing the NFS READ request.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:53 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.17 
 .RE
 .PP
-.RE
-.PP
-\fBnfs_Read.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs_Read.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs_Read.c\fP.
 .SH "Function Documentation"
@@ -116,7 +118,7 @@ Frees the result structure allocated for nfs2_Read.
 .PP
 
 .PP
-Definition at line 477 of file nfs_Read.c.
+Definition at line 490 of file nfs_Read.c.
 .SS "void nfs3_Read_Free (nfs_res_t * resp)"
 .PP
 nfs3_Read_Free: Frees the result structure allocated for nfs3_Read.
@@ -130,7 +132,7 @@ Frees the result structure allocated for nfs3_Read.
 .PP
 
 .PP
-Definition at line 493 of file nfs_Read.c.
+Definition at line 506 of file nfs_Read.c.
 .SS "int nfs_Read (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
 .PP
 nfs_Read: The NFS PROC2 and PROC3 READ
@@ -165,9 +167,7 @@ NFS_REQ_OK if successfull
 .PP
 
 .PP
-Definition at line 146 of file nfs_Read.c.
-.PP
-References nfs2_FSALattr_To_Fattr(), nfs_FhandleToCache(), nfs_RetryableError(), nfs_SetFailedStatus(), and nfs_SetPostOpAttr().
+Definition at line 149 of file nfs_Read.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

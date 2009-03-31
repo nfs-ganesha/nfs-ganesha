@@ -1,4 +1,4 @@
-.TH "HashTableInternalFunctions" 3 "9 Apr 2008" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
+.TH "HashTableInternalFunctions" 3 "31 Mar 2009" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,7 +7,7 @@ HashTableInternalFunctions \-
 
 .in +1c
 .ti -1c
-.RI "group \fBHashTableExportedFunctions\fP"
+.RI "\fBHashTableExportedFunctions\fP"
 .br
 .in -1c
 .SS "Functions"
@@ -29,7 +29,7 @@ HashTableInternalFunctions \-
 .PP
 double_hash_func: This function is used for double hashing, based on another hash function.
 .PP
-This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash  8 ) ) )  hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See 'Algorithm in C', Robert Sedjewick for more detail on this).
+This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash % 8 ) ) ) % hparam.index_size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See 'Algorithm in C', Robert Sedjewick for more detail on this).
 .PP
 \fBParameters:\fP
 .RS 4
@@ -72,8 +72,6 @@ the hash value
 
 .PP
 Definition at line 345 of file HashTable.c.
-.PP
-Referenced by main().
 .SS "unsigned long simple_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 simple_hash_func: A template hash function, which considers the hash key as a polynom
@@ -100,5 +98,6 @@ the hash value
 
 .PP
 Definition at line 278 of file HashTable.c.
-.PP
-Referenced by main().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hash Table Library from the source code.

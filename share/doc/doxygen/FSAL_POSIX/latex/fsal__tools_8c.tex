@@ -1,6 +1,7 @@
 \section{fsal\_\-tools.c File Reference}
-\label{fsal__tools_8c}\index{fsal_tools.c@{fsal\_\-tools.c}}
-miscelaneous FSAL tools. 
+\label{fsal__tools_8c}\index{fsal\_\-tools.c@{fsal\_\-tools.c}}
+miscelaneous FSAL tools.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -10,43 +11,43 @@ miscelaneous FSAL tools.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf STRCMP}\ strcasecmp\label{fsal__tools_8c_a0}
+\#define \textbf{STRCMP}~strcasecmp\label{fsal__tools_8c_1ffef5879101d778f17a377e0d8b0e00}
 
 \item 
-\#define {\bf MAGIC}\ 0x\-ABCD1234\label{fsal__tools_8c_a1}
+\#define \textbf{MAGIC}~0xABCD1234\label{fsal__tools_8c_94630370ae389fb1189282fa0742f310}
 
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-char $\ast$ {\bf FSAL\_\-Get\-FSName} ()\label{fsal__tools_8c_a2}
+char $\ast$ \textbf{FSAL\_\-GetFSName} ()\label{fsal__tools_8c_5ce13ad306b54a091960744c763b3867}
 
 \item 
 int {\bf FSAL\_\-handlecmp} (fsal\_\-handle\_\-t $\ast$handle1, fsal\_\-handle\_\-t $\ast$handle2, fsal\_\-status\_\-t $\ast$status)
 \item 
-unsigned int {\bf FSAL\_\-Handle\_\-to\_\-Hash\-Index} (fsal\_\-handle\_\-t $\ast$p\_\-handle, unsigned int cookie, unsigned int alphabet\_\-len, unsigned int index\_\-size)
+unsigned int {\bf FSAL\_\-Handle\_\-to\_\-HashIndex} (fsal\_\-handle\_\-t $\ast$p\_\-handle, unsigned int cookie, unsigned int alphabet\_\-len, unsigned int index\_\-size)
 \item 
-unsigned int {\bf FSAL\_\-Handle\_\-to\_\-RBTIndex} (fsal\_\-handle\_\-t $\ast$p\_\-handle, unsigned int cookie)\label{fsal__tools_8c_a5}
+unsigned int \textbf{FSAL\_\-Handle\_\-to\_\-RBTIndex} (fsal\_\-handle\_\-t $\ast$p\_\-handle, unsigned int cookie)\label{fsal__tools_8c_0afe476befc56121cceeb82a69e458c5}
 
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Digest\-Handle} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-expcontext, fsal\_\-digesttype\_\-t output\_\-type, fsal\_\-handle\_\-t $\ast$p\_\-in\_\-fsal\_\-handle, caddr\_\-t out\_\-buff)
+fsal\_\-status\_\-t {\bf FSAL\_\-DigestHandle} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-expcontext, fsal\_\-digesttype\_\-t output\_\-type, fsal\_\-handle\_\-t $\ast$p\_\-in\_\-fsal\_\-handle, caddr\_\-t out\_\-buff)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Expand\-Handle} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-expcontext, fsal\_\-digesttype\_\-t in\_\-type, caddr\_\-t in\_\-buff, fsal\_\-handle\_\-t $\ast$p\_\-out\_\-fsal\_\-handle)
+fsal\_\-status\_\-t {\bf FSAL\_\-ExpandHandle} (fsal\_\-export\_\-context\_\-t $\ast$p\_\-expcontext, fsal\_\-digesttype\_\-t in\_\-type, caddr\_\-t in\_\-buff, fsal\_\-handle\_\-t $\ast$p\_\-out\_\-fsal\_\-handle)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Set\-Default\_\-FSAL\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)
+fsal\_\-status\_\-t {\bf FSAL\_\-SetDefault\_\-FSAL\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Set\-Default\_\-FS\_\-common\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_a9}
+fsal\_\-status\_\-t \textbf{FSAL\_\-SetDefault\_\-FS\_\-common\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_7626d35bafe1d83233a23dac0309496a}
 
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-Set\-Default\_\-FS\_\-specific\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_a10}
+fsal\_\-status\_\-t \textbf{FSAL\_\-SetDefault\_\-FS\_\-specific\_\-parameter} (fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_2c9026a0246b7163c494edfaaed5e8b5}
 
 \item 
 fsal\_\-status\_\-t {\bf FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf} (config\_\-file\_\-t in\_\-config, fsal\_\-parameter\_\-t $\ast$out\_\-parameter)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-load\_\-FS\_\-common\_\-parameter\_\-from\_\-conf} (config\_\-file\_\-t in\_\-config, fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_a12}
+fsal\_\-status\_\-t \textbf{FSAL\_\-load\_\-FS\_\-common\_\-parameter\_\-from\_\-conf} (config\_\-file\_\-t in\_\-config, fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_5e93d174a899b934ed30e8bedb143655}
 
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-load\_\-FS\_\-specific\_\-parameter\_\-from\_\-conf} (config\_\-file\_\-t in\_\-config, fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_a13}
+fsal\_\-status\_\-t \textbf{FSAL\_\-load\_\-FS\_\-specific\_\-parameter\_\-from\_\-conf} (config\_\-file\_\-t in\_\-config, fsal\_\-parameter\_\-t $\ast$out\_\-parameter)\label{fsal__tools_8c_be783ef46edfd457473f20e3e5aa4073}
 
 \end{CompactItemize}
 
@@ -55,28 +56,28 @@ fsal\_\-status\_\-t {\bf FSAL\_\-load\_\-FS\_\-specific\_\-parameter\_\-from\_\-
 miscelaneous FSAL tools. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/17 14:20:07 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.26 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-tools.c}.
 
 \subsection{Function Documentation}
-\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_DigestHandle@{FSAL\_\-DigestHandle}}
-\index{FSAL_DigestHandle@{FSAL\_\-DigestHandle}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Digest\-Handle (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-expcontext}, fsal\_\-digesttype\_\-t {\em output\_\-type}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-in\_\-fsal\_\-handle}, caddr\_\-t {\em out\_\-buff})}\label{fsal__tools_8c_a6}
+\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-DigestHandle@{FSAL\_\-DigestHandle}}
+\index{FSAL\_\-DigestHandle@{FSAL\_\-DigestHandle}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-DigestHandle}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-DigestHandle (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-expcontext}, \/  fsal\_\-digesttype\_\-t {\em output\_\-type}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-in\_\-fsal\_\-handle}, \/  caddr\_\-t {\em out\_\-buff})}\label{fsal__tools_8c_4b019cc6729ad10ecdc7a51f4ee29011}
 
 
-FSAL\_\-Digest\-Handle : Convert an fsal\_\-handle\_\-t to a buffer to be included into NFS handles, or another digest.
+FSAL\_\-DigestHandle : Convert an fsal\_\-handle\_\-t to a buffer to be included into NFS handles, or another digest.
 
 \begin{Desc}
 \item[Parameters:]
@@ -87,12 +88,12 @@ FSAL\_\-Digest\-Handle : Convert an fsal\_\-handle\_\-t to a buffer to be includ
 \item[Returns:]The major code is ERR\_\-FSAL\_\-NO\_\-ERROR is no error occured. Else, it is a non null value. \end{Desc}
 
 
-Definition at line 129 of file fsal\_\-tools.c.\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_ExpandHandle@{FSAL\_\-ExpandHandle}}
-\index{FSAL_ExpandHandle@{FSAL\_\-ExpandHandle}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Expand\-Handle (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-expcontext}, fsal\_\-digesttype\_\-t {\em in\_\-type}, caddr\_\-t {\em in\_\-buff}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-out\_\-fsal\_\-handle})}\label{fsal__tools_8c_a7}
+Definition at line 127 of file fsal\_\-tools.c.\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-ExpandHandle@{FSAL\_\-ExpandHandle}}
+\index{FSAL\_\-ExpandHandle@{FSAL\_\-ExpandHandle}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-ExpandHandle}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-ExpandHandle (fsal\_\-export\_\-context\_\-t $\ast$ {\em p\_\-expcontext}, \/  fsal\_\-digesttype\_\-t {\em in\_\-type}, \/  caddr\_\-t {\em in\_\-buff}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-out\_\-fsal\_\-handle})}\label{fsal__tools_8c_8b31958e3ab2bea2852975bfbae1e6e7}
 
 
-FSAL\_\-Expand\-Handle : Convert a buffer extracted from NFS handles to an FSAL handle.
+FSAL\_\-ExpandHandle : Convert a buffer extracted from NFS handles to an FSAL handle.
 
 \begin{Desc}
 \item[Parameters:]
@@ -103,12 +104,12 @@ FSAL\_\-Expand\-Handle : Convert a buffer extracted from NFS handles to an FSAL 
 \item[Returns:]The major code is ERR\_\-FSAL\_\-NO\_\-ERROR is no error occured. Else, it is a non null value. \end{Desc}
 
 
-Definition at line 260 of file fsal\_\-tools.c.\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_Handle_to_HashIndex@{FSAL\_\-Handle\_\-to\_\-HashIndex}}
-\index{FSAL_Handle_to_HashIndex@{FSAL\_\-Handle\_\-to\_\-HashIndex}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int FSAL\_\-Handle\_\-to\_\-Hash\-Index (fsal\_\-handle\_\-t $\ast$ {\em p\_\-handle}, unsigned int {\em cookie}, unsigned int {\em alphabet\_\-len}, unsigned int {\em index\_\-size})}\label{fsal__tools_8c_a4}
+Definition at line 258 of file fsal\_\-tools.c.\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-Handle\_\-to\_\-HashIndex@{FSAL\_\-Handle\_\-to\_\-HashIndex}}
+\index{FSAL\_\-Handle\_\-to\_\-HashIndex@{FSAL\_\-Handle\_\-to\_\-HashIndex}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-Handle\_\-to\_\-HashIndex}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int FSAL\_\-Handle\_\-to\_\-HashIndex (fsal\_\-handle\_\-t $\ast$ {\em p\_\-handle}, \/  unsigned int {\em cookie}, \/  unsigned int {\em alphabet\_\-len}, \/  unsigned int {\em index\_\-size})}\label{fsal__tools_8c_a08050a4cea7a2bd7f00b81687ffca3f}
 
 
-FSAL\_\-Handle\_\-to\_\-Hash\-Index This function is used for hashing a FSAL handle in order to dispatch entries into the hash table array.
+FSAL\_\-Handle\_\-to\_\-HashIndex This function is used for hashing a FSAL handle in order to dispatch entries into the hash table array.
 
 \begin{Desc}
 \item[Parameters:]
@@ -119,9 +120,9 @@ FSAL\_\-Handle\_\-to\_\-Hash\-Index This function is used for hashing a FSAL han
 \item[Returns:]The hash value \end{Desc}
 
 
-Definition at line 80 of file fsal\_\-tools.c.\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_handlecmp@{FSAL\_\-handlecmp}}
-\index{FSAL_handlecmp@{FSAL\_\-handlecmp}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int FSAL\_\-handlecmp (fsal\_\-handle\_\-t $\ast$ {\em handle1}, fsal\_\-handle\_\-t $\ast$ {\em handle2}, fsal\_\-status\_\-t $\ast$ {\em status})}\label{fsal__tools_8c_a3}
+Definition at line 78 of file fsal\_\-tools.c.\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-handlecmp@{FSAL\_\-handlecmp}}
+\index{FSAL\_\-handlecmp@{FSAL\_\-handlecmp}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-handlecmp}]{\setlength{\rightskip}{0pt plus 5cm}int FSAL\_\-handlecmp (fsal\_\-handle\_\-t $\ast$ {\em handle1}, \/  fsal\_\-handle\_\-t $\ast$ {\em handle2}, \/  fsal\_\-status\_\-t $\ast$ {\em status})}\label{fsal__tools_8c_808e39546ae8080e331e6d09255d1fc8}
 
 
 FSAL\_\-handlecmp: Compare 2 handles.
@@ -139,9 +140,9 @@ FSAL\_\-handlecmp: Compare 2 handles.
 
 Definition at line 48 of file fsal\_\-tools.c.
 
-Referenced by FSAL\_\-rename().\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_load_FSAL_parameter_from_conf@{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf}}
-\index{FSAL_load_FSAL_parameter_from_conf@{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf (config\_\-file\_\-t {\em in\_\-config}, fsal\_\-parameter\_\-t $\ast$ {\em out\_\-parameter})}\label{fsal__tools_8c_a11}
+Referenced by FSAL\_\-rename().\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf@{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf}}
+\index{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf@{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  fsal\_\-parameter\_\-t $\ast$ {\em out\_\-parameter})}\label{fsal__tools_8c_38fe03c0aa0fa100e90f3c0f8698c95e}
 
 
 FSAL\_\-load\_\-FSAL\_\-parameter\_\-from\_\-conf, FSAL\_\-load\_\-FS\_\-common\_\-parameter\_\-from\_\-conf, FSAL\_\-load\_\-FS\_\-specific\_\-parameter\_\-from\_\-conf:
@@ -157,13 +158,13 @@ Those functions initialize the FSAL init parameter structure from a configuratio
 \item[Returns:]ERR\_\-FSAL\_\-NO\_\-ERROR (no error) , ERR\_\-FSAL\_\-NOENT (missing a mandatory stanza in config file), ERR\_\-FSAL\_\-INVAL (invalid parameter), ERR\_\-FSAL\_\-SERVERFAULT (unexpected error) ERR\_\-FSAL\_\-FAULT (null pointer given as parameter), \end{Desc}
 
 
-Definition at line 420 of file fsal\_\-tools.c.\index{fsal_tools.c@{fsal\_\-tools.c}!FSAL_SetDefault_FSAL_parameter@{FSAL\_\-SetDefault\_\-FSAL\_\-parameter}}
-\index{FSAL_SetDefault_FSAL_parameter@{FSAL\_\-SetDefault\_\-FSAL\_\-parameter}!fsal_tools.c@{fsal\_\-tools.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-Set\-Default\_\-FSAL\_\-parameter (fsal\_\-parameter\_\-t $\ast$ {\em out\_\-parameter})}\label{fsal__tools_8c_a8}
+Definition at line 430 of file fsal\_\-tools.c.\index{fsal\_\-tools.c@{fsal\_\-tools.c}!FSAL\_\-SetDefault\_\-FSAL\_\-parameter@{FSAL\_\-SetDefault\_\-FSAL\_\-parameter}}
+\index{FSAL\_\-SetDefault\_\-FSAL\_\-parameter@{FSAL\_\-SetDefault\_\-FSAL\_\-parameter}!fsal_tools.c@{fsal\_\-tools.c}}
+\subsubsection[{FSAL\_\-SetDefault\_\-FSAL\_\-parameter}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-SetDefault\_\-FSAL\_\-parameter (fsal\_\-parameter\_\-t $\ast$ {\em out\_\-parameter})}\label{fsal__tools_8c_a4c8e7706d68c7f776c02726c89dc8d0}
 
 
 Those routines set the default parameters for FSAL init structure. \begin{Desc}
 \item[Returns:]ERR\_\-FSAL\_\-NO\_\-ERROR (no error) , ERR\_\-FSAL\_\-FAULT (null pointer given as parameter), ERR\_\-FSAL\_\-SERVERFAULT (unexpected error) \end{Desc}
 
 
-Definition at line 309 of file fsal\_\-tools.c.
+Definition at line 307 of file fsal\_\-tools.c.

@@ -1,4 +1,4 @@
-.TH "yy_buffer_state" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "yy_buffer_state" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -34,44 +34,63 @@ yy_buffer_state \-
 .RI "int \fByy_at_bol\fP"
 .br
 .ti -1c
+.RI "int \fByy_bs_lineno\fP"
+.br
+.ti -1c
+.RI "int \fByy_bs_column\fP"
+.br
+.ti -1c
 .RI "int \fByy_fill_buffer\fP"
 .br
 .ti -1c
 .RI "int \fByy_buffer_status\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 208 of file conf_lex.c.
 .SH "Member Data Documentation"
 .PP 
 .SS "int \fByy_buffer_state::yy_at_bol\fP"
 .PP
-Definition at line 178 of file conf_lex.c.
+Definition at line 242 of file conf_lex.c.
+.SS "int \fByy_buffer_state::yy_bs_column\fP"
+.PP
+The column count. 
+.PP
+Definition at line 245 of file conf_lex.c.
+.SS "int \fByy_buffer_state::yy_bs_lineno\fP"
+.PP
+The line count. 
+.PP
+Definition at line 244 of file conf_lex.c.
 .SS "char* \fByy_buffer_state::yy_buf_pos\fP"
 .PP
-Definition at line 149 of file conf_lex.c.
+Definition at line 213 of file conf_lex.c.
 .SS "\fByy_size_t\fP \fByy_buffer_state::yy_buf_size\fP"
 .PP
-Definition at line 154 of file conf_lex.c.
+Definition at line 218 of file conf_lex.c.
 .SS "int \fByy_buffer_state::yy_buffer_status\fP"
 .PP
-Definition at line 185 of file conf_lex.c.
+Definition at line 252 of file conf_lex.c.
 .SS "char* \fByy_buffer_state::yy_ch_buf\fP"
 .PP
-Definition at line 148 of file conf_lex.c.
+Definition at line 212 of file conf_lex.c.
 .SS "int \fByy_buffer_state::yy_fill_buffer\fP"
 .PP
-Definition at line 183 of file conf_lex.c.
+Definition at line 250 of file conf_lex.c.
 .SS "FILE* \fByy_buffer_state::yy_input_file\fP"
 .PP
-Definition at line 146 of file conf_lex.c.
+Definition at line 210 of file conf_lex.c.
 .SS "int \fByy_buffer_state::yy_is_interactive\fP"
 .PP
-Definition at line 172 of file conf_lex.c.
+Definition at line 236 of file conf_lex.c.
 .SS "int \fByy_buffer_state::yy_is_our_buffer\fP"
 .PP
-Definition at line 165 of file conf_lex.c.
+Definition at line 229 of file conf_lex.c.
 .SS "int \fByy_buffer_state::yy_n_chars\fP"
 .PP
-Definition at line 159 of file conf_lex.c.
+Definition at line 223 of file conf_lex.c.
 
 .SH "Author"
 .PP 

@@ -90,6 +90,7 @@
     <xsd:simpleContent>
       <xsd:extension base="xsd:string">
         <xsd:attribute name="refid" type="xsd:string" />
+        <xsd:attribute name="prot" type="DoxProtectionKind" use="optional"/>
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -122,6 +123,7 @@
       <xsd:element name="name" />
       <xsd:element name="read" minOccurs="0" />
       <xsd:element name="write" minOccurs="0" />
+      <xsd:element name="bitfield" minOccurs="0" />
       <xsd:element name="reimplements" type="reimplementType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="reimplementedby" type="reimplementType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="param" type="paramType" minOccurs="0" maxOccurs="unbounded" />
@@ -145,12 +147,27 @@
     <xsd:attribute name="virt" type="DoxVirtualKind" />
     <xsd:attribute name="volatile" type="DoxBool" />
     <xsd:attribute name="mutable" type="DoxBool" />
+    <!-- Qt property -->
     <xsd:attribute name="readable" type="DoxBool" use="optional"/>
     <xsd:attribute name="writable" type="DoxBool" use="optional"/>
+    <!-- C++/CLI variable -->
+    <xsd:attribute name="initonly" type="DoxBool" use="optional"/>
+    <!-- C++/CLI and C# property -->
+    <xsd:attribute name="settable" type="DoxBool" use="optional"/>
+    <xsd:attribute name="gettable" type="DoxBool" use="optional"/>
+    <!-- C++/CLI function -->
+    <xsd:attribute name="final" type="DoxBool" use="optional"/>
+    <xsd:attribute name="sealed" type="DoxBool" use="optional"/>
+    <xsd:attribute name="new" type="DoxBool" use="optional"/>
+    <!-- C++/CLI event -->
+    <xsd:attribute name="add" type="DoxBool" use="optional"/>
+    <xsd:attribute name="remove" type="DoxBool" use="optional"/>
+    <xsd:attribute name="raise" type="DoxBool" use="optional"/>
   </xsd:complexType>
 
   <xsd:complexType name="descriptionType" mixed="true">
     <xsd:sequence>
+      <xsd:element name="title" type="xsd:string" minOccurs="0"/>	    
       <xsd:element name="para" type="docParaType" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="sect1" type="docSect1Type" minOccurs="0" maxOccurs="unbounded" />
       <xsd:element name="internal" type="docInternalType" minOccurs="0" />
@@ -253,6 +270,7 @@
   <xsd:complexType name="locationType">
     <xsd:attribute name="file" type="xsd:string" />
     <xsd:attribute name="line" type="xsd:integer" />
+    <xsd:attribute name="bodyfile" type="xsd:string" />
     <xsd:attribute name="bodystart" type="xsd:integer" />
     <xsd:attribute name="bodyend" type="xsd:integer" />
   </xsd:complexType>
@@ -349,6 +367,12 @@
       <xsd:element name="copy" type="docEmptyType" />
       <xsd:element name="trademark" type="docEmptyType" />
       <xsd:element name="registered" type="docEmptyType" />
+      <xsd:element name="lsquo" type="docEmptyType" />
+      <xsd:element name="rsquo" type="docEmptyType" />
+      <xsd:element name="ldquo" type="docEmptyType" />
+      <xsd:element name="rdquo" type="docEmptyType" />
+      <xsd:element name="ndash" type="docEmptyType" />
+      <xsd:element name="mdash" type="docEmptyType" />
       <xsd:element name="umlaut" type="docCharType" />
       <xsd:element name="acute" type="docCharType" />
       <xsd:element name="grave" type="docCharType" />
@@ -548,12 +572,11 @@
     </xsd:sequence>
   </xsd:complexType>
 
-  <xsd:complexType name="docParamName">
-    <xsd:simpleContent>
-      <xsd:extension base="xsd:string">
-        <xsd:attribute name="direction" type="DoxParamDir" use="optional" />
-      </xsd:extension>
-    </xsd:simpleContent>
+  <xsd:complexType name="docParamName" mixed="true">
+    <xsd:sequence>
+      <xsd:element name="ref" type="refTextType" minOccurs="0" maxOccurs="1" />
+    </xsd:sequence>
+    <xsd:attribute name="direction" type="DoxParamDir" use="optional" />
   </xsd:complexType>
 
   <xsd:complexType name="docXRefSectType">
@@ -752,6 +775,7 @@
       <xsd:enumeration value="param" />
       <xsd:enumeration value="retval" />
       <xsd:enumeration value="exception" />
+      <xsd:enumeration value="templateparam" />
     </xsd:restriction>
   </xsd:simpleType>
 

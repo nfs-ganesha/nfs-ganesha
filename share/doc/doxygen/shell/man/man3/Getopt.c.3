@@ -1,8 +1,10 @@
-.TH "Getopt.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "Getopt.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-Getopt.c \- GANESHA's version of getopt, to avoid portability issues. 
+Getopt.c \- GANESHA's version of getopt, to avoid portability issues.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -53,26 +55,26 @@ GANESHA's version of getopt, to avoid portability issues.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/18 17:03:35 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.4 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.4 
 .RE
 .PP
 This source code is an adaptation of the AT&T public domain source for getopt(3).
@@ -87,7 +89,7 @@ Revision 1.3 2005/11/28 17:02:59 deniel Added CeCILL headers
 .PP
 Revision 1.2 2005/03/09 15:43:25 leibovic Multi-OS compiling.
 .PP
-Revision 1.1 2005/02/02 09:05:30 leibovic Adding our own version of getopt, to avoid portability issues.
+Revision 1.1 2005/02/02 09:05:30 leibovic Adding our own version of getopt, to avoid portability issues. 
 .PP
 Definition in file \fBGetopt.c\fP.
 .SH "Define Documentation"
@@ -110,44 +112,28 @@ if(Opterr){\
 .fi
 .PP
 Definition at line 115 of file Getopt.c.
-.PP
-Referenced by Getopt().
 .SS "#define NULL   0"
 .PP
 Definition at line 111 of file Getopt.c.
-.PP
-Referenced by cacheinode_init(), cmdnfs_ACCESS3args(), cmdnfs_ACCESS3res(), cmdnfs_ATTR2res(), cmdnfs_CREATE2args(), cmdnfs_CREATE3args(), cmdnfs_CREATE3res(), cmdnfs_DIROP2res(), cmdnfs_diropargs2(), cmdnfs_diropargs3(), cmdnfs_exports(), cmdnfs_fhstatus2(), cmdnfs_FSINFO3res(), cmdnfs_FSSTAT3res(), cmdnfs_GETATTR3res(), cmdnfs_LINK3args(), cmdnfs_LINK3res(), cmdnfs_LOOKUP3res(), cmdnfs_MKDIR3args(), cmdnfs_MKDIR3res(), cmdnfs_mountlist(), cmdnfs_mountres3(), cmdnfs_PATHCONF3res(), cmdnfs_postopattr(), cmdnfs_postopfh3(), cmdnfs_READDIR2args(), cmdnfs_READDIR2res(), cmdnfs_READDIR3args(), cmdnfs_READDIR3res(), cmdnfs_READDIRPLUS3args(), cmdnfs_READDIRPLUS3res(), cmdnfs_READLINK2res(), cmdnfs_READLINK3res(), cmdnfs_REMOVE3res(), cmdnfs_RENAME2args(), cmdnfs_RENAME3args(), cmdnfs_RENAME3res(), cmdnfs_RMDIR3res(), cmdnfs_SETATTR2args(), cmdnfs_SETATTR3args(), cmdnfs_SETATTR3res(), cmdnfs_STATFS2res(), cmdnfs_SYMLINK3args(), cmdnfs_SYMLINK3res(), cmdnfs_wccdata(), fn_Cache_inode_create(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_write(), fn_fsal_access(), fn_fsal_cat(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fn_MNT1_command(), fn_MNT1_remote_command(), fn_MNT3_command(), fn_MNT3_remote_command(), fn_NFS2_command(), fn_NFS2_remote_command(), fn_NFS3_command(), fn_NFS3_remote_command(), fn_nfs_ln(), fn_nfs_mount(), fn_nfs_remote_ln(), fn_nfs_remote_setattr(), fn_nfs_remote_umount(), fn_nfs_setattr(), fn_nfs_umount(), Init_Thread_Context(), InitNFSClient(), main(), nfs_remote_create(), nfs_remote_mkdir(), nfs_remote_mount(), nfs_remote_solvepath(), shell_Init(), shellcmd_interactive(), shellcmd_time(), solvepath(), switch_result(), and util_timer().
 .SH "Function Documentation"
 .PP 
 .SS "int Getopt (int argc, char * argv[], char * opts)"
 .PP
 Definition at line 128 of file Getopt.c.
-.PP
-References ERR, Optarg, Optind, and Optopt.
-.PP
-Referenced by fn_Cache_inode_access(), fn_Cache_inode_cache_init(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_gc(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), fn_Cache_inode_write(), fn_fsal_access(), fn_fsal_cat(), fn_fsal_create(), fn_fsal_getxattr(), fn_fsal_hardlink(), fn_fsal_init_fs(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_init(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_ls(), fn_nfs_remote_mkdir(), fn_nfs_remote_rename(), fn_nfs_remote_setattr(), fn_nfs_remote_stat(), fn_nfs_remote_unlink(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_unlink(), fn_rpc_init(), main(), and util_cmp().
 .SH "Variable Documentation"
 .PP 
 .SS "char* \fBOptarg\fP"
 .PP
 Definition at line 126 of file Getopt.c.
-.PP
-Referenced by fn_Cache_inode_read(), fn_Cache_inode_write(), fn_fsal_read(), fn_fsal_write(), Getopt(), and main().
 .SS "int \fBOpterr\fP = 1"
 .PP
 Definition at line 123 of file Getopt.c.
-.PP
-Referenced by main(), and util_cmp().
 .SS "int \fBOptind\fP = 1"
 .PP
 Definition at line 124 of file Getopt.c.
-.PP
-Referenced by fn_Cache_inode_access(), fn_Cache_inode_cache_init(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), fn_Cache_inode_write(), fn_fsal_access(), fn_fsal_cat(), fn_fsal_create(), fn_fsal_getxattr(), fn_fsal_hardlink(), fn_fsal_init_fs(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_init(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_ls(), fn_nfs_remote_mkdir(), fn_nfs_remote_rename(), fn_nfs_remote_setattr(), fn_nfs_remote_stat(), fn_nfs_remote_unlink(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_unlink(), fn_rpc_init(), Getopt(), main(), and util_cmp().
 .SS "int \fBOptopt\fP"
 .PP
 Definition at line 125 of file Getopt.c.
-.PP
-Referenced by fn_Cache_inode_access(), fn_Cache_inode_cache_init(), fn_Cache_inode_create(), fn_Cache_inode_data_cache(), fn_Cache_inode_flush_cache(), fn_Cache_inode_gc(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_ls(), fn_Cache_inode_mkdir(), fn_Cache_inode_read(), fn_Cache_inode_recover_cache(), fn_Cache_inode_refresh_cache(), fn_Cache_inode_release_cache(), fn_Cache_inode_rename(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_Cache_inode_unlink(), fn_Cache_inode_write(), fn_fsal_access(), fn_fsal_cat(), fn_fsal_create(), fn_fsal_getxattr(), fn_fsal_hardlink(), fn_fsal_init_fs(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_init(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_ls(), fn_nfs_remote_mkdir(), fn_nfs_remote_rename(), fn_nfs_remote_setattr(), fn_nfs_remote_stat(), fn_nfs_remote_unlink(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_unlink(), fn_rpc_init(), Getopt(), main(), and util_cmp().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

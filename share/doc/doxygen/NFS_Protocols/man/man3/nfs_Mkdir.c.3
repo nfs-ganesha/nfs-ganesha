@@ -1,8 +1,10 @@
-.TH "nfs_Mkdir.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs_Mkdir.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_Mkdir.c \- evrythinhg you need to handle NFS PROC2-3 MKDIR. 
+nfs_Mkdir.c \- evrythinhg you need to handle NFS PROC2-3 MKDIR.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -73,6 +75,8 @@ evrythinhg you need to handle NFS PROC2-3 MKDIR.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
@@ -81,17 +85,15 @@ deniel
 2005/11/28 17:02:53 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.21 
 .RE
 .PP
-.RE
-.PP
-Evrythinhg you need to handle NFS PROC2-3 MKDIR. MKDIR is used to create new directories
+Evrythinhg you need to handle NFS PROC2-3 MKDIR. MKDIR is used to create new directories 
 .PP
 Definition in file \fBnfs_Mkdir.c\fP.
 .SH "Function Documentation"
@@ -130,9 +132,7 @@ NFS_REQ_OK if successfull
 .PP
 
 .PP
-Definition at line 146 of file nfs_Mkdir.c.
-.PP
-References nfs2_FSALattr_To_Fattr(), nfs_FhandleToCache(), nfs_RetryableError(), nfs_SetFailedStatus(), nfs_SetPostOpAttr(), and nfs_SetWccData().
+Definition at line 149 of file nfs_Mkdir.c.
 .SS "void nfs_Mkdir_Free (nfs_res_t * resp)"
 .PP
 nfs_Mkdir_Free: Frees the result structure allocated for nfs_Mkdir.
@@ -146,7 +146,7 @@ Frees the result structure allocated for nfs_Mkdir.
 .PP
 
 .PP
-Definition at line 459 of file nfs_Mkdir.c.
+Definition at line 462 of file nfs_Mkdir.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

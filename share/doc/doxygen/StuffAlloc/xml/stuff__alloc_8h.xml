@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="stuff__alloc_8h" kind="file">
     <compoundname>stuff_alloc.h</compoundname>
     <includes local="no">stdlib.h</includes>
@@ -21,7 +21,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="stuff__alloc_8h_1a0" prot="public" static="no">
+      <memberdef kind="define" id="stuff__alloc_8h_1d6b7282e7c215186f8514097b04d5bfa" prot="public" static="no">
         <name>Mem_Alloc</name>
         <param><defname>a</defname></param>
         <initializer>BuddyMalloc( a )</initializer>
@@ -31,9 +31,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/StuffAlloc/stuff_alloc.h" line="43" bodystart="43" bodyend="-1"/>
+        <location file="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" line="43" bodyfile="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" bodystart="43" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="stuff__alloc_8h_1a1" prot="public" static="no">
+      <memberdef kind="define" id="stuff__alloc_8h_133eb598e1abd423b85812262b3691f70" prot="public" static="no">
         <name>STUFF_PREALLOC</name>
         <param><defname>pool</defname></param>
         <param><defname>nb</defname></param>
@@ -92,9 +92,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/StuffAlloc/stuff_alloc.h" line="83" bodystart="66" bodyend="-1"/>
+        <location file="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" line="83" bodyfile="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" bodystart="66" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="stuff__alloc_8h_1a2" prot="public" static="no">
+      <memberdef kind="define" id="stuff__alloc_8h_1457d47f8b2bbac516aee6fd69707e74a" prot="public" static="no">
         <name>GET_PREALLOC</name>
         <param><defname>entry</defname></param>
         <param><defname>pool</defname></param>
@@ -158,9 +158,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/StuffAlloc/stuff_alloc.h" line="119" bodystart="105" bodyend="-1"/>
+        <location file="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" line="119" bodyfile="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" bodystart="105" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="stuff__alloc_8h_1a3" prot="public" static="no">
+      <memberdef kind="define" id="stuff__alloc_8h_1eb0d01b2e3cfab695f1240110e0994c5" prot="public" static="no">
         <name>RELEASE_PREALLOC</name>
         <param><defname>entry</defname></param>
         <param><defname>pool</defname></param>
@@ -199,21 +199,21 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/StuffAlloc/stuff_alloc.h" line="141" bodystart="136" bodyend="-1"/>
+        <location file="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" line="141" bodyfile="/export/GANESHA/src/StuffAlloc/stuff_alloc.h" bodystart="136" bodyend="-1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Stuff allocators macros. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/05/03 07:24:33 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.4 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/05/03 07:24:33 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.4 </para></simplesect>
 <ref refid="stuff__alloc_8h" kindref="compound">stuff_alloc.h</ref> : Stuff allocators macros.</para><para><simplesect kind="rcs"><title>Header</title><para>/cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/StuffAlloc/stuff_alloc.h,v 1.4 2005/05/03 07:24:33 deniel Exp </para></simplesect>
 </para><para><simplesect kind="rcs"><title>Log</title><para><ref refid="stuff__alloc_8h" kindref="compound">stuff_alloc.h</ref>,v </para></simplesect>
-Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular malloc/free</para><para>Revision 1.3 2004/10/20 16:51:25 deniel Comments added to stuuf allocator macros</para><para>Revision 1.2 2004/10/19 14:40:26 deniel Ok for UDP and TCP processing</para><para>Revision 1.2 2004/10/18 08:43:49 deniel Many changes in protootypes ans data structures Adding some functions in preallocator</para><para>Revision 1.1 2004/10/13 13:01:44 deniel Now using the stuff allocator</para>    </detaileddescription>
+Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular malloc/free</para><para>Revision 1.3 2004/10/20 16:51:25 deniel Comments added to stuuf allocator macros</para><para>Revision 1.2 2004/10/19 14:40:26 deniel Ok for UDP and TCP processing</para><para>Revision 1.2 2004/10/18 08:43:49 deniel Many changes in protootypes ans data structures Adding some functions in preallocator</para><para>Revision 1.1 2004/10/13 13:01:44 deniel Now using the stuff allocator </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"></codeline>
 <codeline lineno="34"><highlight class="preprocessor">#ifndef<sp/>_STUFF_ALLOC_H</highlight></codeline>
@@ -225,10 +225,10 @@ Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular ma
 <codeline lineno="40"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>Mem_Alloc(<sp/>a<sp/>)<sp/><sp/>malloc(<sp/>a<sp/>)</highlight></codeline>
 <codeline lineno="41"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#else</highlight></codeline>
 <codeline lineno="42"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;BuddyMalloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="43" refid="stuff__alloc_8h_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>Mem_Alloc(<sp/>a<sp/>)<sp/>BuddyMalloc(<sp/>a<sp/>)<sp/></highlight></codeline>
+<codeline lineno="43" refid="stuff__alloc_8h_1d6b7282e7c215186f8514097b04d5bfa" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>Mem_Alloc(<sp/>a<sp/>)<sp/>BuddyMalloc(<sp/>a<sp/>)<sp/></highlight></codeline>
 <codeline lineno="44"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="45"><highlight class="preprocessor"></highlight></codeline>
-<codeline lineno="66" refid="stuff__alloc_8h_1a1" refkind="member"><highlight class="preprocessor">#define<sp/>STUFF_PREALLOC(<sp/>pool,<sp/>nb,<sp/>type,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="66" refid="stuff__alloc_8h_133eb598e1abd423b85812262b3691f70" refkind="member"><highlight class="preprocessor">#define<sp/>STUFF_PREALLOC(<sp/>pool,<sp/>nb,<sp/>type,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="67"><highlight class="preprocessor">do<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="68"><highlight class="preprocessor">{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="69"><highlight class="preprocessor"><sp/><sp/>int<sp/>i<sp/>=<sp/>0<sp/>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
@@ -249,7 +249,7 @@ Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular ma
 <codeline lineno="84"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="85"><highlight class="normal"></highlight></codeline>
 <codeline lineno="86"><highlight class="normal"></highlight></codeline>
-<codeline lineno="105" refid="stuff__alloc_8h_1a2" refkind="member"><highlight class="preprocessor">#define<sp/>GET_PREALLOC(<sp/>entry,<sp/>pool,<sp/>nb,<sp/>type,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="105" refid="stuff__alloc_8h_1457d47f8b2bbac516aee6fd69707e74a" refkind="member"><highlight class="preprocessor">#define<sp/>GET_PREALLOC(<sp/>entry,<sp/>pool,<sp/>nb,<sp/>type,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="106"><highlight class="preprocessor">do<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="107"><highlight class="preprocessor">{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="108"><highlight class="preprocessor"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
@@ -265,7 +265,7 @@ Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular ma
 <codeline lineno="118"><highlight class="preprocessor"><sp/><sp/><sp/>entry<sp/>=<sp/>NULL<sp/>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="119"><highlight class="preprocessor">}<sp/>while(<sp/>0<sp/>)<sp/></highlight></codeline>
 <codeline lineno="120"><highlight class="preprocessor"></highlight></codeline>
-<codeline lineno="136" refid="stuff__alloc_8h_1a3" refkind="member"><highlight class="preprocessor">#define<sp/>RELEASE_PREALLOC(<sp/>entry,<sp/>pool,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="136" refid="stuff__alloc_8h_1eb0d01b2e3cfab695f1240110e0994c5" refkind="member"><highlight class="preprocessor">#define<sp/>RELEASE_PREALLOC(<sp/>entry,<sp/>pool,<sp/>name_next<sp/>)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="137"><highlight class="preprocessor">do<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="138"><highlight class="preprocessor">{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
 <codeline lineno="139"><highlight class="preprocessor"><sp/><sp/>entry-&gt;name_next<sp/>=<sp/>pool<sp/>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
@@ -275,6 +275,6 @@ Revision 1.4 2005/05/03 07:24:33 deniel Using Buddy System instead of regular ma
 <codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="144"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">/*<sp/>_STUFF_ALLOC_H<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/StuffAlloc/stuff_alloc.h"/>
+    <location file="/export/GANESHA/src/StuffAlloc/stuff_alloc.h"/>
   </compounddef>
 </doxygen>

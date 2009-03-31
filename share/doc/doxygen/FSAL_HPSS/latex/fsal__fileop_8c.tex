@@ -1,11 +1,12 @@
 \section{fsal\_\-fileop.c File Reference}
-\label{fsal__fileop_8c}\index{fsal_fileop.c@{fsal\_\-fileop.c}}
-Files operations. 
+\label{fsal__fileop_8c}\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}}
+Files operations.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
-{\tt \#include \char`\"{}HPSSclapi\-Ext/hpssclapiext.h\char`\"{}}\par
+{\tt \#include \char`\"{}HPSSclapiExt/hpssclapiext.h\char`\"{}}\par
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
@@ -19,10 +20,10 @@ fsal\_\-status\_\-t {\bf FSAL\_\-write} (fsal\_\-file\_\-t $\ast$file\_\-descrip
 \item 
 fsal\_\-status\_\-t {\bf FSAL\_\-close} (fsal\_\-file\_\-t $\ast$file\_\-descriptor)
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-open\_\-by\_\-fileid} (fsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-u64\_\-t fileid, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-openflags\_\-t openflags, fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-attrib\_\-list\_\-t $\ast$file\_\-attributes)\label{fsal__fileop_8c_a5}
+fsal\_\-status\_\-t \textbf{FSAL\_\-open\_\-by\_\-fileid} (fsal\_\-handle\_\-t $\ast$filehandle, fsal\_\-u64\_\-t fileid, fsal\_\-op\_\-context\_\-t $\ast$p\_\-context, fsal\_\-openflags\_\-t openflags, fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-attrib\_\-list\_\-t $\ast$file\_\-attributes)\label{fsal__fileop_8c_5afa8e38170a21da36015a18d0d905a4}
 
 \item 
-fsal\_\-status\_\-t {\bf FSAL\_\-close\_\-by\_\-fileid} (fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-u64\_\-t fileid)\label{fsal__fileop_8c_a6}
+fsal\_\-status\_\-t \textbf{FSAL\_\-close\_\-by\_\-fileid} (fsal\_\-file\_\-t $\ast$file\_\-descriptor, fsal\_\-u64\_\-t fileid)\label{fsal__fileop_8c_4e3271d5450b56071010e1ef556a3d80}
 
 \end{CompactItemize}
 
@@ -31,25 +32,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-close\_\-by\_\-fileid} (fsal\_\-file\_\-t $\ast
 Files operations. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/02/15 14:26:10 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.11 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-fileop.c}.
 
 \subsection{Function Documentation}
-\index{fsal_fileop.c@{fsal\_\-fileop.c}!FSAL_close@{FSAL\_\-close}}
-\index{FSAL_close@{FSAL\_\-close}!fsal_fileop.c@{fsal\_\-fileop.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-close (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor})}\label{fsal__fileop_8c_a4}
+\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}!FSAL\_\-close@{FSAL\_\-close}}
+\index{FSAL\_\-close@{FSAL\_\-close}!fsal_fileop.c@{fsal\_\-fileop.c}}
+\subsubsection[{FSAL\_\-close}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-close (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor})}\label{fsal__fileop_8c_414fc929818222ab0c26779cea528629}
 
 
 FSAL\_\-close: Free the resources allocated by the FSAL\_\-open call.
@@ -67,11 +68,11 @@ FSAL\_\-close: Free the resources allocated by the FSAL\_\-open call.
 
 Definition at line 530 of file fsal\_\-fileop.c.
 
-References hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References hpss2fsal\_\-error(), and TakeTokenFSCall().
 
-Referenced by FSAL\_\-rcp().\index{fsal_fileop.c@{fsal\_\-fileop.c}!FSAL_open@{FSAL\_\-open}}
-\index{FSAL_open@{FSAL\_\-open}!fsal_fileop.c@{fsal\_\-fileop.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-open (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-openflags\_\-t {\em openflags}, fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em file\_\-attributes})}\label{fsal__fileop_8c_a1}
+Referenced by FSAL\_\-rcp().\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}!FSAL\_\-open@{FSAL\_\-open}}
+\index{FSAL\_\-open@{FSAL\_\-open}!fsal_fileop.c@{fsal\_\-fileop.c}}
+\subsubsection[{FSAL\_\-open}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-open (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-openflags\_\-t {\em openflags}, \/  fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em file\_\-attributes})}\label{fsal__fileop_8c_36215c66158f82d668d3986c50757b56}
 
 
 FSAL\_\-open: Open a regular file for reading/writing its data content.
@@ -91,11 +92,11 @@ FSAL\_\-open: Open a regular file for reading/writing its data content.
 
 Definition at line 122 of file fsal\_\-fileop.c.
 
-References fsal2hpss\_\-openflags(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal2hpss\_\-openflags(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().
 
-Referenced by FSAL\_\-open\_\-by\_\-name(), and FSAL\_\-rcp().\index{fsal_fileop.c@{fsal\_\-fileop.c}!FSAL_open_by_name@{FSAL\_\-open\_\-by\_\-name}}
-\index{FSAL_open_by_name@{FSAL\_\-open\_\-by\_\-name}!fsal_fileop.c@{fsal\_\-fileop.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-open\_\-by\_\-name (fsal\_\-handle\_\-t $\ast$ {\em dirhandle}, fsal\_\-name\_\-t $\ast$ {\em filename}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-openflags\_\-t {\em openflags}, fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em file\_\-attributes})}\label{fsal__fileop_8c_a0}
+Referenced by FSAL\_\-open\_\-by\_\-name(), and FSAL\_\-rcp().\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}!FSAL\_\-open\_\-by\_\-name@{FSAL\_\-open\_\-by\_\-name}}
+\index{FSAL\_\-open\_\-by\_\-name@{FSAL\_\-open\_\-by\_\-name}!fsal_fileop.c@{fsal\_\-fileop.c}}
+\subsubsection[{FSAL\_\-open\_\-by\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-open\_\-by\_\-name (fsal\_\-handle\_\-t $\ast$ {\em dirhandle}, \/  fsal\_\-name\_\-t $\ast$ {\em filename}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-openflags\_\-t {\em openflags}, \/  fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em file\_\-attributes})}\label{fsal__fileop_8c_6c899c64e18d90528a018989cc2484c5}
 
 
 FSAL\_\-open\_\-byname: Open a regular file for reading/writing its data content.
@@ -115,9 +116,9 @@ FSAL\_\-open\_\-byname: Open a regular file for reading/writing its data content
 
 Definition at line 62 of file fsal\_\-fileop.c.
 
-References FSAL\_\-lookup(), and FSAL\_\-open().\index{fsal_fileop.c@{fsal\_\-fileop.c}!FSAL_read@{FSAL\_\-read}}
-\index{FSAL_read@{FSAL\_\-read}!fsal_fileop.c@{fsal\_\-fileop.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-read (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, fsal\_\-seek\_\-t $\ast$ {\em seek\_\-descriptor}, fsal\_\-size\_\-t {\em buffer\_\-size}, caddr\_\-t {\em buffer}, fsal\_\-size\_\-t $\ast$ {\em read\_\-amount}, fsal\_\-boolean\_\-t $\ast$ {\em end\_\-of\_\-file})}\label{fsal__fileop_8c_a2}
+References FSAL\_\-lookup(), and FSAL\_\-open().\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}!FSAL\_\-read@{FSAL\_\-read}}
+\index{FSAL\_\-read@{FSAL\_\-read}!fsal_fileop.c@{fsal\_\-fileop.c}}
+\subsubsection[{FSAL\_\-read}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-read (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, \/  fsal\_\-seek\_\-t $\ast$ {\em seek\_\-descriptor}, \/  fsal\_\-size\_\-t {\em buffer\_\-size}, \/  caddr\_\-t {\em buffer}, \/  fsal\_\-size\_\-t $\ast$ {\em read\_\-amount}, \/  fsal\_\-boolean\_\-t $\ast$ {\em end\_\-of\_\-file})}\label{fsal__fileop_8c_280a57629d78eebc53a486d3a9c5f6ae}
 
 
 FSAL\_\-read: Perform a read operation on an opened file.
@@ -129,23 +130,25 @@ FSAL\_\-read: Perform a read operation on an opened file.
 \end{Desc}
 \begin{Desc}
 \item[Returns:]Major error codes:\begin{itemize}
-\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-INVAL (invalid parameter)\item ERR\_\-FSAL\_\-NOT\_\-OPENED (tried to read in a non-opened fsal\_\-file\_\-t)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Other error codes can be returned : ERR\_\-FSAL\_\-IO, ...\end{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-INVAL (invalid parameter)\item ERR\_\-FSAL\_\-NOT\_\-OPENED (tried to read in a non-opened fsal\_\-file\_\-t)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Other error codes can be returned : ERR\_\-FSAL\_\-IO, ... \end{itemize}
 \end{Desc}
 
 
 \begin{Desc}
-\item[{\bf Todo}]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+\item[{\bf Todo}]: manage fsal\_\-size\_\-t to size\_\-t convertion \end{Desc}
 
-: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{Desc}
+
+\begin{Desc}
+\item[{\bf Todo}]: manage ssize\_\-t to fsal\_\-size\_\-t convertion \end{Desc}
 
 
 Definition at line 249 of file fsal\_\-fileop.c.
 
-References hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References hpss2fsal\_\-error(), and TakeTokenFSCall().
 
-Referenced by FSAL\_\-rcp().\index{fsal_fileop.c@{fsal\_\-fileop.c}!FSAL_write@{FSAL\_\-write}}
-\index{FSAL_write@{FSAL\_\-write}!fsal_fileop.c@{fsal\_\-fileop.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-write (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, fsal\_\-seek\_\-t $\ast$ {\em seek\_\-descriptor}, fsal\_\-size\_\-t {\em buffer\_\-size}, caddr\_\-t {\em buffer}, fsal\_\-size\_\-t $\ast$ {\em write\_\-amount})}\label{fsal__fileop_8c_a3}
+Referenced by FSAL\_\-rcp().\index{fsal\_\-fileop.c@{fsal\_\-fileop.c}!FSAL\_\-write@{FSAL\_\-write}}
+\index{FSAL\_\-write@{FSAL\_\-write}!fsal_fileop.c@{fsal\_\-fileop.c}}
+\subsubsection[{FSAL\_\-write}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-write (fsal\_\-file\_\-t $\ast$ {\em file\_\-descriptor}, \/  fsal\_\-seek\_\-t $\ast$ {\em seek\_\-descriptor}, \/  fsal\_\-size\_\-t {\em buffer\_\-size}, \/  caddr\_\-t {\em buffer}, \/  fsal\_\-size\_\-t $\ast$ {\em write\_\-amount})}\label{fsal__fileop_8c_b18f5e98a2fcadd1f2051e1cc5d459dc}
 
 
 FSAL\_\-write: Perform a write operation on an opened file.
@@ -157,18 +160,20 @@ FSAL\_\-write: Perform a write operation on an opened file.
 \end{Desc}
 \begin{Desc}
 \item[Returns:]Major error codes:\begin{itemize}
-\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-INVAL (invalid parameter)\item ERR\_\-FSAL\_\-NOT\_\-OPENED (tried to write in a non-opened fsal\_\-file\_\-t)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Other error codes can be returned : ERR\_\-FSAL\_\-IO, ERR\_\-FSAL\_\-NOSPC, ERR\_\-FSAL\_\-DQUOT...\end{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-INVAL (invalid parameter)\item ERR\_\-FSAL\_\-NOT\_\-OPENED (tried to write in a non-opened fsal\_\-file\_\-t)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Other error codes can be returned : ERR\_\-FSAL\_\-IO, ERR\_\-FSAL\_\-NOSPC, ERR\_\-FSAL\_\-DQUOT... \end{itemize}
 \end{Desc}
 
 
 \begin{Desc}
-\item[{\bf Todo}]: manage fsal\_\-size\_\-t to size\_\-t convertion 
+\item[{\bf Todo}]: manage fsal\_\-size\_\-t to size\_\-t convertion \end{Desc}
 
-: manage ssize\_\-t to fsal\_\-size\_\-t convertion\end{Desc}
+
+\begin{Desc}
+\item[{\bf Todo}]: manage ssize\_\-t to fsal\_\-size\_\-t convertion \end{Desc}
 
 
 Definition at line 397 of file fsal\_\-fileop.c.
 
-References hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References hpss2fsal\_\-error(), and TakeTokenFSCall().
 
 Referenced by FSAL\_\-rcp().

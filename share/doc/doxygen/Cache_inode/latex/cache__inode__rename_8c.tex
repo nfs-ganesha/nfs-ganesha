@@ -1,11 +1,12 @@
 \section{cache\_\-inode\_\-rename.c File Reference}
-\label{cache__inode__rename_8c}\index{cache_inode_rename.c@{cache\_\-inode\_\-rename.c}}
-Renames an entry. 
+\label{cache__inode__rename_8c}\index{cache\_\-inode\_\-rename.c@{cache\_\-inode\_\-rename.c}}
+Renames an entry.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include $<$unistd.h$>$}\par
@@ -26,25 +27,25 @@ cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-rename} (cache\_\-entry\_\-
 Renames an entry. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:27 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.20 \end{Desc}
-\end{Desc}
-{\bf cache\_\-inode\_\-rename.c}{\rm (p.\,\pageref{cache__inode__rename_8c})} : Renames an entry.
+\doxyref{cache\_\-inode\_\-rename.c}{p.}{cache__inode__rename_8c} : Renames an entry. 
 
 Definition in file {\bf cache\_\-inode\_\-rename.c}.
 
 \subsection{Function Documentation}
-\index{cache_inode_rename.c@{cache\_\-inode\_\-rename.c}!cache_inode_rename@{cache\_\-inode\_\-rename}}
-\index{cache_inode_rename@{cache\_\-inode\_\-rename}!cache_inode_rename.c@{cache\_\-inode\_\-rename.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-rename (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dirsrc}, fsal\_\-name\_\-t $\ast$ {\em poldname}, cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dirdest}, fsal\_\-name\_\-t $\ast$ {\em pnewname}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr\_\-src}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr\_\-dst}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__rename_8c_a1}
+\index{cache\_\-inode\_\-rename.c@{cache\_\-inode\_\-rename.c}!cache\_\-inode\_\-rename@{cache\_\-inode\_\-rename}}
+\index{cache\_\-inode\_\-rename@{cache\_\-inode\_\-rename}!cache_inode_rename.c@{cache\_\-inode\_\-rename.c}}
+\subsubsection[{cache\_\-inode\_\-rename}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-rename (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dirsrc}, \/  fsal\_\-name\_\-t $\ast$ {\em poldname}, \/  cache\_\-entry\_\-t $\ast$ {\em pentry\_\-dirdest}, \/  fsal\_\-name\_\-t $\ast$ {\em pnewname}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr\_\-src}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr\_\-dst}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__rename_8c_6c5599740dc90c498de033881b75a9df}
 
 
 cache\_\-inode\_\-rename: renames an entry in the cache.
@@ -66,11 +67,9 @@ CACHE\_\-INODE\_\-LRU\_\-ERROR allocation error occured when validating the entr
 CACHE\_\-INODE\_\-NOT\_\-FOUND source object does not exist \end{Desc}
 
 
-Definition at line 179 of file cache\_\-inode\_\-rename.c.
-
-References cache\_\-inode\_\-add\_\-cached\_\-dirent(), cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-is\_\-dir\_\-empty(), cache\_\-inode\_\-kill\_\-entry(), cache\_\-inode\_\-lookup\_\-no\_\-mutex(), cache\_\-inode\_\-remove\_\-cached\_\-dirent(), cache\_\-inode\_\-remove\_\-no\_\-mutex(), cache\_\-inode\_\-rename\_\-cached\_\-dirent(), and cache\_\-inode\_\-valid().\index{cache_inode_rename.c@{cache\_\-inode\_\-rename.c}!cache_inode_rename_cached_dirent@{cache\_\-inode\_\-rename\_\-cached\_\-dirent}}
-\index{cache_inode_rename_cached_dirent@{cache\_\-inode\_\-rename\_\-cached\_\-dirent}!cache_inode_rename.c@{cache\_\-inode\_\-rename.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-rename\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, fsal\_\-name\_\-t $\ast$ {\em oldname}, fsal\_\-name\_\-t $\ast$ {\em newname}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__rename_8c_a0}
+Definition at line 180 of file cache\_\-inode\_\-rename.c.\index{cache\_\-inode\_\-rename.c@{cache\_\-inode\_\-rename.c}!cache\_\-inode\_\-rename\_\-cached\_\-dirent@{cache\_\-inode\_\-rename\_\-cached\_\-dirent}}
+\index{cache\_\-inode\_\-rename\_\-cached\_\-dirent@{cache\_\-inode\_\-rename\_\-cached\_\-dirent}!cache_inode_rename.c@{cache\_\-inode\_\-rename.c}}
+\subsubsection[{cache\_\-inode\_\-rename\_\-cached\_\-dirent}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-rename\_\-cached\_\-dirent (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-parent}, \/  fsal\_\-name\_\-t $\ast$ {\em oldname}, \/  fsal\_\-name\_\-t $\ast$ {\em newname}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__rename_8c_0e2fbba4bbe73de4401cfffb751d1fcb}
 
 
 cache\_\-inode\_\-rename\_\-cached\_\-dirent: renames an entry in the same directory.
@@ -86,8 +85,4 @@ Renames an entry in the same directory.
 \item[Returns:]the same as $\ast$pstatus \end{Desc}
 
 
-Definition at line 122 of file cache\_\-inode\_\-rename.c.
-
-References cache\_\-inode\_\-operate\_\-cached\_\-dirent().
-
-Referenced by cache\_\-inode\_\-rename().
+Definition at line 126 of file cache\_\-inode\_\-rename.c.

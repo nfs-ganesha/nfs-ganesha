@@ -1,4 +1,4 @@
-.TH "cmdnfs_thr_info__" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "cmdnfs_thr_info__" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -19,7 +19,7 @@ cmdnfs_thr_info__ \-
 .RI "fsal_op_context_t \fBcontext\fP"
 .br
 .ti -1c
-.RI "authunix_parms \fBauthunix_struct\fP"
+.RI "struct authunix_parms \fBauthunix_struct\fP"
 .br
 .ti -1c
 .RI "cache_inode_client_t \fBclient\fP"
@@ -43,67 +43,48 @@ cmdnfs_thr_info__ \-
 .RI "char \fBcurrent_path\fP [NFS2_MAXPATHLEN]"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 285 of file commands_NFS.c.
 .SH "Member Data Documentation"
 .PP 
-.SS "struct authunix_parms \fBcmdnfs_thr_info__::authunix_struct\fP"
+.SS "struct authunix_parms \fBcmdnfs_thr_info__::authunix_struct\fP\fC [read]\fP"
 .PP
-Definition at line 296 of file commands_NFS.c.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and InitNFSClient().
+Definition at line 300 of file commands_NFS.c.
 .SS "cache_inode_client_t \fBcmdnfs_thr_info__::client\fP"
 .PP
 Thread specific variable : the client for the cache 
 .PP
-Definition at line 299 of file commands_NFS.c.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_mount(), fn_nfs_umount(), and InitNFSClient().
+Definition at line 303 of file commands_NFS.c.
 .SS "fsal_op_context_t \fBcmdnfs_thr_info__::context\fP"
 .PP
 context for accessing the filesystem 
 .PP
-Definition at line 293 of file commands_NFS.c.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_id(), fn_nfs_mount(), fn_nfs_su(), fn_nfs_umount(), and InitNFSClient().
+Definition at line 297 of file commands_NFS.c.
 .SS "char \fBcmdnfs_thr_info__::current_path\fP[NFS2_MAXPATHLEN]"
 .PP
-Definition at line 310 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), and fn_nfs_unlink().
+Definition at line 314 of file commands_NFS.c.
 .SS "\fBshell_fh3_t\fP \fBcmdnfs_thr_info__::current_path_hdl\fP"
 .PP
-Definition at line 309 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), and fn_nfs_unlink().
+Definition at line 313 of file commands_NFS.c.
 .SS "cache_content_client_t \fBcmdnfs_thr_info__::dc_client\fP"
 .PP
-Definition at line 300 of file commands_NFS.c.
-.PP
-Referenced by InitNFSClient().
+Definition at line 304 of file commands_NFS.c.
 .SS "fsal_export_context_t \fBcmdnfs_thr_info__::exp_context\fP"
 .PP
-Definition at line 290 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_su(), and InitNFSClient().
+Definition at line 294 of file commands_NFS.c.
 .SS "int \fBcmdnfs_thr_info__::is_mounted_path\fP"
 .PP
-Definition at line 304 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_cd(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_ls(), fn_nfs_mkdir(), fn_nfs_mount(), fn_nfs_pwd(), fn_nfs_rename(), fn_nfs_setattr(), fn_nfs_stat(), fn_nfs_umount(), fn_nfs_unlink(), and GetNFSClient().
+Definition at line 308 of file commands_NFS.c.
 .SS "int \fBcmdnfs_thr_info__::is_thread_init\fP"
 .PP
-Definition at line 284 of file commands_NFS.c.
-.PP
-Referenced by fn_MNT1_command(), fn_MNT3_command(), fn_NFS2_command(), fn_NFS3_command(), fn_nfs_id(), fn_nfs_mount(), fn_nfs_su(), fn_nfs_umount(), GetNFSClient(), and InitNFSClient().
+Definition at line 288 of file commands_NFS.c.
 .SS "char \fBcmdnfs_thr_info__::mounted_path\fP[NFS2_MAXPATHLEN]"
 .PP
-Definition at line 307 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_mount(), and fn_nfs_umount().
+Definition at line 311 of file commands_NFS.c.
 .SS "\fBshell_fh3_t\fP \fBcmdnfs_thr_info__::mounted_path_hdl\fP"
 .PP
-Definition at line 306 of file commands_NFS.c.
-.PP
-Referenced by fn_nfs_mount().
+Definition at line 310 of file commands_NFS.c.
 
 .SH "Author"
 .PP 

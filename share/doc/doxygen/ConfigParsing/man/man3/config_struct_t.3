@@ -1,4 +1,4 @@
-.TH "config_struct_t" 3 "9 Apr 2008" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
+.TH "config_struct_t" 3 "31 Mar 2009" "Version 0.1" "ConfigParsing" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,40 +10,17 @@ config_struct_t \-
 
 .in +1c
 .ti -1c
-.RI "\fBlist_block\fP * \fBsyntax_tree\fP"
-.br
-.ti -1c
-.RI "int \fBcache_nb_items\fP"
-.br
-.ti -1c
-.RI "\fBtype_block\fP * \fBlast_item_ptr\fP"
-.br
-.ti -1c
-.RI "int \fBlast_item_index\fP"
+.RI "\fBlist_items\fP * \fBsyntax_tree\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 78 of file config_parsing.c.
 .SH "Member Data Documentation"
 .PP 
-.SS "int \fBconfig_struct_t::cache_nb_items\fP"
+.SS "\fBlist_items\fP* \fBconfig_struct_t::syntax_tree\fP"
 .PP
-Definition at line 108 of file config_parsing.c.
-.PP
-Referenced by config_GetNbBlocks(), and config_ParseFile().
-.SS "int \fBconfig_struct_t::last_item_index\fP"
-.PP
-Definition at line 112 of file config_parsing.c.
-.PP
-Referenced by config_GetBlockIndexByName(), config_GetNbBlocks(), and config_ParseFile().
-.SS "\fBtype_block\fP* \fBconfig_struct_t::last_item_ptr\fP"
-.PP
-Definition at line 111 of file config_parsing.c.
-.PP
-Referenced by config_GetBlockIndexByName(), config_GetBlockName(), config_GetKeyValue(), config_GetKeyValueByName(), config_GetNbBlocks(), config_GetNbKeys(), and config_ParseFile().
-.SS "\fBlist_block\fP* \fBconfig_struct_t::syntax_tree\fP"
-.PP
-Definition at line 103 of file config_parsing.c.
-.PP
-Referenced by config_Free(), config_GetBlockIndexByName(), config_GetNbBlocks(), and config_ParseFile().
+Definition at line 83 of file config_parsing.c.
 
 .SH "Author"
 .PP 

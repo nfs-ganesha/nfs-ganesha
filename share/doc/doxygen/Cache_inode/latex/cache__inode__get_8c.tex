@@ -1,11 +1,12 @@
 \section{cache\_\-inode\_\-get.c File Reference}
-\label{cache__inode__get_8c}\index{cache_inode_get.c@{cache\_\-inode\_\-get.c}}
-Get and eventually cache an entry. 
+\label{cache__inode__get_8c}\index{cache\_\-inode\_\-get.c@{cache\_\-inode\_\-get.c}}
+Get and eventually cache an entry.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
@@ -25,25 +26,25 @@ cache\_\-entry\_\-t $\ast$ {\bf cache\_\-inode\_\-get} (cache\_\-inode\_\-fsal\_
 Get and eventually cache an entry. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:26 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.26 \end{Desc}
-\end{Desc}
-{\bf cache\_\-inode\_\-get.c}{\rm (p.\,\pageref{cache__inode__get_8c})} : Get and eventually cache an entry.
+\doxyref{cache\_\-inode\_\-get.c}{p.}{cache__inode__get_8c} : Get and eventually cache an entry. 
 
 Definition in file {\bf cache\_\-inode\_\-get.c}.
 
 \subsection{Function Documentation}
-\index{cache_inode_get.c@{cache\_\-inode\_\-get.c}!cache_inode_get@{cache\_\-inode\_\-get}}
-\index{cache_inode_get@{cache\_\-inode\_\-get}!cache_inode_get.c@{cache\_\-inode\_\-get.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ cache\_\-inode\_\-get (cache\_\-inode\_\-fsal\_\-data\_\-t $\ast$ {\em pfsdata}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__get_8c_a0}
+\index{cache\_\-inode\_\-get.c@{cache\_\-inode\_\-get.c}!cache\_\-inode\_\-get@{cache\_\-inode\_\-get}}
+\index{cache\_\-inode\_\-get@{cache\_\-inode\_\-get}!cache_inode_get.c@{cache\_\-inode\_\-get.c}}
+\subsubsection[{cache\_\-inode\_\-get}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-entry\_\-t$\ast$ cache\_\-inode\_\-get (cache\_\-inode\_\-fsal\_\-data\_\-t $\ast$ {\em pfsdata}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__get_8c_c0fd4abaf124c61042c3358cfe294fad}
 
 
 cache\_\-inode\_\-get: Gets an entry by using its fsdata as a key and caches it if needed.
@@ -59,8 +60,4 @@ Gets an entry by using its fsdata as a key and caches it if needed. ASSUMPTION: 
 \item[Returns:]the pointer to the entry is successfull, NULL otherwise. \end{Desc}
 
 
-Definition at line 123 of file cache\_\-inode\_\-get.c.
-
-References cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-fsal\_\-type\_\-convert(), cache\_\-inode\_\-fsaldata\_\-2\_\-key(), cache\_\-inode\_\-get\_\-attributes(), cache\_\-inode\_\-kill\_\-entry(), cache\_\-inode\_\-new\_\-entry(), cache\_\-inode\_\-release\_\-fsaldata\_\-key(), and cache\_\-inode\_\-valid().
-
-Referenced by cache\_\-inode\_\-lookupp\_\-sw().
+Definition at line 127 of file cache\_\-inode\_\-get.c.

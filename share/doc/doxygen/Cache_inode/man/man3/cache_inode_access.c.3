@@ -1,8 +1,10 @@
-.TH "cache_inode_access.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_access.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_access.c \- Check for object accessibility. 
+cache_inode_access.c \- Check for object accessibility.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -50,29 +52,29 @@ Check for object accessibility.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:26 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.19 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_access.c\fP : Check for object accessibility.
+\fBcache_inode_access.c\fP : Check for object accessibility. 
 .PP
 Definition in file \fBcache_inode_access.c\fP.
 .SH "Function Documentation"
@@ -109,9 +111,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 277 of file cache_inode_access.c.
-.PP
-References cache_inode_access_sw().
+Definition at line 284 of file cache_inode_access.c.
 .SS "cache_inode_status_t cache_inode_access_no_mutex (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_access_no_mutex: checks for an entry accessibility. No mutex management
@@ -144,11 +144,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 244 of file cache_inode_access.c.
-.PP
-References cache_inode_access_sw().
-.PP
-Referenced by cache_inode_lookup_sw(), and cache_inode_readdir().
+Definition at line 251 of file cache_inode_access.c.
 .SS "cache_inode_status_t cache_inode_access_sw (cache_entry_t * pentry, fsal_accessflags_t access_type, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
 .PP
 cache_inode_access: checks for an entry accessibility.
@@ -187,11 +183,7 @@ any other values show an unauthorized access.
 .PP
 
 .PP
-Definition at line 123 of file cache_inode_access.c.
-.PP
-References cache_inode_error_convert(), cache_inode_get_attributes(), cache_inode_get_fsal_handle(), cache_inode_kill_entry(), and cache_inode_valid().
-.PP
-Referenced by cache_inode_access(), and cache_inode_access_no_mutex().
+Definition at line 127 of file cache_inode_access.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

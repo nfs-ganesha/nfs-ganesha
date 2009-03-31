@@ -1,6 +1,7 @@
 \section{cmd\_\-nfstools.h File Reference}
-\label{cmd__nfstools_8h}\index{cmd_nfstools.h@{cmd\_\-nfstools.h}}
-nfs tools for ganeshell. 
+\label{cmd__nfstools_8h}\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}}
+nfs tools for ganeshell.  
+
 
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -20,9 +21,9 @@ typedef enum {\bf cmdnfs\_\-encodetype\_\-\_\-} {\bf cmdnfs\_\-encodetype\_\-t}
 \item 
 typedef int($\ast$ {\bf cmdnfs\_\-encoding\_\-func\_\-t} )({\bf cmdnfs\_\-encodetype\_\-t}, int, char $\ast$$\ast$, int, FILE $\ast$, caddr\_\-t)
 \item 
-typedef {\bf cmdnfs\_\-funcdesc\_\-\_\-} {\bf cmdnfs\_\-funcdesc\_\-t}
+typedef struct {\bf cmdnfs\_\-funcdesc\_\-\_\-} {\bf cmdnfs\_\-funcdesc\_\-t}
 \item 
-typedef {\bf cmdnfsremote\_\-funcdesc\_\-\_\-} {\bf cmdnfsremote\_\-funcdesc\_\-t}
+typedef struct {\bf cmdnfsremote\_\-funcdesc\_\-\_\-} {\bf cmdnfsremote\_\-funcdesc\_\-t}
 \end{CompactItemize}
 \subsection*{Enumerations}
 \begin{CompactItemize}
@@ -151,19 +152,19 @@ void {\bf print\_\-nfs\_\-attributes} (fattr3 $\ast$attrs, FILE $\ast$output)
 nfs tools for ganeshell. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/18 17:03:35 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.22 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Log]{\bf cmd\_\-nfstools.h}{\rm (p.\,\pageref{cmd__nfstools_8h})},v \end{Desc}
+\item[Log]\doxyref{cmd\_\-nfstools.h}{p.}{cmd__nfstools_8h},v \end{Desc}
 Revision 1.22 2006/01/18 17:03:35 leibovic Removing some warnings.
 
 Revision 1.21 2006/01/18 08:02:04 deniel Order in includes and libraries
@@ -206,54 +207,50 @@ Revision 1.3 2005/08/03 12:51:16 leibovic MNT3 protocol OK.
 
 Revision 1.2 2005/08/03 11:51:10 leibovic MNT1 protocol OK.
 
-Revision 1.1 2005/08/03 08:16:23 leibovic Adding nfs layer structures.
+Revision 1.1 2005/08/03 08:16:23 leibovic Adding nfs layer structures. 
 
 Definition in file {\bf cmd\_\-nfstools.h}.
 
 \subsection{Typedef Documentation}
-\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_encodetype_t@{cmdnfs\_\-encodetype\_\-t}}
-\index{cmdnfs_encodetype_t@{cmdnfs\_\-encodetype\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef enum {\bf cmdnfs\_\-encodetype\_\-\_\-}  {\bf cmdnfs\_\-encodetype\_\-t}}\label{cmd__nfstools_8h_a0}
+\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-encodetype\_\-t@{cmdnfs\_\-encodetype\_\-t}}
+\index{cmdnfs\_\-encodetype\_\-t@{cmdnfs\_\-encodetype\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-encodetype\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef enum {\bf cmdnfs\_\-encodetype\_\-\_\-}  {\bf cmdnfs\_\-encodetype\_\-t}}\label{cmd__nfstools_8h_d6769d5db79c8670bb957a5adf43ae5e}
 
 
-\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_encoding_func_t@{cmdnfs\_\-encoding\_\-func\_\-t}}
-\index{cmdnfs_encoding_func_t@{cmdnfs\_\-encoding\_\-func\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef int($\ast$  {\bf cmdnfs\_\-encoding\_\-func\_\-t})({\bf cmdnfs\_\-encodetype\_\-t},int, char $\ast$$\ast$,int, FILE $\ast$,caddr\_\-t)}\label{cmd__nfstools_8h_a1}
-
-
-
-
-Definition at line 104 of file cmd\_\-nfstools.h.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_funcdesc_t@{cmdnfs\_\-funcdesc\_\-t}}
-\index{cmdnfs_funcdesc_t@{cmdnfs\_\-funcdesc\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfs\_\-funcdesc\_\-\_\-}  {\bf cmdnfs\_\-funcdesc\_\-t}}\label{cmd__nfstools_8h_a2}
+\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-encoding\_\-func\_\-t@{cmdnfs\_\-encoding\_\-func\_\-t}}
+\index{cmdnfs\_\-encoding\_\-func\_\-t@{cmdnfs\_\-encoding\_\-func\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-encoding\_\-func\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef int($\ast$  {\bf cmdnfs\_\-encoding\_\-func\_\-t})({\bf cmdnfs\_\-encodetype\_\-t},int, char $\ast$$\ast$,int, FILE $\ast$,caddr\_\-t)}\label{cmd__nfstools_8h_be6b577a24fd495ea43835d0f52e5254}
 
 
 
 
-Referenced by fn\_\-MNT1\_\-command(), fn\_\-MNT3\_\-command(), fn\_\-NFS2\_\-command(), and fn\_\-NFS3\_\-command().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfsremote_funcdesc_t@{cmdnfsremote\_\-funcdesc\_\-t}}
-\index{cmdnfsremote_funcdesc_t@{cmdnfsremote\_\-funcdesc\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfsremote\_\-funcdesc\_\-\_\-}  {\bf cmdnfsremote\_\-funcdesc\_\-t}}\label{cmd__nfstools_8h_a3}
+Definition at line 104 of file cmd\_\-nfstools.h.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-funcdesc\_\-t@{cmdnfs\_\-funcdesc\_\-t}}
+\index{cmdnfs\_\-funcdesc\_\-t@{cmdnfs\_\-funcdesc\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-funcdesc\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfs\_\-funcdesc\_\-\_\-}  {\bf cmdnfs\_\-funcdesc\_\-t}}\label{cmd__nfstools_8h_c905c01b01bd15a8ef285af12424b8a1}
+
+
+\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfsremote\_\-funcdesc\_\-t@{cmdnfsremote\_\-funcdesc\_\-t}}
+\index{cmdnfsremote\_\-funcdesc\_\-t@{cmdnfsremote\_\-funcdesc\_\-t}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfsremote\_\-funcdesc\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf cmdnfsremote\_\-funcdesc\_\-\_\-}  {\bf cmdnfsremote\_\-funcdesc\_\-t}}\label{cmd__nfstools_8h_2b0c20766d482a4862e62ed4355070e8}
 
 
 
-
-Referenced by fn\_\-MNT1\_\-remote\_\-command(), fn\_\-MNT3\_\-remote\_\-command(), fn\_\-NFS2\_\-remote\_\-command(), and fn\_\-NFS3\_\-remote\_\-command().
 
 \subsection{Enumeration Type Documentation}
-\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_encodetype__@{cmdnfs\_\-encodetype\_\-\_\-}}
-\index{cmdnfs_encodetype__@{cmdnfs\_\-encodetype\_\-\_\-}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf cmdnfs\_\-encodetype\_\-\_\-}}\label{cmd__nfstools_8h_a70}
+\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-encodetype\_\-\_\-@{cmdnfs\_\-encodetype\_\-\_\-}}
+\index{cmdnfs\_\-encodetype\_\-\_\-@{cmdnfs\_\-encodetype\_\-\_\-}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-encodetype\_\-\_\-}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf cmdnfs\_\-encodetype\_\-\_\-}}\label{cmd__nfstools_8h_397cef1652ae1a9d0f1510493a62274f}
 
 
 \begin{Desc}
-\item[Enumeration values: ]\par
+\item[Enumerator: ]\par
 \begin{description}
-\index{CMDNFS_ENCODE@{CMDNFS\_\-ENCODE}!cmd_nfstools.h@{cmd\_\-nfstools.h}}\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!CMDNFS_ENCODE@{CMDNFS\_\-ENCODE}}\item[{\em 
-CMDNFS\_\-ENCODE\label{cmd__nfstools_8h_a70a12}
-}]\index{CMDNFS_DECODE@{CMDNFS\_\-DECODE}!cmd_nfstools.h@{cmd\_\-nfstools.h}}\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!CMDNFS_DECODE@{CMDNFS\_\-DECODE}}\item[{\em 
-CMDNFS\_\-DECODE\label{cmd__nfstools_8h_a70a13}
-}]\index{CMDNFS_FREE@{CMDNFS\_\-FREE}!cmd_nfstools.h@{cmd\_\-nfstools.h}}\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!CMDNFS_FREE@{CMDNFS\_\-FREE}}\item[{\em 
-CMDNFS\_\-FREE\label{cmd__nfstools_8h_a70a14}
+\index{CMDNFS\_\-ENCODE@{CMDNFS\_\-ENCODE}!cmd\_\-nfstools.h@{cmd\_\-nfstools.h}}\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!CMDNFS\_\-ENCODE@{CMDNFS\_\-ENCODE}}\item[{\em 
+CMDNFS\_\-ENCODE\label{cmd__nfstools_8h_397cef1652ae1a9d0f1510493a62274f8cefd6e286aadd1e76ce0a98d3f95a95}
+}]\index{CMDNFS\_\-DECODE@{CMDNFS\_\-DECODE}!cmd\_\-nfstools.h@{cmd\_\-nfstools.h}}\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!CMDNFS\_\-DECODE@{CMDNFS\_\-DECODE}}\item[{\em 
+CMDNFS\_\-DECODE\label{cmd__nfstools_8h_397cef1652ae1a9d0f1510493a62274fe421e4fa3950219d1fa5ea420d5ed009}
+}]\index{CMDNFS\_\-FREE@{CMDNFS\_\-FREE}!cmd\_\-nfstools.h@{cmd\_\-nfstools.h}}\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!CMDNFS\_\-FREE@{CMDNFS\_\-FREE}}\item[{\em 
+CMDNFS\_\-FREE\label{cmd__nfstools_8h_397cef1652ae1a9d0f1510493a62274f0d3d8e19bcbae675de4d418db9ba004d}
 }]\end{description}
 \end{Desc}
 
@@ -262,516 +259,400 @@ CMDNFS\_\-FREE\label{cmd__nfstools_8h_a70a14}
 Definition at line 94 of file cmd\_\-nfstools.h.
 
 \subsection{Function Documentation}
-\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_ACCESS3args@{cmdnfs\_\-ACCESS3args}}
-\index{cmdnfs_ACCESS3args@{cmdnfs\_\-ACCESS3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ACCESS3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a48}
+\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-ACCESS3args@{cmdnfs\_\-ACCESS3args}}
+\index{cmdnfs\_\-ACCESS3args@{cmdnfs\_\-ACCESS3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-ACCESS3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ACCESS3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_c2cf041edcc7a02020f4ff166d514815}
 
 
 
 
-Definition at line 2833 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_ACCESS3res@{cmdnfs\_\-ACCESS3res}}
-\index{cmdnfs_ACCESS3res@{cmdnfs\_\-ACCESS3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ACCESS3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a49}
+Definition at line 2832 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-ACCESS3res@{cmdnfs\_\-ACCESS3res}}
+\index{cmdnfs\_\-ACCESS3res@{cmdnfs\_\-ACCESS3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-ACCESS3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ACCESS3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_98043821c2e34f63dc8449c264f9da41}
 
 
 
 
-Definition at line 2909 of file cmd\_\-nfstools.c.
-
-References ACCESS3\_\-FAIL\_\-ATTRS, ACCESS3\_\-OK\_\-ACCESS, ACCESS3\_\-OK\_\-ATTRS, CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_ATTR2res@{cmdnfs\_\-ATTR2res}}
-\index{cmdnfs_ATTR2res@{cmdnfs\_\-ATTR2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ATTR2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a24}
+Definition at line 2908 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-ATTR2res@{cmdnfs\_\-ATTR2res}}
+\index{cmdnfs\_\-ATTR2res@{cmdnfs\_\-ATTR2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-ATTR2res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-ATTR2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_fca1770057ac630d3a4357846b5d4e85}
 
 
 
 
-Definition at line 821 of file cmd\_\-nfstools.c.
-
-References ATTR2\_\-ATTRIBUTES, CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fattr2(), CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_CREATE2args@{cmdnfs\_\-CREATE2args}}
-\index{cmdnfs_CREATE2args@{cmdnfs\_\-CREATE2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a30}
+Definition at line 823 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-CREATE2args@{cmdnfs\_\-CREATE2args}}
+\index{cmdnfs\_\-CREATE2args@{cmdnfs\_\-CREATE2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-CREATE2args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_331aae7bbe0965b8d8e58df83ca5cee0}
 
 
 
 
-Definition at line 1237 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs2(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-sattr2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_CREATE3args@{cmdnfs\_\-CREATE3args}}
-\index{cmdnfs_CREATE3args@{cmdnfs\_\-CREATE3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a50}
+Definition at line 1241 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-CREATE3args@{cmdnfs\_\-CREATE3args}}
+\index{cmdnfs\_\-CREATE3args@{cmdnfs\_\-CREATE3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-CREATE3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_e8067d0506d9682565c428a996623f0a}
 
 
 
 
-Definition at line 2993 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs3(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-sattr3(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_CREATE3res@{cmdnfs\_\-CREATE3res}}
-\index{cmdnfs_CREATE3res@{cmdnfs\_\-CREATE3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a51}
+Definition at line 2992 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-CREATE3res@{cmdnfs\_\-CREATE3res}}
+\index{cmdnfs\_\-CREATE3res@{cmdnfs\_\-CREATE3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-CREATE3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-CREATE3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_aa248329807034a467b0299cce1f552d}
 
 
 
 
-Definition at line 3190 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), cmdnfs\_\-postopfh3(), cmdnfs\_\-wccdata(), CREATE3\_\-FAIL\_\-WCC, CREATE3\_\-OK\_\-ATTRS, CREATE3\_\-OK\_\-FH, CREATE3\_\-OK\_\-WCC, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_DIROP2res@{cmdnfs\_\-DIROP2res}}
-\index{cmdnfs_DIROP2res@{cmdnfs\_\-DIROP2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-DIROP2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a25}
+Definition at line 3189 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-DIROP2res@{cmdnfs\_\-DIROP2res}}
+\index{cmdnfs\_\-DIROP2res@{cmdnfs\_\-DIROP2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-DIROP2res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-DIROP2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_3929e3eef3451c4877c808f4c0142e66}
 
 
 
 
-Definition at line 879 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fattr2(), cmdnfs\_\-fhandle2(), CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), DIROP2\_\-ATTRIBUTES, DIROP2\_\-HANDLE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_diropargs2@{cmdnfs\_\-diropargs2}}
-\index{cmdnfs_diropargs2@{cmdnfs\_\-diropargs2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-diropargs2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a26}
+Definition at line 881 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-diropargs2@{cmdnfs\_\-diropargs2}}
+\index{cmdnfs\_\-diropargs2@{cmdnfs\_\-diropargs2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-diropargs2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-diropargs2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_8d0541c68723b6598125d5fb9490b8a3}
 
 
 
 
-Definition at line 938 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-dirpath(), CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle2(), CMDNFS\_\-FREE, and NULL.
-
-Referenced by cmdnfs\_\-CREATE2args(), and cmdnfs\_\-RENAME2args().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_diropargs3@{cmdnfs\_\-diropargs3}}
-\index{cmdnfs_diropargs3@{cmdnfs\_\-diropargs3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-diropargs3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a40}
+Definition at line 940 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-diropargs3@{cmdnfs\_\-diropargs3}}
+\index{cmdnfs\_\-diropargs3@{cmdnfs\_\-diropargs3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-diropargs3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-diropargs3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_242dedae1aa72eac02a1465e81b9441b}
 
 
 
 
-Definition at line 1926 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-dirpath(), CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.
-
-Referenced by cmdnfs\_\-CREATE3args(), cmdnfs\_\-LINK3args(), cmdnfs\_\-MKDIR3args(), cmdnfs\_\-RENAME3args(), and cmdnfs\_\-SYMLINK3args().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_dirpath@{cmdnfs\_\-dirpath}}
-\index{cmdnfs_dirpath@{cmdnfs\_\-dirpath}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-dirpath ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a16}
+Definition at line 1925 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-dirpath@{cmdnfs\_\-dirpath}}
+\index{cmdnfs\_\-dirpath@{cmdnfs\_\-dirpath}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-dirpath}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-dirpath ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_fa2a178837094076227dc6d941bfb66a}
 
 
 
 
-Definition at line 203 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, and CMDNFS\_\-FREE.
-
-Referenced by cmdnfs\_\-diropargs2(), cmdnfs\_\-diropargs3(), cmdnfs\_\-SYMLINK3args(), fn\_\-nfs\_\-mount(), fn\_\-nfs\_\-remote\_\-umount(), fn\_\-nfs\_\-umount(), and nfs\_\-remote\_\-mount().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_exports@{cmdnfs\_\-exports}}
-\index{cmdnfs_exports@{cmdnfs\_\-exports}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-exports ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a20}
+Definition at line 209 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-exports@{cmdnfs\_\-exports}}
+\index{cmdnfs\_\-exports@{cmdnfs\_\-exports}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-exports}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-exports ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_df0d9cea94f31dd31d04b1446464e648}
 
 
 
 
-Definition at line 503 of file cmd\_\-nfstools.c.
+Definition at line 509 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-fattr2@{cmdnfs\_\-fattr2}}
+\index{cmdnfs\_\-fattr2@{cmdnfs\_\-fattr2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-fattr2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fattr2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_8c47e3ccd166d5afcca5f6e0a192e0a6}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_fattr2@{cmdnfs\_\-fattr2}}
-\index{cmdnfs_fattr2@{cmdnfs\_\-fattr2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fattr2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a23}
+
 
 
 \begin{Desc}
 \item[{\bf Todo}]\end{Desc}
 
 
-Definition at line 746 of file cmd\_\-nfstools.c.
+\begin{Desc}
+\item[{\bf Todo}]\end{Desc}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and Localtime\_\-r().
 
-Referenced by cmdnfs\_\-ATTR2res(), and cmdnfs\_\-DIROP2res().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_fattr3@{cmdnfs\_\-fattr3}}
-\index{cmdnfs_fattr3@{cmdnfs\_\-fattr3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fattr3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a35}
+Definition at line 750 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-fattr3@{cmdnfs\_\-fattr3}}
+\index{cmdnfs\_\-fattr3@{cmdnfs\_\-fattr3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-fattr3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fattr3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_536c0eee765570250825fe9a296551a8}
+
+
 
 
 \begin{Desc}
 \item[{\bf Todo}]\end{Desc}
 
 
-Definition at line 1591 of file cmd\_\-nfstools.c.
+\begin{Desc}
+\item[{\bf Todo}]\end{Desc}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and Localtime\_\-r().
 
-Referenced by cmdnfs\_\-GETATTR3res(), and cmdnfs\_\-postopattr().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_fhandle2@{cmdnfs\_\-fhandle2}}
-\index{cmdnfs_fhandle2@{cmdnfs\_\-fhandle2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhandle2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a18}
+Definition at line 1592 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-fhandle2@{cmdnfs\_\-fhandle2}}
+\index{cmdnfs\_\-fhandle2@{cmdnfs\_\-fhandle2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-fhandle2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhandle2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_24c153a7561ff21d6c1748861c0e32fc}
 
 
 
 
-Definition at line 255 of file cmd\_\-nfstools.c.
+Definition at line 261 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-fhandle3@{cmdnfs\_\-fhandle3}}
+\index{cmdnfs\_\-fhandle3@{cmdnfs\_\-fhandle3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-fhandle3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhandle3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_f72127fe6cb58ca1006f48d49cc630ce}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and SIZE\_\-STR\_\-NFSHANDLE2.
 
-Referenced by cmdnfs\_\-DIROP2res(), cmdnfs\_\-diropargs2(), cmdnfs\_\-fhstatus2(), cmdnfs\_\-READDIR2args(), and cmdnfs\_\-SETATTR2args().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_fhandle3@{cmdnfs\_\-fhandle3}}
-\index{cmdnfs_fhandle3@{cmdnfs\_\-fhandle3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhandle3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a22}
 
 
+Definition at line 573 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-fhstatus2@{cmdnfs\_\-fhstatus2}}
+\index{cmdnfs\_\-fhstatus2@{cmdnfs\_\-fhstatus2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-fhstatus2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhstatus2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_e00976cc553a1bdbfd40ae46133dda27}
 
 
-Definition at line 567 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and SIZE\_\-STR\_\-NFSHANDLE3.
 
-Referenced by cmdnfs\_\-ACCESS3args(), cmdnfs\_\-diropargs3(), cmdnfs\_\-LINK3args(), cmdnfs\_\-LOOKUP3res(), cmdnfs\_\-mountres3(), cmdnfs\_\-postopfh3(), cmdnfs\_\-READDIR3args(), cmdnfs\_\-READDIRPLUS3args(), cmdnfs\_\-SETATTR3args(), and nfs\_\-remote\_\-solvepath().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_fhstatus2@{cmdnfs\_\-fhstatus2}}
-\index{cmdnfs_fhstatus2@{cmdnfs\_\-fhstatus2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-fhstatus2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a17}
+Definition at line 329 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-FSINFO3res@{cmdnfs\_\-FSINFO3res}}
+\index{cmdnfs\_\-FSINFO3res@{cmdnfs\_\-FSINFO3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-FSINFO3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-FSINFO3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_6f7397016b476d46ebe1e727e672f2c0}
 
 
 
 
-Definition at line 323 of file cmd\_\-nfstools.c.
+Definition at line 4216 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-FSSTAT3res@{cmdnfs\_\-FSSTAT3res}}
+\index{cmdnfs\_\-FSSTAT3res@{cmdnfs\_\-FSSTAT3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-FSSTAT3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-FSSTAT3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_ed74f750a972e950e98b021e99d7d064}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle2(), CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_FSINFO3res@{cmdnfs\_\-FSINFO3res}}
-\index{cmdnfs_FSINFO3res@{cmdnfs\_\-FSINFO3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-FSINFO3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a64}
 
 
 
+Definition at line 2759 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-GETATTR3res@{cmdnfs\_\-GETATTR3res}}
+\index{cmdnfs\_\-GETATTR3res@{cmdnfs\_\-GETATTR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-GETATTR3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-GETATTR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_6e7a984674dc7857433fd2f1e454ebbc}
 
-Definition at line 4224 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), FSINFO3\_\-FAIL\_\-ATTRS, FSINFO3\_\-OK\_\-ATTRS, FSINFO3\_\-OK\_\-INFO, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_FSSTAT3res@{cmdnfs\_\-FSSTAT3res}}
-\index{cmdnfs_FSSTAT3res@{cmdnfs\_\-FSSTAT3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-FSSTAT3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a47}
 
 
+Definition at line 1871 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-LINK3args@{cmdnfs\_\-LINK3args}}
+\index{cmdnfs\_\-LINK3args@{cmdnfs\_\-LINK3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-LINK3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LINK3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_2052cc32b34b275ee7b05725f2ba3235}
 
 
-Definition at line 2760 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), FSSTAT3\_\-FAIL\_\-ATTRS, FSSTAT3\_\-OK, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_GETATTR3res@{cmdnfs\_\-GETATTR3res}}
-\index{cmdnfs_GETATTR3res@{cmdnfs\_\-GETATTR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-GETATTR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a37}
 
+Definition at line 3908 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-LINK3res@{cmdnfs\_\-LINK3res}}
+\index{cmdnfs\_\-LINK3res@{cmdnfs\_\-LINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-LINK3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_9c8eb0ce9a2a2fa18dff7742e6008ed9}
 
 
 
-Definition at line 1872 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fattr3(), CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), GETATTR3\_\-ATTRIBUTES, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_LINK3args@{cmdnfs\_\-LINK3args}}
-\index{cmdnfs_LINK3args@{cmdnfs\_\-LINK3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LINK3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a60}
+Definition at line 3964 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-LOOKUP3res@{cmdnfs\_\-LOOKUP3res}}
+\index{cmdnfs\_\-LOOKUP3res@{cmdnfs\_\-LOOKUP3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-LOOKUP3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LOOKUP3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_3d8f021bb2cbd9b1ae58d9ceaf7c7bf4}
 
 
 
 
-Definition at line 3914 of file cmd\_\-nfstools.c.
+Definition at line 2055 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-MKDIR3args@{cmdnfs\_\-MKDIR3args}}
+\index{cmdnfs\_\-MKDIR3args@{cmdnfs\_\-MKDIR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-MKDIR3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-MKDIR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_5df66fdcefcdcd4a5b1e1144a4cd4d50}
 
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs3(), CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_LINK3res@{cmdnfs\_\-LINK3res}}
-\index{cmdnfs_LINK3res@{cmdnfs\_\-LINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a61}
 
 
 
+Definition at line 3271 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-MKDIR3res@{cmdnfs\_\-MKDIR3res}}
+\index{cmdnfs\_\-MKDIR3res@{cmdnfs\_\-MKDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-MKDIR3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-MKDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_f2e70d72fa2aa228f4b267d271a0d66d}
 
-Definition at line 3971 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), cmdnfs\_\-wccdata(), LINK3\_\-FAIL\_\-ATTRS, LINK3\_\-FAIL\_\-WCC, LINK3\_\-OK\_\-ATTRS, LINK3\_\-OK\_\-WCC, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_LOOKUP3res@{cmdnfs\_\-LOOKUP3res}}
-\index{cmdnfs_LOOKUP3res@{cmdnfs\_\-LOOKUP3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-LOOKUP3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a41}
 
 
+Definition at line 3342 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-mountlist@{cmdnfs\_\-mountlist}}
+\index{cmdnfs\_\-mountlist@{cmdnfs\_\-mountlist}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-mountlist}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-mountlist ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_66fc6438425cae2dbcf4791f701c6538}
 
 
-Definition at line 2056 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), LOOKUP3\_\-FAIL\_\-DIRATTR, LOOKUP3\_\-OK\_\-DIRATTR, LOOKUP3\_\-OK\_\-HANDLE, LOOKUP3\_\-OK\_\-OBJATTR, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_MKDIR3args@{cmdnfs\_\-MKDIR3args}}
-\index{cmdnfs_MKDIR3args@{cmdnfs\_\-MKDIR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-MKDIR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a52}
 
+Definition at line 455 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-mountres3@{cmdnfs\_\-mountres3}}
+\index{cmdnfs\_\-mountres3@{cmdnfs\_\-mountres3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-mountres3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-mountres3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_9ed868c63dffa323487115ba3b7ed656}
 
 
-
-Definition at line 3272 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs3(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-sattr3(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_MKDIR3res@{cmdnfs\_\-MKDIR3res}}
-\index{cmdnfs_MKDIR3res@{cmdnfs\_\-MKDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-MKDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a53}
-
-
-
-
-Definition at line 3344 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), cmdnfs\_\-postopfh3(), cmdnfs\_\-wccdata(), MKDIR3\_\-FAIL\_\-WCC, MKDIR3\_\-OK\_\-ATTRS, MKDIR3\_\-OK\_\-FH, MKDIR3\_\-OK\_\-WCC, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_mountlist@{cmdnfs\_\-mountlist}}
-\index{cmdnfs_mountlist@{cmdnfs\_\-mountlist}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-mountlist ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a19}
-
-
-
-
-Definition at line 449 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_mountres3@{cmdnfs\_\-mountres3}}
-\index{cmdnfs_mountres3@{cmdnfs\_\-mountres3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-mountres3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a21}
 
 
 \begin{Desc}
-\item[{\bf Todo}]Convert status to error code\end{Desc}
+\item[{\bf Todo}]Convert status to error code \end{Desc}
 
 
-Definition at line 646 of file cmd\_\-nfstools.c.
+Definition at line 652 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-nfsstat2@{cmdnfs\_\-nfsstat2}}
+\index{cmdnfs\_\-nfsstat2@{cmdnfs\_\-nfsstat2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-nfsstat2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-nfsstat2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_0ea9754e3cf3eb6843ed71a20430b663}
 
-References AUTH\_\-FLAVORS, CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, MNT\_\-HANDLE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_nfsstat2@{cmdnfs\_\-nfsstat2}}
-\index{cmdnfs_nfsstat2@{cmdnfs\_\-nfsstat2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-nfsstat2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a27}
 
 
 
+Definition at line 717 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-nfsstat3@{cmdnfs\_\-nfsstat3}}
+\index{cmdnfs\_\-nfsstat3@{cmdnfs\_\-nfsstat3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-nfsstat3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-nfsstat3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_77429f22c9ac2deefd3177a8f8f1be33}
 
-Definition at line 711 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, and CMDNFS\_\-FREE.
 
-Referenced by cmdnfs\_\-ATTR2res(), cmdnfs\_\-DIROP2res(), cmdnfs\_\-fhstatus2(), cmdnfs\_\-READDIR2res(), cmdnfs\_\-READLINK2res(), and cmdnfs\_\-STATFS2res().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_nfsstat3@{cmdnfs\_\-nfsstat3}}
-\index{cmdnfs_nfsstat3@{cmdnfs\_\-nfsstat3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-nfsstat3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a34}
 
+Definition at line 1560 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-PATHCONF3res@{cmdnfs\_\-PATHCONF3res}}
+\index{cmdnfs\_\-PATHCONF3res@{cmdnfs\_\-PATHCONF3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-PATHCONF3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-PATHCONF3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_764f30081647f2a1d2771b0fec38c02a}
 
 
 
-Definition at line 1557 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, and CMDNFS\_\-FREE.
+Definition at line 4313 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-postopattr@{cmdnfs\_\-postopattr}}
+\index{cmdnfs\_\-postopattr@{cmdnfs\_\-postopattr}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-postopattr}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-postopattr ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_fcffb351c8115cd880d820dc200f8bc7}
 
-Referenced by cmdnfs\_\-ACCESS3res(), cmdnfs\_\-CREATE3res(), cmdnfs\_\-FSINFO3res(), cmdnfs\_\-FSSTAT3res(), cmdnfs\_\-GETATTR3res(), cmdnfs\_\-LINK3res(), cmdnfs\_\-LOOKUP3res(), cmdnfs\_\-MKDIR3res(), cmdnfs\_\-PATHCONF3res(), cmdnfs\_\-READDIR3res(), cmdnfs\_\-READDIRPLUS3res(), cmdnfs\_\-READLINK3res(), cmdnfs\_\-REMOVE3res(), cmdnfs\_\-RENAME3res(), cmdnfs\_\-RMDIR3res(), cmdnfs\_\-SETATTR3res(), and cmdnfs\_\-SYMLINK3res().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_PATHCONF3res@{cmdnfs\_\-PATHCONF3res}}
-\index{cmdnfs_PATHCONF3res@{cmdnfs\_\-PATHCONF3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-PATHCONF3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a65}
 
 
 
+Definition at line 1972 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-postopfh3@{cmdnfs\_\-postopfh3}}
+\index{cmdnfs\_\-postopfh3@{cmdnfs\_\-postopfh3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-postopfh3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-postopfh3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_cc46aca72bbd733004ab3a53e25f2a05}
 
-Definition at line 4321 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), NULL, PATHCONF3\_\-FAIL\_\-ATTRS, PATHCONF3\_\-OK\_\-ATTRS, and PATHCONF3\_\-OK\_\-INFO.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_postopattr@{cmdnfs\_\-postopattr}}
-\index{cmdnfs_postopattr@{cmdnfs\_\-postopattr}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-postopattr ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a38}
 
 
+Definition at line 2011 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIR2args@{cmdnfs\_\-READDIR2args}}
+\index{cmdnfs\_\-READDIR2args@{cmdnfs\_\-READDIR2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIR2args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_81bc302ef1af84fba6094863c5414729}
 
 
-Definition at line 1973 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fattr3(), CMDNFS\_\-FREE, and NULL.
 
-Referenced by cmdnfs\_\-ACCESS3res(), cmdnfs\_\-CREATE3res(), cmdnfs\_\-FSINFO3res(), cmdnfs\_\-FSSTAT3res(), cmdnfs\_\-LINK3res(), cmdnfs\_\-LOOKUP3res(), cmdnfs\_\-MKDIR3res(), cmdnfs\_\-PATHCONF3res(), cmdnfs\_\-READDIR3res(), cmdnfs\_\-READDIRPLUS3res(), cmdnfs\_\-READLINK3res(), cmdnfs\_\-SYMLINK3res(), and cmdnfs\_\-wccdata().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_postopfh3@{cmdnfs\_\-postopfh3}}
-\index{cmdnfs_postopfh3@{cmdnfs\_\-postopfh3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-postopfh3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a39}
+Definition at line 1340 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIR2res@{cmdnfs\_\-READDIR2res}}
+\index{cmdnfs\_\-READDIR2res@{cmdnfs\_\-READDIR2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIR2res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_c99ceb01c2a854262ea5ad4a451ad9fc}
 
 
 
 
-Definition at line 2012 of file cmd\_\-nfstools.c.
+Definition at line 1450 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIR3args@{cmdnfs\_\-READDIR3args}}
+\index{cmdnfs\_\-READDIR3args@{cmdnfs\_\-READDIR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIR3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_2a44a5ff5f42ec3fb64b91ff76aa3c43}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.
 
-Referenced by cmdnfs\_\-CREATE3res(), cmdnfs\_\-MKDIR3res(), and cmdnfs\_\-SYMLINK3res().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIR2args@{cmdnfs\_\-READDIR2args}}
-\index{cmdnfs_READDIR2args@{cmdnfs\_\-READDIR2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a32}
 
 
+Definition at line 2261 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIR3res@{cmdnfs\_\-READDIR3res}}
+\index{cmdnfs\_\-READDIR3res@{cmdnfs\_\-READDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIR3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_0b31242fdcb0db145d1eae26897bb4d2}
 
 
-Definition at line 1336 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle2(), CMDNFS\_\-FREE, my\_\-atoi(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIR2res@{cmdnfs\_\-READDIR2res}}
-\index{cmdnfs_READDIR2res@{cmdnfs\_\-READDIR2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a33}
 
+Definition at line 2352 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIRPLUS3args@{cmdnfs\_\-READDIRPLUS3args}}
+\index{cmdnfs\_\-READDIRPLUS3args@{cmdnfs\_\-READDIRPLUS3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIRPLUS3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIRPLUS3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_abf244cb3c969fba19d210fc6ce2d12f}
 
 
 
-Definition at line 1447 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIR3args@{cmdnfs\_\-READDIR3args}}
-\index{cmdnfs_READDIR3args@{cmdnfs\_\-READDIR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a42}
+Definition at line 2428 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READDIRPLUS3res@{cmdnfs\_\-READDIRPLUS3res}}
+\index{cmdnfs\_\-READDIRPLUS3res@{cmdnfs\_\-READDIRPLUS3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READDIRPLUS3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIRPLUS3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_595a5e308779a0debbd65068018a9c57}
 
 
 
 
-Definition at line 2262 of file cmd\_\-nfstools.c.
+Definition at line 2609 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READLINK2res@{cmdnfs\_\-READLINK2res}}
+\index{cmdnfs\_\-READLINK2res@{cmdnfs\_\-READLINK2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READLINK2res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READLINK2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_b94fa7416a1dfd4cdbbbbd0527842ae2}
 
-References ato64(), CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIR3res@{cmdnfs\_\-READDIR3res}}
-\index{cmdnfs_READDIR3res@{cmdnfs\_\-READDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a43}
 
 
 
+Definition at line 990 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-READLINK3res@{cmdnfs\_\-READLINK3res}}
+\index{cmdnfs\_\-READLINK3res@{cmdnfs\_\-READLINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-READLINK3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READLINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_2d0443b085242f596b5717bdca49a104}
 
-Definition at line 2353 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), NULL, READDIR3\_\-FAIL, and READDIR3\_\-OK.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIRPLUS3args@{cmdnfs\_\-READDIRPLUS3args}}
-\index{cmdnfs_READDIRPLUS3args@{cmdnfs\_\-READDIRPLUS3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIRPLUS3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a44}
 
 
+Definition at line 2689 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-REMOVE3res@{cmdnfs\_\-REMOVE3res}}
+\index{cmdnfs\_\-REMOVE3res@{cmdnfs\_\-REMOVE3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-REMOVE3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-REMOVE3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_0c983c1ed75d53cb6ffa77bcee39490f}
 
 
-Definition at line 2429 of file cmd\_\-nfstools.c.
 
-References ato64(), CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READDIRPLUS3res@{cmdnfs\_\-READDIRPLUS3res}}
-\index{cmdnfs_READDIRPLUS3res@{cmdnfs\_\-READDIRPLUS3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READDIRPLUS3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a45}
 
+Definition at line 3427 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-RENAME2args@{cmdnfs\_\-RENAME2args}}
+\index{cmdnfs\_\-RENAME2args@{cmdnfs\_\-RENAME2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-RENAME2args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_ca3ef32c5983e679d24ed632481aea95}
 
 
 
-Definition at line 2610 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), NULL, READDIRPLUS3\_\-FAIL, and READDIRPLUS3\_\-OK.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READLINK2res@{cmdnfs\_\-READLINK2res}}
-\index{cmdnfs_READLINK2res@{cmdnfs\_\-READLINK2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READLINK2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a28}
+Definition at line 1509 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-RENAME3args@{cmdnfs\_\-RENAME3args}}
+\index{cmdnfs\_\-RENAME3args@{cmdnfs\_\-RENAME3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-RENAME3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_ba10fca21d9e9c8fa35453ddc3130395}
 
 
 
 
-Definition at line 988 of file cmd\_\-nfstools.c.
+Definition at line 3770 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-RENAME3res@{cmdnfs\_\-RENAME3res}}
+\index{cmdnfs\_\-RENAME3res@{cmdnfs\_\-RENAME3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-RENAME3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_88dd6e36c0a3fa3f67117c451cbf28bb}
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), NULL, and READLINKRES\_\-PATH.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_READLINK3res@{cmdnfs\_\-READLINK3res}}
-\index{cmdnfs_READLINK3res@{cmdnfs\_\-READLINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-READLINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a46}
 
 
 
+Definition at line 3826 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-RMDIR3res@{cmdnfs\_\-RMDIR3res}}
+\index{cmdnfs\_\-RMDIR3res@{cmdnfs\_\-RMDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-RMDIR3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RMDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_70482e93debd8542a591d85a9cb14117}
 
-Definition at line 2690 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), NULL, READLINK3\_\-FAIL\_\-ATTRS, READLINK3\_\-OK\_\-ATTRS, and READLINK3\_\-OK\_\-DATA.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_REMOVE3res@{cmdnfs\_\-REMOVE3res}}
-\index{cmdnfs_REMOVE3res@{cmdnfs\_\-REMOVE3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-REMOVE3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a54}
 
 
+Definition at line 3496 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-sattr2@{cmdnfs\_\-sattr2}}
+\index{cmdnfs\_\-sattr2@{cmdnfs\_\-sattr2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-sattr2}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-sattr2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_589d61f0388fa907557e11b42af20d22}
 
 
-Definition at line 3429 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-wccdata(), NULL, REMOVE3\_\-FAIL\_\-WCC, and REMOVE3\_\-OK\_\-WCC.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_RENAME2args@{cmdnfs\_\-RENAME2args}}
-\index{cmdnfs_RENAME2args@{cmdnfs\_\-RENAME2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a66}
 
+Definition at line 1039 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-sattr3@{cmdnfs\_\-sattr3}}
+\index{cmdnfs\_\-sattr3@{cmdnfs\_\-sattr3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-sattr3}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-sattr3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_1e0a6cd7c4500a3cfbb1a35cb2105436}
 
 
 
-Definition at line 1506 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs2(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_RENAME3args@{cmdnfs\_\-RENAME3args}}
-\index{cmdnfs_RENAME3args@{cmdnfs\_\-RENAME3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a58}
+Definition at line 1665 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-SETATTR2args@{cmdnfs\_\-SETATTR2args}}
+\index{cmdnfs\_\-SETATTR2args@{cmdnfs\_\-SETATTR2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-SETATTR2args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_d14a256f4f23189d637fbe5ac905c2c9}
 
 
 
 
-Definition at line 3775 of file cmd\_\-nfstools.c.
+Definition at line 1289 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-SETATTR3args@{cmdnfs\_\-SETATTR3args}}
+\index{cmdnfs\_\-SETATTR3args@{cmdnfs\_\-SETATTR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-SETATTR3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_4aa20a7216f5c4ead1ff73943b5a25fc}
 
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs3(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_RENAME3res@{cmdnfs\_\-RENAME3res}}
-\index{cmdnfs_RENAME3res@{cmdnfs\_\-RENAME3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RENAME3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a59}
 
 
 
+Definition at line 3636 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-SETATTR3res@{cmdnfs\_\-SETATTR3res}}
+\index{cmdnfs\_\-SETATTR3res@{cmdnfs\_\-SETATTR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-SETATTR3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_17bb8614a0506a5a6c98e65c00b637b0}
 
-Definition at line 3832 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-wccdata(), NULL, RENAME3\_\-FAIL\_\-FROMWCC, RENAME3\_\-FAIL\_\-TOWCC, RENAME3\_\-OK\_\-FROMWCC, and RENAME3\_\-OK\_\-TOWCC.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_RMDIR3res@{cmdnfs\_\-RMDIR3res}}
-\index{cmdnfs_RMDIR3res@{cmdnfs\_\-RMDIR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-RMDIR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a55}
 
 
+Definition at line 3702 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-STATFS2res@{cmdnfs\_\-STATFS2res}}
+\index{cmdnfs\_\-STATFS2res@{cmdnfs\_\-STATFS2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-STATFS2res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-STATFS2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_478e846158a12b5b750998085b917076}
 
 
-Definition at line 3498 of file cmd\_\-nfstools.c.
 
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-wccdata(), NULL, RMDIR3\_\-FAIL\_\-WCC, and RMDIR3\_\-OK\_\-WCC.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_sattr2@{cmdnfs\_\-sattr2}}
-\index{cmdnfs_sattr2@{cmdnfs\_\-sattr2}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-sattr2 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a29}
 
+Definition at line 388 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-SYMLINK3args@{cmdnfs\_\-SYMLINK3args}}
+\index{cmdnfs\_\-SYMLINK3args@{cmdnfs\_\-SYMLINK3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-SYMLINK3args}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SYMLINK3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_11691f0e087638360a4ec83bfdf359d5}
 
 
 
-Definition at line 1037 of file cmd\_\-nfstools.c.
 
-References ato64(), atomode(), atotime(), CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and my\_\-atoi().
+Definition at line 4049 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-SYMLINK3res@{cmdnfs\_\-SYMLINK3res}}
+\index{cmdnfs\_\-SYMLINK3res@{cmdnfs\_\-SYMLINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-SYMLINK3res}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SYMLINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_c1c836ab8b81ed863a521ea279b5c33a}
 
-Referenced by cmdnfs\_\-CREATE2args(), and cmdnfs\_\-SETATTR2args().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_sattr3@{cmdnfs\_\-sattr3}}
-\index{cmdnfs_sattr3@{cmdnfs\_\-sattr3}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-sattr3 ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a36}
 
 
 
+Definition at line 4130 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!cmdnfs\_\-void@{cmdnfs\_\-void}}
+\index{cmdnfs\_\-void@{cmdnfs\_\-void}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{cmdnfs\_\-void}]{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-void ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, \/  int {\em argc}, \/  char $\ast$$\ast$ {\em argv}, \/  int {\em indent}, \/  FILE $\ast$ {\em out\_\-stream}, \/  caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_3bf698c297f8a7c0c3386115cc54cdca}
 
-Definition at line 1666 of file cmd\_\-nfstools.c.
 
-References ato64(), atomode(), atotime(), CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, and my\_\-atoi().
 
-Referenced by cmdnfs\_\-CREATE3args(), cmdnfs\_\-MKDIR3args(), cmdnfs\_\-SETATTR3args(), cmdnfs\_\-SYMLINK3args(), fn\_\-nfs\_\-ln(), fn\_\-nfs\_\-remote\_\-ln(), fn\_\-nfs\_\-remote\_\-setattr(), fn\_\-nfs\_\-setattr(), nfs\_\-remote\_\-create(), and nfs\_\-remote\_\-mkdir().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_SETATTR2args@{cmdnfs\_\-SETATTR2args}}
-\index{cmdnfs_SETATTR2args@{cmdnfs\_\-SETATTR2args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR2args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a31}
 
-
-
-
-Definition at line 1285 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle2(), CMDNFS\_\-FREE, cmdnfs\_\-sattr2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_SETATTR3args@{cmdnfs\_\-SETATTR3args}}
-\index{cmdnfs_SETATTR3args@{cmdnfs\_\-SETATTR3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a56}
-
-
-
-
-Definition at line 3640 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, cmdnfs\_\-fhandle3(), CMDNFS\_\-FREE, cmdnfs\_\-sattr3(), cmdnfs\_\-sattrguard3(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_SETATTR3res@{cmdnfs\_\-SETATTR3res}}
-\index{cmdnfs_SETATTR3res@{cmdnfs\_\-SETATTR3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SETATTR3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a57}
-
-
-
-
-Definition at line 3707 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-wccdata(), NULL, SETATTR3\_\-FAIL\_\-WCC, and SETATTR3\_\-OK\_\-WCC.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_STATFS2res@{cmdnfs\_\-STATFS2res}}
-\index{cmdnfs_STATFS2res@{cmdnfs\_\-STATFS2res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-STATFS2res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a67}
-
-
-
-
-Definition at line 382 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat2(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_SYMLINK3args@{cmdnfs\_\-SYMLINK3args}}
-\index{cmdnfs_SYMLINK3args@{cmdnfs\_\-SYMLINK3args}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SYMLINK3args ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a62}
-
-
-
-
-Definition at line 4056 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, cmdnfs\_\-diropargs3(), cmdnfs\_\-dirpath(), CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-sattr3(), and NULL.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_SYMLINK3res@{cmdnfs\_\-SYMLINK3res}}
-\index{cmdnfs_SYMLINK3res@{cmdnfs\_\-SYMLINK3res}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-SYMLINK3res ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a63}
-
-
-
-
-Definition at line 4138 of file cmd\_\-nfstools.c.
-
-References CMDNFS\_\-DECODE, CMDNFS\_\-ENCODE, CMDNFS\_\-FREE, cmdnfs\_\-nfsstat3(), cmdnfs\_\-postopattr(), cmdnfs\_\-postopfh3(), cmdnfs\_\-wccdata(), NULL, SYMLINK3\_\-FAIL\_\-WCC, SYMLINK3\_\-OK\_\-ATTRS, SYMLINK3\_\-OK\_\-FH, and SYMLINK3\_\-OK\_\-WCC.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!cmdnfs_void@{cmdnfs\_\-void}}
-\index{cmdnfs_void@{cmdnfs\_\-void}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int cmdnfs\_\-void ({\bf cmdnfs\_\-encodetype\_\-t} {\em encodeflag}, int {\em argc}, char $\ast$$\ast$ {\em argv}, int {\em indent}, FILE $\ast$ {\em out\_\-stream}, caddr\_\-t {\em p\_\-nfs\_\-struct})}\label{cmd__nfstools_8h_a15}
-
-
-
-
-Definition at line 190 of file cmd\_\-nfstools.c.\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!print_nfs_attributes@{print\_\-nfs\_\-attributes}}
-\index{print_nfs_attributes@{print\_\-nfs\_\-attributes}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-nfs\_\-attributes (fattr3 $\ast$ {\em attrs}, FILE $\ast$ {\em output})}\label{cmd__nfstools_8h_a69}
+Definition at line 196 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!print\_\-nfs\_\-attributes@{print\_\-nfs\_\-attributes}}
+\index{print\_\-nfs\_\-attributes@{print\_\-nfs\_\-attributes}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{print\_\-nfs\_\-attributes}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-nfs\_\-attributes (fattr3 $\ast$ {\em attrs}, \/  FILE $\ast$ {\em output})}\label{cmd__nfstools_8h_3d381f490ea75390cc5457a82724d7b1}
 
 
 print\_\-nfs\_\-attributes: print an fattr3 to a given output file.
@@ -785,11 +666,9 @@ print\_\-nfs\_\-attributes: print an fattr3 to a given output file.
 \item[Returns:]Nothing. \end{Desc}
 
 
-Definition at line 4500 of file cmd\_\-nfstools.c.
-
-Referenced by fn\_\-nfs\_\-ls(), fn\_\-nfs\_\-remote\_\-ls(), fn\_\-nfs\_\-remote\_\-stat(), and fn\_\-nfs\_\-stat().\index{cmd_nfstools.h@{cmd\_\-nfstools.h}!print_nfsitem_line@{print\_\-nfsitem\_\-line}}
-\index{print_nfsitem_line@{print\_\-nfsitem\_\-line}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void print\_\-nfsitem\_\-line (FILE $\ast$ {\em out}, fattr3 $\ast$ {\em attrib}, char $\ast$ {\em name}, char $\ast$ {\em target})}\label{cmd__nfstools_8h_a68}
+Definition at line 4491 of file cmd\_\-nfstools.c.\index{cmd\_\-nfstools.h@{cmd\_\-nfstools.h}!print\_\-nfsitem\_\-line@{print\_\-nfsitem\_\-line}}
+\index{print\_\-nfsitem\_\-line@{print\_\-nfsitem\_\-line}!cmd_nfstools.h@{cmd\_\-nfstools.h}}
+\subsubsection[{print\_\-nfsitem\_\-line}]{\setlength{\rightskip}{0pt plus 5cm}void print\_\-nfsitem\_\-line (FILE $\ast$ {\em out}, \/  fattr3 $\ast$ {\em attrib}, \/  char $\ast$ {\em name}, \/  char $\ast$ {\em target})}\label{cmd__nfstools_8h_0da9dd192f1cf0546755a5575d63f570}
 
 
 print\_\-nfsitem\_\-line: Prints a nfs element on one line, like the Unix ls command.
@@ -803,8 +682,4 @@ print\_\-nfsitem\_\-line: Prints a nfs element on one line, like the Unix ls com
 \item[Returns:]Nothing. \end{Desc}
 
 
-Definition at line 4416 of file cmd\_\-nfstools.c.
-
-References print\_\-mask, and time2str().
-
-Referenced by fn\_\-nfs\_\-ls(), and fn\_\-nfs\_\-remote\_\-ls().
+Definition at line 4408 of file cmd\_\-nfstools.c.

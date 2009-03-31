@@ -1,8 +1,10 @@
-.TH "fsal_fileop.c" 3 "9 Apr 2008" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
+.TH "fsal_fileop.c" 3 "31 Mar 2009" "Version 0.1" "File System Abstraction Layer (POSIX) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_fileop.c \- Files operations. 
+fsal_fileop.c \- Files operations.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -44,26 +46,26 @@ Files operations.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/17 14:20:07 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.9 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.9 
 .RE
 .PP
 
@@ -92,7 +94,7 @@ Another error code if an error occured during this call.
 .PP
 
 .PP
-Definition at line 465 of file fsal_fileop.c.
+Definition at line 462 of file fsal_fileop.c.
 .PP
 References posix2fsal_error(), and TakeTokenFSCall().
 .PP
@@ -220,21 +222,26 @@ Major error codes:
 .IP "\(bu" 2
 ERR_FSAL_NO_ERROR: no error.
 .IP "\(bu" 2
-Another error code if an error occured during this call.
+Another error code if an error occured during this call. 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: manage fsal_size_t to size_t convertion 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: manage fsal_size_t to size_t convertion 
-.PP
-: manage ssize_t to fsal_size_t convertion
+: manage ssize_t to fsal_size_t convertion 
 .RE
 .PP
 
 .PP
-Definition at line 214 of file fsal_fileop.c.
+Definition at line 213 of file fsal_fileop.c.
 .PP
 References posix2fsal_error(), and TakeTokenFSCall().
 .PP
@@ -262,21 +269,26 @@ Major error codes:
 .IP "\(bu" 2
 ERR_FSAL_NO_ERROR: no error.
 .IP "\(bu" 2
-Another error code if an error occured during this call.
+Another error code if an error occured during this call. 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: manage fsal_size_t to size_t convertion 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: manage fsal_size_t to size_t convertion 
-.PP
-: manage ssize_t to fsal_size_t convertion
+: manage ssize_t to fsal_size_t convertion 
 .RE
 .PP
 
 .PP
-Definition at line 340 of file fsal_fileop.c.
+Definition at line 338 of file fsal_fileop.c.
 .PP
 References posix2fsal_error(), and TakeTokenFSCall().
 .PP

@@ -1,8 +1,10 @@
-.TH "fsal_lookup.c" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_lookup.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_lookup.c \- Lookup operations. 
+fsal_lookup.c \- Lookup operations.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -36,26 +38,26 @@ Lookup operations.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/08 12:46:59 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.18 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.18 
 .RE
 .PP
 
@@ -98,10 +100,11 @@ ERR_FSAL_XDEV (tried to operate a lookup on a filesystem junction. Use FSAL_look
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
-Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ... 
 .PP
 .RE
 .PP
+
 .PP
 /!\\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR. Thus, in this case, we must double check by checking the directory handle. 
 .PP
@@ -141,7 +144,7 @@ Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
 .PP
 
 .PP
-Definition at line 232 of file fsal_lookup.c.
+Definition at line 233 of file fsal_lookup.c.
 .PP
 References hpss2fsal_attributes(), hpss2fsal_error(), hpss2fsal_type(), and TakeTokenFSCall().
 .PP
@@ -179,19 +182,20 @@ ERR_FSAL_NOTDIR (an element in the path is not a directory)
 .IP "\(bu" 2
 ERR_FSAL_XDEV (tried to cross a filesystem junction, whereas is has not been authorized in the server configuration - FSAL::auth_xdev_export parameter)
 .IP "\(bu" 2
-Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ... 
 .PP
-.RE
-.PP
-.PP
-\fBTodo\fP
-.RS 4
-: Be carefull about junction crossing, symlinks, hardlinks,...
 .RE
 .PP
 
 .PP
-Definition at line 333 of file fsal_lookup.c.
+\fBTodo\fP
+.RS 4
+: Be carefull about junction crossing, symlinks, hardlinks,... 
+.RE
+.PP
+
+.PP
+Definition at line 334 of file fsal_lookup.c.
 .PP
 References FSAL_lookup(), and FSAL_lookupJunction().
 .SH "Author"

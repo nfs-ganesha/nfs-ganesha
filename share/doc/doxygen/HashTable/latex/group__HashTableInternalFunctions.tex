@@ -1,9 +1,9 @@
-\section{Hash\-Table\-Internal\-Functions}
+\section{HashTableInternalFunctions}
 \label{group__HashTableInternalFunctions}\index{HashTableInternalFunctions@{HashTableInternalFunctions}}
 \subsection*{Modules}
 \begin{CompactItemize}
 \item 
-group {\bf Hash\-Table\-Exported\-Functions}
+{\bf HashTableExportedFunctions}
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -17,14 +17,14 @@ unsigned int {\bf rbt\_\-hash\_\-func} (hash\_\-parameter\_\-t $\ast$p\_\-hparam
 
 
 \subsection{Function Documentation}
-\index{HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}!double_hash_func@{double\_\-hash\_\-func}}
-\index{double_hash_func@{double\_\-hash\_\-func}!HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long double\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_ga1}
+\index{HashTableInternalFunctions@{HashTableInternalFunctions}!double\_\-hash\_\-func@{double\_\-hash\_\-func}}
+\index{double\_\-hash\_\-func@{double\_\-hash\_\-func}!HashTableInternalFunctions@{HashTableInternalFunctions}}
+\subsubsection[{double\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long double\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_gee806584243af84ca21ae138d816a7e7}
 
 
 double\_\-hash\_\-func: This function is used for double hashing, based on another hash function.
 
-This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash  8 ) ) )  hparam.index\_\-size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See 'Algorithm in C', Robert Sedjewick for more detail on this).
+This functions uses the hash function contained in hparam to compute a first hash value, then use it to compute a second value like this: h = ( firsthash + ( 8 - ( firsthash \% 8 ) ) ) \% hparam.index\_\-size This operation just changes the last 3 bits, but it can be demonstrated that this produced a more efficient and better balanced hash function (See 'Algorithm in C', Robert Sedjewick for more detail on this).
 
 \begin{Desc}
 \item[Parameters:]
@@ -34,12 +34,12 @@ This functions uses the hash function contained in hparam to compute a first has
 \begin{Desc}
 \item[Returns:]the hash value\end{Desc}
 \begin{Desc}
-\item[See also:]{\bf double\_\-hash\_\-func}{\rm (p.\,\pageref{group__HashTableInternalFunctions_ga1})} \end{Desc}
+\item[See also:]\doxyref{double\_\-hash\_\-func}{p.}{group__HashTableInternalFunctions_gee806584243af84ca21ae138d816a7e7} \end{Desc}
 
 
-Definition at line 315 of file Hash\-Table.c.\index{HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}!rbt_hash_func@{rbt\_\-hash\_\-func}}
-\index{rbt_hash_func@{rbt\_\-hash\_\-func}!HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned int rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_ga2}
+Definition at line 315 of file HashTable.c.\index{HashTableInternalFunctions@{HashTableInternalFunctions}!rbt\_\-hash\_\-func@{rbt\_\-hash\_\-func}}
+\index{rbt\_\-hash\_\-func@{rbt\_\-hash\_\-func}!HashTableInternalFunctions@{HashTableInternalFunctions}}
+\subsubsection[{rbt\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_g1aca4ae1fbd881eb69310b3a18375321}
 
 
 rbt\_\-hash\_\-func: Another hash junction, but to be used for the red-black trees managed internally.
@@ -55,11 +55,9 @@ This library uses red-black trees to store data. RB trees use key data too. The 
 \item[Returns:]the hash value \end{Desc}
 
 
-Definition at line 345 of file Hash\-Table.c.
-
-Referenced by main().\index{HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}!simple_hash_func@{simple\_\-hash\_\-func}}
-\index{simple_hash_func@{simple\_\-hash\_\-func}!HashTableInternalFunctions@{Hash\-Table\-Internal\-Functions}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_ga0}
+Definition at line 345 of file HashTable.c.\index{HashTableInternalFunctions@{HashTableInternalFunctions}!simple\_\-hash\_\-func@{simple\_\-hash\_\-func}}
+\index{simple\_\-hash\_\-func@{simple\_\-hash\_\-func}!HashTableInternalFunctions@{HashTableInternalFunctions}}
+\subsubsection[{simple\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long simple\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{group__HashTableInternalFunctions_gf42a323dd4a2c336ce843bddf643be43}
 
 
 simple\_\-hash\_\-func: A template hash function, which considers the hash key as a polynom
@@ -74,9 +72,7 @@ A template hash function, which considers the hash key as a polynom. we are supp
 \begin{Desc}
 \item[Returns:]the hash value\end{Desc}
 \begin{Desc}
-\item[See also:]{\bf double\_\-hash\_\-func}{\rm (p.\,\pageref{group__HashTableInternalFunctions_ga1})} \end{Desc}
+\item[See also:]\doxyref{double\_\-hash\_\-func}{p.}{group__HashTableInternalFunctions_gee806584243af84ca21ae138d816a7e7} \end{Desc}
 
 
-Definition at line 278 of file Hash\-Table.c.
-
-Referenced by main().
+Definition at line 278 of file HashTable.c.

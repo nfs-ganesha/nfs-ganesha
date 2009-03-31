@@ -1,4 +1,4 @@
-.TH "nfs_client_id.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_client_id.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,9 +24,9 @@ nfs_client_id.c \-
 .br
 \fC#include <string.h>\fP
 .br
-\fC#include 'nfs4.h'\fP
+\fC#include <pthread.h>\fP
 .br
-\fC#include 'SHA1.h'\fP
+\fC#include 'nfs4.h'\fP
 .br
 
 .SS "Functions"
@@ -84,10 +84,10 @@ nfs_client_id.c \-
 .RI "int \fBnfs_Init_client_id_reverse\fP (nfs_client_id_parameter_t param)"
 .br
 .ti -1c
-.RI "int \fBnfs_client_id_compute\fP (char *name, clientid4 *pclientid)"
+.RI "int \fBnfs_client_id_basic_compute\fP (char *name, clientid4 *pclientid)"
 .br
 .ti -1c
-.RI "int \fBnfs_client_id_sha1_compute\fP (char *name, clientid4 *pclientid)"
+.RI "int \fBnfs_client_id_compute\fP (char *name, clientid4 *pclientid)"
 .br
 .in -1c
 .SS "Variables"
@@ -130,12 +130,10 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 181 of file nfs_client_id.c.
+Definition at line 188 of file nfs_client_id.c.
 .SS "unsigned long client_id_rbt_hash_func_reverse (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
-Definition at line 195 of file nfs_client_id.c.
-.PP
-References nfs_client_id_compute().
+Definition at line 202 of file nfs_client_id.c.
 .SS "unsigned long client_id_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 client_id_rbt_hash_func: computes the hash value for the entry in Client Id cache.
@@ -161,7 +159,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 123 of file nfs_client_id.c.
+Definition at line 130 of file nfs_client_id.c.
 .SS "unsigned long client_id_value_hash_func_reverse (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 client_id_reverse_hash_func: computes the hash value for the entry in Client Id cache.
@@ -187,12 +185,12 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 153 of file nfs_client_id.c.
+Definition at line 160 of file nfs_client_id.c.
 .SS "int compare_client_id (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
 compare_client_id: compares the ip address stored in the key buffers.
 .PP
-compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the nfs duplicated requests.
+compare the ip address stored in the key buffers. This function is to be used as 'compare_key' field in the hashtable storing the client ids.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -208,15 +206,15 @@ compare the ip address stored in the key buffers. This function is to be used as
 .PP
 
 .PP
-Definition at line 219 of file nfs_client_id.c.
+Definition at line 226 of file nfs_client_id.c.
 .SS "int compare_client_id_reverse (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
-Definition at line 226 of file nfs_client_id.c.
+Definition at line 233 of file nfs_client_id.c.
 .SS "int display_client_id (hash_buffer_t * pbuff, char * str)"
 .PP
 display_client_id: displays the client_id stored in the buffer.
 .PP
-displays the client_id stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the nfs duplicated requests.
+displays the client_id stored in the buffer. This function is to be used as 'key_to_str' field in the hashtable storing the client ids.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -232,13 +230,13 @@ number of character written.
 .PP
 
 .PP
-Definition at line 247 of file nfs_client_id.c.
+Definition at line 254 of file nfs_client_id.c.
 .SS "int display_client_id_reverse (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 256 of file nfs_client_id.c.
+Definition at line 263 of file nfs_client_id.c.
 .SS "int display_client_id_val (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 262 of file nfs_client_id.c.
+Definition at line 269 of file nfs_client_id.c.
 .SS "int nfs_client_id_add (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"
 .PP
 nfs_client_id_add: adds an entry in the duplicate requests cache.
@@ -269,18 +267,17 @@ CLIENT_ID_NETDB_ERROR if an error occured during the netdb query (via gethostbya
 .PP
 
 .PP
-Definition at line 292 of file nfs_client_id.c.
+Definition at line 299 of file nfs_client_id.c.
+.SS "int nfs_client_id_basic_compute (char * name, clientid4 * pclientid)"
 .PP
-References ht_client_id, ht_client_id_reverse, and nfs_param.
+Definition at line 640 of file nfs_client_id.c.
 .SS "int nfs_client_id_compute (char * name, clientid4 * pclientid)"
 .PP
 nfs_client_id_compute: computes the client id, based on the string.
 .PP
 Computes the client id, based on the string. 
 .PP
-Definition at line 644 of file nfs_client_id.c.
-.PP
-References strnlen().
+Definition at line 670 of file nfs_client_id.c.
 .SS "int nfs_client_id_get (clientid4 clientid, nfs_client_id_t * client_id_res)"
 .PP
 nfs_client_id_get: Tries to get an entry for client_id cache.
@@ -301,16 +298,10 @@ the result previously set if *pstatus == CLIENT_ID_SUCCESS
 .PP
 
 .PP
-Definition at line 454 of file nfs_client_id.c.
-.PP
-References ht_client_id, and ht_client_id_reverse.
-.PP
-Referenced by nfs4_Check_Stateid(), and nfs4_is_lease_expired().
+Definition at line 461 of file nfs_client_id.c.
 .SS "int nfs_client_id_get_reverse (char * key, nfs_client_id_t * client_id_res)"
 .PP
-Definition at line 499 of file nfs_client_id.c.
-.PP
-References ht_client_id_reverse.
+Definition at line 506 of file nfs_client_id.c.
 .SS "int nfs_client_id_remove (clientid4 clientid, nfs_client_id_t * nfs_client_id_pool)"
 .PP
 nfs_client_id_remove: Tries to remove an entry for client_id cache
@@ -331,9 +322,7 @@ the result previously set if *pstatus == CLIENT_ID_SUCCESS
 .PP
 
 .PP
-Definition at line 541 of file nfs_client_id.c.
-.PP
-References ht_client_id, and ht_client_id_reverse.
+Definition at line 548 of file nfs_client_id.c.
 .SS "int nfs_client_id_set (clientid4 clientid, nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)"
 .PP
 nfs_client_id_sets: sets an entry that already exists.
@@ -364,20 +353,7 @@ CLIENT_ID_NETDB_ERROR if an error occured during the netdb query (via gethostbya
 .PP
 
 .PP
-Definition at line 378 of file nfs_client_id.c.
-.PP
-References ht_client_id, ht_client_id_reverse, and nfs_param.
-.SS "int nfs_client_id_sha1_compute (char * name, clientid4 * pclientid)"
-.PP
-nfs_client_id_sha1_compute: computes the client id, based on the string, with SHA1 algorithm
-.PP
-Computes the client id, based on the string, with SHA1 algorithm. 
-.PP
-Definition at line 752 of file nfs_client_id.c.
-.PP
-References SHA1Final(), SHA1Init(), and SHA1Update().
-.PP
-Referenced by main().
+Definition at line 385 of file nfs_client_id.c.
 .SS "int nfs_Init_client_id (nfs_client_id_parameter_t param)"
 .PP
 nfs_Init_client_id: Init the hashtable for Client Id cache.
@@ -396,9 +372,7 @@ Perform all the required initialization for hashtable Client Id cache
 .PP
 
 .PP
-Definition at line 600 of file nfs_client_id.c.
-.PP
-References ht_client_id.
+Definition at line 607 of file nfs_client_id.c.
 .SS "int nfs_Init_client_id_reverse (nfs_client_id_parameter_t param)"
 .PP
 nfs_Init_client_id_reverse: Init the reverse hashtable for Client Id cache.
@@ -417,9 +391,7 @@ Perform all the required initialization for hashtable Client Id cache
 .PP
 
 .PP
-Definition at line 622 of file nfs_client_id.c.
-.PP
-References ht_client_id_reverse.
+Definition at line 629 of file nfs_client_id.c.
 .SS "size_t strnlen (const char * s, size_t maxlen)"
 .PP
 vim:expandtab:shiftwidth=8:tabstop=8:
@@ -459,17 +431,12 @@ $Log$
 .PP 
 .SS "hash_table_t* \fBht_client_id\fP"
 .PP
-Definition at line 102 of file nfs_client_id.c.
-.PP
-Referenced by nfs_client_id_add(), nfs_client_id_get(), nfs_client_id_remove(), nfs_client_id_set(), and nfs_Init_client_id().
+Definition at line 109 of file nfs_client_id.c.
 .SS "hash_table_t* \fBht_client_id_reverse\fP"
 .PP
-Definition at line 103 of file nfs_client_id.c.
-.PP
-Referenced by nfs_client_id_add(), nfs_client_id_get(), nfs_client_id_get_reverse(), nfs_client_id_remove(), nfs_client_id_set(), and nfs_Init_client_id_reverse().
+Definition at line 110 of file nfs_client_id.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 146 of file test_clientid.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

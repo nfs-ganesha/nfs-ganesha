@@ -1,10 +1,10 @@
 \section{config\_\-parsing.c File Reference}
-\label{config__parsing_8c}\index{config_parsing.c@{config\_\-parsing.c}}
+\label{config__parsing_8c}\index{config\_\-parsing.c@{config\_\-parsing.c}}
+{\tt \#include \char`\"{}config.h\char`\"{}}\par
 {\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
 {\tt \#include \char`\"{}analyse.h\char`\"{}}\par
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$errno.h$>$}\par
-{\tt \#include $<$string.h$>$}\par
 \subsection*{Classes}
 \begin{CompactItemize}
 \item 
@@ -13,202 +13,217 @@ struct {\bf config\_\-struct\_\-t}
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf STRNCMP}\ strncasecmp
-\end{CompactItemize}
-\subsection*{Typedefs}
-\begin{CompactItemize}
-\item 
-typedef {\bf config\_\-struct\_\-t} {\bf config\_\-struct\_\-t}
+\#define {\bf STRNCMP}~strncasecmp
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
-int {\bf yyparse} ()
+int {\bf ganesha\_\-yyparse} ()
 \item 
-config\_\-file\_\-t {\bf config\_\-Parse\-File} (char $\ast$file\_\-path)
+void {\bf ganesha\_\-yyreset} (void)
 \item 
-char $\ast$ {\bf config\_\-Get\-Error\-Msg} ()
+void {\bf ganesha\_\-yy\_\-set\_\-current\_\-file} (char $\ast$file)
+\item 
+config\_\-file\_\-t {\bf config\_\-ParseFile} (char $\ast$file\_\-path)
+\item 
+char $\ast$ {\bf config\_\-GetErrorMsg} ()
 \item 
 void {\bf config\_\-Print} (FILE $\ast$output, config\_\-file\_\-t config)
 \item 
 void {\bf config\_\-Free} (config\_\-file\_\-t config)
 \item 
-int {\bf config\_\-Get\-Nb\-Blocks} (config\_\-file\_\-t config)
+int {\bf config\_\-GetNbBlocks} (config\_\-file\_\-t config)
 \item 
-int {\bf config\_\-Get\-Block\-Index\-By\-Name} (config\_\-file\_\-t config, char $\ast$block\_\-name)
+config\_\-item\_\-t {\bf config\_\-GetBlockByIndex} (config\_\-file\_\-t config, unsigned int block\_\-no)
 \item 
-char $\ast$ {\bf config\_\-Get\-Block\-Name} (config\_\-file\_\-t config, int block\_\-no)
+char $\ast$ {\bf config\_\-GetBlockName} (config\_\-item\_\-t block)
 \item 
-int {\bf config\_\-Get\-Nb\-Keys} (config\_\-file\_\-t config, int block\_\-no)
+int {\bf config\_\-GetNbItems} (config\_\-item\_\-t block)
 \item 
-int {\bf config\_\-Get\-Key\-Value} (config\_\-file\_\-t config, int block\_\-no, int key\_\-no, char $\ast$$\ast$var\_\-name, char $\ast$$\ast$var\_\-value)
+config\_\-item\_\-t {\bf config\_\-GetItemByIndex} (config\_\-item\_\-t block, unsigned int item\_\-no)
 \item 
-char $\ast$ {\bf config\_\-Get\-Key\-Value\-By\-Name} (config\_\-file\_\-t config, int block\_\-no, char $\ast$key\_\-name)
+config\_\-item\_\-type {\bf config\_\-ItemType} (config\_\-item\_\-t item)
+\item 
+int {\bf config\_\-GetKeyValue} (config\_\-item\_\-t item, char $\ast$$\ast$var\_\-name, char $\ast$$\ast$var\_\-value)
+\item 
+config\_\-item\_\-t {\bf config\_\-FindItemByName} (config\_\-file\_\-t config, const char $\ast$name)
+\item 
+char $\ast$ {\bf config\_\-FindKeyValueByName} (config\_\-file\_\-t config, const char $\ast$key\_\-name)
+\item 
+config\_\-item\_\-t {\bf config\_\-GetItemByName} (config\_\-item\_\-t block, const char $\ast$name)
+\item 
+char $\ast$ {\bf config\_\-GetKeyValueByName} (config\_\-item\_\-t block, const char $\ast$key\_\-name)
 \end{CompactItemize}
 \subsection*{Variables}
 \begin{CompactItemize}
 \item 
-FILE $\ast$ {\bf yyin}
+FILE $\ast$ {\bf ganesha\_\-yyin}
 \item 
-{\bf list\_\-block} $\ast$ {\bf program\_\-result}
+{\bf list\_\-items} $\ast$ {\bf program\_\-result}
 \item 
 char {\bf extern\_\-errormsg} [1024]
 \end{CompactItemize}
 
 
 \subsection{Define Documentation}
-\index{config_parsing.c@{config\_\-parsing.c}!STRNCMP@{STRNCMP}}
+\index{config\_\-parsing.c@{config\_\-parsing.c}!STRNCMP@{STRNCMP}}
 \index{STRNCMP@{STRNCMP}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STRNCMP\ strncasecmp}\label{config__parsing_8c_a0}
+\subsubsection[{STRNCMP}]{\setlength{\rightskip}{0pt plus 5cm}\#define STRNCMP~strncasecmp}\label{config__parsing_8c_83ae0cfa84a083508398239ded7c284d}
 
 
 
 
-Definition at line 95 of file config\_\-parsing.c.
-
-Referenced by config\_\-Get\-Block\-Index\-By\-Name(), and config\_\-Get\-Key\-Value\-By\-Name().
-
-\subsection{Typedef Documentation}
-\index{config_parsing.c@{config\_\-parsing.c}!config_struct_t@{config\_\-struct\_\-t}}
-\index{config_struct_t@{config\_\-struct\_\-t}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf config\_\-struct\_\-t}  {\bf config\_\-struct\_\-t}}\label{config__parsing_8c_a1}
-
-
-
+Definition at line 75 of file config\_\-parsing.c.
 
 \subsection{Function Documentation}
-\index{config_parsing.c@{config\_\-parsing.c}!config_Free@{config\_\-Free}}
-\index{config_Free@{config\_\-Free}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-Free (config\_\-file\_\-t {\em config})}\label{config__parsing_8c_a9}
+\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-FindItemByName@{config\_\-FindItemByName}}
+\index{config\_\-FindItemByName@{config\_\-FindItemByName}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-FindItemByName}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-item\_\-t config\_\-FindItemByName (config\_\-file\_\-t {\em config}, \/  const char $\ast$ {\em name})}\label{config__parsing_8c_124c884106272c278b7380b2ea98248d}
+
+
+
+
+Definition at line 405 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-FindKeyValueByName@{config\_\-FindKeyValueByName}}
+\index{config\_\-FindKeyValueByName@{config\_\-FindKeyValueByName}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-FindKeyValueByName}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-FindKeyValueByName (config\_\-file\_\-t {\em config}, \/  const char $\ast$ {\em key\_\-name})}\label{config__parsing_8c_ba7f16a9ea9f6710f6a7f569848780ad}
+
+
+
+
+Definition at line 464 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-Free@{config\_\-Free}}
+\index{config\_\-Free@{config\_\-Free}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void config\_\-Free (config\_\-file\_\-t {\em config})}\label{config__parsing_8c_21ff635ca4517f5da8111d943372e423}
 
 
 config\_\-Free: Free the memory structure that store the configuration. 
 
-Definition at line 237 of file config\_\-parsing.c.
-
-References config\_\-free\_\-list(), and config\_\-struct\_\-t::syntax\_\-tree.
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_GetBlockIndexByName@{config\_\-GetBlockIndexByName}}
-\index{config_GetBlockIndexByName@{config\_\-GetBlockIndexByName}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int config\_\-Get\-Block\-Index\-By\-Name (config\_\-file\_\-t {\em config}, char $\ast$ {\em block\_\-name})}\label{config__parsing_8c_a12}
-
-
-config\_\-Get\-Block\-Index\-By\-Name: Returns the index of the block with the specified name. 
-
-Definition at line 351 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::last\_\-item\_\-index, config\_\-struct\_\-t::last\_\-item\_\-ptr, MAXSTRLEN, \_\-type\_\-block\_\-::name, \_\-type\_\-block\_\-::next, STRNCMP, config\_\-struct\_\-t::syntax\_\-tree, and type\_\-block.\index{config_parsing.c@{config\_\-parsing.c}!config_GetBlockName@{config\_\-GetBlockName}}
-\index{config_GetBlockName@{config\_\-GetBlockName}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-Get\-Block\-Name (config\_\-file\_\-t {\em config}, int {\em block\_\-no})}\label{config__parsing_8c_a13}
-
-
-config\_\-Get\-Block\-Name: Indicates the name of a block (specified with its index). 
-
-Definition at line 397 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::last\_\-item\_\-ptr, and \_\-type\_\-block\_\-::name.
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_GetErrorMsg@{config\_\-GetErrorMsg}}
-\index{config_GetErrorMsg@{config\_\-GetErrorMsg}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-Get\-Error\-Msg ()}\label{config__parsing_8c_a7}
+Definition at line 220 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetBlockByIndex@{config\_\-GetBlockByIndex}}
+\index{config\_\-GetBlockByIndex@{config\_\-GetBlockByIndex}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetBlockByIndex}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-item\_\-t config\_\-GetBlockByIndex (config\_\-file\_\-t {\em config}, \/  unsigned int {\em block\_\-no})}\label{config__parsing_8c_87362059b4e1951b3f1054e7c5a6fc9f}
 
 
 
 
-Definition at line 203 of file config\_\-parsing.c.
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_GetKeyValue@{config\_\-GetKeyValue}}
-\index{config_GetKeyValue@{config\_\-GetKeyValue}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int config\_\-Get\-Key\-Value (config\_\-file\_\-t {\em config}, int {\em block\_\-no}, int {\em key\_\-no}, char $\ast$$\ast$ {\em var\_\-name}, char $\ast$$\ast$ {\em var\_\-value})}\label{config__parsing_8c_a15}
+Definition at line 267 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetBlockName@{config\_\-GetBlockName}}
+\index{config\_\-GetBlockName@{config\_\-GetBlockName}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetBlockName}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-GetBlockName (config\_\-item\_\-t {\em block})}\label{config__parsing_8c_075c7715682347ce04b089758e7aedab}
 
 
-config\_\-Get\-Key\-Value: Retrieves a key-value peer from the block index and the key index. 
-
-Definition at line 453 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::last\_\-item\_\-ptr, \_\-type\_\-block\_\-::list\_\-def, \_\-type\_\-affect\_\-::next, type\_\-affect, \_\-type\_\-affect\_\-::varname, and \_\-type\_\-affect\_\-::varvalue.
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_GetKeyValueByName@{config\_\-GetKeyValueByName}}
-\index{config_GetKeyValueByName@{config\_\-GetKeyValueByName}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-Get\-Key\-Value\-By\-Name (config\_\-file\_\-t {\em config}, int {\em block\_\-no}, char $\ast$ {\em key\_\-name})}\label{config__parsing_8c_a16}
 
 
-config\_\-Get\-Key\-Value\-By\-Name: Returns the value of the key with the specified name. 
-
-Definition at line 504 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::last\_\-item\_\-ptr, \_\-type\_\-block\_\-::list\_\-def, MAXSTRLEN, \_\-type\_\-affect\_\-::next, STRNCMP, type\_\-affect, \_\-type\_\-affect\_\-::varname, and \_\-type\_\-affect\_\-::varvalue.\index{config_parsing.c@{config\_\-parsing.c}!config_GetNbBlocks@{config\_\-GetNbBlocks}}
-\index{config_GetNbBlocks@{config\_\-GetNbBlocks}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int config\_\-Get\-Nb\-Blocks (config\_\-file\_\-t {\em config})}\label{config__parsing_8c_a10}
+Definition at line 290 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetErrorMsg@{config\_\-GetErrorMsg}}
+\index{config\_\-GetErrorMsg@{config\_\-GetErrorMsg}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetErrorMsg}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-GetErrorMsg ()}\label{config__parsing_8c_ab9a6d7b5f77cb7b0da504e52ba61adf}
 
 
-config\_\-Get\-Nb\-Blocks: Indicates how many blocks are defined into the config file. 
-
-Definition at line 258 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::cache\_\-nb\_\-items, config\_\-struct\_\-t::last\_\-item\_\-index, config\_\-struct\_\-t::last\_\-item\_\-ptr, \_\-type\_\-block\_\-::next, config\_\-struct\_\-t::syntax\_\-tree, and type\_\-block.
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_GetNbKeys@{config\_\-GetNbKeys}}
-\index{config_GetNbKeys@{config\_\-GetNbKeys}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int config\_\-Get\-Nb\-Keys (config\_\-file\_\-t {\em config}, int {\em block\_\-no})}\label{config__parsing_8c_a14}
 
 
-config\_\-Get\-Nb\-Keys: Indicates how many peers (key-value) are defined in a block (specified with its index). 
+Definition at line 186 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetItemByIndex@{config\_\-GetItemByIndex}}
+\index{config\_\-GetItemByIndex@{config\_\-GetItemByIndex}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetItemByIndex}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-item\_\-t config\_\-GetItemByIndex (config\_\-item\_\-t {\em block}, \/  unsigned int {\em item\_\-no})}\label{config__parsing_8c_a6232f17aec5d583443924e79b536002}
 
-Definition at line 421 of file config\_\-parsing.c.
 
-References config\_\-struct\_\-t::last\_\-item\_\-ptr, \_\-type\_\-block\_\-::list\_\-def, \_\-type\_\-affect\_\-::next, and type\_\-affect.
 
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_ParseFile@{config\_\-ParseFile}}
-\index{config_ParseFile@{config\_\-ParseFile}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}config\_\-file\_\-t config\_\-Parse\-File (char $\ast$ {\em file\_\-path})}\label{config__parsing_8c_a6}
+
+Definition at line 330 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetItemByName@{config\_\-GetItemByName}}
+\index{config\_\-GetItemByName@{config\_\-GetItemByName}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetItemByName}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-item\_\-t config\_\-GetItemByName (config\_\-item\_\-t {\em block}, \/  const char $\ast$ {\em name})}\label{config__parsing_8c_dac5bbcc24cd2a61cc5b5490b2db24f9}
+
+
+
+
+Definition at line 482 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetKeyValue@{config\_\-GetKeyValue}}
+\index{config\_\-GetKeyValue@{config\_\-GetKeyValue}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetKeyValue}]{\setlength{\rightskip}{0pt plus 5cm}int config\_\-GetKeyValue (config\_\-item\_\-t {\em item}, \/  char $\ast$$\ast$ {\em var\_\-name}, \/  char $\ast$$\ast$ {\em var\_\-value})}\label{config__parsing_8c_ff2105a8be08ca4687d93ae8f1db2fde}
+
+
+
+
+Definition at line 368 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetKeyValueByName@{config\_\-GetKeyValueByName}}
+\index{config\_\-GetKeyValueByName@{config\_\-GetKeyValueByName}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetKeyValueByName}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ config\_\-GetKeyValueByName (config\_\-item\_\-t {\em block}, \/  const char $\ast$ {\em key\_\-name})}\label{config__parsing_8c_d6f35ab17c0c80a1a63d1f495db136fd}
+
+
+
+
+Definition at line 539 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetNbBlocks@{config\_\-GetNbBlocks}}
+\index{config\_\-GetNbBlocks@{config\_\-GetNbBlocks}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetNbBlocks}]{\setlength{\rightskip}{0pt plus 5cm}int config\_\-GetNbBlocks (config\_\-file\_\-t {\em config})}\label{config__parsing_8c_1ad32491496feb6301ee1f4e8d9b72a0}
+
+
+config\_\-GetNbBlocks: Indicates how many blocks are defined into the config file. 
+
+Definition at line 241 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-GetNbItems@{config\_\-GetNbItems}}
+\index{config\_\-GetNbItems@{config\_\-GetNbItems}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-GetNbItems}]{\setlength{\rightskip}{0pt plus 5cm}int config\_\-GetNbItems (config\_\-item\_\-t {\em block})}\label{config__parsing_8c_098e7a2614baf20bb96f612c3d7b8d69}
+
+
+
+
+Definition at line 302 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-ItemType@{config\_\-ItemType}}
+\index{config\_\-ItemType@{config\_\-ItemType}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-ItemType}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-item\_\-type config\_\-ItemType (config\_\-item\_\-t {\em item})}\label{config__parsing_8c_447e838f4a3252ddabd4dc0be3bb6cdb}
+
+
+
+
+Definition at line 354 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-ParseFile@{config\_\-ParseFile}}
+\index{config\_\-ParseFile@{config\_\-ParseFile}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-ParseFile}]{\setlength{\rightskip}{0pt plus 5cm}config\_\-file\_\-t config\_\-ParseFile (char $\ast$ {\em file\_\-path})}\label{config__parsing_8c_27122b19350d87c1c46d4c3630a80826}
+
+
 
 
 \begin{Desc}
-\item[{\bf Todo}]: yyparse fait exit en cas d'erreur. Remedier au probleme.\end{Desc}
+\item[{\bf Todo}]: ganesha\_\-yyparse fait exit en cas d'erreur. Remedier au probleme. \end{Desc}
 
 
-Definition at line 136 of file config\_\-parsing.c.
-
-References config\_\-struct\_\-t::cache\_\-nb\_\-items, extern\_\-errormsg, config\_\-struct\_\-t::last\_\-item\_\-index, config\_\-struct\_\-t::last\_\-item\_\-ptr, config\_\-struct\_\-t::syntax\_\-tree, yyin, and yyparse().
-
-Referenced by main().\index{config_parsing.c@{config\_\-parsing.c}!config_Print@{config\_\-Print}}
-\index{config_Print@{config\_\-Print}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void config\_\-Print (FILE $\ast$ {\em output}, config\_\-file\_\-t {\em config})}\label{config__parsing_8c_a8}
+Definition at line 116 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!config\_\-Print@{config\_\-Print}}
+\index{config\_\-Print@{config\_\-Print}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{config\_\-Print}]{\setlength{\rightskip}{0pt plus 5cm}void config\_\-Print (FILE $\ast$ {\em output}, \/  config\_\-file\_\-t {\em config})}\label{config__parsing_8c_ff7eca609d048b1c63fb5dbe460cbff9}
 
 
 config\_\-Print: Print the content of the syntax tree to a file. 
 
-Definition at line 217 of file config\_\-parsing.c.
-
-References config\_\-print\_\-list().\index{config_parsing.c@{config\_\-parsing.c}!yyparse@{yyparse}}
-\index{yyparse@{yyparse}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int yyparse ()}\label{config__parsing_8c_a5}
+Definition at line 200 of file config\_\-parsing.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!ganesha\_\-yy\_\-set\_\-current\_\-file@{ganesha\_\-yy\_\-set\_\-current\_\-file}}
+\index{ganesha\_\-yy\_\-set\_\-current\_\-file@{ganesha\_\-yy\_\-set\_\-current\_\-file}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{ganesha\_\-yy\_\-set\_\-current\_\-file}]{\setlength{\rightskip}{0pt plus 5cm}void ganesha\_\-yy\_\-set\_\-current\_\-file (char $\ast$ {\em file})}\label{config__parsing_8c_241dd44a224c242b3bc3fd52122d2537}
 
 
 
+
+Definition at line 2265 of file conf\_\-lex.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!ganesha\_\-yyparse@{ganesha\_\-yyparse}}
+\index{ganesha\_\-yyparse@{ganesha\_\-yyparse}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{ganesha\_\-yyparse}]{\setlength{\rightskip}{0pt plus 5cm}int ganesha\_\-yyparse ()}\label{config__parsing_8c_4edadf1190387c8f45d970067dcd41a9}
+
+
+\index{config\_\-parsing.c@{config\_\-parsing.c}!ganesha\_\-yyreset@{ganesha\_\-yyreset}}
+\index{ganesha\_\-yyreset@{ganesha\_\-yyreset}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{ganesha\_\-yyreset}]{\setlength{\rightskip}{0pt plus 5cm}void ganesha\_\-yyreset (void)}\label{config__parsing_8c_e3a69a7654fd47eec60f20f48860edd0}
+
+
+
+
+Definition at line 2260 of file conf\_\-lex.c.
 
 \subsection{Variable Documentation}
-\index{config_parsing.c@{config\_\-parsing.c}!extern_errormsg@{extern\_\-errormsg}}
-\index{extern_errormsg@{extern\_\-errormsg}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}char {\bf extern\_\-errormsg}[1024]}\label{config__parsing_8c_a4}
+\index{config\_\-parsing.c@{config\_\-parsing.c}!extern\_\-errormsg@{extern\_\-errormsg}}
+\index{extern\_\-errormsg@{extern\_\-errormsg}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{extern\_\-errormsg}]{\setlength{\rightskip}{0pt plus 5cm}char {\bf extern\_\-errormsg}[1024]}\label{config__parsing_8c_c80358e39707c0c4c3f489380b86e4fb}
 
 
 
 
-Definition at line 94 of file conf\_\-yacc.c.
-
-Referenced by config\_\-Parse\-File(), and yyerror().\index{config_parsing.c@{config\_\-parsing.c}!program_result@{program\_\-result}}
-\index{program_result@{program\_\-result}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-block}$\ast$ {\bf program\_\-result}}\label{config__parsing_8c_a3}
+Definition at line 125 of file conf\_\-yacc.c.\index{config\_\-parsing.c@{config\_\-parsing.c}!ganesha\_\-yyin@{ganesha\_\-yyin}}
+\index{ganesha\_\-yyin@{ganesha\_\-yyin}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{ganesha\_\-yyin}]{\setlength{\rightskip}{0pt plus 5cm}FILE$\ast$ {\bf ganesha\_\-yyin}}\label{config__parsing_8c_8ae4cb07af2045d48170185996af8c46}
 
 
+\index{config\_\-parsing.c@{config\_\-parsing.c}!program\_\-result@{program\_\-result}}
+\index{program\_\-result@{program\_\-result}!config_parsing.c@{config\_\-parsing.c}}
+\subsubsection[{program\_\-result}]{\setlength{\rightskip}{0pt plus 5cm}{\bf list\_\-items}$\ast$ {\bf program\_\-result}}\label{config__parsing_8c_538cfb02bc69bba6c1b09fd1eadbe58b}
 
 
-Definition at line 88 of file conf\_\-yacc.c.
-
-Referenced by yyparse().\index{config_parsing.c@{config\_\-parsing.c}!yyin@{yyin}}
-\index{yyin@{yyin}!config_parsing.c@{config\_\-parsing.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}FILE$\ast$ {\bf yyin}}\label{config__parsing_8c_a2}
 
 
+Definition at line 119 of file conf\_\-yacc.c.

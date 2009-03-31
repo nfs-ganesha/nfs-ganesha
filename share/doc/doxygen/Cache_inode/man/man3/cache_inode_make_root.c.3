@@ -1,8 +1,10 @@
-.TH "cache_inode_make_root.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_make_root.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_make_root.c \- Insert in the cache an entry that is the root of the FS cached. 
+cache_inode_make_root.c \- Insert in the cache an entry that is the root of the FS cached.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -17,6 +19,8 @@ cache_inode_make_root.c \- Insert in the cache an entry that is the root of the 
 \fC#include 'fsal.h'\fP
 .br
 \fC#include 'cache_inode.h'\fP
+.br
+\fC#include 'stuff_alloc.h'\fP
 .br
 \fC#include <unistd.h>\fP
 .br
@@ -42,29 +46,29 @@ Insert in the cache an entry that is the root of the FS cached.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:26 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.12 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_make_root.c\fP : Inserts in the cache an entry that is the root of the FS cached.
+\fBcache_inode_make_root.c\fP : Inserts in the cache an entry that is the root of the FS cached. 
 .PP
 Definition in file \fBcache_inode_make_root.c\fP.
 .SH "Function Documentation"
@@ -90,11 +94,7 @@ Inserts the root of a FS in the cache. This function will be called at junction 
 .PP
 
 .PP
-Definition at line 116 of file cache_inode_make_root.c.
-.PP
-References cache_inode_new_entry().
-.PP
-Referenced by main().
+Definition at line 121 of file cache_inode_make_root.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

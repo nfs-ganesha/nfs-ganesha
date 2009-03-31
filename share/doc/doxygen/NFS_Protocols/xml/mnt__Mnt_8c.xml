@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="mnt__Mnt_8c" kind="file">
     <compoundname>mnt_Mnt.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -35,6 +35,21 @@
       </node>
       <node id="70">
         <label>cache_content.h</label>
+      </node>
+      <node id="56">
+        <label>fcntl.h</label>
+      </node>
+      <node id="60">
+        <label>rpc/types.h</label>
+      </node>
+      <node id="64">
+        <label>log_functions.h</label>
+      </node>
+      <node id="76">
+        <label>nfs_proto_tools.h</label>
+      </node>
+      <node id="67">
+        <label>nfs4.h</label>
       </node>
       <node id="52">
         <label>mnt_Mnt.c</label>
@@ -88,21 +103,6 @@
         <childnode refid="76" relation="include">
         </childnode>
       </node>
-      <node id="56">
-        <label>fcntl.h</label>
-      </node>
-      <node id="60">
-        <label>rpc/types.h</label>
-      </node>
-      <node id="64">
-        <label>log_functions.h</label>
-      </node>
-      <node id="76">
-        <label>nfs_proto_tools.h</label>
-      </node>
-      <node id="67">
-        <label>nfs4.h</label>
-      </node>
       <node id="55">
         <label>pthread.h</label>
       </node>
@@ -153,7 +153,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="mnt__Mnt_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="mnt__Mnt_8c_16112d8a14079300fbcaa6a8817c3eb27" prot="public" static="no">
         <name>RES_MOUNTINFO</name>
         <initializer>pres-&gt;res_mnt3.mountres3_u.mountinfo</initializer>
         <briefdescription>
@@ -162,12 +162,26 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="300"/>
-        <referencedby refid="mnt__Mnt_8c_1a1" compoundref="mnt__Mnt_8c" startline="141" endline="324">mnt_Mnt</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="304"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="mnt__Mnt_8c_1eb8fc46586993cf210777049fca03969" prot="public" static="no" mutable="no">
+        <type>nfs_parameter_t</type>
+        <definition>nfs_parameter_t nfs_param</definition>
+        <argsstring></argsstring>
+        <name>nfs_param</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="129"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="mnt__Mnt_8c_1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="mnt__Mnt_8c_1c1e2fc50567739780ffcada6dc0a54b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt_Mnt</definition>
         <argsstring>(nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres)</argsstring>
@@ -256,10 +270,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="148" bodystart="141" bodyend="324"/>
-        <references refid="mnt__Mnt_8c_1a0">RES_MOUNTINFO</references>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="153" bodyfile="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" bodystart="146" bodyend="328"/>
       </memberdef>
-      <memberdef kind="function" id="mnt__Mnt_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="mnt__Mnt_8c_1c3bbd7e4e552bcf7af22714c6d06e98f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void mnt1_Mnt_Free</definition>
         <argsstring>(nfs_res_t *pres)</argsstring>
@@ -282,9 +295,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="336" bodystart="335" bodyend="338"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="340" bodyfile="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" bodystart="339" bodyend="342"/>
       </memberdef>
-      <memberdef kind="function" id="mnt__Mnt_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="mnt__Mnt_8c_10224a415c06ceea24974dc444fff2449" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void mnt3_Mnt_Free</definition>
         <argsstring>(nfs_res_t *pres)</argsstring>
@@ -299,19 +312,19 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="342" bodystart="341" bodyend="349"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" line="346" bodyfile="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c" bodystart="345" bodyend="353"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>MOUNTPROC_MNT for Mount protocol v1 and v3. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2006/01/18 07:29:11 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.18 </para></simplesect>
-</para></simplesect>
-<ref refid="mnt__Null_8c" kindref="compound">mnt_Null.c</ref> : MOUNTPROC_EXPORT in V1, V3.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2006/01/18 07:29:11 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.18 </para></simplesect>
+<ref refid="mnt__Null_8c" kindref="compound">mnt_Null.c</ref> : MOUNTPROC_EXPORT in V1, V3. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -392,243 +405,247 @@
 <codeline lineno="87"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="89"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="100"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="105"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="110"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141" refid="mnt__Mnt_8c_1a1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_1a1" kindref="member">mnt_Mnt</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/>*<sp/>pclient<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN/OUT<sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN/OUT<sp/><sp/>*/</highlight><highlight class="normal">,<sp/></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>preq<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>OUT<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"><sp/>)<sp/></highlight></codeline>
-<codeline lineno="148"><highlight class="normal">{<sp/><sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/>exportPath[MNTPATHLEN<sp/>+<sp/>1];</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/>exportlist_t<sp/>*<sp/>p_current_item;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/>*<sp/>pfsal_handle<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="91"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="104"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="114"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_parameter_t<sp/><ref refid="mnt__Mnt_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref><sp/>;</highlight></codeline>
+<codeline lineno="130"><highlight class="normal"></highlight></codeline>
+<codeline lineno="146" refid="mnt__Mnt_8c_1c1e2fc50567739780ffcada6dc0a54b1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_1c1e2fc50567739780ffcada6dc0a54b1" kindref="member">mnt_Mnt</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/>*<sp/>pclient<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN/OUT<sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN/OUT<sp/><sp/>*/</highlight><highlight class="normal">,<sp/></highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>preq<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>IN<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>OUT<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"><sp/>)<sp/></highlight></codeline>
+<codeline lineno="153"><highlight class="normal">{<sp/><sp/></highlight></codeline>
 <codeline lineno="154"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>auth_flavor[NB_AUTH_FLAVOR]<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>index_auth<sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i<sp/>=<sp/>0<sp/><sp/>;</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/>cache_inode_status_t<sp/><sp/><sp/><sp/><sp/><sp/>cache_status<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/>cache_inode_fsal_data_t<sp/><sp/><sp/>fsdata<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exported_path[MAXPATHLEN]<sp/>;</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/>fsal_mdsize_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strsize<sp/>=<sp/>MNTPATHLEN;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>hostname<sp/>;</highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;REQUEST<sp/>PROCESSING:<sp/>Calling<sp/>mnt_Mnt,<sp/>version<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>preq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Paranoid<sp/>command<sp/>to<sp/>clean<sp/>the<sp/>result<sp/>struct.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/>memset(<sp/>pres,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(nfs_res_t)<sp/>);</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"></highlight></codeline>
-<codeline lineno="171"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DETECT_MEMCORRUPT</highlight></codeline>
-<codeline lineno="172"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!BuddyCheck(<sp/>parg-&gt;arg_mnt<sp/>))</highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(<sp/>stderr,<sp/></highlight><highlight class="stringliteral">&quot;Memory<sp/>corruption<sp/>in<sp/>mnt_Mnt.<sp/>arg_mnt<sp/>=<sp/>%p\n&quot;</highlight><highlight class="normal">,<sp/>parg-&gt;arg_mnt<sp/>);</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/>}<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="176"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/></highlight></codeline>
-<codeline lineno="177"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>parg-&gt;arg_mnt<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;/!\\<sp/>|<sp/>MOUNT:<sp/>NULL<sp/>path<sp/>passed<sp/>as<sp/>Mount<sp/>argument<sp/>!!!&quot;</highlight><highlight class="normal">)<sp/>;<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Retrieving<sp/>arguments<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/>strncpy(<sp/>exportPath,<sp/>parg-&gt;arg_mnt,<sp/>MNTPATHLEN<sp/>+<sp/>1<sp/>);</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="187"><highlight class="normal"></highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Asked<sp/>path=%s&quot;</highlight><highlight class="normal">,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/>exportPath[MNTPATHLEN<sp/>+<sp/>1];</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/>exportlist_t<sp/>*<sp/>p_current_item;</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/>fsal_handle_t<sp/><sp/><sp/><sp/><sp/>*<sp/>pfsal_handle<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>auth_flavor[NB_AUTH_FLAVOR]<sp/>;</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>index_auth<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i<sp/>=<sp/>0<sp/><sp/>;</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exported_path[MAXPATHLEN]<sp/>;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>hostname<sp/>;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;REQUEST<sp/>PROCESSING:<sp/>Calling<sp/>mnt_Mnt,<sp/>version<sp/>%u&quot;</highlight><highlight class="normal">,<sp/>preq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Paranoid<sp/>command<sp/>to<sp/>clean<sp/>the<sp/>result<sp/>struct.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/>memset(<sp/>pres,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(nfs_res_t)<sp/>);</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DETECT_MEMCORRUPT</highlight></codeline>
+<codeline lineno="173"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!BuddyCheck(<sp/>parg-&gt;arg_mnt<sp/>))</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(<sp/>stderr,<sp/></highlight><highlight class="stringliteral">&quot;Memory<sp/>corruption<sp/>in<sp/>mnt_Mnt.<sp/>arg_mnt<sp/>=<sp/>%p\n&quot;</highlight><highlight class="normal">,<sp/>parg-&gt;arg_mnt<sp/>);</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/>}<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="177"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/></highlight></codeline>
+<codeline lineno="178"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>parg-&gt;arg_mnt<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/>{</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;/!\\<sp/>|<sp/>MOUNT:<sp/>NULL<sp/>path<sp/>passed<sp/>as<sp/>Mount<sp/>argument<sp/>!!!&quot;</highlight><highlight class="normal">)<sp/>;<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Retrieving<sp/>arguments<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/>strncpy(<sp/>exportPath,<sp/>parg-&gt;arg_mnt,<sp/>MNTPATHLEN<sp/>+<sp/>1<sp/>);</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="188"><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_FULL_DEBUG,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Asked<sp/>path=%s&quot;</highlight><highlight class="normal">,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="190"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
-<codeline lineno="192"><highlight class="comment"><sp/><sp/><sp/>*<sp/>Find<sp/>the<sp/>export<sp/>for<sp/>the<sp/>dirname<sp/>(using<sp/>as<sp/>well<sp/>Path<sp/>or<sp/>Tag<sp/>)<sp/></highlight></codeline>
-<codeline lineno="193"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/><sp/>p_current_item<sp/>=<sp/>pexport<sp/>;<sp/>p_current_item<sp/>!=<sp/>NULL<sp/>;<sp/>p_current_item<sp/>=<sp/>p_current_item-&gt;next<sp/>)</highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/><sp/></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>exportPath[0]<sp/>!=<sp/></highlight><highlight class="charliteral">&apos;/&apos;</highlight><highlight class="normal">)</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>input<sp/>value<sp/>may<sp/>be<sp/>a<sp/>&quot;Tag&quot;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!strcmp(<sp/>exportPath,<sp/>p_current_item-&gt;FS_tag<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strncpy(<sp/>exported_path,<sp/>p_current_item-&gt;fullpath,<sp/>MAXPATHLEN<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!strncmp(p_current_item-&gt;fullpath,<sp/>exportPath,<sp/>MAXPATHLEN<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strncpy(<sp/>exported_path,<sp/>p_current_item-&gt;fullpath,<sp/>MAXPATHLEN<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>p_current_item<sp/>is<sp/>not<sp/>null,</highlight></codeline>
-<codeline lineno="216"><highlight class="comment"><sp/><sp/><sp/>*<sp/>it<sp/>points<sp/>to<sp/>the<sp/>asked<sp/>export<sp/>entry.</highlight></codeline>
-<codeline lineno="217"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!p_current_item<sp/>)</highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Export<sp/>entry<sp/>%s<sp/>not<sp/>found&quot;</highlight><highlight class="normal">,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>entry<sp/>not<sp/>found.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo<sp/>:<sp/>not<sp/>MNT3ERR_NOENT<sp/>=&gt;<sp/>ok<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>)</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFSERR_ACCES<sp/>;</highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_ACCES;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Export<sp/>entry<sp/>Path=%s<sp/>Tag=%s<sp/>matches<sp/>%s,<sp/>export_id=%u&quot;</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exported_path,<sp/>p_current_item-&gt;FS_tag,<sp/>exportPath,<sp/>p_current_item-&gt;id<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo<sp/>:<sp/>check<sp/>wether<sp/>mount<sp/>is<sp/>allowed.</highlight></codeline>
-<codeline lineno="241"><highlight class="comment"><sp/><sp/><sp/>*<sp/><sp/>to<sp/>do<sp/>so,<sp/>retrieve<sp/>client<sp/>identifier<sp/>from<sp/>the<sp/>credential.</highlight></codeline>
-<codeline lineno="242"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
-<codeline lineno="245"><highlight class="comment"><sp/><sp/><sp/>*<sp/>retrieve<sp/>the<sp/>associated<sp/>NFS<sp/>handle</highlight></codeline>
-<codeline lineno="246"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="247"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>FSAL<sp/>HANDLE<sp/>(for<sp/>lighter<sp/>code)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/>pfsal_handle<sp/>=<sp/><sp/>p_current_item-&gt;proot_handle<sp/><sp/>;</highlight></codeline>
-<codeline lineno="250"><highlight class="normal"></highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>convert<sp/>the<sp/>fsal_handle<sp/>to<sp/>a<sp/>file<sp/>handle<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>)</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs2_FSALToFhandle(<sp/>&amp;(pres-&gt;res_mnt1.fhstatus2_u.directory),<sp/></highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pfsal_handle,<sp/>p_current_item<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFSERR_IO<sp/>;</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFS_OK<sp/>;</highlight></codeline>
-<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val<sp/>=<sp/>Mem_Alloc(<sp/>NFS3_FHSIZE<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_INVAL<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>BUGAZOMEU:<sp/>pas<sp/>forcement<sp/>le<sp/>meilleur<sp/>code<sp/>retour<sp/>...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs3_FSALToFhandle(<sp/>(nfs_fh3<sp/>*)&amp;(pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle<sp/>),<sp/></highlight></codeline>
-<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pfsal_handle,<sp/>p_current_item<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_INVAL<sp/>;</highlight></codeline>
-<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3_OK<sp/>;</highlight></codeline>
-<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Auth<sp/>et<sp/>nfs_SetPostOpAttr<sp/>ici<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"></highlight></codeline>
-<codeline lineno="287"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Return<sp/>the<sp/>supported<sp/>authentication<sp/>flavor<sp/>in<sp/>V3<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="288"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>==<sp/>MOUNT_V3<sp/>)</highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_AUTH_NONE<sp/>)<sp/>auth_flavor[index_auth++]<sp/>=<sp/>AUTH_NONE<sp/>;</highlight></codeline>
-<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_AUTH_UNIX<sp/>)<sp/>auth_flavor[index_auth++]<sp/>=<sp/>AUTH_UNIX<sp/>;</highlight></codeline>
-<codeline lineno="292"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_RPCSEC_GSS_64_INSTALLED</highlight></codeline>
-<codeline lineno="293"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_RPCSEC_GSS_NONE<sp/>)<sp/>||</highlight></codeline>
-<codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_RPCSEC_GSS_INTG<sp/>)<sp/>||</highlight></codeline>
-<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_RPCSEC_GSS_PRIV<sp/>)<sp/>)<sp/>auth_flavor[index_auth++]<sp/>=<sp/>RPCSEC_GSS<sp/>;</highlight></codeline>
-<codeline lineno="296"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="297"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Entry<sp/>support<sp/>%d<sp/>different<sp/>flavours&quot;</highlight><highlight class="normal">,<sp/>index_auth<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="299"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="300"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>RES_MOUNTINFO<sp/>pres-&gt;res_mnt3.mountres3_u.mountinfo</highlight></codeline>
-<codeline lineno="301"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="mnt__Mnt_8c_1a0" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_val<sp/>=<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">*)Mem_Alloc(<sp/>index_auth<sp/>*<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>)<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="302"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP<sp/>;</highlight></codeline>
-<codeline lineno="303"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="mnt__Mnt_8c_1a0" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_len<sp/>=<sp/>index_auth<sp/>;</highlight></codeline>
-<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>index_auth<sp/>;<sp/>i++<sp/>)</highlight></codeline>
-<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="mnt__Mnt_8c_1a0" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_val[i]<sp/>=<sp/>auth_flavor[i]<sp/>;</highlight></codeline>
-<codeline lineno="307"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="308"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="309"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>the<sp/>client<sp/>to<sp/>the<sp/>mount<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="310"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo:<sp/>BUGAZOMEU;<sp/>seul<sp/>AUTHUNIX<sp/>est<sp/>supporte<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="311"><highlight class="normal"><sp/><sp/>hostname=<sp/>((</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">authunix_parms<sp/>*)(preq-&gt;rq_clntcred))-&gt;aup_machname<sp/>;</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="193"><highlight class="comment"><sp/><sp/><sp/>*<sp/>Find<sp/>the<sp/>export<sp/>for<sp/>the<sp/>dirname<sp/>(using<sp/>as<sp/>well<sp/>Path<sp/>or<sp/>Tag<sp/>)<sp/></highlight></codeline>
+<codeline lineno="194"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/><sp/>p_current_item<sp/>=<sp/>pexport<sp/>;<sp/>p_current_item<sp/>!=<sp/>NULL<sp/>;<sp/>p_current_item<sp/>=<sp/>p_current_item-&gt;next<sp/>)</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/><sp/></highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>exportPath[0]<sp/>!=<sp/></highlight><highlight class="charliteral">&apos;/&apos;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>input<sp/>value<sp/>may<sp/>be<sp/>a<sp/>&quot;Tag&quot;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!strcmp(<sp/>exportPath,<sp/>p_current_item-&gt;FS_tag<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strncpy(<sp/>exported_path,<sp/>p_current_item-&gt;fullpath,<sp/>MAXPATHLEN<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!strncmp(p_current_item-&gt;fullpath,<sp/>exportPath,<sp/>MAXPATHLEN<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strncpy(<sp/>exported_path,<sp/>p_current_item-&gt;fullpath,<sp/>MAXPATHLEN<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>p_current_item<sp/>is<sp/>not<sp/>null,</highlight></codeline>
+<codeline lineno="217"><highlight class="comment"><sp/><sp/><sp/>*<sp/>it<sp/>points<sp/>to<sp/>the<sp/>asked<sp/>export<sp/>entry.</highlight></codeline>
+<codeline lineno="218"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>!p_current_item<sp/>)</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_CRIT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Export<sp/>entry<sp/>%s<sp/>not<sp/>found&quot;</highlight><highlight class="normal">,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>entry<sp/>not<sp/>found.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo<sp/>:<sp/>not<sp/>MNT3ERR_NOENT<sp/>=&gt;<sp/>ok<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>)</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFSERR_ACCES<sp/>;</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_ACCES;</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Export<sp/>entry<sp/>Path=%s<sp/>Tag=%s<sp/>matches<sp/>%s,<sp/>export_id=%u&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exported_path,<sp/>p_current_item-&gt;FS_tag,<sp/>exportPath,<sp/>p_current_item-&gt;id<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo<sp/>:<sp/>check<sp/>wether<sp/>mount<sp/>is<sp/>allowed.</highlight></codeline>
+<codeline lineno="242"><highlight class="comment"><sp/><sp/><sp/>*<sp/><sp/>to<sp/>do<sp/>so,<sp/>retrieve<sp/>client<sp/>identifier<sp/>from<sp/>the<sp/>credential.</highlight></codeline>
+<codeline lineno="243"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="246"><highlight class="comment"><sp/><sp/><sp/>*<sp/>retrieve<sp/>the<sp/>associated<sp/>NFS<sp/>handle</highlight></codeline>
+<codeline lineno="247"><highlight class="comment"><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>FSAL<sp/>HANDLE<sp/>(for<sp/>lighter<sp/>code)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/>pfsal_handle<sp/>=<sp/><sp/>p_current_item-&gt;proot_handle<sp/><sp/>;</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"></highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>convert<sp/>the<sp/>fsal_handle<sp/>to<sp/>a<sp/>file<sp/>handle<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>)</highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs2_FSALToFhandle(<sp/>&amp;(pres-&gt;res_mnt1.fhstatus2_u.directory),<sp/></highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pfsal_handle,<sp/>p_current_item<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFSERR_IO<sp/>;</highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt1.status<sp/>=<sp/>NFS_OK<sp/>;</highlight></codeline>
+<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val<sp/>=<sp/>Mem_Alloc(<sp/>NFS3_FHSIZE<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_INVAL<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>BUGAZOMEU:<sp/>pas<sp/>forcement<sp/>le<sp/>meilleur<sp/>code<sp/>retour<sp/>...<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs3_FSALToFhandle(<sp/>(nfs_fh3<sp/>*)&amp;(pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle<sp/>),<sp/></highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pfsal_handle,<sp/>p_current_item<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3ERR_INVAL<sp/>;</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_mnt3.fhs_status<sp/>=<sp/>MNT3_OK<sp/>;</highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Auth<sp/>et<sp/>nfs_SetPostOpAttr<sp/>ici<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="287"><highlight class="normal"></highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Return<sp/>the<sp/>supported<sp/>authentication<sp/>flavor<sp/>in<sp/>V3<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>preq-&gt;rq_vers<sp/>==<sp/>MOUNT_V3<sp/>)</highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_AUTH_NONE<sp/>)<sp/>auth_flavor[index_auth++]<sp/>=<sp/>AUTH_NONE<sp/>;</highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>p_current_item-&gt;options<sp/>&amp;<sp/>EXPORT_OPTION_AUTH_UNIX<sp/>)<sp/>auth_flavor[index_auth++]<sp/>=<sp/>AUTH_UNIX<sp/>;</highlight></codeline>
+<codeline lineno="293"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="294"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/><ref refid="mnt__Mnt_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref>.krb5_param.active_krb5<sp/>==<sp/>TRUE<sp/>)</highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auth_flavor[index_auth++]<sp/>=<sp/><sp/>MNT_RPC_GSS_NONE<sp/>;</highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auth_flavor[index_auth++]<sp/>=<sp/><sp/>MNT_RPC_GSS_INTEGRITY<sp/>;</highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auth_flavor[index_auth++]<sp/>=<sp/><sp/>MNT_RPC_GSS_PRIVACY<sp/>;</highlight></codeline>
+<codeline lineno="299"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="300"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="301"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="302"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>Entry<sp/>support<sp/>%d<sp/>different<sp/>flavours&quot;</highlight><highlight class="normal">,<sp/>index_auth<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="304"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>RES_MOUNTINFO<sp/>pres-&gt;res_mnt3.mountres3_u.mountinfo</highlight></codeline>
+<codeline lineno="305"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="mnt__Mnt_8c_16112d8a14079300fbcaa6a8817c3eb27" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_val<sp/>=<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">*)Mem_Alloc(<sp/>index_auth<sp/>*<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>)<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP<sp/>;</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="mnt__Mnt_8c_16112d8a14079300fbcaa6a8817c3eb27" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_len<sp/>=<sp/>index_auth<sp/>;</highlight></codeline>
+<codeline lineno="309"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(<sp/>i<sp/>=<sp/>0<sp/>;<sp/>i<sp/>&lt;<sp/>index_auth<sp/>;<sp/>i++<sp/>)</highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="mnt__Mnt_8c_16112d8a14079300fbcaa6a8817c3eb27" kindref="member">RES_MOUNTINFO</ref>.auth_flavors.auth_flavors_val[i]<sp/>=<sp/>auth_flavor[i]<sp/>;</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="312"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="313"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="314"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs_Add_MountList_Entry(<sp/>hostname,<sp/>exportPath<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="315"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="316"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/><sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>/!\\<sp/>|<sp/>Error<sp/>when<sp/>adding<sp/>entry<sp/>(%s,%s)<sp/>to<sp/>the<sp/>mount<sp/>list&quot;</highlight><highlight class="normal">,<sp/>hostname,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="317"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>/!\\<sp/>|<sp/>Mount<sp/>command<sp/>will<sp/>be<sp/>successfull<sp/>anyway&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="318"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="319"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>mount<sp/>list<sp/>entry<sp/>(%s,%s)<sp/>added&quot;</highlight><highlight class="normal">,<sp/><sp/>hostname,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
-<codeline lineno="323"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="324"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="325"><highlight class="normal"></highlight></codeline>
-<codeline lineno="335" refid="mnt__Mnt_8c_1a2" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_1a2" kindref="member">mnt1_Mnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
-<codeline lineno="336"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="337"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="338"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="339"><highlight class="normal"></highlight></codeline>
-<codeline lineno="340"><highlight class="normal"></highlight></codeline>
-<codeline lineno="341" refid="mnt__Mnt_8c_1a3" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_1a3" kindref="member">mnt3_Mnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
-<codeline lineno="342"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="343"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pres-&gt;res_mnt3.fhs_status<sp/>==<sp/>MNT3_OK<sp/>)</highlight></codeline>
-<codeline lineno="344"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="345"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>Mem_Free(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)pres-&gt;res_mnt3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val)<sp/>;</highlight></codeline>
-<codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>Mem_Free(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val)<sp/>;</highlight></codeline>
-<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="348"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="349"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="313"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>the<sp/>client<sp/>to<sp/>the<sp/>mount<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="314"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>@todo:<sp/>BUGAZOMEU;<sp/>seul<sp/>AUTHUNIX<sp/>est<sp/>supporte<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="315"><highlight class="normal"><sp/><sp/>hostname=<sp/>((</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">authunix_parms<sp/>*)(preq-&gt;rq_clntcred))-&gt;aup_machname<sp/>;</highlight></codeline>
+<codeline lineno="316"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="317"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="318"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!nfs_Add_MountList_Entry(<sp/>hostname,<sp/>exportPath<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="319"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/><sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>/!\\<sp/>|<sp/>Error<sp/>when<sp/>adding<sp/>entry<sp/>(%s,%s)<sp/>to<sp/>the<sp/>mount<sp/>list&quot;</highlight><highlight class="normal">,<sp/>hostname,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>/!\\<sp/>|<sp/>Mount<sp/>command<sp/>will<sp/>be<sp/>successfull<sp/>anyway&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="323"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/>DisplayLogJdLevel(<sp/>pclient-&gt;log_outputs,<sp/>NIV_EVENT,<sp/></highlight><highlight class="stringliteral">&quot;MOUNT:<sp/>mount<sp/>list<sp/>entry<sp/>(%s,%s)<sp/>added&quot;</highlight><highlight class="normal">,<sp/><sp/>hostname,<sp/>exportPath<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="328"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="329"><highlight class="normal"></highlight></codeline>
+<codeline lineno="339" refid="mnt__Mnt_8c_1c3bbd7e4e552bcf7af22714c6d06e98f" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_1c3bbd7e4e552bcf7af22714c6d06e98f" kindref="member">mnt1_Mnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
+<codeline lineno="340"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="342"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="343"><highlight class="normal"></highlight></codeline>
+<codeline lineno="344"><highlight class="normal"></highlight></codeline>
+<codeline lineno="345" refid="mnt__Mnt_8c_10224a415c06ceea24974dc444fff2449" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="mnt__Mnt_8c_10224a415c06ceea24974dc444fff2449" kindref="member">mnt3_Mnt_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
+<codeline lineno="346"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pres-&gt;res_mnt3.fhs_status<sp/>==<sp/>MNT3_OK<sp/>)</highlight></codeline>
+<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="349"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>Mem_Free(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)pres-&gt;res_mnt3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val)<sp/>;</highlight></codeline>
+<codeline lineno="350"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>Mem_Free(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)pres-&gt;res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val)<sp/>;</highlight></codeline>
+<codeline lineno="351"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="352"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="353"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>mnt_Mnt_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/mnt_Mnt.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/mnt_Mnt.c"/>
   </compounddef>
 </doxygen>

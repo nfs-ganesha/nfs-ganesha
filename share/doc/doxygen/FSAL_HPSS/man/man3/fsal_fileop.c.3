@@ -1,8 +1,10 @@
-.TH "fsal_fileop.c" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_fileop.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_fileop.c \- Files operations. 
+fsal_fileop.c \- Files operations.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -46,26 +48,26 @@ Files operations.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/15 14:26:10 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.11 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.11 
 .RE
 .PP
 
@@ -238,16 +240,21 @@ ERR_FSAL_NOT_OPENED (tried to read in a non-opened fsal_file_t)
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
-Other error codes can be returned : ERR_FSAL_IO, ...
+Other error codes can be returned : ERR_FSAL_IO, ... 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: manage fsal_size_t to size_t convertion 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: manage fsal_size_t to size_t convertion 
-.PP
-: manage ssize_t to fsal_size_t convertion
+: manage ssize_t to fsal_size_t convertion 
 .RE
 .PP
 
@@ -286,16 +293,21 @@ ERR_FSAL_NOT_OPENED (tried to write in a non-opened fsal_file_t)
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
-Other error codes can be returned : ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
+Other error codes can be returned : ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT... 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: manage fsal_size_t to size_t convertion 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: manage fsal_size_t to size_t convertion 
-.PP
-: manage ssize_t to fsal_size_t convertion
+: manage ssize_t to fsal_size_t convertion 
 .RE
 .PP
 

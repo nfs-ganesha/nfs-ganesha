@@ -1,8 +1,10 @@
-.TH "cache_inode_lookupp.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_lookupp.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_inode_lookupp.c \- Perform lookup through the cache to get the parent entry for a directory. 
+cache_inode_lookupp.c \- Perform lookup through the cache to get the parent entry for a directory.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -50,29 +52,29 @@ Perform lookup through the cache to get the parent entry for a directory.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:26 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.5 
 .RE
 .PP
-.RE
-.PP
-\fBcache_inode_lookupp.c\fP : Perform lookup through the cache to get the parent entry for a directory.
+\fBcache_inode_lookupp.c\fP : Perform lookup through the cache to get the parent entry for a directory. 
 .PP
 Definition in file \fBcache_inode_lookupp.c\fP.
 .SH "Function Documentation"
@@ -107,9 +109,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 251 of file cache_inode_lookupp.c.
-.PP
-References cache_inode_lookupp_sw().
+Definition at line 255 of file cache_inode_lookupp.c.
 .SS "cache_entry_t* cache_inode_lookupp_no_mutex (cache_entry_t * pentry, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_lookupp_no_mutex: looks up (and caches) the parent directory for a directory. No mutex management
@@ -140,11 +140,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 281 of file cache_inode_lookupp.c.
-.PP
-References cache_inode_lookupp_sw().
-.PP
-Referenced by cache_inode_lookup_sw().
+Definition at line 285 of file cache_inode_lookupp.c.
 .SS "cache_entry_t* cache_inode_lookupp_sw (cache_entry_t * pentry, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, cache_inode_status_t * pstatus, int use_mutex)"
 .PP
 cache_inode_lookupp_sw: looks up (and caches) the parent directory for a directory. A switches tells is mutex are use.
@@ -177,11 +173,7 @@ CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
 .PP
 
 .PP
-Definition at line 122 of file cache_inode_lookupp.c.
-.PP
-References cache_inode_error_convert(), cache_inode_get(), cache_inode_kill_entry(), cache_inode_renew_entry(), and cache_inode_valid().
-.PP
-Referenced by cache_inode_lookupp(), and cache_inode_lookupp_no_mutex().
+Definition at line 126 of file cache_inode_lookupp.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

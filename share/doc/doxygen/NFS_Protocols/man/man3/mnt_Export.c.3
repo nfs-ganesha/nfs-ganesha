@@ -1,8 +1,10 @@
-.TH "mnt_Export.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "mnt_Export.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-mnt_Export.c \- MOUNTPROC_EXPORT for Mount protocol v1 and v3. 
+mnt_Export.c \- MOUNTPROC_EXPORT for Mount protocol v1 and v3.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -82,38 +84,38 @@ MOUNTPROC_EXPORT for Mount protocol v1 and v3.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/18 17:01:40 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.19 
 .RE
 .PP
-.RE
-.PP
 \fBmnt_Null.c\fP : MOUNTPROC_EXPORT in V1, V3.
 .PP
-Exporting client hosts and networks OK.
+Exporting client hosts and networks OK. 
 .PP
 Definition in file \fBmnt_Export.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define Free(a)   Mem_Free( a )"
 .PP
-Definition at line 133 of file mnt_Export.c.
+Definition at line 137 of file mnt_Export.c.
 .SH "Function Documentation"
 .PP 
 .SS "int mnt_Export (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
@@ -141,9 +143,7 @@ The MOUNT proc null function, for all versions.
 .PP
 
 .PP
-Definition at line 150 of file mnt_Export.c.
-.PP
-Referenced by test_mnt_Export().
+Definition at line 154 of file mnt_Export.c.
 .SS "void mnt_Export_Free (nfs_res_t * pres)"
 .PP
 mnt_Export_Free: Frees the result structure allocated for mnt_Export.
@@ -152,13 +152,14 @@ Frees the result structure allocated for mnt_Dump.
 .PP
 \fBParameters:\fP
 .RS 4
-\fIpres\fP [INOUT] Pointer to the result structure.
+\fIpres\fP [INOUT] Pointer to the result structure. 
 .RE
 .PP
+
 .PP
 \fBTodo\fP
 .RS 4
-: BUGAZOMEU end this function
+: BUGAZOMEU end this function 
 .RE
 .PP
 

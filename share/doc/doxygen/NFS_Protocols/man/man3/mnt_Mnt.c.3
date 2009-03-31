@@ -1,8 +1,10 @@
-.TH "mnt_Mnt.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "mnt_Mnt.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-mnt_Mnt.c \- MOUNTPROC_MNT for Mount protocol v1 and v3. 
+mnt_Mnt.c \- MOUNTPROC_MNT for Mount protocol v1 and v3.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -75,42 +77,48 @@ mnt_Mnt.c \- MOUNTPROC_MNT for Mount protocol v1 and v3.
 .RI "void \fBmnt3_Mnt_Free\fP (nfs_res_t *pres)"
 .br
 .in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
+.br
+.in -1c
 .SH "Detailed Description"
 .PP 
 MOUNTPROC_MNT for Mount protocol v1 and v3. 
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/18 07:29:11 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.18 
 .RE
 .PP
-.RE
-.PP
-\fBmnt_Null.c\fP : MOUNTPROC_EXPORT in V1, V3.
+\fBmnt_Null.c\fP : MOUNTPROC_EXPORT in V1, V3. 
 .PP
 Definition in file \fBmnt_Mnt.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define RES_MOUNTINFO   pres->res_mnt3.mountres3_u.mountinfo"
 .PP
-Referenced by mnt_Mnt().
 .SH "Function Documentation"
 .PP 
 .SS "void mnt1_Mnt_Free (nfs_res_t * pres)"
@@ -126,10 +134,10 @@ Frees the result structure allocated for mnt_Mnt.
 .PP
 
 .PP
-Definition at line 335 of file mnt_Mnt.c.
+Definition at line 339 of file mnt_Mnt.c.
 .SS "void mnt3_Mnt_Free (nfs_res_t * pres)"
 .PP
-Definition at line 341 of file mnt_Mnt.c.
+Definition at line 345 of file mnt_Mnt.c.
 .SS "int mnt_Mnt (nfs_arg_t * parg, exportlist_t * pexport, fsal_op_context_t * pcontext, cache_inode_client_t * pclient, hash_table_t * ht, struct svc_req * preq, nfs_res_t * pres)"
 .PP
 mnt_Mnt: The Mount proc mount function, for all versions.
@@ -155,9 +163,11 @@ The MOUNT proc proc function, for all versions.
 .PP
 
 .PP
-Definition at line 141 of file mnt_Mnt.c.
+Definition at line 146 of file mnt_Mnt.c.
+.SH "Variable Documentation"
+.PP 
+.SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-References RES_MOUNTINFO.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

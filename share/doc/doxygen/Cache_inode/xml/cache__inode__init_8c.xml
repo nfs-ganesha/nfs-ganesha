@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="cache__inode__init_8c" kind="file">
     <compoundname>cache_inode_init.c</compoundname>
     <includes local="yes">LRU_List.h</includes>
@@ -81,7 +81,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="func">
-      <memberdef kind="function" id="cache__inode__init_8c_1a0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cache__inode__init_8c_17329579dd0f4c0bc806e77e1c095c894" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>hash_table_t *</type>
         <definition>hash_table_t* cache_inode_init</definition>
         <argsstring>(cache_inode_parameter_t param, cache_inode_status_t *pstatus)</argsstring>
@@ -116,10 +116,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_init.c" line="118" bodystart="117" bodyend="131"/>
-        <referencedby refid="test__cache__inode_8c_1a4" compoundref="test__cache__inode_8c" startline="135" endline="672">main</referencedby>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_init.c" line="123" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_init.c" bodystart="122" bodyend="136"/>
       </memberdef>
-      <memberdef kind="function" id="cache__inode__init_8c_1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="cache__inode__init_8c_162f100ea6c5e866931aa71716bd9b675" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int cache_inode_client_init</definition>
         <argsstring>(cache_inode_client_t *pclient, cache_inode_client_parameter_t param, int thread_index, void *pworker_data)</argsstring>
@@ -169,20 +168,19 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_init.c" line="151" bodystart="147" bodyend="272"/>
-        <referencedby refid="test__cache__inode_8c_1a4" compoundref="test__cache__inode_8c" startline="135" endline="672">main</referencedby>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_init.c" line="156" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_init.c" bodystart="152" bodyend="280"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Init the cache_inode. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2006/01/24 13:44:40 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.21 </para></simplesect>
-</para></simplesect>
-<ref refid="cache__inode__init_8c" kindref="compound">cache_inode_init.c</ref> : Initialization routines for the cache_inode.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2006/01/24 13:44:40 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.21 </para></simplesect>
+<ref refid="cache__inode__init_8c" kindref="compound">cache_inode_init.c</ref> : Initialization routines for the cache_inode. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -263,164 +261,172 @@
 <codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight></codeline>
-<codeline lineno="117" refid="cache__inode__init_8c_1a0" refkind="member"><highlight class="normal">hash_table_t<sp/>*<sp/><ref refid="cache__inode__init_8c_1a0" kindref="member">cache_inode_init</ref>(<sp/>cache_inode_parameter_t<sp/>param,<sp/>cache_inode_status_t<sp/>*pstatus<sp/>)</highlight></codeline>
-<codeline lineno="118"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="119"><highlight class="normal"><sp/><sp/>hash_table_t<sp/>*<sp/>ht<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"><sp/><sp/>ht<sp/>=<sp/>HashTable_Init(<sp/>param.hparam<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>ht<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="124"><highlight class="normal"><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
-<codeline lineno="125"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_INVALID_ARGUMENT<sp/>;</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">/*<sp/>_SOLARIS<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;unistd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/param.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;time.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="122" refid="cache__inode__init_8c_17329579dd0f4c0bc806e77e1c095c894" refkind="member"><highlight class="normal">hash_table_t<sp/>*<sp/><ref refid="cache__inode__init_8c_17329579dd0f4c0bc806e77e1c095c894" kindref="member">cache_inode_init</ref>(<sp/>cache_inode_parameter_t<sp/>param,<sp/>cache_inode_status_t<sp/>*pstatus<sp/>)</highlight></codeline>
+<codeline lineno="123"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/>hash_table_t<sp/>*<sp/>ht<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/>ht<sp/>=<sp/>HashTable_Init(<sp/>param.hparam<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="127"><highlight class="normal"></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;Using<sp/>write-through<sp/>metadata<sp/>cache&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="130"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>ht<sp/>;</highlight></codeline>
-<codeline lineno="131"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_init<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>ht<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_SUCCESS<sp/>;</highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>CACHE_INODE_INVALID_ARGUMENT<sp/>;</highlight></codeline>
 <codeline lineno="132"><highlight class="normal"></highlight></codeline>
-<codeline lineno="133"><highlight class="normal"></highlight></codeline>
-<codeline lineno="147" refid="cache__inode__init_8c_1a1" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cache__inode__init_8c_1a1" kindref="member">cache_inode_client_init</ref>(<sp/>cache_inode_client_t<sp/>*<sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_parameter_t<sp/>param,<sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>thread_index,<sp/></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>pworker_data<sp/>)</highlight></codeline>
-<codeline lineno="151"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/>LRU_status_t<sp/>lru_status<sp/>;</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"></highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/>pclient-&gt;log_outputs<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.log_outputs<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/>pclient-&gt;attrmask<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.attrmask<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_prealloc<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_prealloc_entry<sp/>;</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_dir_data<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_dir_data<sp/>;</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_parent<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_parent<sp/>;</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_state_v4<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_state_v4<sp/>;</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_attr<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_attr<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_link<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_link<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_dirent<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_dirent<sp/>;</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/>pclient-&gt;use_test_access<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.use_test_access<sp/>;</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/>pclient-&gt;getattr_dir_invalidation<sp/>=<sp/>param.getattr_dir_invalidation<sp/>;<sp/></highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/>pclient-&gt;call_since_last_gc<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/>pclient-&gt;time_of_last_gc<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>+<sp/>thread_index<sp/>*<sp/>20<sp/><sp/>;<sp/></highlight><highlight class="comment">/*<sp/>All<sp/>the<sp/>thread<sp/>will<sp/>not<sp/>gc<sp/>at<sp/>the<sp/>same<sp/>time<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/>pclient-&gt;pworker<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>pworker_data<sp/>;</highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/>pclient-&gt;use_cache<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.use_cache<sp/>;</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/>pclient-&gt;retention<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.retention<sp/>;</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/>pclient-&gt;max_fd_per_thread<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.max_fd_per_thread<sp/>;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="172"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="173"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="176"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
-<codeline lineno="178"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_entry,<sp/></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_prealloc,<sp/></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_entry_t,<sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_entry<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>entry<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="188"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="189"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="190"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_dir_data_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="193"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="194"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
-<codeline lineno="195"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_dir_data,<sp/></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_dir_data,<sp/></highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_dir_data_t,<sp/></highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_dir_data<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/></highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>dir<sp/>data<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="204"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="205"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="206"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="207"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_parent_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="210"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="211"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
-<codeline lineno="212"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_parent,</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_parent,</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_parent_entry_t,<sp/></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_parent<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/></highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>parent<sp/>link<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="222"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="224"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_state_v4_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="227"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="228"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
-<codeline lineno="229"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_state_v4,</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_state_v4,</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_state_v4_t,</highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_state_v4<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>state<sp/>v4<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="238"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="239"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="241"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="242"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_fsal_data_t:init&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="244"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="245"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="246"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
-<codeline lineno="247"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_key,<sp/></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_prealloc,<sp/></highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_fsal_data_t,<sp/></highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="252"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="253"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;N/A&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>endif</highlight></codeline>
-<codeline lineno="256"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_key<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>key<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="262"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/></highlight></codeline>
-<codeline lineno="263"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pclient-&gt;lru_gc<sp/>=<sp/>LRU_Init(<sp/>param.lru_param,<sp/>&amp;lru_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>lru<sp/>gc&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/><sp/>;</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="269"><highlight class="normal"></highlight></codeline>
-<codeline lineno="270"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Everything<sp/>was<sp/>ok,<sp/>return<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="271"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="272"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_client_init<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;Hash<sp/>Table<sp/>initiated&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>ht<sp/>;</highlight></codeline>
+<codeline lineno="136"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_init<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"></highlight></codeline>
+<codeline lineno="152" refid="cache__inode__init_8c_162f100ea6c5e866931aa71716bd9b675" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="cache__inode__init_8c_162f100ea6c5e866931aa71716bd9b675" kindref="member">cache_inode_client_init</ref>(<sp/>cache_inode_client_t<sp/>*<sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_parameter_t<sp/>param,<sp/></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>thread_index,<sp/></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>pworker_data<sp/>)</highlight></codeline>
+<codeline lineno="156"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/>LRU_status_t<sp/>lru_status<sp/>;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"></highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/>pclient-&gt;log_outputs<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.log_outputs<sp/>;</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/>pclient-&gt;attrmask<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.attrmask<sp/>;</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_prealloc<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_prealloc_entry<sp/>;</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_dir_data<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_dir_data<sp/>;</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_parent<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_parent<sp/>;</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/>pclient-&gt;nb_pre_state_v4<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.nb_pre_state_v4<sp/>;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_attr<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_attr<sp/>;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_link<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_link<sp/>;</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/>pclient-&gt;grace_period_dirent<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.grace_period_dirent<sp/>;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/>pclient-&gt;use_test_access<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.use_test_access<sp/>;</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/>pclient-&gt;getattr_dir_invalidation<sp/>=<sp/>param.getattr_dir_invalidation<sp/>;<sp/></highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/>pclient-&gt;pworker<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>pworker_data<sp/>;</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/>pclient-&gt;use_cache<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.use_cache<sp/>;</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/>pclient-&gt;retention<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.retention<sp/>;</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/>pclient-&gt;max_fd_per_thread<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>param.max_fd_per_thread<sp/>;</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"></highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>introducing<sp/>desynchronisation<sp/>for<sp/>GC<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/>pclient-&gt;time_of_last_gc<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>+<sp/>thread_index<sp/>*<sp/>20<sp/>;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/>pclient-&gt;call_since_last_gc<sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>thread_index<sp/>*<sp/>20;</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"></highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="180"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="181"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="183"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="184"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
+<codeline lineno="186"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_entry,<sp/></highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_prealloc,<sp/></highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_entry_t,<sp/></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_entry<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>entry<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="195"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="196"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="197"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="198"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_dir_data_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="201"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="202"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
+<codeline lineno="203"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_dir_data,<sp/></highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_dir_data,<sp/></highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_dir_data_t,<sp/></highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_dir_data<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/></highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>dir<sp/>data<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="213"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="214"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="215"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_parent_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="218"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="219"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
+<codeline lineno="220"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_parent,</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_parent,</highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_parent_entry_t,<sp/></highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_parent<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/>{<sp/></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>parent<sp/>link<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="230"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="231"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="232"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_state_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="235"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="236"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
+<codeline lineno="237"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_state_v4,</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_pre_state_v4,</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_state_t,</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_state_v4<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>state<sp/>v4<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="247"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="249"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="250"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;cache_inode_fsal_data_t:init&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="253"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"></highlight><highlight class="preprocessor">#ifndef<sp/>_NO_BLOCK_PREALLOC</highlight></codeline>
+<codeline lineno="255"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>STUFF_PREALLOC(<sp/>pclient-&gt;pool_key,<sp/></highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient-&gt;nb_prealloc,<sp/></highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_fsal_data_t,<sp/></highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="260"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="261"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;N/A&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="263"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>endif</highlight></codeline>
+<codeline lineno="264"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pclient-&gt;pool_key<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>key<sp/>pool&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;</highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="270"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/><sp/></highlight></codeline>
+<codeline lineno="271"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pclient-&gt;lru_gc<sp/>=<sp/>LRU_Init(<sp/>param.lru_param,<sp/>&amp;lru_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLogJd(<sp/>pclient-&gt;log_outputs,<sp/></highlight><highlight class="stringliteral">&quot;Error<sp/>:<sp/>can&apos;t<sp/>init<sp/>cache_inode<sp/>client<sp/>lru<sp/>gc&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/><sp/>;</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="277"><highlight class="normal"></highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Everything<sp/>was<sp/>ok,<sp/>return<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="280"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>cache_inode_client_init<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_init.c"/>
+    <location file="/export/GANESHA/src/Cache_inode/cache_inode_init.c"/>
   </compounddef>
 </doxygen>
