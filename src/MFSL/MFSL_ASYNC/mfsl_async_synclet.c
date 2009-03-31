@@ -392,6 +392,10 @@ void * mfsl_async_synclet_thread( void * Arg )
     /* Execute the async op */
     fsal_status = mfsl_async_process_async_op( pasyncopdesc ) ;
 
+    /* Now proceed with LRU gc management. First step is to increment the passcounter */
+    synclet_data[index].passcounter += 1 ;
+
+
     /* Finalize my making the LRU entry invalid so that it is garbagged later */
     P( synclet_data[index].mutex_op_lru ) ;
     if( LRU_invalidate( synclet_data[index].op_lru , pentry ) != LRU_LIST_SUCCESS )
@@ -400,23 +404,31 @@ void * mfsl_async_synclet_thread( void * Arg )
       }
     V( synclet_data[index].mutex_op_lru ) ;
 
-  /* Init synclet context */
-  if( FSAL_IS_ERROR ( MFSL_ASYNC_RefreshSyncletContext( &synclet_data[index].synclet_context, 
-  		              	                        &synclet_data[index].root_fsal_context ) ) )
-   {
-      /* Failed init */
-      DisplayLog( "MFSL Synclet context could not be initialized, exiting..." ) ;
-      exit( 1 ) ;
-   }
+    /* Init synclet context */
+    if( FSAL_IS_ERROR ( MFSL_ASYNC_RefreshSyncletContext( &synclet_data[index].synclet_context, 
+    		              	                        &synclet_data[index].root_fsal_context ) ) )
+     {
+        /* Failed init */
+        DisplayLog( "MFSL Synclet context could not be initialized, exiting..." ) ;
+        exit( 1 ) ;
+     }
 
-    /************************************************* Ne pas oublier de cleaner les invalides */         
+    if( synclet_data[index].passcounter > mfsl_param.nb_before_gc )
+     {
+        printf( "-----------> GC on op_lru\n" ) ;
+ 
+	if( LRU_gc_invalid( synclet_data[index].op_lru, NULL ) != LRU_LIST_SUCCESS )
+	  DisplayLog( "/!\\ : Could not gc on LRU list for pending asynchronous operations" ) ;
 
-  } /* while( 1 ) */
+   	synclet_data[index].passcounter = 0 ;
+     }
+ 
+    } /* while( 1 ) */
 
   
-  DisplayLog( "Terminated..." ) ;
+    DisplayLog( "Terminated..." ) ;
 
-  return NULL ;
+    return NULL ;
 } /* mfsl_async_synclet_thread */
 
 /**

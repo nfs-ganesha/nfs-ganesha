@@ -97,7 +97,19 @@
 
 #ifndef _USE_SWIG
 
-
+/**
+ *
+ * MFSAL_getattrs_check_perms : Checks authorization to perform an asynchronous getattr.
+ *
+ * Checks authorization to perform an asynchronous getattr.
+ *
+ * @param target_handle      [IN]    mfsl object to be operated on.
+ * @param pspecdata          [IN]    object's specific data
+ * @param p_context          [IN]    associated fsal context
+ * @param object_attributes  [INOUT] attributes for the objet
+ *
+ * @return always FSAL_NO_ERROR (not yet implemented 
+ */
 fsal_status_t MFSAL_getattrs_check_perms( mfsl_object_t                * filehandle,        /* IN */
                                           mfsl_object_specific_data_t  * pspecdata,         /* IN */
  					  fsal_op_context_t            * p_context,         /* IN */
@@ -114,6 +126,19 @@ fsal_status_t MFSAL_getattrs_check_perms( mfsl_object_t                * filehan
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_setattr_check_perms */
 
+/**
+ *
+ * MFSL_getattrs : performs getattr but takes care of the asynchronous logic.
+ *
+ * Performs getattr but takes care of the asynchronous logic.
+ *
+ * @param filehandle         [IN]    mfsl object related to the object
+ * @param p_context          [IN]    associated fsal context
+ * @param p_mfsl_context     [INOUT] associated mfsl context
+ * @param object_attributes  [INOUT] attributes for the object
+ *
+ * @return the same as FSAL_getattrs
+ */
 fsal_status_t MFSL_getattrs(
     mfsl_object_t         * filehandle,        /* IN */
     fsal_op_context_t     * p_context,         /* IN */

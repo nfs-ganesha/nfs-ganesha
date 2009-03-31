@@ -146,7 +146,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * MFSAL_create_check_perms : Checks authorization to perform an asynchronous setattr.
  *
- * Checks authorization to perform an asynchronous link.
+ * Checks authorization to perform an asynchronous setattr.
  *
  * @param target_handle     [IN]    mfsl object to be operated on.
  * @param p_dirname         [IN]    name of the object to be created

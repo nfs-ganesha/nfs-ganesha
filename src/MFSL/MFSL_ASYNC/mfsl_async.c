@@ -212,7 +212,7 @@ fsal_status_t mfsl_async_init_precreated_directories( fsal_op_context_t         
  * Allocate pre-created files for asynchronous create.
  *
  * @param pcontext      [INOUT] pointer to FSAL context to be used 
- * @param pmfsl_context [INOUT] pointer to MFSL context to be used
+ * @param pool_file     [INOUT] pointer to MFSL precreated entries to be created
  *
  * @return a FSAL status
  *
@@ -294,6 +294,19 @@ fsal_status_t mfsl_async_init_precreated_files( fsal_op_context_t         * pcon
  return fsal_status ;
 } /* mfsl_async_init_precreated_files */
 
+
+/**
+ * 
+ * MFSL_GetContext: Creates a MFSL context for a thead.
+ *
+ * Creates a MFSL context for a thread.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_GetContext( mfsl_context_t     * pcontext,
                                fsal_op_context_t  * pfsal_context  ) 
 { 
@@ -324,7 +337,19 @@ fsal_status_t MFSL_GetContext( mfsl_context_t     * pcontext,
 
   return status ;
 } /* MFSL_GetContext */
-  
+
+ /**
+ * 
+ * MFSL_GetSyncletContext: Creates a MFSL context for a synclet.
+ *
+ * Creates a MFSL context for a synclet.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_ASYNC_GetSyncletContext( mfsl_synclet_context_t  * pcontext,
                                             fsal_op_context_t       * pfsal_context  ) 
 {
@@ -339,6 +364,18 @@ fsal_status_t MFSL_ASYNC_GetSyncletContext( mfsl_synclet_context_t  * pcontext,
    return status;
 }
 
+/**
+ * 
+ * MFSL_ASYNC_RefreshContextDirs: Refreshes the pool of pre-allocated directories for a MFSL context.
+ *
+ * Refreshes the pool of pre-allocated directories for a MFSL conte
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_ASYNC_RefreshContextDirs( mfsl_context_t     * pcontext,
                                              fsal_op_context_t  * pfsal_context  ) 
 {
@@ -364,6 +401,20 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs( mfsl_context_t     * pcontext,
    return status;
 } /* MFSL_ASYNC_RefreshContextDirs */
 
+/**
+ * 
+ * MFSL_ASYNC_RefreshContextDirs: Refreshes the pool of pre-allocated files for a MFSL context.
+ *
+ * Refreshes the pool of pre-allocated files for a MFSL conte
+ *
+ * Creates a MFSL context for a thread.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_ASYNC_RefreshContextFiles( mfsl_context_t     * pcontext,
                                               fsal_op_context_t  * pfsal_context  ) 
 {
@@ -388,7 +439,19 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles( mfsl_context_t     * pcontext,
 
    return status;
 } /* MFSL_ASYNC_RefreshtContextFiles */
- 
+
+/**
+ * 
+ * MFSL_RefreshContext: Refreshes a MFSL context for a thead.
+ *
+ * Refreshes a MFSL context for a thread.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_RefreshContext( mfsl_context_t     * pcontext,
                                    fsal_op_context_t  * pfsal_context  ) 
 {
@@ -435,7 +498,18 @@ fsal_status_t MFSL_RefreshContext( mfsl_context_t     * pcontext,
   return status ;
 } /* MFSL_ASYNC_RefreshContext */
 
-
+/**
+ * 
+ * MFSL_ASYNC_RefreshSyncletContext: Refreshes a MFSL context for a synclet.
+ *
+ * Refreshes a MFSL context for a synclet.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ * @param pfsal_context [INOUT] pointer to FSAL context to be used
+ *
+ * @return a FSAL status
+ *
+ */
 fsal_status_t MFSL_ASYNC_RefreshSyncletContext( mfsl_synclet_context_t  * pcontext,
                                                 fsal_op_context_t       * pfsal_context  ) 
 {
