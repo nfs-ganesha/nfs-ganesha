@@ -143,14 +143,15 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
 /**
  *
- * MFSAL_link_check_perms : Checks authorization to perform an asynchronous setattr.
+ * MFSAL_mkdir_check_perms : Checks authorization to perform an asynchronous mkdir.
  *
- * Checks authorization to perform an asynchronous link.
+ * Checks authorization to perform an asynchronous mkdir.
  *
  * @param target_handle     [IN]    mfsl object to be operated on.
  * @param p_dirname         [IN]    name of the object to be created
  * @param p_context         [IN]    associated fsal context
  * @param p_mfsl_context    [INOUT] associated mfsl context
+ * @param object_attributes [IN]    object-attributes
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */

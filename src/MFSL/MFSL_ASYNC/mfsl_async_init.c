@@ -110,10 +110,18 @@ mfsl_synclet_data_t * synclet_data ;
 mfsl_parameter_t  mfsl_param ;
 
 
-/** 
- *  FSAL_Init:
- *  Initializes Filesystem abstraction layer.
+/**
+ * 
+ * MFSL_Init: Inits the MFSL layer.
+ *
+ * Inits the MFSL layer.
+ *
+ * @param init_info      [IN] pointer to the MFSL parameters
+ *
+ * @return a FSAL status
+ *
  */
+
 fsal_status_t  MFSL_Init(
     mfsl_parameter_t        * init_info         /* IN */
 )
@@ -153,6 +161,8 @@ fsal_status_t  MFSL_Init(
 
         if( ( synclet_data[i].op_lru= LRU_Init( mfsl_param.lru_param, &lru_status ) ) == NULL )
 	   MFSL_return( ERR_FSAL_INVAL, 0 ) ;
+   
+        synclet_data[i].passcounter = 0 ;
 
     } /* for */
 

@@ -152,6 +152,7 @@ typedef struct mfsl_synclet_data__
   fsal_op_context_t        root_fsal_context ;
   mfsl_synclet_context_t   synclet_context ;
   pthread_mutex_t          mutex_op_lru;
+  unsigned int             passcounter ; 
   LRU_list_t            *  op_lru ;
 } mfsl_synclet_data_t ;
 
