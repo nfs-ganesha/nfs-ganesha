@@ -125,14 +125,14 @@ unsigned long mfsl_async_hash_func( hash_parameter_t * p_hparam, hash_buffer_t *
 {
   unsigned long h = 0 ;
 #ifdef _DEBUG_HASHTABLE
-  char printbuf[512];
+  char printbuf[128];
 #endif
   mfsl_object_t * mobject = (mfsl_object_t *)(buffclef->pdata) ;
 
   h = FSAL_Handle_to_HashIndex( &mobject->handle, 0, mfsl_hparam.alphabet_length, mfsl_hparam.index_size );
     
 #ifdef _DEBUG_HASHTABLE
-  snprintHandle( printbuf, 512, &mobject->handle );
+  snprintHandle( printbuf, 128, &mobject->handle );
   printf( "hash_func key: buff =(Handle=%s), hash value=%lu\n", printbuf, h ) ;
 #endif
 
@@ -156,7 +156,7 @@ unsigned long mfsl_async_rbt_func( hash_parameter_t * p_hparam, hash_buffer_t * 
   /* A polynomial function too, but reversed, to avoid producing same value as decimal_simple_hash_func */
   unsigned long h = 0 ;
 #ifdef _DEBUG_HASHTABLE
-  char printbuf[512];
+  char printbuf[128];
 #endif
 
   mfsl_object_t * mobject = (mfsl_object_t *)(buffclef->pdata) ;
@@ -164,7 +164,7 @@ unsigned long mfsl_async_rbt_func( hash_parameter_t * p_hparam, hash_buffer_t * 
   h = FSAL_Handle_to_RBTIndex( &mobject->handle, 0 );
 
 #ifdef _DEBUG_HASHTABLE
-  snprintHandle( printbuf, 512, &mobject->handle );
+  snprintHandle( printbuf, 128, &mobject->handle );
   printf( "hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h ) ;
 #endif
   return h;
@@ -221,7 +221,7 @@ int mfsl_async_compare_key(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
           mobject1 = (mfsl_object_t *)(buff1->pdata) ;
           mobject2 = (mfsl_object_t *)(buff2->pdata) ;
 
-          rc = ( FSAL_handlecmp( &mobject1->handle, &mobject2->handle, &status) ) ? 0 : 1 ;
+          rc = FSAL_handlecmp( &mobject1->handle, &mobject2->handle, &status) ;
 
           return rc ;
         }
@@ -268,7 +268,11 @@ int mfsl_async_set_specdata( mfsl_object_t                * key,
 
   if( rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS )
      return 0 ;
-   
+  
+#ifdef _DEBUG_HASHTABLE
+  HashTable_Print( mfsl_ht ) ;
+#endif
+
   return 1 ;
 } /* mfsl_async_set_specdata */
 
@@ -278,14 +282,20 @@ int mfsl_async_get_specdata( mfsl_object_t                 * key,
   hash_buffer_t     buffkey  ;
   hash_buffer_t     buffval ;
   int               status ;
+  int               rc = 0 ;
 
   if(  key == NULL || ppvalue == NULL )
     return 0 ; 
 
+#ifdef _DEBUG_HASHTABLE
+  HashTable_Print( mfsl_ht ) ;
+#endif
+
   buffkey.pdata = (caddr_t)key ;
   buffkey.len   = sizeof( mfsl_object_t ) ;
 
-  if( HashTable_Get( mfsl_ht, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+  rc = HashTable_Get( mfsl_ht, &buffkey, &buffval ) ;
+  if( rc == HASHTABLE_SUCCESS )
     {
         *ppvalue = (mfsl_object_specific_data_t *)(buffval.pdata) ;
         status = 1 ;

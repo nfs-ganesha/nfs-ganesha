@@ -399,7 +399,6 @@ fsal_status_t MFSL_RefreshContext( mfsl_context_t     * pcontext,
    status.major = ERR_FSAL_NO_ERROR ;
    status.minor = 0 ;
 
-   printf( "---> MFSL_RefreshContext\n" ) ;
    if( !pcontext->pool_dirs || !pcontext->pool_files )
     {
        status = FSAL_BuildExportContext( &fsal_export_context,

@@ -873,18 +873,6 @@ int HashTable_Del(  hash_table_t * ht, hash_buffer_t  * buffkey,
   return HASHTABLE_SUCCESS ;
 } /*  HashTable_Del */
 
-/**
- * 
- * HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
- *
- * Print information about the hashtable (mostly for debugging purpose).
- *
- * @param ht the hashtable to be used.
- *
- * @return none (returns void).
- *
- * @see HashTable_Print
- */
 
 /**
  * 
@@ -1019,6 +1007,9 @@ void HashTable_Print( hash_table_t * ht )
   unsigned int i = 0 ;
   int nb_entries = 0 ;
 
+  unsigned long rbtval ;
+  unsigned long hashval ;
+  
   /* Sanity check */
   if( ht == NULL  )
     return ;
@@ -1047,8 +1038,11 @@ void HashTable_Print( hash_table_t * ht )
 
           ht->parameter.key_to_str( &(pdata->buffkey), dispkey ) ;
           ht->parameter.val_to_str( &(pdata->buffval), dispval ) ;
-          
-          printf( "%s => %s;\n ", dispkey, dispval ) ;
+  
+          hashval = (*(ht->parameter.hash_func_key))(  &ht->parameter,  &(pdata->buffkey) ) ;
+          rbtval  = (*(ht->parameter.hash_func_rbt))(  &ht->parameter,  &(pdata->buffkey) ) ;
+
+          printf( "%s => %s; hashval=%lu rbtval=%lu\n ", dispkey, dispval, hashval, rbtval ) ;
           RBT_INCREMENT(it);
         }
     }
