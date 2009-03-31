@@ -159,7 +159,7 @@ fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handl
  *
  * MFSL_unlink : posts an asynchronous unlink and sets the cached attributes in return.
  *
- * Posts an asynchronous unblink and sets the cached attributes in return.
+ * Posts an asynchronous unlink and sets the cached attributes in return.
  * If an object is not asynchronous, then the content of object attributes structure for result will be used to populate it.
  *
  * @param parentdir_handle  [IN]    mfsl object to be operated on (source directory for the unlink)

@@ -125,7 +125,7 @@ fsal_status_t  MFSL_link_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
 /**
  *
- * MFSAL_link_check_perms : Checks authorization to perform an asynchronous setattr.
+ * MFSAL_link_check_perms : Checks authorization to perform an asynchronous link.
  *
  * Checks authorization to perform an asynchronous link.
  *
