@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="test__mnt__proto_8c" kind="file">
     <compoundname>test_mnt_proto.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -27,133 +27,133 @@
     <includes local="yes">nfs_proto_functions.h</includes>
     <includes local="yes">nfs_tools.h</includes>
     <incdepgraph>
-      <node id="1981">
+      <node id="2028">
         <label>rpc/pmap_clnt.h</label>
       </node>
-      <node id="1986">
+      <node id="2033">
         <label>mount.h</label>
       </node>
-      <node id="1989">
+      <node id="2036">
         <label>cache_content.h</label>
       </node>
-      <node id="1973">
+      <node id="2020">
         <label>fcntl.h</label>
       </node>
-      <node id="1978">
+      <node id="2025">
         <label>rpc/types.h</label>
       </node>
-      <node id="1982">
+      <node id="2029">
         <label>log_functions.h</label>
       </node>
-      <node id="1985">
+      <node id="2032">
         <label>nfs4.h</label>
       </node>
-      <node id="1972">
+      <node id="2019">
         <label>pthread.h</label>
       </node>
-      <node id="1971">
+      <node id="2018">
         <label>string.h</label>
       </node>
-      <node id="1977">
+      <node id="2024">
         <label>HashTable.h</label>
       </node>
-      <node id="1980">
+      <node id="2027">
         <label>rpc/auth.h</label>
       </node>
-      <node id="1974">
+      <node id="2021">
         <label>sys/file.h</label>
       </node>
-      <node id="1979">
+      <node id="2026">
         <label>rpc/rpc.h</label>
       </node>
-      <node id="1990">
+      <node id="2037">
         <label>nfs_exports.h</label>
       </node>
-      <node id="1969">
+      <node id="2016">
         <label>test_mnt_proto.c</label>
         <link refid="test_mnt_proto.c"/>
-        <childnode refid="1970" relation="include">
+        <childnode refid="2017" relation="include">
         </childnode>
-        <childnode refid="1971" relation="include">
+        <childnode refid="2018" relation="include">
         </childnode>
-        <childnode refid="1972" relation="include">
+        <childnode refid="2019" relation="include">
         </childnode>
-        <childnode refid="1973" relation="include">
+        <childnode refid="2020" relation="include">
         </childnode>
-        <childnode refid="1974" relation="include">
+        <childnode refid="2021" relation="include">
         </childnode>
-        <childnode refid="1975" relation="include">
+        <childnode refid="2022" relation="include">
         </childnode>
-        <childnode refid="1976" relation="include">
+        <childnode refid="2023" relation="include">
         </childnode>
-        <childnode refid="1977" relation="include">
+        <childnode refid="2024" relation="include">
         </childnode>
-        <childnode refid="1978" relation="include">
+        <childnode refid="2025" relation="include">
         </childnode>
-        <childnode refid="1979" relation="include">
+        <childnode refid="2026" relation="include">
         </childnode>
-        <childnode refid="1980" relation="include">
+        <childnode refid="2027" relation="include">
         </childnode>
-        <childnode refid="1981" relation="include">
+        <childnode refid="2028" relation="include">
         </childnode>
-        <childnode refid="1982" relation="include">
+        <childnode refid="2029" relation="include">
         </childnode>
-        <childnode refid="1983" relation="include">
+        <childnode refid="2030" relation="include">
         </childnode>
-        <childnode refid="1984" relation="include">
+        <childnode refid="2031" relation="include">
         </childnode>
-        <childnode refid="1985" relation="include">
+        <childnode refid="2032" relation="include">
         </childnode>
-        <childnode refid="1986" relation="include">
+        <childnode refid="2033" relation="include">
         </childnode>
-        <childnode refid="1987" relation="include">
+        <childnode refid="2034" relation="include">
         </childnode>
-        <childnode refid="1988" relation="include">
+        <childnode refid="2035" relation="include">
         </childnode>
-        <childnode refid="1989" relation="include">
+        <childnode refid="2036" relation="include">
         </childnode>
-        <childnode refid="1990" relation="include">
+        <childnode refid="2037" relation="include">
         </childnode>
-        <childnode refid="1991" relation="include">
+        <childnode refid="2038" relation="include">
         </childnode>
-        <childnode refid="1992" relation="include">
+        <childnode refid="2039" relation="include">
         </childnode>
-        <childnode refid="1993" relation="include">
+        <childnode refid="2040" relation="include">
         </childnode>
       </node>
-      <node id="1987">
+      <node id="2034">
         <label>nfs_core.h</label>
       </node>
-      <node id="1984">
+      <node id="2031">
         <label>nfs23.h</label>
       </node>
-      <node id="1992">
+      <node id="2039">
         <label>nfs_proto_functions.h</label>
       </node>
-      <node id="1975">
+      <node id="2022">
         <label>sys/socket.h</label>
       </node>
-      <node id="1983">
+      <node id="2030">
         <label>stuff_alloc.h</label>
       </node>
-      <node id="1970">
+      <node id="2017">
         <label>stdio.h</label>
       </node>
-      <node id="1988">
+      <node id="2035">
         <label>cache_inode.h</label>
       </node>
-      <node id="1976">
+      <node id="2023">
         <label>HashData.h</label>
       </node>
-      <node id="1991">
+      <node id="2038">
         <label>nfs_creds.h</label>
       </node>
-      <node id="1993">
+      <node id="2040">
         <label>nfs_tools.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="test__mnt__proto_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="test__mnt__proto_8c_12fe5c50405023da952d76450ca5c8b74" prot="public" static="no">
         <name>NB_EXPORT_ENTRIES</name>
         <initializer>5</initializer>
         <briefdescription>
@@ -162,9 +162,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="165" bodystart="165" bodyend="-1"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="168" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="168" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="test__mnt__proto_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="test__mnt__proto_8c_10817aa0f6027fc10bd0562dc8a7cf1e2" prot="public" static="no">
         <name>Maketest</name>
         <param><defname>func</defname></param>
         <param><defname>name</defname></param>
@@ -183,12 +183,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="319" bodystart="311" bodyend="-1"/>
-        <referencedby refid="test__mnt__proto_8c_1a5" compoundref="test__mnt__proto_8c" startline="321" endline="334">main</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="322" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="314" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="test__mnt__proto_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__mnt__proto_8c_157ab96e36873b8bb9c2029f0cabeec7e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void print_export_list</definition>
         <argsstring>(exports export_list)</argsstring>
@@ -203,10 +202,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="124" bodystart="124" bodyend="145"/>
-        <referencedby refid="test__mnt__proto_8c_1a4" compoundref="test__mnt__proto_8c" startline="166" endline="309">test_mnt_Export</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="127" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="127" bodyend="148"/>
       </memberdef>
-      <memberdef kind="function" id="test__mnt__proto_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__mnt__proto_8c_13a63791505a7b76d63380f9daa870c15" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int test_mnt_Null</definition>
         <argsstring>()</argsstring>
@@ -217,11 +215,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="148" bodystart="148" bodyend="163"/>
-        <references refid="mnt__Null_8c_1a0" compoundref="mnt__Null_8c" startline="137" endline="147">mnt_Null</references>
-        <referencedby refid="test__mnt__proto_8c_1a5" compoundref="test__mnt__proto_8c" startline="321" endline="334">main</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="151" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="151" bodyend="166"/>
       </memberdef>
-      <memberdef kind="function" id="test__mnt__proto_8c_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__mnt__proto_8c_1cc06b966584ff390efa22aa422aa21a0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int test_mnt_Export</definition>
         <argsstring>()</argsstring>
@@ -232,12 +228,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="166" bodystart="166" bodyend="309"/>
-        <references refid="mnt__Export_8c_1a1" compoundref="mnt__Export_8c" startline="150" endline="365">mnt_Export</references>
-        <references refid="test__mnt__proto_8c_1a2" compoundref="test__mnt__proto_8c" startline="124" endline="145">print_export_list</references>
-        <referencedby refid="test__mnt__proto_8c_1a5" compoundref="test__mnt__proto_8c" startline="321" endline="334">main</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="169" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="169" bodyend="312"/>
       </memberdef>
-      <memberdef kind="function" id="test__mnt__proto_8c_1a5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="test__mnt__proto_8c_13c04138a5bfe5d72780bb7e82a18e627" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int main</definition>
         <argsstring>(int argc, char **argv)</argsstring>
@@ -256,21 +249,18 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="321" bodystart="321" bodyend="334"/>
-        <references refid="test__mnt__proto_8c_1a1" compoundref="test__mnt__proto_8c" startline="311">Maketest</references>
-        <references refid="test__mnt__proto_8c_1a4" compoundref="test__mnt__proto_8c" startline="166" endline="309">test_mnt_Export</references>
-        <references refid="test__mnt__proto_8c_1a3" compoundref="test__mnt__proto_8c" startline="148" endline="163">test_mnt_Null</references>
+        <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" line="324" bodyfile="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c" bodystart="324" bodyend="337"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Tests for testing the mount protocol routines. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/12/20 10:52:15 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/12/20 10:52:15 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.8 </para></simplesect>
 </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
@@ -352,253 +342,256 @@
 <codeline lineno="86"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="87"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="88"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/socket.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>getsockname<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="99"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="104"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>prints<sp/>an<sp/>export<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124" refid="test__mnt__proto_8c_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_1a2" kindref="member">print_export_list</ref>(<sp/>exports<sp/>export_list<sp/>){</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/socket.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>getsockname<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="102"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="107"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="112"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/>exports<sp/>p_expnode<sp/>=<sp/>export_list;</highlight></codeline>
-<codeline lineno="127"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(<sp/>p_expnode<sp/>){</highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="130"><highlight class="normal"><sp/><sp/><sp/>groups<sp/>p_group;</highlight></codeline>
-<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;exportnode.ex_dir<sp/>=<sp/>\&quot;%s\&quot;\n&quot;</highlight><highlight class="normal">,p_expnode-&gt;ex_dir);</highlight></codeline>
-<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;exportnode.ex_groups<sp/>=<sp/>{\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/>p_group<sp/>=<sp/>p_expnode-&gt;ex_groups;</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(p_group){</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;<sp/><sp/>\&quot;%s\&quot;\n&quot;</highlight><highlight class="normal">,p_group-&gt;gr_name);</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>p_group<sp/>=<sp/>p_group-&gt;gr_next;</highlight></codeline>
-<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;}\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/>p_expnode<sp/>=<sp/><sp/>p_expnode-&gt;ex_next;</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"></highlight></codeline>
-<codeline lineno="145"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"></highlight></codeline>
-<codeline lineno="147"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Test<sp/>MNTPROC_NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="148" refid="test__mnt__proto_8c_1a3" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_1a3" kindref="member">test_mnt_Null</ref>(){</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>prints<sp/>an<sp/>export<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127" refid="test__mnt__proto_8c_157ab96e36873b8bb9c2029f0cabeec7e" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_157ab96e36873b8bb9c2029f0cabeec7e" kindref="member">print_export_list</ref>(<sp/>exports<sp/>export_list<sp/>){</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/>exports<sp/>p_expnode<sp/>=<sp/>export_list;</highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(<sp/>p_expnode<sp/>){</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/>groups<sp/>p_group;</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;exportnode.ex_dir<sp/>=<sp/>\&quot;%s\&quot;\n&quot;</highlight><highlight class="normal">,p_expnode-&gt;ex_dir);</highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;exportnode.ex_groups<sp/>=<sp/>{\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/>p_group<sp/>=<sp/>p_expnode-&gt;ex_groups;</highlight></codeline>
+<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal">(p_group){</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;<sp/><sp/>\&quot;%s\&quot;\n&quot;</highlight><highlight class="normal">,p_group-&gt;gr_name);</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>p_group<sp/>=<sp/>p_group-&gt;gr_next;</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;}\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/>p_expnode<sp/>=<sp/><sp/>p_expnode-&gt;ex_next;</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"></highlight></codeline>
+<codeline lineno="148"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="149"><highlight class="normal"></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/>rc<sp/>=<sp/><ref refid="mnt__Null_8c_1a0" kindref="member">mnt_Null</ref>(<sp/>NULL,NULL,NULL,NULL,NULL,NULL,NULL);</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_NULL()=%d\n&quot;</highlight><highlight class="normal">,rc);</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Test<sp/>MNTPROC_NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="151" refid="test__mnt__proto_8c_13a63791505a7b76d63380f9daa870c15" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_13a63791505a7b76d63380f9daa870c15" kindref="member">test_mnt_Null</ref>(){</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
 <codeline lineno="154"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>Must<sp/>return<sp/>MNT3_OK<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(rc<sp/>==<sp/>MNT3_OK)<sp/>{</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_NULL<sp/>:<sp/>OK\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_NULL<sp/>:<sp/>ERROR\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/>}</highlight></codeline>
-<codeline lineno="163"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="164"><highlight class="normal"></highlight></codeline>
-<codeline lineno="165" refid="test__mnt__proto_8c_1a0" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>define<sp/>NB_EXPORT_ENTRIES<sp/>5</highlight></codeline>
-<codeline lineno="166" refid="test__mnt__proto_8c_1a4" refkind="member"><highlight class="preprocessor"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_1a4" kindref="member">test_mnt_Export</ref>(){</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc,i;</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>error<sp/>=<sp/>0;</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">addrinfo<sp/>*<sp/>p_tab;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/>exportlist_t<sp/><sp/>export_entries[NB_EXPORT_ENTRIES];</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/>result;</highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>mysock;</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>size;</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr_in<sp/>in_addr;</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr_in<sp/>addr;</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>TEST<sp/>1<sp/>:<sp/>using<sp/>a<sp/>NULL<sp/>export_list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/>rc=<ref refid="mnt__Export_8c_1a1" kindref="member">mnt_Export</ref>(NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>&amp;result);</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>rc<sp/>must<sp/>be<sp/>OK<sp/>and<sp/>result.res_mntexport<sp/>must<sp/>be<sp/>NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_EXPORT(NULL)=(%d,%p)\n&quot;</highlight><highlight class="normal">,rc,result.res_mntexport<sp/>);</highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((rc<sp/>==<sp/>MNT3_OK)&amp;&amp;(result.res_mntexport==NULL)){</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>OK\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>ERROR\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/>error++;</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>TEST<sp/>2<sp/>:<sp/>MNT_EXPORT<sp/>complex<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="194"><highlight class="normal"></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((mysock<sp/>=<sp/>socket(PF_INET,SOCK_STREAM,0))==-1){</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;socket<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/>in_addr.sin_family<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>AF_INET<sp/>;</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/>in_addr.sin_addr.s_addr<sp/>=<sp/>INADDR_ANY<sp/>;</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/>in_addr.sin_port<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>htons(5100)<sp/><sp/>;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(bind(<sp/>mysock,<sp/>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*)&amp;in_addr,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>in_addr<sp/>)<sp/>)<sp/>==<sp/>-1<sp/>){</highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;bind<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"></highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/>size<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr);</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(getsockname(mysock,(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*)<sp/>&amp;addr,(socklen_t<sp/>*)&amp;size)==-1){</highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;getsockname<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>we<sp/>don&apos;t<sp/>use<sp/>the<sp/>resource,<sp/>only<sp/>its<sp/>adress.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/>close(mysock);</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Building<sp/>an<sp/>export<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(i=0;i&lt;NB_EXPORT_ENTRIES;i++){</highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>pour<sp/>alleger<sp/>les<sp/>notations<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/>exportlist_client_entry_t<sp/>p_cli[5];</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>setting<sp/>paths<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].dirname,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/dirname-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].fsname,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/fsname-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].pseudopath,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/pseudopath-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].fullpath,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/fullpath-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>linking<sp/>to<sp/>the<sp/>next<sp/>element.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((i+1)&lt;NB_EXPORT_ENTRIES)</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].next<sp/>=<sp/>&amp;(export_entries[i+1]);</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].next<sp/>=<sp/>NULL;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>tests<sp/>several<sp/>clients<sp/>list<sp/>type<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(i%4){</highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>0:</highlight></codeline>
-<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>empty<sp/>list*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=0;</highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>1:</highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>one<sp/>element<sp/>list<sp/>*/</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=1;</highlight></codeline>
-<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
-<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>2:</highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>two<sp/>elements<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=2;</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[1].type<sp/>=<sp/>NETGROUP_CLIENT;</highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(<sp/>p_cli[1].client.netgroup.netgroupname,</highlight><highlight class="stringliteral">&quot;netgroup&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="260"><highlight class="normal"></highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>3:</highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>several<sp/>elements<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="265"><highlight class="normal"></highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=5;</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/>rc<sp/>=<sp/><ref refid="mnt__Null_8c_138b7920c004102e5ea9ad92f2b7f4089" kindref="member">mnt_Null</ref>(<sp/>NULL,NULL,NULL,NULL,NULL,NULL,NULL);</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_NULL()=%d\n&quot;</highlight><highlight class="normal">,rc);</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>Must<sp/>return<sp/>MNT3_OK<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(rc<sp/>==<sp/>MNT3_OK)<sp/>{</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_NULL<sp/>:<sp/>OK\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_NULL<sp/>:<sp/>ERROR\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/>}</highlight></codeline>
+<codeline lineno="166"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"></highlight></codeline>
+<codeline lineno="168" refid="test__mnt__proto_8c_12fe5c50405023da952d76450ca5c8b74" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#<sp/>define<sp/>NB_EXPORT_ENTRIES<sp/>5</highlight></codeline>
+<codeline lineno="169" refid="test__mnt__proto_8c_1cc06b966584ff390efa22aa422aa21a0" refkind="member"><highlight class="preprocessor"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_1cc06b966584ff390efa22aa422aa21a0" kindref="member">test_mnt_Export</ref>(){</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc,i;</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>error<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">addrinfo<sp/>*<sp/>p_tab;</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/>exportlist_t<sp/><sp/>export_entries[<ref refid="test__mnt__proto_8c_12fe5c50405023da952d76450ca5c8b74" kindref="member">NB_EXPORT_ENTRIES</ref>];</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/>result;</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>mysock;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>size;</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr_in<sp/>in_addr;</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr_in<sp/>addr;</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>TEST<sp/>1<sp/>:<sp/>using<sp/>a<sp/>NULL<sp/>export_list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/>rc=<ref refid="mnt__Export_8c_1e8f332cea99cb0c6bc33cb8b1ba3b4a8" kindref="member">mnt_Export</ref>(NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>&amp;result);</highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>rc<sp/>must<sp/>be<sp/>OK<sp/>and<sp/>result.res_mntexport<sp/>must<sp/>be<sp/>NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_EXPORT(NULL)=(%d,%p)\n&quot;</highlight><highlight class="normal">,rc,result.res_mntexport<sp/>);</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((rc<sp/>==<sp/>MNT3_OK)&amp;&amp;(result.res_mntexport==NULL)){</highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>OK\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>ERROR\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/>error++;</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>TEST<sp/>2<sp/>:<sp/>MNT_EXPORT<sp/>complex<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="197"><highlight class="normal"></highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((mysock<sp/>=<sp/>socket(PF_INET,SOCK_STREAM,0))==-1){</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;socket<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/>in_addr.sin_family<sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>AF_INET<sp/>;</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/>in_addr.sin_addr.s_addr<sp/>=<sp/>INADDR_ANY<sp/>;</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/>in_addr.sin_port<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>htons(5100)<sp/><sp/>;</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(bind(<sp/>mysock,<sp/>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*)&amp;in_addr,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>in_addr<sp/>)<sp/>)<sp/>==<sp/>-1<sp/>){</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;bind<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"></highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/>size<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">sockaddr);</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(getsockname(mysock,(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>sockaddr<sp/>*)<sp/>&amp;addr,(socklen_t<sp/>*)&amp;size)==-1){</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;getsockname<sp/>ERROR<sp/>%d<sp/>:<sp/>%s\n&quot;</highlight><highlight class="normal">,errno,strerror(errno));</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>we<sp/>don&apos;t<sp/>use<sp/>the<sp/>resource,<sp/>only<sp/>its<sp/>adress.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/>close(mysock);</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Building<sp/>an<sp/>export<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(i=0;i&lt;<ref refid="test__mnt__proto_8c_12fe5c50405023da952d76450ca5c8b74" kindref="member">NB_EXPORT_ENTRIES</ref>;i++){</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>pour<sp/>alleger<sp/>les<sp/>notations<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/>exportlist_client_entry_t<sp/>p_cli[5];</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>setting<sp/>paths<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].dirname,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/dirname-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].fsname,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/fsname-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].pseudopath,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/pseudopath-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/>snprintf(export_entries[i].fullpath,MAXPATHLEN,</highlight><highlight class="stringliteral">&quot;/fullpath-%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>linking<sp/>to<sp/>the<sp/>next<sp/>element.<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((i+1)&lt;NB_EXPORT_ENTRIES)</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].next<sp/>=<sp/>&amp;(export_entries[i+1]);</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].next<sp/>=<sp/>NULL;</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>tests<sp/>several<sp/>clients<sp/>list<sp/>type<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(i%4){</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>0:</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>empty<sp/>list*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=0;</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>1:</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>one<sp/>element<sp/>list<sp/>*/</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=1;</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>2:</highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>two<sp/>elements<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=2;</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[1].type<sp/>=<sp/>NETGROUP_CLIENT;</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(<sp/>p_cli[1].client.netgroup.netgroupname,</highlight><highlight class="stringliteral">&quot;netgroup&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="263"><highlight class="normal"></highlight></codeline>
+<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>3:</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>several<sp/>elements<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="268"><highlight class="normal"></highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>export_entries[i].clients.num_clients=5;</highlight></codeline>
 <codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[1].type<sp/>=<sp/>NETGROUP_CLIENT;</highlight></codeline>
-<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(<sp/>p_cli[1].client.netgroup.netgroupname,</highlight><highlight class="stringliteral">&quot;netgroup&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="273"><highlight class="normal"></highlight></codeline>
-<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[2].type<sp/>=<sp/>WILDCARDHOST_CLIENT;</highlight></codeline>
-<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(p_cli[2].client.wildcard.wildcard,</highlight><highlight class="stringliteral">&quot;wilcard&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[3].type<sp/>=<sp/>GSSPRINCIPAL_CLIENT;</highlight></codeline>
-<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(p_cli[3].client.gssprinc.princname,<sp/></highlight><highlight class="stringliteral">&quot;gssprincipal&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
+<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].type<sp/>=<sp/>HOSTIF_CLIENT;</highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[0].client.hostif.clientaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[1].type<sp/>=<sp/>NETGROUP_CLIENT;</highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(<sp/>p_cli[1].client.netgroup.netgroupname,</highlight><highlight class="stringliteral">&quot;netgroup&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"></highlight></codeline>
+<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[2].type<sp/>=<sp/>WILDCARDHOST_CLIENT;</highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(p_cli[2].client.wildcard.wildcard,</highlight><highlight class="stringliteral">&quot;wilcard&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].type<sp/>=<sp/>NETWORK_CLIENT;</highlight></codeline>
-<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].client.network.netaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].client.network.netmask<sp/><sp/><sp/><sp/>=<sp/>0xFFFFFF00;</highlight></codeline>
-<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;!!!!!*****<sp/>TEST<sp/>ERROR<sp/>*****!!!!!\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1;</highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="291"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="293"><highlight class="normal"><sp/><sp/>rc=<ref refid="mnt__Export_8c_1a1" kindref="member">mnt_Export</ref>(NULL,export_entries<sp/>,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>&amp;result);</highlight></codeline>
-<codeline lineno="294"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>rc<sp/>must<sp/>be<sp/>OK<sp/>and<sp/>result.res_mntexport<sp/>must<sp/>be<sp/>NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="295"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_EXPORT(entries)=(%d,%p)\n&quot;</highlight><highlight class="normal">,rc,result.res_mntexport<sp/>);</highlight></codeline>
-<codeline lineno="296"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="297"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((rc<sp/>==<sp/>MNT3_OK)&amp;&amp;(result.res_mntexport!=NULL)){</highlight></codeline>
-<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>OK\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="299"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="300"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>ERROR\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/>error++;</highlight></codeline>
-<codeline lineno="302"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
-<codeline lineno="303"><highlight class="normal"></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>printing<sp/>the<sp/>export_list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="305"><highlight class="normal"><sp/><sp/><ref refid="test__mnt__proto_8c_1a2" kindref="member">print_export_list</ref>(<sp/>result.res_mntexport<sp/>);</highlight></codeline>
-<codeline lineno="306"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(error);</highlight></codeline>
-<codeline lineno="308"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="309"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="310"><highlight class="normal"></highlight></codeline>
-<codeline lineno="311" refid="test__mnt__proto_8c_1a1" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>Maketest(func,name)<sp/>do<sp/>{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="312"><highlight class="preprocessor"><sp/><sp/>int<sp/>rc;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="313"><highlight class="preprocessor"><sp/><sp/>printf(&quot;\n========<sp/>TEST<sp/>%s<sp/>=========\n\n&quot;,name);<sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="314"><highlight class="preprocessor"><sp/><sp/>rc<sp/>=<sp/>func();<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="315"><highlight class="preprocessor"><sp/><sp/>if<sp/>(rc)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="316"><highlight class="preprocessor"><sp/><sp/><sp/><sp/>printf(&quot;\n--------<sp/>%s<sp/>:<sp/>%d<sp/>---------\n&quot;,name,rc);<sp/>\</highlight></codeline>
-<codeline lineno="317"><highlight class="preprocessor"><sp/><sp/>else<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
-<codeline lineno="318"><highlight class="preprocessor"><sp/><sp/><sp/><sp/>printf(&quot;\n--------<sp/>%s<sp/>:<sp/>OK<sp/>---------\n&quot;,name);<sp/>\</highlight></codeline>
-<codeline lineno="319"><highlight class="preprocessor"><sp/><sp/>}<sp/>while<sp/>(0)</highlight></codeline>
-<codeline lineno="320"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="321" refid="test__mnt__proto_8c_1a5" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_1a5" kindref="member">main</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv){</highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="323"><highlight class="normal"><sp/><sp/><sp/><sp/>SetNameFileLog(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/>SetNamePgm(<sp/></highlight><highlight class="stringliteral">&quot;test_mnt_proto&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[3].type<sp/>=<sp/>GSSPRINCIPAL_CLIENT;</highlight></codeline>
+<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>strcpy(p_cli[3].client.gssprinc.princname,<sp/></highlight><highlight class="stringliteral">&quot;gssprincipal&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].type<sp/>=<sp/>NETWORK_CLIENT;</highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].client.network.netaddr<sp/>=<sp/>addr.sin_addr.s_addr<sp/>;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_cli[4].client.network.netmask<sp/><sp/><sp/><sp/>=<sp/>0xFFFFFF00;</highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;!!!!!*****<sp/>TEST<sp/>ERROR<sp/>*****!!!!!\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1;</highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/>rc=<ref refid="mnt__Export_8c_1e8f332cea99cb0c6bc33cb8b1ba3b4a8" kindref="member">mnt_Export</ref>(NULL,export_entries<sp/>,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>NULL,<sp/>&amp;result);</highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>rc<sp/>must<sp/>be<sp/>OK<sp/>and<sp/>result.res_mntexport<sp/>must<sp/>be<sp/>NULL<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;MNTPROC_EXPORT(entries)=(%d,%p)\n&quot;</highlight><highlight class="normal">,rc,result.res_mntexport<sp/>);</highlight></codeline>
+<codeline lineno="299"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="300"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((rc<sp/>==<sp/>MNT3_OK)&amp;&amp;(result.res_mntexport!=NULL)){</highlight></codeline>
+<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>OK\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="302"><highlight class="normal"><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;TEST<sp/>MNT_EXPORT<sp/>:<sp/>ERROR\n\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/>error++;</highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
+<codeline lineno="306"><highlight class="normal"></highlight></codeline>
+<codeline lineno="307"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>printing<sp/>the<sp/>export_list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><ref refid="test__mnt__proto_8c_157ab96e36873b8bb9c2029f0cabeec7e" kindref="member">print_export_list</ref>(<sp/>result.res_mntexport<sp/>);</highlight></codeline>
+<codeline lineno="309"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(error);</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="312"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="313"><highlight class="normal"></highlight></codeline>
+<codeline lineno="314" refid="test__mnt__proto_8c_10817aa0f6027fc10bd0562dc8a7cf1e2" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>Maketest(func,name)<sp/>do<sp/>{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="315"><highlight class="preprocessor"><sp/><sp/>int<sp/>rc;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="316"><highlight class="preprocessor"><sp/><sp/>printf(&quot;\n========<sp/>TEST<sp/>%s<sp/>=========\n\n&quot;,name);<sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="317"><highlight class="preprocessor"><sp/><sp/>rc<sp/>=<sp/>func();<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="318"><highlight class="preprocessor"><sp/><sp/>if<sp/>(rc)<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="319"><highlight class="preprocessor"><sp/><sp/><sp/><sp/>printf(&quot;\n--------<sp/>%s<sp/>:<sp/>%d<sp/>---------\n&quot;,name,rc);<sp/>\</highlight></codeline>
+<codeline lineno="320"><highlight class="preprocessor"><sp/><sp/>else<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>\</highlight></codeline>
+<codeline lineno="321"><highlight class="preprocessor"><sp/><sp/><sp/><sp/>printf(&quot;\n--------<sp/>%s<sp/>:<sp/>OK<sp/>---------\n&quot;,name);<sp/>\</highlight></codeline>
+<codeline lineno="322"><highlight class="preprocessor"><sp/><sp/>}<sp/>while<sp/>(0)</highlight></codeline>
+<codeline lineno="323"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="324" refid="test__mnt__proto_8c_13c04138a5bfe5d72780bb7e82a18e627" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__mnt__proto_8c_13c04138a5bfe5d72780bb7e82a18e627" kindref="member">main</ref>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**<sp/>argv){</highlight></codeline>
 <codeline lineno="325"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="326"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/><sp/><sp/>InitDebug(<sp/>NIV_FULL_DEBUG<sp/>)<sp/>;*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/>InitDebug(<sp/>NIV_DEBUG<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/>SetNameFileLog(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/>SetNamePgm(<sp/></highlight><highlight class="stringliteral">&quot;test_mnt_proto&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="328"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="329"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="test__mnt__proto_8c_1a1" kindref="member">Maketest</ref>(<ref refid="test__mnt__proto_8c_1a3" kindref="member">test_mnt_Null</ref>,</highlight><highlight class="stringliteral">&quot;test_mnt_Null&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="330"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="test__mnt__proto_8c_1a1" kindref="member">Maketest</ref>(<ref refid="test__mnt__proto_8c_1a4" kindref="member">test_mnt_Export</ref>,</highlight><highlight class="stringliteral">&quot;test_mnt_Export&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="329"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/><sp/><sp/>InitDebug(<sp/>NIV_FULL_DEBUG<sp/>)<sp/>;*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="330"><highlight class="normal"><sp/><sp/><sp/><sp/>InitDebug(<sp/>NIV_DEBUG<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="331"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/>exit(0);</highlight></codeline>
-<codeline lineno="333"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="334"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="test__mnt__proto_8c_10817aa0f6027fc10bd0562dc8a7cf1e2" kindref="member">Maketest</ref>(<ref refid="test__mnt__proto_8c_13a63791505a7b76d63380f9daa870c15" kindref="member">test_mnt_Null</ref>,</highlight><highlight class="stringliteral">&quot;test_mnt_Null&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="test__mnt__proto_8c_10817aa0f6027fc10bd0562dc8a7cf1e2" kindref="member">Maketest</ref>(<ref refid="test__mnt__proto_8c_1cc06b966584ff390efa22aa422aa21a0" kindref="member">test_mnt_Export</ref>,</highlight><highlight class="stringliteral">&quot;test_mnt_Export&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="335"><highlight class="normal"><sp/><sp/><sp/><sp/>exit(0);</highlight></codeline>
+<codeline lineno="336"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="337"><highlight class="normal">}</highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/test_mnt_proto.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/test_mnt_proto.c"/>
   </compounddef>
 </doxygen>

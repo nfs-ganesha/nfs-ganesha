@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="nfs3__Commit_8c" kind="file">
     <compoundname>nfs3_Commit.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -29,6 +29,27 @@
     <incdepgraph>
       <node id="240">
         <label>rpc/pmap_clnt.h</label>
+      </node>
+      <node id="245">
+        <label>mount.h</label>
+      </node>
+      <node id="248">
+        <label>cache_content.h</label>
+      </node>
+      <node id="233">
+        <label>fcntl.h</label>
+      </node>
+      <node id="237">
+        <label>rpc/types.h</label>
+      </node>
+      <node id="241">
+        <label>log_functions.h</label>
+      </node>
+      <node id="252">
+        <label>nfs_proto_tools.h</label>
+      </node>
+      <node id="244">
+        <label>nfs4.h</label>
       </node>
       <node id="229">
         <label>nfs3_Commit.c</label>
@@ -82,27 +103,6 @@
         <childnode refid="253" relation="include">
         </childnode>
       </node>
-      <node id="245">
-        <label>mount.h</label>
-      </node>
-      <node id="248">
-        <label>cache_content.h</label>
-      </node>
-      <node id="233">
-        <label>fcntl.h</label>
-      </node>
-      <node id="237">
-        <label>rpc/types.h</label>
-      </node>
-      <node id="241">
-        <label>log_functions.h</label>
-      </node>
-      <node id="252">
-        <label>nfs_proto_tools.h</label>
-      </node>
-      <node id="244">
-        <label>nfs4.h</label>
-      </node>
       <node id="232">
         <label>pthread.h</label>
       </node>
@@ -152,78 +152,8 @@
         <label>nfs_tools.h</label>
       </node>
     </incdepgraph>
-      <sectiondef kind="func">
-      <memberdef kind="function" id="nfs3__Commit_8c_1a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>int</type>
-        <definition>int nfs3_Commit</definition>
-        <argsstring>(nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres)</argsstring>
-        <name>nfs3_Commit</name>
-        <param>
-          <type>nfs_arg_t *</type>
-          <declname>parg</declname>
-        </param>
-        <param>
-          <type>exportlist_t *</type>
-          <declname>pexport</declname>
-        </param>
-        <param>
-          <type>fsal_op_context_t *</type>
-          <declname>pcontext</declname>
-        </param>
-        <param>
-          <type>cache_inode_client_t *</type>
-          <declname>pclient</declname>
-        </param>
-        <param>
-          <type>hash_table_t *</type>
-          <declname>ht</declname>
-        </param>
-        <param>
-          <type>struct svc_req *</type>
-          <declname>preq</declname>
-        </param>
-        <param>
-          <type>nfs_res_t *</type>
-          <declname>pres</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="150" bodystart="143" bodyend="204"/>
-        <references refid="nfs3__Commit_8c_1a0">NFS3_write_verifier</references>
-        <references refid="nfs__proto__tools_8c_1a4" compoundref="nfs__proto__tools_8c" startline="335" endline="354">nfs_SetWccData</references>
-      </memberdef>
-      <memberdef kind="function" id="nfs3__Commit_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>void</type>
-        <definition>void nfs3_Commit_Free</definition>
-        <argsstring>(nfs_res_t *pres)</argsstring>
-        <name>nfs3_Commit_Free</name>
-        <param>
-          <type>nfs_res_t *</type>
-          <declname>pres</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>nfs3_Commit_Free: Frees the result structure allocated for nfs3_Commit.</para><para>Frees the result structure allocated for nfs3_Commit.</para><para><parameterlist kind="param"><parameteritem>
-<parameternamelist>
-<parametername>pres</parametername>
-</parameternamelist>
-<parameterdescription>
-<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
-</parameteritem>
-</parameterlist>
-</para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="215" bodystart="214" bodyend="218"/>
-      </memberdef>
-      </sectiondef>
       <sectiondef kind="var">
-      <memberdef kind="variable" id="nfs3__Commit_8c_1a0" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="nfs3__Commit_8c_1c75a3dafdfdc69436850ab6d14017097" prot="public" static="no" mutable="no">
         <type>writeverf3</type>
         <definition>writeverf3 NFS3_write_verifier</definition>
         <argsstring></argsstring>
@@ -285,21 +215,87 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="141"/>
-        <referencedby refid="nfs3__Commit_8c_1a1" compoundref="nfs3__Commit_8c" startline="143" endline="204">nfs3_Commit</referencedby>
-        <referencedby refid="nfs__Write_8c_1a1" compoundref="nfs__Write_8c" startline="148" endline="496">nfs_Write</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="145"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="nfs3__Commit_8c_1ca3469382751c6fe2457dc2b9f914f4a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int nfs3_Commit</definition>
+        <argsstring>(nfs_arg_t *parg, exportlist_t *pexport, fsal_op_context_t *pcontext, cache_inode_client_t *pclient, hash_table_t *ht, struct svc_req *preq, nfs_res_t *pres)</argsstring>
+        <name>nfs3_Commit</name>
+        <param>
+          <type>nfs_arg_t *</type>
+          <declname>parg</declname>
+        </param>
+        <param>
+          <type>exportlist_t *</type>
+          <declname>pexport</declname>
+        </param>
+        <param>
+          <type>fsal_op_context_t *</type>
+          <declname>pcontext</declname>
+        </param>
+        <param>
+          <type>cache_inode_client_t *</type>
+          <declname>pclient</declname>
+        </param>
+        <param>
+          <type>hash_table_t *</type>
+          <declname>ht</declname>
+        </param>
+        <param>
+          <type>struct svc_req *</type>
+          <declname>preq</declname>
+        </param>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="154" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c" bodystart="147" bodyend="205"/>
+      </memberdef>
+      <memberdef kind="function" id="nfs3__Commit_8c_11a70694ec7376c98517ee284b5bf05ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void nfs3_Commit_Free</definition>
+        <argsstring>(nfs_res_t *pres)</argsstring>
+        <name>nfs3_Commit_Free</name>
+        <param>
+          <type>nfs_res_t *</type>
+          <declname>pres</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>nfs3_Commit_Free: Frees the result structure allocated for nfs3_Commit.</para><para>Frees the result structure allocated for nfs3_Commit.</para><para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pres</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[INOUT] Pointer to the result structure. </para></parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c" line="216" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c" bodystart="215" bodyend="219"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Routines used for managing the NFS4 COMPOUND functions. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:49 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.10 </para></simplesect>
-</para></simplesect>
-<ref refid="nfs3__Commit_8c" kindref="compound">nfs3_Commit.c</ref> : Routines used for managing the NFS4 COMPOUND functions.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:49 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.10 </para></simplesect>
+<ref refid="nfs3__Commit_8c" kindref="compound">nfs3_Commit.c</ref> : Routines used for managing the NFS4 COMPOUND functions. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -380,111 +376,112 @@
 <codeline lineno="87"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="89"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="99"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="104"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141"><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>writeverf3<sp/><sp/>NFS3_write_verifier<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>NFS<sp/>V3<sp/>write<sp/>verifier<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="142"><highlight class="normal"></highlight></codeline>
-<codeline lineno="143" refid="nfs3__Commit_8c_1a1" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs3__Commit_8c_1a1" kindref="member">nfs3_Commit</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg,<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport,<sp/></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/><sp/><sp/>*<sp/>pclient,</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,</highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/>*<sp/>preq,<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/>)<sp/></highlight></codeline>
-<codeline lineno="150"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcName[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs3_Access&quot;</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/>fsal_accessflags_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>access_mode<sp/>;</highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/>cache_inode_status_t<sp/><sp/><sp/><sp/><sp/><sp/>cache_status<sp/>;</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/>cache_inode_file_type_t<sp/><sp/><sp/>filetype<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/>cache_inode_fsal_data_t<sp/><sp/><sp/>fsal_data<sp/>;</highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>attr<sp/>;</highlight></codeline>
-<codeline lineno="159"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pre_attr<sp/>;</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ppre_attr<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="91"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="103"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="108"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="145"><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>writeverf3<sp/><sp/><ref refid="nfs3__Commit_8c_1c75a3dafdfdc69436850ab6d14017097" kindref="member">NFS3_write_verifier</ref><sp/>;<sp/></highlight><highlight class="comment">/*<sp/>NFS<sp/>V3<sp/>write<sp/>verifier<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="146"><highlight class="normal"></highlight></codeline>
+<codeline lineno="147" refid="nfs3__Commit_8c_1ca3469382751c6fe2457dc2b9f914f4a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs3__Commit_8c_1ca3469382751c6fe2457dc2b9f914f4a" kindref="member">nfs3_Commit</ref>(<sp/>nfs_arg_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>parg,<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exportlist_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pexport,<sp/></highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fsal_op_context_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pcontext,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cache_inode_client_t<sp/><sp/><sp/><sp/>*<sp/>pclient,</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>hash_table_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ht,</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/><sp/><sp/>*<sp/>preq,<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pres<sp/>)<sp/></highlight></codeline>
+<codeline lineno="154"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>__attribute__((<sp/>__unused__<sp/>))<sp/><sp/><sp/><sp/><sp/>funcName[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;nfs3_Access&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/>cache_inode_status_t<sp/><sp/><sp/><sp/><sp/><sp/>cache_status<sp/>;</highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/>cache_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>pentry<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/>cache_inode_fsal_data_t<sp/><sp/><sp/>fsal_data<sp/>;</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pre_attr<sp/>;</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>ppre_attr<sp/>;</highlight></codeline>
 <codeline lineno="162"><highlight class="normal"></highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>to<sp/>avoid<sp/>setting<sp/>it<sp/>on<sp/>each<sp/>error<sp/>case<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/>pres-&gt;res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow<sp/>=<sp/>FALSE;</highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/>pres-&gt;res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow<sp/>=<sp/>FALSE;</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/>ppre_attr<sp/>=<sp/>NULL;</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Convert<sp/>file<sp/>handle<sp/>into<sp/>a<sp/>fsal_handle<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs3_FhandleToFSAL(<sp/>&amp;(parg-&gt;arg_commit3.file),<sp/>&amp;fsal_data.handle,<sp/>pcontext<sp/>)<sp/>==<sp/>0<sp/>)</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"></highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>cookie<sp/>to<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/>fsal_data.cookie<sp/>=<sp/>DIR_START<sp/>;</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"></highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Get<sp/>the<sp/>entry<sp/>in<sp/>the<sp/>cache_inode<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry<sp/>=<sp/>cache_inode_get(<sp/>&amp;fsal_data,<sp/></highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;pre_attr,<sp/></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,<sp/></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Stale<sp/>NFS<sp/>FH<sp/>?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_commit3.status<sp/>=<sp/>NFS3ERR_STALE<sp/>;</highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="187"><highlight class="normal"></highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>pre_attr<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/>ppre_attr<sp/>=<sp/>&amp;pre_attr;</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"></highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs__proto__tools_8c_1a4" kindref="member">nfs_SetWccData</ref>(<sp/>pcontext,</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pexport,</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry,<sp/></highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ppre_attr,<sp/></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ppre_attr,</highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;(pres-&gt;res_commit3.COMMIT3res_u.resok.file_wcc));</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"></highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>write<sp/>verifier<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>memcpy(pres-&gt;res_commit3.COMMIT3res_u.resok.verf,<sp/><ref refid="nfs3__Commit_8c_1a0" kindref="member">NFS3_write_verifier</ref>,</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(writeverf3));</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"></highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_commit3.status<sp/>=<sp/>NFS3_OK;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK;</highlight></codeline>
-<codeline lineno="204"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs3_Commit<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="205"><highlight class="normal"></highlight></codeline>
-<codeline lineno="214" refid="nfs3__Commit_8c_1a2" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs3__Commit_8c_1a2" kindref="member">nfs3_Commit_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
-<codeline lineno="215"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>do<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="218"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs3_Commit_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="163"><highlight class="normal"></highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>to<sp/>avoid<sp/>setting<sp/>it<sp/>on<sp/>each<sp/>error<sp/>case<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/>pres-&gt;res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow<sp/>=<sp/>FALSE;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/>pres-&gt;res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow<sp/>=<sp/>FALSE;</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/>ppre_attr<sp/>=<sp/>NULL;</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Convert<sp/>file<sp/>handle<sp/>into<sp/>a<sp/>fsal_handle<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs3_FhandleToFSAL(<sp/>&amp;(parg-&gt;arg_commit3.file),<sp/>&amp;fsal_data.handle,<sp/>pcontext<sp/>)<sp/>==<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_DROP;</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"></highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>cookie<sp/>to<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/>fsal_data.cookie<sp/>=<sp/>DIR_START<sp/>;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"></highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Get<sp/>the<sp/>entry<sp/>in<sp/>the<sp/>cache_inode<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry<sp/>=<sp/>cache_inode_get(<sp/>&amp;fsal_data,<sp/></highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;pre_attr,<sp/></highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ht,<sp/></highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pclient,<sp/></highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pcontext,<sp/></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;cache_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Stale<sp/>NFS<sp/>FH<sp/>?<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_commit3.status<sp/>=<sp/>NFS3ERR_STALE<sp/>;</highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK<sp/>;</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>pre_attr<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/>ppre_attr<sp/>=<sp/>&amp;pre_attr;</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs__proto__tools_8c_159e0bde56bc1855420c304e57334a8ec" kindref="member">nfs_SetWccData</ref>(<sp/>pcontext,</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pexport,</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pentry,<sp/></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ppre_attr,<sp/></highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ppre_attr,</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&amp;(pres-&gt;res_commit3.COMMIT3res_u.resok.file_wcc));</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Set<sp/>the<sp/>write<sp/>verifier<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>memcpy(pres-&gt;res_commit3.COMMIT3res_u.resok.verf,<sp/><ref refid="nfs3__Commit_8c_1c75a3dafdfdc69436850ab6d14017097" kindref="member">NFS3_write_verifier</ref>,</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(writeverf3));</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"></highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pres-&gt;res_commit3.status<sp/>=<sp/>NFS3_OK;</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS_REQ_OK;</highlight></codeline>
+<codeline lineno="205"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs3_Commit<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="206"><highlight class="normal"></highlight></codeline>
+<codeline lineno="215" refid="nfs3__Commit_8c_11a70694ec7376c98517ee284b5bf05ff" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs3__Commit_8c_11a70694ec7376c98517ee284b5bf05ff" kindref="member">nfs3_Commit_Free</ref>(<sp/>nfs_res_t<sp/>*<sp/>pres<sp/>)</highlight></codeline>
+<codeline lineno="216"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>do<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="219"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs3_Commit_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs3_Commit.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/nfs3_Commit.c"/>
   </compounddef>
 </doxygen>

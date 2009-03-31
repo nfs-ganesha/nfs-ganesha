@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="structshell__state____" kind="struct" prot="public">
     <compoundname>shell_state__</compoundname>
     <includes refid="shell__types_8h" local="no">shell_types.h</includes>
       <sectiondef kind="public-attrib">
-      <memberdef kind="variable" id="structshell__state_____1o0" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____1b9848d436ad635a7af41cf75e012f403" prot="public" static="no" mutable="no">
         <type>FILE *</type>
         <definition>FILE* shell_state__::input_stream</definition>
         <argsstring></argsstring>
@@ -15,12 +15,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="62" bodystart="62" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a25" compoundref="shell_8c" startline="1688" endline="1694">shell_GetInputStream</referencedby>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="62" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="62" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o1" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____1c19530794ea54d353fd0311833918b58" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int shell_state__::interactive</definition>
         <argsstring></argsstring>
@@ -31,11 +28,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="63" bodystart="63" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="63" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="63" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o2" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____16d0f8ff17a863ff9b78024b332d4f002" prot="public" static="no" mutable="no">
         <type><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref> *</type>
         <definition>layer_def_t* shell_state__::layer</definition>
         <argsstring></argsstring>
@@ -46,11 +41,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="64" bodystart="64" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a18" compoundref="shell_8c" startline="1366" endline="1371">shell_GetLayer</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="64" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="64" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o3" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____1ecc070dc56b42065153b28df3b48731d" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int shell_state__::status</definition>
         <argsstring></argsstring>
@@ -61,11 +54,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="65" bodystart="65" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a20" compoundref="shell_8c" startline="1416" endline="1419">shell_GetStatus</referencedby>
-        <referencedby refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="65" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="65" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o4" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____1f1e01f5e2ea55d14d3e2dbafb9313262" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int shell_state__::verbose</definition>
         <argsstring></argsstring>
@@ -76,11 +67,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="66" bodystart="66" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a22" compoundref="shell_8c" startline="1490" endline="1493">shell_GetVerbose</referencedby>
-        <referencedby refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="66" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="66" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o5" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____10dbfbd99cd492b36f310c006616a7fc9" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int shell_state__::debug_level</definition>
         <argsstring></argsstring>
@@ -91,11 +80,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="67" bodystart="67" bodyend="-1"/>
-        <referencedby refid="shell_8c_1a36" compoundref="shell_8c" startline="1558" endline="1561">shell_GetDbgLvl</referencedby>
-        <referencedby refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="67" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="67" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="structshell__state_____1o6" prot="public" static="no" volatile="no" mutable="no">
+      <memberdef kind="variable" id="structshell__state_____1f791667e865551ff1ef99e5bd7fb5ebd" prot="public" static="no" mutable="no">
         <type>int</type>
         <definition>int shell_state__::line</definition>
         <argsstring></argsstring>
@@ -106,9 +93,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="68" bodystart="68" bodyend="-1"/>
-        <referencedby refid="shell_8h_1a31" compoundref="shell_8c" startline="1790" endline="1793">shell_GetLine</referencedby>
-        <referencedby refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="68" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="68" bodyend="-1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -116,34 +101,34 @@
     <detaileddescription>
     </detaileddescription>
     <collaborationgraph>
-      <node id="28">
+      <node id="30">
         <label>layer_def__</label>
         <link refid="structlayer__def____"/>
-        <childnode refid="29" relation="usage">
+        <childnode refid="31" relation="usage">
           <edgelabel>command_list</edgelabel>
         </childnode>
       </node>
-      <node id="27">
+      <node id="29">
         <label>shell_state__</label>
         <link refid="structshell__state____"/>
-        <childnode refid="28" relation="usage">
+        <childnode refid="30" relation="usage">
           <edgelabel>layer</edgelabel>
         </childnode>
       </node>
-      <node id="29">
+      <node id="31">
         <label>command_def__</label>
         <link refid="structcommand__def____"/>
       </node>
     </collaborationgraph>
-    <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="61" bodystart="60" bodyend="69"/>
+    <location file="/export/GANESHA/src/shell/shell_types.h" line="61" bodyfile="/export/GANESHA/src/shell/shell_types.h" bodystart="60" bodyend="69"/>
     <listofallmembers>
-      <member refid="structshell__state_____1o5" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>debug_level</name></member>
-      <member refid="structshell__state_____1o0" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>input_stream</name></member>
-      <member refid="structshell__state_____1o1" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>interactive</name></member>
-      <member refid="structshell__state_____1o2" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>layer</name></member>
-      <member refid="structshell__state_____1o6" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>line</name></member>
-      <member refid="structshell__state_____1o3" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>status</name></member>
-      <member refid="structshell__state_____1o4" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>verbose</name></member>
+      <member refid="structshell__state_____10dbfbd99cd492b36f310c006616a7fc9" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>debug_level</name></member>
+      <member refid="structshell__state_____1b9848d436ad635a7af41cf75e012f403" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>input_stream</name></member>
+      <member refid="structshell__state_____1c19530794ea54d353fd0311833918b58" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>interactive</name></member>
+      <member refid="structshell__state_____16d0f8ff17a863ff9b78024b332d4f002" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>layer</name></member>
+      <member refid="structshell__state_____1f791667e865551ff1ef99e5bd7fb5ebd" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>line</name></member>
+      <member refid="structshell__state_____1ecc070dc56b42065153b28df3b48731d" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>status</name></member>
+      <member refid="structshell__state_____1f1e01f5e2ea55d14d3e2dbafb9313262" prot="public" virt="non-virtual"><scope>shell_state__</scope><name>verbose</name></member>
     </listofallmembers>
   </compounddef>
 </doxygen>

@@ -1,11 +1,12 @@
 \section{fsal\_\-attrs.c File Reference}
-\label{fsal__attrs_8c}\index{fsal_attrs.c@{fsal\_\-attrs.c}}
-Attributes functions. 
+\label{fsal__attrs_8c}\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}}
+Attributes functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
-{\tt \#include \char`\"{}HPSSclapi\-Ext/hpssclapiext.h\char`\"{}}\par
+{\tt \#include \char`\"{}HPSSclapiExt/hpssclapiext.h\char`\"{}}\par
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
@@ -19,25 +20,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-setattrs} (fsal\_\-handle\_\-t $\ast$filehandle
 Attributes functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/09/09 15:22:49 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.19 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-attrs.c}.
 
 \subsection{Function Documentation}
-\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_getattrs@{FSAL\_\-getattrs}}
-\index{FSAL_getattrs@{FSAL\_\-getattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-getattrs (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__attrs_8c_a0}
+\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}!FSAL\_\-getattrs@{FSAL\_\-getattrs}}
+\index{FSAL\_\-getattrs@{FSAL\_\-getattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection[{FSAL\_\-getattrs}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-getattrs (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__attrs_8c_1a28c6ab788c37b4658aeb6ed9536d7b}
 
 
 FSAL\_\-getattrs: Get attributes for the object specified by its filehandle.
@@ -55,11 +56,11 @@ FSAL\_\-getattrs: Get attributes for the object specified by its filehandle.
 
 Definition at line 44 of file fsal\_\-attrs.c.
 
-References hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().
 
-Referenced by FSAL\_\-access(), FSAL\_\-link(), FSAL\_\-lookup(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-truncate(), and FSAL\_\-unlink().\index{fsal_attrs.c@{fsal\_\-attrs.c}!FSAL_setattrs@{FSAL\_\-setattrs}}
-\index{FSAL_setattrs@{FSAL\_\-setattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-setattrs (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attrib\_\-set}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__attrs_8c_a1}
+Referenced by FSAL\_\-access(), FSAL\_\-GetXAttrAttrs(), FSAL\_\-link(), FSAL\_\-ListXAttrs(), FSAL\_\-lookup(), FSAL\_\-readlink(), FSAL\_\-rename(), FSAL\_\-setattrs(), FSAL\_\-truncate(), and FSAL\_\-unlink().\index{fsal\_\-attrs.c@{fsal\_\-attrs.c}!FSAL\_\-setattrs@{FSAL\_\-setattrs}}
+\index{FSAL\_\-setattrs@{FSAL\_\-setattrs}!fsal_attrs.c@{fsal\_\-attrs.c}}
+\subsubsection[{FSAL\_\-setattrs}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-setattrs (fsal\_\-handle\_\-t $\ast$ {\em filehandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attrib\_\-set}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__attrs_8c_c0463632f2c08701c012b7885b1d9012}
 
 
 FSAL\_\-setattrs: Set attributes for the object specified by its filehandle.
@@ -71,16 +72,18 @@ FSAL\_\-setattrs: Set attributes for the object specified by its filehandle.
 \end{Desc}
 \begin{Desc}
 \item[Returns:]Major error codes :\begin{itemize}
-\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-STALE (object\_\-handle does not address an existing object)\item ERR\_\-FSAL\_\-INVAL (tried to modify a read-only attribute)\item ERR\_\-FSAL\_\-ATTRNOTSUPP (tried to modify a non-supported attribute)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Another error code if an error occured. NB: if getting postop attributes failed, the function does not return an error but the FSAL\_\-ATTR\_\-RDATTR\_\-ERR bit is set in the object\_\-attributes-$>$asked\_\-attributes field.\end{itemize}
+\item ERR\_\-FSAL\_\-NO\_\-ERROR (no error)\item ERR\_\-FSAL\_\-STALE (object\_\-handle does not address an existing object)\item ERR\_\-FSAL\_\-INVAL (tried to modify a read-only attribute)\item ERR\_\-FSAL\_\-ATTRNOTSUPP (tried to modify a non-supported attribute)\item ERR\_\-FSAL\_\-FAULT (a NULL pointer was passed as mandatory argument)\item Another error code if an error occured. NB: if getting postop attributes failed, the function does not return an error but the FSAL\_\-ATTR\_\-RDATTR\_\-ERR bit is set in the object\_\-attributes-$>$asked\_\-attributes field. \end{itemize}
 \end{Desc}
 
 
 \begin{Desc}
-\item[{\bf Todo}]: chown restricted seems to be OK. 
+\item[{\bf Todo}]: chown restricted seems to be OK. \end{Desc}
 
-voir pourquoi hpss\_\-fattr\_\-out ne contient pas ce qu'il devrait contenir\end{Desc}
+
+\begin{Desc}
+\item[{\bf Todo}]voir pourquoi hpss\_\-fattr\_\-out ne contient pas ce qu'il devrait contenir \end{Desc}
 
 
 Definition at line 138 of file fsal\_\-attrs.c.
 
-References fsal2hpss\_\-attribset(), FSAL\_\-getattrs(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal2hpss\_\-attribset(), FSAL\_\-getattrs(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().

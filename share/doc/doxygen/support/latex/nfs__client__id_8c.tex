@@ -1,7 +1,7 @@
 \section{nfs\_\-client\_\-id.c File Reference}
-\label{nfs__client__id_8c}\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+\label{nfs__client__id_8c}\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}}
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
 {\tt \#include \char`\"{}nfs\_\-core.h\char`\"{}}\par
@@ -9,8 +9,8 @@
 {\tt \#include \char`\"{}config\_\-parsing.h\char`\"{}}\par
 {\tt \#include $<$stdlib.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$pthread.h$>$}\par
 {\tt \#include \char`\"{}nfs4.h\char`\"{}}\par
-{\tt \#include \char`\"{}SHA1.h\char`\"{}}\par
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
@@ -48,9 +48,9 @@ int {\bf nfs\_\-Init\_\-client\_\-id} (nfs\_\-client\_\-id\_\-parameter\_\-t par
 \item 
 int {\bf nfs\_\-Init\_\-client\_\-id\_\-reverse} (nfs\_\-client\_\-id\_\-parameter\_\-t param)
 \item 
-int {\bf nfs\_\-client\_\-id\_\-compute} (char $\ast$name, clientid4 $\ast$pclientid)
+int {\bf nfs\_\-client\_\-id\_\-basic\_\-compute} (char $\ast$name, clientid4 $\ast$pclientid)
 \item 
-int {\bf nfs\_\-client\_\-id\_\-sha1\_\-compute} (char $\ast$name, clientid4 $\ast$pclientid)
+int {\bf nfs\_\-client\_\-id\_\-compute} (char $\ast$name, clientid4 $\ast$pclientid)
 \end{CompactItemize}
 \subsection*{Variables}
 \begin{CompactItemize}
@@ -64,14 +64,14 @@ nfs\_\-parameter\_\-t {\bf nfs\_\-param}
 
 
 \subsection{Function Documentation}
-\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!client_id_rbt_hash_func@{client\_\-id\_\-rbt\_\-hash\_\-func}}
-\index{client_id_rbt_hash_func@{client\_\-id\_\-rbt\_\-hash\_\-func}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_a6}
+\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!client\_\-id\_\-rbt\_\-hash\_\-func@{client\_\-id\_\-rbt\_\-hash\_\-func}}
+\index{client\_\-id\_\-rbt\_\-hash\_\-func@{client\_\-id\_\-rbt\_\-hash\_\-func}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{client\_\-id\_\-rbt\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-rbt\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_bc2876182497a99301c7fc37331c7c90}
 
 
 client\_\-id\_\-rbt\_\-hash\_\-func: computes the rbt value for the entry in Client Id cache.
 
-Computes the rbt value for the entry in Client Id cache. In fact, it just use the address value itself (which is an unsigned integer) as the rbt value. This function is called internal in the Has\-Table\_\-$\ast$ function
+Computes the rbt value for the entry in Client Id cache. In fact, it just use the address value itself (which is an unsigned integer) as the rbt value. This function is called internal in the HasTable\_\-$\ast$ function
 
 \begin{Desc}
 \item[Parameters:]
@@ -81,26 +81,24 @@ Computes the rbt value for the entry in Client Id cache. In fact, it just use th
 \begin{Desc}
 \item[Returns:]the computed rbt value.\end{Desc}
 \begin{Desc}
-\item[See also:]Hash\-Table\_\-Init \end{Desc}
+\item[See also:]HashTable\_\-Init \end{Desc}
 
 
-Definition at line 181 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!client_id_rbt_hash_func_reverse@{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse}}
-\index{client_id_rbt_hash_func_reverse@{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_a7}
+Definition at line 188 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse@{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse}}
+\index{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse@{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-rbt\_\-hash\_\-func\_\-reverse (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_2cc4076a9eab69408673ab152c820593}
 
 
 
 
-Definition at line 195 of file nfs\_\-client\_\-id.c.
-
-References nfs\_\-client\_\-id\_\-compute().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!client_id_value_hash_func@{client\_\-id\_\-value\_\-hash\_\-func}}
-\index{client_id_value_hash_func@{client\_\-id\_\-value\_\-hash\_\-func}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-value\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_a4}
+Definition at line 202 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!client\_\-id\_\-value\_\-hash\_\-func@{client\_\-id\_\-value\_\-hash\_\-func}}
+\index{client\_\-id\_\-value\_\-hash\_\-func@{client\_\-id\_\-value\_\-hash\_\-func}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{client\_\-id\_\-value\_\-hash\_\-func}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-value\_\-hash\_\-func (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_23b0e059f9dce040b0f59460eb917dcf}
 
 
 client\_\-id\_\-rbt\_\-hash\_\-func: computes the hash value for the entry in Client Id cache.
 
-Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the Has\-Table\_\-$\ast$ function
+Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable\_\-$\ast$ function
 
 \begin{Desc}
 \item[Parameters:]
@@ -110,17 +108,17 @@ Computes the hash value for the entry in Client Id cache. In fact, it just use a
 \begin{Desc}
 \item[Returns:]the computed hash value.\end{Desc}
 \begin{Desc}
-\item[See also:]Hash\-Table\_\-Init \end{Desc}
+\item[See also:]HashTable\_\-Init \end{Desc}
 
 
-Definition at line 123 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!client_id_value_hash_func_reverse@{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse}}
-\index{client_id_value_hash_func_reverse@{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-value\_\-hash\_\-func\_\-reverse (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_a5}
+Definition at line 130 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!client\_\-id\_\-value\_\-hash\_\-func\_\-reverse@{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse}}
+\index{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse@{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{client\_\-id\_\-value\_\-hash\_\-func\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}unsigned long client\_\-id\_\-value\_\-hash\_\-func\_\-reverse (hash\_\-parameter\_\-t $\ast$ {\em p\_\-hparam}, \/  hash\_\-buffer\_\-t $\ast$ {\em buffclef})}\label{nfs__client__id_8c_89725021ffa3ad506fcca6c9a3c51a1f}
 
 
 client\_\-id\_\-reverse\_\-hash\_\-func: computes the hash value for the entry in Client Id cache.
 
-Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the Has\-Table\_\-$\ast$ function
+Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash. This function is called internal in the HasTable\_\-$\ast$ function
 
 \begin{Desc}
 \item[Parameters:]
@@ -130,17 +128,17 @@ Computes the hash value for the entry in Client Id cache. In fact, it just use a
 \begin{Desc}
 \item[Returns:]the computed hash value.\end{Desc}
 \begin{Desc}
-\item[See also:]Hash\-Table\_\-Init \end{Desc}
+\item[See also:]HashTable\_\-Init \end{Desc}
 
 
-Definition at line 153 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!compare_client_id@{compare\_\-client\_\-id}}
-\index{compare_client_id@{compare\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-client\_\-id (hash\_\-buffer\_\-t $\ast$ {\em buff1}, hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__client__id_8c_a8}
+Definition at line 160 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!compare\_\-client\_\-id@{compare\_\-client\_\-id}}
+\index{compare\_\-client\_\-id@{compare\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{compare\_\-client\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-client\_\-id (hash\_\-buffer\_\-t $\ast$ {\em buff1}, \/  hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__client__id_8c_7657ba09a1d31d97724207f0e2df9367}
 
 
 compare\_\-client\_\-id: compares the ip address stored in the key buffers.
 
-compare the ip address stored in the key buffers. This function is to be used as 'compare\_\-key' field in the hashtable storing the nfs duplicated requests.
+compare the ip address stored in the key buffers. This function is to be used as 'compare\_\-key' field in the hashtable storing the client ids.
 
 \begin{Desc}
 \item[Parameters:]
@@ -151,21 +149,21 @@ compare the ip address stored in the key buffers. This function is to be used as
 \item[Returns:]0 if keys are identifical, 1 if they are different. \end{Desc}
 
 
-Definition at line 219 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!compare_client_id_reverse@{compare\_\-client\_\-id\_\-reverse}}
-\index{compare_client_id_reverse@{compare\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-client\_\-id\_\-reverse (hash\_\-buffer\_\-t $\ast$ {\em buff1}, hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__client__id_8c_a9}
+Definition at line 226 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!compare\_\-client\_\-id\_\-reverse@{compare\_\-client\_\-id\_\-reverse}}
+\index{compare\_\-client\_\-id\_\-reverse@{compare\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{compare\_\-client\_\-id\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}int compare\_\-client\_\-id\_\-reverse (hash\_\-buffer\_\-t $\ast$ {\em buff1}, \/  hash\_\-buffer\_\-t $\ast$ {\em buff2})}\label{nfs__client__id_8c_88623fe32cf9deb2c2b47f031ecc565b}
 
 
 
 
-Definition at line 226 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!display_client_id@{display\_\-client\_\-id}}
-\index{display_client_id@{display\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{nfs__client__id_8c_a10}
+Definition at line 233 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!display\_\-client\_\-id@{display\_\-client\_\-id}}
+\index{display\_\-client\_\-id@{display\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{display\_\-client\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__client__id_8c_cecf2572f514e8751b8ae1f4f1c3772c}
 
 
 display\_\-client\_\-id: displays the client\_\-id stored in the buffer.
 
-displays the client\_\-id stored in the buffer. This function is to be used as 'key\_\-to\_\-str' field in the hashtable storing the nfs duplicated requests.
+displays the client\_\-id stored in the buffer. This function is to be used as 'key\_\-to\_\-str' field in the hashtable storing the client ids.
 
 \begin{Desc}
 \item[Parameters:]
@@ -176,23 +174,23 @@ displays the client\_\-id stored in the buffer. This function is to be used as '
 \item[Returns:]number of character written. \end{Desc}
 
 
-Definition at line 247 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!display_client_id_reverse@{display\_\-client\_\-id\_\-reverse}}
-\index{display_client_id_reverse@{display\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id\_\-reverse (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{nfs__client__id_8c_a11}
+Definition at line 254 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!display\_\-client\_\-id\_\-reverse@{display\_\-client\_\-id\_\-reverse}}
+\index{display\_\-client\_\-id\_\-reverse@{display\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{display\_\-client\_\-id\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id\_\-reverse (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__client__id_8c_de873a858c39e477dc87d27b5adb0c5a}
 
 
 
 
-Definition at line 256 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!display_client_id_val@{display\_\-client\_\-id\_\-val}}
-\index{display_client_id_val@{display\_\-client\_\-id\_\-val}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id\_\-val (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, char $\ast$ {\em str})}\label{nfs__client__id_8c_a12}
+Definition at line 263 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!display\_\-client\_\-id\_\-val@{display\_\-client\_\-id\_\-val}}
+\index{display\_\-client\_\-id\_\-val@{display\_\-client\_\-id\_\-val}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{display\_\-client\_\-id\_\-val}]{\setlength{\rightskip}{0pt plus 5cm}int display\_\-client\_\-id\_\-val (hash\_\-buffer\_\-t $\ast$ {\em pbuff}, \/  char $\ast$ {\em str})}\label{nfs__client__id_8c_80dae4a1dff1cd9f09a6c819234fc847}
 
 
 
 
-Definition at line 262 of file nfs\_\-client\_\-id.c.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_add@{nfs\_\-client\_\-id\_\-add}}
-\index{nfs_client_id_add@{nfs\_\-client\_\-id\_\-add}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-add (clientid4 {\em clientid}, nfs\_\-client\_\-id\_\-t {\em client\_\-record}, nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_a13}
+Definition at line 269 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-add@{nfs\_\-client\_\-id\_\-add}}
+\index{nfs\_\-client\_\-id\_\-add@{nfs\_\-client\_\-id\_\-add}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-add}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-add (clientid4 {\em clientid}, \/  nfs\_\-client\_\-id\_\-t {\em client\_\-record}, \/  nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_b9140a0995c7adc7f300b6046fa89be9}
 
 
 nfs\_\-client\_\-id\_\-add: adds an entry in the duplicate requests cache.
@@ -214,22 +212,25 @@ CLIENT\_\-ID\_\-INSERT\_\-MALLOC\_\-ERROR if an error occured during the inserti
 CLIENT\_\-ID\_\-NETDB\_\-ERROR if an error occured during the netdb query (via gethostbyaddr). \end{Desc}
 
 
-Definition at line 292 of file nfs\_\-client\_\-id.c.
+Definition at line 299 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-basic\_\-compute@{nfs\_\-client\_\-id\_\-basic\_\-compute}}
+\index{nfs\_\-client\_\-id\_\-basic\_\-compute@{nfs\_\-client\_\-id\_\-basic\_\-compute}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-basic\_\-compute}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-basic\_\-compute (char $\ast$ {\em name}, \/  clientid4 $\ast$ {\em pclientid})}\label{nfs__client__id_8c_746ffb73ac84094a654d44f5e7838f55}
 
-References ht\_\-client\_\-id, ht\_\-client\_\-id\_\-reverse, and nfs\_\-param.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_compute@{nfs\_\-client\_\-id\_\-compute}}
-\index{nfs_client_id_compute@{nfs\_\-client\_\-id\_\-compute}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-compute (char $\ast$ {\em name}, clientid4 $\ast$ {\em pclientid})}\label{nfs__client__id_8c_a20}
+
+
+
+Definition at line 640 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-compute@{nfs\_\-client\_\-id\_\-compute}}
+\index{nfs\_\-client\_\-id\_\-compute@{nfs\_\-client\_\-id\_\-compute}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-compute}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-compute (char $\ast$ {\em name}, \/  clientid4 $\ast$ {\em pclientid})}\label{nfs__client__id_8c_7b579894c261ba1316d2df847d336869}
 
 
 nfs\_\-client\_\-id\_\-compute: computes the client id, based on the string.
 
 Computes the client id, based on the string. 
 
-Definition at line 644 of file nfs\_\-client\_\-id.c.
-
-References strnlen().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_get@{nfs\_\-client\_\-id\_\-get}}
-\index{nfs_client_id_get@{nfs\_\-client\_\-id\_\-get}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-get (clientid4 {\em clientid}, nfs\_\-client\_\-id\_\-t $\ast$ {\em client\_\-id\_\-res})}\label{nfs__client__id_8c_a15}
+Definition at line 670 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-get@{nfs\_\-client\_\-id\_\-get}}
+\index{nfs\_\-client\_\-id\_\-get@{nfs\_\-client\_\-id\_\-get}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-get}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-get (clientid4 {\em clientid}, \/  nfs\_\-client\_\-id\_\-t $\ast$ {\em client\_\-id\_\-res})}\label{nfs__client__id_8c_4377fb5883c046e98f63925d842f0ed7}
 
 
 nfs\_\-client\_\-id\_\-get: Tries to get an entry for client\_\-id cache.
@@ -245,22 +246,16 @@ Tries to get an entry for client\_\-id cache.
 \item[Returns:]the result previously set if $\ast$pstatus == CLIENT\_\-ID\_\-SUCCESS \end{Desc}
 
 
-Definition at line 454 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id, and ht\_\-client\_\-id\_\-reverse.
-
-Referenced by nfs4\_\-Check\_\-Stateid(), and nfs4\_\-is\_\-lease\_\-expired().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_get_reverse@{nfs\_\-client\_\-id\_\-get\_\-reverse}}
-\index{nfs_client_id_get_reverse@{nfs\_\-client\_\-id\_\-get\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-get\_\-reverse (char $\ast$ {\em key}, nfs\_\-client\_\-id\_\-t $\ast$ {\em client\_\-id\_\-res})}\label{nfs__client__id_8c_a16}
+Definition at line 461 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-get\_\-reverse@{nfs\_\-client\_\-id\_\-get\_\-reverse}}
+\index{nfs\_\-client\_\-id\_\-get\_\-reverse@{nfs\_\-client\_\-id\_\-get\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-get\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-get\_\-reverse (char $\ast$ {\em key}, \/  nfs\_\-client\_\-id\_\-t $\ast$ {\em client\_\-id\_\-res})}\label{nfs__client__id_8c_8c7f1ee417a40da215ec4c9632b4c8c7}
 
 
 
 
-Definition at line 499 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id\_\-reverse.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_remove@{nfs\_\-client\_\-id\_\-remove}}
-\index{nfs_client_id_remove@{nfs\_\-client\_\-id\_\-remove}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-remove (clientid4 {\em clientid}, nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_a17}
+Definition at line 506 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-remove@{nfs\_\-client\_\-id\_\-remove}}
+\index{nfs\_\-client\_\-id\_\-remove@{nfs\_\-client\_\-id\_\-remove}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-remove}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-remove (clientid4 {\em clientid}, \/  nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_7a209ed238e327117616f035e8987e81}
 
 
 nfs\_\-client\_\-id\_\-remove: Tries to remove an entry for client\_\-id cache
@@ -276,11 +271,9 @@ Tries to remove an entry for client\_\-id cache.
 \item[Returns:]the result previously set if $\ast$pstatus == CLIENT\_\-ID\_\-SUCCESS \end{Desc}
 
 
-Definition at line 541 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id, and ht\_\-client\_\-id\_\-reverse.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_set@{nfs\_\-client\_\-id\_\-set}}
-\index{nfs_client_id_set@{nfs\_\-client\_\-id\_\-set}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-set (clientid4 {\em clientid}, nfs\_\-client\_\-id\_\-t {\em client\_\-record}, nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_a14}
+Definition at line 548 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-client\_\-id\_\-set@{nfs\_\-client\_\-id\_\-set}}
+\index{nfs\_\-client\_\-id\_\-set@{nfs\_\-client\_\-id\_\-set}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-client\_\-id\_\-set}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-set (clientid4 {\em clientid}, \/  nfs\_\-client\_\-id\_\-t {\em client\_\-record}, \/  nfs\_\-client\_\-id\_\-t $\ast$ {\em nfs\_\-client\_\-id\_\-pool})}\label{nfs__client__id_8c_f755fa4673cd3bdb9a9717858c8c823e}
 
 
 nfs\_\-client\_\-id\_\-sets: sets an entry that already exists.
@@ -302,24 +295,9 @@ CLIENT\_\-ID\_\-INSERT\_\-MALLOC\_\-ERROR if an error occured during the inserti
 CLIENT\_\-ID\_\-NETDB\_\-ERROR if an error occured during the netdb query (via gethostbyaddr). \end{Desc}
 
 
-Definition at line 378 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id, ht\_\-client\_\-id\_\-reverse, and nfs\_\-param.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_client_id_sha1_compute@{nfs\_\-client\_\-id\_\-sha1\_\-compute}}
-\index{nfs_client_id_sha1_compute@{nfs\_\-client\_\-id\_\-sha1\_\-compute}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-client\_\-id\_\-sha1\_\-compute (char $\ast$ {\em name}, clientid4 $\ast$ {\em pclientid})}\label{nfs__client__id_8c_a21}
-
-
-nfs\_\-client\_\-id\_\-sha1\_\-compute: computes the client id, based on the string, with SHA1 algorithm
-
-Computes the client id, based on the string, with SHA1 algorithm. 
-
-Definition at line 752 of file nfs\_\-client\_\-id.c.
-
-References SHA1Final(), SHA1Init(), and SHA1Update().
-
-Referenced by main().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_Init_client_id@{nfs\_\-Init\_\-client\_\-id}}
-\index{nfs_Init_client_id@{nfs\_\-Init\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-client\_\-id (nfs\_\-client\_\-id\_\-parameter\_\-t {\em param})}\label{nfs__client__id_8c_a18}
+Definition at line 385 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-Init\_\-client\_\-id@{nfs\_\-Init\_\-client\_\-id}}
+\index{nfs\_\-Init\_\-client\_\-id@{nfs\_\-Init\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-Init\_\-client\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-client\_\-id (nfs\_\-client\_\-id\_\-parameter\_\-t {\em param})}\label{nfs__client__id_8c_8691d477be25dae8e9c9f0ca02bd14ab}
 
 
 nfs\_\-Init\_\-client\_\-id: Init the hashtable for Client Id cache.
@@ -335,11 +313,9 @@ Perform all the required initialization for hashtable Client Id cache
 \item[Returns:]0 if successful, -1 otherwise \end{Desc}
 
 
-Definition at line 600 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_Init_client_id_reverse@{nfs\_\-Init\_\-client\_\-id\_\-reverse}}
-\index{nfs_Init_client_id_reverse@{nfs\_\-Init\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-client\_\-id\_\-reverse (nfs\_\-client\_\-id\_\-parameter\_\-t {\em param})}\label{nfs__client__id_8c_a19}
+Definition at line 607 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-Init\_\-client\_\-id\_\-reverse@{nfs\_\-Init\_\-client\_\-id\_\-reverse}}
+\index{nfs\_\-Init\_\-client\_\-id\_\-reverse@{nfs\_\-Init\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-Init\_\-client\_\-id\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Init\_\-client\_\-id\_\-reverse (nfs\_\-client\_\-id\_\-parameter\_\-t {\em param})}\label{nfs__client__id_8c_3574e9f41f349da29b75b83f0d33a485}
 
 
 nfs\_\-Init\_\-client\_\-id\_\-reverse: Init the reverse hashtable for Client Id cache.
@@ -355,11 +331,9 @@ Perform all the required initialization for hashtable Client Id cache
 \item[Returns:]0 if successful, -1 otherwise \end{Desc}
 
 
-Definition at line 622 of file nfs\_\-client\_\-id.c.
-
-References ht\_\-client\_\-id\_\-reverse.\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!strnlen@{strnlen}}
+Definition at line 629 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!strnlen@{strnlen}}
 \index{strnlen@{strnlen}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}size\_\-t strnlen (const char $\ast$ {\em s}, size\_\-t {\em maxlen})}\label{nfs__client__id_8c_a3}
+\subsubsection[{strnlen}]{\setlength{\rightskip}{0pt plus 5cm}size\_\-t strnlen (const char $\ast$ {\em s}, \/  size\_\-t {\em maxlen})}\label{nfs__client__id_8c_fc92d2231e45d19988c7894aa2a07f0c}
 
 
 vim:expandtab:shiftwidth=8:tabstop=8:
@@ -368,13 +342,13 @@ Copyright CEA/DAM/DIF (2008) contributeur : Philippe DENIEL {\tt philippe.deniel
 
 Ce logiciel est un serveur implementant le protocole NFS.
 
-Ce logiciel est r\'{e}gi par la licence Ce\-CILL soumise au droit fran\c{c}ais et respectant les principes de diffusion des logiciels libres. Vous pouvez utiliser, modifier et/ou redistribuer ce programme sous les conditions de la licence Ce\-CILL telle que diffus\'{e}e par le CEA, le CNRS et l'INRIA sur le site \char`\"{}http://www.cecill.info\char`\"{}.
+Ce logiciel est régi par la licence CeCILL soumise au droit français et respectant les principes de diffusion des logiciels libres. Vous pouvez utiliser, modifier et/ou redistribuer ce programme sous les conditions de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA sur le site \char`\"{}http://www.cecill.info\char`\"{}.
 
-En contrepartie de l'accessibilit\'{e} au code source et des droits de copie, de modification et de redistribution accord\'{e}s par cette licence, il n'est offert aux utilisateurs qu'une garantie limit\'{e}e. Pour les m\^{e}mes raisons, seule une responsabilit\'{e} restreinte p\`{e}se sur l'auteur du programme, le titulaire des droits patrimoniaux et les conc\'{e}dants successifs.
+En contrepartie de l'accessibilité au code source et des droits de copie, de modification et de redistribution accordés par cette licence, il n'est offert aux utilisateurs qu'une garantie limitée. Pour les mêmes raisons, seule une responsabilité restreinte pèse sur l'auteur du programme, le titulaire des droits patrimoniaux et les concédants successifs.
 
-A cet \'{e}gard l'attention de l'utilisateur est attir\'{e}e sur les risques associ\'{e}s au chargement, \`{a} l'utilisation, \`{a} la modification et/ou au d\'{e}veloppement et \`{a} la reproduction du logiciel par l'utilisateur \'{e}tant donn\'{e} sa sp\'{e}cificit\'{e} de logiciel libre, qui peut le rendre complexe \`{a} manipuler et qui le r\'{e}serve donc \`{a} des d\'{e}veloppeurs et des professionnels avertis poss\'{e}dant des connaissances informatiques approfondies. Les utilisateurs sont donc invit\'{e}s \`{a} charger et tester l'ad\'{e}quation du logiciel \`{a} leurs besoins dans des conditions permettant d'assurer la s\'{e}curit\'{e} de leurs syst\`{e}mes et ou de leurs donn\'{e}es et, plus g\'{e}n\'{e}ralement, \`{a} l'utiliser et l'exploiter dans les m\^{e}mes conditions de s\'{e}curit\'{e}.
+A cet égard l'attention de l'utilisateur est attirée sur les risques associés au chargement, à l'utilisation, à la modification et/ou au développement et à la reproduction du logiciel par l'utilisateur étant donné sa spécificité de logiciel libre, qui peut le rendre complexe à manipuler et qui le réserve donc à des développeurs et des professionnels avertis possédant des connaissances informatiques approfondies. Les utilisateurs sont donc invités à charger et tester l'adéquation du logiciel à leurs besoins dans des conditions permettant d'assurer la sécurité de leurs systèmes et ou de leurs données et, plus généralement, à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
 
-Le fait que vous puissiez acc\'{e}der \`{a} cet en-t\^{e}te signifie que vous avez pris connaissance de la licence Ce\-CILL, et que vous en avez accept\'{e} les termes.
+Le fait que vous puissiez accéder à cet en-tête signifie que vous avez pris connaissance de la licence CeCILL, et que vous en avez accepté les termes.
 
 ---------------------
 
@@ -382,44 +356,37 @@ Copyright CEA/DAM/DIF (2005) Contributor: Philippe DENIEL {\tt philippe.deniel@c
 
 This software is a server that implements the NFS protocol.
 
-This software is governed by the Ce\-CILL license under French law and abiding by the rules of distribution of free software. You can use, modify and/ or redistribute the software under the terms of the Ce\-CILL license as circulated by CEA, CNRS and INRIA at the following URL \char`\"{}http://www.cecill.info\char`\"{}.
+This software is governed by the CeCILL license under French law and abiding by the rules of distribution of free software. You can use, modify and/ or redistribute the software under the terms of the CeCILL license as circulated by CEA, CNRS and INRIA at the following URL \char`\"{}http://www.cecill.info\char`\"{}.
 
 As a counterpart to the access to the source code and rights to copy, modify and redistribute granted by the license, users are provided only with a limited warranty and the software's author, the holder of the economic rights, and the successive licensors have only limited liability.
 
 In this respect, the user's attention is drawn to the risks associated with loading, using, modifying and/or developing or reproducing the software by the user in light of its specific status of free software, that may mean that it is complicated to manipulate, and that also therefore means that it is reserved for developers and experienced professionals having in-depth computer knowledge. Users are therefore encouraged to load and test the software's suitability as regards their requirements in conditions enabling the security of their systems and/or data to be ensured and, more generally, to use and operate it in the same conditions as regards security.
 
-The fact that you are presently reading this means that you have had knowledge of the Ce\-CILL license and that you accept its terms. ---------------------------------------
+The fact that you are presently reading this means that you have had knowledge of the CeCILL license and that you accept its terms. ---------------------------------------
 
-{\bf nfs\_\-client\_\-id.c}{\rm (p.\,\pageref{nfs__client__id_8c})} : The management of the client id cache.
+\doxyref{nfs\_\-client\_\-id.c}{p.}{nfs__client__id_8c} : The management of the client id cache.
 
 \$Header\$
 
 \$Log\$ 
 
 \subsection{Variable Documentation}
-\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!ht_client_id@{ht\_\-client\_\-id}}
-\index{ht_client_id@{ht\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-client\_\-id}}\label{nfs__client__id_8c_a0}
+\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!ht\_\-client\_\-id@{ht\_\-client\_\-id}}
+\index{ht\_\-client\_\-id@{ht\_\-client\_\-id}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{ht\_\-client\_\-id}]{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-client\_\-id}}\label{nfs__client__id_8c_9814a7ba7bd5d8989727ff7dd5be2898}
 
 
 
 
-Definition at line 102 of file nfs\_\-client\_\-id.c.
-
-Referenced by nfs\_\-client\_\-id\_\-add(), nfs\_\-client\_\-id\_\-get(), nfs\_\-client\_\-id\_\-remove(), nfs\_\-client\_\-id\_\-set(), and nfs\_\-Init\_\-client\_\-id().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!ht_client_id_reverse@{ht\_\-client\_\-id\_\-reverse}}
-\index{ht_client_id_reverse@{ht\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-client\_\-id\_\-reverse}}\label{nfs__client__id_8c_a1}
+Definition at line 109 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!ht\_\-client\_\-id\_\-reverse@{ht\_\-client\_\-id\_\-reverse}}
+\index{ht\_\-client\_\-id\_\-reverse@{ht\_\-client\_\-id\_\-reverse}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{ht\_\-client\_\-id\_\-reverse}]{\setlength{\rightskip}{0pt plus 5cm}hash\_\-table\_\-t$\ast$ {\bf ht\_\-client\_\-id\_\-reverse}}\label{nfs__client__id_8c_4f42330ca2745fd231221c2993e5a4f6}
 
 
 
 
-Definition at line 103 of file nfs\_\-client\_\-id.c.
-
-Referenced by nfs\_\-client\_\-id\_\-add(), nfs\_\-client\_\-id\_\-get(), nfs\_\-client\_\-id\_\-get\_\-reverse(), nfs\_\-client\_\-id\_\-remove(), nfs\_\-client\_\-id\_\-set(), and nfs\_\-Init\_\-client\_\-id\_\-reverse().\index{nfs_client_id.c@{nfs\_\-client\_\-id.c}!nfs_param@{nfs\_\-param}}
-\index{nfs_param@{nfs\_\-param}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__client__id_8c_a2}
+Definition at line 110 of file nfs\_\-client\_\-id.c.\index{nfs\_\-client\_\-id.c@{nfs\_\-client\_\-id.c}!nfs\_\-param@{nfs\_\-param}}
+\index{nfs\_\-param@{nfs\_\-param}!nfs_client_id.c@{nfs\_\-client\_\-id.c}}
+\subsubsection[{nfs\_\-param}]{\setlength{\rightskip}{0pt plus 5cm}nfs\_\-parameter\_\-t {\bf nfs\_\-param}}\label{nfs__client__id_8c_eb8fc46586993cf210777049fca03969}
 
 
-
-
-Definition at line 146 of file test\_\-clientid.c.

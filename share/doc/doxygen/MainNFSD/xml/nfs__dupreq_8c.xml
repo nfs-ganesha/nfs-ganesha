@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="nfs__dupreq_8c" kind="file">
     <compoundname>nfs_dupreq.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -33,115 +33,81 @@
     <includes local="yes">nfs_file_handle.h</includes>
     <includes local="yes">nfs_dupreq.h</includes>
     <incdepgraph>
-      <node id="33">
+      <node id="50">
         <label>grp.h</label>
       </node>
-      <node id="26">
+      <node id="43">
         <label>netinet/in.h</label>
       </node>
-      <node id="27">
+      <node id="44">
         <label>arpa/inet.h</label>
       </node>
-      <node id="36">
+      <node id="53">
         <label>rpc/pmap_clnt.h</label>
       </node>
-      <node id="37">
+      <node id="54">
         <label>LRU_List.h</label>
       </node>
-      <node id="44">
+      <node id="61">
         <label>fsal.h</label>
       </node>
-      <node id="23">
+      <node id="40">
         <label>stdlib.h</label>
       </node>
-      <node id="30">
+      <node id="47">
         <label>fcntl.h</label>
       </node>
-      <node id="35">
+      <node id="52">
         <label>rpc/svc.h</label>
       </node>
-      <node id="25">
+      <node id="42">
         <label>netdb.h</label>
       </node>
-      <node id="40">
+      <node id="57">
         <label>log_functions.h</label>
       </node>
-      <node id="43">
+      <node id="60">
         <label>nfs4.h</label>
       </node>
-      <node id="29">
+      <node id="46">
         <label>pthread.h</label>
       </node>
-      <node id="21">
+      <node id="38">
         <label>sys/types.h</label>
       </node>
-      <node id="28">
+      <node id="45">
         <label>string.h</label>
       </node>
-      <node id="39">
+      <node id="56">
         <label>HashTable.h</label>
       </node>
-      <node id="31">
+      <node id="48">
         <label>sys/file.h</label>
       </node>
-      <node id="34">
+      <node id="51">
         <label>rpc/rpc.h</label>
       </node>
-      <node id="47">
+      <node id="64">
         <label>nfs_exports.h</label>
       </node>
-      <node id="41">
+      <node id="58">
         <label>nfs_core.h</label>
       </node>
-      <node id="42">
+      <node id="59">
         <label>nfs23.h</label>
       </node>
-      <node id="22">
+      <node id="39">
         <label>ctype.h</label>
       </node>
-      <node id="32">
+      <node id="49">
         <label>pwd.h</label>
       </node>
-      <node id="45">
+      <node id="62">
         <label>stuff_alloc.h</label>
       </node>
-      <node id="19">
+      <node id="36">
         <label>nfs_dupreq.c</label>
         <link refid="nfs_dupreq.c"/>
-        <childnode refid="20" relation="include">
-        </childnode>
-        <childnode refid="21" relation="include">
-        </childnode>
-        <childnode refid="22" relation="include">
-        </childnode>
-        <childnode refid="23" relation="include">
-        </childnode>
-        <childnode refid="24" relation="include">
-        </childnode>
-        <childnode refid="25" relation="include">
-        </childnode>
-        <childnode refid="26" relation="include">
-        </childnode>
-        <childnode refid="27" relation="include">
-        </childnode>
-        <childnode refid="28" relation="include">
-        </childnode>
-        <childnode refid="29" relation="include">
-        </childnode>
-        <childnode refid="30" relation="include">
-        </childnode>
-        <childnode refid="31" relation="include">
-        </childnode>
-        <childnode refid="32" relation="include">
-        </childnode>
-        <childnode refid="33" relation="include">
-        </childnode>
-        <childnode refid="34" relation="include">
-        </childnode>
-        <childnode refid="35" relation="include">
-        </childnode>
-        <childnode refid="36" relation="include">
-        </childnode>
         <childnode refid="37" relation="include">
         </childnode>
         <childnode refid="38" relation="include">
@@ -168,28 +134,155 @@
         </childnode>
         <childnode refid="49" relation="include">
         </childnode>
+        <childnode refid="50" relation="include">
+        </childnode>
+        <childnode refid="51" relation="include">
+        </childnode>
+        <childnode refid="52" relation="include">
+        </childnode>
+        <childnode refid="53" relation="include">
+        </childnode>
+        <childnode refid="54" relation="include">
+        </childnode>
+        <childnode refid="55" relation="include">
+        </childnode>
+        <childnode refid="56" relation="include">
+        </childnode>
+        <childnode refid="57" relation="include">
+        </childnode>
+        <childnode refid="58" relation="include">
+        </childnode>
+        <childnode refid="59" relation="include">
+        </childnode>
+        <childnode refid="60" relation="include">
+        </childnode>
+        <childnode refid="61" relation="include">
+        </childnode>
+        <childnode refid="62" relation="include">
+        </childnode>
+        <childnode refid="63" relation="include">
+        </childnode>
+        <childnode refid="64" relation="include">
+        </childnode>
+        <childnode refid="65" relation="include">
+        </childnode>
+        <childnode refid="66" relation="include">
+        </childnode>
       </node>
-      <node id="20">
+      <node id="37">
         <label>stdio.h</label>
       </node>
-      <node id="38">
+      <node id="55">
         <label>HashData.h</label>
       </node>
-      <node id="48">
+      <node id="65">
         <label>nfs_file_handle.h</label>
       </node>
-      <node id="46">
+      <node id="63">
         <label>nfs_tools.h</label>
       </node>
-      <node id="49">
+      <node id="66">
         <label>nfs_dupreq.h</label>
       </node>
-      <node id="24">
+      <node id="41">
         <label>dirent.h</label>
       </node>
     </incdepgraph>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" prot="public" static="no" mutable="no">
+        <type>nfs_parameter_t</type>
+        <definition>nfs_parameter_t nfs_param</definition>
+        <argsstring></argsstring>
+        <name>nfs_param</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="132" bodyfile="/export/GANESHA/src/MainNFSD/nfs_init.c" bodystart="135" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_1d1973964670037b91a33fd6b6e4c40bc" prot="public" static="no" mutable="no">
+        <type>nfs_function_desc_t</type>
+        <definition>nfs_function_desc_t nfs2_func_desc[]</definition>
+        <argsstring>[]</argsstring>
+        <name>nfs2_func_desc</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="133" bodyfile="/export/GANESHA/src/MainNFSD/nfs_worker_thread.c" bodystart="169" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_1177ddde86497df151d3b3ff5c876d90a" prot="public" static="no" mutable="no">
+        <type>nfs_function_desc_t</type>
+        <definition>nfs_function_desc_t nfs3_func_desc[]</definition>
+        <argsstring>[]</argsstring>
+        <name>nfs3_func_desc</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="134" bodyfile="/export/GANESHA/src/MainNFSD/nfs_worker_thread.c" bodystart="191" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_1de3381a451007489495bf0b92585520f" prot="public" static="no" mutable="no">
+        <type>nfs_function_desc_t</type>
+        <definition>nfs_function_desc_t nfs4_func_desc[]</definition>
+        <argsstring>[]</argsstring>
+        <name>nfs4_func_desc</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="135" bodyfile="/export/GANESHA/src/MainNFSD/nfs_worker_thread.c" bodystart="218" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_1331b43564c209696c670c70673d544e1" prot="public" static="no" mutable="no">
+        <type>nfs_function_desc_t</type>
+        <definition>nfs_function_desc_t mnt1_func_desc[]</definition>
+        <argsstring>[]</argsstring>
+        <name>mnt1_func_desc</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="136" bodyfile="/export/GANESHA/src/MainNFSD/nfs_worker_thread.c" bodystart="224" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_17bcfef9b974d9b55a0f057d959a13bb8" prot="public" static="no" mutable="no">
+        <type>nfs_function_desc_t</type>
+        <definition>nfs_function_desc_t mnt3_func_desc[]</definition>
+        <argsstring>[]</argsstring>
+        <name>mnt3_func_desc</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="137" bodyfile="/export/GANESHA/src/MainNFSD/nfs_worker_thread.c" bodystart="234" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" prot="public" static="no" mutable="no">
+        <type>hash_table_t *</type>
+        <definition>hash_table_t* ht_dupreq</definition>
+        <argsstring></argsstring>
+        <name>ht_dupreq</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="140" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="140" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs__dupreq_8c_1a7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_1e04d38ace0d9a143801c1625135d4ad7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned int</type>
         <definition>unsigned int get_rpc_xid</definition>
         <argsstring>(struct svc_req *reqp)</argsstring>
@@ -213,9 +306,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="155" bodystart="154" bodyend="189"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="159" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="158" bodyend="193"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_1f812dda060fd0aa4f965adadb15dd22d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int print_entry_dupreq</definition>
         <argsstring>(LRU_data_t data, char *str)</argsstring>
@@ -250,9 +343,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="205" bodystart="204" bodyend="208"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="209" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="208" bodyend="212"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_10dd9a264f91e9823e807b34e6994f777" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int clean_entry_dupreq</definition>
         <argsstring>(LRU_entry_t *pentry, void *addparam)</argsstring>
@@ -287,16 +380,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="224" bodystart="223" bodyend="303"/>
-        <references refid="nfs__dupreq_8c_1a6" compoundref="nfs__dupreq_8c" startline="136">ht_dupreq</references>
-        <references refid="nfs__dupreq_8c_1a4" compoundref="nfs__worker__thread_8c" startline="215">mnt1_func_desc</references>
-        <references refid="nfs__dupreq_8c_1a5" compoundref="nfs__worker__thread_8c" startline="225">mnt3_func_desc</references>
-        <references refid="nfs__dupreq_8c_1a1" compoundref="nfs__worker__thread_8c" startline="160">nfs2_func_desc</references>
-        <references refid="nfs__dupreq_8c_1a2" compoundref="nfs__worker__thread_8c" startline="182">nfs3_func_desc</references>
-        <references refid="nfs__dupreq_8c_1a3" compoundref="nfs__worker__thread_8c" startline="209">nfs4_func_desc</references>
-        <references refid="nfs__dupreq_8c_1a0" compoundref="nfs__init_8c" startline="130">nfs_param</references>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="228" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="227" bodyend="307"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a10" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_17363cd3531f6119e8a2047a57e51e08f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long dupreq_value_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -332,9 +418,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="321" bodystart="320" bodyend="323"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="325" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="324" bodyend="327"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_1cd77080a96d71b76efbdee9178171504" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>unsigned long</type>
         <definition>unsigned long dupreq_rbt_hash_func</definition>
         <argsstring>(hash_parameter_t *p_hparam, hash_buffer_t *buffclef)</argsstring>
@@ -370,9 +456,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="342" bodystart="341" bodyend="345"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="346" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="345" bodyend="349"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_11754ccd21821c745e816f32a7a459e24" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int compare_xid</definition>
         <argsstring>(hash_buffer_t *buff1, hash_buffer_t *buff2)</argsstring>
@@ -407,9 +493,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="361" bodystart="360" bodyend="365"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="365" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="364" bodyend="369"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a13" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_130afd5b6d3dff5d4d7d4767089d59b44" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int display_xid</definition>
         <argsstring>(hash_buffer_t *pbuff, char *str)</argsstring>
@@ -444,9 +530,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="381" bodystart="380" bodyend="385"/>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="385" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="384" bodyend="389"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_10e0c7a1fda2f7d756dd1b2f8b4f97db6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs_Init_dupreq</definition>
         <argsstring>(nfs_rpc_dupreq_parameter_t param)</argsstring>
@@ -470,10 +556,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="399" bodystart="398" bodyend="407"/>
-        <references refid="nfs__dupreq_8c_1a6" compoundref="nfs__dupreq_8c" startline="136">ht_dupreq</references>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="403" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="402" bodyend="411"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a15" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_172a8bca40613bd2e5a727a7274ca8e66" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs_dupreq_add</definition>
         <argsstring>(long xid, struct svc_req *ptr_req, nfs_res_t *p_res_nfs, LRU_list_t *lru_dupreq, dupreq_entry_t **p_dupreq_pool)</argsstring>
@@ -521,11 +606,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="429" bodystart="424" bodyend="484"/>
-        <references refid="nfs__dupreq_8c_1a6" compoundref="nfs__dupreq_8c" startline="136">ht_dupreq</references>
-        <references refid="nfs__dupreq_8c_1a0" compoundref="nfs__init_8c" startline="130">nfs_param</references>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="433" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="428" bodyend="488"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a16" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_1f44969aca0de15c4a2079988b6e6c266" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>nfs_res_t</type>
         <definition>nfs_res_t nfs_dupreq_get</definition>
         <argsstring>(long xid, int *pstatus)</argsstring>
@@ -560,10 +643,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="499" bodystart="498" bodyend="523"/>
-        <references refid="nfs__dupreq_8c_1a6" compoundref="nfs__dupreq_8c" startline="136">ht_dupreq</references>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="503" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="502" bodyend="527"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a17" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_135d644f1f1b2c333ddc223251d615205" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs_dupreq_gc_function</definition>
         <argsstring>(LRU_entry_t *pentry, void *addparam)</argsstring>
@@ -592,11 +674,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="540" bodystart="539" bodyend="550"/>
-        <references refid="nfs__dupreq_8c_1a0" compoundref="nfs__init_8c" startline="130">nfs_param</references>
-        <referencedby refid="nfs__worker__thread_8c_1a20" compoundref="nfs__worker__thread_8c" startline="773" endline="1151">worker_thread</referencedby>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="544" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="543" bodyend="554"/>
       </memberdef>
-      <memberdef kind="function" id="nfs__dupreq_8c_1a18" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs__dupreq_8c_1ade2ed32dcdd7eb6990c8f99f5c81370" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void nfs_dupreq_get_stats</definition>
         <argsstring>(hash_stat_t *phstat)</argsstring>
@@ -621,130 +701,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="567" bodystart="566" bodyend="569"/>
-        <references refid="nfs__dupreq_8c_1a6" compoundref="nfs__dupreq_8c" startline="136">ht_dupreq</references>
-        <referencedby refid="nfs__stats__thread_8c_1a3" compoundref="nfs__stats__thread_8c" startline="104" endline="701">stats_thread</referencedby>
-      </memberdef>
-      </sectiondef>
-      <sectiondef kind="var">
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a0" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_parameter_t</type>
-        <definition>nfs_parameter_t nfs_param</definition>
-        <argsstring></argsstring>
-        <name>nfs_param</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="128" bodystart="130" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-        <referencedby refid="nfs__file__content__gc__thread_8c_1a8" compoundref="nfs__file__content__gc__thread_8c" startline="197" endline="358">file_content_gc_thread</referencedby>
-        <referencedby refid="fuse__binding_8c_1a12" compoundref="fuse__binding_8c" startline="175" endline="404">ganefuse_main</referencedby>
-        <referencedby refid="nfs__main_8c_1a10" compoundref="nfs__main_8c" startline="173" endline="362">main</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a15" compoundref="nfs__dupreq_8c" startline="424" endline="484">nfs_dupreq_add</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a17" compoundref="nfs__dupreq_8c" startline="539" endline="550">nfs_dupreq_gc_function</referencedby>
-        <referencedby refid="nfs__file__content__flush__thread_8c_1a5" compoundref="nfs__file__content__flush__thread_8c" startline="144" endline="218">nfs_file_content_flush_thread</referencedby>
-        <referencedby refid="nfs__rpc__dispatcher__thread_8c_1a28" compoundref="nfs__rpc__dispatcher__thread_8c" startline="1231" endline="1250">nfs_Init_request_data</referencedby>
-        <referencedby refid="nfs__rpc__dispatcher__thread_8c_1a20" compoundref="nfs__rpc__dispatcher__thread_8c" startline="336" endline="736">nfs_Init_svc</referencedby>
-        <referencedby refid="nfs__worker__thread_8c_1a19" compoundref="nfs__worker__thread_8c" startline="718" endline="758">nfs_Init_worker_data</referencedby>
-        <referencedby refid="nfs__init_8c_1a17" compoundref="nfs__init_8c" startline="860" endline="937">nfs_reset_stats</referencedby>
-        <referencedby refid="nfs__rpc__dispatcher__thread_8c_1a23" compoundref="nfs__rpc__dispatcher__thread_8c" startline="826" endline="1060">nfs_rpc_getreq</referencedby>
-        <referencedby refid="nfs__init_8h_1a6" compoundref="nfs__init_8c" startline="1387" endline="1541">nfs_start</referencedby>
-        <referencedby refid="nfs__rpc__dispatcher__thread_8c_1a27" compoundref="nfs__rpc__dispatcher__thread_8c" startline="1190" endline="1215">rpc_dispatcher_thread</referencedby>
-        <referencedby refid="Svc__tcp__oncrpc_8c_1a28" compoundref="nfs__rpc__tcp__socket__manager__thread_8c" startline="163" endline="377">rpc_tcp_socket_manager_thread</referencedby>
-        <referencedby refid="nfs__stats__snmp_8c_1a40" compoundref="nfs__stats__snmp_8c" startline="1137" endline="1294">stats_snmp</referencedby>
-        <referencedby refid="nfs__stats__thread_8c_1a3" compoundref="nfs__stats__thread_8c" startline="104" endline="701">stats_thread</referencedby>
-        <referencedby refid="nfs__worker__thread_8c_1a20" compoundref="nfs__worker__thread_8c" startline="773" endline="1151">worker_thread</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a1" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_function_desc_t</type>
-        <definition>nfs_function_desc_t nfs2_func_desc[]</definition>
-        <argsstring>[]</argsstring>
-        <name>nfs2_func_desc</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="129" bodystart="160" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a2" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_function_desc_t</type>
-        <definition>nfs_function_desc_t nfs3_func_desc[]</definition>
-        <argsstring>[]</argsstring>
-        <name>nfs3_func_desc</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="130" bodystart="182" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a3" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_function_desc_t</type>
-        <definition>nfs_function_desc_t nfs4_func_desc[]</definition>
-        <argsstring>[]</argsstring>
-        <name>nfs4_func_desc</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="131" bodystart="209" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a4" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_function_desc_t</type>
-        <definition>nfs_function_desc_t mnt1_func_desc[]</definition>
-        <argsstring>[]</argsstring>
-        <name>mnt1_func_desc</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="132" bodystart="215" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a5" prot="public" static="no" volatile="no" mutable="no">
-        <type>nfs_function_desc_t</type>
-        <definition>nfs_function_desc_t mnt3_func_desc[]</definition>
-        <argsstring>[]</argsstring>
-        <name>mnt3_func_desc</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="133" bodystart="225" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="nfs__dupreq_8c_1a6" prot="public" static="no" volatile="no" mutable="no">
-        <type>hash_table_t *</type>
-        <definition>hash_table_t* ht_dupreq</definition>
-        <argsstring></argsstring>
-        <name>ht_dupreq</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c" line="136" bodystart="136" bodyend="-1"/>
-        <referencedby refid="nfs__dupreq_8c_1a9" compoundref="nfs__dupreq_8c" startline="223" endline="303">clean_entry_dupreq</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a15" compoundref="nfs__dupreq_8c" startline="424" endline="484">nfs_dupreq_add</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a16" compoundref="nfs__dupreq_8c" startline="498" endline="523">nfs_dupreq_get</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a18" compoundref="nfs__dupreq_8c" startline="566" endline="569">nfs_dupreq_get_stats</referencedby>
-        <referencedby refid="nfs__dupreq_8c_1a14" compoundref="nfs__dupreq_8c" startline="398" endline="407">nfs_Init_dupreq</referencedby>
+        <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" line="571" bodyfile="/export/GANESHA/src/MainNFSD/nfs_dupreq.c" bodystart="570" bodyend="573"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -829,327 +786,331 @@
 <codeline lineno="86"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="87"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;ctype.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>isalnum<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>atoi<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;dirent.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>MAXNAMLEN<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netdb.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;arpa/inet.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pwd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;grp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="105"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_dupreq.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="127"><highlight class="normal"></highlight></codeline>
-<codeline lineno="128"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_parameter_t<sp/><sp/><sp/><sp/><sp/>nfs_param<sp/>;</highlight></codeline>
-<codeline lineno="129"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1a1" kindref="member">nfs2_func_desc</ref>[]<sp/>;</highlight></codeline>
-<codeline lineno="130"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1a2" kindref="member">nfs3_func_desc</ref>[]<sp/>;</highlight></codeline>
-<codeline lineno="131"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1a3" kindref="member">nfs4_func_desc</ref>[]<sp/>;</highlight></codeline>
-<codeline lineno="132"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1a4" kindref="member">mnt1_func_desc</ref>[]<sp/>;</highlight></codeline>
-<codeline lineno="133"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1a5" kindref="member">mnt3_func_desc</ref>[]<sp/>;</highlight></codeline>
-<codeline lineno="134"><highlight class="normal"></highlight></codeline>
-<codeline lineno="135"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Structure<sp/>used<sp/>for<sp/>duplicated<sp/>request<sp/>cache<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="136" refid="nfs__worker__thread_8c_1a5" refkind="member"><highlight class="normal">hash_table_t<sp/>*<sp/>ht_dupreq<sp/>;</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"></highlight></codeline>
-<codeline lineno="154" refid="nfs__dupreq_8c_1a7" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a7" kindref="member">get_rpc_xid</ref>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/>*<sp/>reqp)</highlight></codeline>
-<codeline lineno="155"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>RPC<sp/>Xid<sp/>is<sp/>used<sp/>for<sp/>RPC<sp/>Reply<sp/>cache.<sp/>With<sp/>UDP<sp/>connection,<sp/>the<sp/>xid<sp/>is<sp/>in<sp/>an<sp/>opaque<sp/>structure</highlight></codeline>
-<codeline lineno="157"><highlight class="comment"><sp/><sp/><sp/>*<sp/>stored<sp/>in<sp/>xprt-&gt;xp_p2,<sp/>but<sp/>with<sp/>TCP<sp/>connection,<sp/>the<sp/>xid<sp/>is<sp/>in<sp/>another<sp/>opaque<sp/>structure<sp/>stored</highlight></codeline>
-<codeline lineno="158"><highlight class="comment"><sp/><sp/><sp/>*<sp/>in<sp/>xprt-&gt;xp_p1.<sp/>xp_p2<sp/>and<sp/>xp_p1<sp/>are<sp/>mutually<sp/>exclusive.<sp/>The<sp/>opaque<sp/>structure<sp/>are<sp/>well<sp/>defined<sp/>in</highlight></codeline>
-<codeline lineno="159"><highlight class="comment"><sp/><sp/><sp/>*<sp/>ONC<sp/>RPC<sp/>protocol<sp/>definitions,<sp/>and<sp/>used<sp/>internally<sp/>by<sp/>the<sp/>ONC<sp/>layers.<sp/>Since<sp/>I<sp/>need<sp/>to<sp/>know<sp/>the<sp/>xid</highlight></codeline>
-<codeline lineno="160"><highlight class="comment"><sp/><sp/><sp/>*<sp/>the<sp/>structures<sp/>are<sp/>defined<sp/>here<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="162"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__</highlight></codeline>
-<codeline lineno="163"><highlight class="normal"><sp/><sp/>{<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>up_unused;</highlight></codeline>
-<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/>u_long<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>up_xid;</highlight></codeline>
-<codeline lineno="166"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/>{<sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>xprt_stat<sp/>strm_stat;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/>u_long<sp/>x_id;</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/>XDR<sp/>xdrs;</highlight></codeline>
-<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>verf_body[MAX_AUTH_BYTES];</highlight></codeline>
-<codeline lineno="174"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/>Xid<sp/>;</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Map<sp/>the<sp/>xp1<sp/>and<sp/>xp2<sp/>field<sp/>to<sp/>the<sp/>udp<sp/>and<sp/>tcp<sp/>private<sp/>structures<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__<sp/>*ptcpxp<sp/>=<sp/><sp/>(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__<sp/>*)(reqp-&gt;rq_xprt-&gt;xp_p1)<sp/>;</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__<sp/>*pudpxp<sp/>=<sp/>(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__<sp/>*)(reqp-&gt;rq_xprt-&gt;xp_p2)<sp/>;</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="90"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="92"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;ctype.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>isalnum<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>atoi<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;dirent.h&gt;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>MAXNAMLEN<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netdb.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;netinet/in.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;arpa/inet.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pwd.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;grp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="109"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/svc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="117"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LRU_List.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fsal.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_file_handle.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_dupreq.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"></highlight></codeline>
+<codeline lineno="132"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_parameter_t<sp/><sp/><sp/><sp/><sp/><ref refid="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref><sp/>;</highlight></codeline>
+<codeline lineno="133"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1d1973964670037b91a33fd6b6e4c40bc" kindref="member">nfs2_func_desc</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1177ddde86497df151d3b3ff5c876d90a" kindref="member">nfs3_func_desc</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1de3381a451007489495bf0b92585520f" kindref="member">nfs4_func_desc</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="136"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_1331b43564c209696c670c70673d544e1" kindref="member">mnt1_func_desc</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>nfs_function_desc_t<sp/><ref refid="nfs__dupreq_8c_17bcfef9b974d9b55a0f057d959a13bb8" kindref="member">mnt3_func_desc</ref>[]<sp/>;</highlight></codeline>
+<codeline lineno="138"><highlight class="normal"></highlight></codeline>
+<codeline lineno="139"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Structure<sp/>used<sp/>for<sp/>duplicated<sp/>request<sp/>cache<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="140" refid="nfs__worker__thread_8c_13ada0731d68a5b4aab865acfd3d73290" refkind="member"><highlight class="normal">hash_table_t<sp/>*<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref><sp/>;</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"></highlight></codeline>
+<codeline lineno="158" refid="nfs__dupreq_8c_1e04d38ace0d9a143801c1625135d4ad7" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1e04d38ace0d9a143801c1625135d4ad7" kindref="member">get_rpc_xid</ref>(</highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/>*<sp/>reqp)</highlight></codeline>
+<codeline lineno="159"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>RPC<sp/>Xid<sp/>is<sp/>used<sp/>for<sp/>RPC<sp/>Reply<sp/>cache.<sp/>With<sp/>UDP<sp/>connection,<sp/>the<sp/>xid<sp/>is<sp/>in<sp/>an<sp/>opaque<sp/>structure</highlight></codeline>
+<codeline lineno="161"><highlight class="comment"><sp/><sp/><sp/>*<sp/>stored<sp/>in<sp/>xprt-&gt;xp_p2,<sp/>but<sp/>with<sp/>TCP<sp/>connection,<sp/>the<sp/>xid<sp/>is<sp/>in<sp/>another<sp/>opaque<sp/>structure<sp/>stored</highlight></codeline>
+<codeline lineno="162"><highlight class="comment"><sp/><sp/><sp/>*<sp/>in<sp/>xprt-&gt;xp_p1.<sp/>xp_p2<sp/>and<sp/>xp_p1<sp/>are<sp/>mutually<sp/>exclusive.<sp/>The<sp/>opaque<sp/>structure<sp/>are<sp/>well<sp/>defined<sp/>in</highlight></codeline>
+<codeline lineno="163"><highlight class="comment"><sp/><sp/><sp/>*<sp/>ONC<sp/>RPC<sp/>protocol<sp/>definitions,<sp/>and<sp/>used<sp/>internally<sp/>by<sp/>the<sp/>ONC<sp/>layers.<sp/>Since<sp/>I<sp/>need<sp/>to<sp/>know<sp/>the<sp/>xid</highlight></codeline>
+<codeline lineno="164"><highlight class="comment"><sp/><sp/><sp/>*<sp/>the<sp/>structures<sp/>are<sp/>defined<sp/>here<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/>{<sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p2<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>up_unused;</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/>u_long<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>up_xid;</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/>{<sp/><sp/></highlight><highlight class="comment">/*<sp/>kept<sp/>in<sp/>xprt-&gt;xp_p1<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>xprt_stat<sp/>strm_stat;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>u_long<sp/>x_id;</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/>XDR<sp/>xdrs;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>verf_body[MAX_AUTH_BYTES];</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/>};</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/>Xid<sp/>;</highlight></codeline>
 <codeline lineno="181"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>request<sp/>is<sp/>either<sp/>UDP<sp/>or<sp/>TCP.<sp/>If<sp/>UDP<sp/>Xid<sp/>is<sp/>null,<sp/>then<sp/>look<sp/>for<sp/>TCP<sp/>xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>reqp-&gt;rq_xprt-&gt;xp_p2<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/>Xid<sp/>=<sp/>pudpxp-&gt;up_xid<sp/>;<sp/><sp/></highlight><highlight class="comment">/*<sp/>UDP<sp/>XID<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/>Xid<sp/>=<sp/>ptcpxp-&gt;x_id<sp/>;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>TCP<sp/>XID<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Xid<sp/>;</highlight></codeline>
-<codeline lineno="189"><highlight class="normal">}</highlight><highlight class="comment">/*<sp/>get_rpc_xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="190"><highlight class="normal"></highlight></codeline>
-<codeline lineno="191"><highlight class="normal"></highlight></codeline>
-<codeline lineno="204" refid="nfs__dupreq_8c_1a8" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a8" kindref="member">print_entry_dupreq</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str<sp/>)<sp/></highlight></codeline>
-<codeline lineno="205"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/>strcpy(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="208"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"></highlight></codeline>
-<codeline lineno="210"><highlight class="normal"></highlight></codeline>
-<codeline lineno="223" refid="nfs__dupreq_8c_1a9" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a9" kindref="member">clean_entry_dupreq</ref>(<sp/><sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)<sp/></highlight></codeline>
-<codeline lineno="224"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffkey<sp/>;</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/>nfs_function_desc_t<sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>;</highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>**<sp/>dupreq_pool<sp/>=<sp/>(dupreq_entry_t<sp/>**)addparam<sp/>;</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/><sp/>pdupreq<sp/><sp/><sp/><sp/><sp/>=<sp/>(dupreq_entry_t<sp/>*)(pentry-&gt;buffdata.pdata)<sp/>;</highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Removing<sp/>entry<sp/>in<sp/>the<sp/>hash<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)pdupreq-&gt;xid<sp/>;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Map<sp/>the<sp/>xp1<sp/>and<sp/>xp2<sp/>field<sp/>to<sp/>the<sp/>udp<sp/>and<sp/>tcp<sp/>private<sp/>structures<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__<sp/>*ptcpxp<sp/>=<sp/><sp/>(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">tcp_conn2__<sp/>*)(reqp-&gt;rq_xprt-&gt;xp_p1)<sp/>;</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__<sp/>*pudpxp<sp/>=<sp/>(</highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">udp_private2__<sp/>*)(reqp-&gt;rq_xprt-&gt;xp_p2)<sp/>;</highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>The<sp/>request<sp/>is<sp/>either<sp/>UDP<sp/>or<sp/>TCP.<sp/>If<sp/>UDP<sp/>Xid<sp/>is<sp/>null,<sp/>then<sp/>look<sp/>for<sp/>TCP<sp/>xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>reqp-&gt;rq_xprt-&gt;xp_p2<sp/>!=<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/>Xid<sp/>=<sp/>pudpxp-&gt;up_xid<sp/>;<sp/><sp/></highlight><highlight class="comment">/*<sp/>UDP<sp/>XID<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/>Xid<sp/>=<sp/>ptcpxp-&gt;x_id<sp/>;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>TCP<sp/>XID<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Xid<sp/>;</highlight></codeline>
+<codeline lineno="193"><highlight class="normal">}</highlight><highlight class="comment">/*<sp/>get_rpc_xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="194"><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"></highlight></codeline>
+<codeline lineno="208" refid="nfs__dupreq_8c_1f812dda060fd0aa4f965adadb15dd22d" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1f812dda060fd0aa4f965adadb15dd22d" kindref="member">print_entry_dupreq</ref>(<sp/>LRU_data_t<sp/>data,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*str<sp/>)<sp/></highlight></codeline>
+<codeline lineno="209"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/>strcpy(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="212"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"></highlight></codeline>
+<codeline lineno="214"><highlight class="normal"></highlight></codeline>
+<codeline lineno="227" refid="nfs__dupreq_8c_10dd9a264f91e9823e807b34e6994f777" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_10dd9a264f91e9823e807b34e6994f777" kindref="member">clean_entry_dupreq</ref>(<sp/><sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)<sp/></highlight></codeline>
+<codeline lineno="228"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffkey<sp/>;</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/>nfs_function_desc_t<sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>;</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>**<sp/>dupreq_pool<sp/>=<sp/>(dupreq_entry_t<sp/>**)addparam<sp/>;</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/><sp/>pdupreq<sp/><sp/><sp/><sp/><sp/>=<sp/>(dupreq_entry_t<sp/>*)(pentry-&gt;buffdata.pdata)<sp/>;</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
 <codeline lineno="234"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="235"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_DUPREQ<sp/><sp/></highlight></codeline>
-<codeline lineno="236"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Garbagge<sp/>collection<sp/>on<sp/>xid=%u&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;xid<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="238"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/>HashTable_Del(<sp/><ref refid="nfs__dupreq_8c_1a6" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>NULL,<sp/>NULL<sp/>);</highlight></codeline>
-<codeline lineno="240"><highlight class="normal"></highlight></codeline>
-<codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>hashtable<sp/>no<sp/>such<sp/>key<sp/>=&gt;<sp/>dupreq<sp/>garbaged<sp/>by<sp/>another<sp/>thread<sp/>*/</highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="242"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>rc<sp/>!=<sp/>HASHTABLE_SUCCESS<sp/>&amp;&amp;<sp/>rc<sp/>!=<sp/>HASHTABLE_ERROR_NO_SUCH_KEY<sp/>)</highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>Error<sp/>while<sp/>cleaning<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>rc<sp/>==<sp/>HASHTABLE_ERROR_NO_SUCH_KEY<sp/>)</highlight></codeline>
-<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;<sp/></highlight><highlight class="comment">/*<sp/>don&apos;t<sp/>free<sp/>the<sp/>dupreq<sp/>twice<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="246"><highlight class="normal"></highlight></codeline>
-<codeline lineno="247"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Locate<sp/>the<sp/>function<sp/>descriptor<sp/>associated<sp/>with<sp/>this<sp/>cached<sp/>request<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_prog<sp/><sp/>==<sp/><ref refid="nfs__dupreq_8c_1a0" kindref="member">nfs_param</ref>.core_param.nfs_program<sp/>)</highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_vers<sp/>)</highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V2:</highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a1" kindref="member">nfs2_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V3:</highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a2" kindref="member">nfs3_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Removing<sp/>entry<sp/>in<sp/>the<sp/>hash<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)pdupreq-&gt;xid<sp/>;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="239"><highlight class="normal">#ifdef<sp/>_DEBUG_DUPREQ<sp/><sp/></highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Garbagge<sp/>collection<sp/>on<sp/>xid=%u&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;xid<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="242"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/>rc<sp/>=<sp/>HashTable_Del(<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>NULL,<sp/>NULL<sp/>);</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>if<sp/>hashtable<sp/>no<sp/>such<sp/>key<sp/>=&gt;<sp/>dupreq<sp/>garbaged<sp/>by<sp/>another<sp/>thread<sp/>*/</highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>rc<sp/>!=<sp/>HASHTABLE_SUCCESS<sp/>&amp;&amp;<sp/>rc<sp/>!=<sp/>HASHTABLE_ERROR_NO_SUCH_KEY<sp/>)</highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>Error<sp/>while<sp/>cleaning<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<sp/>rc<sp/>==<sp/>HASHTABLE_ERROR_NO_SUCH_KEY<sp/>)</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;<sp/></highlight><highlight class="comment">/*<sp/>don&apos;t<sp/>free<sp/>the<sp/>dupreq<sp/>twice<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal"></highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Locate<sp/>the<sp/>function<sp/>descriptor<sp/>associated<sp/>with<sp/>this<sp/>cached<sp/>request<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_prog<sp/><sp/>==<sp/><ref refid="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref>.core_param.nfs_program<sp/>)</highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_vers<sp/>)</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V2:</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1d1973964670037b91a33fd6b6e4c40bc" kindref="member">nfs2_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
 <codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
 <codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V4:</highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a3" kindref="member">nfs4_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V3:</highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1177ddde86497df151d3b3ff5c876d90a" kindref="member">nfs3_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
 <codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
 <codeline lineno="263"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>NFS<sp/>Protocol<sp/>version<sp/>%d<sp/>unknown<sp/>in<sp/>dupreq_gc&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a1" kindref="member">nfs2_func_desc</ref>[0]<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>free<sp/>function<sp/>for<sp/>PROC_NULL<sp/>does<sp/>nothing<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="271"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_prog<sp/>==<sp/><ref refid="nfs__dupreq_8c_1a0" kindref="member">nfs_param</ref>.core_param.mnt_program<sp/>)</highlight></codeline>
-<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_vers<sp/>)</highlight></codeline>
-<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
-<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a4" kindref="member">mnt1_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
-<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
-<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1a5" kindref="member">mnt3_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
+<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>NFS_V4:</highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1de3381a451007489495bf0b92585520f" kindref="member">nfs4_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>NFS<sp/>Protocol<sp/>version<sp/>%d<sp/>unknown<sp/>in<sp/>dupreq_gc&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1d1973964670037b91a33fd6b6e4c40bc" kindref="member">nfs2_func_desc</ref>[0]<sp/>;<sp/></highlight><highlight class="comment">/*<sp/>free<sp/>function<sp/>for<sp/>PROC_NULL<sp/>does<sp/>nothing<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_prog<sp/>==<sp/><ref refid="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref>.core_param.mnt_program<sp/>)</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal">(<sp/>pdupreq-&gt;rq_vers<sp/>)</highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V1:</highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_1331b43564c209696c670c70673d544e1" kindref="member">mnt1_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
 <codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
 <codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>MOUNT<sp/>Protocol<sp/>version<sp/>%d<sp/>unknown<sp/>in<sp/>dupreq_gc&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
-<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="comment">/*<sp/>switch(<sp/>ptr_req-&gt;vers<sp/>)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="290"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>protocol<sp/>%d<sp/>is<sp/>not<sp/>managed&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_prog<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight></codeline>
-<codeline lineno="295"><highlight class="normal"></highlight></codeline>
-<codeline lineno="296"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Call<sp/>the<sp/>free<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="297"><highlight class="normal"><sp/><sp/>funcdesc.free_function(<sp/>&amp;(pdupreq-&gt;res_nfs)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="298"><highlight class="normal"></highlight></codeline>
-<codeline lineno="299"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Send<sp/>the<sp/>entry<sp/>back<sp/>to<sp/>the<sp/>pool<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="300"><highlight class="normal"><sp/><sp/>RELEASE_PREALLOC(<sp/>pdupreq,<sp/>*dupreq_pool,<sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="302"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="303"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>clean_entry_dupreq<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="304"><highlight class="normal"></highlight></codeline>
-<codeline lineno="320" refid="nfs__dupreq_8c_1a10" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a10" kindref="member">dupreq_value_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
-<codeline lineno="321"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="322"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/>long)(buffclef-&gt;pdata)<sp/>%<sp/>p_hparam-&gt;index_size<sp/>;</highlight></codeline>
-<codeline lineno="323"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/><sp/>dupreq_value_hash_func<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="324"><highlight class="normal"></highlight></codeline>
-<codeline lineno="341" refid="nfs__dupreq_8c_1a11" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a11" kindref="member">dupreq_rbt_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
-<codeline lineno="342"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="343"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>use<sp/>the<sp/>Xid<sp/>as<sp/>the<sp/>rbt<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="344"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/>long)(buffclef-&gt;pdata)<sp/>;</highlight></codeline>
-<codeline lineno="345"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>dupreq_rbt_hash_func<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="346"><highlight class="normal"></highlight></codeline>
-<codeline lineno="360" refid="nfs__dupreq_8c_1a12" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><ref refid="nfs__dupreq_8c_1a12" kindref="member">compare_xid</ref>(<sp/><sp/>hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2<sp/>)</highlight></codeline>
-<codeline lineno="361"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="362"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid1<sp/>=<sp/>(long)(buff1-&gt;pdata)<sp/>;</highlight></codeline>
-<codeline lineno="363"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid2<sp/>=<sp/>(long)(buff2-&gt;pdata)<sp/>;</highlight></codeline>
-<codeline lineno="364"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(xid1<sp/>==<sp/>xid2)?0:1<sp/>;</highlight></codeline>
-<codeline lineno="365"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>compare_xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="366"><highlight class="normal"></highlight></codeline>
-<codeline lineno="380" refid="nfs__dupreq_8c_1a13" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a13" kindref="member">display_xid</ref>(<sp/>hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>)<sp/></highlight></codeline>
-<codeline lineno="381"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="382"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid<sp/><sp/>=<sp/>(long)(pbuff-&gt;pdata)<sp/>;</highlight></codeline>
-<codeline lineno="383"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="384"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;%X&quot;</highlight><highlight class="normal">,<sp/>xid<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="385"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="386"><highlight class="normal"></highlight></codeline>
-<codeline lineno="398" refid="nfs__dupreq_8c_1a14" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a14" kindref="member">nfs_Init_dupreq</ref>(<sp/>nfs_rpc_dupreq_parameter_t<sp/>param<sp/>)<sp/></highlight></codeline>
-<codeline lineno="399"><highlight class="normal">{<sp/></highlight></codeline>
-<codeline lineno="400"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="nfs__dupreq_8c_1a6" kindref="member">ht_dupreq</ref><sp/>=<sp/>HashTable_Init(<sp/>param.hash_param<sp/><sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="401"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="402"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Cannot<sp/>init<sp/>the<sp/>duplicate<sp/>request<sp/>hash<sp/>table&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="403"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1<sp/>;</highlight></codeline>
-<codeline lineno="404"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="405"><highlight class="normal"></highlight></codeline>
-<codeline lineno="406"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_SUCCESS;</highlight></codeline>
-<codeline lineno="407"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_Init_dupreq<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="408"><highlight class="normal"></highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>MOUNT_V3:</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>funcdesc<sp/>=<sp/><ref refid="nfs__dupreq_8c_17bcfef9b974d9b55a0f057d959a13bb8" kindref="member">mnt3_func_desc</ref>[pdupreq-&gt;rq_proc]<sp/>;</highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>MOUNT<sp/>Protocol<sp/>version<sp/>%d<sp/>unknown<sp/>in<sp/>dupreq_gc&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_vers<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break<sp/>;</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="comment">/*<sp/>switch(<sp/>ptr_req-&gt;vers<sp/>)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>should<sp/>never<sp/>go<sp/>there<sp/>(this<sp/>situation<sp/>is<sp/>filtered<sp/>in<sp/>nfs_rpc_getreq)<sp/>*/</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>protocol<sp/>%d<sp/>is<sp/>not<sp/>managed&quot;</highlight><highlight class="normal">,<sp/>pdupreq-&gt;rq_prog<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight></codeline>
+<codeline lineno="299"><highlight class="normal"></highlight></codeline>
+<codeline lineno="300"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Call<sp/>the<sp/>free<sp/>function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="301"><highlight class="normal"><sp/><sp/>funcdesc.free_function(<sp/>&amp;(pdupreq-&gt;res_nfs)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="302"><highlight class="normal"></highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Send<sp/>the<sp/>entry<sp/>back<sp/>to<sp/>the<sp/>pool<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="304"><highlight class="normal"><sp/><sp/>RELEASE_PREALLOC(<sp/>pdupreq,<sp/>*dupreq_pool,<sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="307"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>clean_entry_dupreq<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"></highlight></codeline>
+<codeline lineno="324" refid="nfs__dupreq_8c_17363cd3531f6119e8a2047a57e51e08f" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_17363cd3531f6119e8a2047a57e51e08f" kindref="member">dupreq_value_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
+<codeline lineno="325"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal">)(buffclef-&gt;pdata)<sp/>%<sp/>p_hparam-&gt;index_size<sp/>;</highlight></codeline>
+<codeline lineno="327"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/><sp/>dupreq_value_hash_func<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="328"><highlight class="normal"></highlight></codeline>
+<codeline lineno="345" refid="nfs__dupreq_8c_1cd77080a96d71b76efbdee9178171504" refkind="member"><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1cd77080a96d71b76efbdee9178171504" kindref="member">dupreq_rbt_hash_func</ref>(<sp/>hash_parameter_t<sp/>*<sp/>p_hparam,<sp/>hash_buffer_t<sp/>*<sp/>buffclef<sp/>)<sp/></highlight></codeline>
+<codeline lineno="346"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>We<sp/>use<sp/>the<sp/>Xid<sp/>as<sp/>the<sp/>rbt<sp/>value<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="348"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal">)(buffclef-&gt;pdata)<sp/>;</highlight></codeline>
+<codeline lineno="349"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>dupreq_rbt_hash_func<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="350"><highlight class="normal"></highlight></codeline>
+<codeline lineno="364" refid="nfs__dupreq_8c_11754ccd21821c745e816f32a7a459e24" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><ref refid="nfs__dupreq_8c_11754ccd21821c745e816f32a7a459e24" kindref="member">compare_xid</ref>(<sp/><sp/>hash_buffer_t<sp/>*<sp/>buff1,<sp/>hash_buffer_t<sp/>*<sp/>buff2<sp/>)</highlight></codeline>
+<codeline lineno="365"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="366"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid1<sp/>=<sp/>(long)(buff1-&gt;pdata)<sp/>;</highlight></codeline>
+<codeline lineno="367"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid2<sp/>=<sp/>(long)(buff2-&gt;pdata)<sp/>;</highlight></codeline>
+<codeline lineno="368"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(xid1<sp/>==<sp/>xid2)?0:1<sp/>;</highlight></codeline>
+<codeline lineno="369"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>compare_xid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="370"><highlight class="normal"></highlight></codeline>
+<codeline lineno="384" refid="nfs__dupreq_8c_130afd5b6d3dff5d4d7d4767089d59b44" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_130afd5b6d3dff5d4d7d4767089d59b44" kindref="member">display_xid</ref>(<sp/>hash_buffer_t<sp/>*<sp/>pbuff,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>str<sp/>)<sp/></highlight></codeline>
+<codeline lineno="385"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="386"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid<sp/><sp/>=<sp/>(long)(pbuff-&gt;pdata)<sp/>;</highlight></codeline>
+<codeline lineno="387"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="388"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sprintf(<sp/>str,<sp/></highlight><highlight class="stringliteral">&quot;%lX&quot;</highlight><highlight class="normal">,<sp/>xid<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="389"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="390"><highlight class="normal"></highlight></codeline>
+<codeline lineno="402" refid="nfs__dupreq_8c_10e0c7a1fda2f7d756dd1b2f8b4f97db6" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_10e0c7a1fda2f7d756dd1b2f8b4f97db6" kindref="member">nfs_Init_dupreq</ref>(<sp/>nfs_rpc_dupreq_parameter_t<sp/>param<sp/>)<sp/></highlight></codeline>
+<codeline lineno="403"><highlight class="normal">{<sp/></highlight></codeline>
+<codeline lineno="404"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref><sp/>=<sp/>HashTable_Init(<sp/>param.hash_param<sp/><sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="405"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="406"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Cannot<sp/>init<sp/>the<sp/>duplicate<sp/>request<sp/>hash<sp/>table&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="407"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1<sp/>;</highlight></codeline>
+<codeline lineno="408"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="409"><highlight class="normal"></highlight></codeline>
-<codeline lineno="424" refid="nfs__dupreq_8c_1a15" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a15" kindref="member">nfs_dupreq_add</ref>(<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>xid,<sp/></highlight></codeline>
-<codeline lineno="425"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/>*<sp/>ptr_req<sp/>,</highlight></codeline>
-<codeline lineno="426"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>p_res_nfs,</highlight></codeline>
-<codeline lineno="427"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>LRU_list_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>lru_dupreq,</highlight></codeline>
-<codeline lineno="428"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>dupreq_entry_t<sp/>**<sp/>p_dupreq_pool<sp/>)</highlight></codeline>
-<codeline lineno="429"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="430"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/>buffkey<sp/><sp/>;</highlight></codeline>
-<codeline lineno="431"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/>buffdata<sp/>;</highlight></codeline>
-<codeline lineno="432"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/>*<sp/>pdupreq<sp/><sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="433"><highlight class="normal"><sp/><sp/>LRU_entry_t<sp/><sp/><sp/><sp/>*<sp/>pentry<sp/><sp/><sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="434"><highlight class="normal"><sp/><sp/>LRU_status_t<sp/><sp/><sp/><sp/><sp/>lru_status<sp/>;</highlight></codeline>
-<codeline lineno="435"><highlight class="normal"></highlight></codeline>
-<codeline lineno="436"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="437"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="438"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;dupreq_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="439"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="440"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="441"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Entry<sp/>to<sp/>be<sp/>cached<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="442"><highlight class="normal"><sp/><sp/>GET_PREALLOC(<sp/>pdupreq,<sp/></highlight></codeline>
-<codeline lineno="443"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(*p_dupreq_pool),<sp/></highlight></codeline>
-<codeline lineno="444"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs__dupreq_8c_1a0" kindref="member">nfs_param</ref>.worker_param.nb_dupreq_prealloc,<sp/></highlight></codeline>
-<codeline lineno="445"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>dupreq_entry_t,<sp/></highlight></codeline>
-<codeline lineno="446"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="447"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="448"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq<sp/>==<sp/>NULL<sp/>)<sp/></highlight></codeline>
-<codeline lineno="449"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
-<codeline lineno="450"><highlight class="normal"></highlight></codeline>
-<codeline lineno="451"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
-<codeline lineno="452"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="453"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;N/A&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="454"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="455"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="456"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>have<sp/>to<sp/>keep<sp/>an<sp/>integer<sp/>as<sp/>key,<sp/>I<sp/>wil<sp/>use<sp/>the<sp/>pointer<sp/>buffkey-&gt;pdata<sp/>for<sp/>this,<sp/></highlight></codeline>
-<codeline lineno="457"><highlight class="comment"><sp/><sp/><sp/>*<sp/>this<sp/>also<sp/>means<sp/>that<sp/>buffkey-&gt;len<sp/>will<sp/>be<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="458"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)xid<sp/>;<sp/></highlight></codeline>
-<codeline lineno="459"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="460"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="461"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>build<sp/>the<sp/>data<sp/>with<sp/>the<sp/>request<sp/>pointer<sp/>that<sp/>should<sp/>be<sp/>in<sp/>state<sp/>&apos;IN<sp/>USE&apos;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="462"><highlight class="normal"><sp/><sp/>pdupreq-&gt;xid<sp/>=<sp/>xid<sp/>;</highlight></codeline>
-<codeline lineno="463"><highlight class="normal"><sp/><sp/>pdupreq-&gt;res_nfs<sp/>=<sp/>*p_res_nfs<sp/>;</highlight></codeline>
-<codeline lineno="464"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_prog<sp/>=<sp/>ptr_req-&gt;rq_prog<sp/>;</highlight></codeline>
-<codeline lineno="465"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_vers<sp/>=<sp/>ptr_req-&gt;rq_vers<sp/>;</highlight></codeline>
-<codeline lineno="466"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_proc<sp/>=<sp/>ptr_req-&gt;rq_proc<sp/>;</highlight></codeline>
-<codeline lineno="467"><highlight class="normal"><sp/><sp/>pdupreq-&gt;timestamp<sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="468"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="469"><highlight class="normal"><sp/><sp/>buffdata.pdata<sp/>=<sp/>(caddr_t)pdupreq<sp/>;</highlight></codeline>
-<codeline lineno="470"><highlight class="normal"><sp/><sp/>buffdata.len<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>dupreq_entry_t<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="471"><highlight class="normal"></highlight></codeline>
-<codeline lineno="472"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>HashTable_Set(<sp/><ref refid="nfs__dupreq_8c_1a6" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>&amp;buffdata<sp/>)<sp/>!=<sp/>HASHTABLE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="473"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
-<codeline lineno="474"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="475"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>it<sp/>to<sp/>lru<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="476"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry<sp/>=<sp/>LRU_new_entry(<sp/>lru_dupreq,<sp/>&amp;lru_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
-<codeline lineno="477"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
+<codeline lineno="410"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_SUCCESS;</highlight></codeline>
+<codeline lineno="411"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_Init_dupreq<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="412"><highlight class="normal"></highlight></codeline>
+<codeline lineno="413"><highlight class="normal"></highlight></codeline>
+<codeline lineno="428" refid="nfs__dupreq_8c_172a8bca40613bd2e5a727a7274ca8e66" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_172a8bca40613bd2e5a727a7274ca8e66" kindref="member">nfs_dupreq_add</ref>(<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>xid,<sp/></highlight></codeline>
+<codeline lineno="429"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>svc_req<sp/><sp/>*<sp/>ptr_req<sp/>,</highlight></codeline>
+<codeline lineno="430"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>p_res_nfs,</highlight></codeline>
+<codeline lineno="431"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>LRU_list_t<sp/><sp/><sp/><sp/><sp/><sp/>*<sp/>lru_dupreq,</highlight></codeline>
+<codeline lineno="432"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>dupreq_entry_t<sp/>**<sp/>p_dupreq_pool<sp/>)</highlight></codeline>
+<codeline lineno="433"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="434"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/>buffkey<sp/><sp/>;</highlight></codeline>
+<codeline lineno="435"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/>buffdata<sp/>;</highlight></codeline>
+<codeline lineno="436"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/>*<sp/>pdupreq<sp/><sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="437"><highlight class="normal"><sp/><sp/>LRU_entry_t<sp/><sp/><sp/><sp/>*<sp/>pentry<sp/><sp/><sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="438"><highlight class="normal"><sp/><sp/>LRU_status_t<sp/><sp/><sp/><sp/><sp/>lru_status<sp/>;</highlight></codeline>
+<codeline lineno="439"><highlight class="normal"></highlight></codeline>
+<codeline lineno="440"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="441"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="442"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;dupreq_entry_t&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="443"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="444"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="445"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Entry<sp/>to<sp/>be<sp/>cached<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="446"><highlight class="normal"><sp/><sp/>GET_PREALLOC(<sp/>pdupreq,<sp/></highlight></codeline>
+<codeline lineno="447"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(*p_dupreq_pool),<sp/></highlight></codeline>
+<codeline lineno="448"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref>.worker_param.nb_dupreq_prealloc,<sp/></highlight></codeline>
+<codeline lineno="449"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>dupreq_entry_t,<sp/></highlight></codeline>
+<codeline lineno="450"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>next_alloc<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="451"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="452"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>pdupreq<sp/>==<sp/>NULL<sp/>)<sp/></highlight></codeline>
+<codeline lineno="453"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
+<codeline lineno="454"><highlight class="normal"></highlight></codeline>
+<codeline lineno="455"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_MEMLEAKS</highlight></codeline>
+<codeline lineno="456"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>debugging<sp/>memory<sp/>leaks<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="457"><highlight class="normal"><sp/><sp/>BuddySetDebugLabel(<sp/></highlight><highlight class="stringliteral">&quot;N/A&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="458"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="459"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="460"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>have<sp/>to<sp/>keep<sp/>an<sp/>integer<sp/>as<sp/>key,<sp/>I<sp/>wil<sp/>use<sp/>the<sp/>pointer<sp/>buffkey-&gt;pdata<sp/>for<sp/>this,<sp/></highlight></codeline>
+<codeline lineno="461"><highlight class="comment"><sp/><sp/><sp/>*<sp/>this<sp/>also<sp/>means<sp/>that<sp/>buffkey-&gt;len<sp/>will<sp/>be<sp/>0<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="462"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)xid<sp/>;<sp/></highlight></codeline>
+<codeline lineno="463"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="464"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="465"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>build<sp/>the<sp/>data<sp/>with<sp/>the<sp/>request<sp/>pointer<sp/>that<sp/>should<sp/>be<sp/>in<sp/>state<sp/>&apos;IN<sp/>USE&apos;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="466"><highlight class="normal"><sp/><sp/>pdupreq-&gt;xid<sp/>=<sp/>xid<sp/>;</highlight></codeline>
+<codeline lineno="467"><highlight class="normal"><sp/><sp/>pdupreq-&gt;res_nfs<sp/>=<sp/>*p_res_nfs<sp/>;</highlight></codeline>
+<codeline lineno="468"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_prog<sp/>=<sp/>ptr_req-&gt;rq_prog<sp/>;</highlight></codeline>
+<codeline lineno="469"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_vers<sp/>=<sp/>ptr_req-&gt;rq_vers<sp/>;</highlight></codeline>
+<codeline lineno="470"><highlight class="normal"><sp/><sp/>pdupreq-&gt;rq_proc<sp/>=<sp/>ptr_req-&gt;rq_proc<sp/>;</highlight></codeline>
+<codeline lineno="471"><highlight class="normal"><sp/><sp/>pdupreq-&gt;timestamp<sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="472"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="473"><highlight class="normal"><sp/><sp/>buffdata.pdata<sp/>=<sp/>(caddr_t)pdupreq<sp/>;</highlight></codeline>
+<codeline lineno="474"><highlight class="normal"><sp/><sp/>buffdata.len<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>dupreq_entry_t<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="475"><highlight class="normal"></highlight></codeline>
+<codeline lineno="476"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>HashTable_Set(<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>&amp;buffdata<sp/>)<sp/>!=<sp/>HASHTABLE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="477"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
 <codeline lineno="478"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="479"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>keep<sp/>track<sp/>of<sp/>the<sp/>xid<sp/>too<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="480"><highlight class="normal"><sp/><sp/>pentry-&gt;buffdata.pdata<sp/>=<sp/>(caddr_t)pdupreq<sp/>;</highlight></codeline>
-<codeline lineno="481"><highlight class="normal"><sp/><sp/>pentry-&gt;buffdata.len<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>dupreq_entry_t<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="479"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Add<sp/>it<sp/>to<sp/>lru<sp/>list<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="480"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>pentry<sp/>=<sp/>LRU_new_entry(<sp/>lru_dupreq,<sp/>&amp;lru_status<sp/>)<sp/>)<sp/>==<sp/>NULL<sp/>)</highlight></codeline>
+<codeline lineno="481"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_INSERT_MALLOC_ERROR<sp/>;</highlight></codeline>
 <codeline lineno="482"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="483"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_SUCCESS<sp/>;<sp/></highlight></codeline>
-<codeline lineno="484"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_add<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="485"><highlight class="normal"></highlight></codeline>
-<codeline lineno="498" refid="nfs__dupreq_8c_1a16" refkind="member"><highlight class="normal">nfs_res_t<sp/><ref refid="nfs__dupreq_8c_1a16" kindref="member">nfs_dupreq_get</ref>(<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
-<codeline lineno="499"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="500"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffkey<sp/>;</highlight></codeline>
-<codeline lineno="501"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffval<sp/>;</highlight></codeline>
-<codeline lineno="502"><highlight class="normal"><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>res_nfs<sp/>;</highlight></codeline>
-<codeline lineno="503"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="504"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)xid<sp/>;</highlight></codeline>
-<codeline lineno="505"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="506"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="507"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>HashTable_Get(<sp/><ref refid="nfs__dupreq_8c_1a6" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>==<sp/>HASHTABLE_SUCCESS<sp/>)</highlight></codeline>
-<codeline lineno="508"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="509"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>reset<sp/>timestamp<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="510"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>((dupreq_entry_t<sp/>*)buffval.pdata)-&gt;timestamp<sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="511"><highlight class="normal"></highlight></codeline>
-<codeline lineno="512"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pstatus<sp/>=<sp/>DUPREQ_SUCCESS<sp/>;</highlight></codeline>
-<codeline lineno="513"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>res_nfs<sp/>=<sp/>((dupreq_entry_t<sp/>*)buffval.pdata)-&gt;res_nfs<sp/>;</highlight></codeline>
-<codeline lineno="514"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_DUPREQ<sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="515"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Hit<sp/>in<sp/>the<sp/>dupreq<sp/>cache<sp/>for<sp/>xid=%u&quot;</highlight><highlight class="normal">,<sp/>xid<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="516"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="517"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="518"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="519"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="520"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>DUPREQ_NOT_FOUND<sp/>;</highlight></codeline>
-<codeline lineno="521"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="522"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>res_nfs;</highlight></codeline>
-<codeline lineno="523"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_get<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="524"><highlight class="normal"></highlight></codeline>
-<codeline lineno="539" refid="nfs__dupreq_8c_1a17" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a17" kindref="member">nfs_dupreq_gc_function</ref>(<sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)</highlight></codeline>
-<codeline lineno="540"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="541"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/>*<sp/>pdupreq<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
-<codeline lineno="542"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="543"><highlight class="normal"><sp/><sp/>pdupreq<sp/>=<sp/>(dupreq_entry_t<sp/>*)(pentry-&gt;buffdata.pdata)<sp/>;</highlight></codeline>
-<codeline lineno="544"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="545"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>if<sp/>entry<sp/>is<sp/>expired<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="546"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>time(<sp/>NULL<sp/>)<sp/>-<sp/><sp/>pdupreq-&gt;timestamp<sp/>&gt;<sp/><ref refid="nfs__dupreq_8c_1a0" kindref="member">nfs_param</ref>.core_param.expiration_dupreq<sp/>)</highlight></codeline>
-<codeline lineno="547"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>LRU_LIST_SET_INVALID<sp/>;</highlight></codeline>
+<codeline lineno="483"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>keep<sp/>track<sp/>of<sp/>the<sp/>xid<sp/>too<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="484"><highlight class="normal"><sp/><sp/>pentry-&gt;buffdata.pdata<sp/>=<sp/>(caddr_t)pdupreq<sp/>;</highlight></codeline>
+<codeline lineno="485"><highlight class="normal"><sp/><sp/>pentry-&gt;buffdata.len<sp/>=<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/>dupreq_entry_t<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="486"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="487"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>DUPREQ_SUCCESS<sp/>;<sp/></highlight></codeline>
+<codeline lineno="488"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_add<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="489"><highlight class="normal"></highlight></codeline>
+<codeline lineno="502" refid="nfs__dupreq_8c_1f44969aca0de15c4a2079988b6e6c266" refkind="member"><highlight class="normal">nfs_res_t<sp/><ref refid="nfs__dupreq_8c_1f44969aca0de15c4a2079988b6e6c266" kindref="member">nfs_dupreq_get</ref>(<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/>xid,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*<sp/>pstatus<sp/>)</highlight></codeline>
+<codeline lineno="503"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="504"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffkey<sp/>;</highlight></codeline>
+<codeline lineno="505"><highlight class="normal"><sp/><sp/>hash_buffer_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>buffval<sp/>;</highlight></codeline>
+<codeline lineno="506"><highlight class="normal"><sp/><sp/>nfs_res_t<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>res_nfs<sp/>;</highlight></codeline>
+<codeline lineno="507"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="508"><highlight class="normal"><sp/><sp/>buffkey.pdata<sp/>=<sp/>(caddr_t)xid<sp/>;</highlight></codeline>
+<codeline lineno="509"><highlight class="normal"><sp/><sp/>buffkey.len<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="510"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="511"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>HashTable_Get(<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref>,<sp/>&amp;buffkey,<sp/>&amp;buffval<sp/>)<sp/>==<sp/>HASHTABLE_SUCCESS<sp/>)</highlight></codeline>
+<codeline lineno="512"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="513"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>reset<sp/>timestamp<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="514"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>((dupreq_entry_t<sp/>*)buffval.pdata)-&gt;timestamp<sp/>=<sp/>time(<sp/>NULL<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="515"><highlight class="normal"></highlight></codeline>
+<codeline lineno="516"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pstatus<sp/>=<sp/>DUPREQ_SUCCESS<sp/>;</highlight></codeline>
+<codeline lineno="517"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>res_nfs<sp/>=<sp/>((dupreq_entry_t<sp/>*)buffval.pdata)-&gt;res_nfs<sp/>;</highlight></codeline>
+<codeline lineno="518"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_DUPREQ<sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="519"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;NFS<sp/>DUPREQ:<sp/>Hit<sp/>in<sp/>the<sp/>dupreq<sp/>cache<sp/>for<sp/>xid=%u&quot;</highlight><highlight class="normal">,<sp/>xid<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="520"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="521"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="522"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="523"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="524"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*pstatus<sp/>=<sp/>DUPREQ_NOT_FOUND<sp/>;</highlight></codeline>
+<codeline lineno="525"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="526"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>res_nfs;</highlight></codeline>
+<codeline lineno="527"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_get<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="528"><highlight class="normal"></highlight></codeline>
+<codeline lineno="543" refid="nfs__dupreq_8c_135d644f1f1b2c333ddc223251d615205" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_135d644f1f1b2c333ddc223251d615205" kindref="member">nfs_dupreq_gc_function</ref>(<sp/>LRU_entry_t<sp/>*<sp/>pentry,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>addparam<sp/>)</highlight></codeline>
+<codeline lineno="544"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="545"><highlight class="normal"><sp/><sp/>dupreq_entry_t<sp/>*<sp/>pdupreq<sp/>=<sp/>NULL<sp/>;</highlight></codeline>
+<codeline lineno="546"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="547"><highlight class="normal"><sp/><sp/>pdupreq<sp/>=<sp/>(dupreq_entry_t<sp/>*)(pentry-&gt;buffdata.pdata)<sp/>;</highlight></codeline>
 <codeline lineno="548"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="549"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>LRU_LIST_DO_NOT_SET_INVALID<sp/>;</highlight></codeline>
-<codeline lineno="550"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_fc_function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="551"><highlight class="normal"></highlight></codeline>
-<codeline lineno="552"><highlight class="normal"></highlight></codeline>
-<codeline lineno="566" refid="nfs__dupreq_8c_1a18" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1a18" kindref="member">nfs_dupreq_get_stats</ref>(<sp/>hash_stat_t<sp/>*<sp/>phstat<sp/>)</highlight></codeline>
-<codeline lineno="567"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="568"><highlight class="normal"><sp/><sp/>HashTable_GetStats(<sp/><ref refid="nfs__dupreq_8c_1a6" kindref="member">ht_dupreq</ref>,<sp/>phstat<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="569"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_get_stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="549"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>if<sp/>entry<sp/>is<sp/>expired<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="550"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>time(<sp/>NULL<sp/>)<sp/>-<sp/><sp/>pdupreq-&gt;timestamp<sp/>&gt;<sp/><ref refid="nfs__dupreq_8c_1eb8fc46586993cf210777049fca03969" kindref="member">nfs_param</ref>.core_param.expiration_dupreq<sp/>)</highlight></codeline>
+<codeline lineno="551"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>LRU_LIST_SET_INVALID<sp/>;</highlight></codeline>
+<codeline lineno="552"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="553"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>LRU_LIST_DO_NOT_SET_INVALID<sp/>;</highlight></codeline>
+<codeline lineno="554"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_fc_function<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="555"><highlight class="normal"></highlight></codeline>
+<codeline lineno="556"><highlight class="normal"></highlight></codeline>
+<codeline lineno="570" refid="nfs__dupreq_8c_1ade2ed32dcdd7eb6990c8f99f5c81370" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs__dupreq_8c_1ade2ed32dcdd7eb6990c8f99f5c81370" kindref="member">nfs_dupreq_get_stats</ref>(<sp/>hash_stat_t<sp/>*<sp/>phstat<sp/>)</highlight></codeline>
+<codeline lineno="571"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="572"><highlight class="normal"><sp/><sp/>HashTable_GetStats(<sp/><ref refid="nfs__dupreq_8c_13ada0731d68a5b4aab865acfd3d73290" kindref="member">ht_dupreq</ref>,<sp/>phstat<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="573"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs_dupreq_get_stats<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/MainNFSD/nfs_dupreq.c"/>
+    <location file="/export/GANESHA/src/MainNFSD/nfs_dupreq.c"/>
   </compounddef>
 </doxygen>

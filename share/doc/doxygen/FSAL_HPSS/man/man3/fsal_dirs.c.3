@@ -1,8 +1,10 @@
-.TH "fsal_dirs.c" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "fsal_dirs.c" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-fsal_dirs.c \- Directory browsing operations. 
+fsal_dirs.c \- Directory browsing operations.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -36,26 +38,26 @@ Directory browsing operations.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/07/29 09:39:04 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.10 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.10 
 .RE
 .PP
 
@@ -159,16 +161,21 @@ ERR_FSAL_NO_ERROR (no error)
 .IP "\(bu" 2
 ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
 .IP "\(bu" 2
-Other error codes can be returned : ERR_FSAL_IO, ...
+Other error codes can be returned : ERR_FSAL_IO, ... 
 .PP
+.RE
+.PP
+
+.PP
+\fBTodo\fP
+.RS 4
+: does handle provide mounted_on_fileid ? 
 .RE
 .PP
 .PP
 \fBTodo\fP
 .RS 4
-: does handle provide mounted_on_fileid ? 
-.PP
-: test returned status
+: test returned status 
 .RE
 .PP
 

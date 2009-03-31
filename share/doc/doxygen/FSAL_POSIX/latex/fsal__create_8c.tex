@@ -1,6 +1,7 @@
 \section{fsal\_\-create.c File Reference}
-\label{fsal__create_8c}\index{fsal_create.c@{fsal\_\-create.c}}
-Filesystem objects creation functions. 
+\label{fsal__create_8c}\index{fsal\_\-create.c@{fsal\_\-create.c}}
+Filesystem objects creation functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -22,25 +23,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-mknode} (fsal\_\-handle\_\-t $\ast$parentdir\_\
 Filesystem objects creation functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 13:45:36 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.18 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-create.c}.
 
 \subsection{Function Documentation}
-\index{fsal_create.c@{fsal\_\-create.c}!FSAL_create@{FSAL\_\-create}}
-\index{FSAL_create@{FSAL\_\-create}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-create (fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-directory\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-filename}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__create_8c_a0}
+\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-create@{FSAL\_\-create}}
+\index{FSAL\_\-create@{FSAL\_\-create}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-create (fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-directory\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-filename}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__create_8c_8b82067d8e5021afb2096ff913fcd47e}
 
 
 FSAL\_\-create: Create a regular file.
@@ -58,9 +59,9 @@ FSAL\_\-create: Create a regular file.
 
 Definition at line 52 of file fsal\_\-create.c.
 
-References fsal2unix\_\-mode(), fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_link@{FSAL\_\-link}}
-\index{FSAL_link@{FSAL\_\-link}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-link (fsal\_\-handle\_\-t $\ast$ {\em p\_\-target\_\-handle}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-dir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-link\_\-name}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-attributes})}\label{fsal__create_8c_a2}
+References fsal2unix\_\-mode(), fsal\_\-internal\_\-appendFSALNameToFSALPath(), fsal\_\-internal\_\-getPathFromHandle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-link@{FSAL\_\-link}}
+\index{FSAL\_\-link@{FSAL\_\-link}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-link}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-link (fsal\_\-handle\_\-t $\ast$ {\em p\_\-target\_\-handle}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-dir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-link\_\-name}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-attributes})}\label{fsal__create_8c_53044ec7fea7dda184aaad8c2d49f636}
 
 
 FSAL\_\-link: Create a hardlink.
@@ -76,11 +77,11 @@ FSAL\_\-link: Create a hardlink.
 \end{Desc}
 
 
-Definition at line 331 of file fsal\_\-create.c.
+Definition at line 334 of file fsal\_\-create.c.
 
-References fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_mkdir@{FSAL\_\-mkdir}}
-\index{FSAL_mkdir@{FSAL\_\-mkdir}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mkdir (fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-directory\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-dirname}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__create_8c_a1}
+References fsal\_\-internal\_\-appendFSALNameToFSALPath(), fsal\_\-internal\_\-getPathFromHandle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-mkdir@{FSAL\_\-mkdir}}
+\index{FSAL\_\-mkdir@{FSAL\_\-mkdir}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-mkdir}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mkdir (fsal\_\-handle\_\-t $\ast$ {\em p\_\-parent\_\-directory\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-dirname}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-object\_\-attributes})}\label{fsal__create_8c_22cd141c9597760c91ca8238c1b56816}
 
 
 FSAL\_\-mkdir: Create a directory.
@@ -96,11 +97,11 @@ FSAL\_\-mkdir: Create a directory.
 \end{Desc}
 
 
-Definition at line 200 of file fsal\_\-create.c.
+Definition at line 201 of file fsal\_\-create.c.
 
-References fsal2unix\_\-mode(), fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_mknode@{FSAL\_\-mknode}}
-\index{FSAL_mknode@{FSAL\_\-mknode}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mknode (fsal\_\-handle\_\-t $\ast$ {\em parentdir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-node\_\-name}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-nodetype\_\-t {\em nodetype}, fsal\_\-dev\_\-t $\ast$ {\em dev}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em node\_\-attributes})}\label{fsal__create_8c_a3}
+References fsal2unix\_\-mode(), fsal\_\-internal\_\-appendFSALNameToFSALPath(), fsal\_\-internal\_\-getPathFromHandle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-mknode@{FSAL\_\-mknode}}
+\index{FSAL\_\-mknode@{FSAL\_\-mknode}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-mknode}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mknode (fsal\_\-handle\_\-t $\ast$ {\em parentdir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-node\_\-name}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-nodetype\_\-t {\em nodetype}, \/  fsal\_\-dev\_\-t $\ast$ {\em dev}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em node\_\-attributes})}\label{fsal__create_8c_344a6fd2ad23cc03509f7e7f3bf1fd1c}
 
 
 FSAL\_\-mknode: Create a special object in the filesystem. Not supported upon HPSS.
@@ -109,6 +110,6 @@ FSAL\_\-mknode: Create a special object in the filesystem. Not supported upon HP
 \item[Returns:]ERR\_\-FSAL\_\-NOTSUPP. \end{Desc}
 
 
-Definition at line 437 of file fsal\_\-create.c.
+Definition at line 440 of file fsal\_\-create.c.
 
-References fsal2unix\_\-mode(), fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath(), fsal\_\-internal\_\-get\-Path\-From\-Handle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal2unix\_\-mode(), fsal\_\-internal\_\-appendFSALNameToFSALPath(), fsal\_\-internal\_\-getPathFromHandle(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), posix2fsal\_\-error(), and TakeTokenFSCall().

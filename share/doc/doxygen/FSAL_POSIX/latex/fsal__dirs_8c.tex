@@ -1,6 +1,7 @@
 \section{fsal\_\-dirs.c File Reference}
-\label{fsal__dirs_8c}\index{fsal_dirs.c@{fsal\_\-dirs.c}}
-Directory browsing operations. 
+\label{fsal__dirs_8c}\index{fsal\_\-dirs.c@{fsal\_\-dirs.c}}
+Directory browsing operations.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -22,25 +23,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-closedir} (fsal\_\-dir\_\-t $\ast$p\_\-dir\_\-d
 Directory browsing operations. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/07/29 09:39:04 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-dirs.c}.
 
 \subsection{Function Documentation}
-\index{fsal_dirs.c@{fsal\_\-dirs.c}!FSAL_closedir@{FSAL\_\-closedir}}
-\index{FSAL_closedir@{FSAL\_\-closedir}!fsal_dirs.c@{fsal\_\-dirs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-closedir (fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor})}\label{fsal__dirs_8c_a2}
+\index{fsal\_\-dirs.c@{fsal\_\-dirs.c}!FSAL\_\-closedir@{FSAL\_\-closedir}}
+\index{FSAL\_\-closedir@{FSAL\_\-closedir}!fsal_dirs.c@{fsal\_\-dirs.c}}
+\subsubsection[{FSAL\_\-closedir}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-closedir (fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor})}\label{fsal__dirs_8c_23fcbb2bc230e9a10d84ad210c3b2150}
 
 
 FSAL\_\-closedir : Free the resources allocated for reading directory entries.
@@ -56,11 +57,11 @@ FSAL\_\-closedir : Free the resources allocated for reading directory entries.
 \end{Desc}
 
 
-Definition at line 330 of file fsal\_\-dirs.c.
+Definition at line 329 of file fsal\_\-dirs.c.
 
-References posix2fsal\_\-error().\index{fsal_dirs.c@{fsal\_\-dirs.c}!FSAL_opendir@{FSAL\_\-opendir}}
-\index{FSAL_opendir@{FSAL\_\-opendir}!fsal_dirs.c@{fsal\_\-dirs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-opendir (fsal\_\-handle\_\-t $\ast$ {\em p\_\-dir\_\-handle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-dir\_\-attributes})}\label{fsal__dirs_8c_a0}
+References posix2fsal\_\-error().\index{fsal\_\-dirs.c@{fsal\_\-dirs.c}!FSAL\_\-opendir@{FSAL\_\-opendir}}
+\index{FSAL\_\-opendir@{FSAL\_\-opendir}!fsal_dirs.c@{fsal\_\-dirs.c}}
+\subsubsection[{FSAL\_\-opendir}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-opendir (fsal\_\-handle\_\-t $\ast$ {\em p\_\-dir\_\-handle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em p\_\-dir\_\-attributes})}\label{fsal__dirs_8c_85ca24a067cf5cb8bbe4588b79cbe534}
 
 
 FSAL\_\-opendir : Opens a directory for reading its content.
@@ -78,9 +79,9 @@ FSAL\_\-opendir : Opens a directory for reading its content.
 
 Definition at line 46 of file fsal\_\-dirs.c.
 
-References fsal\_\-internal\_\-get\-Path\-From\-Handle(), posix2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_dirs.c@{fsal\_\-dirs.c}!FSAL_readdir@{FSAL\_\-readdir}}
-\index{FSAL_readdir@{FSAL\_\-readdir}!fsal_dirs.c@{fsal\_\-dirs.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-readdir (fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor}, fsal\_\-cookie\_\-t {\em start\_\-position}, fsal\_\-attrib\_\-mask\_\-t {\em get\_\-attr\_\-mask}, fsal\_\-mdsize\_\-t {\em buffersize}, fsal\_\-dirent\_\-t $\ast$ {\em p\_\-pdirent}, fsal\_\-cookie\_\-t $\ast$ {\em p\_\-end\_\-position}, fsal\_\-count\_\-t $\ast$ {\em p\_\-nb\_\-entries}, fsal\_\-boolean\_\-t $\ast$ {\em p\_\-end\_\-of\_\-dir})}\label{fsal__dirs_8c_a1}
+References fsal\_\-internal\_\-getPathFromHandle(), posix2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-dirs.c@{fsal\_\-dirs.c}!FSAL\_\-readdir@{FSAL\_\-readdir}}
+\index{FSAL\_\-readdir@{FSAL\_\-readdir}!fsal_dirs.c@{fsal\_\-dirs.c}}
+\subsubsection[{FSAL\_\-readdir}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-readdir (fsal\_\-dir\_\-t $\ast$ {\em p\_\-dir\_\-descriptor}, \/  fsal\_\-cookie\_\-t {\em start\_\-position}, \/  fsal\_\-attrib\_\-mask\_\-t {\em get\_\-attr\_\-mask}, \/  fsal\_\-mdsize\_\-t {\em buffersize}, \/  fsal\_\-dirent\_\-t $\ast$ {\em p\_\-pdirent}, \/  fsal\_\-cookie\_\-t $\ast$ {\em p\_\-end\_\-position}, \/  fsal\_\-count\_\-t $\ast$ {\em p\_\-nb\_\-entries}, \/  fsal\_\-boolean\_\-t $\ast$ {\em p\_\-end\_\-of\_\-dir})}\label{fsal__dirs_8c_b5ff624d5551dbf8ef1825ae44d5c2b9}
 
 
 FSAL\_\-readdir : Read the entries of an opened directory.
@@ -98,6 +99,6 @@ FSAL\_\-readdir : Read the entries of an opened directory.
 \end{Desc}
 
 
-Definition at line 157 of file fsal\_\-dirs.c.
+Definition at line 156 of file fsal\_\-dirs.c.
 
-References fsal\_\-internal\_\-append\-FSALName\-To\-FSALPath(), fsal\_\-internal\_\-get\-Info\-From\-Children\-List(), fsal\_\-internal\_\-get\-Info\-From\-Name(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), FSAL\_\-str2name(), posix2fsal\_\-error(), posixdb2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal\_\-internal\_\-appendFSALNameToFSALPath(), fsal\_\-internal\_\-getInfoFromChildrenList(), fsal\_\-internal\_\-getInfoFromName(), fsal\_\-internal\_\-posix2posixdb\_\-fileinfo(), FSAL\_\-str2name(), posix2fsal\_\-error(), posixdb2fsal\_\-error(), and TakeTokenFSCall().

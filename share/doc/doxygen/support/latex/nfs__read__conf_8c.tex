@@ -1,6 +1,7 @@
 \section{nfs\_\-read\_\-conf.c File Reference}
-\label{nfs__read__conf_8c}\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-This file that contain the routine required for parsing the NFS specific configuraion file. 
+\label{nfs__read__conf_8c}\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}}
+This file that contain the routine required for parsing the NFS specific configuraion file.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
@@ -59,34 +60,34 @@ void {\bf Print\_\-param\_\-in\_\-log} (nfs\_\-parameter\_\-t $\ast$pparam)
 This file that contain the routine required for parsing the NFS specific configuraion file. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/12/07 14:28:00 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-read\_\-conf.c}{\rm (p.\,\pageref{nfs__read__conf_8c})} : This file that contain the routine required for parsing the NFS specific configuraion file.
+\doxyref{nfs\_\-read\_\-conf.c}{p.}{nfs__read__conf_8c} : This file that contain the routine required for parsing the NFS specific configuraion file.
 
 \begin{Desc}
-\item[Header]/cea/S/home/cvs/cvs/SHERPA/Base\-Cvs/GANESHA/src/support/nfs\_\-read\_\-conf.c,v 1.10 2005/12/07 14:28:00 deniel Exp \end{Desc}
+\item[Header]/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs\_\-read\_\-conf.c,v 1.10 2005/12/07 14:28:00 deniel Exp \end{Desc}
 
 
 \begin{Desc}
-\item[Log]{\bf nfs\_\-read\_\-conf.c}{\rm (p.\,\pageref{nfs__read__conf_8c})},v \end{Desc}
+\item[Log]\doxyref{nfs\_\-read\_\-conf.c}{p.}{nfs__read__conf_8c},v \end{Desc}
 Revision 1.10 2005/12/07 14:28:00 deniel Support of stats via stats\_\-thread was added
 
 Revision 1.9 2005/11/30 15:41:15 deniel Added IP/stats conf
 
 Revision 1.8 2005/11/29 13:38:18 deniel bottlenecked ip\_\-stats
 
-Revision 1.7 2005/11/28 17:03:03 deniel Added Ce\-CILL headers
+Revision 1.7 2005/11/28 17:03:03 deniel Added CeCILL headers
 
-Revision 1.6 2005/11/08 15:22:24 deniel Wild\-Card and Netgroup entry for exportlist are now supported
+Revision 1.6 2005/11/08 15:22:24 deniel WildCard and Netgroup entry for exportlist are now supported
 
 Revision 1.5 2005/10/10 14:27:54 deniel mnt\_\-Mnt does not create root entries in Cache inode any more. This is done before the first request once the export list is read the first time .
 
@@ -98,14 +99,14 @@ Revision 1.2 2005/08/03 13:14:00 deniel memset to zero before building the fileh
 
 Revision 1.1 2005/08/03 06:57:54 deniel Added a libsupport for miscellaneous service functions
 
-Revision 1.1 2005/07/18 14:12:45 deniel Fusion of the dirrent layers in progreess via the implementation of mount protocol
+Revision 1.1 2005/07/18 14:12:45 deniel Fusion of the dirrent layers in progreess via the implementation of mount protocol 
 
 Definition in file {\bf nfs\_\-read\_\-conf.c}.
 
 \subsection{Function Documentation}
-\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_client_id_conf@{nfs\_\-read\_\-client\_\-id\_\-conf}}
-\index{nfs_read_client_id_conf@{nfs\_\-read\_\-client\_\-id\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-client\_\-id\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-client\_\-id\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a4}
+\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-client\_\-id\_\-conf@{nfs\_\-read\_\-client\_\-id\_\-conf}}
+\index{nfs\_\-read\_\-client\_\-id\_\-conf@{nfs\_\-read\_\-client\_\-id\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-client\_\-id\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-client\_\-id\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-client\_\-id\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_c037d2cb2e08a2f7ca4bf47309d65864}
 
 
 nfs\_\-read\_\-ip\_\-name\_\-conf: reads the configuration for the Client/ID Cache
@@ -121,9 +122,9 @@ Reads the configuration for the Client/ID Cache
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 548 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_core_conf@{nfs\_\-read\_\-core\_\-conf}}
-\index{nfs_read_core_conf@{nfs\_\-read\_\-core\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-core\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-core\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a1}
+Definition at line 584 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-core\_\-conf@{nfs\_\-read\_\-core\_\-conf}}
+\index{nfs\_\-read\_\-core\_\-conf@{nfs\_\-read\_\-core\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-core\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-core\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-core\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_ad656a5aaf2d9d31664ee728806ae2ca}
 
 
 nfs\_\-read\_\-core\_\-conf: read the configuration ite; for the worker theads.
@@ -139,9 +140,9 @@ Reads the configuration ite; for the worker theads.
 \item[Returns:]0 if ok, -1 if failed, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 271 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_dupreq_hash_conf@{nfs\_\-read\_\-dupreq\_\-hash\_\-conf}}
-\index{nfs_read_dupreq_hash_conf@{nfs\_\-read\_\-dupreq\_\-hash\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-dupreq\_\-hash\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-rpc\_\-dupreq\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a2}
+Definition at line 282 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-dupreq\_\-hash\_\-conf@{nfs\_\-read\_\-dupreq\_\-hash\_\-conf}}
+\index{nfs\_\-read\_\-dupreq\_\-hash\_\-conf@{nfs\_\-read\_\-dupreq\_\-hash\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-dupreq\_\-hash\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-dupreq\_\-hash\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-rpc\_\-dupreq\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_1aec323c55bf14734c686cab1b3c7b72}
 
 
 nfs\_\-read\_\-dupreq\_\-hash\_\-conf: reads the configuration for the hash in Duplicate Request layer.
@@ -157,9 +158,9 @@ Reads the configuration for the hash in Duplicate Request layer
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 391 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_gidmap_conf@{nfs\_\-read\_\-gidmap\_\-conf}}
-\index{nfs_read_gidmap_conf@{nfs\_\-read\_\-gidmap\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-gidmap\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-idmap\_\-cache\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a7}
+Definition at line 413 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-gidmap\_\-conf@{nfs\_\-read\_\-gidmap\_\-conf}}
+\index{nfs\_\-read\_\-gidmap\_\-conf@{nfs\_\-read\_\-gidmap\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-gidmap\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-gidmap\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-idmap\_\-cache\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_92e59120dfa3baa00e8a99409158fd92}
 
 
 nfs\_\-read\_\-gidmap\_\-conf: reads the configuration for the GID\_\-MAPPER Cache
@@ -175,9 +176,9 @@ Reads the configuration for the GID\_\-MAPPER Cache
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 775 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_ip_name_conf@{nfs\_\-read\_\-ip\_\-name\_\-conf}}
-\index{nfs_read_ip_name_conf@{nfs\_\-read\_\-ip\_\-name\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-ip\_\-name\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-ip\_\-name\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a3}
+Definition at line 822 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-ip\_\-name\_\-conf@{nfs\_\-read\_\-ip\_\-name\_\-conf}}
+\index{nfs\_\-read\_\-ip\_\-name\_\-conf@{nfs\_\-read\_\-ip\_\-name\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-ip\_\-name\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-ip\_\-name\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-ip\_\-name\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_e60e27dbe2971c399bbfbc201bf06c8a}
 
 
 nfs\_\-read\_\-ip\_\-name\_\-conf: reads the configuration for the IP/name.
@@ -193,9 +194,9 @@ Reads the configuration for the IP/name.
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 466 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_krb5_conf@{nfs\_\-read\_\-krb5\_\-conf}}
-\index{nfs_read_krb5_conf@{nfs\_\-read\_\-krb5\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-krb5\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-krb5\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a8}
+Definition at line 495 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-krb5\_\-conf@{nfs\_\-read\_\-krb5\_\-conf}}
+\index{nfs\_\-read\_\-krb5\_\-conf@{nfs\_\-read\_\-krb5\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-krb5\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-krb5\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-krb5\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_1e60d474d55be64f464e031dee8ca60a}
 
 
 nfs\_\-read\_\-krb5\_\-conf: read the configuration for krb5 stuff
@@ -211,9 +212,9 @@ Read the configuration for krb5 stuff.
 \item[Returns:]0 if ok, -1 if failed,1 is stanza is not there \end{Desc}
 
 
-Definition at line 853 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_state_id_conf@{nfs\_\-read\_\-state\_\-id\_\-conf}}
-\index{nfs_read_state_id_conf@{nfs\_\-read\_\-state\_\-id\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-state\_\-id\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-state\_\-id\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a5}
+Definition at line 907 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-state\_\-id\_\-conf@{nfs\_\-read\_\-state\_\-id\_\-conf}}
+\index{nfs\_\-read\_\-state\_\-id\_\-conf@{nfs\_\-read\_\-state\_\-id\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-state\_\-id\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-state\_\-id\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-state\_\-id\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_0f1d63e300fa6122405dc714efc32f54}
 
 
 nfs\_\-read\_\-ip\_\-name\_\-conf: reads the configuration for the Client/ID Cache
@@ -229,9 +230,9 @@ Reads the configuration for the Client/ID Cache
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 622 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_uidmap_conf@{nfs\_\-read\_\-uidmap\_\-conf}}
-\index{nfs_read_uidmap_conf@{nfs\_\-read\_\-uidmap\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-uidmap\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-idmap\_\-cache\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a6}
+Definition at line 660 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-uidmap\_\-conf@{nfs\_\-read\_\-uidmap\_\-conf}}
+\index{nfs\_\-read\_\-uidmap\_\-conf@{nfs\_\-read\_\-uidmap\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-uidmap\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-uidmap\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-idmap\_\-cache\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_b64ea8b581940ec2377468f0a67b6122}
 
 
 nfs\_\-read\_\-uidmap\_\-conf: reads the configuration for the UID\_\-MAPPER Cache
@@ -247,9 +248,9 @@ Reads the configuration for the UID\_\-MAPPER Cache
 \item[Returns:]0 if ok, -1 if not, 1 is stanza is not there. \end{Desc}
 
 
-Definition at line 697 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_version4_conf@{nfs\_\-read\_\-version4\_\-conf}}
-\index{nfs_read_version4_conf@{nfs\_\-read\_\-version4\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-version4\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-version4\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a9}
+Definition at line 737 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-version4\_\-conf@{nfs\_\-read\_\-version4\_\-conf}}
+\index{nfs\_\-read\_\-version4\_\-conf@{nfs\_\-read\_\-version4\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-version4\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-version4\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-version4\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_c8214c0bbba9022ba3be91875fd77c5e}
 
 
 nfs\_\-read\_\-version4\_\-conf: read the configuration for NFSv4 stuff
@@ -265,9 +266,9 @@ Read the configuration for NFSv4 stuff.
 \item[Returns:]0 if ok, -1 if failed,1 is stanza is not there \end{Desc}
 
 
-Definition at line 924 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!nfs_read_worker_conf@{nfs\_\-read\_\-worker\_\-conf}}
-\index{nfs_read_worker_conf@{nfs\_\-read\_\-worker\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-worker\_\-conf (config\_\-file\_\-t {\em in\_\-config}, nfs\_\-worker\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a0}
+Definition at line 989 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!nfs\_\-read\_\-worker\_\-conf@{nfs\_\-read\_\-worker\_\-conf}}
+\index{nfs\_\-read\_\-worker\_\-conf@{nfs\_\-read\_\-worker\_\-conf}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{nfs\_\-read\_\-worker\_\-conf}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-read\_\-worker\_\-conf (config\_\-file\_\-t {\em in\_\-config}, \/  nfs\_\-worker\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_b4d5f8858fb8254aae508daddac7c136}
 
 
 nfs\_\-read\_\-worker\_\-conf: read the configuration ite; for the worker theads.
@@ -283,9 +284,9 @@ Reads the configuration ite; for the worker theads.
 \item[Returns:]0 if ok, -1 if failed,1 is stanza is not there \end{Desc}
 
 
-Definition at line 174 of file nfs\_\-read\_\-conf.c.\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!Print_param_in_log@{Print\_\-param\_\-in\_\-log}}
-\index{Print_param_in_log@{Print\_\-param\_\-in\_\-log}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Print\_\-param\_\-in\_\-log (nfs\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a11}
+Definition at line 178 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!Print\_\-param\_\-in\_\-log@{Print\_\-param\_\-in\_\-log}}
+\index{Print\_\-param\_\-in\_\-log@{Print\_\-param\_\-in\_\-log}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{Print\_\-param\_\-in\_\-log}]{\setlength{\rightskip}{0pt plus 5cm}void Print\_\-param\_\-in\_\-log (nfs\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_8597e5ad755851844ddea5f618cb9807}
 
 
 Print\_\-param\_\-in\_\-log : prints the nfs parameter structure into the logfile
@@ -301,11 +302,9 @@ prints the nfs parameter structure into the logfile
 \item[Returns:]none (void function) \end{Desc}
 
 
-Definition at line 1015 of file nfs\_\-read\_\-conf.c.
-
-References Print\_\-param\_\-worker\_\-in\_\-log().\index{nfs_read_conf.c@{nfs\_\-read\_\-conf.c}!Print_param_worker_in_log@{Print\_\-param\_\-worker\_\-in\_\-log}}
-\index{Print_param_worker_in_log@{Print\_\-param\_\-worker\_\-in\_\-log}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Print\_\-param\_\-worker\_\-in\_\-log (nfs\_\-worker\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_a10}
+Definition at line 1091 of file nfs\_\-read\_\-conf.c.\index{nfs\_\-read\_\-conf.c@{nfs\_\-read\_\-conf.c}!Print\_\-param\_\-worker\_\-in\_\-log@{Print\_\-param\_\-worker\_\-in\_\-log}}
+\index{Print\_\-param\_\-worker\_\-in\_\-log@{Print\_\-param\_\-worker\_\-in\_\-log}!nfs_read_conf.c@{nfs\_\-read\_\-conf.c}}
+\subsubsection[{Print\_\-param\_\-worker\_\-in\_\-log}]{\setlength{\rightskip}{0pt plus 5cm}void Print\_\-param\_\-worker\_\-in\_\-log (nfs\_\-worker\_\-parameter\_\-t $\ast$ {\em pparam})}\label{nfs__read__conf_8c_d3fc1abf808a8133abfe1b29e0266764}
 
 
 Print\_\-param\_\-in\_\-log : prints the nfs worker parameter structure into the logfile
@@ -321,6 +320,4 @@ prints the nfs worker parameter structure into the logfile
 \item[Returns:]none (void function) \end{Desc}
 
 
-Definition at line 996 of file nfs\_\-read\_\-conf.c.
-
-Referenced by Print\_\-param\_\-in\_\-log().
+Definition at line 1072 of file nfs\_\-read\_\-conf.c.

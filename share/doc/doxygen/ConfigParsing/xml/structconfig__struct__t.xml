@@ -1,11 +1,11 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="structconfig__struct__t" kind="struct" prot="public">
     <compoundname>config_struct_t</compoundname>
       <sectiondef kind="public-attrib">
-      <memberdef kind="variable" id="structconfig__struct__t_1o0" prot="public" static="no" volatile="no" mutable="no">
-        <type><ref refid="struct__type__block__" kindref="compound">list_block</ref> *</type>
-        <definition>list_block* config_struct_t::syntax_tree</definition>
+      <memberdef kind="variable" id="structconfig__struct__t_12fb873f65294aa91fe5a3481dda831df" prot="public" static="no" mutable="no">
+        <type><ref refid="struct__generic__item__" kindref="compound">list_items</ref> *</type>
+        <definition>list_items* config_struct_t::syntax_tree</definition>
         <argsstring></argsstring>
         <name>syntax_tree</name>
         <briefdescription>
@@ -14,62 +14,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/ConfigParsing/config_parsing.c" line="103" bodystart="103" bodyend="-1"/>
-        <referencedby refid="config__parsing_8c_1a9" compoundref="config__parsing_8c" startline="237" endline="249">config_Free</referencedby>
-        <referencedby refid="config__parsing_8c_1a12" compoundref="config__parsing_8c" startline="351" endline="387">config_GetBlockIndexByName</referencedby>
-        <referencedby refid="config__parsing_8c_1a10" compoundref="config__parsing_8c" startline="258" endline="296">config_GetNbBlocks</referencedby>
-        <referencedby refid="config__parsing_8c_1a6" compoundref="config__parsing_8c" startline="136" endline="195">config_ParseFile</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="structconfig__struct__t_1o1" prot="public" static="no" volatile="no" mutable="no">
-        <type>int</type>
-        <definition>int config_struct_t::cache_nb_items</definition>
-        <argsstring></argsstring>
-        <name>cache_nb_items</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/ConfigParsing/config_parsing.c" line="108" bodystart="108" bodyend="-1"/>
-        <referencedby refid="config__parsing_8c_1a10" compoundref="config__parsing_8c" startline="258" endline="296">config_GetNbBlocks</referencedby>
-        <referencedby refid="config__parsing_8c_1a6" compoundref="config__parsing_8c" startline="136" endline="195">config_ParseFile</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="structconfig__struct__t_1o2" prot="public" static="no" volatile="no" mutable="no">
-        <type><ref refid="struct__type__block__" kindref="compound">type_block</ref> *</type>
-        <definition>type_block* config_struct_t::last_item_ptr</definition>
-        <argsstring></argsstring>
-        <name>last_item_ptr</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/ConfigParsing/config_parsing.c" line="111" bodystart="111" bodyend="-1"/>
-        <referencedby refid="config__parsing_8c_1a12" compoundref="config__parsing_8c" startline="351" endline="387">config_GetBlockIndexByName</referencedby>
-        <referencedby refid="config__parsing_8c_1a13" compoundref="config__parsing_8c" startline="397" endline="410">config_GetBlockName</referencedby>
-        <referencedby refid="config__parsing_8c_1a15" compoundref="config__parsing_8c" startline="453" endline="494">config_GetKeyValue</referencedby>
-        <referencedby refid="config__parsing_8c_1a16" compoundref="config__parsing_8c" startline="504" endline="533">config_GetKeyValueByName</referencedby>
-        <referencedby refid="config__parsing_8c_1a10" compoundref="config__parsing_8c" startline="258" endline="296">config_GetNbBlocks</referencedby>
-        <referencedby refid="config__parsing_8c_1a14" compoundref="config__parsing_8c" startline="421" endline="443">config_GetNbKeys</referencedby>
-        <referencedby refid="config__parsing_8c_1a6" compoundref="config__parsing_8c" startline="136" endline="195">config_ParseFile</referencedby>
-      </memberdef>
-      <memberdef kind="variable" id="structconfig__struct__t_1o3" prot="public" static="no" volatile="no" mutable="no">
-        <type>int</type>
-        <definition>int config_struct_t::last_item_index</definition>
-        <argsstring></argsstring>
-        <name>last_item_index</name>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/ConfigParsing/config_parsing.c" line="112" bodystart="112" bodyend="-1"/>
-        <referencedby refid="config__parsing_8c_1a12" compoundref="config__parsing_8c" startline="351" endline="387">config_GetBlockIndexByName</referencedby>
-        <referencedby refid="config__parsing_8c_1a10" compoundref="config__parsing_8c" startline="258" endline="296">config_GetNbBlocks</referencedby>
-        <referencedby refid="config__parsing_8c_1a6" compoundref="config__parsing_8c" startline="136" endline="195">config_ParseFile</referencedby>
+        <location file="/export/GANESHA/src/ConfigParsing/config_parsing.c" line="83" bodyfile="/export/GANESHA/src/ConfigParsing/config_parsing.c" bodystart="83" bodyend="-1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -77,27 +22,41 @@
     <detaileddescription>
     </detaileddescription>
     <collaborationgraph>
-      <node id="5">
+      <node id="11">
         <label>config_struct_t</label>
         <link refid="structconfig__struct__t"/>
-        <childnode refid="6" relation="usage">
-          <edgelabel>last_item_ptr</edgelabel>
+        <childnode refid="12" relation="usage">
+          <edgelabel>syntax_tree</edgelabel>
         </childnode>
       </node>
-      <node id="6">
-        <label>_type_block_</label>
-        <link refid="struct__type__block__"/>
-        <childnode refid="6" relation="usage">
+      <node id="14">
+        <label>_type_affect_</label>
+        <link refid="struct__type__affect__"/>
+      </node>
+      <node id="12">
+        <label>_generic_item_</label>
+        <link refid="struct__generic__item__"/>
+        <childnode refid="13" relation="usage">
+          <edgelabel>block</edgelabel>
+        </childnode>
+        <childnode refid="14" relation="usage">
+          <edgelabel>affect</edgelabel>
+        </childnode>
+        <childnode refid="12" relation="usage">
           <edgelabel>next</edgelabel>
         </childnode>
       </node>
+      <node id="13">
+        <label>_type_block_</label>
+        <link refid="struct__type__block__"/>
+        <childnode refid="12" relation="usage">
+          <edgelabel>block_content</edgelabel>
+        </childnode>
+      </node>
     </collaborationgraph>
-    <location file="/opt/philippe/GANESHA/src/ConfigParsing/config_parsing.c" line="99" bodystart="98" bodyend="114"/>
+    <location file="/export/GANESHA/src/ConfigParsing/config_parsing.c" line="79" bodyfile="/export/GANESHA/src/ConfigParsing/config_parsing.c" bodystart="78" bodyend="85"/>
     <listofallmembers>
-      <member refid="structconfig__struct__t_1o1" prot="public" virt="non-virtual"><scope>config_struct_t</scope><name>cache_nb_items</name></member>
-      <member refid="structconfig__struct__t_1o3" prot="public" virt="non-virtual"><scope>config_struct_t</scope><name>last_item_index</name></member>
-      <member refid="structconfig__struct__t_1o2" prot="public" virt="non-virtual"><scope>config_struct_t</scope><name>last_item_ptr</name></member>
-      <member refid="structconfig__struct__t_1o0" prot="public" virt="non-virtual"><scope>config_struct_t</scope><name>syntax_tree</name></member>
+      <member refid="structconfig__struct__t_12fb873f65294aa91fe5a3481dda831df" prot="public" virt="non-virtual"><scope>config_struct_t</scope><name>syntax_tree</name></member>
     </listofallmembers>
   </compounddef>
 </doxygen>

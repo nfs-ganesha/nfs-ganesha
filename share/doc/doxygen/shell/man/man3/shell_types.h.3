@@ -1,8 +1,10 @@
-.TH "shell_types.h" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_types.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell_types.h \- Internal routines for the shell. 
+shell_types.h \- Internal routines for the shell.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -26,13 +28,13 @@ shell_types.h \- Internal routines for the shell.
 
 .in +1c
 .ti -1c
-.RI "typedef \fBcommand_def__\fP \fBcommand_def_t\fP"
+.RI "typedef struct \fBcommand_def__\fP \fBcommand_def_t\fP"
 .br
 .ti -1c
-.RI "typedef \fBlayer_def__\fP \fBlayer_def_t\fP"
+.RI "typedef struct \fBlayer_def__\fP \fBlayer_def_t\fP"
 .br
 .ti -1c
-.RI "typedef \fBshell_state__\fP \fBshell_state_t\fP"
+.RI "typedef struct \fBshell_state__\fP \fBshell_state_t\fP"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -41,26 +43,26 @@ Internal routines for the shell.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/07/26 12:54:47 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.2 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.2 
 .RE
 .PP
 \fBLog\fP.RS 4
@@ -69,7 +71,7 @@ leibovic
 .PP
 Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.
 .PP
-Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell. 
 .PP
 Definition in file \fBshell_types.h\fP.
 .SH "Typedef Documentation"
@@ -80,11 +82,8 @@ command definition
 .SS "typedef struct \fBlayer_def__\fP  \fBlayer_def_t\fP"
 .PP
 layer definition 
-.PP
-Referenced by shell_Execute(), shell_GetLayer(), shell_SetLayer(), and shellcmd_help().
 .SS "typedef struct \fBshell_state__\fP  \fBshell_state_t\fP"
 .PP
-Referenced by shell_Execute(), shell_GetDbgLvl(), shell_GetInputStream(), shell_GetLayer(), shell_GetLine(), shell_GetPrompt(), shell_GetStatus(), shell_GetVerbose(), shell_Init(), shell_Launch(), shell_PrintError(), shell_PrintTrace(), shell_SetDbgLvl(), shell_SetInput(), shell_SetLayer(), shell_SetLine(), shell_SetPrompt(), shell_SetShellId(), shell_SetStatus(), shell_SetVerbose(), and shell_SolveArgs().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

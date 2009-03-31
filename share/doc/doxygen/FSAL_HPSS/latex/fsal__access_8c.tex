@@ -1,6 +1,7 @@
 \section{fsal\_\-access.c File Reference}
-\label{fsal__access_8c}\index{fsal_access.c@{fsal\_\-access.c}}
-FSAL access permissions functions. 
+\label{fsal__access_8c}\index{fsal\_\-access.c@{fsal\_\-access.c}}
+FSAL access permissions functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
@@ -16,25 +17,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-access} (fsal\_\-handle\_\-t $\ast$object\_\-ha
 FSAL access permissions functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/17 14:20:07 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.16 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-access.c}.
 
 \subsection{Function Documentation}
-\index{fsal_access.c@{fsal\_\-access.c}!FSAL_access@{FSAL\_\-access}}
-\index{FSAL_access@{FSAL\_\-access}!fsal_access.c@{fsal\_\-access.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-access (fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessflags\_\-t {\em access\_\-type}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__access_8c_a0}
+\index{fsal\_\-access.c@{fsal\_\-access.c}!FSAL\_\-access@{FSAL\_\-access}}
+\index{FSAL\_\-access@{FSAL\_\-access}!fsal_access.c@{fsal\_\-access.c}}
+\subsubsection[{FSAL\_\-access}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-access (fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessflags\_\-t {\em access\_\-type}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__access_8c_a50fd5f13bbbdce0fd2279b34623b33a}
 
 
 FSAL\_\-access : Tests whether the user or entity identified by the p\_\-context structure can access the object identified by object\_\-handle, as indicated by the access\_\-type parameter.
@@ -54,6 +55,6 @@ FSAL\_\-access : Tests whether the user or entity identified by the p\_\-context
 
 Definition at line 57 of file fsal\_\-access.c.
 
-References fsal2hpss\_\-testperm(), FSAL\_\-getattrs(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References fsal2hpss\_\-testperm(), FSAL\_\-getattrs(), hpss2fsal\_\-error(), and TakeTokenFSCall().
 
 Referenced by FSAL\_\-opendir().

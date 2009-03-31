@@ -1,8 +1,10 @@
-.TH "cache_content_emergency_flush.c" 3 "9 Apr 2008" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_emergency_flush.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cached files to FSAL. 
+cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cached files to FSAL.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -15,6 +17,8 @@ cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cac
 \fC#include 'HashTable.h'\fP
 .br
 \fC#include 'fsal.h'\fP
+.br
+\fC#include 'nfs_core.h'\fP
 .br
 \fC#include 'cache_inode.h'\fP
 .br
@@ -43,7 +47,7 @@ cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cac
 
 .in +1c
 .ti -1c
-.RI "cache_content_status_t \fBcache_content_emergency_flush\fP (char *cachedir, cache_content_flush_behaviour_t flushhow, time_t grace_period, unsigned int index, unsigned int mod, fsal_op_context_t *pcontext, cache_content_status_t *pstatus)"
+.RI "cache_content_status_t \fBcache_content_emergency_flush\fP (char *cachedir, cache_content_flush_behaviour_t flushhow, unsigned int lw_mark_trigger_flag, time_t grace_period, unsigned int index, unsigned int mod, unsigned int *p_nb_flushed, unsigned int *p_nb_too_young, unsigned int *p_nb_errors, unsigned int *p_nb_orphans, fsal_op_context_t *pcontext, cache_content_status_t *pstatus)"
 .br
 .in -1c
 .SS "Variables"
@@ -51,6 +55,9 @@ cache_content_emergency_flush.c \- Emergency flush for forcing flush of data cac
 .in +1c
 .ti -1c
 .RI "unsigned int \fBcache_content_dir_errno\fP"
+.br
+.ti -1c
+.RI "nfs_parameter_t \fBnfs_param\fP"
 .br
 .in -1c
 .SH "Detailed Description"
@@ -69,15 +76,15 @@ $Date$
 .PP
 \fBVersion:\fP
 .RS 4
-$Revision$ 
+$Revision$ \fBcache_content_emergency_flush.c\fP : Emergency flush for forcing flush of data cached files to FSAL. 
 .RE
 .PP
-\fBcache_content_emergency_flush.c\fP : Emergency flush for forcing flush of data cached files to FSAL.
+
 .PP
 Definition in file \fBcache_content_emergency_flush.c\fP.
 .SH "Function Documentation"
 .PP 
-.SS "cache_content_status_t cache_content_emergency_flush (char * cachedir, cache_content_flush_behaviour_t flushhow, time_t grace_period, unsigned int index, unsigned int mod, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
+.SS "cache_content_status_t cache_content_emergency_flush (char * cachedir, cache_content_flush_behaviour_t flushhow, unsigned int lw_mark_trigger_flag, time_t grace_period, unsigned int index, unsigned int mod, unsigned int * p_nb_flushed, unsigned int * p_nb_too_young, unsigned int * p_nb_errors, unsigned int * p_nb_orphans, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
 .PP
 cache_content_emergency_flush: Flushes the content of a file in the local cache to the FSAL data.
 .PP
@@ -91,7 +98,15 @@ No lock management is done in this layer: the related pentry in the cache inode 
 .br
 \fIflushhow\fP [IN] should we delete local files or not ? 
 .br
+\fIlw_mark_trig\fP [IN] shpuld we purge until low water mark is reached ? 
+.br
 \fIgrace_period\fP [IN] grace_period The grace period for a file before being considered for deletion 
+.br
+\fIp_nb_flushed\fP [INOUT] current flushed count 
+.br
+\fIp_nb_errors\fP [INOUT] current flush errors 
+.br
+\fIp_nb_orphans\fP [INOUT] current orphan files detected 
 .br
 \fIpcontext\fP [INOUT] pcontext the FSAL context for this operation 
 .br
@@ -105,16 +120,14 @@ CACHE_CONTENT_SUCCESS if successful, an error otherwise.
 .PP
 
 .PP
-Definition at line 135 of file cache_content_emergency_flush.c.
-.PP
-References cache_content_dir_errno, cache_content_get_datapath(), cache_content_get_inum(), cache_content_local_cache_closedir(), cache_content_local_cache_dir_iter(), and cache_content_local_cache_opendir().
+Definition at line 156 of file cache_content_emergency_flush.c.
 .SH "Variable Documentation"
 .PP 
 .SS "unsigned int \fBcache_content_dir_errno\fP"
 .PP
-Definition at line 111 of file cache_content_misc.c.
+Definition at line 126 of file cache_content_misc.c.
+.SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Referenced by cache_content_emergency_flush(), cache_content_local_cache_dir_iter(), and cache_content_local_cache_opendir().
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

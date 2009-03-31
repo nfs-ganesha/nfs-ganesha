@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-lock.c File Reference}
-\label{nfs4__op__lock_8c}\index{nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs4__op__lock_8c}\index{nfs4\_\-op\_\-lock.c@{nfs4\_\-op\_\-lock.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -29,9 +30,9 @@ Routines used for managing the NFS4 COMPOUND functions.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf arg\_\-LOCK4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplock
+\#define {\bf arg\_\-LOCK4}~op $\rightarrow$ nfs\_\-argop4\_\-u.oplock
 \item 
-\#define {\bf res\_\-LOCK4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplock
+\#define {\bf res\_\-LOCK4}~resp $\rightarrow$ nfs\_\-resop4\_\-u.oplock
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -46,25 +47,25 @@ void {\bf nfs4\_\-op\_\-lock\_\-Free} (LOCK4res $\ast$resp)
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:50 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.8 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-lock.c}{\rm (p.\,\pageref{nfs4__op__lock_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs4\_\-op\_\-lock.c}{p.}{nfs4__op__lock_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs4\_\-op\_\-lock.c}.
 
 \subsection{Define Documentation}
-\index{nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}!arg_LOCK4@{arg\_\-LOCK4}}
-\index{arg_LOCK4@{arg\_\-LOCK4}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-LOCK4\ op $\rightarrow$ nfs\_\-argop4\_\-u.oplock}\label{nfs4__op__lock_8c_a0}
+\index{nfs4\_\-op\_\-lock.c@{nfs4\_\-op\_\-lock.c}!arg\_\-LOCK4@{arg\_\-LOCK4}}
+\index{arg\_\-LOCK4@{arg\_\-LOCK4}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
+\subsubsection[{arg\_\-LOCK4}]{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-LOCK4~op $\rightarrow$ nfs\_\-argop4\_\-u.oplock}\label{nfs4__op__lock_8c_1c1cffaf9f1f70da7e5d0715676c2de1}
 
 
 nfs4\_\-op\_\-lock: The NFS4\_\-OP\_\-LOCK operation.
@@ -81,35 +82,33 @@ This function implements the NFS4\_\-OP\_\-LOCK operation.
 \begin{Desc}
 \item[See also:]all the nfs4\_\-op\_\-$<$$\ast$$>$ function 
 
-{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+\doxyref{nfs4\_\-Compound}{p.}{nfs4__Compound_8c_a1516130248e7ae55d3c2e1bffe90016} \end{Desc}
 
 
-Definition at line 142 of file nfs4\_\-op\_\-lock.c.
-
-Referenced by nfs4\_\-op\_\-lock().\index{nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}!res_LOCK4@{res\_\-LOCK4}}
-\index{res_LOCK4@{res\_\-LOCK4}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-LOCK4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.oplock}\label{nfs4__op__lock_8c_a1}
+Definition at line 145 of file nfs4\_\-op\_\-lock.c.\index{nfs4\_\-op\_\-lock.c@{nfs4\_\-op\_\-lock.c}!res\_\-LOCK4@{res\_\-LOCK4}}
+\index{res\_\-LOCK4@{res\_\-LOCK4}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
+\subsubsection[{res\_\-LOCK4}]{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-LOCK4~resp $\rightarrow$ nfs\_\-resop4\_\-u.oplock}\label{nfs4__op__lock_8c_cac4512d114f3c7476507b1267e89b6a}
 
 
 
 
-Definition at line 143 of file nfs4\_\-op\_\-lock.c.
-
-Referenced by nfs4\_\-op\_\-lock().
+Definition at line 146 of file nfs4\_\-op\_\-lock.c.
 
 \subsection{Function Documentation}
-\index{nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}!nfs4_op_lock@{nfs4\_\-op\_\-lock}}
-\index{nfs4_op_lock@{nfs4\_\-op\_\-lock}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-lock (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__lock_8c_a2}
+\index{nfs4\_\-op\_\-lock.c@{nfs4\_\-op\_\-lock.c}!nfs4\_\-op\_\-lock@{nfs4\_\-op\_\-lock}}
+\index{nfs4\_\-op\_\-lock@{nfs4\_\-op\_\-lock}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
+\subsubsection[{nfs4\_\-op\_\-lock}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-lock (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__lock_8c_4001042e7f6119629f9ff1f48f7a8e90}
 
 
 
 
-Definition at line 145 of file nfs4\_\-op\_\-lock.c.
+\begin{Desc}
+\item[{\bf Todo}]BUGAZOMEU: Manage the case if lock conflicts \end{Desc}
 
-References arg\_\-LOCK4, nfs4\_\-Errno(), and res\_\-LOCK4.\index{nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}!nfs4_op_lock_Free@{nfs4\_\-op\_\-lock\_\-Free}}
-\index{nfs4_op_lock_Free@{nfs4\_\-op\_\-lock\_\-Free}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-lock\_\-Free (LOCK4res $\ast$ {\em resp})}\label{nfs4__op__lock_8c_a3}
+
+Definition at line 148 of file nfs4\_\-op\_\-lock.c.\index{nfs4\_\-op\_\-lock.c@{nfs4\_\-op\_\-lock.c}!nfs4\_\-op\_\-lock\_\-Free@{nfs4\_\-op\_\-lock\_\-Free}}
+\index{nfs4\_\-op\_\-lock\_\-Free@{nfs4\_\-op\_\-lock\_\-Free}!nfs4_op_lock.c@{nfs4\_\-op\_\-lock.c}}
+\subsubsection[{nfs4\_\-op\_\-lock\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-lock\_\-Free (LOCK4res $\ast$ {\em resp})}\label{nfs4__op__lock_8c_f8734f9586b401ff79c347a610433be7}
 
 
 nfs4\_\-op\_\-lock\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-lock.
@@ -125,6 +124,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-lock.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 323 of file nfs4\_\-op\_\-lock.c.
-
-Referenced by nfs4\_\-Compound\_\-Free().
+Definition at line 483 of file nfs4\_\-op\_\-lock.c.

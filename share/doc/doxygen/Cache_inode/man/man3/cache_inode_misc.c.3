@@ -1,4 +1,4 @@
-.TH "cache_inode_misc.c" 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "cache_inode_misc.c" 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -78,12 +78,6 @@ cache_inode_misc.c \-
 .RI "void \fBcache_inode_mutex_destroy\fP (cache_entry_t *pentry)"
 .br
 .ti -1c
-.RI "u_int32_t \fBcache_inode_increment_seqid\fP (cache_entry_t *pentry)"
-.br
-.ti -1c
-.RI "u_int32_t \fBcache_inode_get_seqid\fP (cache_entry_t *pentry)"
-.br
-.ti -1c
 .RI "void \fBcache_inode_print_dir\fP (cache_entry_t *cache_entry_root)"
 .br
 .ti -1c
@@ -116,7 +110,7 @@ CACHE_INODE_SUCCESS in all cases.
 .PP
 
 .PP
-Definition at line 704 of file cache_inode_misc.c.
+Definition at line 693 of file cache_inode_misc.c.
 .SS "int cache_inode_compare_key_fsal (hash_buffer_t * buff1, hash_buffer_t * buff2)"
 .PP
 cache_inode_compare_key_fsal: Compares two keys used in cache inode.
@@ -142,7 +136,7 @@ FSAL_handlecmp
 .PP
 
 .PP
-Definition at line 123 of file cache_inode_misc.c.
+Definition at line 127 of file cache_inode_misc.c.
 .SS "cache_inode_status_t cache_inode_dump_content (char * path, cache_entry_t * pentry)"
 .PP
 cache_inode_dump_content: dumps the content of a pentry to a local file (used for File Content index files).
@@ -171,7 +165,7 @@ CACHE_INODE_SUCCESS if operation succeded.
 .PP
 
 .PP
-Definition at line 1351 of file cache_inode_misc.c.
+Definition at line 1286 of file cache_inode_misc.c.
 .SS "cache_inode_status_t cache_inode_error_convert (fsal_status_t fsal_status)"
 .PP
 cache_inode_error_convert: converts an FSAL error to the corresponding cache_inode error.
@@ -190,9 +184,7 @@ the result of the conversion.
 .PP
 
 .PP
-Definition at line 726 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_access_sw(), cache_inode_close(), cache_inode_create(), cache_inode_get(), cache_inode_getattr(), cache_inode_link(), cache_inode_lookup_sw(), cache_inode_lookupp_sw(), cache_inode_new_entry(), cache_inode_open(), cache_inode_open_by_name(), cache_inode_operate_cached_dirent(), cache_inode_rdwr(), cache_inode_readdir_populate(), cache_inode_readlink(), cache_inode_remove_sw(), cache_inode_rename(), cache_inode_renew_entry(), cache_inode_setattr(), cache_inode_statfs(), and cache_inode_truncate_sw().
+Definition at line 715 of file cache_inode_misc.c.
 .SS "cache_inode_file_type_t cache_inode_fsal_type_convert (fsal_nodetype_t type)"
 .PP
 cache_inode_fsal_type_convert: converts an FSAL type to the cache_inode type to be used.
@@ -212,8 +204,6 @@ the result of the conversion.
 
 .PP
 Definition at line 1048 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_get(), cache_inode_lookup_sw(), and cache_inode_readdir_populate().
 .SS "int cache_inode_fsaldata_2_key (hash_buffer_t * pkey, cache_inode_fsal_data_t * pfsdata, cache_inode_client_t * pclient)"
 .PP
 cache_inode_fsaldata_2_key: builds a key from the FSAL data.
@@ -236,9 +226,7 @@ Builds a key from the FSAL data. If the key is used for reading and stay local t
 .PP
 
 .PP
-Definition at line 168 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_get(), cache_inode_kill_entry(), cache_inode_new_entry(), cache_inode_release(), cache_inode_remove_sw(), and main().
+Definition at line 171 of file cache_inode_misc.c.
 .SS "void cache_inode_get_attributes (cache_entry_t * pentry, fsal_attrib_list_t * pattr)"
 .PP
 cache_inode_get_attributes: gets the attributes cached in the entry.
@@ -260,8 +248,6 @@ nothing (void function).
 
 .PP
 Definition at line 955 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_access_sw(), cache_inode_get(), cache_inode_getattr(), and cache_inode_lookup_sw().
 .SS "fsal_handle_t* cache_inode_get_fsal_handle (cache_entry_t * pentry, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_get_fsal_handle: gets the FSAL handle from a pentry.
@@ -283,46 +269,6 @@ the result of the conversion. NULL shows an error.
 
 .PP
 Definition at line 1103 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_access_sw(), cache_inode_kill_entry(), cache_inode_release(), cache_inode_remove_sw(), and cache_inode_statfs().
-.SS "u_int32_t cache_inode_get_seqid (cache_entry_t * pentry)"
-.PP
-cache_inode_mutex_destroy: destroys the pthread_mutex associated with a pentry when it is put back to the spool.
-.PP
-Destroys the pthread_mutex associated with a pentry when it is put back to the spool
-.PP
-\fBParameters:\fP
-.RS 4
-\fIpentry\fP [INOUT] the input pentry.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-nothing (void function) 
-.RE
-.PP
-
-.PP
-Definition at line 1260 of file cache_inode_misc.c.
-.SS "u_int32_t cache_inode_increment_seqid (cache_entry_t * pentry)"
-.PP
-cache_inode_mutex_destroy: destroys the pthread_mutex associated with a pentry when it is put back to the spool.
-.PP
-Destroys the pthread_mutex associated with a pentry when it is put back to the spool
-.PP
-\fBParameters:\fP
-.RS 4
-\fIpentry\fP [INOUT] the input pentry.
-.RE
-.PP
-\fBReturns:\fP
-.RS 4
-nothing (void function) 
-.RE
-.PP
-
-.PP
-Definition at line 1228 of file cache_inode_misc.c.
 .SS "cache_inode_status_t cache_inode_kill_entry (cache_entry_t * pentry, hash_table_t * ht, cache_inode_client_t * pclient, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_kill_entry: force removing an entry from the cache_inode. This is used in case of a 'stale' entry.
@@ -351,11 +297,7 @@ CACHE_INODE_SUCCESS if operation succeded.
 .PP
 
 .PP
-Definition at line 1521 of file cache_inode_misc.c.
-.PP
-References cache_inode_fsaldata_2_key(), cache_inode_get_fsal_handle(), cache_inode_mutex_destroy(), and cache_inode_release_fsaldata_key().
-.PP
-Referenced by cache_inode_access_sw(), cache_inode_create(), cache_inode_get(), cache_inode_getattr(), cache_inode_link(), cache_inode_lookup_sw(), cache_inode_lookupp_sw(), cache_inode_new_entry(), cache_inode_readdir_populate(), cache_inode_readlink(), cache_inode_remove_sw(), cache_inode_rename(), cache_inode_renew_entry(), cache_inode_setattr(), and cache_inode_truncate_sw().
+Definition at line 1463 of file cache_inode_misc.c.
 .SS "void cache_inode_mutex_destroy (cache_entry_t * pentry)"
 .PP
 cache_inode_mutex_destroy: destroys the pthread_mutex associated with a pentry when it is put back to the spool.
@@ -375,8 +317,6 @@ nothing (void function)
 
 .PP
 Definition at line 1212 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_kill_entry(), cache_inode_release(), and cache_inode_remove_sw().
 .SS "cache_entry_t* cache_inode_new_entry (cache_inode_fsal_data_t * pfsdata, fsal_attrib_list_t * pfsal_attr, cache_inode_file_type_t type, cache_inode_create_arg_t * pcreate_arg, cache_entry_t * pentry_dir_prev, hash_table_t * ht, cache_inode_client_t * pclient, fsal_op_context_t * pcontext, unsigned int create_flag, cache_inode_status_t * pstatus)"
 .PP
 cache_inode_new_entry: adds a new entry to the cache_inode.
@@ -413,11 +353,7 @@ the same as *pstatus
 .PP
 
 .PP
-Definition at line 252 of file cache_inode_misc.c.
-.PP
-References cache_inode_error_convert(), cache_inode_fsaldata_2_key(), cache_inode_kill_entry(), cache_inode_release_fsaldata_key(), and cache_inode_valid().
-.PP
-Referenced by cache_inode_add_cached_dirent(), cache_inode_create(), cache_inode_get(), cache_inode_lookup_sw(), cache_inode_make_root(), and cache_inode_readdir_populate().
+Definition at line 255 of file cache_inode_misc.c.
 .SS "void cache_inode_print_dir (cache_entry_t * cache_entry_root)"
 .PP
 cache_inode_print_dir: prints the content of a pentry that is a directory segment.
@@ -436,9 +372,7 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 1295 of file cache_inode_misc.c.
-.PP
-Referenced by main().
+Definition at line 1230 of file cache_inode_misc.c.
 .SS "void cache_inode_release_fsaldata_key (hash_buffer_t * pkey, cache_inode_client_t * pclient)"
 .PP
 cache_inode_release_fsaldata_key: release a fsal key used to access the cache inode
@@ -459,9 +393,7 @@ nothing (void function)
 .PP
 
 .PP
-Definition at line 222 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_get(), cache_inode_kill_entry(), cache_inode_new_entry(), cache_inode_release(), and cache_inode_remove_sw().
+Definition at line 225 of file cache_inode_misc.c.
 .SS "cache_inode_status_t cache_inode_reload_content (char * path, cache_entry_t * pentry)"
 .PP
 cache_inode_reload_content: reloads the content of a pentry from a local file (used File Content crash recovery).
@@ -486,7 +418,7 @@ CACHE_INODE_SUCCESS if operation succeded.
 .PP
 
 .PP
-Definition at line 1392 of file cache_inode_misc.c.
+Definition at line 1327 of file cache_inode_misc.c.
 .SS "void cache_inode_set_attributes (cache_entry_t * pentry, fsal_attrib_list_t * pattr)"
 .PP
 cache_inode_set_attributes: sets the attributes cached in the entry.
@@ -508,8 +440,6 @@ nothing (void function).
 
 .PP
 Definition at line 1003 of file cache_inode_misc.c.
-.PP
-Referenced by cache_inode_getattr().
 .SS "int cache_inode_type_are_rename_compatible (cache_entry_t * pentry_src, cache_entry_t * pentry_dest)"
 .PP
 cache_inode_type_are_rename_compatible: test if an existing entry could be scrtached during a rename.
@@ -531,8 +461,6 @@ TRUE if rename if allowed (types are compatible), FALSE if not.
 
 .PP
 Definition at line 1169 of file cache_inode_misc.c.
-.PP
-References cache_inode_is_dir_empty().
 .SS "cache_inode_status_t cache_inode_valid (cache_entry_t * pentry, cache_inode_op_t op, cache_inode_client_t * pclient)"
 .PP
 cache_inode_valid: validates an entry to update its garbagge status.
@@ -559,11 +487,7 @@ CACHE_INODE_LRU_ERROR if an errorr occured in LRU management.
 .PP
 
 .PP
-Definition at line 818 of file cache_inode_misc.c.
-.PP
-References cache_inode_close().
-.PP
-Referenced by cache_inode_access_sw(), cache_inode_create(), cache_inode_get(), cache_inode_getattr(), cache_inode_link(), cache_inode_lookup_sw(), cache_inode_lookupp_sw(), cache_inode_new_entry(), cache_inode_rdwr(), cache_inode_readdir(), cache_inode_readlink(), cache_inode_remove_sw(), cache_inode_rename(), cache_inode_setattr(), and cache_inode_truncate_sw().
+Definition at line 811 of file cache_inode_misc.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Cache inode layer from the source code.

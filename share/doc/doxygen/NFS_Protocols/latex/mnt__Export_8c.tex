@@ -1,6 +1,7 @@
 \section{mnt\_\-Export.c File Reference}
-\label{mnt__Export_8c}\index{mnt_Export.c@{mnt\_\-Export.c}}
-MOUNTPROC\_\-EXPORT for Mount protocol v1 and v3. 
+\label{mnt__Export_8c}\index{mnt\_\-Export.c@{mnt\_\-Export.c}}
+MOUNTPROC\_\-EXPORT for Mount protocol v1 and v3.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
@@ -10,8 +11,8 @@ MOUNTPROC\_\-EXPORT for Mount protocol v1 and v3.
 {\tt \#include $<$sys/types.h$>$}\par
 {\tt \#include $<$sys/socket.h$>$}\par
 {\tt \#include $<$arpa/inet.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -31,7 +32,7 @@ MOUNTPROC\_\-EXPORT for Mount protocol v1 and v3.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf Free}(a)\ Mem\_\-Free( a )
+\#define {\bf Free}(a)~Mem\_\-Free( a )
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -46,37 +47,37 @@ void {\bf mnt\_\-Export\_\-Free} (nfs\_\-res\_\-t $\ast$pres)
 MOUNTPROC\_\-EXPORT for Mount protocol v1 and v3. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/18 17:01:40 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.19 \end{Desc}
-\end{Desc}
-{\bf mnt\_\-Null.c}{\rm (p.\,\pageref{mnt__Null_8c})} : MOUNTPROC\_\-EXPORT in V1, V3.
+\doxyref{mnt\_\-Null.c}{p.}{mnt__Null_8c} : MOUNTPROC\_\-EXPORT in V1, V3.
 
-Exporting client hosts and networks OK.
+Exporting client hosts and networks OK. 
 
 Definition in file {\bf mnt\_\-Export.c}.
 
 \subsection{Define Documentation}
-\index{mnt_Export.c@{mnt\_\-Export.c}!Free@{Free}}
+\index{mnt\_\-Export.c@{mnt\_\-Export.c}!Free@{Free}}
 \index{Free@{Free}!mnt_Export.c@{mnt\_\-Export.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Free(a)\ Mem\_\-Free( a )}\label{mnt__Export_8c_a0}
+\subsubsection[{Free}]{\setlength{\rightskip}{0pt plus 5cm}\#define Free(a)~Mem\_\-Free( a )}\label{mnt__Export_8c_1a511529c1b9f8b385f22e563844446f}
 
 
 
 
-Definition at line 133 of file mnt\_\-Export.c.
+Definition at line 137 of file mnt\_\-Export.c.
 
 \subsection{Function Documentation}
-\index{mnt_Export.c@{mnt\_\-Export.c}!mnt_Export@{mnt\_\-Export}}
-\index{mnt_Export@{mnt\_\-Export}!mnt_Export.c@{mnt\_\-Export.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int mnt\_\-Export (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Export_8c_a1}
+\index{mnt\_\-Export.c@{mnt\_\-Export.c}!mnt\_\-Export@{mnt\_\-Export}}
+\index{mnt\_\-Export@{mnt\_\-Export}!mnt_Export.c@{mnt\_\-Export.c}}
+\subsubsection[{mnt\_\-Export}]{\setlength{\rightskip}{0pt plus 5cm}int mnt\_\-Export (nfs\_\-arg\_\-t $\ast$ {\em parg}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  struct svc\_\-req $\ast$ {\em preq}, \/  nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Export_8c_e8f332cea99cb0c6bc33cb8b1ba3b4a8}
 
 
 mnt\_\-Export: The Mount proc export function, for all versions.
@@ -90,11 +91,9 @@ The MOUNT proc null function, for all versions.
 \end{Desc}
 
 
-Definition at line 150 of file mnt\_\-Export.c.
-
-Referenced by test\_\-mnt\_\-Export().\index{mnt_Export.c@{mnt\_\-Export.c}!mnt_Export_Free@{mnt\_\-Export\_\-Free}}
-\index{mnt_Export_Free@{mnt\_\-Export\_\-Free}!mnt_Export.c@{mnt\_\-Export.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void mnt\_\-Export\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Export_8c_a2}
+Definition at line 154 of file mnt\_\-Export.c.\index{mnt\_\-Export.c@{mnt\_\-Export.c}!mnt\_\-Export\_\-Free@{mnt\_\-Export\_\-Free}}
+\index{mnt\_\-Export\_\-Free@{mnt\_\-Export\_\-Free}!mnt_Export.c@{mnt\_\-Export.c}}
+\subsubsection[{mnt\_\-Export\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void mnt\_\-Export\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{mnt__Export_8c_b16cb1612cb6fdfffd77c84b6334a7c9}
 
 
 mnt\_\-Export\_\-Free: Frees the result structure allocated for mnt\_\-Export.
@@ -104,12 +103,12 @@ Frees the result structure allocated for mnt\_\-Dump.
 \begin{Desc}
 \item[Parameters:]
 \begin{description}
-\item[{\em pres}][INOUT] Pointer to the result structure.\end{description}
+\item[{\em pres}][INOUT] Pointer to the result structure. \end{description}
 \end{Desc}
 
 
 \begin{Desc}
-\item[{\bf Todo}]: BUGAZOMEU end this function\end{Desc}
+\item[{\bf Todo}]: BUGAZOMEU end this function \end{Desc}
 
 
 Definition at line 375 of file mnt\_\-Export.c.

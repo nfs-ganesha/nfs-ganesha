@@ -10,16 +10,30 @@
         {\fancyplain{}{\bfseries\rightmark}}
 \rhead[\fancyplain{}{\bfseries\leftmark}]
         {\fancyplain{}{\bfseries\thepage}}
-\rfoot[\fancyplain{}{\bfseries\scriptsize Generated on Wed Apr 9 08:24:21 2008 for File Content Policy layer by Doxygen }]{}
-\lfoot[]{\fancyplain{}{\bfseries\scriptsize Generated on Wed Apr 9 08:24:21 2008 for File Content Policy layer by Doxygen }}
+\rfoot[\fancyplain{}{\bfseries\scriptsize Generated on Tue Mar 31 14:37:37 2009 for File Content Policy layer by Doxygen }]{}
+\lfoot[]{\fancyplain{}{\bfseries\scriptsize Generated on Tue Mar 31 14:37:37 2009 for File Content Policy layer by Doxygen }}
 \cfoot{}
+\newenvironment{Code}
+{\footnotesize}
+{\normalsize}
+\newcommand{\doxyref}[3]{\textbf{#1} (\textnormal{#2}\,\pageref{#3})}
+\newenvironment{DocInclude}
+{\footnotesize}
+{\normalsize}
+\newenvironment{VerbInclude}
+{\footnotesize}
+{\normalsize}
+\newenvironment{Image}
+{\begin{figure}[H]}
+{\end{figure}}
+\newenvironment{ImageNoCaption}{}{}
 \newenvironment{CompactList}
 {\begin{list}{}{
   \setlength{\leftmargin}{0.5cm}
   \setlength{\itemsep}{0pt}
   \setlength{\parsep}{0pt}
   \setlength{\topsep}{0pt}
-  \renewcommand{\makelabel}{}}}
+  \renewcommand{\makelabel}{\hfill}}}
 {\end{list}}
 \newenvironment{CompactItemize}
 {
@@ -41,7 +55,7 @@
 }
 {\end{tabular*}\par}
 \newcommand{\entrylabel}[1]{
-   {\parbox[b]{\labelwidth-4pt}{\makebox[0pt][l]{\textbf{#1}}\\}}}
+   {\parbox[b]{\labelwidth-4pt}{\makebox[0pt][l]{\textbf{#1}}\vspace{1.5\baselineskip}}}}
 \newenvironment{Desc}
 {\begin{list}{}
   {

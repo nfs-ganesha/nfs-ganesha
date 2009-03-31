@@ -1,8 +1,10 @@
-.TH "nfs_export_list.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_export_list.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_export_list.c \- routines for managing the export list. 
+nfs_export_list.c \- routines for managing the export list.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -33,8 +35,6 @@ nfs_export_list.c \- routines for managing the export list.
 \fC#include <pwd.h>\fP
 .br
 \fC#include <grp.h>\fP
-.br
-\fC#include <gssapi/gssapi.h>\fP
 .br
 \fC#include <rpc/types.h>\fP
 .br
@@ -92,26 +92,26 @@ routines for managing the export list.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/20 13:44:57 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.13 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.13 
 .RE
 .PP
 \fBnfs_export_list.c\fP : routines for managing the export list.
@@ -151,7 +151,7 @@ Revision 1.2 2005/08/03 13:13:59 deniel memset to zero before building the fileh
 .PP
 Revision 1.1 2005/08/03 06:57:54 deniel Added a libsupport for miscellaneous service functions
 .PP
-Revision 1.2 2005/08/02 13:49:43 deniel Ok NFSv3
+Revision 1.2 2005/08/02 13:49:43 deniel Ok NFSv3 
 .PP
 Definition in file \fBnfs_export_list.c\fP.
 .SH "Function Documentation"
@@ -180,7 +180,7 @@ TRUE if successful, FALSE otherwise
 .PP
 
 .PP
-Definition at line 290 of file nfs_export_list.c.
+Definition at line 295 of file nfs_export_list.c.
 .SS "int nfs_compare_clientcred (nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2)"
 .PP
 nfs_compare_rpc_cred: Compares two RPC creds
@@ -199,7 +199,7 @@ TRUE if same, FALSE otherwise
 .PP
 
 .PP
-Definition at line 430 of file nfs_export_list.c.
+Definition at line 453 of file nfs_export_list.c.
 .SS "exportlist_t* nfs_Get_export_by_id (exportlist_t * exportroot, unsigned short exportid)"
 .PP
 nfs_Get_export_by_id: Gets an export entry from its export id.
@@ -220,15 +220,15 @@ the pointer to the pointer to the export list or NULL if failed.
 .PP
 
 .PP
-Definition at line 256 of file nfs_export_list.c.
+Definition at line 261 of file nfs_export_list.c.
 .SS "int nfs_rpc_req2client_cred (struct svc_req * reqp, nfs_client_cred_t * pcred)"
 .PP
-Definition at line 458 of file nfs_export_list.c.
+Definition at line 481 of file nfs_export_list.c.
 .SH "Variable Documentation"
 .PP 
 .SS "const char* \fBRpc_gss_svc_name\fP[] = { 'no name', 'RPCSEC_GSS_SVC_NONE', 'RPCSEC_GSS_SVC_INTEGRITY', 'RPCSEC_GSS_SVC_PRIVACY' }"
 .PP
-Definition at line 195 of file nfs_export_list.c.
+Definition at line 200 of file nfs_export_list.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

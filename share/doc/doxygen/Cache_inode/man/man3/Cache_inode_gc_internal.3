@@ -1,4 +1,4 @@
-.TH "Cache Inode GC internal functions." 3 "9 Apr 2008" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
+.TH "Cache Inode GC internal functions." 3 "31 Mar 2009" "Version 0.1" "Cache inode layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -46,11 +46,7 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 490 of file cache_inode_gc.c.
-.PP
-References cache_inode_gc_suppress_directory(), and cache_inode_gc_suppress_file().
-.PP
-Referenced by cache_inode_gc().
+Definition at line 492 of file cache_inode_gc.c.
 .SS "int cache_inode_gc_suppress_directory (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"
 .PP
 cache_inode_gc_suppress_directory: suppress a directory entry from the cache inode.
@@ -76,11 +72,7 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 397 of file cache_inode_gc.c.
-.PP
-References cache_inode_is_dir_empty().
-.PP
-Referenced by cache_inode_gc_function().
+Definition at line 418 of file cache_inode_gc.c.
 .SS "int cache_inode_gc_suppress_file (cache_entry_t * pentry, cache_inode_param_gc_t * pgcparam)"
 .PP
 cache_inode_gc_suppress_file: suppress a file entry from the cache inode.
@@ -106,6 +98,7 @@ LRU_gc_invalid
 .PP
 
 .PP
-Definition at line 352 of file cache_inode_gc.c.
-.PP
-Referenced by cache_inode_gc_function().
+Definition at line 374 of file cache_inode_gc.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Cache inode layer from the source code.

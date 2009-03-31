@@ -1,11 +1,12 @@
 \section{cache\_\-inode\_\-remove.c File Reference}
-\label{cache__inode__remove_8c}\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-Removes an entry of any type. 
+\label{cache__inode__remove_8c}\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}}
+Removes an entry of any type.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
@@ -20,7 +21,9 @@ Removes an entry of any type.
 \item 
 cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-is\_\-dir\_\-empty} (cache\_\-entry\_\-t $\ast$pentry)
 \item 
-cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-is\_\-dir\_\-empty\_\-With\-Lock} (cache\_\-entry\_\-t $\ast$pentry)
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock} (cache\_\-entry\_\-t $\ast$pentry)
+\item 
+cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-clean\_\-internal} (cache\_\-entry\_\-t $\ast$to\_\-remove\_\-entry, hash\_\-table\_\-t $\ast$ht, cache\_\-inode\_\-client\_\-t $\ast$pclient)
 \item 
 cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-remove\_\-sw} (cache\_\-entry\_\-t $\ast$pentry, fsal\_\-name\_\-t $\ast$pnode\_\-name, fsal\_\-attrib\_\-list\_\-t $\ast$pattr, hash\_\-table\_\-t $\ast$ht, cache\_\-inode\_\-client\_\-t $\ast$pclient, fsal\_\-op\_\-context\_\-t $\ast$pcontext, cache\_\-inode\_\-status\_\-t $\ast$pstatus, int use\_\-mutex)
 \item 
@@ -34,25 +37,39 @@ cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-remove} (cache\_\-entry\_\-
 Removes an entry of any type. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/31 10:18:58 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.32 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf cache\_\-inode\_\-remove.c}.
 
 \subsection{Function Documentation}
-\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}!cache_inode_is_dir_empty@{cache\_\-inode\_\-is\_\-dir\_\-empty}}
-\index{cache_inode_is_dir_empty@{cache\_\-inode\_\-is\_\-dir\_\-empty}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-is\_\-dir\_\-empty (cache\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__inode__remove_8c_a0}
+\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-clean\_\-internal@{cache\_\-inode\_\-clean\_\-internal}}
+\index{cache\_\-inode\_\-clean\_\-internal@{cache\_\-inode\_\-clean\_\-internal}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-clean\_\-internal}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-clean\_\-internal (cache\_\-entry\_\-t $\ast$ {\em to\_\-remove\_\-entry}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient})}\label{cache__inode__remove_8c_b37607d51033bda097ac6ff80f79a0ff}
+
+
+cache\_\-inode\_\-clean\_\-internal: remove a pentry from cache and all LRUs, and release related resources.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pentry}][IN] entry to be deleted from cache \item[{\em hash\_\-table\_\-t}][IN] The cache hash table \item[{\em pclient}][INOUT] ressource allocated by the client for the nfs management. \end{description}
+\end{Desc}
+
+
+Definition at line 130 of file cache\_\-inode\_\-remove.c.\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-is\_\-dir\_\-empty@{cache\_\-inode\_\-is\_\-dir\_\-empty}}
+\index{cache\_\-inode\_\-is\_\-dir\_\-empty@{cache\_\-inode\_\-is\_\-dir\_\-empty}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-is\_\-dir\_\-empty}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-is\_\-dir\_\-empty (cache\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__inode__remove_8c_9eb8017e3c52113989ef8b3cb68b9d0e}
 
 
 cache\_\-inode\_\-is\_\-dir\_\-empty: checks if a directory is empty or not. No mutex management.
@@ -74,14 +91,12 @@ CACHE\_\-INODE\_\-BAD\_\-TYPE is pentry is not of type DIR\_\-BEGINNING\par
 CACHE\_\-INODE\_\-DIR\_\-NOT\_\-EMPTY if pentry is a non empty DIR\_\-BEGINNING \end{Desc}
 
 
-Definition at line 46 of file cache\_\-inode\_\-remove.c.
-
-Referenced by cache\_\-inode\_\-gc\_\-suppress\_\-directory(), cache\_\-inode\_\-is\_\-dir\_\-empty\_\-With\-Lock(), cache\_\-inode\_\-remove\_\-sw(), cache\_\-inode\_\-rename(), and cache\_\-inode\_\-type\_\-are\_\-rename\_\-compatible().\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}!cache_inode_is_dir_empty_WithLock@{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock}}
-\index{cache_inode_is_dir_empty_WithLock@{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-is\_\-dir\_\-empty\_\-With\-Lock (cache\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__inode__remove_8c_a1}
+Definition at line 50 of file cache\_\-inode\_\-remove.c.\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock@{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock}}
+\index{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock@{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock (cache\_\-entry\_\-t $\ast$ {\em pentry})}\label{cache__inode__remove_8c_ae2de7c7798f173e1a0ff9bb79746fad}
 
 
-cache\_\-inode\_\-is\_\-dir\_\-empty\_\-With\-Lock: checks if a directory is empty or not, BUT has lock management.
+cache\_\-inode\_\-is\_\-dir\_\-empty\_\-WithLock: checks if a directory is empty or not, BUT has lock management.
 
 Checks if a directory is empty or not, BUT has lock management.
 
@@ -100,11 +115,9 @@ CACHE\_\-INODE\_\-BAD\_\-TYPE is pentry is not of type DIR\_\-BEGINNING\par
 CACHE\_\-INODE\_\-DIR\_\-NOT\_\-EMPTY if pentry is a non empty DIR\_\-BEGINNING \end{Desc}
 
 
-Definition at line 106 of file cache\_\-inode\_\-remove.c.
-
-References cache\_\-inode\_\-is\_\-dir\_\-empty().\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}!cache_inode_remove@{cache\_\-inode\_\-remove}}
-\index{cache_inode_remove@{cache\_\-inode\_\-remove}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove (cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__remove_8c_a4}
+Definition at line 110 of file cache\_\-inode\_\-remove.c.\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-remove@{cache\_\-inode\_\-remove}}
+\index{cache\_\-inode\_\-remove@{cache\_\-inode\_\-remove}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-remove}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove (cache\_\-entry\_\-t $\ast$ {\em pentry}, \/  fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__remove_8c_1ebe1ccf9bc7daf2f75aa7bf78522e22}
 
 
 cache\_\-inode\_\-remove: removes a pentry addressed by its parent pentry and its FSAL name.
@@ -129,11 +142,9 @@ pentry}]Parent entry \end{description}
 \end{Desc}
 
 
-Definition at line 539 of file cache\_\-inode\_\-remove.c.
-
-References cache\_\-inode\_\-remove\_\-sw().\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}!cache_inode_remove_no_mutex@{cache\_\-inode\_\-remove\_\-no\_\-mutex}}
-\index{cache_inode_remove_no_mutex@{cache\_\-inode\_\-remove\_\-no\_\-mutex}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-no\_\-mutex (cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__remove_8c_a3}
+Definition at line 615 of file cache\_\-inode\_\-remove.c.\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-remove\_\-no\_\-mutex@{cache\_\-inode\_\-remove\_\-no\_\-mutex}}
+\index{cache\_\-inode\_\-remove\_\-no\_\-mutex@{cache\_\-inode\_\-remove\_\-no\_\-mutex}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-remove\_\-no\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-no\_\-mutex (cache\_\-entry\_\-t $\ast$ {\em pentry}, \/  fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__remove_8c_bc88903c5c3036d83b9a289b40e871b0}
 
 
 cache\_\-inode\_\-remove\_\-no\_\-mutex: removes a pentry addressed by its parent pentry and its FSAL name. No mutex management.
@@ -158,13 +169,9 @@ pentry}]Parent entry \end{description}
 \end{Desc}
 
 
-Definition at line 502 of file cache\_\-inode\_\-remove.c.
-
-References cache\_\-inode\_\-remove\_\-sw().
-
-Referenced by cache\_\-inode\_\-rename().\index{cache_inode_remove.c@{cache\_\-inode\_\-remove.c}!cache_inode_remove_sw@{cache\_\-inode\_\-remove\_\-sw}}
-\index{cache_inode_remove_sw@{cache\_\-inode\_\-remove\_\-sw}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-sw (cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus}, int {\em use\_\-mutex})}\label{cache__inode__remove_8c_a2}
+Definition at line 578 of file cache\_\-inode\_\-remove.c.\index{cache\_\-inode\_\-remove.c@{cache\_\-inode\_\-remove.c}!cache\_\-inode\_\-remove\_\-sw@{cache\_\-inode\_\-remove\_\-sw}}
+\index{cache\_\-inode\_\-remove\_\-sw@{cache\_\-inode\_\-remove\_\-sw}!cache_inode_remove.c@{cache\_\-inode\_\-remove.c}}
+\subsubsection[{cache\_\-inode\_\-remove\_\-sw}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-remove\_\-sw (cache\_\-entry\_\-t $\ast$ {\em pentry}, \/  fsal\_\-name\_\-t $\ast$ {\em pnode\_\-name}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus}, \/  int {\em use\_\-mutex})}\label{cache__inode__remove_8c_3a3242748669826a54bf59b571a93640}
 
 
 cache\_\-inode\_\-remove\_\-sw: removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
@@ -189,8 +196,4 @@ pentry}]Parent entry \end{description}
 \end{Desc}
 
 
-Definition at line 136 of file cache\_\-inode\_\-remove.c.
-
-References cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-fsaldata\_\-2\_\-key(), cache\_\-inode\_\-get\_\-fsal\_\-handle(), cache\_\-inode\_\-is\_\-dir\_\-empty(), cache\_\-inode\_\-kill\_\-entry(), cache\_\-inode\_\-lookup\_\-sw(), cache\_\-inode\_\-mutex\_\-destroy(), cache\_\-inode\_\-release\_\-fsaldata\_\-key(), cache\_\-inode\_\-remove\_\-cached\_\-dirent(), and cache\_\-inode\_\-valid().
-
-Referenced by cache\_\-inode\_\-remove(), and cache\_\-inode\_\-remove\_\-no\_\-mutex().
+Definition at line 247 of file cache\_\-inode\_\-remove.c.

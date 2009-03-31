@@ -1,8 +1,10 @@
-.TH "nfs4_op_putfh.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_putfh.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_putfh.c \- Routines used for managing the NFS4_OP_PUTFH operation. 
+nfs4_op_putfh.c \- Routines used for managing the NFS4_OP_PUTFH operation.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -81,43 +83,39 @@ Routines used for managing the NFS4_OP_PUTFH operation.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/16 16:25:44 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.11 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_putfh.c\fP : Routines used for managing the NFS4_OP_PUTFH operation.
+\fBnfs4_op_putfh.c\fP : Routines used for managing the NFS4_OP_PUTFH operation. 
 .PP
 Definition in file \fBnfs4_op_putfh.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define arg_PUTFH4   op->nfs_argop4_u.opputfh"
 .PP
-Definition at line 124 of file nfs4_op_putfh.c.
-.PP
-Referenced by nfs4_op_putfh().
+Definition at line 127 of file nfs4_op_putfh.c.
 .SS "#define res_PUTFH4   resp->nfs_resop4_u.opputfh"
 .PP
-Definition at line 125 of file nfs4_op_putfh.c.
-.PP
-Referenced by nfs4_op_putfh().
+Definition at line 128 of file nfs4_op_putfh.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_putfh (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
@@ -149,9 +147,7 @@ all the nfs4_op_<*> function
 .PP
 
 .PP
-Definition at line 144 of file nfs4_op_putfh.c.
-.PP
-References arg_PUTFH4, nfs4_AllocateFH(), nfs4_SetCompoundExport(), nfs_FhandleToCache(), and res_PUTFH4.
+Definition at line 147 of file nfs4_op_putfh.c.
 .SS "void nfs4_op_putfh_Free (PUTFH4res * resp)"
 .PP
 nfs4_op_create_Free: frees what was allocared to handle nfs4_op_create.
@@ -170,9 +166,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 272 of file nfs4_op_putfh.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 276 of file nfs4_op_putfh.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

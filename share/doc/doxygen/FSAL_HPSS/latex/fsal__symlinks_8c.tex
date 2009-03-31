@@ -1,13 +1,14 @@
 \section{fsal\_\-symlinks.c File Reference}
-\label{fsal__symlinks_8c}\index{fsal_symlinks.c@{fsal\_\-symlinks.c}}
-symlinks operations. 
+\label{fsal__symlinks_8c}\index{fsal\_\-symlinks.c@{fsal\_\-symlinks.c}}
+symlinks operations.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-common.h\char`\"{}}\par
 {\tt \#include $<$string.h$>$}\par
-{\tt \#include \char`\"{}HPSSclapi\-Ext/hpssclapiext.h\char`\"{}}\par
+{\tt \#include \char`\"{}HPSSclapiExt/hpssclapiext.h\char`\"{}}\par
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
@@ -21,25 +22,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-symlink} (fsal\_\-handle\_\-t $\ast$parent\_\-d
 symlinks operations. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/07/29 09:39:04 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.15 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-symlinks.c}.
 
 \subsection{Function Documentation}
-\index{fsal_symlinks.c@{fsal\_\-symlinks.c}!FSAL_readlink@{FSAL\_\-readlink}}
-\index{FSAL_readlink@{FSAL\_\-readlink}!fsal_symlinks.c@{fsal\_\-symlinks.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-readlink (fsal\_\-handle\_\-t $\ast$ {\em linkhandle}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-path\_\-t $\ast$ {\em p\_\-link\_\-content}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em link\_\-attributes})}\label{fsal__symlinks_8c_a0}
+\index{fsal\_\-symlinks.c@{fsal\_\-symlinks.c}!FSAL\_\-readlink@{FSAL\_\-readlink}}
+\index{FSAL\_\-readlink@{FSAL\_\-readlink}!fsal_symlinks.c@{fsal\_\-symlinks.c}}
+\subsubsection[{FSAL\_\-readlink}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-readlink (fsal\_\-handle\_\-t $\ast$ {\em linkhandle}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-path\_\-t $\ast$ {\em p\_\-link\_\-content}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em link\_\-attributes})}\label{fsal__symlinks_8c_4170bc0feb29c36be1cd175a3b792880}
 
 
 FSAL\_\-readlink: Read the content of a symbolic link.
@@ -57,9 +58,9 @@ FSAL\_\-readlink: Read the content of a symbolic link.
 
 Definition at line 54 of file fsal\_\-symlinks.c.
 
-References FSAL\_\-getattrs(), FSAL\_\-str2path(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_symlinks.c@{fsal\_\-symlinks.c}!FSAL_symlink@{FSAL\_\-symlink}}
-\index{FSAL_symlink@{FSAL\_\-symlink}!fsal_symlinks.c@{fsal\_\-symlinks.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-symlink (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-linkname}, fsal\_\-path\_\-t $\ast$ {\em p\_\-linkcontent}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-handle\_\-t $\ast$ {\em link\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em link\_\-attributes})}\label{fsal__symlinks_8c_a1}
+References FSAL\_\-getattrs(), FSAL\_\-str2path(), hpss2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-symlinks.c@{fsal\_\-symlinks.c}!FSAL\_\-symlink@{FSAL\_\-symlink}}
+\index{FSAL\_\-symlink@{FSAL\_\-symlink}!fsal_symlinks.c@{fsal\_\-symlinks.c}}
+\subsubsection[{FSAL\_\-symlink}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-symlink (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-linkname}, \/  fsal\_\-path\_\-t $\ast$ {\em p\_\-linkcontent}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-handle\_\-t $\ast$ {\em link\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em link\_\-attributes})}\label{fsal__symlinks_8c_a2469936f37f8fadfe8af38349461ecf}
 
 
 FSAL\_\-symlink: Create a symbolic link.
@@ -77,4 +78,4 @@ FSAL\_\-symlink: Create a symbolic link.
 
 Definition at line 162 of file fsal\_\-symlinks.c.
 
-References hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().
+References hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().

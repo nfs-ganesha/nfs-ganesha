@@ -1,8 +1,10 @@
-.TH "nfs_main.c" 3 "9 Apr 2008" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_main.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_main.c \- The file that contain the 'main' routine for the nfsd. 
+nfs_main.c \- The file that contain the 'main' routine for the nfsd.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -32,16 +34,16 @@ nfs_main.c \- The file that contain the 'main' routine for the nfsd.
 
 .in +1c
 .ti -1c
-.RI "\fBnfs_start_info_t\fP \fBnfs_start_info\fP"
+.RI "\fBnfs_start_info_t\fP \fBmy_nfs_start_info\fP"
 .br
 .ti -1c
-.RI "char \fBconfig_path\fP [MAXPATHLEN] = '/etc/ganesha/ganesha_nfsd.conf'"
+.RI "char \fBmy_config_path\fP [MAXPATHLEN] = '/etc/ganesha/ganesha.conf'"
 .br
 .ti -1c
-.RI "char \fBlog_path\fP [MAXPATHLEN] = '/tmp/ganesha_nfsd.log'"
+.RI "char \fBlog_path\fP [MAXPATHLEN] = '/tmp/nfs-ganesha.log'"
 .br
 .ti -1c
-.RI "char \fBexec_name\fP [MAXPATHLEN] = 'ganesha-nfsd'"
+.RI "char \fBexec_name\fP [MAXPATHLEN] = 'nfs-ganesha'"
 .br
 .ti -1c
 .RI "char \fBhost_name\fP [MAXHOSTNAMELEN] = 'localhost'"
@@ -53,7 +55,10 @@ nfs_main.c \- The file that contain the 'main' routine for the nfsd.
 .RI "int \fBdetach_flag\fP = FALSE"
 .br
 .ti -1c
-.RI "char \fBoptions\fP [] = 'h@RdS:F:S:f:L:N:'"
+.RI "char \fBganesha_exec_path\fP [MAXPATHLEN]"
+.br
+.ti -1c
+.RI "char \fBoptions\fP [] = 'h@RdS:F:S:P:f:L:N:'"
 .br
 .ti -1c
 .RI "char \fBusage\fP []"
@@ -65,13 +70,13 @@ The file that contain the 'main' routine for the nfsd.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
-\fBnfs_main.c\fP : The file that contain the 'main' routine for the nfsd.
+\fBnfs_main.c\fP : The file that contain the 'main' routine for the nfsd. 
 .PP
 Definition in file \fBnfs_main.c\fP.
 .SH "Function Documentation"
@@ -96,30 +101,31 @@ status to calling program by calling the exit(3C) function.
 .PP
 
 .PP
-Definition at line 173 of file nfs_main.c.
-.PP
-References config_path, debug_level, detach_flag, __nfs_start_info::enable_rpcsec_gss, exec_name, __nfs_start_info::flush_behaviour, __nfs_start_info::flush_datacache_mode, host_name, log_path, __nfs_start_info::nb_flush_threads, nfs_check_param_consistency(), nfs_param, nfs_prereq_init(), nfs_set_param_default(), nfs_set_param_from_conf(), nfs_start(), nfs_start_info, options, and usage.
+Definition at line 196 of file nfs_main.c.
 .SH "Variable Documentation"
 .PP 
-.SS "char \fBconfig_path\fP[MAXPATHLEN] = '/etc/ganesha/ganesha_nfsd.conf'"
-.PP
-Definition at line 108 of file nfs_main.c.
 .SS "int \fBdebug_level\fP = NIV_EVENT"
 .PP
-Definition at line 112 of file nfs_main.c.
+Definition at line 116 of file nfs_main.c.
 .SS "int \fBdetach_flag\fP = FALSE"
 .PP
-Definition at line 113 of file nfs_main.c.
-.SS "char \fBexec_name\fP[MAXPATHLEN] = 'ganesha-nfsd'"
+Definition at line 117 of file nfs_main.c.
+.SS "char \fBexec_name\fP[MAXPATHLEN] = 'nfs-ganesha'"
 .PP
-Definition at line 110 of file nfs_main.c.
+Definition at line 114 of file nfs_main.c.
+.SS "char \fBganesha_exec_path\fP[MAXPATHLEN]"
+.PP
+Definition at line 118 of file nfs_main.c.
 .SS "char \fBhost_name\fP[MAXHOSTNAMELEN] = 'localhost'"
 .PP
-Definition at line 111 of file nfs_main.c.
-.SS "char \fBlog_path\fP[MAXPATHLEN] = '/tmp/ganesha_nfsd.log'"
+Definition at line 115 of file nfs_main.c.
+.SS "char \fBlog_path\fP[MAXPATHLEN] = '/tmp/nfs-ganesha.log'"
 .PP
-Definition at line 109 of file nfs_main.c.
-.SS "\fBnfs_start_info_t\fP \fBnfs_start_info\fP"
+Definition at line 113 of file nfs_main.c.
+.SS "char \fBmy_config_path\fP[MAXPATHLEN] = '/etc/ganesha/ganesha.conf'"
+.PP
+Definition at line 112 of file nfs_main.c.
+.SS "\fBnfs_start_info_t\fP \fBmy_nfs_start_info\fP"
 .PP
 \fBInitial value:\fP
 .PP
@@ -129,14 +135,14 @@ Definition at line 109 of file nfs_main.c.
    .flush_datacache_mode = FALSE,
    .nb_flush_threads     = 1,
    .flush_behaviour      = CACHE_CONTENT_FLUSH_AND_DELETE,
-   .enable_rpcsec_gss    = FALSE
+   .lw_mark_trigger      = FALSE
 }
 .fi
 .PP
-Definition at line 100 of file nfs_main.c.
-.SS "char \fBoptions\fP[] = 'h@RdS:F:S:f:L:N:'"
+Definition at line 104 of file nfs_main.c.
+.SS "char \fBoptions\fP[] = 'h@RdS:F:S:P:f:L:N:'"
 .PP
-Definition at line 118 of file nfs_main.c.
+Definition at line 124 of file nfs_main.c.
 .SS "char \fBusage\fP[]"
 .PP
 \fBInitial value:\fP
@@ -152,15 +158,17 @@ Definition at line 118 of file nfs_main.c.
     '\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n'
     '\t[-F] <nb_flushers>  flushes the data cache with purge, but do not answer to requests\n'
     '\t[-S] <nb_flushers>  flushes the data cache without purge, but do not answer to requests\n'
+    '\t[-P] <nb_flushers>  flushes the data cache with purge until lw mark is reached, then just sync. Do not answer to requests\n'
     '----------------- Signals ----------------\n'
     'SIGUSR1    : Enable/Disable File Content Cache forced flush\n' 
+    'SIGTERM    : Cleanly terminate the program\n' 
     '------------- Default Values -------------\n'
-    'LogFile    : /tmp/ganesha_nfsd.log\n'
+    'LogFile    : /tmp/nfs-ganesha.log\n'
     'DebugLevel : NIV_EVENT\n'
-    'ConfigFile : /etc/ganesha_nfsd.conf\n'
+    'ConfigFile : /etc/ganesha/ganesha.conf\n'
 .fi
 .PP
-Definition at line 119 of file nfs_main.c.
+Definition at line 125 of file nfs_main.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

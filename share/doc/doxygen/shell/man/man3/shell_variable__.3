@@ -1,4 +1,4 @@
-.TH "shell_variable__" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_variable__" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -19,35 +19,32 @@ shell_variable__ \-
 .RI "int \fBdatalen\fP"
 .br
 .ti -1c
-.RI "\fBshell_variable__\fP * \fBnext\fP"
+.RI "struct \fBshell_variable__\fP * \fBnext\fP"
 .br
 .ti -1c
-.RI "\fBshell_variable__\fP * \fBprev\fP"
+.RI "struct \fBshell_variable__\fP * \fBprev\fP"
 .br
 .in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 123 of file shell_vars.c.
 .SH "Member Data Documentation"
 .PP 
 .SS "int \fBshell_variable__::datalen\fP"
 .PP
 Definition at line 126 of file shell_vars.c.
-.PP
-Referenced by print_varlist().
-.SS "struct \fBshell_variable__\fP* \fBshell_variable__::next\fP"
+.SS "struct \fBshell_variable__\fP* \fBshell_variable__::next\fP\fC [read]\fP"
 .PP
 Definition at line 127 of file shell_vars.c.
-.SS "struct \fBshell_variable__\fP* \fBshell_variable__::prev\fP"
+.SS "struct \fBshell_variable__\fP* \fBshell_variable__::prev\fP\fC [read]\fP"
 .PP
 Definition at line 128 of file shell_vars.c.
 .SS "char \fBshell_variable__::var_name\fP[MAX_VAR_LEN]"
 .PP
 Definition at line 124 of file shell_vars.c.
-.PP
-Referenced by print_varlist().
 .SS "char* \fBshell_variable__::var_value\fP"
 .PP
 Definition at line 125 of file shell_vars.c.
-.PP
-Referenced by get_var_value().
 
 .SH "Author"
 .PP 

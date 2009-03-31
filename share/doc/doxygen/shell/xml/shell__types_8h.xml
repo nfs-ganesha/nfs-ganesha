@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="shell__types_8h" kind="file">
     <compoundname>shell_types.h</compoundname>
     <includes local="no">stdio.h</includes>
@@ -7,92 +7,98 @@
     <includedby refid="shell_8h" local="yes">shell.h</includedby>
     <includedby refid="shell__utils_8h" local="yes">shell_utils.h</includedby>
     <incdepgraph>
-      <node id="246">
+      <node id="269">
         <label>shell_types.h</label>
         <link refid="shell_types.h"/>
-        <childnode refid="247" relation="include">
+        <childnode refid="270" relation="include">
         </childnode>
       </node>
-      <node id="247">
+      <node id="270">
         <label>stdio.h</label>
       </node>
     </incdepgraph>
     <invincdepgraph>
-      <node id="257">
-        <label>shell_utils.h</label>
-        <link refid="shell__utils_8h"/>
-        <childnode refid="254" relation="include">
-        </childnode>
-        <childnode refid="258" relation="include">
-        </childnode>
-      </node>
-      <node id="252">
-        <label>commands_NFS.c</label>
-        <link refid="commands__NFS_8c"/>
-      </node>
-      <node id="248">
-        <label>shell_types.h</label>
-        <link refid="shell_types.h"/>
-        <childnode refid="249" relation="include">
-        </childnode>
-        <childnode refid="255" relation="include">
-        </childnode>
-        <childnode refid="257" relation="include">
-        </childnode>
-      </node>
-      <node id="251">
-        <label>commands_FSAL.c</label>
-        <link refid="commands__FSAL_8c"/>
-      </node>
-      <node id="253">
-        <label>commands_NFS_remote.c</label>
-        <link refid="commands__NFS__remote_8c"/>
-      </node>
-      <node id="249">
-        <label>commands.h</label>
-        <link refid="commands_8h"/>
-        <childnode refid="250" relation="include">
-        </childnode>
-        <childnode refid="251" relation="include">
-        </childnode>
-        <childnode refid="252" relation="include">
-        </childnode>
-        <childnode refid="253" relation="include">
-        </childnode>
-        <childnode refid="254" relation="include">
-        </childnode>
-      </node>
-      <node id="256">
+      <node id="280">
         <label>main.c</label>
         <link refid="main_8c"/>
       </node>
-      <node id="254">
-        <label>shell.c</label>
-        <link refid="shell_8c"/>
+      <node id="276">
+        <label>commands_NFS.c</label>
+        <link refid="commands__NFS_8c"/>
       </node>
-      <node id="255">
-        <label>shell.h</label>
-        <link refid="shell_8h"/>
-        <childnode refid="256" relation="include">
-        </childnode>
-        <childnode refid="254" relation="include">
-        </childnode>
+      <node id="277">
+        <label>commands_NFS_remote.c</label>
+        <link refid="commands__NFS__remote_8c"/>
       </node>
-      <node id="250">
+      <node id="274">
+        <label>commands_FSAL.c</label>
+        <link refid="commands__FSAL_8c"/>
+      </node>
+      <node id="273">
         <label>commands_Cache_inode.c</label>
         <link refid="commands__Cache__inode_8c"/>
       </node>
-      <node id="258">
+      <node id="275">
+        <label>commands_MFSL.c</label>
+        <link refid="commands__MFSL_8c"/>
+      </node>
+      <node id="282">
         <label>shell_utils.c</label>
         <link refid="shell__utils_8c"/>
       </node>
+      <node id="281">
+        <label>shell_utils.h</label>
+        <link refid="shell__utils_8h"/>
+        <childnode refid="278" relation="include">
+        </childnode>
+        <childnode refid="282" relation="include">
+        </childnode>
+      </node>
+      <node id="278">
+        <label>shell.c</label>
+        <link refid="shell_8c"/>
+      </node>
+      <node id="279">
+        <label>shell.h</label>
+        <link refid="shell_8h"/>
+        <childnode refid="280" relation="include">
+        </childnode>
+        <childnode refid="278" relation="include">
+        </childnode>
+      </node>
+      <node id="271">
+        <label>shell_types.h</label>
+        <link refid="shell_types.h"/>
+        <childnode refid="272" relation="include">
+        </childnode>
+        <childnode refid="279" relation="include">
+        </childnode>
+        <childnode refid="281" relation="include">
+        </childnode>
+      </node>
+      <node id="272">
+        <label>commands.h</label>
+        <link refid="commands_8h"/>
+        <childnode refid="273" relation="include">
+        </childnode>
+        <childnode refid="274" relation="include">
+        </childnode>
+        <childnode refid="275" relation="include">
+        </childnode>
+        <childnode refid="276" relation="include">
+        </childnode>
+        <childnode refid="277" relation="include">
+        </childnode>
+        <childnode refid="278" relation="include">
+        </childnode>
+      </node>
     </invincdepgraph>
-    <innerclass refid="structcommand__def____">command_def__</innerclass>
-    <innerclass refid="structlayer__def____">layer_def__</innerclass>
-    <innerclass refid="structshell__state____">shell_state__</innerclass>
+    <innerclass refid="structcommand__def____" prot="public">command_def__</innerclass>
+    <innerclass refid="structlayer__def____" prot="public">layer_def__</innerclass>
+    <innerclass refid="structshell__state____" prot="public">shell_state__</innerclass>
       <sectiondef kind="typedef">
-      <memberdef kind="typedef" id="shell__types_8h_1a0" prot="public" static="no">
-        <type><ref refid="structcommand__def____" kindref="compound">command_def__</ref></type>
+      <memberdef kind="typedef" id="shell__types_8h_1b765d972df67be5b511dff67ca914c20" prot="public" static="no">
+        <type>struct <ref refid="structcommand__def____" kindref="compound">command_def__</ref></type>
         <definition>typedef struct command_def__  command_def_t</definition>
         <argsstring></argsstring>
         <name>command_def_t</name>
@@ -102,10 +108,10 @@
 <para>command definition </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="40"/>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="40"/>
       </memberdef>
-      <memberdef kind="typedef" id="shell__types_8h_1a1" prot="public" static="no">
-        <type><ref refid="structlayer__def____" kindref="compound">layer_def__</ref></type>
+      <memberdef kind="typedef" id="shell__types_8h_1c7efd0f60793ac82a77ba7df7bce6d78" prot="public" static="no">
+        <type>struct <ref refid="structlayer__def____" kindref="compound">layer_def__</ref></type>
         <definition>typedef struct layer_def__  layer_def_t</definition>
         <argsstring></argsstring>
         <name>layer_def_t</name>
@@ -115,14 +121,10 @@
 <para>layer definition </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="54"/>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8h_1a18" compoundref="shell_8c" startline="1366" endline="1371">shell_GetLayer</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
-        <referencedby refid="shell_8h_1a32" compoundref="shell_8c" startline="1802" endline="1875">shellcmd_help</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="54"/>
       </memberdef>
-      <memberdef kind="typedef" id="shell__types_8h_1a2" prot="public" static="no">
-        <type><ref refid="structshell__state____" kindref="compound">shell_state__</ref></type>
+      <memberdef kind="typedef" id="shell__types_8h_183795db33ef8b97550397547fbedf279" prot="public" static="no">
+        <type>struct <ref refid="structshell__state____" kindref="compound">shell_state__</ref></type>
         <definition>typedef struct shell_state__  shell_state_t</definition>
         <argsstring></argsstring>
         <name>shell_state_t</name>
@@ -132,41 +134,20 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/shell_types.h" line="69"/>
-        <referencedby refid="shell_8h_1a14" compoundref="shell_8c" startline="1123" endline="1243">shell_Execute</referencedby>
-        <referencedby refid="shell_8c_1a36" compoundref="shell_8c" startline="1558" endline="1561">shell_GetDbgLvl</referencedby>
-        <referencedby refid="shell_8h_1a25" compoundref="shell_8c" startline="1688" endline="1694">shell_GetInputStream</referencedby>
-        <referencedby refid="shell_8h_1a18" compoundref="shell_8c" startline="1366" endline="1371">shell_GetLayer</referencedby>
-        <referencedby refid="shell_8h_1a31" compoundref="shell_8c" startline="1790" endline="1793">shell_GetLine</referencedby>
-        <referencedby refid="shell_8h_1a28" compoundref="shell_8c" startline="1724" endline="1727">shell_GetPrompt</referencedby>
-        <referencedby refid="shell_8h_1a20" compoundref="shell_8c" startline="1416" endline="1419">shell_GetStatus</referencedby>
-        <referencedby refid="shell_8h_1a22" compoundref="shell_8c" startline="1490" endline="1493">shell_GetVerbose</referencedby>
-        <referencedby refid="shell_8h_1a8" compoundref="shell_8c" startline="358" endline="433">shell_Init</referencedby>
-        <referencedby refid="shell_8h_1a9" compoundref="shell_8c" startline="473" endline="518">shell_Launch</referencedby>
-        <referencedby refid="shell_8h_1a15" compoundref="shell_8c" startline="1257" endline="1268">shell_PrintError</referencedby>
-        <referencedby refid="shell_8h_1a16" compoundref="shell_8c" startline="1275" endline="1291">shell_PrintTrace</referencedby>
-        <referencedby refid="shell_8h_1a23" compoundref="shell_8c" startline="1500" endline="1550">shell_SetDbgLvl</referencedby>
-        <referencedby refid="shell_8h_1a26" compoundref="shell_8c" startline="1573" endline="1680">shell_SetInput</referencedby>
-        <referencedby refid="shell_8h_1a17" compoundref="shell_8c" startline="1306" endline="1358">shell_SetLayer</referencedby>
-        <referencedby refid="shell_8h_1a30" compoundref="shell_8c" startline="1761" endline="1782">shell_SetLine</referencedby>
-        <referencedby refid="shell_8h_1a27" compoundref="shell_8c" startline="1703" endline="1716">shell_SetPrompt</referencedby>
-        <referencedby refid="shell_8h_1a29" compoundref="shell_8c" startline="1735" endline="1753">shell_SetShellId</referencedby>
-        <referencedby refid="shell_8h_1a19" compoundref="shell_8c" startline="1378" endline="1409">shell_SetStatus</referencedby>
-        <referencedby refid="shell_8h_1a21" compoundref="shell_8c" startline="1426" endline="1483">shell_SetVerbose</referencedby>
-        <referencedby refid="shell_8h_1a13" compoundref="shell_8c" startline="804" endline="1076">shell_SolveArgs</referencedby>
+        <location file="/export/GANESHA/src/shell/shell_types.h" line="69"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Internal routines for the shell. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/07/26 12:54:47 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.2 </para></simplesect>
-</para></simplesect>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>leibovic </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/07/26 12:54:47 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.2 </para></simplesect>
 <simplesect kind="rcs"><title>Log</title><para><ref refid="shell__types_8h" kindref="compound">shell_types.h</ref>,v </para></simplesect>
-Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.</para>    </detaileddescription>
+Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisation routines.</para><para>Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"></codeline>
 <codeline lineno="20"><highlight class="preprocessor">#ifndef<sp/>_SHELL_TYPES_H</highlight></codeline>
@@ -178,13 +159,13 @@ Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisatio
 <codeline lineno="28"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="29"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="30"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>name<sp/>of<sp/>a<sp/>command<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="31" refid="structcommand__def_____1o0" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>command_name;</highlight></codeline>
+<codeline lineno="31" refid="structcommand__def_____16470cd228728d90e6d137beb7b1e7b1a" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="structcommand__def_____16470cd228728d90e6d137beb7b1e7b1a" kindref="member">command_name</ref>;</highlight></codeline>
 <codeline lineno="32"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="33"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>function<sp/>for<sp/>processing<sp/>the<sp/>command<sp/>:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="34"><highlight class="normal"><sp/><sp/>int<sp/><sp/>(*command_func)(int,</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**,FILE<sp/>*);</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/>int<sp/><sp/>(*<ref refid="structcommand__def_____169f8d07ba9009b5a333eed7ff5a20c17" kindref="member">command_func</ref>)(int,</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**,FILE<sp/>*);</highlight></codeline>
 <codeline lineno="35"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="36"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>short<sp/>help<sp/>message<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="37" refid="structcommand__def_____1o2" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>command_help;</highlight></codeline>
+<codeline lineno="37" refid="structcommand__def_____14251bac8477b9c896e6f411ea2081bd9" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><ref refid="structcommand__def_____14251bac8477b9c896e6f411ea2081bd9" kindref="member">command_help</ref>;</highlight></codeline>
 <codeline lineno="38"><highlight class="normal"></highlight></codeline>
 <codeline lineno="39"><highlight class="normal"></highlight></codeline>
 <codeline lineno="40"><highlight class="normal">}<sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref>;</highlight></codeline>
@@ -194,10 +175,10 @@ Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisatio
 <codeline lineno="46" refid="structlayer__def____" refkind="compound"><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structlayer__def____" kindref="compound">layer_def__</ref></highlight></codeline>
 <codeline lineno="47"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="48"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="49" refid="structlayer__def_____1o0" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>layer_name;</highlight></codeline>
-<codeline lineno="50" refid="structlayer__def_____1o1" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref><sp/>*<sp/>command_list;</highlight></codeline>
-<codeline lineno="51" refid="structlayer__def_____1o2" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>layer_description;<sp/><sp/></highlight></codeline>
-<codeline lineno="52"><highlight class="normal"><sp/><sp/>void<sp/><sp/>(*setlog_func)(int);</highlight></codeline>
+<codeline lineno="49" refid="structlayer__def_____1e3ce826183c3bd6b126511808dd1e449" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structlayer__def_____1e3ce826183c3bd6b126511808dd1e449" kindref="member">layer_name</ref>;</highlight></codeline>
+<codeline lineno="50" refid="structlayer__def_____1fd47e95d6f7af78b82d58856a08d5838" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="structcommand__def____" kindref="compound">command_def_t</ref><sp/>*<sp/><ref refid="structlayer__def_____1fd47e95d6f7af78b82d58856a08d5838" kindref="member">command_list</ref>;</highlight></codeline>
+<codeline lineno="51" refid="structlayer__def_____1fe53dd726108b2daf0a682db98ff2552" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structlayer__def_____1fe53dd726108b2daf0a682db98ff2552" kindref="member">layer_description</ref>;<sp/><sp/></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/>void<sp/><sp/>(*<ref refid="structlayer__def_____130ae5403c54841f30e5f22361c8b1ee5" kindref="member">setlog_func</ref>)(int);</highlight></codeline>
 <codeline lineno="53"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="54"><highlight class="normal">}<sp/><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref>;</highlight></codeline>
 <codeline lineno="55"><highlight class="normal"></highlight></codeline>
@@ -207,17 +188,17 @@ Revision 1.2 2005/07/26 12:54:47 leibovic Multi-thread shell with synchronisatio
 <codeline lineno="59"><highlight class="normal"></highlight></codeline>
 <codeline lineno="60" refid="structshell__state____" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structshell__state____" kindref="compound">shell_state__</ref></highlight></codeline>
 <codeline lineno="61"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="62" refid="structshell__state_____1o0" refkind="member"><highlight class="normal"><sp/><sp/>FILE<sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>input_stream;<sp/><sp/></highlight></codeline>
-<codeline lineno="63" refid="structshell__state_____1o1" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>interactive;</highlight></codeline>
-<codeline lineno="64" refid="structshell__state_____1o2" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref><sp/>*<sp/>layer;</highlight></codeline>
-<codeline lineno="65" refid="structshell__state_____1o3" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>status;</highlight></codeline>
-<codeline lineno="66" refid="structshell__state_____1o4" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>verbose;</highlight></codeline>
-<codeline lineno="67" refid="structshell__state_____1o5" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>debug_level;</highlight></codeline>
-<codeline lineno="68" refid="structshell__state_____1o6" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>line;</highlight></codeline>
+<codeline lineno="62" refid="structshell__state_____1b9848d436ad635a7af41cf75e012f403" refkind="member"><highlight class="normal"><sp/><sp/>FILE<sp/>*<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____1b9848d436ad635a7af41cf75e012f403" kindref="member">input_stream</ref>;<sp/><sp/></highlight></codeline>
+<codeline lineno="63" refid="structshell__state_____1c19530794ea54d353fd0311833918b58" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____1c19530794ea54d353fd0311833918b58" kindref="member">interactive</ref>;</highlight></codeline>
+<codeline lineno="64" refid="structshell__state_____16d0f8ff17a863ff9b78024b332d4f002" refkind="member"><highlight class="normal"><sp/><sp/><ref refid="structlayer__def____" kindref="compound">layer_def_t</ref><sp/>*<sp/><ref refid="structshell__state_____16d0f8ff17a863ff9b78024b332d4f002" kindref="member">layer</ref>;</highlight></codeline>
+<codeline lineno="65" refid="structshell__state_____1ecc070dc56b42065153b28df3b48731d" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____1ecc070dc56b42065153b28df3b48731d" kindref="member">status</ref>;</highlight></codeline>
+<codeline lineno="66" refid="structshell__state_____1f1e01f5e2ea55d14d3e2dbafb9313262" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____1f1e01f5e2ea55d14d3e2dbafb9313262" kindref="member">verbose</ref>;</highlight></codeline>
+<codeline lineno="67" refid="structshell__state_____10dbfbd99cd492b36f310c006616a7fc9" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____10dbfbd99cd492b36f310c006616a7fc9" kindref="member">debug_level</ref>;</highlight></codeline>
+<codeline lineno="68" refid="structshell__state_____1f791667e865551ff1ef99e5bd7fb5ebd" refkind="member"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structshell__state_____1f791667e865551ff1ef99e5bd7fb5ebd" kindref="member">line</ref>;</highlight></codeline>
 <codeline lineno="69"><highlight class="normal">}<sp/><ref refid="structshell__state____" kindref="compound">shell_state_t</ref>;</highlight></codeline>
 <codeline lineno="70"><highlight class="normal"></highlight></codeline>
 <codeline lineno="71"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/shell/shell_types.h"/>
+    <location file="/export/GANESHA/src/shell/shell_types.h"/>
   </compounddef>
 </doxygen>

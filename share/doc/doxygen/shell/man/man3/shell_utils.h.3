@@ -1,8 +1,10 @@
-.TH "shell_utils.h" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "shell_utils.h" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-shell_utils.h \- Miscellaneous build-in commands for shell. 
+shell_utils.h \- Miscellaneous build-in commands for shell.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -39,32 +41,39 @@ shell_utils.h \- Miscellaneous build-in commands for shell.
 .RI "int \fButil_chomp\fP (int argc, char **argv, FILE *output)"
 .br
 .in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBcommand_def_t\fP \fBshell_utils\fP []"
+.br
+.in -1c
 .SH "Detailed Description"
 .PP 
 Miscellaneous build-in commands for shell. 
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/05/11 07:25:45 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.3 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.3 
 .RE
 .PP
 \fBLog\fP.RS 4
@@ -75,47 +84,46 @@ Revision 1.3 2005/05/11 07:25:45 leibovic adding chomp util.
 .PP
 Revision 1.2 2005/05/09 14:54:43 leibovic Adding eq and ne.
 .PP
-Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell.
+Revision 1.1 2005/05/09 12:23:55 leibovic Version 2 of ganeshell. 
 .PP
 Definition in file \fBshell_utils.h\fP.
 .SH "Function Documentation"
 .PP 
 .SS "int util_chomp (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 736 of file shell_utils.c.
+Definition at line 750 of file shell_utils.c.
 .SS "int util_cmp (int argc, char ** argv, FILE * output)"
 .PP
 String utils 
 .PP
-Definition at line 419 of file shell_utils.c.
-.PP
-References Getopt(), my_atoi(), Opterr, Optind, and Optopt.
+Definition at line 433 of file shell_utils.c.
 .SS "int util_diff (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 674 of file shell_utils.c.
+Definition at line 688 of file shell_utils.c.
 .SS "int util_meminfo (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 344 of file shell_utils.c.
+Definition at line 355 of file shell_utils.c.
 .SS "int util_shell (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 291 of file shell_utils.c.
+Definition at line 302 of file shell_utils.c.
 .SS "int util_sleep (int argc, char ** argv, FILE * output)"
 .PP
 System utils. 
 .PP
-Definition at line 251 of file shell_utils.c.
-.PP
-References my_atoi().
+Definition at line 262 of file shell_utils.c.
 .SS "int util_timer (int argc, char ** argv, FILE * output)"
 .PP
 Timer management. 
 .PP
-Definition at line 146 of file shell_utils.c.
-.PP
-References NULL, print_timeval, and time_diff().
+Definition at line 157 of file shell_utils.c.
 .SS "int util_wc (int argc, char ** argv, FILE * output)"
 .PP
-Definition at line 716 of file shell_utils.c.
+Definition at line 730 of file shell_utils.c.
+.SH "Variable Documentation"
+.PP 
+.SS "\fBcommand_def_t\fP \fBshell_utils\fP[]"
+.PP
+Definition at line 215 of file shell.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

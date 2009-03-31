@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-savefh.c File Reference}
-\label{nfs4__op__savefh_8c}\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
-Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation. 
+\label{nfs4__op__savefh_8c}\index{nfs4\_\-op\_\-savefh.c@{nfs4\_\-op\_\-savefh.c}}
+Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -39,30 +40,30 @@ void {\bf nfs4\_\-op\_\-savefh\_\-Free} (SAVEFH4res $\ast$resp)
 Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/05 15:14:52 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-getfh.c}{\rm (p.\,\pageref{nfs4__op__getfh_8c})} : Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation.
+\doxyref{nfs4\_\-op\_\-getfh.c}{p.}{nfs4__op__getfh_8c} : Routines used for managing the NFS4\_\-OP\_\-SAVEFH operation. 
 
 Definition in file {\bf nfs4\_\-op\_\-savefh.c}.
 
 \subsection{Function Documentation}
-\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4_op_savefh@{nfs4\_\-op\_\-savefh}}
-\index{nfs4_op_savefh@{nfs4\_\-op\_\-savefh}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-savefh (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_a0}
+\index{nfs4\_\-op\_\-savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4\_\-op\_\-savefh@{nfs4\_\-op\_\-savefh}}
+\index{nfs4\_\-op\_\-savefh@{nfs4\_\-op\_\-savefh}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
+\subsubsection[{nfs4\_\-op\_\-savefh}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-savefh (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_6e55b91063b897f0f49113a0576af2f1}
 
 
 nfs4\_\-op\_\-savefh: the NFS4\_\-OP\_\-SAVEFH operation
 
-This functions handles the NFS4\_\-OP\_\-SAVEFH operation in NFSv4. This function can be called only from nfs4\_\-Compound. The operation set the saved\-FH with the value of the current\-FH.
+This functions handles the NFS4\_\-OP\_\-SAVEFH operation in NFSv4. This function can be called only from nfs4\_\-Compound. The operation set the savedFH with the value of the currentFH.
 
 \begin{Desc}
 \item[Parameters:]
@@ -74,14 +75,12 @@ This functions handles the NFS4\_\-OP\_\-SAVEFH operation in NFSv4. This functio
 \begin{Desc}
 \item[See also:]all the nfs4\_\-op\_\-$<$$\ast$$>$ function 
 
-{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+\doxyref{nfs4\_\-Compound}{p.}{nfs4__Compound_8c_a1516130248e7ae55d3c2e1bffe90016} \end{Desc}
 
 
-Definition at line 145 of file nfs4\_\-op\_\-savefh.c.
-
-References nfs4\_\-Allocate\-FH().\index{nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4_op_savefh_Free@{nfs4\_\-op\_\-savefh\_\-Free}}
-\index{nfs4_op_savefh_Free@{nfs4\_\-op\_\-savefh\_\-Free}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-savefh\_\-Free (SAVEFH4res $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_a1}
+Definition at line 148 of file nfs4\_\-op\_\-savefh.c.\index{nfs4\_\-op\_\-savefh.c@{nfs4\_\-op\_\-savefh.c}!nfs4\_\-op\_\-savefh\_\-Free@{nfs4\_\-op\_\-savefh\_\-Free}}
+\index{nfs4\_\-op\_\-savefh\_\-Free@{nfs4\_\-op\_\-savefh\_\-Free}!nfs4_op_savefh.c@{nfs4\_\-op\_\-savefh.c}}
+\subsubsection[{nfs4\_\-op\_\-savefh\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-savefh\_\-Free (SAVEFH4res $\ast$ {\em resp})}\label{nfs4__op__savefh_8c_1df4091d7cc137f329eb50a1636e3648}
 
 
 nfs4\_\-op\_\-savefh\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-savefh.
@@ -97,4 +96,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-savefh.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 218 of file nfs4\_\-op\_\-savefh.c.
+Definition at line 223 of file nfs4\_\-op\_\-savefh.c.

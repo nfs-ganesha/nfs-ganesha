@@ -1,8 +1,10 @@
-.TH "nfs4_op_renew.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_renew.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_renew.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_op_renew.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -86,29 +88,29 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:51 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.8 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_renew.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs4_op_renew.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs4_op_renew.c\fP.
 .SH "Define Documentation"
@@ -142,21 +144,15 @@ all the nfs4_op_<*> function
 .PP
 
 .PP
-Definition at line 140 of file nfs4_op_renew.c.
-.PP
-Referenced by nfs4_op_renew().
+Definition at line 143 of file nfs4_op_renew.c.
 .SS "#define res_RENEW4   resp->nfs_resop4_u.oprenew"
 .PP
-Definition at line 141 of file nfs4_op_renew.c.
-.PP
-Referenced by nfs4_op_renew().
+Definition at line 144 of file nfs4_op_renew.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_renew (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
-Definition at line 145 of file nfs4_op_renew.c.
-.PP
-References arg_RENEW4, nfs_param, and res_RENEW4.
+Definition at line 148 of file nfs4_op_renew.c.
 .SS "void nfs4_op_renew_Free (RENEW4res * resp)"
 .PP
 nfs4_op_renew_Free: frees what was allocared to handle nfs4_op_renew.
@@ -175,9 +171,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 193 of file nfs4_op_renew.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 196 of file nfs4_op_renew.c.
 .SH "Variable Documentation"
 .PP 
 .SS "nfs_parameter_t \fBnfs_param\fP"

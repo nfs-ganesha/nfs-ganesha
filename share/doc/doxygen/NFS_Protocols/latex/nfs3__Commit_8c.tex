@@ -1,14 +1,15 @@
 \section{nfs3\_\-Commit.c File Reference}
-\label{nfs3__Commit_8c}\index{nfs3_Commit.c@{nfs3\_\-Commit.c}}
-Routines used for managing the NFS4 COMPOUND functions. 
+\label{nfs3__Commit_8c}\index{nfs3\_\-Commit.c@{nfs3\_\-Commit.c}}
+Routines used for managing the NFS4 COMPOUND functions.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -44,34 +45,32 @@ writeverf3 {\bf NFS3\_\-write\_\-verifier}
 Routines used for managing the NFS4 COMPOUND functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:49 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.10 \end{Desc}
-\end{Desc}
-{\bf nfs3\_\-Commit.c}{\rm (p.\,\pageref{nfs3__Commit_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs3\_\-Commit.c}{p.}{nfs3__Commit_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs3\_\-Commit.c}.
 
 \subsection{Function Documentation}
-\index{nfs3_Commit.c@{nfs3\_\-Commit.c}!nfs3_Commit@{nfs3\_\-Commit}}
-\index{nfs3_Commit@{nfs3\_\-Commit}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Commit (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs3__Commit_8c_a1}
+\index{nfs3\_\-Commit.c@{nfs3\_\-Commit.c}!nfs3\_\-Commit@{nfs3\_\-Commit}}
+\index{nfs3\_\-Commit@{nfs3\_\-Commit}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
+\subsubsection[{nfs3\_\-Commit}]{\setlength{\rightskip}{0pt plus 5cm}int nfs3\_\-Commit (nfs\_\-arg\_\-t $\ast$ {\em parg}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  struct svc\_\-req $\ast$ {\em preq}, \/  nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs3__Commit_8c_ca3469382751c6fe2457dc2b9f914f4a}
 
 
 
 
-Definition at line 143 of file nfs3\_\-Commit.c.
-
-References NFS3\_\-write\_\-verifier, and nfs\_\-Set\-Wcc\-Data().\index{nfs3_Commit.c@{nfs3\_\-Commit.c}!nfs3_Commit_Free@{nfs3\_\-Commit\_\-Free}}
-\index{nfs3_Commit_Free@{nfs3\_\-Commit\_\-Free}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-Commit\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs3__Commit_8c_a2}
+Definition at line 147 of file nfs3\_\-Commit.c.\index{nfs3\_\-Commit.c@{nfs3\_\-Commit.c}!nfs3\_\-Commit\_\-Free@{nfs3\_\-Commit\_\-Free}}
+\index{nfs3\_\-Commit\_\-Free@{nfs3\_\-Commit\_\-Free}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
+\subsubsection[{nfs3\_\-Commit\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs3\_\-Commit\_\-Free (nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs3__Commit_8c_1a70694ec7376c98517ee284b5bf05ff}
 
 
 nfs3\_\-Commit\_\-Free: Frees the result structure allocated for nfs3\_\-Commit.
@@ -85,12 +84,12 @@ Frees the result structure allocated for nfs3\_\-Commit.
 \end{Desc}
 
 
-Definition at line 214 of file nfs3\_\-Commit.c.
+Definition at line 215 of file nfs3\_\-Commit.c.
 
 \subsection{Variable Documentation}
-\index{nfs3_Commit.c@{nfs3\_\-Commit.c}!NFS3_write_verifier@{NFS3\_\-write\_\-verifier}}
-\index{NFS3_write_verifier@{NFS3\_\-write\_\-verifier}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}writeverf3 {\bf NFS3\_\-write\_\-verifier}}\label{nfs3__Commit_8c_a0}
+\index{nfs3\_\-Commit.c@{nfs3\_\-Commit.c}!NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}}
+\index{NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}!nfs3_Commit.c@{nfs3\_\-Commit.c}}
+\subsubsection[{NFS3\_\-write\_\-verifier}]{\setlength{\rightskip}{0pt plus 5cm}writeverf3 {\bf NFS3\_\-write\_\-verifier}}\label{nfs3__Commit_8c_c75a3dafdfdc69436850ab6d14017097}
 
 
 nfs3\_\-Commit: Implements NFSPROC3\_\-COMMIT
@@ -104,6 +103,3 @@ Implements NFSPROC3\_\-COMMIT. Unused for now, all the storage is GUARDED (see w
 \end{Desc}
 \begin{Desc}
 \item[Returns:]always NFS\_\-REQ\_\-OK (this routine does nothing) \end{Desc}
-
-
-Referenced by nfs3\_\-Commit(), and nfs\_\-Write().

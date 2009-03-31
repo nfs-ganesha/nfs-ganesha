@@ -1,8 +1,10 @@
-.TH "cache_content_rdwr.c" 3 "9 Apr 2008" "Version 0.1" "File Content layer" \" -*- nroff -*-
+.TH "cache_content_rdwr.c" 3 "31 Mar 2009" "Version 0.1" "File Content layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cache_content_rdwr.c \- Management of the file content cache: read/write operations. 
+cache_content_rdwr.c \- Management of the file content cache: read/write operations.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -39,12 +41,6 @@ cache_content_rdwr.c \- Management of the file content cache: read/write operati
 
 .in +1c
 .ti -1c
-.RI "ssize_t \fBpread\fP (int fd, void *buf, size_t count, off_t offset)"
-.br
-.ti -1c
-.RI "ssize_t \fBpwrite\fP (int fd, const void *buf, size_t count, off_t offset)"
-.br
-.ti -1c
 .RI "cache_content_status_t \fBcache_content_open\fP (cache_content_entry_t *pentry, cache_content_client_t *pclient, cache_content_status_t *pstatus)"
 .br
 .ti -1c
@@ -60,29 +56,29 @@ Management of the file content cache: read/write operations.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:33 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.12 
 .RE
 .PP
-.RE
-.PP
-cache_content_rdwr.c.c : Management of the file content cache, read and write operations.
+cache_content_rdwr.c.c : Management of the file content cache, read and write operations. 
 .PP
 Definition in file \fBcache_content_rdwr.c\fP.
 .SH "Function Documentation"
@@ -109,9 +105,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 202 of file cache_content_rdwr.c.
-.PP
-Referenced by cache_content_rdwr().
+Definition at line 203 of file cache_content_rdwr.c.
 .SS "cache_content_status_t cache_content_open (cache_content_entry_t * pentry, cache_content_client_t * pclient, cache_content_status_t * pstatus)"
 .PP
 cache_content_open: opens the local fd on the cache.
@@ -134,9 +128,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 130 of file cache_content_rdwr.c.
-.PP
-Referenced by cache_content_rdwr().
+Definition at line 132 of file cache_content_rdwr.c.
 .SS "cache_content_status_t cache_content_rdwr (cache_content_entry_t * pentry, cache_content_io_direction_t read_or_write, fsal_seek_t * seek_descriptor, fsal_size_t * pio_size_in, fsal_size_t * pio_size_out, caddr_t buffer, fsal_boolean_t * p_fsal_eof, struct stat * pbuffstat, cache_content_client_t * pclient, fsal_op_context_t * pcontext, cache_content_status_t * pstatus)"
 .PP
 cache_content_rdwr: Reads/Writes through the cache layer.
@@ -173,15 +165,7 @@ CACHE_CONTENT_SUCCESS is successful .
 .PP
 
 .PP
-Definition at line 255 of file cache_content_rdwr.c.
-.PP
-References cache_content_close(), cache_content_fsal_seek_convert(), cache_content_fsal_size_convert(), cache_content_open(), cache_content_valid(), pread(), and pwrite().
-.SS "ssize_t pread (int fd, void * buf, size_t count, off_t offset)"
-.PP
-Referenced by cache_content_rdwr().
-.SS "ssize_t pwrite (int fd, const void * buf, size_t count, off_t offset)"
-.PP
-Referenced by cache_content_rdwr().
+Definition at line 256 of file cache_content_rdwr.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for File Content layer from the source code.

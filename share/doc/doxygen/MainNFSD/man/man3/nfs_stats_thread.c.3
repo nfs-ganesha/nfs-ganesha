@@ -1,8 +1,10 @@
-.TH "nfs_stats_thread.c" 3 "9 Apr 2008" "Version 0.1" "Daemon Main" \" -*- nroff -*-
+.TH "nfs_stats_thread.c" 3 "31 Mar 2009" "Version 0.1" "Daemon Main" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_stats_thread.c \- The file that contain the 'stats_thread' routine for the nfsd. 
+nfs_stats_thread.c \- The file that contain the 'stats_thread' routine for the nfsd.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -49,53 +51,47 @@ The file that contain the 'stats_thread' routine for the nfsd.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/02/22 12:01:58 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.6 
 .RE
 .PP
-.RE
-.PP
-\fBnfs_stats_thread.c\fP : The file that contain the 'stats_thread' routine for the nfsd.
+\fBnfs_stats_thread.c\fP : The file that contain the 'stats_thread' routine for the nfsd. 
 .PP
 Definition in file \fBnfs_stats_thread.c\fP.
 .SH "Function Documentation"
 .PP 
 .SS "void* stats_thread (void * addr)"
 .PP
-Definition at line 104 of file nfs_stats_thread.c.
-.PP
-References global_buddy_stat, ht_ip_stats, nfs_dupreq_get_stats(), nfs_param, ServerBootTime, stats_snmp(), and workers_data.
+Definition at line 108 of file nfs_stats_thread.c.
 .SH "Variable Documentation"
 .PP 
 .SS "hash_table_t* \fBht_ip_stats\fP[NB_MAX_WORKER_THREAD]"
 .PP
-Definition at line 136 of file nfs_init.c.
-.PP
-Referenced by stats_thread().
+Definition at line 141 of file nfs_init.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 130 of file nfs_init.c.
+Definition at line 135 of file nfs_init.c.
 .SS "time_t \fBServerBootTime\fP"
 .PP
-Definition at line 131 of file nfs_init.c.
-.PP
-Referenced by nfs_start(), and stats_thread().
+Definition at line 136 of file nfs_init.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Daemon Main from the source code.

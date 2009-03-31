@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="test__liblog__functions_8c" kind="file">
     <compoundname>test_liblog_functions.c</compoundname>
     <includes local="no">stdlib.h</includes>
@@ -9,12 +9,6 @@
     <incdepgraph>
       <node id="18">
         <label>stdlib.h</label>
-      </node>
-      <node id="21">
-        <label>log_functions.h</label>
-      </node>
-      <node id="20">
-        <label>string.h</label>
       </node>
       <node id="17">
         <label>test_liblog_functions.c</label>
@@ -28,12 +22,18 @@
         <childnode refid="21" relation="include">
         </childnode>
       </node>
+      <node id="21">
+        <label>log_functions.h</label>
+      </node>
+      <node id="20">
+        <label>string.h</label>
+      </node>
       <node id="19">
         <label>stdio.h</label>
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="test__liblog__functions_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="test__liblog__functions_8c_1c070539a3da334a15b47bc50ae924e8e" prot="public" static="no">
         <name>ERR_PIPO_1</name>
         <initializer>0</initializer>
         <briefdescription>
@@ -42,10 +42,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="92"/>
-        <referencedby refid="test__liblog__functions_8c_1a5" compoundref="test__liblog__functions_8c" startline="104" endline="169">Test1</referencedby>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="92"/>
       </memberdef>
-      <memberdef kind="define" id="test__liblog__functions_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="test__liblog__functions_8c_1cc1fe662644cc45414464a14cb8c7ddb" prot="public" static="no">
         <name>ERR_PIPO_2</name>
         <initializer>1</initializer>
         <briefdescription>
@@ -54,10 +53,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="94"/>
-        <referencedby refid="test__liblog__functions_8c_1a5" compoundref="test__liblog__functions_8c" startline="104" endline="169">Test1</referencedby>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="94"/>
       </memberdef>
-      <memberdef kind="define" id="test__liblog__functions_8c_1a2" prot="public" static="no">
+      <memberdef kind="define" id="test__liblog__functions_8c_193efd606e54bc5bfcc8fd6a0709b5487" prot="public" static="no">
         <name>NB_THREADS</name>
         <initializer>20</initializer>
         <briefdescription>
@@ -66,74 +64,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="174" bodystart="174" bodyend="-1"/>
-      </memberdef>
-      </sectiondef>
-      <sectiondef kind="func">
-      <memberdef kind="function" id="test__liblog__functions_8c_1a5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>void *</type>
-        <definition>void* Test1</definition>
-        <argsstring>(void *arg)</argsstring>
-        <name>Test1</name>
-        <param>
-          <type>void *</type>
-          <declname>arg</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-<para>Tests about Log streams and special printf functions. </para>        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="104" bodystart="104" bodyend="169"/>
-        <references refid="log__functions_8c_1a90" compoundref="log__functions_8c" startline="966" endline="995">AddLogStreamJd</references>
-        <references refid="log__functions_8c_1a86" compoundref="log__functions_8c" startline="923" endline="931">DisplayErrorStringLine</references>
-        <references refid="log__functions_8c_1a74" compoundref="log__functions_8c" startline="672" endline="683">DisplayLog</references>
-        <references refid="log__functions_8c_1a68" compoundref="log__functions_8c" startline="545" endline="556">DisplayLogFd</references>
-        <references refid="log__functions_8c_1a70" compoundref="log__functions_8c" startline="569" endline="580">DisplayLogFlux</references>
-        <references refid="log__functions_8c_1a91" compoundref="log__functions_8c" startline="997" endline="1067">DisplayLogJdLevel</references>
-        <references refid="log__functions_8c_1a72" compoundref="log__functions_8c" startline="654" endline="665">DisplayLogPath</references>
-        <references refid="log__functions_8c_1a66" compoundref="log__functions_8c" startline="523" endline="534">DisplayLogString</references>
-        <references refid="test__liblog__functions_8c_1a0">ERR_PIPO_1</references>
-        <references refid="test__liblog__functions_8c_1a1">ERR_PIPO_2</references>
-        <references refid="log__functions_8c_1a95" compoundref="log__functions_8c" startline="1731" endline="1741">log_sprintf</references>
-        <references refid="log__functions_8c_1a56" compoundref="log__functions_8c" startline="357" endline="362">ReturnNameFunction</references>
-        <references refid="log__functions_8c_1a55" compoundref="log__functions_8c" startline="347" endline="350">ReturnNameHost</references>
-        <references refid="log__functions_8c_1a52" compoundref="log__functions_8c" startline="311" endline="319">SetNameFunction</references>
-        <referencedby refid="test__liblog__functions_8c_1a6" compoundref="test__liblog__functions_8c" startline="176" endline="255">main</referencedby>
-      </memberdef>
-      <memberdef kind="function" id="test__liblog__functions_8c_1a6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>int</type>
-        <definition>int main</definition>
-        <argsstring>(int argc, char *argv[])</argsstring>
-        <name>main</name>
-        <param>
-          <type>int</type>
-          <declname>argc</declname>
-        </param>
-        <param>
-          <type>char *</type>
-          <declname>argv</declname>
-          <array>[]</array>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="177" bodystart="176" bodyend="255"/>
-        <references refid="log__functions_8c_1a80" compoundref="log__functions_8c" startline="794" endline="820">AddFamilyError</references>
-        <references refid="log__functions_8c_1a63" compoundref="log__functions_8c" startline="456" endline="475">InitDebug</references>
-        <references refid="log__functions_8c_1a82" compoundref="log__functions_8c" startline="837" endline="851">ReturnNameFamilyError</references>
-        <references refid="log__functions_8c_1a53" compoundref="log__functions_8c" startline="325" endline="332">SetNameFileLog</references>
-        <references refid="log__functions_8c_1a51" compoundref="log__functions_8c" startline="300" endline="304">SetNameHost</references>
-        <references refid="log__functions_8c_1a50" compoundref="log__functions_8c" startline="286" endline="294">SetNamePgm</references>
-        <references refid="test__liblog__functions_8c_1a5" compoundref="test__liblog__functions_8c" startline="104" endline="169">Test1</references>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="174" bodyfile="/export/GANESHA/src/Log/test_liblog_functions.c" bodystart="174" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="var">
-      <memberdef kind="variable" id="test__liblog__functions_8c_1a3" prot="public" static="yes" volatile="no" mutable="no">
+      <memberdef kind="variable" id="test__liblog__functions_8c_1e4be3899801d521147bd60d18f69d8b7" prot="public" static="yes" mutable="no">
         <type>family_error_t</type>
         <definition>family_error_t tab_test_err[]</definition>
         <argsstring>[]</argsstring>
@@ -153,9 +88,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="98" bodystart="90" bodyend="-1"/>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="98" bodyfile="/export/GANESHA/src/Log/test_liblog_functions.c" bodystart="90" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="test__liblog__functions_8c_1a4" prot="public" static="yes" volatile="no" mutable="no">
+      <memberdef kind="variable" id="test__liblog__functions_8c_1c272052a23799ed4af95e9876ba00fac" prot="public" static="yes" mutable="no">
         <type>char</type>
         <definition>char usage[]</definition>
         <argsstring>[]</argsstring>
@@ -167,7 +102,48 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c" line="172" bodystart="172" bodyend="-1"/>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="172" bodyfile="/export/GANESHA/src/Log/test_liblog_functions.c" bodystart="172" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="test__liblog__functions_8c_1fc27d60fbf5ea1420a0bcbbea8231b38" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void *</type>
+        <definition>void* Test1</definition>
+        <argsstring>(void *arg)</argsstring>
+        <name>Test1</name>
+        <param>
+          <type>void *</type>
+          <declname>arg</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Tests about Log streams and special printf functions. </para>        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="104" bodyfile="/export/GANESHA/src/Log/test_liblog_functions.c" bodystart="104" bodyend="169"/>
+      </memberdef>
+      <memberdef kind="function" id="test__liblog__functions_8c_10ddf1224851353fc92bfbff6f499fa97" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int main</definition>
+        <argsstring>(int argc, char *argv[])</argsstring>
+        <name>main</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>char *</type>
+          <declname>argv</declname>
+          <array>[]</array>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/export/GANESHA/src/Log/test_liblog_functions.c" line="177" bodyfile="/export/GANESHA/src/Log/test_liblog_functions.c" bodystart="176" bodyend="255"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
@@ -267,46 +243,46 @@
 <codeline lineno="90"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>family_error_t<sp/>tab_test_err[]<sp/>=</highlight></codeline>
 <codeline lineno="91"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>ERR_PIPO_1<sp/><sp/>0</highlight></codeline>
-<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>{ERR_PIPO_1,<sp/></highlight><highlight class="stringliteral">&quot;ERR_PIPO_1&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Premiere<sp/>Error<sp/>Pipo&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>{<ref refid="test__liblog__functions_8c_1c070539a3da334a15b47bc50ae924e8e" kindref="member">ERR_PIPO_1</ref>,<sp/></highlight><highlight class="stringliteral">&quot;ERR_PIPO_1&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Premiere<sp/>Error<sp/>Pipo&quot;</highlight><highlight class="normal">},</highlight></codeline>
 <codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>ERR_PIPO_2<sp/><sp/>1<sp/></highlight></codeline>
-<codeline lineno="95"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>{ERR_PIPO_2,<sp/></highlight><highlight class="stringliteral">&quot;ERR_PIPO_2&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Deuxieme<sp/>Error<sp/>Pipo&quot;</highlight><highlight class="normal">},</highlight></codeline>
+<codeline lineno="95"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>{<ref refid="test__liblog__functions_8c_1cc1fe662644cc45414464a14cb8c7ddb" kindref="member">ERR_PIPO_2</ref>,<sp/></highlight><highlight class="stringliteral">&quot;ERR_PIPO_2&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Deuxieme<sp/>Error<sp/>Pipo&quot;</highlight><highlight class="normal">},</highlight></codeline>
 <codeline lineno="96"><highlight class="normal"></highlight></codeline>
 <codeline lineno="97"><highlight class="normal"><sp/><sp/>{ERR_NULL,<sp/></highlight><highlight class="stringliteral">&quot;ERR_NULL&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">}</highlight></codeline>
 <codeline lineno="98"><highlight class="normal">};</highlight></codeline>
 <codeline lineno="99"><highlight class="normal"></highlight></codeline>
 <codeline lineno="100"><highlight class="normal"></highlight></codeline>
-<codeline lineno="104" refid="test__liblog__functions_8c_1a5" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/><ref refid="test__liblog__functions_8c_1a5" kindref="member">Test1</ref>(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>arg){</highlight></codeline>
+<codeline lineno="104" refid="test__liblog__functions_8c_1fc27d60fbf5ea1420a0bcbbea8231b38" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/><ref refid="test__liblog__functions_8c_1fc27d60fbf5ea1420a0bcbbea8231b38" kindref="member">Test1</ref>(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>arg){</highlight></codeline>
 <codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="106"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>tampon[255]<sp/>;</highlight></codeline>
 <codeline lineno="107"><highlight class="normal"><sp/><sp/>log_t<sp/>jd<sp/>=<sp/>LOG_INITIALIZER<sp/>;</highlight></codeline>
 <codeline lineno="108"><highlight class="normal"><sp/><sp/>desc_log_stream_t<sp/><sp/>voie<sp/>;</highlight></codeline>
 <codeline lineno="109"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="110"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a52" kindref="member">SetNameFunction</ref>((</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)arg);</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1132221b3d8a89c38196fbe9e7c4ab897" kindref="member">SetNameFunction</ref>((</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)arg);</highlight></codeline>
 <codeline lineno="111"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="112"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Init<sp/>d&apos;un<sp/>journal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="113"><highlight class="normal"><sp/><sp/>strcpy(<sp/>voie.path<sp/><sp/>,<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="114"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a90" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_FILE,<sp/>voie,<sp/>LOG_MAJOR,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="114"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1ef7cd2efc61e27b4fd914075aa8cf7d5" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_FILE,<sp/>voie,<sp/>LOG_MAJOR,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="115"><highlight class="normal"><sp/></highlight></codeline>
 <codeline lineno="116"><highlight class="normal"><sp/><sp/>voie.fd<sp/>=<sp/>fileno(<sp/>stderr<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="117"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a90" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_FD,<sp/>voie,<sp/>LOG_CRITICAL,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1ef7cd2efc61e27b4fd914075aa8cf7d5" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_FD,<sp/>voie,<sp/>LOG_CRITICAL,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="118"><highlight class="normal"></highlight></codeline>
 <codeline lineno="119"><highlight class="normal"><sp/><sp/>voie.flux<sp/>=<sp/>stderr<sp/>;</highlight></codeline>
-<codeline lineno="120"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a90" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_STREAM,<sp/>voie,<sp/>LOG_EVENT,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1ef7cd2efc61e27b4fd914075aa8cf7d5" kindref="member">AddLogStreamJd</ref>(<sp/>&amp;jd,<sp/>V_STREAM,<sp/>voie,<sp/>LOG_EVENT,<sp/>INF<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="121"><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a70" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="123"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a70" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="124"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a70" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;Troncature<sp/>impossible<sp/>sur<sp/>%s<sp/>|<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;un&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;deux&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="125"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a74" kindref="member">DisplayLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>journal<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a74" kindref="member">DisplayLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>Log<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;<sp/><sp/></highlight></codeline>
-<codeline lineno="127"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a68" kindref="member">DisplayLogFd</ref>(<sp/>fileno(<sp/>stderr<sp/>),<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>fd<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a68" kindref="member">DisplayLogFd</ref>(<sp/>fileno(<sp/>stderr<sp/>),<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>fd<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;<sp/><sp/></highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a72" kindref="member">DisplayLogPath</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>path<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="130"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a72" kindref="member">DisplayLogPath</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>path<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="131"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a66" kindref="member">DisplayLogString</ref>(<sp/>tampon,<sp/></highlight><highlight class="stringliteral">&quot;%s<sp/>--&gt;<sp/>%d&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;essai&quot;</highlight><highlight class="normal">,<sp/>10<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_117cb2c845d02c26129b4a14a3cc0e33f" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="123"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_117cb2c845d02c26129b4a14a3cc0e33f" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_117cb2c845d02c26129b4a14a3cc0e33f" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;Troncature<sp/>impossible<sp/>sur<sp/>%s<sp/>|<sp/>%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;un&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;deux&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_10fd1034c6fcec83f3b2379d10083f01e" kindref="member">DisplayLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>journal<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_10fd1034c6fcec83f3b2379d10083f01e" kindref="member">DisplayLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>Log<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;<sp/><sp/></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_18cf8a91fec9537c6781388b2c486a56b" kindref="member">DisplayLogFd</ref>(<sp/>fileno(<sp/>stderr<sp/>),<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>fd<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_18cf8a91fec9537c6781388b2c486a56b" kindref="member">DisplayLogFd</ref>(<sp/>fileno(<sp/>stderr<sp/>),<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>fd<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;<sp/><sp/></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1e878d3843292099063322bfe3a913883" kindref="member">DisplayLogPath</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>path<sp/>numero<sp/>1&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1e878d3843292099063322bfe3a913883" kindref="member">DisplayLogPath</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>path<sp/>numero<sp/>2&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1329d936e1ce562f134e90455a76ba62e" kindref="member">DisplayLogString</ref>(<sp/>tampon,<sp/></highlight><highlight class="stringliteral">&quot;%s<sp/>--&gt;<sp/>%d&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="stringliteral">&quot;essai&quot;</highlight><highlight class="normal">,<sp/>10<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="132"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;%s&quot;</highlight><highlight class="normal">,<sp/>tampon<sp/>)<sp/>;<sp/></highlight></codeline>
 <codeline lineno="133"><highlight class="normal"></highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a91" kindref="member">DisplayLogJdLevel</ref>(<sp/>jd,<sp/>LOG_MAJOR,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>jd:<sp/>MAJOR&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a91" kindref="member">DisplayLogJdLevel</ref>(<sp/>jd,<sp/>LOG_CRITICAL,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>jd:<sp/>CRIT&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_16e6d118b08f82b3d19b2c469152e385a" kindref="member">DisplayLogJdLevel</ref>(<sp/>jd,<sp/>LOG_MAJOR,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>jd:<sp/>MAJOR&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_16e6d118b08f82b3d19b2c469152e385a" kindref="member">DisplayLogJdLevel</ref>(<sp/>jd,<sp/>LOG_CRITICAL,<sp/></highlight><highlight class="stringliteral">&quot;Essai<sp/>sur<sp/>un<sp/>jd:<sp/>CRIT&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="136"><highlight class="normal"></highlight></codeline>
 <codeline lineno="137"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;------------------------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="138"><highlight class="normal"><sp/><sp/></highlight></codeline>
@@ -314,24 +290,24 @@
 <codeline lineno="140"><highlight class="normal"><sp/><sp/>DisplayErrorFd(<sp/>fileno(<sp/>stdout<sp/>),<sp/>0,<sp/>ERR_MALLOC,<sp/>3<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="141"><highlight class="normal"><sp/><sp/>DisplayErrorLog(<sp/>0,<sp/>ERR_SOCKET,<sp/>4<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="142"><highlight class="normal"><sp/><sp/>DisplayErrorJd(<sp/>jd,<sp/>ERR_SYS,<sp/>ERR_POPEN,<sp/>3<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a86" kindref="member">DisplayErrorStringLine</ref>(<sp/>tampon,<sp/>0,<sp/>ERR_SIGACTION,<sp/>1,<sp/>12345<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_185682e82ad46217de3f3408acf13553f" kindref="member">DisplayErrorStringLine</ref>(<sp/>tampon,<sp/>0,<sp/>ERR_SIGACTION,<sp/>1,<sp/>12345<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="144"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;--&gt;%s\n&quot;</highlight><highlight class="normal">,<sp/>tampon<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="145"><highlight class="normal"></highlight></codeline>
 <codeline lineno="146"><highlight class="normal"><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;------------------------------------------------------\n&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="147"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/>DisplayErrorFlux(<sp/>stdout,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1a1" kindref="member">ERR_PIPO_2</ref>,<sp/>2<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/>DisplayErrorFlux(<sp/>stdout,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1cc1fe662644cc45414464a14cb8c7ddb" kindref="member">ERR_PIPO_2</ref>,<sp/>2<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="149"><highlight class="normal"><sp/><sp/>puts(<sp/></highlight><highlight class="stringliteral">&quot;Une<sp/>erreur<sp/>numerique<sp/>:<sp/>erreur<sp/>%d<sp/>=<sp/>%R&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a95" kindref="member">log_sprintf</ref>(<sp/>tampon,<sp/></highlight><highlight class="stringliteral">&quot;Une<sp/>erreur<sp/>numerique<sp/>:<sp/>erreur<sp/>%d<sp/>=<sp/>%J%R,<sp/>dans<sp/>err_pipo_1<sp/>%J%r&quot;</highlight><highlight class="normal">,<sp/>5,<sp/>0,<sp/>5,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1a1" kindref="member">ERR_PIPO_2</ref><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1e80a4154d6af3dc122b1b8f1b398b616" kindref="member">log_sprintf</ref>(<sp/>tampon,<sp/></highlight><highlight class="stringliteral">&quot;Une<sp/>erreur<sp/>numerique<sp/>:<sp/>erreur<sp/>%d<sp/>=<sp/>%J%R,<sp/>dans<sp/>err_pipo_1<sp/>%J%r&quot;</highlight><highlight class="normal">,<sp/>5,<sp/>0,<sp/>5,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1cc1fe662644cc45414464a14cb8c7ddb" kindref="member">ERR_PIPO_2</ref><sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="151"><highlight class="normal"><sp/><sp/>puts(<sp/>tampon<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_1a70" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;Une<sp/>erreur<sp/>numerique<sp/>:<sp/>erreur<sp/>%d<sp/>=<sp/>%J%R,<sp/>dans<sp/>err_pipo_1<sp/>%J%r&quot;</highlight><highlight class="normal">,<sp/>5,0,<sp/>5,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1a1" kindref="member">ERR_PIPO_2</ref><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/>DisplayErrorFlux(<sp/>stderr,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1a0" kindref="member">ERR_PIPO_1</ref>,<sp/>1<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"><sp/><sp/><ref refid="log__functions_8c_117cb2c845d02c26129b4a14a3cc0e33f" kindref="member">DisplayLogFlux</ref>(<sp/>stdout,<sp/></highlight><highlight class="stringliteral">&quot;Une<sp/>erreur<sp/>numerique<sp/>:<sp/>erreur<sp/>%d<sp/>=<sp/>%J%R,<sp/>dans<sp/>err_pipo_1<sp/>%J%r&quot;</highlight><highlight class="normal">,<sp/>5,0,<sp/>5,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1cc1fe662644cc45414464a14cb8c7ddb" kindref="member">ERR_PIPO_2</ref><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/>DisplayErrorFlux(<sp/>stderr,<sp/>3,<sp/><ref refid="test__liblog__functions_8c_1c070539a3da334a15b47bc50ae924e8e" kindref="member">ERR_PIPO_1</ref>,<sp/>1<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="154"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight></codeline>
 <codeline lineno="156"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>teste<sp/>si<sp/>le<sp/>nom<sp/>du<sp/>thread<sp/>est<sp/>reste<sp/>le<sp/>meme<sp/>depuis<sp/>le<sp/>debut<sp/>:<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(strcmp(<ref refid="log__functions_8c_1a56" kindref="member">ReturnNameFunction</ref>(),(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)arg)){</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(strcmp(<ref refid="log__functions_8c_1546cc865726cc916d689b34282e48733" kindref="member">ReturnNameFunction</ref>(),(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)arg)){</highlight></codeline>
 <codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/>printf(</highlight><highlight class="stringliteral">&quot;*****<sp/>ERROR:<sp/>initial<sp/>function<sp/>name<sp/>\&quot;%s\&quot;<sp/>differs<sp/>from<sp/>\&quot;%s\&quot;<sp/>*****\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)arg,<ref refid="log__functions_8c_1a55" kindref="member">ReturnNameHost</ref>());</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*)arg,<ref refid="log__functions_8c_14b309303417dda2a88696af4e099487c" kindref="member">ReturnNameHost</ref>());</highlight></codeline>
 <codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*)1;</highlight></codeline>
 <codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="163"><highlight class="normal"><sp/><sp/>}</highlight></codeline>
@@ -345,9 +321,9 @@
 <codeline lineno="171"><highlight class="normal"><sp/></highlight></codeline>
 <codeline lineno="172"><highlight class="normal"></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>usage[]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;usage:\n\ttest_liblog<sp/>STD|MT&quot;</highlight><highlight class="normal">;</highlight></codeline>
 <codeline lineno="173"><highlight class="normal"><sp/></highlight></codeline>
-<codeline lineno="174" refid="test__liblog__functions_8c_1a2" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>NB_THREADS<sp/>20</highlight></codeline>
+<codeline lineno="174" refid="test__liblog__functions_8c_193efd606e54bc5bfcc8fd6a0709b5487" refkind="member"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>NB_THREADS<sp/>20</highlight></codeline>
 <codeline lineno="175"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="176" refid="test__liblog__functions_8c_1a6" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__liblog__functions_8c_1a6" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
+<codeline lineno="176" refid="test__liblog__functions_8c_10ddf1224851353fc92bfbff6f499fa97" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="test__liblog__functions_8c_10ddf1224851353fc92bfbff6f499fa97" kindref="member">main</ref>(<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>argv[]<sp/>)</highlight></codeline>
 <codeline lineno="177"><highlight class="normal">{<sp/><sp/></highlight></codeline>
 <codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="179"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(argc==2){</highlight></codeline>
@@ -359,15 +335,15 @@
 <codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
 <codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a50" kindref="member">SetNamePgm</ref>(<sp/></highlight><highlight class="stringliteral">&quot;test_liblog&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a51" kindref="member">SetNameHost</ref>(<sp/></highlight><highlight class="stringliteral">&quot;localhost&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a53" kindref="member">SetNameFileLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a63" kindref="member">InitDebug</ref>(<sp/>NIV_EVENT<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;AddFamilyError<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1a80" kindref="member">AddFamilyError</ref>(<sp/>3,<sp/></highlight><highlight class="stringliteral">&quot;Family<sp/>Pipo&quot;</highlight><highlight class="normal">,<sp/>tab_test_err<sp/>)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;La<sp/>famille<sp/>qui<sp/>a<sp/>ete<sp/>ajoutee<sp/>est<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1a82" kindref="member">ReturnNameFamilyError</ref>(<sp/>3<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_190b86f8decaae4e419afb514799e7f6b" kindref="member">SetNamePgm</ref>(<sp/></highlight><highlight class="stringliteral">&quot;test_liblog&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_11f29c13951aff70e64c5538a4ebf2152" kindref="member">SetNameHost</ref>(<sp/></highlight><highlight class="stringliteral">&quot;localhost&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_171693baf2fa129bf27ed975386fe8a0e" kindref="member">SetNameFileLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_152c6a8893f855b3db6f70c605ed2acaa" kindref="member">InitDebug</ref>(<sp/>NIV_EVENT<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;AddFamilyError<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1941a9e17b9296690cb5ea89ac8bf5a47" kindref="member">AddFamilyError</ref>(<sp/>3,<sp/></highlight><highlight class="stringliteral">&quot;Family<sp/>Pipo&quot;</highlight><highlight class="normal">,<sp/>tab_test_err<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;La<sp/>famille<sp/>qui<sp/>a<sp/>ete<sp/>ajoutee<sp/>est<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_12e330c217ed202523ad038ef05ed90dd" kindref="member">ReturnNameFamilyError</ref>(<sp/>3<sp/>)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="194"><highlight class="normal"></highlight></codeline>
 <codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/>(int)<ref refid="test__liblog__functions_8c_1a5" kindref="member">Test1</ref>((</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*)</highlight><highlight class="stringliteral">&quot;monothread&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/>(int)<ref refid="test__liblog__functions_8c_1fc27d60fbf5ea1420a0bcbbea8231b38" kindref="member">Test1</ref>((</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*)</highlight><highlight class="stringliteral">&quot;monothread&quot;</highlight><highlight class="normal">);</highlight></codeline>
 <codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
 <codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
@@ -378,21 +354,21 @@
 <codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!strcmp(argv[1],</highlight><highlight class="stringliteral">&quot;MT&quot;</highlight><highlight class="normal">)){</highlight></codeline>
 <codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>multithread<sp/>test<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pthread_attr_t<sp/>th_attr[NB_THREADS];</highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pthread_t<sp/>threads[NB_THREADS];</highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pthread_attr_t<sp/>th_attr[<ref refid="test__liblog__functions_8c_193efd606e54bc5bfcc8fd6a0709b5487" kindref="member">NB_THREADS</ref>];</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>pthread_t<sp/>threads[<ref refid="test__liblog__functions_8c_193efd606e54bc5bfcc8fd6a0709b5487" kindref="member">NB_THREADS</ref>];</highlight></codeline>
 <codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>th_index,i;</highlight></codeline>
 <codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>*<sp/>result;</highlight></codeline>
 <codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a50" kindref="member">SetNamePgm</ref>(<sp/></highlight><highlight class="stringliteral">&quot;test_liblog&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a51" kindref="member">SetNameHost</ref>(<sp/></highlight><highlight class="stringliteral">&quot;localhost&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a53" kindref="member">SetNameFileLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_1a63" kindref="member">InitDebug</ref>(<sp/>NIV_EVENT<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;AddFamilyError<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1a80" kindref="member">AddFamilyError</ref>(<sp/>3,<sp/></highlight><highlight class="stringliteral">&quot;Family<sp/>Pipo&quot;</highlight><highlight class="normal">,<sp/>tab_test_err<sp/>)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;La<sp/>famille<sp/>qui<sp/>a<sp/>ete<sp/>ajoutee<sp/>est<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1a82" kindref="member">ReturnNameFamilyError</ref>(<sp/>3<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_190b86f8decaae4e419afb514799e7f6b" kindref="member">SetNamePgm</ref>(<sp/></highlight><highlight class="stringliteral">&quot;test_liblog&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_11f29c13951aff70e64c5538a4ebf2152" kindref="member">SetNameHost</ref>(<sp/></highlight><highlight class="stringliteral">&quot;localhost&quot;</highlight><highlight class="normal"><sp/>);</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_171693baf2fa129bf27ed975386fe8a0e" kindref="member">SetNameFileLog</ref>(<sp/></highlight><highlight class="stringliteral">&quot;/dev/tty&quot;</highlight><highlight class="normal"><sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="log__functions_8c_152c6a8893f855b3db6f70c605ed2acaa" kindref="member">InitDebug</ref>(<sp/>NIV_EVENT<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;AddFamilyError<sp/>=<sp/>%d\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_1941a9e17b9296690cb5ea89ac8bf5a47" kindref="member">AddFamilyError</ref>(<sp/>3,<sp/></highlight><highlight class="stringliteral">&quot;Family<sp/>Pipo&quot;</highlight><highlight class="normal">,<sp/>tab_test_err<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>printf(<sp/></highlight><highlight class="stringliteral">&quot;La<sp/>famille<sp/>qui<sp/>a<sp/>ete<sp/>ajoutee<sp/>est<sp/>%s\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="log__functions_8c_12e330c217ed202523ad038ef05ed90dd" kindref="member">ReturnNameFamilyError</ref>(<sp/>3<sp/>)<sp/>)<sp/>;</highlight></codeline>
 <codeline lineno="218"><highlight class="normal"></highlight></codeline>
 <codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>creation<sp/>of<sp/>attributes<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(th_index=0;th_index&lt;NB_THREADS;th_index++){</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(th_index=0;th_index&lt;<ref refid="test__liblog__functions_8c_193efd606e54bc5bfcc8fd6a0709b5487" kindref="member">NB_THREADS</ref>;th_index++){</highlight></codeline>
 <codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pthread_attr_init(&amp;th_attr[th_index]);</highlight></codeline>
 <codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pthread_attr_setdetachstate(&amp;th_attr[th_index],PTHREAD_CREATE_JOINABLE);</highlight></codeline>
 <codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
@@ -402,7 +378,7 @@
 <codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rc;</highlight></codeline>
 <codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*<sp/>thread_name<sp/>=<sp/>malloc(256);</highlight></codeline>
 <codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(thread_name,256,</highlight><highlight class="stringliteral">&quot;thread<sp/>%d&quot;</highlight><highlight class="normal">,i);</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/>pthread_create(&amp;(threads[i]),&amp;th_attr[i],<ref refid="test__liblog__functions_8c_1a5" kindref="member">Test1</ref>,(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*)thread_name);</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>=<sp/>pthread_create(&amp;(threads[i]),&amp;th_attr[i],<ref refid="test__liblog__functions_8c_1fc27d60fbf5ea1420a0bcbbea8231b38" kindref="member">Test1</ref>,(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*)thread_name);</highlight></codeline>
 <codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>waiting<sp/>for<sp/>threads<sp/>termination<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
@@ -430,6 +406,6 @@
 <codeline lineno="256"><highlight class="normal"></highlight></codeline>
 <codeline lineno="257"><highlight class="normal"><sp/><sp/></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/Log/test_liblog_functions.c"/>
+    <location file="/export/GANESHA/src/Log/test_liblog_functions.c"/>
   </compounddef>
 </doxygen>

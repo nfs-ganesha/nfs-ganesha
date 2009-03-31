@@ -1,12 +1,13 @@
 \section{fsal\_\-create.c File Reference}
-\label{fsal__create_8c}\index{fsal_create.c@{fsal\_\-create.c}}
-Filesystem objects creation functions. 
+\label{fsal__create_8c}\index{fsal\_\-create.c@{fsal\_\-create.c}}
+Filesystem objects creation functions.  
+
 
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-internal.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-convert.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal\_\-common.h\char`\"{}}\par
-{\tt \#include \char`\"{}HPSSclapi\-Ext/hpssclapiext.h\char`\"{}}\par
+{\tt \#include \char`\"{}HPSSclapiExt/hpssclapiext.h\char`\"{}}\par
 \subsection*{Functions}
 \begin{CompactItemize}
 \item 
@@ -24,25 +25,25 @@ fsal\_\-status\_\-t {\bf FSAL\_\-mknode} (fsal\_\-handle\_\-t $\ast$parentdir\_\
 Filesystem objects creation functions. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/24 13:45:36 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.18 \end{Desc}
-\end{Desc}
 
 
 Definition in file {\bf fsal\_\-create.c}.
 
 \subsection{Function Documentation}
-\index{fsal_create.c@{fsal\_\-create.c}!FSAL_create@{FSAL\_\-create}}
-\index{FSAL_create@{FSAL\_\-create}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-create (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-filename}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__create_8c_a0}
+\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-create@{FSAL\_\-create}}
+\index{FSAL\_\-create@{FSAL\_\-create}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-create}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-create (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-filename}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__create_8c_b32064718b92ea123ea5cc7a6ff7cacd}
 
 
 FSAL\_\-create: Create a regular file.
@@ -60,9 +61,9 @@ NB: if getting postop attributes failed, the function does not return an error b
 
 Definition at line 62 of file fsal\_\-create.c.
 
-References fsal2unix\_\-mode(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_link@{FSAL\_\-link}}
-\index{FSAL_link@{FSAL\_\-link}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-link (fsal\_\-handle\_\-t $\ast$ {\em target\_\-handle}, fsal\_\-handle\_\-t $\ast$ {\em dir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-link\_\-name}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attributes})}\label{fsal__create_8c_a2}
+References fsal2unix\_\-mode(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-link@{FSAL\_\-link}}
+\index{FSAL\_\-link@{FSAL\_\-link}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-link}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-link (fsal\_\-handle\_\-t $\ast$ {\em target\_\-handle}, \/  fsal\_\-handle\_\-t $\ast$ {\em dir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-link\_\-name}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em attributes})}\label{fsal__create_8c_b835d0f160323a78d0512a5254e9c109}
 
 
 FSAL\_\-link: Create a hardlink.
@@ -80,9 +81,9 @@ NB: if getting postop attributes failed, the function does not return an error b
 
 Definition at line 363 of file fsal\_\-create.c.
 
-References FSAL\_\-getattrs(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_mkdir@{FSAL\_\-mkdir}}
-\index{FSAL_mkdir@{FSAL\_\-mkdir}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mkdir (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-dirname}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__create_8c_a1}
+References FSAL\_\-getattrs(), hpss2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-mkdir@{FSAL\_\-mkdir}}
+\index{FSAL\_\-mkdir@{FSAL\_\-mkdir}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-mkdir}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mkdir (fsal\_\-handle\_\-t $\ast$ {\em parent\_\-directory\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-dirname}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-handle\_\-t $\ast$ {\em object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em object\_\-attributes})}\label{fsal__create_8c_8d7790c659b715e2e87bc57595a2cd71}
 
 
 FSAL\_\-mkdir: Create a directory.
@@ -100,9 +101,9 @@ NB: if getting postop attributes failed, the function does not return an error b
 
 Definition at line 232 of file fsal\_\-create.c.
 
-References fsal2unix\_\-mode(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and Take\-Token\-FSCall().\index{fsal_create.c@{fsal\_\-create.c}!FSAL_mknode@{FSAL\_\-mknode}}
-\index{FSAL_mknode@{FSAL\_\-mknode}!fsal_create.c@{fsal\_\-create.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mknode (fsal\_\-handle\_\-t $\ast$ {\em parentdir\_\-handle}, fsal\_\-name\_\-t $\ast$ {\em p\_\-node\_\-name}, fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, fsal\_\-accessmode\_\-t {\em accessmode}, fsal\_\-nodetype\_\-t {\em nodetype}, fsal\_\-dev\_\-t $\ast$ {\em dev}, fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em node\_\-attributes})}\label{fsal__create_8c_a3}
+References fsal2unix\_\-mode(), hpss2fsal\_\-attributes(), hpss2fsal\_\-error(), and TakeTokenFSCall().\index{fsal\_\-create.c@{fsal\_\-create.c}!FSAL\_\-mknode@{FSAL\_\-mknode}}
+\index{FSAL\_\-mknode@{FSAL\_\-mknode}!fsal_create.c@{fsal\_\-create.c}}
+\subsubsection[{FSAL\_\-mknode}]{\setlength{\rightskip}{0pt plus 5cm}fsal\_\-status\_\-t FSAL\_\-mknode (fsal\_\-handle\_\-t $\ast$ {\em parentdir\_\-handle}, \/  fsal\_\-name\_\-t $\ast$ {\em p\_\-node\_\-name}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em p\_\-context}, \/  fsal\_\-accessmode\_\-t {\em accessmode}, \/  fsal\_\-nodetype\_\-t {\em nodetype}, \/  fsal\_\-dev\_\-t $\ast$ {\em dev}, \/  fsal\_\-handle\_\-t $\ast$ {\em p\_\-object\_\-handle}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em node\_\-attributes})}\label{fsal__create_8c_344a6fd2ad23cc03509f7e7f3bf1fd1c}
 
 
 FSAL\_\-mknode: Create a special object in the filesystem. Not supported upon HPSS.

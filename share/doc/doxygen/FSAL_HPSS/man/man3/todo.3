@@ -1,67 +1,85 @@
-.TH "todo" 3 "9 Apr 2008" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
+.TH "todo" 3 "31 Mar 2009" "Version 0.2" "File System Abstraction Layer (HPSS) library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-todo \- Todo List
+todo \- Todo List 
  
-.IP "\fBMember \fBFSAL_setattrs\fP(fsal_handle_t *filehandle, fsal_op_context_t *p_context, fsal_attrib_list_t *attrib_set, fsal_attrib_list_t *object_attributes) \fP" 1c
+.IP "\fBMember \fBFSAL_setattrs\fP \fP" 1c
 : chown restricted seems to be OK. 
 .PP
-voir pourquoi hpss_fattr_out ne contient pas ce qu'il devrait contenir
+.PP
+ 
+.IP "\fBMember \fBFSAL_setattrs\fP \fP" 1c
+voir pourquoi hpss_fattr_out ne contient pas ce qu'il devrait contenir 
 .PP
 .PP
  
-.IP "\fBMember \fBfsal2hpss_attribset\fP(fsal_handle_t *p_fsal_handle, fsal_attrib_list_t *p_attrib_set, hpss_fileattrbits_t *p_hpss_attrmask, hpss_Attrs_t *p_hpss_attrs) \fP" 1c
+.IP "\fBMember \fBfsal2hpss_attribset\fP \fP" 1c
 : Define some constants for settable and supported attributes. 
 .PP
-ACL management
+.PP
+ 
+.IP "\fBMember \fBfsal2hpss_attribset\fP \fP" 1c
+ACL management 
 .PP
 .PP
  
-.IP "\fBMember \fBhpss2fsal_attributes\fP(ns_ObjHandle_t *p_hpss_handle_in, hpss_Attrs_t *p_hpss_attr_in, fsal_attrib_list_t *p_fsalattr_out) \fP" 1c
-: This doesn't convert ACLs for the moment.
+.IP "\fBMember \fBhpss2fsal_attributes\fP \fP" 1c
+: This doesn't convert ACLs for the moment. 
 .PP
 .PP
  
-.IP "\fBMember \fBhpss2fsal_error\fP(int hpss_errorcode) \fP" 1c
+.IP "\fBMember \fBhpss2fsal_error\fP \fP" 1c
 : The EBADF error also happens when file is opened for reading, and we try writting in it. In this case, we return ERR_FSAL_NOT_OPENED, but it doesn't seems to be a correct error translation. 
 .PP
 .PP
  
-.IP "\fBMember \fBFSAL_readdir\fP(fsal_dir_t *dir_descriptor, fsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t *pdirent, fsal_cookie_t *end_position, fsal_count_t *nb_entries, fsal_boolean_t *end_of_dir) \fP" 1c
+.IP "\fBMember \fBFSAL_readdir\fP \fP" 1c
 : does handle provide mounted_on_fileid ? 
 .PP
-: test returned status
+.PP
+ 
+.IP "\fBMember \fBFSAL_readdir\fP \fP" 1c
+: test returned status 
 .PP
 .PP
  
-.IP "\fBMember \fBfsal_is_retryable\fP(fsal_status_t status) \fP" 1c
-: ERR_FSAL_DELAY : The only retryable error ?
+.IP "\fBMember \fBfsal_is_retryable\fP \fP" 1c
+: ERR_FSAL_DELAY : The only retryable error ? 
 .PP
 .PP
  
-.IP "\fBMember \fBFSAL_read\fP(fsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *read_amount, fsal_boolean_t *end_of_file) \fP" 1c
+.IP "\fBMember \fBFSAL_read\fP \fP" 1c
 : manage fsal_size_t to size_t convertion 
 .PP
-: manage ssize_t to fsal_size_t convertion
+.PP
+ 
+.IP "\fBMember \fBFSAL_read\fP \fP" 1c
+: manage ssize_t to fsal_size_t convertion 
 .PP
 .PP
  
-.IP "\fBMember \fBFSAL_write\fP(fsal_file_t *file_descriptor, fsal_seek_t *seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t *write_amount) \fP" 1c
+.IP "\fBMember \fBFSAL_write\fP \fP" 1c
 : manage fsal_size_t to size_t convertion 
 .PP
-: manage ssize_t to fsal_size_t convertion
+.PP
+ 
+.IP "\fBMember \fBFSAL_write\fP \fP" 1c
+: manage ssize_t to fsal_size_t convertion 
 .PP
 .PP
  
-.IP "\fBMember \fBFSAL_test_access\fP(fsal_op_context_t *p_context, fsal_accessflags_t access_type, fsal_attrib_list_t *object_attributes) \fP" 1c
+.IP "\fBMember \fBFSAL_test_access\fP \fP" 1c
 : test that needed attributes are in the structure 
 .PP
-: ACLs.
+.PP
+ 
+.IP "\fBMember \fBFSAL_test_access\fP \fP" 1c
+: ACLs. 
 .PP
 .PP
  
-.IP "\fBMember \fBFSAL_lookupPath\fP(fsal_path_t *p_path, fsal_op_context_t *p_context, fsal_handle_t *object_handle, fsal_attrib_list_t *object_attributes) \fP" 1c
-: Be carefull about junction crossing, symlinks, hardlinks,...
+.IP "\fBMember \fBFSAL_lookupPath\fP \fP" 1c
+: Be carefull about junction crossing, symlinks, hardlinks,... 
 .PP
 

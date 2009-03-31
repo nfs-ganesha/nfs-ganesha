@@ -1,5 +1,5 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="nfs4__op__putpubfh_8c" kind="file">
     <compoundname>nfs4_op_putpubfh.c</compoundname>
     <includes local="no">stdio.h</includes>
@@ -153,7 +153,7 @@
       </node>
     </incdepgraph>
       <sectiondef kind="define">
-      <memberdef kind="define" id="nfs4__op__putpubfh_8c_1a0" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__putpubfh_8c_1aca82145864a684d6f4acf2d9fa79a36" prot="public" static="no">
         <name>arg_PUTPUBFH4</name>
         <initializer>op-&gt;nfs_argop4_u.opputpubfh</initializer>
         <briefdescription>
@@ -182,13 +182,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>NFS4_OK if successfull, other values show an error.</para></simplesect>
-<simplesect kind="see"><para>all the nfs4_op_&lt;*&gt; function </para><para><ref refid="nfs4__Compound_8c_1a4" kindref="member">nfs4_Compound</ref> </para></simplesect>
+<simplesect kind="see"><para>all the nfs4_op_&lt;*&gt; function </para><para><ref refid="nfs4__Compound_8c_1a1516130248e7ae55d3c2e1bffe90016" kindref="member">nfs4_Compound</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="185" bodystart="185" bodyend="-1"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="190" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" bodystart="190" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="define" id="nfs4__op__putpubfh_8c_1a1" prot="public" static="no">
+      <memberdef kind="define" id="nfs4__op__putpubfh_8c_174ceb2516bba88804a042ee2fe96b7f6" prot="public" static="no">
         <name>res_PUTPUBFH4</name>
         <initializer>resp-&gt;nfs_resop4_u.opputpubfh</initializer>
         <briefdescription>
@@ -197,12 +197,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="186" bodystart="186" bodyend="-1"/>
-        <referencedby refid="nfs4__op__putpubfh_8c_1a3" compoundref="nfs4__op__putpubfh_8c" startline="188" endline="252">nfs4_op_putpubfh</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="191" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" bodystart="191" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="nfs4__op__putpubfh_8c_1a2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__putpubfh_8c_138f52d5e8aab79df8f6dbc499819c569" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int CreatePUBFH4</definition>
         <argsstring>(nfs_fh4 *fh, compound_data_t *data)</argsstring>
@@ -234,16 +233,13 @@
 </parameteritem>
 </parameterlist>
 <simplesect kind="return"><para>NFS4_OK is successful, NFS4ERR_BADHANDLE otherwise (for an error).</para></simplesect>
-<simplesect kind="see"><para><ref refid="nfs4__op__putrootfh_8c_1a3" kindref="member">nfs4_op_putrootfh</ref> </para></simplesect>
+<simplesect kind="see"><para><ref refid="nfs4__op__putrootfh_8c_1f2ae7afb2b900467450251fda8abe5d1" kindref="member">nfs4_op_putrootfh</ref> </para></simplesect>
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="143" bodystart="141" bodyend="165"/>
-        <references refid="nfs__proto__tools_8c_1a29" compoundref="nfs__proto__tools_8c" startline="3365" endline="3389">nfs4_AllocateFH</references>
-        <references refid="nfs4__pseudo_8c_1a20" compoundref="nfs4__pseudo_8c" startline="1266" endline="1281">nfs4_PseudoToFhandle</references>
-        <referencedby refid="nfs4__op__putpubfh_8c_1a3" compoundref="nfs4__op__putpubfh_8c" startline="188" endline="252">nfs4_op_putpubfh</referencedby>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="146" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" bodystart="144" bodyend="170"/>
       </memberdef>
-      <memberdef kind="function" id="nfs4__op__putpubfh_8c_1a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__putpubfh_8c_10c1e48c9a9e8f520bbdd6dc232f0b168" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int nfs4_op_putpubfh</definition>
         <argsstring>(struct nfs_argop4 *op, compound_data_t *data, struct nfs_resop4 *resp)</argsstring>
@@ -266,12 +262,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="191" bodystart="188" bodyend="252"/>
-        <references refid="nfs4__op__putpubfh_8c_1a2" compoundref="nfs4__op__putpubfh_8c" startline="141" endline="165">CreatePUBFH4</references>
-        <references refid="nfs__proto__tools_8c_1a29" compoundref="nfs__proto__tools_8c" startline="3365" endline="3389">nfs4_AllocateFH</references>
-        <references refid="nfs4__op__putpubfh_8c_1a1" compoundref="nfs4__op__putpubfh_8c" startline="186">res_PUTPUBFH4</references>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="196" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" bodystart="193" bodyend="254"/>
       </memberdef>
-      <memberdef kind="function" id="nfs4__op__putpubfh_8c_1a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="nfs4__op__putpubfh_8c_142c88a3096c35d10d58b6225e0a88124" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void nfs4_op_putpubfh_Free</definition>
         <argsstring>(PUTPUBFH4res *resp)</argsstring>
@@ -295,19 +288,19 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="267" bodystart="266" bodyend="270"/>
+        <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" line="269" bodyfile="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c" bodystart="268" bodyend="272"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
 <para>Routines used for managing the NFS4_OP_PUTPUBFH operation. </para>    </briefdescription>
     <detaileddescription>
-<para><simplesect kind="author"><para><simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
-</para></simplesect>
-<simplesect kind="date"><para><simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:51 </para></simplesect>
-</para></simplesect>
-<simplesect kind="version"><para><simplesect kind="rcs"><title>Revision</title><para>1.11 </para></simplesect>
-</para></simplesect>
-<ref refid="nfs4__op__getfh_8c" kindref="compound">nfs4_op_getfh.c</ref> : Routines used for managing the NFS4_OP_PUTPUBFH operation.</para>    </detaileddescription>
+<para><simplesect kind="author"><para></para></simplesect>
+<simplesect kind="rcs"><title>Author</title><para>deniel </para></simplesect>
+<simplesect kind="date"><para></para></simplesect>
+<simplesect kind="rcs"><title>Date</title><para>2005/11/28 17:02:51 </para></simplesect>
+<simplesect kind="version"><para></para></simplesect>
+<simplesect kind="rcs"><title>Revision</title><para>1.11 </para></simplesect>
+<ref refid="nfs4__op__getfh_8c" kindref="compound">nfs4_op_getfh.c</ref> : Routines used for managing the NFS4_OP_PUTPUBFH operation. </para>    </detaileddescription>
     <programlisting>
 <codeline lineno="1"><highlight class="comment">/*</highlight></codeline>
 <codeline lineno="2"><highlight class="comment"><sp/>*<sp/>vim:expandtab:shiftwidth=8:tabstop=8:</highlight></codeline>
@@ -388,146 +381,148 @@
 <codeline lineno="87"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;config.h&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
 <codeline lineno="89"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90"><highlight class="normal"></highlight></codeline>
-<codeline lineno="91"><highlight class="normal"></highlight></codeline>
-<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
-<codeline lineno="100"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="103"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
-<codeline lineno="105"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="108"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="110"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="113"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="124"><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141" refid="nfs4__op__putpubfh_8c_1a2" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_1a2" kindref="member">CreatePUBFH4</ref>(<sp/>nfs_fh4<sp/>*<sp/>fh,</highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/>*<sp/>data<sp/>)</highlight></codeline>
-<codeline lineno="143"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/>pseudofs_entry_t<sp/><sp/><sp/>psfsentry<sp/>;</highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>status<sp/>=<sp/>0<sp/>;</highlight></codeline>
-<codeline lineno="146"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>fhstr[LEN_FH_STR]<sp/>;</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"><sp/><sp/>psfsentry<sp/>=<sp/>*<sp/>(data-&gt;pseudofs-&gt;reverse_tab[0])<sp/>;</highlight></codeline>
-<codeline lineno="149"><highlight class="normal"></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>status<sp/>=<sp/><ref refid="nfs__proto__tools_8c_1a29" kindref="member">nfs4_AllocateFH</ref>(<sp/>&amp;(data-&gt;publicFH<sp/><sp/>)<sp/>)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
-<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>status<sp/>;</highlight></codeline>
-<codeline lineno="152"><highlight class="normal"></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!<ref refid="nfs4__pseudo_8c_1a20" kindref="member">nfs4_PseudoToFhandle</ref>(<sp/>&amp;(data-&gt;publicFH<sp/><sp/>),<sp/>&amp;psfsentry<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_SOLARIS</highlight></codeline>
+<codeline lineno="91"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&quot;solaris_port.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="93"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;pthread.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fcntl.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sys/file.h&gt;</highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>for<sp/>having<sp/>FNDELAY<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashData.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;HashTable.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_USE_GSSRPC</highlight></codeline>
+<codeline lineno="103"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;gssrpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight></codeline>
+<codeline lineno="108"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/types.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/rpc.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/auth.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;rpc/pmap_clnt.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="113"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;log_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;stuff_alloc.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs23.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs4.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;mount.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_inode.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;cache_content.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_exports.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_creds.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_functions.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;nfs_proto_tools.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"></highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="144" refid="nfs4__op__putpubfh_8c_138f52d5e8aab79df8f6dbc499819c569" refkind="member"><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_138f52d5e8aab79df8f6dbc499819c569" kindref="member">CreatePUBFH4</ref>(<sp/>nfs_fh4<sp/>*<sp/>fh,</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/>*<sp/>data<sp/>)</highlight></codeline>
+<codeline lineno="146"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/>pseudofs_entry_t<sp/><sp/><sp/>psfsentry<sp/>;</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>status<sp/>=<sp/>0<sp/>;</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_NFS_V4</highlight></codeline>
+<codeline lineno="150"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>fhstr[LEN_FH_STR]<sp/>;</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="152"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/>psfsentry<sp/>=<sp/>*<sp/>(data-&gt;pseudofs-&gt;reverse_tab[0])<sp/>;</highlight></codeline>
+<codeline lineno="154"><highlight class="normal"></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>status<sp/>=<sp/><ref refid="nfs__proto__tools_8c_19f988a714dadc7d8a6c107bc864d30ff" kindref="member">nfs4_AllocateFH</ref>(<sp/>&amp;(data-&gt;publicFH<sp/><sp/>)<sp/>)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>status<sp/>;</highlight></codeline>
 <codeline lineno="157"><highlight class="normal"></highlight></codeline>
-<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="159"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_NFS_V4</highlight></codeline>
-<codeline lineno="160"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>nfs4_sprint_fhandle(<sp/>&amp;data-&gt;publicFH,<sp/>fhstr<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="161"><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;CREATE<sp/>PUBFH:<sp/>%s&quot;</highlight><highlight class="normal">,<sp/>fhstr<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="162"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
-<codeline lineno="163"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="164"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK<sp/>;</highlight></codeline>
-<codeline lineno="165"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>CreatePUBFH4<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="166"><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="normal"></highlight></codeline>
-<codeline lineno="185" refid="nfs4__op__putpubfh_8c_1a0" refkind="member"><highlight class="preprocessor">#define<sp/>arg_PUTPUBFH4<sp/>op-&gt;nfs_argop4_u.opputpubfh</highlight></codeline>
-<codeline lineno="186" refid="nfs4__op__putpubfh_8c_1a1" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_PUTPUBFH4<sp/>resp-&gt;nfs_resop4_u.opputpubfh</highlight></codeline>
-<codeline lineno="187"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="188" refid="nfs4__op__putpubfh_8c_1a3" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_1a3" kindref="member">nfs4_op_putpubfh</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
-<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
-<codeline lineno="191"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>i<sp/>;</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rc<sp/>;</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/>fsal_attrib_list_t<sp/>attr<sp/>;</highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_PUTPUBFH<sp/>;</highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/><sp/>NFS4_OK<sp/><sp/>;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Unsupported<sp/>for<sp/>now,<sp/>keep<sp/>the<sp/>rest<sp/>of<sp/>the<sp/>code<sp/>for<sp/>a<sp/>later<sp/>version<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_NOTSUPP<sp/>;</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"></highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>now,<sp/>GANESHA<sp/>makes<sp/>no<sp/>difference<sp/>betzeen<sp/>cwPUBLICFH<sp/>and<sp/>ROOTFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>error<sp/>=<sp/><ref refid="nfs4__op__putpubfh_8c_1a2" kindref="member">CreatePUBFH4</ref>(<sp/>&amp;(data-&gt;publicFH),<sp/>data)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs4__op__putpubfh_8c_1a1" kindref="member">res_PUTPUBFH4</ref>.status<sp/>=<sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_1a1" kindref="member">res_PUTPUBFH4</ref>.status<sp/>;</highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>First<sp/>of<sp/>all,<sp/>set<sp/>the<sp/>reply<sp/>to<sp/>zero<sp/>to<sp/>make<sp/>sure<sp/>it<sp/>contains<sp/>no<sp/>parasite<sp/>information<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/>memset(<sp/>resp,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>)<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"></highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>there<sp/>is<sp/>no<sp/>currentFH,<sp/>teh<sp/><sp/>return<sp/>an<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Empty(<sp/>&amp;(data-&gt;publicFH<sp/>)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>is<sp/>no<sp/>current<sp/>FH,<sp/>return<sp/>NFS4ERR_NOFILEHANDLE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_NOFILEHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"></highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>filehandle<sp/>is<sp/>invalid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Invalid(<sp/>&amp;(data-&gt;publicFH)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Tests<sp/>if<sp/>teh<sp/>Filehandle<sp/>is<sp/>expired<sp/>(for<sp/>volatile<sp/>filehandle)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Expired(<sp/>&amp;(data-&gt;publicFH)<sp/>)<sp/>)</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_FHEXPIRED<sp/>;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="235"><highlight class="normal"></highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>copy<sp/>the<sp/>root<sp/>FH<sp/>to<sp/>the<sp/>currentFH<sp/>and,<sp/>if<sp/>not<sp/>already<sp/>done,<sp/>to<sp/>the<sp/>publicFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>the<sp/>moment,<sp/>I<sp/>choose<sp/>to<sp/>have<sp/>rootFH<sp/>=<sp/>publicFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="238"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>initial<sp/>mounted_on_FH,<sp/>I&apos;ll<sp/>use<sp/>the<sp/>rootFH,<sp/>this<sp/>will<sp/>change<sp/>at<sp/>junction<sp/>traversal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="239"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>data-&gt;currentFH.nfs_fh4_len<sp/>==<sp/>0<sp/>)</highlight></codeline>
-<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>error<sp/>=<sp/><ref refid="nfs__proto__tools_8c_1a29" kindref="member">nfs4_AllocateFH</ref>(<sp/>&amp;(data-&gt;currentFH)<sp/>)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
-<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>error<sp/>;</highlight></codeline>
-<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="247"><highlight class="normal"></highlight></codeline>
-<codeline lineno="248"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Copy<sp/>the<sp/>data<sp/>from<sp/>current<sp/>FH<sp/>to<sp/>saved<sp/>FH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="249"><highlight class="normal"><sp/><sp/>memcpy(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;currentFH.nfs_fh4_val),<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;publicFH.nfs_fh4_val),<sp/>data-&gt;publicFH.nfs_fh4_len<sp/>)<sp/>;</highlight></codeline>
-<codeline lineno="250"><highlight class="normal"><sp/><sp/></highlight></codeline>
-<codeline lineno="251"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK<sp/>;</highlight></codeline>
-<codeline lineno="252"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_putpubfh<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="253"><highlight class="normal"></highlight></codeline>
-<codeline lineno="254"><highlight class="normal"></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>!<ref refid="nfs4__pseudo_8c_1966b3725ffba577196e3d5b158d0c32f" kindref="member">nfs4_PseudoToFhandle</ref>(<sp/>&amp;(data-&gt;publicFH<sp/><sp/>),<sp/>&amp;psfsentry<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"></highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>Test<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="164"><highlight class="normal"></highlight><highlight class="preprocessor">#ifdef<sp/>_DEBUG_NFS_V4</highlight></codeline>
+<codeline lineno="165"><highlight class="preprocessor"></highlight><highlight class="normal"><sp/><sp/>nfs4_sprint_fhandle(<sp/>&amp;data-&gt;publicFH,<sp/>fhstr<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/>DisplayLog(<sp/></highlight><highlight class="stringliteral">&quot;CREATE<sp/>PUBFH:<sp/>%s&quot;</highlight><highlight class="normal">,<sp/>fhstr<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight></codeline>
+<codeline lineno="168"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK<sp/>;</highlight></codeline>
+<codeline lineno="170"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>CreatePUBFH4<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="171"><highlight class="normal"></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"></highlight></codeline>
+<codeline lineno="190" refid="nfs4__op__putpubfh_8c_1aca82145864a684d6f4acf2d9fa79a36" refkind="member"><highlight class="preprocessor">#define<sp/>arg_PUTPUBFH4<sp/>op-&gt;nfs_argop4_u.opputpubfh</highlight></codeline>
+<codeline lineno="191" refid="nfs4__op__putpubfh_8c_174ceb2516bba88804a042ee2fe96b7f6" refkind="member"><highlight class="preprocessor"></highlight><highlight class="preprocessor">#define<sp/>res_PUTPUBFH4<sp/>resp-&gt;nfs_resop4_u.opputpubfh</highlight></codeline>
+<codeline lineno="192"><highlight class="preprocessor"></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="193" refid="nfs4__op__putpubfh_8c_10c1e48c9a9e8f520bbdd6dc232f0b168" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_10c1e48c9a9e8f520bbdd6dc232f0b168" kindref="member">nfs4_op_putpubfh</ref>(<sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_argop4<sp/>*<sp/>op<sp/>,<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>compound_data_t<sp/><sp/><sp/>*<sp/>data,</highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>*<sp/>resp)</highlight></codeline>
+<codeline lineno="196"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>error<sp/>;</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/>resp-&gt;resop<sp/>=<sp/>NFS4_OP_PUTPUBFH<sp/>;</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/><sp/>NFS4_OK<sp/><sp/>;<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Unsupported<sp/>for<sp/>now,<sp/>keep<sp/>the<sp/>rest<sp/>of<sp/>the<sp/>code<sp/>for<sp/>a<sp/>later<sp/>version<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_NOTSUPP<sp/>;</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
+<codeline lineno="205"><highlight class="normal"></highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>now,<sp/>GANESHA<sp/>makes<sp/>no<sp/>difference<sp/>betzeen<sp/>cwPUBLICFH<sp/>and<sp/>ROOTFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>error<sp/>=<sp/><ref refid="nfs4__op__putpubfh_8c_138f52d5e8aab79df8f6dbc499819c569" kindref="member">CreatePUBFH4</ref>(<sp/>&amp;(data-&gt;publicFH),<sp/>data)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="nfs4__op__putpubfh_8c_174ceb2516bba88804a042ee2fe96b7f6" kindref="member">res_PUTPUBFH4</ref>.status<sp/>=<sp/>error<sp/>;</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_174ceb2516bba88804a042ee2fe96b7f6" kindref="member">res_PUTPUBFH4</ref>.status<sp/>;</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>First<sp/>of<sp/>all,<sp/>set<sp/>the<sp/>reply<sp/>to<sp/>zero<sp/>to<sp/>make<sp/>sure<sp/>it<sp/>contains<sp/>no<sp/>parasite<sp/>information<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/>memset(<sp/>resp,<sp/>0,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(<sp/></highlight><highlight class="keyword">struct</highlight><highlight class="normal"><sp/>nfs_resop4<sp/>)<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>there<sp/>is<sp/>no<sp/>currentFH,<sp/>teh<sp/><sp/>return<sp/>an<sp/>error<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Empty(<sp/>&amp;(data-&gt;publicFH<sp/>)<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>There<sp/>is<sp/>no<sp/>current<sp/>FH,<sp/>return<sp/>NFS4ERR_NOFILEHANDLE<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_NOFILEHANDLE<sp/>;</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"></highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>If<sp/>the<sp/>filehandle<sp/>is<sp/>invalid<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Invalid(<sp/>&amp;(data-&gt;publicFH)<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_BADHANDLE<sp/>;</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Tests<sp/>if<sp/>teh<sp/>Filehandle<sp/>is<sp/>expired<sp/>(for<sp/>volatile<sp/>filehandle)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>nfs4_Is_Fh_Expired(<sp/>&amp;(data-&gt;publicFH)<sp/>)<sp/>)</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>NFS4ERR_FHEXPIRED<sp/>;</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>;</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"></highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>I<sp/>copy<sp/>the<sp/>root<sp/>FH<sp/>to<sp/>the<sp/>currentFH<sp/>and,<sp/>if<sp/>not<sp/>already<sp/>done,<sp/>to<sp/>the<sp/>publicFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>the<sp/>moment,<sp/>I<sp/>choose<sp/>to<sp/>have<sp/>rootFH<sp/>=<sp/>publicFH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>For<sp/>initial<sp/>mounted_on_FH,<sp/>I&apos;ll<sp/>use<sp/>the<sp/>rootFH,<sp/>this<sp/>will<sp/>change<sp/>at<sp/>junction<sp/>traversal<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>data-&gt;currentFH.nfs_fh4_len<sp/>==<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(<sp/>(<sp/>error<sp/>=<sp/><ref refid="nfs__proto__tools_8c_19f988a714dadc7d8a6c107bc864d30ff" kindref="member">nfs4_AllocateFH</ref>(<sp/>&amp;(data-&gt;currentFH)<sp/>)<sp/>)<sp/>!=<sp/>NFS4_OK<sp/>)</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>resp-&gt;nfs_resop4_u.opputpubfh.status<sp/>=<sp/>error<sp/>;</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>error<sp/>;</highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="249"><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Copy<sp/>the<sp/>data<sp/>from<sp/>current<sp/>FH<sp/>to<sp/>saved<sp/>FH<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/>memcpy(<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;currentFH.nfs_fh4_val),<sp/>(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*)(data-&gt;publicFH.nfs_fh4_val),<sp/>data-&gt;publicFH.nfs_fh4_len<sp/>)<sp/>;</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NFS4_OK<sp/>;</highlight></codeline>
+<codeline lineno="254"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_putpubfh<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="255"><highlight class="normal"></highlight></codeline>
-<codeline lineno="266" refid="nfs4__op__putpubfh_8c_1a4" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_1a4" kindref="member">nfs4_op_putpubfh_Free</ref>(<sp/>PUTPUBFH4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
-<codeline lineno="267"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="268"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="269"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
-<codeline lineno="270"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_putpubfh_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="256"><highlight class="normal"></highlight></codeline>
+<codeline lineno="257"><highlight class="normal"></highlight></codeline>
+<codeline lineno="268" refid="nfs4__op__putpubfh_8c_142c88a3096c35d10d58b6225e0a88124" refkind="member"><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="nfs4__op__putpubfh_8c_142c88a3096c35d10d58b6225e0a88124" kindref="member">nfs4_op_putpubfh_Free</ref>(<sp/>PUTPUBFH4res<sp/>*<sp/>resp<sp/>)</highlight></codeline>
+<codeline lineno="269"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="270"><highlight class="normal"><sp/><sp/></highlight><highlight class="comment">/*<sp/>Nothing<sp/>to<sp/>be<sp/>done<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="271"><highlight class="normal"><sp/><sp/>return<sp/>;</highlight></codeline>
+<codeline lineno="272"><highlight class="normal">}<sp/></highlight><highlight class="comment">/*<sp/>nfs4_op_putpubfh_Free<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
-    <location file="/opt/philippe/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c"/>
+    <location file="/export/GANESHA/src/NFS_Protocols/nfs4_op_putpubfh.c"/>
   </compounddef>
 </doxygen>

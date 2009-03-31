@@ -1,11 +1,12 @@
 \section{cache\_\-content\_\-add\_\-entry.c File Reference}
-\label{cache__content__add__entry_8c}\index{cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}}
-Management of the file content cache: adding a new entry. 
+\label{cache__content__add__entry_8c}\index{cache\_\-content\_\-add\_\-entry.c@{cache\_\-content\_\-add\_\-entry.c}}
+Management of the file content cache: adding a new entry.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-content.h\char`\"{}}\par
@@ -29,25 +30,25 @@ cache\_\-content\_\-entry\_\-t $\ast$ {\bf cache\_\-content\_\-new\_\-entry} (ca
 Management of the file content cache: adding a new entry. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:32 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.12 \end{Desc}
-\end{Desc}
-{\bf cache\_\-content\_\-add\_\-entry.c}{\rm (p.\,\pageref{cache__content__add__entry_8c})} : Management of the file content cache: adding a new entry.
+\doxyref{cache\_\-content\_\-add\_\-entry.c}{p.}{cache__content__add__entry_8c} : Management of the file content cache: adding a new entry. 
 
 Definition in file {\bf cache\_\-content\_\-add\_\-entry.c}.
 
 \subsection{Function Documentation}
-\index{cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}!cache_content_new_entry@{cache\_\-content\_\-new\_\-entry}}
-\index{cache_content_new_entry@{cache\_\-content\_\-new\_\-entry}!cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-entry\_\-t$\ast$ cache\_\-content\_\-new\_\-entry (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, cache\_\-content\_\-spec\_\-data\_\-t $\ast$ {\em pspecdata}, cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, cache\_\-content\_\-add\_\-behaviour\_\-t {\em how}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__add__entry_8c_a0}
+\index{cache\_\-content\_\-add\_\-entry.c@{cache\_\-content\_\-add\_\-entry.c}!cache\_\-content\_\-new\_\-entry@{cache\_\-content\_\-new\_\-entry}}
+\index{cache\_\-content\_\-new\_\-entry@{cache\_\-content\_\-new\_\-entry}!cache_content_add_entry.c@{cache\_\-content\_\-add\_\-entry.c}}
+\subsubsection[{cache\_\-content\_\-new\_\-entry}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-content\_\-entry\_\-t$\ast$ cache\_\-content\_\-new\_\-entry (cache\_\-entry\_\-t $\ast$ {\em pentry\_\-inode}, \/  cache\_\-content\_\-spec\_\-data\_\-t $\ast$ {\em pspecdata}, \/  cache\_\-content\_\-client\_\-t $\ast$ {\em pclient}, \/  cache\_\-content\_\-add\_\-behaviour\_\-t {\em how}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-content\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__content__add__entry_8c_ecc3cc81b0b3838b7c73ed46bde8ccd0}
 
 
 cache\_\-content\_\-new\_\-entry: adds an entry to the file content cache.
@@ -65,8 +66,4 @@ No lock management is done in this layer: the related pentry in the cache inode 
 \item[Returns:]CACHE\_\-CONTENT\_\-SUCCESS is successful . \end{Desc}
 
 
-Definition at line 128 of file cache\_\-content\_\-add\_\-entry.c.
-
-References cache\_\-content\_\-create\_\-name(), and cache\_\-content\_\-refresh().
-
-Referenced by cache\_\-content\_\-crash\_\-recover().
+Definition at line 131 of file cache\_\-content\_\-add\_\-entry.c.

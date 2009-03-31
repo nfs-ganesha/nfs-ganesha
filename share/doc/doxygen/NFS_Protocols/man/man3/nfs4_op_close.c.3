@@ -1,8 +1,10 @@
-.TH "nfs4_op_close.c" 3 "9 Apr 2008" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
+.TH "nfs4_op_close.c" 3 "31 Mar 2009" "Version 0.1" "NFS and Mount protocols layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs4_op_close.c \- Routines used for managing the NFS4 COMPOUND functions. 
+nfs4_op_close.c \- Routines used for managing the NFS4 COMPOUND functions.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -81,36 +83,36 @@ Routines used for managing the NFS4 COMPOUND functions.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/11/28 17:02:50 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.8 
 .RE
 .PP
-.RE
-.PP
-\fBnfs4_op_close.c\fP : Routines used for managing the NFS4 COMPOUND functions.
+\fBnfs4_op_close.c\fP : Routines used for managing the NFS4 COMPOUND functions. 
 .PP
 Definition in file \fBnfs4_op_close.c\fP.
 .SH "Define Documentation"
 .PP 
 .SS "#define arg_CLOSE4   op->nfs_argop4_u.opclose"
 .PP
-nfs4_op_commit: Implemtation of NFS4_OP_CLOSE
+nfs4_op_close: Implemtation of NFS4_OP_CLOSE
 .PP
 Implemtation of NFS4_OP_CLOSE. Implementation is partial for now, so it always returns NFS4_OK.
 .PP
@@ -130,28 +132,24 @@ NFS4_OK
 .PP
 
 .PP
-Definition at line 139 of file nfs4_op_close.c.
-.PP
-Referenced by nfs4_op_close().
+Definition at line 142 of file nfs4_op_close.c.
 .SS "#define res_CLOSE4   resp->nfs_resop4_u.opclose"
 .PP
-Definition at line 140 of file nfs4_op_close.c.
-.PP
-Referenced by nfs4_op_close().
+Definition at line 143 of file nfs4_op_close.c.
 .SH "Function Documentation"
 .PP 
 .SS "int nfs4_op_close (struct nfs_argop4 * op, compound_data_t * data, struct nfs_resop4 * resp)"
 .PP
+
+.PP
 \fBTodo\fP
 .RS 4
-: check seqid mgmt
+: BUGAZOMEU: check for lease use 
 .RE
 .PP
 
 .PP
-Definition at line 142 of file nfs4_op_close.c.
-.PP
-References arg_CLOSE4, nfs4_Errno(), and res_CLOSE4.
+Definition at line 145 of file nfs4_op_close.c.
 .SS "void nfs4_op_close_Free (CLOSE4res * resp)"
 .PP
 nfs4_op_close_Free: frees what was allocared to handle nfs4_op_close.
@@ -170,9 +168,7 @@ nothing (void function )
 .PP
 
 .PP
-Definition at line 263 of file nfs4_op_close.c.
-.PP
-Referenced by nfs4_Compound_Free().
+Definition at line 276 of file nfs4_op_close.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for NFS and Mount protocols layer from the source code.

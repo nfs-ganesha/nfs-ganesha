@@ -1,14 +1,15 @@
 \section{nfs4\_\-op\_\-putfh.c File Reference}
-\label{nfs4__op__putfh_8c}\index{nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
-Routines used for managing the NFS4\_\-OP\_\-PUTFH operation. 
+\label{nfs4__op__putfh_8c}\index{nfs4\_\-op\_\-putfh.c@{nfs4\_\-op\_\-putfh.c}}
+Routines used for managing the NFS4\_\-OP\_\-PUTFH operation.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -29,9 +30,9 @@ Routines used for managing the NFS4\_\-OP\_\-PUTFH operation.
 \subsection*{Defines}
 \begin{CompactItemize}
 \item 
-\#define {\bf arg\_\-PUTFH4}\ op $\rightarrow$ nfs\_\-argop4\_\-u.opputfh
+\#define {\bf arg\_\-PUTFH4}~op $\rightarrow$ nfs\_\-argop4\_\-u.opputfh
 \item 
-\#define {\bf res\_\-PUTFH4}\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opputfh
+\#define {\bf res\_\-PUTFH4}~resp $\rightarrow$ nfs\_\-resop4\_\-u.opputfh
 \end{CompactItemize}
 \subsection*{Functions}
 \begin{CompactItemize}
@@ -46,46 +47,42 @@ void {\bf nfs4\_\-op\_\-putfh\_\-Free} (PUTFH4res $\ast$resp)
 Routines used for managing the NFS4\_\-OP\_\-PUTFH operation. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/01/16 16:25:44 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.11 \end{Desc}
-\end{Desc}
-{\bf nfs4\_\-op\_\-putfh.c}{\rm (p.\,\pageref{nfs4__op__putfh_8c})} : Routines used for managing the NFS4\_\-OP\_\-PUTFH operation.
+\doxyref{nfs4\_\-op\_\-putfh.c}{p.}{nfs4__op__putfh_8c} : Routines used for managing the NFS4\_\-OP\_\-PUTFH operation. 
 
 Definition in file {\bf nfs4\_\-op\_\-putfh.c}.
 
 \subsection{Define Documentation}
-\index{nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}!arg_PUTFH4@{arg\_\-PUTFH4}}
-\index{arg_PUTFH4@{arg\_\-PUTFH4}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-PUTFH4\ op $\rightarrow$ nfs\_\-argop4\_\-u.opputfh}\label{nfs4__op__putfh_8c_a0}
+\index{nfs4\_\-op\_\-putfh.c@{nfs4\_\-op\_\-putfh.c}!arg\_\-PUTFH4@{arg\_\-PUTFH4}}
+\index{arg\_\-PUTFH4@{arg\_\-PUTFH4}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
+\subsubsection[{arg\_\-PUTFH4}]{\setlength{\rightskip}{0pt plus 5cm}\#define arg\_\-PUTFH4~op $\rightarrow$ nfs\_\-argop4\_\-u.opputfh}\label{nfs4__op__putfh_8c_e83b19254b3bdb8dd78e065b20823bfc}
 
 
 
 
-Definition at line 124 of file nfs4\_\-op\_\-putfh.c.
-
-Referenced by nfs4\_\-op\_\-putfh().\index{nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}!res_PUTFH4@{res\_\-PUTFH4}}
-\index{res_PUTFH4@{res\_\-PUTFH4}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-PUTFH4\ resp $\rightarrow$ nfs\_\-resop4\_\-u.opputfh}\label{nfs4__op__putfh_8c_a1}
+Definition at line 127 of file nfs4\_\-op\_\-putfh.c.\index{nfs4\_\-op\_\-putfh.c@{nfs4\_\-op\_\-putfh.c}!res\_\-PUTFH4@{res\_\-PUTFH4}}
+\index{res\_\-PUTFH4@{res\_\-PUTFH4}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
+\subsubsection[{res\_\-PUTFH4}]{\setlength{\rightskip}{0pt plus 5cm}\#define res\_\-PUTFH4~resp $\rightarrow$ nfs\_\-resop4\_\-u.opputfh}\label{nfs4__op__putfh_8c_6b56697d9e2ac4d2c4998f5da27cc189}
 
 
 
 
-Definition at line 125 of file nfs4\_\-op\_\-putfh.c.
-
-Referenced by nfs4\_\-op\_\-putfh().
+Definition at line 128 of file nfs4\_\-op\_\-putfh.c.
 
 \subsection{Function Documentation}
-\index{nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}!nfs4_op_putfh@{nfs4\_\-op\_\-putfh}}
-\index{nfs4_op_putfh@{nfs4\_\-op\_\-putfh}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-putfh (struct nfs\_\-argop4 $\ast$ {\em op}, compound\_\-data\_\-t $\ast$ {\em data}, struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__putfh_8c_a2}
+\index{nfs4\_\-op\_\-putfh.c@{nfs4\_\-op\_\-putfh.c}!nfs4\_\-op\_\-putfh@{nfs4\_\-op\_\-putfh}}
+\index{nfs4\_\-op\_\-putfh@{nfs4\_\-op\_\-putfh}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
+\subsubsection[{nfs4\_\-op\_\-putfh}]{\setlength{\rightskip}{0pt plus 5cm}int nfs4\_\-op\_\-putfh (struct nfs\_\-argop4 $\ast$ {\em op}, \/  compound\_\-data\_\-t $\ast$ {\em data}, \/  struct nfs\_\-resop4 $\ast$ {\em resp})}\label{nfs4__op__putfh_8c_196753c8469e11282467d00816dd6d14}
 
 
 nfs4\_\-op\_\-putfh: The NFS4\_\-OP\_\-PUTFH operation
@@ -102,14 +99,12 @@ Sets the current FH with the value given in argument.
 \begin{Desc}
 \item[See also:]all the nfs4\_\-op\_\-$<$$\ast$$>$ function 
 
-{\bf nfs4\_\-Compound}{\rm (p.\,\pageref{nfs4__Compound_8c_a4})} \end{Desc}
+\doxyref{nfs4\_\-Compound}{p.}{nfs4__Compound_8c_a1516130248e7ae55d3c2e1bffe90016} \end{Desc}
 
 
-Definition at line 144 of file nfs4\_\-op\_\-putfh.c.
-
-References arg\_\-PUTFH4, nfs4\_\-Allocate\-FH(), nfs4\_\-Set\-Compound\-Export(), nfs\_\-Fhandle\-To\-Cache(), and res\_\-PUTFH4.\index{nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}!nfs4_op_putfh_Free@{nfs4\_\-op\_\-putfh\_\-Free}}
-\index{nfs4_op_putfh_Free@{nfs4\_\-op\_\-putfh\_\-Free}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-putfh\_\-Free (PUTFH4res $\ast$ {\em resp})}\label{nfs4__op__putfh_8c_a3}
+Definition at line 147 of file nfs4\_\-op\_\-putfh.c.\index{nfs4\_\-op\_\-putfh.c@{nfs4\_\-op\_\-putfh.c}!nfs4\_\-op\_\-putfh\_\-Free@{nfs4\_\-op\_\-putfh\_\-Free}}
+\index{nfs4\_\-op\_\-putfh\_\-Free@{nfs4\_\-op\_\-putfh\_\-Free}!nfs4_op_putfh.c@{nfs4\_\-op\_\-putfh.c}}
+\subsubsection[{nfs4\_\-op\_\-putfh\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs4\_\-op\_\-putfh\_\-Free (PUTFH4res $\ast$ {\em resp})}\label{nfs4__op__putfh_8c_4ef844018e86af5ea52cbbe3cf3032c8}
 
 
 nfs4\_\-op\_\-create\_\-Free: frees what was allocared to handle nfs4\_\-op\_\-create.
@@ -125,6 +120,4 @@ Frees what was allocared to handle nfs4\_\-op\_\-create.
 \item[Returns:]nothing (void function ) \end{Desc}
 
 
-Definition at line 272 of file nfs4\_\-op\_\-putfh.c.
-
-Referenced by nfs4\_\-Compound\_\-Free().
+Definition at line 276 of file nfs4\_\-op\_\-putfh.c.

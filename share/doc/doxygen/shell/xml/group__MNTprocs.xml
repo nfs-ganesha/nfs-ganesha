@@ -1,11 +1,11 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="group__MNTprocs" kind="group">
     <compoundname>MNTprocs</compoundname>
     <title>Mount protocol functions.</title>
     <innergroup refid="group__NFSprocs">NFS protocols functions.</innergroup>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__MNTprocs_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g57af674c6a6985abc2c91f26ab22fcde" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_Null</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -50,9 +50,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="98" bodystart="125" bodyend="138"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="98" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="128" bodyend="141"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g2cd45bf3102b89de5890480fb99db4ae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_Mnt</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -97,9 +97,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="102" bodystart="150" bodyend="164"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="102" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="153" bodyend="167"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g3fb6c5e8cf31193ab707e76f17a10606" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_Dump</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -144,9 +144,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="106" bodystart="176" bodyend="190"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="106" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="179" bodyend="193"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g12436609c27ab5881d690c41981e7bb1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_Umnt</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -191,9 +191,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="110" bodystart="202" bodyend="215"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="110" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="205" bodyend="218"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g210e44facdf641082e0d0c030751d1ad" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_UmntAll</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -238,9 +238,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="114" bodystart="227" bodyend="240"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="114" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="230" bodyend="243"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g55294cc352b3688224a76aa914e4dad1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt1_remote_Export</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -285,9 +285,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="118" bodystart="252" bodyend="266"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="118" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="255" bodyend="269"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g3d78bf1d679b67f59ef6ce13bef6c202" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_Null</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -332,9 +332,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="122" bodystart="278" bodyend="291"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="122" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="281" bodyend="294"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1gd9f77ceb646cee21165ce3318f0fe54b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_Mnt</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -379,11 +379,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="126" bodystart="303" bodyend="317"/>
-        <referencedby refid="commands__NFS__remote_8c_1a58" compoundref="commands__NFS__remote_8c" startline="2031" endline="2104">fn_nfs_remote_umount</referencedby>
-        <referencedby refid="commands__NFS__remote_8c_1a56" compoundref="commands__NFS__remote_8c" startline="1922" endline="1978">nfs_remote_mount</referencedby>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="126" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="306" bodyend="320"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1gfb40d52403d9e2402412ec40e47c2090" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_Dump</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -428,9 +426,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="130" bodystart="329" bodyend="343"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="130" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="332" bodyend="346"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g0eb4ed1fa7c89a3d21b91325082706a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_Umnt</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -475,9 +473,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="134" bodystart="355" bodyend="368"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="134" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="358" bodyend="371"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga10" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g72108294349dc32d7ae07d0d88e4d154" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_UmntAll</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -522,9 +520,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="138" bodystart="380" bodyend="393"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="138" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="383" bodyend="396"/>
       </memberdef>
-      <memberdef kind="function" id="group__MNTprocs_1ga11" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__MNTprocs_1g03057430f8bcb74bbec5159f95cde37b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>int</type>
         <definition>int mnt3_remote_Export</definition>
         <argsstring>(CLIENT *clnt, nfs_arg_t *parg, nfs_res_t *pres)</argsstring>
@@ -569,7 +567,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/shell/nfs_remote_functions.h" line="142" bodystart="405" bodyend="419"/>
+        <location file="/export/GANESHA/src/shell/nfs_remote_functions.h" line="142" bodyfile="/export/GANESHA/src/shell/nfs_remote_functions.c" bodystart="408" bodyend="422"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

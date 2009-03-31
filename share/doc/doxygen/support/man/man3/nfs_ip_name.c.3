@@ -1,8 +1,10 @@
-.TH "nfs_ip_name.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_ip_name.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_ip_name.c \- The management of the IP/name cache. 
+nfs_ip_name.c \- The management of the IP/name cache.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -87,48 +89,29 @@ The management of the IP/name cache.
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 leibovic 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2006/01/20 07:39:23 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
+.RE
+.PP
 \fBRevision\fP.RS 4
 1.6 
 .RE
 .PP
-.RE
-.PP
-\fBnfs_ip_name.c\fP : The management of the IP/name cache.
-.PP
-\fBHeader\fP.RS 4
-/cea/S/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/support/nfs_ip_name.c,v 1.6 2006/01/20 07:39:23 leibovic Exp 
-.RE
-.PP
-.PP
-\fBLog\fP.RS 4
-\fBnfs_ip_name.c\fP,v 
-.RE
-.PP
-Revision 1.6 2006/01/20 07:39:23 leibovic Back to the previous version.
-.PP
-Revision 1.4 2005/11/28 17:03:03 deniel Added CeCILL headers
-.PP
-Revision 1.3 2005/11/24 13:44:29 deniel ajout du remove dans ipname track list in nfs_mnt_listc.
-.PP
-Revision 1.2 2005/11/10 07:53:25 deniel Corrected some memory leaks
-.PP
-Revision 1.1 2005/11/08 15:22:24 deniel WildCard and Netgroup entry for exportlist are now supported
+\fBnfs_ip_name.c\fP : The management of the IP/name cache. 
 .PP
 Definition in file \fBnfs_ip_name.c\fP.
 .SH "Function Documentation"
@@ -153,7 +136,7 @@ compare the ip address stored in the key buffers. This function is to be used as
 .PP
 
 .PP
-Definition at line 187 of file nfs_ip_name.c.
+Definition at line 171 of file nfs_ip_name.c.
 .SS "int display_ip_name (hash_buffer_t * pbuff, char * str)"
 .PP
 display_ip_name: displays the ip_name stored in the buffer.
@@ -174,10 +157,10 @@ number of character written.
 .PP
 
 .PP
-Definition at line 208 of file nfs_ip_name.c.
+Definition at line 192 of file nfs_ip_name.c.
 .SS "int display_ip_value (hash_buffer_t * pbuff, char * str)"
 .PP
-Definition at line 220 of file nfs_ip_name.c.
+Definition at line 204 of file nfs_ip_name.c.
 .SS "unsigned long int ip_name_rbt_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 ip_name_rbt_hash_func: computes the rbt value for the entry in IP/name cache.
@@ -203,7 +186,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 168 of file nfs_ip_name.c.
+Definition at line 152 of file nfs_ip_name.c.
 .SS "unsigned long int ip_name_value_hash_func (hash_parameter_t * p_hparam, hash_buffer_t * buffclef)"
 .PP
 ip_name_rbt_hash_func: computes the hash value for the entry in IP/name cache.
@@ -229,7 +212,7 @@ HashTable_Init
 .PP
 
 .PP
-Definition at line 146 of file nfs_ip_name.c.
+Definition at line 130 of file nfs_ip_name.c.
 .SS "int nfs_Init_ip_name (nfs_ip_name_parameter_t param)"
 .PP
 nfs_Init_ip_name: Init the hashtable for IP/name cache.
@@ -248,9 +231,7 @@ Perform all the required initialization for hashtable IP/name cache
 .PP
 
 .PP
-Definition at line 393 of file nfs_ip_name.c.
-.PP
-References expiration_time, and ht_ip_name.
+Definition at line 376 of file nfs_ip_name.c.
 .SS "int nfs_ip_name_add (unsigned int ipaddr, char * hostname)"
 .PP
 nfs_ip_name_add: adds an entry in the duplicate requests cache.
@@ -279,11 +260,7 @@ IP_NAME_NETDB_ERROR if an error occured during the netdb query (via gethostbyadd
 .PP
 
 .PP
-Definition at line 249 of file nfs_ip_name.c.
-.PP
-References ht_ip_name.
-.PP
-Referenced by nfs_export_check_access().
+Definition at line 233 of file nfs_ip_name.c.
 .SS "int nfs_ip_name_get (unsigned int ipaddr, char * hostname)"
 .PP
 nfs_ip_name_get: Tries to get an entry for ip_name cache.
@@ -304,11 +281,7 @@ the result previously set if *pstatus == IP_NAME_SUCCESS
 .PP
 
 .PP
-Definition at line 318 of file nfs_ip_name.c.
-.PP
-References ht_ip_name.
-.PP
-Referenced by nfs_export_check_access().
+Definition at line 302 of file nfs_ip_name.c.
 .SS "void nfs_ip_name_get_stats (hash_stat_t * phstat)"
 .PP
 nfs_ip_name_get_stats: gets the hash table statistics for the IP_NAME Table.
@@ -332,14 +305,10 @@ HashTable_GetStats
 .PP
 
 .PP
-Definition at line 505 of file nfs_ip_name.c.
-.PP
-References ht_ip_name.
+Definition at line 494 of file nfs_ip_name.c.
 .SS "int nfs_ip_name_populate (char * path)"
 .PP
-Definition at line 408 of file nfs_ip_name.c.
-.PP
-References ht_ip_name.
+Definition at line 391 of file nfs_ip_name.c.
 .SS "int nfs_ip_name_remove (int ipaddr)"
 .PP
 nfs_ip_name_remove: Tries to remove an entry for ip_name cache
@@ -358,24 +327,17 @@ the result previously set if *pstatus == IP_NAME_SUCCESS
 .PP
 
 .PP
-Definition at line 356 of file nfs_ip_name.c.
-.PP
-References ht_ip_name.
+Definition at line 340 of file nfs_ip_name.c.
 .SH "Variable Documentation"
 .PP 
 .SS "unsigned int \fBexpiration_time\fP"
 .PP
-Definition at line 127 of file nfs_ip_name.c.
-.PP
-Referenced by nfs_Init_ip_name().
+Definition at line 111 of file nfs_ip_name.c.
 .SS "hash_table_t* \fBht_ip_name\fP"
 .PP
-Definition at line 125 of file nfs_ip_name.c.
-.PP
-Referenced by nfs_Init_ip_name(), nfs_ip_name_add(), nfs_ip_name_get(), nfs_ip_name_get_stats(), nfs_ip_name_populate(), and nfs_ip_name_remove().
+Definition at line 109 of file nfs_ip_name.c.
 .SS "nfs_parameter_t \fBnfs_param\fP"
 .PP
-Definition at line 146 of file test_clientid.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

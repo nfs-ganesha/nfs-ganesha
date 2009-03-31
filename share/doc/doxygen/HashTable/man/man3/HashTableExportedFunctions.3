@@ -1,4 +1,4 @@
-.TH "HashTableExportedFunctions" 3 "9 Apr 2008" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
+.TH "HashTableExportedFunctions" 3 "31 Mar 2009" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -65,9 +65,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 816 of file HashTable.c.
-.PP
-Referenced by do_del(), and main().
+Definition at line 813 of file HashTable.c.
 .SS "int HashTable_Get (hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval)"
 .PP
 HashTable_Get: Try to retrieve the value associated with a key.
@@ -103,9 +101,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 754 of file HashTable.c.
-.PP
-Referenced by do_get(), and main().
+Definition at line 751 of file HashTable.c.
 .SS "unsigned int HashTable_GetSize (hash_table_t * ht)"
 .PP
 HashTable_GetSize: Gets the number of entries in the hashtable.
@@ -133,7 +129,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 986 of file HashTable.c.
+Definition at line 971 of file HashTable.c.
 .SS "void HashTable_GetStats (hash_table_t * ht, hash_stat_t * hstat)"
 .PP
 HashTable_GetStats: Computes statistiques on the hashtable
@@ -163,9 +159,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 908 of file HashTable.c.
-.PP
-Referenced by main().
+Definition at line 893 of file HashTable.c.
 .SS "hash_table_t* HashTable_Init (hash_parameter_t hparam)"
 .PP
 HashTable_Init: Init the Hash Table.
@@ -193,11 +187,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 515 of file HashTable.c.
-.PP
-References Mem_Alloc.
-.PP
-Referenced by main().
+Definition at line 512 of file HashTable.c.
 .SS "void HashTable_Print (hash_table_t * ht)"
 .PP
 HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
@@ -225,9 +215,7 @@ HashTable_Set
 .PP
 
 .PP
-Definition at line 1015 of file HashTable.c.
-.PP
-Referenced by main().
+Definition at line 1000 of file HashTable.c.
 .SS "int HashTable_Test_And_Set (hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval, hashtable_set_how_t how)"
 .PP
 HashTable_Test_And_Set: set a pair (key,value) into the Hash Table.
@@ -265,6 +253,7 @@ HASHTABLE_INSERT_MALLOC_ERROR if an error occured during the insertion process.
 .PP
 
 .PP
-Definition at line 617 of file HashTable.c.
-.PP
-Referenced by do_new(), do_test(), and main().
+Definition at line 614 of file HashTable.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Hash Table Library from the source code.

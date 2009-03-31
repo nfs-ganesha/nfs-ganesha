@@ -1,8 +1,10 @@
-.TH "cmd_tools.c" 3 "9 Apr 2008" "Version 0.1" "ganeshell" \" -*- nroff -*-
+.TH "cmd_tools.c" 3 "31 Mar 2009" "Version 0.1" "ganeshell" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-cmd_tools.c \- Header file for functions used by several layers. 
+cmd_tools.c \- Header file for functions used by several layers.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -41,7 +43,7 @@ cmd_tools.c \- Header file for functions used by several layers.
 
 .in +1c
 .ti -1c
-.RI "tm * \fBLocaltime_r\fP (const time_t *p_time, struct tm *p_tm)"
+.RI "struct tm * \fBLocaltime_r\fP (const time_t *p_time, struct tm *p_tm)"
 .br
 .ti -1c
 .RI "int \fBmy_atoi\fP (char *str)"
@@ -83,7 +85,7 @@ cmd_tools.c \- Header file for functions used by several layers.
 .RI "int \fBMkFSALSetAttrStruct\fP (char *attribute_list, fsal_attrib_list_t *fsal_set_attr_struct)"
 .br
 .ti -1c
-.RI "timeval \fBtime_diff\fP (struct timeval time_from, struct timeval time_to)"
+.RI "struct timeval \fBtime_diff\fP (struct timeval time_from, struct timeval time_to)"
 .br
 .ti -1c
 .RI "char * \fBconcat\fP (char *str1, char *str2, size_t max_len)"
@@ -98,10 +100,10 @@ Header file for functions used by several layers.
 
 \fBAuthor:\fP
 .RS 4
-\fBAuthor\fP.RS 4
-leibovic 
 .RE
 .PP
+\fBAuthor\fP.RS 4
+leibovic 
 .RE
 .PP
 \fBDate:\fP
@@ -164,7 +166,7 @@ Revision 1.3 2004/12/17 16:05:27 leibovic Replacing X with snprintmem for handle
 .PP
 Revision 1.2 2004/12/09 15:53:50 leibovic A debug printf had been left.
 .PP
-Revision 1.1 2004/12/09 15:46:22 leibovic Tools externalisation.
+Revision 1.1 2004/12/09 15:46:22 leibovic Tools externalisation. 
 .PP
 Definition in file \fBcmd_tools.c\fP.
 .SH "Define Documentation"
@@ -202,14 +204,11 @@ Nothing.
 Definition at line 836 of file cmd_tools.c.
 .SS "#define TIME_STRLEN   30"
 .PP
-Referenced by time2str().
 .SH "Function Documentation"
 .PP 
 .SS "int ato64 (char * str, unsigned long long * out64)"
 .PP
 Definition at line 265 of file cmd_tools.c.
-.PP
-Referenced by cmdnfs_READDIR3args(), cmdnfs_READDIRPLUS3args(), cmdnfs_sattr2(), cmdnfs_sattr3(), fn_Cache_inode_read(), fn_Cache_inode_write(), fn_fsal_read(), fn_fsal_truncate(), fn_fsal_write(), and MkFSALSetAttrStruct().
 .SS "int atomode (char * str)"
 .PP
 atomode: This function converts a string to a unix access mode.
@@ -227,17 +226,11 @@ A negative value on error. Else, the access mode integer.
 
 .PP
 Definition at line 242 of file cmd_tools.c.
-.PP
-Referenced by cmdnfs_sattr2(), cmdnfs_sattr3(), fn_Cache_inode_create(), fn_Cache_inode_mkdir(), fn_fsal_create(), fn_fsal_mkdir(), fn_nfs_create(), fn_nfs_mkdir(), fn_nfs_remote_create(), fn_nfs_remote_mkdir(), and MkFSALSetAttrStruct().
 .SS "time_t atotime (char * str)"
 .PP
 convert time from 'YYYYMMDDHHMMSS' to time_t. 
 .PP
 Definition at line 293 of file cmd_tools.c.
-.PP
-References my_atoi().
-.PP
-Referenced by cmdnfs_sattr2(), cmdnfs_sattr3(), cmdnfs_sattrguard3(), and MkFSALSetAttrStruct().
 .SS "void clean_path (char * str, int len)"
 .PP
 clean_path: Transform a path to a cannonical path. Remove //, /./, /../, final / from a POSIX-like path.
@@ -257,8 +250,6 @@ Nothing.
 
 .PP
 Definition at line 540 of file cmd_tools.c.
-.PP
-Referenced by cache_solvepath(), nfs_remote_solvepath(), and solvepath().
 .SS "char* concat (char * str1, char * str2, size_t max_len)"
 .PP
 concat: concatenates 2 strings with a limitation of the size of the destination string.
@@ -279,19 +270,13 @@ NULL on error, the destination string, else.
 .PP
 
 .PP
-Definition at line 1115 of file cmd_tools.c.
-.PP
-Referenced by shellcmd_set().
+Definition at line 1114 of file cmd_tools.c.
 .SS "int getugroups (int maxcount, gid_t * grouplist, char * username, gid_t gid)"
 .PP
-Definition at line 1129 of file cmd_tools.c.
-.PP
-Referenced by fn_Cache_inode_su(), fn_fsal_su(), fn_nfs_remote_su(), fn_nfs_su(), and rpc_init().
-.SS "struct tm* Localtime_r (const time_t * p_time, struct tm * p_tm)"
+Definition at line 1128 of file cmd_tools.c.
+.SS "struct tm* Localtime_r (const time_t * p_time, struct tm * p_tm)\fC [read]\fP"
 .PP
 Definition at line 179 of file cmd_tools.c.
-.PP
-Referenced by cmdnfs_fattr2(), cmdnfs_fattr3(), cmdnfs_preopattr(), and time2str().
 .SS "int MkFSALSetAttrStruct (char * attribute_list, fsal_attrib_list_t * fsal_set_attr_struct)"
 .PP
 this function converts peers (attr_name=attr_value,attr_name=attr_value,...) to a fsal_attrib_list_t to be used in the FSAL_setattr call). 
@@ -303,11 +288,7 @@ this function converts peers (attr_name=attr_value,attr_name=attr_value,...) to 
 .PP
 
 .PP
-Definition at line 946 of file cmd_tools.c.
-.PP
-References ato64(), atomode(), atotime(), ATTR_32, ATTR_64, shell_attribute__::attr_mask, shell_attribute__::attr_name, ATTR_OCTAL, shell_attribute__::attr_offset, ATTR_TIME, shell_attribute__::attr_type, my_atoi(), and shell_attribute_t.
-.PP
-Referenced by fn_Cache_inode_setattr(), and fn_fsal_setattr().
+Definition at line 945 of file cmd_tools.c.
 .SS "int my_atoi (char * str)"
 .PP
 my_atoi: This function converts a string to an integer.
@@ -325,8 +306,6 @@ A negative value on error. Else, the converted integer.
 
 .PP
 Definition at line 211 of file cmd_tools.c.
-.PP
-Referenced by atotime(), cmdnfs_READDIR2args(), cmdnfs_sattr2(), cmdnfs_sattr3(), cmdnfs_sattrguard3(), fn_Cache_inode_su(), fn_fsal_su(), fn_nfs_remote_su(), fn_nfs_su(), MkFSALSetAttrStruct(), shellcmd_set(), util_cmp(), and util_sleep().
 .SS "void print_fsal_attrib_mask (fsal_attrib_mask_t mask, FILE * output)"
 .PP
 print_fsal_attrib_mask: Print an fsal_attrib_mask_t to a given output file.
@@ -346,8 +325,6 @@ Nothing.
 
 .PP
 Definition at line 707 of file cmd_tools.c.
-.PP
-Referenced by fn_fsal_stat().
 .SS "void print_fsal_attributes (fsal_attrib_list_t attrs, FILE * output)"
 .PP
 print_fsal_attributes: print an fsal_attrib_list_t to a given output file.
@@ -367,10 +344,6 @@ Nothing.
 
 .PP
 Definition at line 784 of file cmd_tools.c.
-.PP
-References strtype().
-.PP
-Referenced by fn_Cache_inode_ls(), fn_Cache_inode_setattr(), fn_Cache_inode_stat(), fn_fsal_access(), fn_fsal_ls(), fn_fsal_setattr(), and fn_fsal_stat().
 .SS "void print_fsal_status (FILE * output, fsal_status_t status)"
 .PP
 print_fsal_status: this function prints an fsal_status_t to a given output file.
@@ -390,8 +363,6 @@ Nothing.
 
 .PP
 Definition at line 677 of file cmd_tools.c.
-.PP
-Referenced by cache_solvepath(), cacheinode_init(), fn_Cache_inode_create(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_mkdir(), fn_Cache_inode_rename(), fn_Cache_inode_su(), fn_Cache_inode_unlink(), fn_fsal_access(), fn_fsal_cat(), fn_fsal_cd(), fn_fsal_close(), fn_fsal_close_byfileid(), fn_fsal_create(), fn_fsal_cross(), fn_fsal_getxattr(), fn_fsal_handlecmp(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_ls(), fn_fsal_lsxattrs(), fn_fsal_mkdir(), fn_fsal_open(), fn_fsal_open_byfileid(), fn_fsal_open_byname(), fn_fsal_rcp(), fn_fsal_read(), fn_fsal_rename(), fn_fsal_setattr(), fn_fsal_stat(), fn_fsal_su(), fn_fsal_truncate(), fn_fsal_unlink(), fn_fsal_write(), fn_nfs_su(), fsal_init(), Init_Thread_Context(), and solvepath().
 .SS "void print_item_line (FILE * out, fsal_attrib_list_t * attrib, char * name, char * target)"
 .PP
 print_item_line: Prints a filesystem element on one line, like the Unix ls command.
@@ -415,10 +386,6 @@ Nothing.
 
 .PP
 Definition at line 841 of file cmd_tools.c.
-.PP
-References print_mask, and time2str().
-.PP
-Referenced by fn_Cache_inode_ls(), and fn_fsal_ls().
 .SS "void split_path (char * in_path, char ** p_path, char ** p_file)"
 .PP
 split_path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and 'obj'.
@@ -435,8 +402,6 @@ split_path: splits a path 'dir/dir/dir/obj' in two strings : 'dir/dir/dir' and '
 
 .PP
 Definition at line 443 of file cmd_tools.c.
-.PP
-Referenced by fn_Cache_inode_create(), fn_Cache_inode_link(), fn_Cache_inode_ln(), fn_Cache_inode_mkdir(), fn_Cache_inode_rename(), fn_Cache_inode_unlink(), fn_fsal_create(), fn_fsal_hardlink(), fn_fsal_ln(), fn_fsal_mkdir(), fn_fsal_rename(), fn_fsal_unlink(), fn_nfs_create(), fn_nfs_hardlink(), fn_nfs_ln(), fn_nfs_mkdir(), fn_nfs_remote_create(), fn_nfs_remote_hardlink(), fn_nfs_remote_ln(), fn_nfs_remote_mkdir(), fn_nfs_remote_rename(), fn_nfs_remote_unlink(), fn_nfs_rename(), and fn_nfs_unlink().
 .SS "char* strtype (fsal_nodetype_t type)"
 .PP
 strtype: convert an FSAL object type to a string.
@@ -454,22 +419,12 @@ The name (char *) for this FSAL object type.
 
 .PP
 Definition at line 754 of file cmd_tools.c.
-.PP
-Referenced by print_fsal_attributes().
 .SS "char* time2str (time_t time_in, char * str_out)"
 .PP
 Definition at line 501 of file cmd_tools.c.
+.SS "struct timeval time_diff (struct timeval time_from, struct timeval time_to)\fC [read]\fP"
 .PP
-References Localtime_r(), and TIME_STRLEN.
-.PP
-Referenced by print_item_line(), and print_nfsitem_line().
-.SS "struct timeval time_diff (struct timeval time_from, struct timeval time_to)"
-.PP
-Definition at line 1095 of file cmd_tools.c.
-.PP
-References time_diff().
-.PP
-Referenced by fn_Cache_inode_read(), fn_Cache_inode_write(), fn_fsal_read(), fn_fsal_write(), shellcmd_time(), time_diff(), and util_timer().
+Definition at line 1094 of file cmd_tools.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for ganeshell from the source code.

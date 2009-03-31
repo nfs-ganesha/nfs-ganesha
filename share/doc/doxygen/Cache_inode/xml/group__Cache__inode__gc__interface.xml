@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='iso-8859-1' standalone='no'?>
-<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.3.9.1">
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.5.7.1">
   <compounddef id="group__Cache__inode__gc__interface" kind="group">
     <compoundname>Cache_inode_gc_interface</compoundname>
     <title>Cache Inode GC interface.</title>
       <sectiondef kind="func">
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1g69c5ffce5cdb7882aa52f72c665a2790" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void cache_inode_set_gc_policy</definition>
         <argsstring>(cache_inode_gc_policy_t policy)</argsstring>
@@ -28,10 +28,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_gc.c" line="568" bodystart="567" bodyend="570"/>
-        <referencedby refid="test__cache__inode_8c_1a4" compoundref="test__cache__inode_8c" startline="135" endline="672">main</referencedby>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="574" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="573" bodyend="576"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1gb355d80bfbbb711ce94b45b7a3cc7df9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_gc_policy_t</type>
         <definition>cache_inode_gc_policy_t cache_inode_get_gc_policy</definition>
         <argsstring>(void)</argsstring>
@@ -46,9 +45,9 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_gc.c" line="581" bodystart="580" bodyend="583"/>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="587" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="586" bodyend="589"/>
       </memberdef>
-      <memberdef kind="function" id="group__Cache__inode__gc__interface_1ga2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="group__Cache__inode__gc__interface_1g2c07f75a5a24f519e42b34e8718bf79b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>cache_inode_status_t</type>
         <definition>cache_inode_status_t cache_inode_gc</definition>
         <argsstring>(hash_table_t *ht, cache_inode_client_t *pclient, cache_inode_status_t *pstatus)</argsstring>
@@ -96,9 +95,7 @@
 </para>        </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/opt/philippe/GANESHA/src/Cache_inode/cache_inode_gc.c" line="606" bodystart="603" bodyend="684"/>
-        <references refid="group__Cache__inode__gc__internal_1ga4" compoundref="cache__inode__gc_8c" startline="490" endline="546">cache_inode_gc_function</references>
-        <referencedby refid="test__cache__inode_8c_1a4" compoundref="test__cache__inode_8c" startline="135" endline="672">main</referencedby>
+        <location file="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" line="612" bodyfile="/export/GANESHA/src/Cache_inode/cache_inode_gc.c" bodystart="609" bodyend="691"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

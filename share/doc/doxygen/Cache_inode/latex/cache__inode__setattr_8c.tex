@@ -1,11 +1,12 @@
 \section{cache\_\-inode\_\-setattr.c File Reference}
-\label{cache__inode__setattr_8c}\index{cache_inode_setattr.c@{cache\_\-inode\_\-setattr.c}}
-Sets the attributes for an entry. 
+\label{cache__inode__setattr_8c}\index{cache\_\-inode\_\-setattr.c@{cache\_\-inode\_\-setattr.c}}
+Sets the attributes for an entry.  
+
 
 {\tt \#include \char`\"{}LRU\_\-List.h\char`\"{}}\par
 {\tt \#include \char`\"{}log\_\-functions.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include \char`\"{}fsal.h\char`\"{}}\par
 {\tt \#include \char`\"{}cache\_\-inode.h\char`\"{}}\par
 {\tt \#include \char`\"{}stuff\_\-alloc.h\char`\"{}}\par
@@ -25,25 +26,25 @@ cache\_\-inode\_\-status\_\-t {\bf cache\_\-inode\_\-setattr} (cache\_\-entry\_\
 Sets the attributes for an entry. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]leibovic \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2006/02/14 11:47:40 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.19 \end{Desc}
-\end{Desc}
-{\bf cache\_\-inode\_\-setattr.c}{\rm (p.\,\pageref{cache__inode__setattr_8c})} : Sets the attributes for an entry.
+\doxyref{cache\_\-inode\_\-setattr.c}{p.}{cache__inode__setattr_8c} : Sets the attributes for an entry. 
 
 Definition in file {\bf cache\_\-inode\_\-setattr.c}.
 
 \subsection{Function Documentation}
-\index{cache_inode_setattr.c@{cache\_\-inode\_\-setattr.c}!cache_inode_setattr@{cache\_\-inode\_\-setattr}}
-\index{cache_inode_setattr@{cache\_\-inode\_\-setattr}!cache_inode_setattr.c@{cache\_\-inode\_\-setattr.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-setattr (cache\_\-entry\_\-t $\ast$ {\em pentry}, fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, hash\_\-table\_\-t $\ast$ {\em ht}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__setattr_8c_a0}
+\index{cache\_\-inode\_\-setattr.c@{cache\_\-inode\_\-setattr.c}!cache\_\-inode\_\-setattr@{cache\_\-inode\_\-setattr}}
+\index{cache\_\-inode\_\-setattr@{cache\_\-inode\_\-setattr}!cache_inode_setattr.c@{cache\_\-inode\_\-setattr.c}}
+\subsubsection[{cache\_\-inode\_\-setattr}]{\setlength{\rightskip}{0pt plus 5cm}cache\_\-inode\_\-status\_\-t cache\_\-inode\_\-setattr (cache\_\-entry\_\-t $\ast$ {\em pentry}, \/  fsal\_\-attrib\_\-list\_\-t $\ast$ {\em pattr}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-status\_\-t $\ast$ {\em pstatus})}\label{cache__inode__setattr_8c_46905c852814f659362d0f068e0968bd}
 
 
 cache\_\-inode\_\-setattrs: set the attributes for an entry located in the cache by its address.
@@ -62,6 +63,4 @@ Sets the attributes for an entry located in the cache by its address. Attributes
 CACHE\_\-INODE\_\-LRU\_\-ERROR if allocation error occured when validating the entry \end{Desc}
 
 
-Definition at line 124 of file cache\_\-inode\_\-setattr.c.
-
-References cache\_\-inode\_\-error\_\-convert(), cache\_\-inode\_\-kill\_\-entry(), and cache\_\-inode\_\-valid().
+Definition at line 128 of file cache\_\-inode\_\-setattr.c.

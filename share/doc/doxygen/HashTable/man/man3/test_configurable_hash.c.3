@@ -1,4 +1,4 @@
-.TH "test_configurable_hash.c" 3 "9 Apr 2008" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
+.TH "test_configurable_hash.c" 3 "31 Mar 2009" "Version 0.1" "Hash Table Library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -108,8 +108,6 @@ Definition at line 147 of file test_configurable_hash.c.
 .SS "#define LENBUF   256"
 .PP
 Definition at line 139 of file test_configurable_hash.c.
-.PP
-Referenced by main().
 .SS "#define MAXDESTROY   5"
 .PP
 Definition at line 142 of file test_configurable_hash.c.
@@ -122,8 +120,6 @@ Definition at line 141 of file test_configurable_hash.c.
 .SS "#define Mem_Alloc(a)   BuddyMalloc( a )"
 .PP
 Definition at line 155 of file test_configurable_hash.c.
-.PP
-Referenced by do_set(), HashTable_Init(), and main().
 .SS "#define Mem_Free(a)   BuddyFree( a )"
 .PP
 Definition at line 156 of file test_configurable_hash.c.
@@ -136,8 +132,6 @@ Definition at line 145 of file test_configurable_hash.c.
 .SS "#define STRSIZE   10"
 .PP
 Definition at line 140 of file test_configurable_hash.c.
-.PP
-Referenced by do_set(), and main().
 .SH "Function Documentation"
 .PP 
 .SS "int compare_string_buffer (hash_buffer_t * buff1, hash_buffer_t * buff2)"
@@ -149,43 +143,21 @@ Definition at line 174 of file test_configurable_hash.c.
 .SS "int do_del (hash_table_t * ht, int key)"
 .PP
 Definition at line 244 of file test_configurable_hash.c.
-.PP
-References HashTable_Del().
-.PP
-Referenced by main().
 .SS "int do_get (hash_table_t * ht, int key, int * pval)"
 .PP
 Definition at line 183 of file test_configurable_hash.c.
-.PP
-References HashTable_Get().
-.PP
-Referenced by main().
 .SS "int do_new (hash_table_t * ht, int key, int val)"
 .PP
 Definition at line 225 of file test_configurable_hash.c.
-.PP
-References HashTable_Test_And_Set().
-.PP
-Referenced by main().
 .SS "int do_set (hash_table_t * ht, int key, int val)"
 .PP
 Definition at line 203 of file test_configurable_hash.c.
-.PP
-References Mem_Alloc, and STRSIZE.
-.PP
-Referenced by main().
 .SS "int do_test (hash_table_t * ht, int key)"
 .PP
 Definition at line 257 of file test_configurable_hash.c.
-.PP
-References HashTable_Test_And_Set().
-.PP
-Referenced by main().
 .SS "int main (int argc, char * argv[])"
 .PP
 Definition at line 272 of file test_configurable_hash.c.
-.PP
-References do_del(), do_get(), do_new(), do_set(), do_test(), HashTable_Init(), HashTable_Print(), LENBUF, MAXTEST, Mem_Alloc, and STRSIZE.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Hash Table Library from the source code.

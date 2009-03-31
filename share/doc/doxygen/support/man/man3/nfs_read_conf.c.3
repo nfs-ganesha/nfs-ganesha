@@ -1,8 +1,10 @@
-.TH "nfs_read_conf.c" 3 "9 Apr 2008" "Version 0.1" "Support routines layer" \" -*- nroff -*-
+.TH "nfs_read_conf.c" 3 "31 Mar 2009" "Version 0.1" "Support routines layer" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-nfs_read_conf.c \- This file that contain the routine required for parsing the NFS specific configuraion file. 
+nfs_read_conf.c \- This file that contain the routine required for parsing the NFS specific configuraion file.  
+
+.PP
 .SH SYNOPSIS
 .br
 .PP
@@ -101,26 +103,26 @@ This file that contain the routine required for parsing the NFS specific configu
 
 \fBAuthor:\fP
 .RS 4
+.RE
+.PP
 \fBAuthor\fP.RS 4
 deniel 
 .RE
 .PP
-.RE
-.PP
 \fBDate:\fP
 .RS 4
+.RE
+.PP
 \fBDate\fP.RS 4
 2005/12/07 14:28:00 
 .RE
 .PP
-.RE
-.PP
 \fBVersion:\fP
 .RS 4
-\fBRevision\fP.RS 4
-1.10 
 .RE
 .PP
+\fBRevision\fP.RS 4
+1.10 
 .RE
 .PP
 \fBnfs_read_conf.c\fP : This file that contain the routine required for parsing the NFS specific configuraion file.
@@ -154,7 +156,7 @@ Revision 1.2 2005/08/03 13:14:00 deniel memset to zero before building the fileh
 .PP
 Revision 1.1 2005/08/03 06:57:54 deniel Added a libsupport for miscellaneous service functions
 .PP
-Revision 1.1 2005/07/18 14:12:45 deniel Fusion of the dirrent layers in progreess via the implementation of mount protocol
+Revision 1.1 2005/07/18 14:12:45 deniel Fusion of the dirrent layers in progreess via the implementation of mount protocol 
 .PP
 Definition in file \fBnfs_read_conf.c\fP.
 .SH "Function Documentation"
@@ -179,7 +181,7 @@ Reads the configuration for the Client/ID Cache
 .PP
 
 .PP
-Definition at line 548 of file nfs_read_conf.c.
+Definition at line 584 of file nfs_read_conf.c.
 .SS "int nfs_read_core_conf (config_file_t in_config, nfs_core_parameter_t * pparam)"
 .PP
 nfs_read_core_conf: read the configuration ite; for the worker theads.
@@ -200,7 +202,7 @@ Reads the configuration ite; for the worker theads.
 .PP
 
 .PP
-Definition at line 271 of file nfs_read_conf.c.
+Definition at line 282 of file nfs_read_conf.c.
 .SS "int nfs_read_dupreq_hash_conf (config_file_t in_config, nfs_rpc_dupreq_parameter_t * pparam)"
 .PP
 nfs_read_dupreq_hash_conf: reads the configuration for the hash in Duplicate Request layer.
@@ -221,7 +223,7 @@ Reads the configuration for the hash in Duplicate Request layer
 .PP
 
 .PP
-Definition at line 391 of file nfs_read_conf.c.
+Definition at line 413 of file nfs_read_conf.c.
 .SS "int nfs_read_gidmap_conf (config_file_t in_config, nfs_idmap_cache_parameter_t * pparam)"
 .PP
 nfs_read_gidmap_conf: reads the configuration for the GID_MAPPER Cache
@@ -242,7 +244,7 @@ Reads the configuration for the GID_MAPPER Cache
 .PP
 
 .PP
-Definition at line 775 of file nfs_read_conf.c.
+Definition at line 822 of file nfs_read_conf.c.
 .SS "int nfs_read_ip_name_conf (config_file_t in_config, nfs_ip_name_parameter_t * pparam)"
 .PP
 nfs_read_ip_name_conf: reads the configuration for the IP/name.
@@ -263,7 +265,7 @@ Reads the configuration for the IP/name.
 .PP
 
 .PP
-Definition at line 466 of file nfs_read_conf.c.
+Definition at line 495 of file nfs_read_conf.c.
 .SS "int nfs_read_krb5_conf (config_file_t in_config, nfs_krb5_parameter_t * pparam)"
 .PP
 nfs_read_krb5_conf: read the configuration for krb5 stuff
@@ -284,7 +286,7 @@ Read the configuration for krb5 stuff.
 .PP
 
 .PP
-Definition at line 853 of file nfs_read_conf.c.
+Definition at line 907 of file nfs_read_conf.c.
 .SS "int nfs_read_state_id_conf (config_file_t in_config, nfs_state_id_parameter_t * pparam)"
 .PP
 nfs_read_ip_name_conf: reads the configuration for the Client/ID Cache
@@ -305,7 +307,7 @@ Reads the configuration for the Client/ID Cache
 .PP
 
 .PP
-Definition at line 622 of file nfs_read_conf.c.
+Definition at line 660 of file nfs_read_conf.c.
 .SS "int nfs_read_uidmap_conf (config_file_t in_config, nfs_idmap_cache_parameter_t * pparam)"
 .PP
 nfs_read_uidmap_conf: reads the configuration for the UID_MAPPER Cache
@@ -326,7 +328,7 @@ Reads the configuration for the UID_MAPPER Cache
 .PP
 
 .PP
-Definition at line 697 of file nfs_read_conf.c.
+Definition at line 737 of file nfs_read_conf.c.
 .SS "int nfs_read_version4_conf (config_file_t in_config, nfs_version4_parameter_t * pparam)"
 .PP
 nfs_read_version4_conf: read the configuration for NFSv4 stuff
@@ -347,7 +349,7 @@ Read the configuration for NFSv4 stuff.
 .PP
 
 .PP
-Definition at line 924 of file nfs_read_conf.c.
+Definition at line 989 of file nfs_read_conf.c.
 .SS "int nfs_read_worker_conf (config_file_t in_config, nfs_worker_parameter_t * pparam)"
 .PP
 nfs_read_worker_conf: read the configuration ite; for the worker theads.
@@ -368,7 +370,7 @@ Reads the configuration ite; for the worker theads.
 .PP
 
 .PP
-Definition at line 174 of file nfs_read_conf.c.
+Definition at line 178 of file nfs_read_conf.c.
 .SS "void Print_param_in_log (nfs_parameter_t * pparam)"
 .PP
 Print_param_in_log : prints the nfs parameter structure into the logfile
@@ -387,9 +389,7 @@ none (void function)
 .PP
 
 .PP
-Definition at line 1015 of file nfs_read_conf.c.
-.PP
-References Print_param_worker_in_log().
+Definition at line 1091 of file nfs_read_conf.c.
 .SS "void Print_param_worker_in_log (nfs_worker_parameter_t * pparam)"
 .PP
 Print_param_in_log : prints the nfs worker parameter structure into the logfile
@@ -408,9 +408,7 @@ none (void function)
 .PP
 
 .PP
-Definition at line 996 of file nfs_read_conf.c.
-.PP
-Referenced by Print_param_in_log().
+Definition at line 1072 of file nfs_read_conf.c.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for Support routines layer from the source code.

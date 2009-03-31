@@ -1,14 +1,15 @@
 \section{nfs\_\-Write.c File Reference}
-\label{nfs__Write_8c}\index{nfs_Write.c@{nfs\_\-Write.c}}
-Routines used for managing the Write requests. 
+\label{nfs__Write_8c}\index{nfs\_\-Write.c@{nfs\_\-Write.c}}
+Routines used for managing the Write requests.  
+
 
 {\tt \#include $<$stdio.h$>$}\par
 {\tt \#include $<$string.h$>$}\par
 {\tt \#include $<$pthread.h$>$}\par
 {\tt \#include $<$fcntl.h$>$}\par
 {\tt \#include $<$sys/file.h$>$}\par
-{\tt \#include \char`\"{}Hash\-Data.h\char`\"{}}\par
-{\tt \#include \char`\"{}Hash\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashData.h\char`\"{}}\par
+{\tt \#include \char`\"{}HashTable.h\char`\"{}}\par
 {\tt \#include $<$rpc/types.h$>$}\par
 {\tt \#include $<$rpc/rpc.h$>$}\par
 {\tt \#include $<$rpc/auth.h$>$}\par
@@ -45,34 +46,32 @@ writeverf3 {\bf NFS3\_\-write\_\-verifier}
 Routines used for managing the Write requests. 
 
 \begin{Desc}
-\item[Author:]\begin{Desc}
+\item[Author:]\end{Desc}
+\begin{Desc}
 \item[Author]deniel \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Date:]\begin{Desc}
+\item[Date:]\end{Desc}
+\begin{Desc}
 \item[Date]2005/11/28 17:02:54 \end{Desc}
-\end{Desc}
 \begin{Desc}
-\item[Version:]\begin{Desc}
+\item[Version:]\end{Desc}
+\begin{Desc}
 \item[Revision]1.14 \end{Desc}
-\end{Desc}
-{\bf nfs\_\-Write.c}{\rm (p.\,\pageref{nfs__Write_8c})} : Routines used for managing the NFS4 COMPOUND functions.
+\doxyref{nfs\_\-Write.c}{p.}{nfs__Write_8c} : Routines used for managing the NFS4 COMPOUND functions. 
 
 Definition in file {\bf nfs\_\-Write.c}.
 
 \subsection{Function Documentation}
-\index{nfs_Write.c@{nfs\_\-Write.c}!nfs_Write@{nfs\_\-Write}}
-\index{nfs_Write@{nfs\_\-Write}!nfs_Write.c@{nfs\_\-Write.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Write (nfs\_\-arg\_\-t $\ast$ {\em parg}, exportlist\_\-t $\ast$ {\em pexport}, fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, hash\_\-table\_\-t $\ast$ {\em ht}, struct svc\_\-req $\ast$ {\em preq}, nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Write_8c_a1}
+\index{nfs\_\-Write.c@{nfs\_\-Write.c}!nfs\_\-Write@{nfs\_\-Write}}
+\index{nfs\_\-Write@{nfs\_\-Write}!nfs_Write.c@{nfs\_\-Write.c}}
+\subsubsection[{nfs\_\-Write}]{\setlength{\rightskip}{0pt plus 5cm}int nfs\_\-Write (nfs\_\-arg\_\-t $\ast$ {\em parg}, \/  exportlist\_\-t $\ast$ {\em pexport}, \/  fsal\_\-op\_\-context\_\-t $\ast$ {\em pcontext}, \/  cache\_\-inode\_\-client\_\-t $\ast$ {\em pclient}, \/  hash\_\-table\_\-t $\ast$ {\em ht}, \/  struct svc\_\-req $\ast$ {\em preq}, \/  nfs\_\-res\_\-t $\ast$ {\em pres})}\label{nfs__Write_8c_4591de75a0bf8415a277d034901a82e9}
 
 
 
 
-Definition at line 148 of file nfs\_\-Write.c.
-
-References nfs2\_\-FSALattr\_\-To\_\-Fattr(), NFS3\_\-write\_\-verifier, nfs\_\-Fhandle\-To\-Cache(), nfs\_\-Retryable\-Error(), nfs\_\-Set\-Failed\-Status(), and nfs\_\-Set\-Wcc\-Data().\index{nfs_Write.c@{nfs\_\-Write.c}!nfs_Write_Free@{nfs\_\-Write\_\-Free}}
-\index{nfs_Write_Free@{nfs\_\-Write\_\-Free}!nfs_Write.c@{nfs\_\-Write.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Write\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Write_8c_a2}
+Definition at line 151 of file nfs\_\-Write.c.\index{nfs\_\-Write.c@{nfs\_\-Write.c}!nfs\_\-Write\_\-Free@{nfs\_\-Write\_\-Free}}
+\index{nfs\_\-Write\_\-Free@{nfs\_\-Write\_\-Free}!nfs_Write.c@{nfs\_\-Write.c}}
+\subsubsection[{nfs\_\-Write\_\-Free}]{\setlength{\rightskip}{0pt plus 5cm}void nfs\_\-Write\_\-Free (nfs\_\-res\_\-t $\ast$ {\em resp})}\label{nfs__Write_8c_cdba416885514f0172886d8f7459cbc1}
 
 
 nfs\_\-Write\_\-Free: Frees the result structure allocated for nfs\_\-Write.
@@ -86,12 +85,12 @@ Frees the result structure allocated for nfs\_\-Write.
 \end{Desc}
 
 
-Definition at line 508 of file nfs\_\-Write.c.
+Definition at line 521 of file nfs\_\-Write.c.
 
 \subsection{Variable Documentation}
-\index{nfs_Write.c@{nfs\_\-Write.c}!NFS3_write_verifier@{NFS3\_\-write\_\-verifier}}
-\index{NFS3_write_verifier@{NFS3\_\-write\_\-verifier}!nfs_Write.c@{nfs\_\-Write.c}}
-\subsubsection{\setlength{\rightskip}{0pt plus 5cm}writeverf3 {\bf NFS3\_\-write\_\-verifier}}\label{nfs__Write_8c_a0}
+\index{nfs\_\-Write.c@{nfs\_\-Write.c}!NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}}
+\index{NFS3\_\-write\_\-verifier@{NFS3\_\-write\_\-verifier}!nfs_Write.c@{nfs\_\-Write.c}}
+\subsubsection[{NFS3\_\-write\_\-verifier}]{\setlength{\rightskip}{0pt plus 5cm}writeverf3 {\bf NFS3\_\-write\_\-verifier}}\label{nfs__Write_8c_c75a3dafdfdc69436850ab6d14017097}
 
 
 nfs\_\-Write: The NFS PROC2 and PROC3 WRITE
