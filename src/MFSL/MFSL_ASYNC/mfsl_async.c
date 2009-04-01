@@ -541,6 +541,8 @@ fsal_status_t MFSL_lookup (
 {
   fsal_status_t fsal_status ;
 
+  printf( "---> MFSL_lookup called \n" ) ;
+
   fsal_status = FSAL_lookup( &parent_directory_handle->handle,
 	             	     p_filename,      
                              p_context,
@@ -591,6 +593,7 @@ fsal_status_t MFSL_access(
     fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
 )
 {
+   printf( "---> MFSL_access called\n" ) ;
    return FSAL_access(  &object_handle->handle,
 			p_context,
 			access_type,
