@@ -256,7 +256,18 @@ int Init_Thread_MFSL( FILE * output,
     fprintf(output,"\n");
     return st.major;    
   }  
-  
+ 
+  /* get MFSL_Context */
+  st = MFSL_GetContext(  &context->mcontext, &context->context ) ;
+
+  if ( FSAL_IS_ERROR( st ) )
+  {
+    fprintf(output,"Error executing MFSL_GetContext:");
+    print_fsal_status(output,st);
+    fprintf(output,"\n");
+    return st.major;    
+  }  
+ 
   /* get root file handle */
   
   /* lookup */

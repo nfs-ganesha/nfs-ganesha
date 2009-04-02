@@ -239,10 +239,9 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
     return fsal_status ;
 
   /* Update the asynchronous metadata */
-  dir_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   dir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
-
+  dir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
 
   if( !mfsl_async_set_specdata( dir_handle, dir_pasyncdata ) )
     MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;

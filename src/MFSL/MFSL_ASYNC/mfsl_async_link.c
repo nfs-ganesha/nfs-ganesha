@@ -272,12 +272,10 @@ fsal_status_t MFSL_link(  mfsl_object_t         * target_handle,     /* IN */
     return fsal_status ;
 
   /* Update the asynchronous metadata */
-  tgt_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   tgt_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   tgt_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
   tgt_pasyncdata->async_attr.numlinks += 1 ;
 
-  dir_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   dir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
 
@@ -287,7 +285,9 @@ fsal_status_t MFSL_link(  mfsl_object_t         * target_handle,     /* IN */
   if( !mfsl_async_set_specdata( dir_handle, dir_pasyncdata ) )
     MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
 
- 
+  target_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+  dir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+
   /* Return the correct attributes */ 
   *tgt_attributes = tgt_pasyncdata->async_attr ;
   *dir_attributes = dir_pasyncdata->async_attr ;

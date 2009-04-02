@@ -277,7 +277,6 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
     return fsal_status ;
 
   /* Update the asynchronous metadata */
-  newfile_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   newfile_pasyncdata->async_attr = pprecreated->attr ;
 
   newfile_pasyncdata->async_attr.type = FSAL_TYPE_FILE ;
@@ -298,6 +297,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   /* Return the correct attributes */ 
   *object_attributes = newfile_pasyncdata->async_attr ;
   *object_handle = pprecreated->mobject ;
+  object_handle->health = MFSL_ASYNC_NEVER_SYNCED ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_create */
