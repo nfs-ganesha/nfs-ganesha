@@ -521,6 +521,30 @@ fsal_status_t MFSL_ASYNC_RefreshSyncletContext( mfsl_synclet_context_t  * pconte
   return status ;
 } /* MFSL_ASYNC_RefreshSyncletContext */
 
+
+/**
+ * 
+ * MFSL_ASYNC_is_synced: returns TRUE if the object is synced, FALSE is asynchronous.
+ *
+ * Returns TRUE if the object is synced, FALSE is asynchronous.
+ *
+ * @param mobject      [IN] pointer to MFSL object to be tested
+ *
+ * @return  TRUE if the object is synced, FALSE is asynchronous. 
+ *
+ */
+int MFSL_ASYNC_is_synced( mfsl_object_t * mobject )
+{
+   if( mobject == NULL ) 
+	return FALSE ;
+
+   if( mobject->health == MFSL_ASYNC_SYNCHRONOUS )
+ 	return TRUE ;
+
+   /* in all other case, returns FALSE */
+   return FALSE ;
+} /*  MFSL_ASYNC_is_synced */
+
 #endif /* ! _USE_SWIG */
 
 
@@ -540,8 +564,6 @@ fsal_status_t MFSL_lookup (
 )
 {
   fsal_status_t fsal_status ;
-
-  printf( "---> MFSL_lookup called \n" ) ;
 
   fsal_status = FSAL_lookup( &parent_directory_handle->handle,
 	             	     p_filename,      
@@ -593,7 +615,6 @@ fsal_status_t MFSL_access(
     fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
 )
 {
-   printf( "---> MFSL_access called\n" ) ;
    return FSAL_access(  &object_handle->handle,
 			p_context,
 			access_type,

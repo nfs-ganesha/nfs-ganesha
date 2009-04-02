@@ -439,6 +439,11 @@ cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent,
            return NULL ;
          }
 
+#ifdef _USE_MFSL
+      /* Copy the MFSL object to the cache */
+      memcpy( (char *)&(pentry->mobject), (char *)&object_handle, sizeof( mfsl_object_t ) ) ; 
+#endif
+
        /* Add this entry to the directory */
        if( cache_inode_add_cached_dirent( pentry_parent,
                                           pname, 

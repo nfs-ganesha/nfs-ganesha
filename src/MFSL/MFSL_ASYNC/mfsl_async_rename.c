@@ -289,14 +289,13 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
     return fsal_status ;
 
   /* Update the asynchronous metadata */
-  old_parentdir_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   old_parentdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   old_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
+  old_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
 
-
-  new_parentdir_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   new_parentdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   new_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
+  new_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
 
   if( !mfsl_async_set_specdata( old_parentdir_handle, old_parentdir_pasyncdata ) )
     MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;

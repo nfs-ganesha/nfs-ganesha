@@ -148,3 +148,4 @@
         - Bug Fix: possible race condition in cache_inode_readdir (badly placed rw_lock_downgrade) that could
           lead in having cache_inode_readdir_populate called twice at the same time.
         - MFSL_ASYNC: now, preallocated entries are owned by each 
+	- Byg Fix: bad MFSL_Context management in ganeshell

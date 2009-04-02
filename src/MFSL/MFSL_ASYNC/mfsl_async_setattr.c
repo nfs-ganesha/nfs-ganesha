@@ -242,9 +242,9 @@ fsal_status_t MFSL_setattrs(
 
  
   /* Update the associated times for this object */
-  pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
+  filehandle->health = MFSL_ASYNC_ASYNCHRONOUS ;
 
   /* merge the attributes to the asynchronous attributes */
   if( ( attrib_set->asked_attributes & FSAL_ATTR_SIZE ) ||

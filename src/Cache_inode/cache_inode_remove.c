@@ -165,7 +165,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t        * to_remove
         {
           return CACHE_INODE_INCONSISTENT_ENTRY ;
         }
-      
+   
       /* use the key to delete the entry */
       rc = HashTable_Del( ht, &key, &old_key, &old_value ) ;
       
@@ -265,6 +265,10 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
   cache_content_status_t    cache_content_status ;
   int                       to_remove_numlinks = 0 ;
   
+  /* pentry is a directory */
+  if( use_mutex )
+    P_w( &pentry->lock ) ;
+
   /* stats */
   pclient->stat.nb_call_total += 1 ;
   pclient->stat.func_stats.nb_call[CACHE_INODE_REMOVE] += 1 ;
@@ -277,15 +281,18 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
                                                  pclient, 
                                                  pcontext, 
                                                  &status, 
-                                                 use_mutex ) ) == NULL )
+                                                 FALSE ) ) == NULL )
     {
       *pstatus = status ;
-      return *pstatus ; 
-    }
+  
 
-  /* pentry is a directory */
-  if( use_mutex )
-    P_w( &pentry->lock ) ;
+      /* pentry is a directory */
+      if( use_mutex )
+        V_w( &pentry->lock ) ;
+
+      return *pstatus ; 
+    } 
+
   
   if( pentry->internal_md.type != DIR_BEGINNING && pentry->internal_md.type != DIR_CONTINUE )
     {
@@ -306,7 +313,7 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
       return *pstatus;
     }
   
-  /* A directory is empty if none of its pdir_chain itemps contains something */
+  /* A directory is empty if none of its pdir_chain items contains something */
   if( to_remove_entry->internal_md.type == DIR_BEGINNING &&
       to_remove_entry->object.dir_begin.has_been_readdir == CACHE_INODE_YES )
     {

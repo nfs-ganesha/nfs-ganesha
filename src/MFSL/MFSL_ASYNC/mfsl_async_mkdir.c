@@ -264,7 +264,6 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   if( FSAL_IS_ERROR( fsal_status ) )
    return fsal_status ;
 
-
   pasyncopdesc->op_func = MFSL_mkdir_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;
 
@@ -275,7 +274,6 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
     return fsal_status ;
 
   /* Update the asynchronous metadata */
-  newdir_pasyncdata->health = MFSL_ASYNC_ASYNCHRONOUS ;
   newdir_pasyncdata->async_attr = pprecreated->attr ;
 
   newdir_pasyncdata->async_attr.type = FSAL_TYPE_DIR ;
@@ -295,6 +293,7 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   /* Return the correct attributes */ 
   *object_attributes = newdir_pasyncdata->async_attr ;
   *object_handle = pprecreated->mobject ;
+  object_handle->health = MFSL_ASYNC_NEVER_SYNCED ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_mkdir */
