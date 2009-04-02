@@ -113,10 +113,10 @@
 
 typedef enum mfsl_async_health__ { MFSL_ASYNC_SYNCHRONOUS   = 0,
 				   MFSL_ASYNC_ASYNCHRONOUS  = 1,
-			           MFSL_ASYNC_DEAD          = 2 } mfsl_async_health_t ;
+                                   MFSL_ASYNC_NEVER_SYNCED  = 2,
+			           MFSL_ASYNC_DEAD          = 3 } mfsl_async_health_t ;
 
 typedef struct mfsl_object_specific_data__{
-  mfsl_async_health_t    health ;
   fsal_attrib_list_t     async_attr ;
 
   struct  mfsl_object_specific_data__ * next_alloc ; 
@@ -124,7 +124,8 @@ typedef struct mfsl_object_specific_data__{
 
 typedef struct mfsl_object__
 {
-  fsal_handle_t handle ; 
+  fsal_handle_t          handle ; 
+  mfsl_async_health_t    health ;
 } mfsl_object_t ;
 
 typedef struct mfsl_precreated_object__
@@ -364,5 +365,7 @@ fsal_status_t MFSL_ASYNC_GetSyncletContext( mfsl_synclet_context_t  * pcontext,
 
 fsal_status_t MFSL_ASYNC_RefreshSyncletContext( mfsl_synclet_context_t  * pcontext,
                                                  fsal_op_context_t       * pfsal_context  )  ;
+
+int MFSL_ASYNC_is_synced( mfsl_object_t * mobject ) ;
 
 #endif /* _MFSL_ASYNC_TYPES_H */
