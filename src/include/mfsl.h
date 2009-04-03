@@ -363,8 +363,9 @@ fsal_status_t MFSL_rename(
 );
 
 fsal_status_t MFSL_unlink(
-    mfsl_object_t           * parentdir_handle,     /* IN */
+    mfsl_object_t           * parentdir_handle,     /* INOUT */
     fsal_name_t             * p_object_name,        /* IN */
+    mfsl_object_t           * object_handle,        /* INOUT */
     fsal_op_context_t       * p_context,            /* IN */
     mfsl_context_t          * p_mfsl_context,       /* IN */
     fsal_attrib_list_t      * parentdir_attributes  /* [IN/OUT ] */

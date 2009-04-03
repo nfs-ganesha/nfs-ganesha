@@ -355,9 +355,17 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
       after_attr.asked_attributes = pclient->attrmask ;
 #ifdef _USE_MFSL
       cache_inode_get_attributes( pentry, &after_attr ) ;
-      fsal_status =  MFSL_unlink( &pentry->mobject, pnode_name, pcontext, &pclient->mfsl_context, &after_attr ) ;
+      fsal_status =  MFSL_unlink( &pentry->mobject, 
+				  pnode_name, 
+                                  &to_remove_entry->mobject, 
+				  pcontext, 
+				  &pclient->mfsl_context, 
+				  &after_attr ) ;
 #else
-      fsal_status =  FSAL_unlink( &fsal_handle_parent, pnode_name, pcontext, &after_attr ) ;
+      fsal_status =  FSAL_unlink( &fsal_handle_parent, 
+	`			  pnode_name, 
+				  pcontext, 
+				  &after_attr ) ;
 #endif
      
       /* Set the 'after' attr */

@@ -14,6 +14,7 @@ libmfslasync_la_SOURCES = mfsl_async.c           \
                           mfsl_async_truncate.c  \
                           mfsl_async_setattr.c   \
                           mfsl_async_getattr.c   \
+                          mfsl_async_lookup.c    \
                           mfsl_async_synclet.c   \
                           mfsl_async_hash.c
 

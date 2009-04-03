@@ -1483,6 +1483,7 @@ int fn_mfsl_unlink( int argc ,         /* IN : number of args in argv */
   
   if (FSAL_IS_ERROR(st = MFSL_unlink( &new_hdl,
 				      &objname,
+				      NULL, /* Bad idea, will probably segfault */
         			      &context->context,
         			      &context->mcontext,
 				      NULL))){

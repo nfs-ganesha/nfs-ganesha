@@ -805,11 +805,11 @@ cache_inode_status_t cache_inode_readdir_populate(  cache_entry_t           * pe
   /* If entry is asynchronous (via MFSL), it should not be repopulated until it is synced */
   if( MFSL_ASYNC_is_synced( &pentry_dir->mobject ) == FALSE )
    {
-       printf( "---> %p Not synced\n", pentry_dir ) ;
+      /* Directory is asynchronous, do not repopulate it and let it
+       * in the state 'has_been_readdir == FALSE' */  
       *pstatus = CACHE_INODE_SUCCESS ;
       return *pstatus ;
    }
-       printf( "---> %p YABON synced\n", pentry_dir ) ;
 #endif 
 
   /* If directory is already populated , there is no job to do */
