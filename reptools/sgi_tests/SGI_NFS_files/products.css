@@ -1,0 +1,18 @@
+BODY		{background: #FFFFFF; color: #000000;}
+A		{color: #660099;}
+A:active	{color: #9900CC;}
+A:visited {color: #7C7F87;}
+A:hover	{color: #9900CC;}
+OPTION 	{background-color: #CCCCCC;}
+.palette  {background-color: #C5C5DB;}
+.paletteGray  {background-color: #EEEEEE;}
+
+
+.tborder {background-color: #8F8FC2;}
+.ttophead {background-color: #D9D9D9;}
+.thead {background-color: #663399;}
+.tsubhead {background-color: #B3B3D9;}
+.trow1 {background-color: #FFFFFF;}
+.trow2 {background-color: #EFEFEF;}
+
+
