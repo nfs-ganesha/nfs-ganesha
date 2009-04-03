@@ -1,0 +1,446 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd">
+<html><head>
+
+
+
+<title>SGI - Developer Central Open Source | NFS</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta name="description" content="SGI - Open Source Projects">
+<meta name="keywords" content="SGI, Open Source, Linux, source code, NFS, NFSv4, XFS, test, debug">
+<meta name="owner" content="oss-project-owners">
+<meta http-equiv="Expires" content="Fri, 31 Dec 1990 23:59:59 GMT">
+
+<!-- This style will define the main link title to look inactive -->
+<style type="text/css"><!-- #homeLink {color: #000000; text-decoration: none;} --></style>
+
+<!-- This header is using the OLD sgi styles.  This is not to be used with the NEW sgi styles. -->
+<!-- created 03/28/06 -->
+<link rel="icon" type="image/png" href="http://oss.sgi.com/favicon.ico">
+
+<link rel="stylesheet" href="SGI_NFS_files/generic.css" type="text/css">
+<link rel="stylesheet" href="SGI_NFS_files/products.css" type="text/css">
+<script type="text/javascript" src="SGI_NFS_files/style_sniffer.js"></script><link rel="stylesheet" href="SGI_NFS_files/mozilla.css" type="text/css">
+<script type="text/javascript" src="SGI_NFS_files/hitbox-vars.js"></script>
+<script type="text/javascript" src="SGI_NFS_files/util.js"></script>
+<script type="text/javascript">
+function ChangeValue(x,y)
+{
+if (x.value == y)
+	{x.value = "";}
+}
+</script>
+
+
+</head><body alink="#9900cc" bgcolor="#ffffff" link="#660099" text="#000000" vlink="#7c7f87">
+<table id="headerBackground" border="0" cellpadding="0" cellspacing="0" width="100%">
+<tbody><tr>
+<td>
+
+<table id="globalHeader" border="0" cellpadding="0" cellspacing="0" width="100%">
+<tbody><tr>
+<td rowspan="2" valign="top" width="112"><a href="http://www.sgi.com/"><img src="SGI_NFS_files/topbar_logo.gif" alt="SGI" border="0" height="84" width="112"></a></td>
+<td class="globalSubnav" align="right" valign="top" width="648">
+
+	<table border="0" cellspacing="0"><tbody><tr>
+	<td>
+<div id="globalSubnavContainer"><span class="bar"><a href="http://www.sgi.com/">Home</a></span><span class="bar"><a href="http://www.sgi.com/sales/">How to Buy</a></span><span class="bar"><a href="http://www.sgi.com/company_info/">About SGI</a></span><span class="endbar"><a href="http://www.sgi.com/global/">Worldwide</a></span></div>
+	</td>
+	<td align="right">
+		<!-- Start Search -->
+			<form id="gs" method="get" action="http://www.sgi.com/cgi-bin/search">
+			<fieldset><legend></legend><input name="q" value="Search" onfocus="ChangeValue(this,'Search')" size="18" class="box" type="text">
+			<button type="submit" name="btnG" class="search"></button><input name="btnG" value="Search" class="hideButton" type="submit">
+			<input name="client" value="sgi" type="hidden">
+          	<input name="proxystylesheet" value="sgi" type="hidden">
+          	<input name="output" value="xml_no_dtd" type="hidden">
+          	<input name="site" value="sgi" type="hidden"></fieldset>
+			</form>
+		<!-- End Search -->
+	</td>
+	</tr></tbody></table>
+<img src="SGI_NFS_files/dot_clear_002.gif" alt="" border="0" height="1" width="648">
+
+</td>
+<td></td>
+</tr>
+
+<tr>
+<td id="topNav" align="right" valign="bottom" width="648">
+<a href="http://www.sgi.com/products/" title="Products and Services"><img class="tighten" src="SGI_NFS_files/topnav_prod_off.html" alt="Products &amp; Services" border="0" height="27" width="163"></a>
+<a href="http://www.sgi.com/industries/" title="Industry Solutions"><img class="tighten" src="SGI_NFS_files/topnav_ind_off.html" alt="Industry Solutions" border="0" height="27" width="153"></a>
+<a href="http://www.sgi.com/support/" title="Support and Downloads"><img class="tighten" src="SGI_NFS_files/topnav_supp_off.html" alt="Support &amp; Downloads" border="0" height="27" width="172"></a>
+<a href="http://www.sgi.com/developers/" title="Developers"><img src="SGI_NFS_files/topnav_dev_off.html" alt="Developers" border="0" height="27" width="114"></a>
+</td>
+<td id="topNavEnd"><span style="visibility: hidden; color: rgb(96, 47, 165);">...</span></td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+<!-- End Primary Navigation -->
+
+<table border="0" cellpadding="0" cellspacing="0" width="780">
+<tbody><tr>
+    <!-- This is the site banner TD -->
+    <td colspan="5" align="right">
+
+
+<img src="SGI_NFS_files/ban_open.gif" alt="Open Source" height="68" width="271">
+
+
+
+
+
+<!-- Do not remove the next four lines before the sidenav -->
+</td>
+</tr>
+<tr valign="top">
+        <td width="130">
+
+<!-- Start Side Nav -->
+<!-- #include virtual="/includes/rev2/i_sidenav.html"-->
+<!-- End Side Nav -->
+<!-- #include virtual="/includes/rev2/i_sep_left.html"-->
+
+<!-- Start Side Nav -->
+<div id="sidenav">
+	<table border="0" cellpadding="0" cellspacing="0" width="130">
+
+<!-- About : this is no longer used 
+  <TR VALIGN="TOP">
+  <TR><TD><IMG SRC="/images/common/bullets_dev.gif" ALT="" WIDTH="18" HEIGHT="10"></TD>
+  <TD><A HREF="../../about/system.html">About this site</A></TD></TR>
+  <TR><TD><IMG SRC="/images/dots/dot_clear.gif" ALT="" HEIGHT="20" WIDTH="1"></TD><TD></TD></TR> -->
+
+<!-- Project Menu -->
+<tbody><tr valign="top">
+<td><img src="SGI_NFS_files/bullets_dev.html" alt="" height="10" width="18"></td>
+<td><b>NFS Test Tools</b></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#introduction">Introduction</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#checkstream">Checkstream</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#weber">Weber</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#pmdanfs">NFS PMDA</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#pmdasamba">Samba PMDA</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#ddnfs">Ddnfs</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#ttcp">Ttcp</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#pmapload">Pmapload</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#rpc-exerciser">RPC Exerciser</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#testfs">Testfs</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="#streplay">StReplay</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+
+<!-- Project List link -->
+<tr valign="top">
+<td><img src="SGI_NFS_files/bullets_dev.html" alt="" height="10" width="18"></td>
+<td><b>SGI Open Source</b></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://oss.sgi.com/projects/">Project List</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="20" width="1"></td><td></td></tr>
+
+
+<tr valign="top">
+<td><img src="SGI_NFS_files/bullets_dev.html" alt="" height="10" width="18"></td>
+<td><b>SGI Support and Resources</b></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://www.sgi.com/developers/technology/linux/">Press Releases</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://www.sgi.com/developers/technology/linux/">SGI and Linux</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://support.sgi.com/linux/">Supportfolio for Linux</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://www.sgi.com/support/">Customer Services</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="20" width="1"></td><td></td></tr>
+
+
+<tr valign="top">
+<td><img src="SGI_NFS_files/bullets_dev.html" alt="" height="10" width="18"></td>
+<td><b>Community Resources</b></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://oss.sgi.com/newsgroups.html">Newsgroups &amp; Mailing Lists</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://oss.sgi.com/support.html">Support Links</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://oss.sgi.com/sites.html">Open Source Sites</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="8" width="1"></td><td></td></tr>
+<tr><td></td><td><a href="http://oss.sgi.com/LDP/">Linux Documentation Project</a></td></tr>
+<tr><td><img src="SGI_NFS_files/dot_clear.gif" alt="" height="20" width="1"></td><td></td></tr>
+</tbody></table>
+</div>
+
+
+
+<!-- Start sep_left.htmlf -->
+
+</td><td valign="top" width="30"><img src="SGI_NFS_files/dot_clear_002.gif" alt="" height="2" width="30"></td><td>
+
+
+<!-- End sep_left.htmlf -->
+
+<div class="content">
+</div>
+
+
+
+
+
+<br>
+<h1><b><font face="ARIAL NARROW,HELVETICA">
+SGI NFS Test Tools
+</font></b></h1>
+
+<!-- Start Project Content -->
+
+<a name="introduction"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Introduction
+</font></h2>
+<p>
+This page contains a number of internal SGI testing and debugging
+tools for NFS.  Some of these tools are also applicable to filesystems
+in general.
+</p>
+
+<p><b>License</b></p>
+
+<p>
+These tools are being released under the GNU General Public License
+(GPL) version 2, in the hope that the Linux filesystem development
+community may find them useful.
+</p>
+
+<p><b>Support</b></p>
+
+<p>
+These tools are provided as-is, without any support.  Please do not
+contact SGI for support on any of these tools.
+</p>
+
+<p>
+Some of these tools are unfinished.  Others rely on build
+infrastructure in internal SGI trees which cannot be released.
+The tools are provided as tarball snapshots of internal SGI source
+control trees; for a number of technical reasons it is not possible
+to provide access to those trees or to create external repositories.
+</p>
+
+
+
+
+<a name="checkstream"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Checkstream
+</font></h2>
+<p>
+Simple data corruption testing utilities based on the concept of
+generating a stream of small self-contained records which can be
+decoded in a way which makes certain common data corruption modes
+automatically diagnosable.  Has been useful for automated testing
+of NFS, XFS, and CXFS in SGI.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/checkstream-oss-20090302.tar.bz2">checkstream-oss-20090302.tar.bz2</a>
+</p>
+
+<a name="weber"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Weber
+</font></h2>
+<p>
+Test load generator for NFS.  Uses multiple threads, multiple sockets
+and multiple IP addresses to simulate loads from many machines,
+thus enabling testing of NFS server setups with larger client counts
+than can be tested with physical infrastructure (or Virtual Machine
+clients).  Has been useful in automated NFS testing and as a pinpoint
+NFS load generator tool for performance development.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/weber-oss-20090303.tar.bz2">weber-oss-20090303.tar.bz2</a>
+</p>
+
+<a name="pmdanfs"></a><h2><font face="ARIAL NARROW,HELVETICA">
+NFS PMDA
+</font></h2>
+<p>
+PCP Data Agent for extended NFS server statistics.  Exports
+to PCP the new statistics (measuring per-client and per-server
+performance) which are provided by SGI's EnhancedNFS kernel
+patches.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/pmdanfs-oss-20090303.tar.bz2">pmdanfs-oss-20090303.tar.bz2</a>
+</p>
+
+
+<a name="pmdasamba"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Samba PMDA
+</font></h2>
+<p>
+PCP Data Agent for extended Samba server statistics.  Exports
+to PCP the additional statistics (measuring per-client and
+per-server performance) which are provided by SGI's patches
+to Samba.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/pmdasamba-oss-20090303.tar.bz2">pmdasamba-oss-20090303.tar.bz2</a>
+</p>
+
+
+<a name="ddnfs"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Ddnfs
+</font></h2>
+<p>
+Filesystem load generation program designed to simulate the
+IO load placed on an XFS filesystem by the NFS server in
+response to certain NFS loads.  Intended for use in XFS
+automated testing, to test performance and correctness of
+certain XFS functionality not otherwise exercised by the
+existing XFS test suite, but never integrated into XFSQA.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/ddnfs-oss-20090302.tar.bz2">ddnfs-oss-20090302.tar.bz2</a>
+</p>
+
+<a name="ttcp"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Cluster Mode TTCP
+</font></h2>
+<p>
+TTCP is the venerable Public Domain "Test TCP" tool used
+since the early 1980s by the Unix community.  This version
+has been used for network testing by SGI's Melbourne group.
+It's based on the Irix version, which includes a number of
+minor bugfixes by SGI and other authors.  It also includes
+a Cluster Mode feature added by SGI, which is useful for
+synchronised testing of aggregate bandwidth between one
+server machine and multiple client machines.  This is a
+common scenario for cluster testing and has been used in
+SGI for performance testing of NFS servers for ICE clusters.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/ttcp-oss-20090303.tar.bz2">ttcp-oss-20090303.tar.bz2</a>
+</p>
+
+
+<a name="pmapload"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Pmapload
+</font></h2>
+<p>
+Test suite for the portmap and rpcbind programs (which
+are NFS infrastructure components based on code open-sourced
+by Sun Microsystems and used by every Unix and Linux).
+Developed by SGI to test changes imported into those programs
+from newer Sun source code during the NFS on IPv6 work for
+Irix several years ago.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/pmapload-oss-20090312.tar.bz2">pmapload-oss-20090312.tar.bz2</a>
+</p>
+
+<a name="rpc-exerciser"></a><h2><font face="ARIAL NARROW,HELVETICA">
+RPC Exerciser
+</font></h2>
+<p>
+Test suite for the userspace RPC infrastructure libraries,
+(which are NFS infrastructure components based on code open-sourced
+by Sun Microsystems and used by every Unix and Linux).
+Developed by SGI to test changes imported into those libraries
+from newer Sun source code during the NFS on IPv6 work for
+Irix several years ago.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/rpc-exerciser-oss-20090312.tar.bz2">rpc-exerciser-oss-20090312.tar.bz2</a>
+</p>
+
+<a name="testfs"></a><h2><font face="ARIAL NARROW,HELVETICA">
+Testfs
+</font></h2>
+<p>
+Linux kernel module which provides an in-memory filesystem which
+forgets all data written to it.  Also can be configured to simulate
+timing behaviour on reads and writes.  This is useful for NFS
+performance testing without a fast disk subsystem.
+</p>
+
+<p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/testfs.patch">testfs.patch</a>
+</p>
+
+<a name="streplay"></a><h2><font face="ARIAL NARROW,HELVETICA">
+StReplay
+</font></h2>
+<p>
+
+Program which reads the system call trace of another program
+(obtained using the widely available strace utility) and replays
+the IO pattern.  This was intended to be used for automated NFS
+and XFS testing and for NFS and XFS problem diagnosis, but was
+never completed as the author transferred to another team.  Could
+be the basis for a very useful filesystem test tool.
+
+</p><p>
+Download tarball: <a href="http://oss.sgi.com/projects/nfs/testtools/streplay-oss-20090303.tar.bz2">streplay-oss-20090303.tar.bz2</a>
+</p>
+
+<br>
+<br>
+
+<!-- End Project Content -->
+
+
+
+<!-- Start sep_left.htmlf -->
+
+</td><td valign="top" width="30"><img src="SGI_NFS_files/dot_clear_002.gif" alt="" height="2" width="30"></td><td>
+
+
+<!-- End sep_left.htmlf -->
+
+<div class="content">
+</div>
+
+
+</td><td>
+<!-- include virtual="/includes/rev2/i_highlights.html"-->
+
+</td></tr>
+
+
+<!-- Begin trademark footer -->
+<tr>
+<td colspan="3" align="center" valign="bottom">
+<div id="footer-full">
+
+	<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="center">
+	<a href="http://www.sgi.com/cgi-bin/feedback/index.cgi">Contact Us</a> |
+	<a href="http://www.sgi.com/site_contents.html">Site Map</a> |
+	<a href="http://www.sgi.com/company_info/trademarks/">Trademarks</a> |
+	<a href="http://www.sgi.com/company_info/privacy.html">Privacy</a> |
+	Using this site means you accept its <a href="http://www.sgi.com/company_info/terms.html">Terms of Use</a></td></tr>
+	<tr><td class="footer" align="center">Copyright © 1993-2007 Silicon Graphics, Inc. All rights reserved.
+	</td></tr></tbody></table>
+
+</div>
+</td>
+</tr>
+</tbody></table>
+<!-- End trademark footer -->
+<script type="text/javascript" defer="defer" src="SGI_NFS_files/hitbox-functions.js"></script>
+
+</body></html>
