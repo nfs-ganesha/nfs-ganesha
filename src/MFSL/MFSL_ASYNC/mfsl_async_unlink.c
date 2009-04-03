@@ -172,6 +172,7 @@ fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handl
  */
 fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN */
     			    fsal_name_t           * p_object_name,        /* IN */
+			    mfsl_object_t         * object_handle,        /* INOUT */
     			    fsal_op_context_t     * p_context,            /* IN */
     			    mfsl_context_t        * p_mfsl_context,       /* IN */
     			    fsal_attrib_list_t    * dir_attributes        /* [ IN/OUT ] */ )
@@ -179,6 +180,7 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   fsal_status_t fsal_status ;
   mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
   mfsl_object_specific_data_t * dir_pasyncdata   = NULL ;
+  mfsl_object_specific_data_t * obj_pasyncdata   = NULL ;
 
   GET_PREALLOC( pasyncopdesc,
                 p_mfsl_context->pool_async_op,
@@ -209,7 +211,8 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
 	/* In this case use object_attributes parameter to initiate asynchronous object */
 	dir_pasyncdata->async_attr = *dir_attributes ;
    }
-  
+ 
+ 
   fsal_status = MFSAL_unlink_check_perms( dir_handle, 
 					  dir_pasyncdata, 
 					  p_object_name,
@@ -246,7 +249,23 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   if( !mfsl_async_set_specdata( dir_handle, dir_pasyncdata ) )
     MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
 
- 
+  if( !mfsl_async_get_specdata( object_handle, &obj_pasyncdata ) )
+   {
+        /* The object to be deleted is not asynchronous, but it has
+         * has to becomo asynchronous to be correctly managed until the FSAL deletes it */   
+  	GET_PREALLOC( obj_pasyncdata,
+        	      p_mfsl_context->pool_spec_data,
+                      mfsl_param.nb_pre_async_op_desc,
+               	      mfsl_object_specific_data_t,
+               	      next_alloc ) ;
+
+        /* Possible bug here with getattr because it has not data */
+   }
+
+  obj_pasyncdata->deleted = TRUE ;
+  if( !mfsl_async_set_specdata( object_handle, obj_pasyncdata ) )
+    		MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+
   /* Return the correct attributes */ 
   *dir_attributes = dir_pasyncdata->async_attr ;
 

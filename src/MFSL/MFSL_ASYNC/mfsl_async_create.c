@@ -287,9 +287,10 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   newfile_pasyncdata->async_attr.owner = 0 ; /** @todo penser a mettre la "vraie" uid ici */
   newfile_pasyncdata->async_attr.group = 0 ; /** @todo penser a mettre la "vraie" gid ici */
   
-
   newfile_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   newfile_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
+
+  newfile_pasyncdata->deleted = FALSE ;
 
   if( !mfsl_async_set_specdata( pnewfile_handle, newfile_pasyncdata ) )
     MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
