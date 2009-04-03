@@ -553,27 +553,6 @@ int MFSL_ASYNC_is_synced( mfsl_object_t * mobject )
  *              Common Filesystem calls.
  ******************************************************/
 
-
-fsal_status_t MFSL_lookup (
-    mfsl_object_t         * parent_directory_handle,        /* IN */
-    fsal_name_t           * p_filename,                     /* IN */
-    fsal_op_context_t     * p_context,                      /* IN */
-    mfsl_context_t        * p_mfsl_context,                 /* IN */
-    mfsl_object_t         * object_handle,                  /* OUT */
-    fsal_attrib_list_t    * object_attributes               /* [ IN/OUT ] */
-)
-{
-  fsal_status_t fsal_status ;
-
-  fsal_status = FSAL_lookup( &parent_directory_handle->handle,
-	             	     p_filename,      
-                             p_context,
-                             &object_handle->handle, 
-                             object_attributes ) ;
-   return fsal_status ;
-} /* MFSL_lookup */
-
-
 fsal_status_t MFSL_lookupPath (
     fsal_path_t           * p_path,            /* IN */
     fsal_op_context_t     * p_context,         /* IN */

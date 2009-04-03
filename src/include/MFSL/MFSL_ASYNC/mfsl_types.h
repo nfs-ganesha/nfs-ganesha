@@ -113,12 +113,11 @@
 
 typedef enum mfsl_async_health__ { MFSL_ASYNC_SYNCHRONOUS   = 0,
 				   MFSL_ASYNC_ASYNCHRONOUS  = 1,
-                                   MFSL_ASYNC_NEVER_SYNCED  = 2,
-			           MFSL_ASYNC_DEAD          = 3 } mfsl_async_health_t ;
+                                   MFSL_ASYNC_NEVER_SYNCED  = 2 } mfsl_async_health_t ;
 
 typedef struct mfsl_object_specific_data__{
   fsal_attrib_list_t     async_attr ;
-
+  unsigned int           deleted ;
   struct  mfsl_object_specific_data__ * next_alloc ; 
 } mfsl_object_specific_data_t ;
 
