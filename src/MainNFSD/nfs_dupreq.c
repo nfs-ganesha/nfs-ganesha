@@ -237,7 +237,7 @@ int clean_entry_dupreq(  LRU_entry_t * pentry, void * addparam )
   buffkey.len = 0 ;
   
 #ifdef _DEBUG_DUPREQ  
-  DisplayLog( "NFS DUPREQ: Garbagge collection on xid=%u", pdupreq->xid ) ;
+  DisplayLog( "NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid ) ;
 #endif
 
   rc = HashTable_Del( ht_dupreq, &buffkey, NULL, NULL );

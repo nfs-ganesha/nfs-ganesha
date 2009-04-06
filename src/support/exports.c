@@ -705,9 +705,10 @@ static int BuildExportEntry( config_item_t block,
   p_entry->filesystem_id.major = (fsal_u64_t)666;
   p_entry->filesystem_id.minor = (fsal_u64_t)666;  
 
-  /** @todo BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite */  
-  p_entry->MaxWrite = (fsal_size_t)4096 ;
-  p_entry->MaxRead  = (fsal_size_t)4096 ;
+  p_entry->MaxWrite = (fsal_size_t)16384;
+  p_entry->MaxRead  = (fsal_size_t)16384;
+  p_entry->PrefWrite = (fsal_size_t)16384;
+  p_entry->PrefRead  = (fsal_size_t)16384;
 
   strcpy( p_entry->FS_specific, "" );
   strcpy( p_entry->FS_tag, "" ); 
@@ -1877,9 +1878,10 @@ exportlist_t * BuildDefaultExport()
   p_entry->filesystem_id.major = (fsal_u64_t)101;
   p_entry->filesystem_id.minor = (fsal_u64_t)101;  
 
-  /** @todo BUGAZOMEU : temporaire, bug de parsing MaxRead/MaxWrite */
-  p_entry->MaxWrite = (fsal_size_t)4096 ;
-  p_entry->MaxRead  = (fsal_size_t)4096 ;
+  p_entry->MaxWrite = (fsal_size_t)16384;
+  p_entry->MaxRead  = (fsal_size_t)16384;
+  p_entry->PrefWrite = (fsal_size_t)16384;
+  p_entry->PrefRead  = (fsal_size_t)16384;
 
   strcpy( p_entry->FS_specific, "" );
   strcpy( p_entry->FS_tag, "ganesha" );
@@ -2392,7 +2394,7 @@ int nfs_export_create_root_entry( exportlist_t *  pexportlist, hash_table_t * ht
           exit ( 1 ) ;
         }
       else
-        DisplayLog( "NFS STARTUP: small cache inode client successfully inited" ) ;
+        DisplayLog( "NFS STARTUP: small cache inode client successfully initialized" ) ;
 
       /* creating the datacache client for recovering data cache */
       if( cache_content_client_init( &recover_datacache_client, nfs_param.cache_layers_param.cache_content_client_param )  )

@@ -151,3 +151,11 @@
 	- Bug Fix: bad MFSL_Context management in ganeshell
 	- Bug Fix: deleted entry can no more be lookuped and accessed before
 	  their real deletion.
+	- Lustre v2 FSAL Beta
+	- Fixed bug in RW_lock_downgrade function
+	- Fixed weak locking in cache_inode_remove
+	- I/O optimization and fixes
+	- Improved fd cache management
+	- Tweak fixes in logs
+	- A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels
+

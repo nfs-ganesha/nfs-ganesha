@@ -341,7 +341,7 @@ int nfs_Init_svc( )
  DisplayLog( "netconfig found for UDPv6 and TCPv6" ) ;
 #endif
 
-  /* RW_lock need to be inited */
+  /* RW_lock need to be initialized */
   rw_lock_init( &Svc_lock ) ;
   rw_lock_init( &Svc_fd_lock ) ;
 #endif /* _USE_TIRPC */
@@ -1778,7 +1778,7 @@ void constructor_nfs_request_data_t( void * ptr )
 {
   if( nfs_Init_request_data( ptr ) != 0 )
      {
-        DisplayLog( "NFS INIT: Error while initing request data " ) ;
+        DisplayLog( "NFS INIT: Error initializing request data " ) ;
         exit( 1 ) ;
      }
 }

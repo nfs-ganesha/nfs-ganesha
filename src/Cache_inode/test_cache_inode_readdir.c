@@ -188,7 +188,7 @@ main(int argc, char * argv[] )
   /* Init the Buddy System allocation */
   if( ( rc = BuddyInit( NULL ) ) != BUDDY_SUCCESS )
     {
-      fprintf( stderr, "Error while Initing the Buddy system allocator"  ) ;
+      fprintf( stderr, "Error while initializing the Buddy system allocator"  ) ;
       exit( 1 ) ;
     }
 

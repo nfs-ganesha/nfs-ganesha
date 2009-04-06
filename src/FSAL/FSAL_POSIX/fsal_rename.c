@@ -137,8 +137,10 @@ fsal_status_t FSAL_rename(
     errsv = errno;
     ReleaseTokenFSCall();
     if ( rc )
+    {
       if (errsv != ENOENT)
         Return( posix2fsal_error(errsv), errsv, INDEX_FSAL_rename );
+    }
     else if ( new_parent_buffstat.st_uid != p_context->credential.user 
                 && buffstat.st_uid != p_context->credential.user 
                 && p_context->credential.user != 0 )

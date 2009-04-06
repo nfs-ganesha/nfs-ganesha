@@ -292,7 +292,7 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
   DisplayLogLevel( NIV_FULL_DEBUG, "NFS DISPATCH: Program %d, Version %d, Function %d", 
                    ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc ) ;
 #endif  
-  /* Initing RPC structure */
+  /* initializing RPC structure */
   memset( &arg_nfs, 0, sizeof( arg_nfs ) ) ;
   memset( &res_nfs, 0, sizeof( res_nfs ) ) ;
 
@@ -863,17 +863,17 @@ void * worker_thread( void * IndexArg )
       DisplayLog( "NFS WORKER #%d: Memory manager could not be initialized, exiting...", index ) ;
       exit( 1 ) ;
     }
-  DisplayLog( "NFS WORKER #%d: Memory manager successfully initialized", index ) ;
+  DisplayLogLevel( NIV_EVENT, "NFS WORKER #%d: Memory manager successfully initialized", index ) ;
 #endif
 
-  DisplayLog( "NFS WORKER #%d: my pthread id is %p", index, (caddr_t)pthread_self() ) ;
+  DisplayLogLevel( NIV_DEBUG, "NFS WORKER #%d: my pthread id is %p", index, (caddr_t)pthread_self() ) ;
 
   /* Initialisation of credential for current thread */ 
-  DisplayLog( "NFS WORKER #%d: Initialization of thread's credential", index ) ;
+  DisplayLogLevel( NIV_DEBUG, "NFS WORKER #%d: Initialization of thread's credential", index ) ;
   if ( FSAL_IS_ERROR( FSAL_InitClientContext( &pmydata->thread_fsal_context )) )
     {
       /* Failed init */
-      DisplayLog( "NFS  WORKER #%d: Error initing thread's credential", index ) ;
+      DisplayLog( "NFS  WORKER #%d: Error initializing thread's credential", index ) ;
       exit( 1 ) ;
     }
       
@@ -888,7 +888,7 @@ void * worker_thread( void * IndexArg )
       DisplayLog( "NFS WORKER #%d: Cache Inode client could not be initialized, exiting...", index ) ;
       exit( 1 ) ;
     }
-  DisplayLog( "NFS WORKER #%d: Cache Inode client successfully initialized", index ) ;
+  DisplayLogLevel( NIV_DEBUG, "NFS WORKER #%d: Cache Inode client successfully initialized", index ) ;
  
 #ifdef _USE_MFSL
   if( FSAL_IS_ERROR( MFSL_GetContext(  &pmydata->cache_inode_client.mfsl_context,
@@ -909,7 +909,7 @@ void * worker_thread( void * IndexArg )
       DisplayLog( "NFS WORKER #%d: Cache Content client could not be initialized, exiting...", index ) ;
       exit( 1 ) ;
     }
-  DisplayLog( "NFS WORKER #%d: Cache Content client successfully initialized", index ) ;
+  DisplayLogLevel( NIV_DEBUG, "NFS WORKER #%d: Cache Content client successfully initialized", index ) ;
 
   /* The worker thread is not garbagging anything at the time it starts */
   pmydata->gc_in_progress = FALSE ;
@@ -920,6 +920,8 @@ void * worker_thread( void * IndexArg )
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;  
  
+  DisplayLogLevel( NIV_EVENT, "NFS WORKER #%d successfully initialized", index ) ;
+
   /* Worker's infinite loop */
   while( 1 )
     {
@@ -1109,7 +1111,7 @@ void * worker_thread( void * IndexArg )
       
       if( pmydata->passcounter > nfs_param.worker_param.nb_before_gc )
         {
-          /* Garbagge collection on dup req cache */
+          /* Garbage collection on dup req cache */
 #ifdef _DEBUG_DISPATCH
           DisplayLogLevel( NIV_DEBUG, "NFS_WORKER #%d: before dupreq invalidation nb_entry=%d nb_invalid=%d", 
                            index, pmydata->duplicate_request->nb_entry, pmydata->duplicate_request->nb_invalid ) ;
@@ -1133,24 +1135,24 @@ void * worker_thread( void * IndexArg )
                            index, pmydata->duplicate_request->nb_entry, pmydata->duplicate_request->nb_invalid ) ;
 
           /* Performing garbabbge collection */
-          DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbagge collecting on pending request list", index ) ;
+          DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbage collecting on pending request list", index ) ;
 #endif
           pmydata->passcounter = 0 ;
 	  P( pmydata->request_pool_mutex ) ;
 
           if( LRU_gc_invalid( pmydata->pending_request, (void *)&pmydata->request_pool ) != LRU_LIST_SUCCESS )
             DisplayLogLevel( NIV_CRIT, 
-                             "NFS WORKER #%d: ERROR: Impossible garbagge collection on pending request list",
+                             "NFS WORKER #%d: ERROR: Impossible garbage collection on pending request list",
                              index ) ;
           else
-            DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbagge collection on pending request list OK", index ) ;
+            DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbage collection on pending request list OK", index ) ;
           
 	  V( pmydata->request_pool_mutex ) ;
 
         }
 #ifdef _DEBUG_DISPATCH          
       else
-        DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbagge collection isn't necessary count=%d, max=%d", 
+        DisplayLogLevel( NIV_FULL_DEBUG, "NFS WORKER #%d: garbage collection isn't necessary count=%d, max=%d", 
                          index, pmydata->passcounter, nfs_param.worker_param.nb_before_gc ) ;
 #endif
       pmydata->passcounter += 1 ;
@@ -1173,7 +1175,7 @@ void * worker_thread( void * IndexArg )
        }
  
 
-      /* If needed, perform garbagge collection on cache_inode layer */
+      /* If needed, perform garbage collection on cache_inode layer */
       P( lock_nb_current_gc_workers )  ;
       if( nb_current_gc_workers < nfs_param.core_param.nb_max_concurrent_gc )
 	{
@@ -1188,17 +1190,16 @@ void * worker_thread( void * IndexArg )
 	{
           pmydata->gc_in_progress = TRUE ;
 #ifdef _DEBUG_DISPATCH
-	  DisplayLogLevel( NIV_DEBUG, "There are %d concurrent garbagge collection", nb_current_gc_workers ) ;
+	  DisplayLogLevel( NIV_DEBUG, "There are %d concurrent garbage collection", nb_current_gc_workers ) ;
 #endif
 
           if( cache_inode_gc( pmydata->ht, 
                               &(pmydata->cache_inode_client), 
                               &cache_status ) != CACHE_INODE_SUCCESS ) 
             {
-              DisplayLogLevel( NIV_CRIT, "NFS DISPATCHER: FAILURE: Bad cache_inode garbagge collection" ) ;
+              DisplayLogLevel( NIV_CRIT, "NFS WORKER: FAILURE: Bad cache_inode garbage collection" ) ;
             }
-  	 
- 
+
 	  P( lock_nb_current_gc_workers )  ;
 	  nb_current_gc_workers -= 1 ;
           V( lock_nb_current_gc_workers )  ;
