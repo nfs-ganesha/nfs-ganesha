@@ -448,6 +448,8 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
   LRU_status_t                   lru_status ;
   unsigned int                   chosen_synclet = 0 ;  
   unsigned int                   passcounter = 0 ;
+  struct timeval                 current ;
+  mfsl_async_op_desc_t         * pasyncopdesc = NULL ; 
 
   SetNameFunction( "MFSL_ASYNC ADT" ) ;
 
@@ -474,15 +476,30 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
   while( !end_of_mfsl )
    {
       /* Sleep for a while */
-      sleep( mfsl_param.adt_sleeptime ) ;
+      usleep( 60000 ) ;
+
+      // sleep( mfsl_param.adt_sleeptime ) ;
+      if( gettimeofday( &current, NULL ) != 0 )
+       {
+           /* Could'not get time of day... Stopping, this may need a major failure */
+           DisplayLog( " cannot get time of day..." ) ;
+           continue ;
+       }
   
-      DisplayLogLevel( NIV_DEBUG, "Awaken... Looking for things to be synced" ) ;
    
       P( mutex_async_list ) ;
       for( pentry_dispatch = async_op_lru->LRU ; pentry_dispatch != NULL ; pentry_dispatch = pentry_dispatch->next )
         {
+           /* Entries are in chronological order, they should be managed in the asynchronous window only */
 	   if( pentry_dispatch->valid_state == LRU_ENTRY_VALID )
             {
+                /* Get the async op to be proceeded */
+                pasyncopdesc = (mfsl_async_op_desc_t *)(pentry_dispatch->buffdata.pdata ) ;
+
+		/* Manage ops that are older than the duration of the asynchronous window */
+                if( current.tv_sec - pasyncopdesc->op_time.tv_sec < mfsl_param.adt_sleeptime   )
+                   break ;
+
 		/* Choose a synclet to operate on */
                 chosen_synclet =  mfsl_async_choose_synclet( ) ;
 
@@ -526,8 +543,6 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
 
 
       V( mutex_async_list ) ;
-
-      DisplayLogLevel( NIV_DEBUG, "Check done... going back to sleep..." ) ;
    }
 
   DisplayLog( "Terminated..." ) ;
