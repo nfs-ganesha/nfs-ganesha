@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+targetNamespace="urn:snmp_admin"
+xmlns="urn:snmp_admin"
+elementFormDefault="qualified">
+
+<!-- simple element -->
+<xs:element name="id" type="xs:integer"/>
+<xs:element name="name" type="xs:string"/>
+<xs:element name="desc" type="xs:string"/>
+<xs:element name="value" type="xs:string"/>
+<xs:element name="type">
+	<xs:simpleType>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="INTEGER"/>
+			<xs:enumeration value="STRING"/>
+			<xs:enumeration value="BIGINT"/>
+			<xs:enumeration value="REAL"/>
+			<xs:enumeration value="TIMETICKS"/>
+			<xs:enumeration value="IP"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:element> 
+<xs:element name="nb_arg" type="xs:integer"/>
+
+<xs:element name="status">
+	<xs:simpleType>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="success"/>
+			<xs:enumeration value="failed"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:element> 
+
+<!-- type -->
+<xs:complexType name="confstat_type">
+ 	<xs:sequence>
+		<xs:element ref="name"/>
+		<xs:element ref="desc"/>
+		<xs:element ref="value"/>
+		<xs:element ref="type"/>
+	</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="proc_type">
+	<xs:sequence>
+		<xs:element ref="name"/>
+		<xs:element ref="desc"/>
+		<xs:element ref="nb_arg"/>
+	</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="proc_res_type">
+	<xs:sequence>
+		<xs:element ref="type"/>
+		<xs:element ref="value"/>
+	</xs:sequence>
+</xs:complexType>
+
+
+<xs:complexType name="conf_list_type">
+	<xs:sequence>
+		<xs:element name="conf" type="confstat_type" maxOccurs="unbounded"/>
+	</xs:sequence>
+</xs:complexType>
+
+
+<xs:complexType name="stat_list_type">
+	<xs:sequence>
+		<xs:element name="stat" type="confstat_type" maxOccurs="unbounded"/>
+	</xs:sequence>
+</xs:complexType>
+
+
+<xs:complexType name="proc_list_type">
+	<xs:sequence>
+		<xs:element name="proc" type="proc_type" maxOccurs="unbounded"/>		
+	</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="proc_res_list_type">
+	<xs:sequence>
+		<xs:element name="proc_res" type="proc_res_type" maxOccurs="unbounded"/>
+	</xs:sequence>
+</xs:complexType>
+
+<!-- complex element -->
+<xs:element name="product">
+	<xs:complexType>
+		<xs:sequence>
+			<xs:element ref="id"/>
+			<xs:element name="conf_list" type="conf_list_type" minOccurs="0"/>
+			<xs:element name="stat_list" type="stat_list_type" minOccurs="0"/>
+			<xs:element name="proc_list" type="proc_list_type" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:element>
+
+<xs:element name="product_list">
+	<xs:complexType>
+		<xs:sequence>
+			<xs:element ref="id" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:element>
+
+<xs:element name="procedure_res">
+	<xs:complexType>
+		<xs:sequence>
+			<xs:sequence>
+			       <xs:element ref="status"/>
+			       <xs:element name="proc_res_list" type="proc_res_list_type" minOccurs="0"/>
+			</xs:sequence> 
+		</xs:sequence>
+	</xs:complexType>
+</xs:element>
+
+<!-- last, but not least, the snmp_adm -->
+<xs:element name="snmp_adm">
+	<xs:complexType>
+		<xs:sequence>
+			<xs:element ref="product_list" minOccurs="0"/>
+			<xs:element ref="product" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element ref="procedure_res" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:element>
+
+</xs:schema>
+

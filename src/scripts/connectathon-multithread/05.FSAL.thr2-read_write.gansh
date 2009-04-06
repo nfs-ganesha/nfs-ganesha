@@ -1,0 +1,60 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+# open flags for reading
+set OFLAGS_R "r"
+
+# Number of blocks to be written
+set NB_BLOCKS  128
+
+# Data block to be written (63+null terminating character)
+set BLOCK_SIZE 64
+set ASCII_BLOCK "AZERTYUIOPQSDFGHJKLMWXCVBN,;:!1234567890+&(-_)~{[#^@]}=$*%<>abc"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+barrier
+
+cd $TEST_DIR
+
+barrier
+ls -l FICHIER_1
+barrier
+
+barrier
+ls -l FICHIER_1
+barrier
+
+barrier
+ls -l FICHIER_2
+barrier
+
+barrier
+ls -l FICHIER_2
+barrier
+
+barrier
+
+open FICHIER_1 $OFLAGS_R
+read -v -s SET,0 -B $BLOCK_SIZE all
+close
+
+barrier
+
+open FICHIER_2 $OFLAGS_R
+read -v -s SET,0 -B $BLOCK_SIZE all
+close
+
+barrier

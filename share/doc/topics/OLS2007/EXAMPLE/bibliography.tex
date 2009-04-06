@@ -1,0 +1,180 @@
+
+This example is based on Keith Packard's 2003 paper for
+the Linux Symposium Proceedings.
+
+The easiest way to do a bibliography is to use BiBTeX.
+In the body of the paper, you \cite{} various references.
+The citation name is the first name following the opening
+curly brace in the .bib file.  For example, with the list below,
+I could \cite{autoconf} and \cite{freetype2}.
+
+Near the end of your main .tex file, you include a section like so:
+\begin{flushleft}
+\bibliography{keithp}
+\bibliographystyle{plain}
+\end{flushleft}
+(this comes *before* \end{document}.)
+
+And in a separate file whose name matches the \bibliography{}
+declaration above (e.g., keithp.bib in this case), you define all
+the references.  Note that \url is a valid way to typeset web
+references.  
+
+Note that the makefiles are already set up to process this form
+of bibliography, so using it is indeed easy.  (It's also one
+reason why the input files are processed multiple times, though.)
+
+Here are some sample entries for various types
+of publications:
+
+@book{autoconf,
+ title		= "GNU Autoconf, Automake and Libtool",
+ author		= "Gary V. Vaughan and Ben Elliston and Tom Tromey and Ian Lance Taylor",
+ publisher 	= "New Riders",
+ year		= 2000,
+ note		= {ISBN 1-57870-190-2},	},
+
+@article{blinn:1994,
+ title		= "Compositing Theory",
+ author		= "Jim Blinn",
+ journal	= "IEEE Computer Graphics and Applications",
+ year		= 1994,
+ month		= "September",
+ note		= "Republished in~\cite{blinn:1998}"	}
+ 
+@book{blinn:1998,
+ title		= "{Jim Blinn's Corner: Dirty Pixels}",
+ author		= "Jim Blinn",
+ year		= 1998,
+ publisher	= "Morgan Kaufmann",
+ isbn		= "1-55860-455-3",	}
+
+@techreport{dbe,
+ title		= "{Double Buffer Extension Protocol}",
+ author		= "Ian Elliott and David P. Wiggins",
+ institution	= "X Consortium, Inc.",
+ type		= "X Consortium Standard",
+ year		= 1994,			}
+@manual{dc,
+ title		= "DC - An Interactive Desk Calculator",
+ author		= "Robert Morris and Lorinda Cherry",
+ organization	= "AT\&T Bell Laboratories",
+ note		= "Unix Programmer's Manual Volume 2, 7th Edition",
+ year		= 1978,			},
+
+@misc{freetype2,
+ title		= "The design of {FreeType} 2",
+ author		= "David Turner and The FreeType Development Team",
+ year		= 2000,
+ note		= "\url{http://www.freetype.org/freetype2/docs/design/}",
+},
+
+@inproceedings{gj,
+ title		= "Making the future safe for the past: Adding Genericity to the Java Programming Language",
+ author		= "Gilad Bracha and Martin Odersky and David Stoutamire and Phillip Wadler",
+ month		= "October",
+ booktitle	= "Conference on Object-Oriented Programing systems, Languages and Applications (OOPSLA '98)",
+ year		= 1998,
+ publisher	= "ACM",
+ organization	= "SIGPLAN",	}
+
+@phdthesis{Hobby85,
+ author = {John D. Hobby},
+ title = {Digitized Brush Trajectories},
+ school = {Stanford University},
+ year = {1985},
+ note = {Also {\it Stanford Report STAN-CS-85-1070}}
+}
+
+@article{itsy,
+ title          = "{Itsy: Stretching the Bounds of Mobile Computing}",
+ author         = "William R. Hamburgen and Deborah A. Wallach and Marc A. Viredaz and Lawrence S. Brakmo and Carl A. Waldspurger and Joel F. Bartlett and Timothy Mann and Keith I. Farkas",
+ journal        = "IEEE Computer",
+ year           = 2001,
+ publisher      = "Institute of Electrical and Electronics Engineers, Inc.",
+ volume         = 34,
+ number         = 4,
+ month          = "April",
+ pages          = "28-35",              }
+  
+@inproceedings{lbx:1993,
+ title = "{An Update on Low Bandwidth X (LBX): A Standard For X and Serial Lines}",
+ author		= "Jim Fulton and Chris Kent Kantarjiev",
+ booktitle	= "Proceedings of the Seventh Annual X Technical Conference",
+ month		= "January",
+ year		= 1993,
+ pages		= "251-266",
+ address	= "Boston, MA",
+ organization	= "MIT X Consortium",	
+},
+
+@inproceedings{lmbench:1996,
+ title 		= "{lmbench: Portable tools for performance analysis}",
+ author		= "Larry McVoy and Carl Staelin",
+ booktitle	= "Technical Conference Proceedings",
+ month		= "January",
+ year		= 1996,
+ pages		= "279-284",
+ address	= "San Diego, CA",
+ organization	= "USENIX",		}
+ 
+@Article{Nistnet00,
+  author =       "NIST Internetworking Technology Group",
+  title =        "{NISTNet} network emulation package",
+  journal =      "\url{http://www.antd.nist.gov/itg/nistnet/}",
+  month =        jun,
+  year =         "2000",
+  bibdate =      "Thursday, June 29, 2000 at 16:40:15 (MEST)",
+  submitter =    "Katarina Asplund",
+}
+
+@TechReport{AMD:2000:XTW,
+  author =       "{AMD Corporation}",
+  title =        "{x86-64$^{\mathrm{TM}}$ Technology White Paper}",
+  institution =  "{AMD Corporation}",
+  address =      "One AMD Place, Sunnyvale, CA 94088, USA",
+  pages =        "12",
+  day =          "17",
+  month =        aug,
+  year =         "2000",
+  bibdate =      "Fri May 04 12:53:45 2001",
+  bibsource =    "\url{http://www.amd.com/products/cpg/64bit/index.html}",
+  URL = "\url{http://www.amd.com/products/cpg/64bit/pdf/x86-64_wp.pdf};
+                 \url{http://www1.amd.com/products/cpg/x8664bit/faq}",
+  acknowledgement = ack-nhfb,
+  annote =       "The x86-64 architecture is definitely not an IA-64
+                 implementation, but rather, an extension of IA-32 by
+                 widening the integer registers to 64-bits.",
+}
+
+@unpublished{pinzari,
+ author		= "Gian Filippo Pinzari",
+ title		= "The NX X Protocol Compressor",
+ note		= "Electronic Communication",
+ month		= "March",
+ year		= "2003",
+ }
+ 
+@inproceedings{Gettys:2002,
+  title = "{The Future is Coming, Where the X Window System Should Go}",
+  author        = "James Gettys",
+  booktitle	= "FREENIX Track, 2002 Usenix Annual Technical Conference",
+  month		= "June",
+  year		= 2002,
+  organization	= "USENIX",
+  address       = "Monterey, CA",
+  url = "\url{http://www.usenix.org/publications/library/proceedings/usenix02/tech/freenix/full_papers/gettys/gettys_html/index.html}",
+}
+
+@misc{ewing,
+ title          = "Linux 2.0 Penguins",
+ author         = "Larry Ewing",
+ note           = "\url{http://www.isc.tamu.edu/~lewing/linux}",
+}
+
+@misc{gimp,
+ title          = "The {GIMP}: The {GNU} Image Manipulation Program",
+ author         = "Peter Mattis and Spencer Kimball and the GIMP developers",
+ note           = "\url{http://www.gimp.org}",
+}
+

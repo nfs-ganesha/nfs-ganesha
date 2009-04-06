@@ -1,0 +1,60 @@
+BODY			{margin: 0px;}
+IMG.menu		{border-bottom:1px solid white;}
+DIV.content	{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 10pt;}
+#sidenav TD	{font-size: 8pt;}
+#sidenav TD.small {font-size: 7pt;}
+.highlights	{font-size: 8pt;}
+.header		{font-size: 16pt; line-height: 18pt;}
+.subhead2		{font-size: 12pt; font-weight: bold;}
+.subhead3		{font-size: 10pt; font-weight: bold;}
+.tm			{font-family: Arial Narrow, Verdana, Helvetica, sans-serif; font-size: 8pt; text-decoration: none;}
+.reg			{font-size: 11pt;}
+.code		{font-family: monospace; font-size: 12px;}
+.credit		{font-size: 8pt; color: #999999;}
+.small		{font-size: 7pt;}
+.med			{font-size: 8pt;}
+.med p 		{margin-top: 9px; margin-bottom: 9px;}
+.widget		{font-size: 10pt; font-weight: bold; color: #FFFFFF;}
+.wwsgi 		{padding: 3px 0px 0px 0px; margin: 0px 0px 0px 0px;}
+.ffind		{padding: 0px 0px 5px 0px; margin: 0px 0px 5px 0px;}
+.required		{color: #FF0000;}
+A			{font-family: Arial, Verdana, Helvetica, sans-serif;}
+SELECT		{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt;}
+TD			{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 9pt;}
+TD.rowHdr		{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 7pt; font-weight: bold;}
+TH.columnHdr	{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt; font-weight: bold; color:#000000;}
+TH.tableHdr	{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 10pt;}
+TD.footer, TD.footer A	{font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt;}
+
+
+
+.ttophead 	{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt; font-weight: bold;}
+.ttophead2 	{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt; font-weight: bold;}
+.thead 		{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt; font-weight: bold; color: #FFFFFF;}
+.thead p 		{margin-top: 9px; margin-bottom: 9px;}
+.tsubhead 	{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt; font-weight: bold; color: #FFFFFF;}
+.tsubhead p 	{margin-top: 9px; margin-bottom: 9px;}
+.trow1 		{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt;}
+.trow1 p 		{margin-top: 9px; margin-bottom: 9px;}
+.trow2 		{vertical-align: top; font-family: Arial, Verdana, Helvetica, sans-serif; font-size: 8pt;}
+.trow2 p 		{margin-top: 9px; margin-bottom: 9px;}
+
+
+#tmp-contentArea {width: 596px;}
+ul.indent {margin-bottom: 0px; margin-top: 0px;}
+ul.indent li {margin-left: -15px;}
+
+
+/* This is for the i_header_generic.html include, Windows IE adjustments */
+/* It corresponds with /styles/new/generic.css */
+.globalSubnav {padding-top: 8px;}
+#globalHeader fieldset {
+	margin-top: -12px; 
+	margin-bottom: -15px;
+}
+.search {margin-left: 3px; margin-bottom: 7px;
+}
+
+/* This is a browser quirk correction for the redesign generic template stylesheet (generic.css) */
+#globalSubnavContainer {margin-top: -12px;}
+.search {height: 20px;}

@@ -1,0 +1,174 @@
+# options du shell
+set VERBOSE OFF
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_EVENT"
+nfs_init -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+mount /
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+# on se place a la racine
+cd /
+
+# TEST 1 : on fait des stat sur la racine par un stat /
+# puis par un stat . et on compare les resultats
+
+print "------ TEST 1 : stat / and stat .        -------"
+
+set STAT1_1 `stat /`
+set STAT1_2 `stat /`
+set STAT1_3 `stat .`
+set STAT1_4 `stat /`
+set STAT1_5 `stat .`
+
+
+print "STAT1_1: " `wc $STAT1_1`
+print "STAT1_2: " `wc $STAT1_2`
+print "STAT1_3: " `wc $STAT1_3`
+print "STAT1_4: " `wc $STAT1_4`
+print "STAT1_5: " `wc $STAT1_5`
+
+set ERROR_STAT 0
+
+if ne -- $STAT1_1 $STAT1_2 ? set ERROR_STAT 1
+if ne -- $STAT1_1 $STAT1_4 ? set ERROR_STAT 1
+if ne -- $STAT1_3 $STAT1_5 ? set ERROR_STAT 1
+
+if ne -n $ERROR_STAT 0  ? print "STAT_ERROR" : print "STAT_OK"
+
+
+# Prise de l'identite de user1
+su $USER1
+
+# test de stats sur d'autres repertoires
+# entrecoupes d'autres appels
+
+# creation d'entrees plus bas
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+
+create fichier 0644
+
+set chemin_fichier $chemin "/fichier"
+
+print "------ TEST 2 : stat, cd, stat           -------"
+
+
+set STAT2_1 `stat $chemin_fichier`
+set STAT2_2 `stat $chemin_fichier`
+set STAT2_3 `stat fichier`
+set STAT2_4 `stat fichier`
+
+print "STAT2_1: " `wc $STAT2_1`
+print "STAT2_2: " `wc $STAT2_2`
+print "STAT2_3: " `wc $STAT2_3`
+print "STAT2_4: " `wc $STAT2_4`
+
+
+set ERROR_STAT 0
+
+if ne -- $STAT2_1 $STAT2_2 ? set ERROR_STAT 1
+if ne -- $STAT2_3 $STAT2_4 ? set ERROR_STAT 1
+if ne -- $STAT2_1 $STAT2_3 ? set ERROR_STAT 1
+
+if ne -n $ERROR_STAT 0  ? print "STAT_ERROR" : print "STAT_OK"
+
+
+# idem avec un ls -l entre les deux
+
+print  "------ TEST 3 : stat, ls -l, stat, ls -l -------"
+
+set STAT3_1 `stat $chemin`
+set LS3_1   `ls -ld $chemin`
+set STAT3_2 `stat $chemin`
+set LS3_2   `ls -ld $chemin`
+
+print "STAT3_1: " `wc $STAT3_1`
+print "STAT3_2: " `wc $STAT3_2`
+
+if ne -- $STAT3_1 $STAT3_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS3_1: " `wc $LS3_1`
+print "LS3_2: " `wc $LS3_2`
+if ne -- $LS3_1 $LS3_2 ?  print "LS_ERROR" : print "LS_OK"
+
+# idem avec un ls -S entre les deux
+
+print "------ TEST 4 : stat, ls -S, stat  ls -S -------"
+
+set STAT4_1 `stat $chemin`
+set LS4_1   `ls -Sd $chemin`
+set STAT4_2 `stat $chemin`
+set LS4_2   `ls -Sd $chemin`
+
+print "STAT4_1: " `wc $STAT4_1`
+print "STAT4_2: " `wc $STAT4_2`
+if ne -- $STAT4_1 $STAT4_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS4_1: " `wc $LS4_1`
+print "LS4_2: " `wc $LS4_2`
+if ne -- $LS4_1 $LS4_2 ? print "LS_ERROR" : print "LS_OK"
+
+#idem avec un cd et un ls entre les 2
+
+print "------ TEST 5 : stat, cd, ls, stat, ls   ------- "
+
+cd $chemin
+mkdir SUBDIR 0755
+
+set chemin_dir $chemin "/SUBDIR"
+
+
+set STAT5_1 `stat $chemin_dir`
+cd $chemin
+set LS5_1 `ls -l`
+set STAT5_2 `stat SUBDIR`
+set LS5_2 `ls -l`
+
+print "STAT5_1: " `wc $STAT5_1`
+print "STAT5_2: " `wc $STAT5_2`
+if ne -- $STAT5_1 $STAT5_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS5_1: " `wc $LS5_1`
+print "LS5_2: " `wc $LS5_2`
+if ne -- $LS5_1 $LS5_2 ? print "LS_ERROR" : print "LS_OK"
+
+print "----------- cleaning -------------"
+unlink $chemin_dir
+unlink $chemin_fichier

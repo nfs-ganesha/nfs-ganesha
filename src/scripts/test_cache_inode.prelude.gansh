@@ -1,0 +1,5 @@
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+layer set Cache_inode
+init_cache
+interactive 

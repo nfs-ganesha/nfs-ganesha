@@ -1,0 +1,97 @@
+#set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+# je deviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $TESTDIR
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+
+# creation d'un link symbolique dans le repertoire courant
+ln -v ../contenu_du_lien_1   lien_test_1
+if ne -- $STATUS 0 ? print "SYMLINK_ERROR" : print "SYMLINK_OK"
+
+# creation d'un lien symbolique dans le repertoire enfant
+ln -v  ../../contenu_du_lien_2  TEST_DIR/lien_test_2
+if ne -- $STATUS 0 ? print "SYMLINK_ERROR" : print "SYMLINK_OK"
+
+# on se place dans le repertoire enfant
+cd TEST_DIR
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+# creation d'un link symbolique dans le repertoire parent
+ln -v ../contenu_du_lien_3   ../lien_test_3
+if ne -- $STATUS 0 ? print "SYMLINK_ERROR" : print "SYMLINK_OK"
+
+# creation d'un lien symbolique dans le repertoire courant
+ln -v  ../../contenu_du_lien_4  lien_test_4
+if ne -- $STATUS 0 ? print "SYMLINK_ERROR" : print "SYMLINK_OK"
+
+# on fait les verifications des contenus
+cd ..
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+ls -l ./lien_test_1
+if ne -- $STATUS 0 ? print "LS_ERROR" : print "LS_OK"
+
+ls -l ./lien_test_3
+if ne -- $STATUS 0 ? print "LS_ERROR" : print "LS_OK"
+
+ls -l TEST_DIR/lien_test_2
+if ne -- $STATUS 0 ? print "LS_ERROR" : print "LS_OK"
+
+ls -l TEST_DIR/lien_test_4
+if ne -- $STATUS 0 ? print "LS_ERROR" : print "LS_OK"
+
+
+# on supprime les liens
+unlink lien_test_1
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink lien_test_3
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink TEST_DIR/lien_test_2
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink TEST_DIR/lien_test_4
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink TEST_DIR
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"

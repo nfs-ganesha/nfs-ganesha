@@ -1,0 +1,39 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER FSAL
+
+# wait for FS initialization
+barrier
+
+cd /cea/prot/S/lama/s8/leibovic/ganesha
+
+create FICHIER 755
+barrier
+
+unlink FICHIER 
+barrier
+
+create FICHIER 755
+barrier
+
+unlink FICHIER
+barrier
+
+create FICHIER 755
+barrier
+
+unlink FICHIER
+barrier
+
+create FICHIER 755
+barrier
+
+unlink FICHIER
+barrier
+
+create FICHIER 755
+barrier
+
+unlink FICHIER
+barrier
+ 
+callstat 

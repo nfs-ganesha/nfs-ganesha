@@ -1,0 +1,59 @@
+TODO
+
+General
+=======
+* Fix all FIXMEs in the source. 
+
+
+nfs4st.py
+=========
+* Split nfs4st.py into several files, one for each test suite. 
+
+* Make it possible to use nfs4st with servers not supporting special
+devices, like block devices. Need support in test_tree_net for this as
+well. 
+
+* More boundary-tests, like SETATTR(size) with too short and too long
+buffers. 
+
+* Choice of TCP/UDP: Should work the same way as with nfs4client,
+eg. TCP is first tried, then UDP? In that case, the transport should
+be saved, so we do not need to try TCP on every test case. Use
+nfs4lib.create_client, just as nfs4client. 
+
+* Better infrastructure for skipping tests that cannot be executed,
+for some reason. Use SkipException more. 
+
+* More RENAME tests. 
+
+* More tests on invalid attributes. 
+
+* Test all missing operations. 
+
+* More testing of stale filehandles. 
+
+* Checking, all the time, if the returned error code is valid for the
+operation.
+
+Hard to do, but anyway:
+
+* Verify that filehandles are never reused. 
+
+
+nfs4client.py
+============
+* Test more. 
+
+* Support for NFS4ERR_FHEXPIRED and volatile filehandles. 
+
+* Named attributes. 
+
+* Handle server reboots. (Note to self: When a new verifier is
+created, the sequence counter should be reset.)
+
+* Increase performance by sending & receiving multiple packets at a
+time, eg. send, send, ..., select, recv, recv, ..., send, send, ...)
+rather than select, recv, send,, recv, send, etc. Or, rewrite the
+Python XDR and RPC modules in C :-)
+
+

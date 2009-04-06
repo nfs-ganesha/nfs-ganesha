@@ -1,0 +1,72 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs /tmp/hpss.ganesha.conf
+if ne -- $STATUS 0 ? print "INIT_FSAL_ERROR" : print "INIT_FSAL_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v /tmp/hpss.ganesha.conf
+if ne -- $STATUS 0 ? print "INIT_CACHE_ERROR" : print "INIT_CACHE_OK"
+
+print "------------ Je suis leibovic -------------"
+# je deviens leibovic
+su 3733
+
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+
+# je mets le repertoire courant en acces a tous.
+setattr . MODE 755
+
+print "------------ Je cree des repertoires -------------"
+
+mkdir test_rights_Ur    400
+mkdir test_rights_Uwx   300
+mkdir test_rights_Gr    740
+mkdir test_rights_Gwx   730
+mkdir test_rights_Or    774
+mkdir test_rights_Owx   773
+
+print "-------- Je deviens root --------"
+
+su 0
+
+print "-------- Je tente diverses operations --------"
+
+create test_rights_Ur/toto 755
+ls -l test_rights_Ur/toto
+ls test_rights_Ur
+
+create test_rights_Uwx/toto 755
+ls -l test_rights_Uwx/toto
+ls test_rights_Uwx
+
+create test_rights_Gr/toto 755
+ls -l test_rights_Gr/toto
+ls test_rights_Gr
+
+create test_rights_Gwx/toto 755
+ls -l test_rights_Gwx/toto
+ls test_rights_Gwx
+
+create test_rights_Or/toto 755
+ls -l test_rights_Or/toto
+ls test_rights_Or    
+
+create test_rights_Owx/toto 755
+ls -l test_rights_Owx/toto
+ls test_rights_Owx
+
+unlink test_rights_Ur/toto
+unlink test_rights_Ur    
+unlink test_rights_Uwx/toto
+unlink test_rights_Uwx   
+unlink test_rights_Gr/toto
+unlink test_rights_Gr    
+unlink test_rights_Gwx/toto
+unlink test_rights_Gwx
+unlink test_rights_Or/toto    
+unlink test_rights_Or
+unlink test_rights_Owx/toto
+unlink test_rights_Owx

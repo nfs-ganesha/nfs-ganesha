@@ -1,0 +1,15 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+
+set LAYER FSAL
+init_fs -v /root/posix.ganesha.nfsd.conf
+
+set LAYER MFSL
+init_fs -v /root/posix.ganesha.nfsd.conf
+
+set LAYER Cache_inode
+
+init_cache -v  /root/posix.ganesha.nfsd.conf
+ 
+cd tmp
+
+interactive 
