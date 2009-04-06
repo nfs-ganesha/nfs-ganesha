@@ -487,6 +487,7 @@ typedef struct cache_inode_client__
   unsigned int                  getattr_dir_invalidation ;       /**< Use getattr as cookie for directory invalidation         */
   unsigned int                  call_since_last_gc       ;       /**< Number of call to cache_inode since the last gc run      */
   time_t                        time_of_last_gc          ;       /**< Epoch time for the last gc run for this thread           */
+  time_t                        time_of_last_gc_fd       ;       /**< Epoch time for the last file descriptor gc               */
   caddr_t                       pcontent_client          ;       /**< Pointer to cache content client                          */
   void                        * pworker                  ;       /**< Pointer to the information on the worker I belong to     */
   unsigned int                  max_fd_per_thread        ;       /**< Max fd open per client                                   */
@@ -938,6 +939,9 @@ cache_inode_status_t cache_inode_is_dir_empty_WithLock( cache_entry_t * pentry )
 cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
                                      cache_inode_client_t     * pclient,
                                      cache_inode_status_t     * pstatus) ;
+
+cache_inode_status_t cache_inode_gc_fd( cache_inode_client_t     * pclient,
+                       	             cache_inode_status_t     * pstatus );
 
 cache_inode_status_t cache_inode_kill_entry( cache_entry_t            * pentry, 
 	    		                     hash_table_t             * ht,

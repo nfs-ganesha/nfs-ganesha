@@ -1625,12 +1625,11 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t            * pentry,
       RELEASE_PREALLOC( pentry->object.dir_cont.pdir_data, pclient->pool_dir_data, next_alloc ) ;
     }
  
+  /* Destroy the mutex associated with the pentry */
+  cache_inode_mutex_destroy( pentry ) ;
   
   /* Put the pentry back to the pool */
   RELEASE_PREALLOC( pentry, pclient->pool_entry, next_alloc ) ;
-
-  /* Destroy the mutex associated with the pentry */
-  cache_inode_mutex_destroy( pentry ) ;
 
   *pstatus = CACHE_INODE_SUCCESS ;
   return *pstatus ; 

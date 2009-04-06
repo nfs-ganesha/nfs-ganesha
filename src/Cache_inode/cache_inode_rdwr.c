@@ -313,12 +313,8 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
        /* No data cache entry, we operated directly on FSAL */
        pentry->object.file.attributes.asked_attributes =  pclient->attrmask ;
 
-#ifdef _DEBUG_FSAL 
-       printf("cache_inode_rdwr: pentry %p: fd=%u\n", pentry, pentry->object.file.open_fd.fileno);
-#endif
-       
        /* Open the file if needed */
-       if( pentry->object.file.open_fd.fileno < 0 ) 
+       if( pentry->object.file.open_fd.fileno == -1 ) 
          {
            if( cache_inode_open( pentry, 
 	   		        pclient, 
@@ -334,7 +330,9 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
               return *pstatus ;
             } 
          }
-       
+
+       rw_lock_downgrade( &pentry->lock ) ;
+
        /* Call FSAL_read or FSAL_write */
 
        switch( read_or_write )
@@ -376,20 +374,45 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
  
            break ;
          }
-       
+
+
+       V_r( &pentry->lock ) ;
+#ifdef _DEBUG_FSAL 
+       DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "FSAL IO operation returned %d, asked_size=%llu, effective_size=%llu", fsal_status.major, (unsigned long long)io_size, (unsigned long long)*pio_size ) ;
+#endif
+       P_w( &pentry->lock ) ;
+
        if( FSAL_IS_ERROR( fsal_status ) )
          {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
 
            if( fsal_status.major == ERR_FSAL_DELAY )
              DisplayLogJd( pclient->log_outputs, "FSAL_write returned EBUSY" ) ;
            else
-             DisplayLogJd( pclient->log_outputs, "cache_inode_rdwr: fsal_status.major = %d", fsal_status.major ) ;
-#ifdef _USE_MFSL 
-          MFSL_close( &(pentry->object.file.open_fd.fd), &pclient->mfsl_context ) ;
-#else
-          FSAL_close( &(pentry->object.file.open_fd.fd) ) ;
+             DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "cache_inode_rdwr: fsal_status.major = %d", fsal_status.major ) ;
+
+          if ( (fsal_status.major != ERR_FSAL_NOT_OPENED) && (pentry->object.file.open_fd.fileno != -1) )
+          {
+#ifdef _DEBUG_CACHE_INODE
+             printf("cache_inode_rdwr: CLOSING pentry %p: fd=%d\n", pentry, pentry->object.file.open_fd.fileno);
 #endif
+
+#ifdef _USE_MFSL 
+             MFSL_close( &(pentry->object.file.open_fd.fd), &pclient->mfsl_context ) ;
+#else
+             FSAL_close( &(pentry->object.file.open_fd.fd) ) ;
+#endif
+
+           *pstatus = cache_inode_error_convert( fsal_status ) ;
+          }
+          else
+          {
+                /* the fd has been close by another thread.
+                 * return CACHE_INODE_FSAL_DELAY so the client will
+                 * retry with a new fd.
+                 */
+                *pstatus = CACHE_INODE_FSAL_DELAY;
+          }
+
           pentry->object.file.open_fd.last_op = 0 ;
           pentry->object.file.open_fd.fileno = -1 ;
            
@@ -410,6 +433,8 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
         
        if( cache_inode_close( pentry, pclient, pstatus ) != CACHE_INODE_SUCCESS )  
          {
+           DisplayLogJd( pclient->log_outputs, "cache_inode_rdwr: cache_inode_close = %d", *pstatus ) ;
+
            V_w( &pentry->lock ) ;
            
            /* stats */
@@ -422,7 +447,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
           {
              /* Do a getattr in order to have update information on filesize 
               * This query is done directly on FSAL (object is not data cached), and result
-              * will be propagated to Cache Inode */
+              * will be propagated to cache Inode */
               
              /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX, 
               * may not flush data until the file is closed */

@@ -174,7 +174,7 @@ typedef unsigned long long int u_int64_t;
 /* number of FSAL functions */
 #define FSAL_NB_FUNC  49
 
-static char * fsal_function_names[] = {
+static const char * fsal_function_names[] = {
   "FSAL_lookup", "FSAL_access", "FSAL_create", "FSAL_mkdir", "FSAL_truncate",
   "FSAL_getattrs", "FSAL_setattrs", "FSAL_link", "FSAL_opendir", "FSAL_readdir",
   "FSAL_closedir", "FSAL_open", "FSAL_read", "FSAL_write", "FSAL_close",
@@ -266,6 +266,10 @@ typedef enum fsal_nodetype__
 #elif defined ( _USE_FUSE )
 
 #include "FSAL/FSAL_FUSELIKE/fsal_types.h"
+
+#elif defined ( _USE_LUSTRE )
+
+#include "FSAL/FSAL_LUSTRE/fsal_types.h"
 
 #elif defined ( _USE_TEMPLATE ) /* <- place here your own define */
 

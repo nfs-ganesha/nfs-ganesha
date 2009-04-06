@@ -207,9 +207,10 @@ int nfs4_op_access(  struct nfs_argop4 * op ,
    credentials =  data->pcontext->user_credential ; 
 #elif defined( _USE_PROXY )
    credentials =  data->pcontext->user_credential ; 
+#elif defined( _USE_LUSTRE )
+   credentials =  data->pcontext->credential ; 
 #else
-  printf( "--------> Bad FSAL configured\n" ) ;
-  abort() ;
+#error "This FSAL is not supported"
 #endif
 
 #if !defined( _USE_HPSS_62) && !defined( _USE_HPSS_622)

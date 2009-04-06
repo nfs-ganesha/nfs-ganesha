@@ -283,9 +283,9 @@ void cache_content_print_conf_client_parameter( FILE * output,
 
 /**
  *
- * cache_content_read_conf_gc_policy: read the garbagge collection policy in configuration file.
+ * cache_content_read_conf_gc_policy: read the garbage collection policy in configuration file.
  *
- * Reads the garbagge collection policy in configuration file.
+ * Reads the garbage collection policy in configuration file.
  *
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
@@ -381,9 +381,9 @@ cache_content_status_t cache_content_read_conf_gc_policy( config_file_t         
 
 /**
  *
- * cache_content_print_gc_pol: prints the garbagge collection policy.
+ * cache_content_print_gc_pol: prints the garbage collection policy.
  *
- * Prints the garbagge collection policy.
+ * Prints the garbage collection policy.
  *
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
@@ -393,11 +393,11 @@ cache_content_status_t cache_content_read_conf_gc_policy( config_file_t         
  */
 void cache_content_print_conf_gc_policy( FILE * output,  cache_content_gc_policy_t  gcpolicy )
 {
-  fprintf( output, "Garbagge Policy: Lifetime              = %u\n",   (unsigned int)gcpolicy.lifetime ) ;
-  fprintf( output, "Garbagge Policy: Df_HighWater          = %u%%\n", gcpolicy.hwmark_df ) ;
-  fprintf( output, "Garbagge Policy: Df_LowWater           = %u%%\n", gcpolicy.lwmark_df ) ;
-  fprintf( output, "Garbagge Policy: Emergency Grace Delay = %u\n",   (unsigned int)gcpolicy.emergency_grace_delay ) ;
-  fprintf( output, "Garbagge Policy: Nb_Call_Before_GC     = %u\n",   gcpolicy.nb_call_before_gc ) ;
-  fprintf( output, "Garbagge Policy: Runtime_Interval      = %u\n",   gcpolicy.run_interval ) ;
+  fprintf( output, "Garbage Policy: Lifetime              = %u\n",   (unsigned int)gcpolicy.lifetime ) ;
+  fprintf( output, "Garbage Policy: Df_HighWater          = %u%%\n", gcpolicy.hwmark_df ) ;
+  fprintf( output, "Garbage Policy: Df_LowWater           = %u%%\n", gcpolicy.lwmark_df ) ;
+  fprintf( output, "Garbage Policy: Emergency Grace Delay = %u\n",   (unsigned int)gcpolicy.emergency_grace_delay ) ;
+  fprintf( output, "Garbage Policy: Nb_Call_Before_GC     = %u\n",   gcpolicy.nb_call_before_gc ) ;
+  fprintf( output, "Garbage Policy: Runtime_Interval      = %u\n",   gcpolicy.run_interval ) ;
 } /* cache_content_print_gc_pol */
 

@@ -19,13 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-static fsal_status_t __test_access(
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * p_object_attributes   /* IN */
-);
-
-
 /**
  * FSAL_access :
  * Tests whether the user or entity identified by its cred

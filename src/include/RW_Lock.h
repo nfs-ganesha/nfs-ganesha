@@ -49,7 +49,7 @@ typedef struct _RW_LOCK
   unsigned int nbw_active ; 
   unsigned int nbw_waiting ;
   pthread_mutex_t mutexProtect ;
-  pthread_mutex_t mutexWrite ;
+  pthread_cond_t condWrite ;
   pthread_cond_t condRead ;
   pthread_mutex_t mcond ;
 } rw_lock_t ; 

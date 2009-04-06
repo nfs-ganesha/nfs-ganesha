@@ -176,6 +176,8 @@ int cache_inode_client_init( cache_inode_client_t * pclient,
   pclient->time_of_last_gc          = time( NULL ) + thread_index * 20 ;
   pclient->call_since_last_gc       = thread_index * 20;
 
+  pclient->time_of_last_gc_fd       = time( NULL );
+
     
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */

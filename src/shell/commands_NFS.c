@@ -396,7 +396,7 @@ int InitNFSClient( cmdnfs_thr_info_t * p_thr_info )
     
   if ( FSAL_IS_ERROR( st ) )
   {    
-    printf( "%p:commands_NFS: Error %d initing credentials for thread (FSAL_InitThreadCred)\n",
+    printf( "%p:commands_NFS: Error %d initializing credentials for thread (FSAL_InitThreadCred)\n",
         (caddr_t)pthread_self(),st.major);
     return st.major;
   }
@@ -407,7 +407,7 @@ int InitNFSClient( cmdnfs_thr_info_t * p_thr_info )
     
   if ( FSAL_IS_ERROR( st ) )
   {    
-    printf( "%p:commands_NFS: Error %d initing credentials for thread (FSAL_InitThreadCred)\n",
+    printf( "%p:commands_NFS: Error %d initializing credentials for thread (FSAL_InitThreadCred)\n",
         (caddr_t)pthread_self(),st.major);
     return st.major;
   }
@@ -515,7 +515,7 @@ int nfs_init(char * filename,
   /* initalize export entries */
   if( rc = nfs_export_create_root_entry( pexportlist, ht ) != TRUE )
   {
-      fprintf( output, "nfs_init: Error %d while initing root entries, exiting...", -rc );
+      fprintf( output, "nfs_init: Error %d initializing root entries, exiting...", -rc );
       return -1 ;
   }  
   
