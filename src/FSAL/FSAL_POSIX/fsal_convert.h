@@ -18,9 +18,8 @@ int posix2fsal_error(int posix_errorcode);
 
 fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb);
 
-/** converts an fsal open flag to an hpss open flag. */
-int   fsal2posix_openflags( fsal_openflags_t fsal_flags, char * p_posix_flags );
- 
+/** converts an fsal open flag to posix open flag. */
+int fsal2posix_openflags( fsal_openflags_t fsal_flags, int *p_posix_flags );
 
 /** converts an FSAL permission test to a Posix permission test. */
 int  fsal2posix_testperm(fsal_accessflags_t testperm);
