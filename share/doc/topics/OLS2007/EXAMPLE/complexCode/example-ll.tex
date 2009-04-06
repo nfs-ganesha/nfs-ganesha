@@ -1,0 +1,24 @@
+\begin{verbatim}
+%struct.QuadTree = type { double, [4 x %QT*] }
+%QT = type %struct.QuadTree
+
+void %Sum3rdChildren(%QT* %T, double* %Result) {
+entry: %V = alloca double            ;; %V is type 'double*'
+       %tmp.0 = seteq %QT* %T, null  ;; type 'bool'
+       br bool %tmp.0, label %endif, label %else
+
+else:  ;;tmp.1 = &T[0].Children[3]  'Children' = Field #1
+       %tmp.1 = getelementptr %QT* %T, long 0, ubyte 1, long 3
+       %Child3 = load %QT** %tmp.1
+       call void %Sum3rdChildren(%QT* %Child3, double* %V)
+       %tmp.2 = load double* %V
+       %tmp.3 = getelementptr %QT* %T, long 0, ubyte 0
+       %tmp.4 = load double* %tmp.3
+       %tmp.5 = add double %tmp.2, %tmp.4
+       br label %endif
+
+endif: %Ret = phi double [ %tmp.5, %else ], [ 0.0, %entry ]
+       store double %Ret, double* %Result
+       ret void  ;; Return with no value
+}
+\end{verbatim}

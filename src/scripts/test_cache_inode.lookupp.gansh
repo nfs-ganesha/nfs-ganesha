@@ -1,0 +1,14 @@
+# script de test du lookup sur ..
+
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+
+layer set Cache_inode
+init_cache
+cd /AIX_5/bin
+ls -v ..
+
+exit
+
+
+

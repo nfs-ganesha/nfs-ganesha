@@ -1,0 +1,4 @@
+#DOCS#
+usr/bin/proxy.ganesha.nfsd
+usr/bin/proxy.ganesha.convertFH
+usr/bin/proxy.ganeshell

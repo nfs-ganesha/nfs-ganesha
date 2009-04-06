@@ -1,0 +1,1242 @@
+#!/bin/env perl
+use strict;
+use SNMP;
+use Getopt::Std;
+$Getopt::Std::STANDARD_HELP_VERSION='false';
+
+use XML::DOM;
+
+use Config::General;
+
+use constant STAT_OID    => 0;
+use constant CONF_OID    => 1;
+use constant PROC_OID    => 2;
+use constant TRIGGER_OID => 3;
+
+use constant READY       => 0;
+use constant PROGRESS    => 1;
+use constant DONE        => 2;
+use constant ERROR       => 3;
+
+use constant NAME_OID    => 0;
+use constant DESC_OID    => 1;
+use constant VAR_OID     => 2;
+
+use constant TYPE_OID    => 0;
+use constant VAL_OID     => 1;
+
+use constant IN_OID      => 0;
+use constant OUT_OID     => 1;
+
+my $CONF_FILE = $ENV{"HOME"}."/.snmp_adm.conf";
+
+######################CONFIG################################
+
+my $ROOT_OID   = "iso.3.6.1.4.1.12384.999"; 
+my $DestHost   = "localhost";
+my $RemotePort = 161;
+
+my $SecLevel    = "authPriv";
+my $AuthProto   = "MD5";
+my $PrivProto   = "DES";
+
+######################CONFIG################################
+
+#If you want comma separated value field be separated by other thing than comma
+my $CSV=";";
+
+#bulkwalk
+my $maxrep=20;
+
+sub HELP_MESSAGE
+# help message.
+{
+
+    print "smnp_adm, SNMP based deamon's administration tool.\n";
+    print "\n";
+    print "[1mSynopsis :[m\n";
+    print "\n";
+    print "  smnp_adm <command> [options]\n";
+    print "\n";
+    print "[1mCommands :[m\n";
+    print "  \n";
+    print "  help [command_name]\n";
+    print "    display this help, or the help associated to a specific snmp_adm command.\n";
+    print "    \n";
+    print "  listproducts\n";
+    print "    give the list of deamon names (and numeric product_ids)\n";
+    print "    registered on SNMP server.\n";
+    print "    \n";
+    print "  liststat  [regexp]\n";
+    print "    display the list of registered statistics for a deamon.\n";
+    print "    an optional argument specifies a filter in the fnmatch(P) format.\n";
+    print "    \n";
+    print "  listconf  [regexp]\n";
+    print "    display the list of registered configuration variables for a deamon.\n";
+    print "    an optional argument specifies a filter in the fnmatch(P) format.  \n";
+    print "  \n";
+    print "  listproc  [regexp]\n";
+    print "    display the list of registered actions that the deamon can execute.\n";
+    print "    an optional argument specifies a filter in the fnmatch(P) format.\n";
+    print "  \n";
+    print "  setconf   <conf_var> <value>\n";
+    print "    modify a deamon's configuration variable.\n";
+    print "  \n";
+    print "  resetstat <stat_var>\n";
+    print "    reset a server's statistic.\n";
+    print "  \n";
+    print "  callproc  <proc_name> [proc_args]\n";
+    print "    make the deamon execute an action.\n";
+    print "    \n";
+    print "  allxml\n";
+    print "    Dump the whole statistics tree in XML.\n";
+    print "    \n";
+    print "\n";
+    print "[1moptions :[m\n";
+    print "  -s <host>[:port] : the host where SNMP server is running\n";
+    print "      (default is localhost)\n";
+    print "  -p <product_id|product_name> : the deamon to be queried\n";
+    print "      (default is the first product of server's admin tree)\n";
+    print "  -r : for liststat and listconf commands, display\n";
+    print "       access and modification rights of each item.\n";
+    print "  -d : for liststat, listconf and listproc commands, \n";
+    print "       display the description of entries.\n";
+    print "  -v : for liststat and listconf commands, display objects' values.\n";
+    print "  -x : set output format to XML.\n";
+    print "  -c : set output format to CSV.\n";
+    print "  -C <community>: Community name for SNMPv2c.\n";
+    print "  -A <auth>: authentication for SNMPv3.\n";
+    print "  -X <pass>: password for SNMPv3.\n";
+    print "  -u <secname>: security name for SNMPv3.\n";
+    print "  -f <path>: path to the configuration file.\n";
+    print "\n";
+    print "What's more, it is possible to give some default parameters\n";
+    print "using an environment variable SNMP_ADM_OPTS, that could be\n";
+    print "for example \"-s snmp_host -p GANESHA -x\".\n";
+    print "However, command line arguments override options from environment.\n";
+#dvxcs:p:A:X:u:f:C:
+    exit;
+}
+
+
+sub VERSION_MESSAGE
+# version message
+{
+	print "snmp_admin v0.1 alpha\n";
+}
+
+
+$ENV{MIBS}="";
+
+if(defined($ENV{"SNMP_ADM_ROOT"})) {
+	$ROOT_OID=$ENV{"SNMP_ADM_ROOT"};
+	$ROOT_OID=~s/^\.1/.iso/g;
+}
+
+#Options come in this priority :
+# 1 command line
+# 2 environnement
+# 3 config file
+
+#get env options
+if(defined($ENV{"SNMP_ADM_OPTS"})) {
+	@ARGV=($ENV{"SNMP_ADM_OPTS"},@ARGV);
+}
+
+#arg parse
+my %opts;
+getopts('dvxcs:p:A:X:u:f:C:',\%opts) || HELP_MESSAGE();
+
+if ($opts{'f'}) {
+	$CONF_FILE=$opts{'f'};
+}
+
+#get conf file options
+get_conf();
+
+
+if ($opts{'s'}) {
+	my @tmp_host=split(/:/,$opts{'s'});
+	$DestHost=$tmp_host[0];
+	$RemotePort=$tmp_host[1] if defined($tmp_host[1]);	
+}
+
+my ($AuthPass,$PrivPass,$SecName,$Community) = ("","","","public");
+
+if($opts{'A'}) {
+	$AuthPass=$opts{'A'};
+}
+
+if($opts{'X'}) {
+	$PrivPass=$opts{'X'};
+}
+
+if($opts{'u'}) {
+	$SecName=$opts{'u'};
+}
+
+if($opts{'C'}) {
+	$Community=$opts{'C'};
+}
+
+$DestHost=~s/ //g;
+$RemotePort=~s/ //g;
+
+
+if( !( defined($DestHost) && 
+       defined($RemotePort) &&
+         ( defined($SecName) &&
+	   defined($SecLevel) &&
+	   defined($AuthProto) &&
+	   defined($AuthPass) &&
+	   defined($PrivProto) &&
+	   defined($PrivPass)  || defined($Community)))) {
+	
+	#printf STDERR "Need more option\n";
+	HELP_MESSAGE;
+	exit;
+}
+
+my $session;
+if(!defined($Community)) {
+	$session= new SNMP::Session(DestHost => $DestHost, 
+				    RemotePort => $RemotePort,
+				    SecName => $SecName,
+				    SecLevel => $SecLevel,
+				    AuthProto => $AuthProto,
+				    AuthPass => $AuthPass,
+				    PrivProto => $PrivProto,
+				    PrivPass => $PrivPass,
+				    Version => 3) || die "timeout $DestHost:$RemotePort";
+}else{
+	printf STDERR "Warning: you are using unsecure SNMPv2\n";
+	$session= new SNMP::Session(DestHost => $DestHost, 
+				    RemotePort => $RemotePort,
+				    Community => $Community,
+				    Version => 2) || die "timeout $DestHost:$RemotePort";
+}
+
+#We need to initialize ProductId to 0 for get_productid_list
+my $ProductId=0;
+if (defined($opts{'p'})) {
+	$ProductId=$opts{'p'};
+}else{
+	my @tab=get_productid_list();
+	$ProductId=$tab[0];	
+}
+
+
+
+#take the first command, ignore the rest of the line
+my $Action=$ARGV[0] or HELP_MESSAGE();
+
+my $err=0;
+if($Action eq "listproducts")
+{
+        $err=print_format(get_productid_list());
+}
+elsif ($Action eq "liststat" || 
+       $Action eq "listconf" ||
+       $Action eq "listproc")
+{
+	my $regexp=$ARGV[1]; #may be undef
+	if($Action eq "liststat")
+    {
+		$err=print_format(get_conf_stat_list("stat"),$regexp);
+	}
+    elsif($Action eq "listconf")
+    {
+		 $err=print_format(get_conf_stat_list("conf"),$regexp);
+	}
+    else
+    {
+		$err=print_format(get_proc_list(),$regexp);
+	}
+}
+elsif($Action eq "setconf")
+{
+	if(defined($ARGV[1]) && defined($ARGV[2]))
+    {
+		$err=setconf($ARGV[1],$ARGV[2]);
+	}
+    else
+    {
+		HELP_MESSAGE();
+	}
+}
+elsif ($Action eq "resetstat")
+{
+	if(defined($ARGV[1]))
+    {
+		$err=resetstat($ARGV[1]);
+	}
+    else
+    {
+		HELP_MESSAGE();
+	}
+}
+elsif($Action eq "callproc")
+{
+	if(defined($ARGV[1]))
+    {
+	        shift @ARGV;
+
+		my $oid=callproc_async(@ARGV);
+		if(defined($oid))
+        {
+			$err=getproc_res($oid);
+		}
+	}
+    else
+    {
+		HELP_MESSAGE();
+	}
+}
+elsif($Action eq "allxml")
+{
+	my ($doc,$root)=openXMLDoc();
+	my @prodlist=get_productid_list();
+
+	getXMLProd($root,$doc,@prodlist);
+
+	foreach (@prodlist)
+    {
+		$ProductId=$_;
+		getXMLConfStatProc($root,$doc,"Configuration",undef,get_conf_stat_list("conf"));
+		getXMLConfStatProc($root,$doc,"Statistics",undef,get_conf_stat_list("stat"));
+		getXMLConfStatProc($root,$doc,"Procedure",undef,get_proc_list());
+	}
+	$doc->printToFileHandle (\*STDOUT);
+
+	closeXMLDoc($root);
+}
+else
+{
+	HELP_MESSAGE();
+}
+exit $err;
+	
+
+sub get_conf #$argv
+#parse the config file.
+#@return 1 if conf file not found, 0 otherwise
+{
+	if(! -e $CONF_FILE) {
+		return 1;
+	}
+	my $mode = (stat($CONF_FILE))[2]; #2=mode
+	if ( (($mode) & 07777) != 0600 ) {
+		printf STDERR "Warning: your configuration file have right for other user\n";
+		printf STDERR "It may contain SNMPv3 password!!\n";
+
+		# in CSV or XML mode, we consider that it is not an interactive command
+		if ( !defined($opts{'c'}) && !defined($opts{'x'}) )
+		{
+			printf STDERR "Type yes if you want to continue\n";
+		
+			my $in=<STDIN>;
+			chomp($in);
+			if($in ne "yes") {
+				printf STDERR "Command aborted by user, exiting\n";
+				exit;
+			}
+		}
+	} 
+	my $conf = new Config::General($CONF_FILE);
+	my %config = $conf->getall;
+	
+	if(defined($config{"host"})) {
+		my @tmp_host=split(/:/,$config{"host"});
+		$DestHost=$tmp_host[0];
+		$RemotePort=$tmp_host[1] if defined($tmp_host[1]);
+	}
+	if(defined($config{"product_id"})) {
+		$ProductId=$config{"product id"};
+	}
+	if(defined($config{"auth_pass"})) {
+		$AuthPass=$config{"auth_pass"};
+	}
+	if(defined($config{"enc_pass"})) {
+		$PrivPass=$config{"enc_pass"};
+	}
+	if(defined($config{"sec_name"})) {
+		$SecName=$config{"sec_name"};
+	}
+	return 0;
+}
+
+
+sub get_productid_list 
+# Get the product list.
+# Jump to all productid with getnext until endofmib.
+# @return array of productid
+{
+	my $oid;
+	my @res;
+	my $prodid_save=$ProductId;
+
+	my @root_tab=split(/\./,$ROOT_OID);
+	my $root_len=@root_tab; 
+	my $var;
+	while (1) {	
+		$oid=$ROOT_OID.".".$prodid_save;
+		$var= new SNMP::Varbind([$oid]);
+		$session->getnext($var);
+		$oid=@{$var}[0];
+
+		if($$session{ErrorStr}) {
+			die "cannot connect to snmpd";
+		}
+	      
+		if($oid =~ /^$ROOT_OID/ && ${$var}[2] ne "ENDOFMIBVIEW") {
+			#save this id and go to the next.
+			my @oid_tab=split(/\./,$oid);
+
+			$prodid_save=$oid_tab[$root_len];
+			push(@res,$prodid_save++);
+		}else{
+			last;
+		}
+
+	}
+	my $len=@res;
+	if($len==0) {
+		printf STDERR "FATAL ERROR : no product detected\n";
+		exit 1;
+	}
+	return @res;
+}
+
+
+
+sub get_conf_stat_list # $branch
+# get the list of configuration or statistic.
+# @param $branch "conf" or "stat"
+# return array of ref on the array ($name,$desc,$type,$val).
+{
+	my $branch=shift;
+
+	my ($name, $desc,$type, $value);	
+	my $oid;
+	my @res;
+
+	if($branch eq "stat") {
+		$type=STAT_OID;
+	}elsif($branch eq "conf") {
+		$type=CONF_OID;
+	}else{
+		return;
+	}
+
+	$oid=$ROOT_OID.".".$ProductId.".$type";
+	# do not use -d -v option, a big bulk is better than several little get
+	my @reswalk=$session->bulkwalk(0, $maxrep,$oid);
+	if(!defined($reswalk[0])) {
+		 die "daemon seem to be dead...";
+ 	}
+
+	while (($name,$desc,$type,$value) = @{$reswalk[0]}) {
+		my @list;
+		if(defined($value)) {
+			my $printed_val;
+			if($type->val eq "TIMETICKS") {
+				$printed_val=asn1_ticks_to_time($value->val);
+			}else{
+				$printed_val=$value->val;
+			}
+			@list=($name->val,$desc->val,$type->val,$printed_val);
+
+		}else{
+			@list=($name->val,$desc->val,$type->val,"SNMP_ADM_ERROR");
+		}
+
+		push(@res,\@list);
+
+		shift @{$reswalk[0]};
+		shift @{$reswalk[0]};
+		shift @{$reswalk[0]};
+		shift @{$reswalk[0]};
+	}
+	return @res;
+}
+
+
+sub get_proc_list 
+# get the list of procedure.
+# @return array of reference on ($name,$desc,$nb_arg,"").
+# we use empty string to be compatible with get_conf_stat_list
+{
+	my $oid;
+	my @res;
+	my $in_branch=1;
+
+	my $procid=0;
+	my $oid_proc=$ROOT_OID.".".$ProductId.".".PROC_OID;
+	
+	#try if  name exist.
+	#we do not use walk, because we do not need values.
+	while($in_branch) {
+		my $nameoid = $session->get($oid_proc.".".$procid.".".NAME_OID);
+		while($nameoid ne "NOSUCHOBJECT" ){        
+			my $nb_arg=how_many_arg($oid_proc.".".$procid);
+			
+			#adapt to conf|stat format, we use empty string
+			my @list=($nameoid,$session->get($oid_proc.".".$procid.".".DESC_OID),$nb_arg,"");
+			$procid++;
+			push(@res,\@list);
+
+            $nameoid = $session->get($oid_proc.".".$procid.".".NAME_OID);
+		}
+		#do a getnext to check if other value remain.
+		my $var = new SNMP::Varbind([$oid_proc.".".$procid.".".NAME_OID]);
+ 	        $session->getnext($var);
+		$oid=@{$var}[0];
+
+ 		#are we in the same tree? 
+		if( $oid =~ /^$oid_proc/ && ${$var}[2] ne "ENDOFMIBVIEW" ) {
+			$procid++;
+		}else{
+			$in_branch=0;
+		}
+	}
+	return @res;
+}
+
+
+sub setconf # $conf_name,$conf_value
+#set a configuration.
+#@param $conf_name name of the configuration element (string)
+#@param $conf_value the new value.
+{
+	my ($conf_name,$conf_value)=@_;
+	
+	my $oid=find_var_by_name($conf_name,CONF_OID);
+	
+	if(!defined($oid)) {
+		printf STDERR "$conf_name does not exist in daemon #$ProductId\n";
+		    return 1;
+	}else{
+		if(setvalue($oid, $conf_value)==0) {
+			print "$conf_name=$conf_value\n";
+			return 0;
+		}else{
+			print "cannot set $conf_name\n";
+			return 2;
+		}
+	}
+}
+
+
+
+sub resetstat # $stat_name
+# reset a statistique.
+# @see get_defautl_val.
+# @param $stat_name name of the statistique.
+{
+	my ($stat_name)=@_;
+	my $oid=find_var_by_name($stat_name,STAT_OID);
+	
+	if(!defined($oid)) {
+		printf STDERR "$stat_name does not exist in daemon #$ProductId\n";
+		    return 1;
+	}else{
+		return setvalue($oid, 0);
+	}
+}
+
+
+sub getproc_res # $oid
+#Regulary check if data are available
+#@param oid proc as return by callproc_async
+#@see callproc_async.
+{
+	my $status=0;
+	my $oid=shift;
+
+	my $trig;
+	my @displist;
+	my ($type,$val);
+        do {		
+		printf STDERR "computing in progress...\n";
+		$trig=$session->get($oid.".".TRIGGER_OID);
+		sleep(1);
+	} while ($trig != ERROR && $trig != DONE);
+
+	my @reswalk=$session->bulkwalk(0, $maxrep,$oid.".".VAR_OID.".".OUT_OID);
+	
+	if($trig == ERROR ) {
+		printf STDERR "Warning: Error in procedure call\n";
+		$status=1;
+	}
+
+	while (($type,$val)=@{$reswalk[0]}) {
+		my $printed_val;
+		if($type->val eq "TIMETICKS") {
+			$printed_val=asn1_ticks_to_time($val->val);
+		}else{
+			$printed_val=$val->val;
+		}
+		my @list=($type->val, $printed_val);
+		push(@displist, \@list);
+		shift(@{$reswalk[0]}) ;
+		shift(@{$reswalk[0]}) ;
+	}
+	#raz value for future call
+	my $input=new SNMP::Varbind([$oid.".".TRIGGER_OID,0,"0","INTEGER"]);
+	$session->set($input);
+
+	#pass the status for xml
+	print_proc_res($status,@displist);
+
+	return $status;
+}
+
+
+sub callproc_async # $proc_name,@args
+# call a procedure with arguments
+# @param $proc_name name of the procedure.
+# @param @args arguments passed to the procedure.
+# @return the procedure oid (ROOT..numproc).
+# @see getproc_res. 
+{
+	my ($proc_name,@args)=@_;
+	
+	my $i=0;
+
+	my $oidproc=find_var_by_name($proc_name,PROC_OID);
+	my ($oid,$var,$type,$input);
+
+	if(!defined($oidproc)) {
+		printf STDERR "$proc_name does not exist in daemon #$ProductId\n";
+		return;
+	}
+	
+	#inputs are on default value, we try to set as much as we can
+	#with value provided by user.
+
+	my $nb_arg=how_many_arg($oidproc);
+	if($nb_arg != @args) {
+		printf STDERR "I need exactly $nb_arg arguments\n";
+		exit(2);
+	}
+
+	foreach (@args) {		
+		$oid=$oidproc.".".VAR_OID.".".IN_OID.".".$i.".".VAL_OID;
+		$var=new SNMP::Varbind([$oid]);
+		$session->get($var);
+		$type=$$var[3];
+		
+		$input=new SNMP::Varbind([$oid,0,$_,$type]);
+		$session->set($input);
+		
+		$i++;
+		if($$session{ErrorStr}) {
+			#no more input, stop
+			last;
+		}
+	}
+	#call the proc	
+	$input=new SNMP::Varbind([$oidproc.".".TRIGGER_OID,0,"1","INTEGER"]);
+	$session->set($input);
+	return $oidproc;
+}
+
+
+
+sub find_var_by_name # $var_name,$type
+# find node for a given name.
+# @param $var_name the node name.
+# @param $type the type of variable (CONF_OID or STAT_OID or PROC_OID)
+# @return oid (ROOT..num<stat|conf|proc>) or undef
+{
+	my ($var_name,$type)=@_;
+	my $oid=$ROOT_OID.".".$ProductId.".".$type;
+	my $in_branch=1;
+	my $varid=0;
+	my $var;
+
+	while($in_branch) {
+		while(($var=$session->get($oid.".".$varid.".".NAME_OID)) ne "NOSUCHOBJECT") {
+			if($var eq $var_name) {
+				return $oid.".".$varid;
+			}
+			$varid++;
+		}
+		#do a getnext to check if other value remain.
+		$var = new SNMP::Varbind([$oid.".".$varid.".".NAME_OID]);
+ 	        $session->getnext($var);
+		my $thisoid=@{$var}[0];
+
+ 		#are we in the same tree? 
+		if( $thisoid =~ /^$oid/) {
+			$varid++;
+		}else{
+			$in_branch=0;
+		}
+	}
+	return undef;
+}
+
+
+sub setvalue # $oid,$new_val
+#set a value.
+#@param $oid the value OID (ROOT..num<stat|conf|proc>)
+#@param $new_val the new value.
+{
+	my ($oid,$new_val)=@_;
+
+	my $var=new SNMP::Varbind([$oid.".".VAR_OID.".".VAL_OID]);
+	$session->get($var);
+
+	my $type=$$var[3];
+	my $old_val=$$var[2];
+
+	$var=new SNMP::Varbind([$oid.".".VAR_OID.".".VAL_OID,0,$new_val,$type]);
+
+	$session->set($var);
+
+	if($session->{ErrorNum}) {
+		print $$session{ErrorStr},"\n";
+		$$session{ErrorStr}="";
+        return 2;
+	}
+        #check if all is ok.
+	$var=new SNMP::Varbind([$oid.".".VAR_OID.".".VAL_OID]);
+	$session->get($var);
+
+	if( $$var[2] ne $new_val ) {
+		print "Setting new value have failed !\n";
+		print "Check your type\n";
+		$var=new SNMP::Varbind([$oid.".".VAR_OID.".".VAL_OID,0,$old_val,$type]);
+		$session->set($var);
+		return 3;
+	}
+	return 0;
+}
+
+
+
+sub print_format # $regexp,@_
+# call a fonction to display result as product list or values
+# @param $regexp used only for values and may be undef.
+# @param @_ list to display.
+# @see get_proc_list, get_conf_stat_list 
+{
+	my $str;	
+
+        if($Action eq "listproducts") {
+		printprod(@_);
+	}elsif($Action eq "liststat" || $Action eq "listconf" || $Action eq "listproc") {
+		my $regexp=pop;
+		
+		if($Action eq "liststat") {
+			$str="Statistics";
+		}elsif($Action eq "listconf") {
+			$str="Configuration";
+		}else{
+			$str="Procedure";
+		}		
+		return print_conf_stat_proc($str,@_,$regexp);
+
+
+	}
+}
+
+
+sub print_proc_res # $status,@_
+# Display procedure according to a format
+# @param @_ list of (type,value,...)
+# @param $status 0 for success.
+{
+	my ($type,$value);
+	my $status=shift;
+
+	if(defined($opts{'x'})) {
+		#XML 
+		my ($doc,$root)=openXMLDoc();
+		my $product=$doc->createElement('procedure_res');
+		
+		my $statstr;
+		if($status == 0) {
+			$statstr="success";
+		}else{
+			$statstr="failed";
+		}
+		my $stat_txt=$doc->createTextNode($statstr);
+		my $xmlstat=$doc->createElement('status');
+		
+		$xmlstat->appendChild($stat_txt);
+		$product->appendChild($xmlstat);
+		
+		my $proc_list_txt=$doc->createTextNode($statstr);
+		my $proc_list=$doc->createElement('proc_res_list');
+		$product->appendChild($proc_list);
+		foreach(@_) {
+			($type,$value)=@$_;
+			my $var=$doc->createElement('proc_res');			
+			my $type_txt=$doc->createTextNode($type);
+			my $val_txt=$doc->createTextNode($value);
+			my $xmltype=$doc->createElement('type');
+			my $xmlval=$doc->createElement('value');
+
+			$var->appendChild($xmltype);
+			$var->appendChild($xmlval);
+			
+			$xmltype->appendChild($type_txt);
+			$xmlval->appendChild($val_txt);
+
+			$proc_list->appendChild($var);
+		}
+		$root->appendChild($product);
+		$doc->printToFileHandle (\*STDOUT);
+		closeXMLDoc($doc);		
+	
+	}elsif(defined($opts{'c'})) {
+		#CSV
+		foreach (@_) {
+			($type,$value)=@$_;
+			printf("%s%s%s\n",$type,$CSV,$value);
+		}
+	}else{
+		#console print
+		foreach (@_) {
+			($type,$value)=@$_;
+			printf("%s %s\n",$type,$value);
+		
+		}
+	}
+}
+
+   
+sub print_conf_stat_proc # $str,@_,$regexp
+# Display result according to a format
+# @param $str "Statistics" or "Configuration" or "Procedure"
+# @param @_ list to display
+# @param $regexp filter on output 
+{
+	my ($name,$desc,$type,$val);
+	my $regexp=pop;
+	my $str=shift;
+	my $written=0;
+
+	if(defined($opts{'x'})) {
+		#XML
+		my ($doc,$root)=openXMLDoc();
+
+		getXMLConfStatProc($root,$doc,$str,$regexp,@_);
+			
+		$doc->printToFileHandle (\*STDOUT);
+
+		closeXMLDoc($root);
+
+	}elsif(defined($opts{'c'})) {
+		#CSV
+
+		# don't write product ID when it is specified on command line
+		if ( !defined($opts{'p'}) )
+		{
+			print "$str$CSV$ProductId\n";
+		}
+
+		foreach (@_) {
+			($name,$desc,$type,$val)=@$_;	
+			
+			if(defined($regexp)) {
+				if(($name =~ /$regexp/) ) {
+					$written=1;
+					if(defined($opts{'d'}) && !defined($opts{'v'})) {
+						printf("%s%s%s\n",$name,$CSV,$desc);
+					}elsif(defined($opts{'d'}) && defined($opts{'v'})){
+						printf("%s%s%s%s%s",$name,$CSV,$desc,$CSV,$type);
+						if($val ne "") {# i am not a proc
+							printf("%s%s\n",$CSV,$val);
+						}else{
+							printf("\n");
+						}
+					}elsif(!defined($opts{'d'}) && defined($opts{'v'})){
+						printf("%s%s%s",$name,$CSV,$type);
+						if($val ne "") { # i am not a proc
+							printf("%s%s\n",$CSV,$val);
+						}else{
+							printf("\n");
+						}
+					}else{
+						printf("%s\n",$name);
+					}
+				}
+			}else{
+				$written=1;
+				if(defined($opts{'d'}) && !defined($opts{'v'})) {
+					printf("%s%s%s\n",$name,$CSV,$desc);
+				}elsif(defined($opts{'d'}) && defined($opts{'v'})){
+					printf("%s%s%s%s%s",$name,$CSV,$desc,$CSV,$type);
+					if($val ne "") {# i am not a proc
+						printf("%s%s\n",$CSV,$val);
+					}else{
+						printf("\n");
+					}
+				}elsif(!defined($opts{'d'}) && defined($opts{'v'})){
+					printf("%s%s%s",$name,$CSV,$type);
+					if($val ne "") {# i am not a proc
+						printf("%s%s\n",$CSV,$val);
+					}else{
+						printf("\n");
+					}
+				}else{
+					printf("%s\n",$name);
+				}
+			}
+		}
+	}else{
+                #console print
+
+		# don't write product ID when it is specified on command line
+		if ( !defined($opts{'p'}) )
+		{
+			print "$str for product_id=$ProductId:\n";
+		}
+
+		#print title
+		printf("%-30s","name");
+		if($opts{'d'}) {
+			printf("%-37s","description");
+		}
+		if($opts{'v'}) {
+			if($str ne "Procedure") {
+				printf("%-25s %s","type","value");
+			}else{
+				printf("%-25s","nb arguments");
+			}
+		}
+		print "\n\n";
+
+		foreach (@_) {
+			($name,$desc,$type,$val)=@$_;	
+
+			if(defined($regexp)) {
+				if(($name =~ /$regexp/) ) {
+					$written=1;
+					if(defined($opts{'d'}) && !defined($opts{'v'})) {
+						printf("%-30s %s\n",$name,$desc);
+					}elsif(defined($opts{'d'}) && defined($opts{'v'})){
+						printf("%-25s %-40s %-10s",$name,$desc,$type);
+						if($val ne "") {# i am not a proc
+							printf(" %s\n",$val);
+						}else{
+							printf("\n");
+						}
+					}elsif(!defined($opts{'d'}) && defined($opts{'v'})){
+						printf("%-30s %-10s",$name,$type);
+						if($val ne "") {# i am not a proc
+							printf(" %s\n",$val);
+						}else{
+							printf("\n");
+						}
+					}else{
+						printf("%s\n",$name);
+					}
+				}
+			}else{
+				$written=1;
+				if(defined($opts{'d'}) && !defined($opts{'v'})) {
+					printf("%-30s %s\n",$name,$desc);
+				}elsif(defined($opts{'d'}) && defined($opts{'v'})){
+					printf("%-25s %-40s %-10s",$name,$desc,$type);
+					if($val ne "") { # i am not a proc
+						printf(" %s\n",$val);
+					}else{
+						printf("\n");
+					}
+				}elsif(!defined($opts{'d'}) && defined($opts{'v'})){
+					printf("%-30s %-10s",$name,$type);
+					if($val ne "") { # i am not a proc
+						printf(" %s\n",$val);
+					}else{
+						printf("\n");
+					}
+				}else{
+					printf("%s\n",$name);
+				}
+			}
+		}
+
+		if(!$written) {
+			if(defined($regexp)) {
+				print STDERR "No entry matching filter '$regexp'\n";
+			}else{
+				print STDERR "No entry found\n";
+			}
+		}
+	}
+    
+    if(!$written) {
+      return 2;
+    } else {
+      return 0;
+    }    
+}
+
+sub printprod # @_
+# display the list of products according to a format.
+# @param @_ list of products.
+{
+	if(defined($opts{'x'})) {
+		my ($doc,$root)=openXMLDoc();
+
+		getXMLProd($root,$doc,@_);
+
+		$doc->printToFileHandle (\*STDOUT);
+
+		closeXMLDoc($root);
+
+	}elsif(defined($opts{'c'})) {
+		my @arg=@_;
+		my $len=@_;
+		foreach ((0..$len-2)) {
+			print $arg[$_],",";
+		}
+		print $arg[$len-1],"\n";
+	}else{
+		print "List of products\n";
+		foreach (@_) {
+			print "\t$_\n";
+		}
+	}
+	
+}
+
+
+sub openXMLDoc 
+# create a new XML class.
+# @return ($doc,$root) document and root node.
+{
+	my $doc = XML::DOM::Document->new;
+	my $head=$doc->createXMLDecl("1.0","UTF-8",0);
+
+	my $root=$doc->createElement('snmp_adm');
+	#default namespace
+	$root->setAttribute("xmlns", "urn:snmp_admin");
+	#XML Schema Instance namespace
+	$root->setAttribute("xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
+	#namespace + schema location
+	$root->setAttribute("xsi:schemaLocation","urn:snmp_admin snmp_adm.xsd");
+	
+	$doc->setXMLDecl($head);
+	$doc->appendChild($root);
+
+	return ($doc,$root);
+}
+
+
+sub closeXMLDoc # $doc
+#destroy a XML class
+{
+	$_[0]->dispose();
+}
+
+
+
+sub getXMLConfStatProc # $root,$doc,$str,$regexp,@_
+# fill a XML structure with data.
+# @param $root XML root.
+# @param $doc XML document.
+# @param $str "Statistics" or "Configuration" or "Procedure".
+# @param $regexp
+# @param @_ list to write in XML
+{
+	my ($root,$doc,$str,$regexp);
+	($root,$doc,$str,$regexp,@_)=@_;	
+	
+	my $branchtxt;
+	my $product;
+	my $id;
+
+	if ($str eq "Statistics") {
+		$branchtxt="stat";
+	}elsif ($str eq "Configuration") {
+		$branchtxt="conf";
+	}elsif ($str eq "Procedure") {
+		$branchtxt="proc";
+	}else{
+		return;
+	}
+	#are other products exist in the XML document?
+	my @productlist=$root->getElementsByTagName("product");
+
+	foreach (@productlist) {
+		my $tmpprod=$_;
+		#some products already exist...
+		my @idlist=$tmpprod->getElementsByTagName("id");
+		foreach (@idlist) {
+			# ...we search ours.
+			my $val=$_->getFirstChild->getNodeValue;
+
+			if (defined($val) && $val eq $ProductId) {
+				#we exist, data will be appended after.
+				$product=$tmpprod;
+			}
+		}
+	}
+	if(!defined($product)) {
+		#new product, we have to build it.
+		$product=$doc->createElement('product');
+		$id=$doc->createElement('id');
+		my $txt=$doc->createTextNode($ProductId);			
+		$id->appendChild($txt);
+		$product->appendChild($id);
+		$root->appendChild($product);
+	}
+	my $list=$doc->createElement($branchtxt."_list");
+	
+	$product->appendChild($list);
+	#fill with data
+	foreach (@_) {
+		my $branch=$doc->createElement($branchtxt);
+		$list->appendChild($branch);
+		my ($name,$desc,$type,$val)=@$_;	
+		if(defined($regexp)) {
+			if(($name =~ /$regexp/) ) {
+				if($val ne "") {
+					write_xml_conf_stat($doc,$branch,$name,$desc,$type,$val);
+				}else{
+					write_xml_proc($doc,$branch,$name,$desc,$type,$val);
+				}
+
+			}
+		}else{
+			if($val ne "") {
+				write_xml_conf_stat($doc,$branch,$name,$desc,$type,$val);
+			}else{
+				write_xml_proc($doc,$branch,$name,$desc,$type,$val);
+			}
+			
+		}
+	}
+}
+
+
+sub getXMLProd # $root,$doc,@_
+# fill a XML structure with products.
+# @param $root XML root.
+# @param $doc XML document.
+# @param @_ list of products
+{
+	my ($root,$doc);
+	($root,$doc,@_)=@_;
+
+	my $prod = $doc->createElement('product_list');		
+		foreach(@_) {
+			my $id=$doc->createElement('id');
+			my $txt=$doc->createTextNode($_);
+			
+			$id->appendChild($txt);
+			$prod->appendChild($id);
+		}
+	$root->appendChild($prod);
+	
+}
+	
+
+sub write_xml_conf_stat # $doc,$branch,$name,$desc,$type,$val
+# write info under a branch.
+{
+	my ($doc,$branch,$name,$desc,$type,$val)=@_;
+
+	my $xmlname=$doc->createElement('name');
+	my $txt=$doc->createTextNode($name);
+	$xmlname->appendChild($txt);
+	
+	my $xmldesc=$doc->createElement('desc');
+	$txt=$doc->createTextNode($desc);
+	$xmldesc->appendChild($txt);
+	
+	my $xmltype=$doc->createElement('type');
+	$txt=$doc->createTextNode($type);
+	$xmltype->appendChild($txt);
+
+	my $xmlval=$doc->createElement('value');
+	$txt=$doc->createTextNode($val);
+	$xmlval->appendChild($txt);
+
+	$branch->appendChild($xmlname);
+	$branch->appendChild($xmldesc);
+	$branch->appendChild($xmlval);
+	$branch->appendChild($xmltype);
+
+}
+
+sub write_xml_proc # $doc,$branch,$name,$desc,$nb_arg,$val
+# write info under a branch.
+{
+	my ($doc,$branch,$name,$desc,$nb_arg)=@_;
+
+	my $xmlname=$doc->createElement('name');
+	my $txt=$doc->createTextNode($name);
+	$xmlname->appendChild($txt);
+	
+	my $xmldesc=$doc->createElement('desc');
+	$txt=$doc->createTextNode($desc);
+	$xmldesc->appendChild($txt);
+	
+	my $xmlnb_arg=$doc->createElement('nb_arg');
+	$txt=$doc->createTextNode($nb_arg);
+	$xmlnb_arg->appendChild($txt);
+
+	$branch->appendChild($xmlname);
+	$branch->appendChild($xmldesc);
+	$branch->appendChild($xmlnb_arg);
+}
+
+
+sub asn1_ticks_to_time # $value
+#@param $value nb hundredth of second
+#@return formated string
+# Code provided by http://search.cpan.org/~dtown/Net-SNMP-5.2.0/lib/Net/SNMP.pm
+{
+	my $ticks = shift || 0;
+   
+	my $days = int($ticks / (24 * 60 * 60 * 100));
+	$ticks %= (24 * 60 * 60 * 100);
+	
+	my $hours = int($ticks / (60 * 60 * 100));
+	$ticks %= (60 * 60 * 100);
+	
+	my $minutes = int($ticks / (60 * 100));
+	$ticks %= (60 * 100);
+	
+	my $seconds = ($ticks / 100);
+	
+	if ($days != 0){
+		sprintf('%d day%s, %02d:%02d:%05.02f', $days,
+			($days == 1 ? '' : 's'), $hours, $minutes, $seconds);
+	} elsif ($hours != 0) {
+		sprintf('%d hour%s, %02d:%05.02f', $hours,
+			($hours == 1 ? '' : 's'), $minutes, $seconds);
+	} elsif ($minutes != 0) {
+		sprintf('%d minute%s, %05.02f', $minutes,
+			($minutes == 1 ? '' : 's'), $seconds);
+	} else {
+		sprintf('%04.02f second%s', $seconds, ($seconds == 1 ? '' : 's'));
+	}
+}
+
+sub how_many_arg # $oid_procid 
+# @param $oid_procid oid from root to procid
+# @return the number of input for a procedure
+{
+	my $oid_procid=shift;
+
+	my $nb_arg=0;
+
+	my $oid=$oid_procid.".".VAR_OID.".".IN_OID;
+	my @reswalk=$session->bulkwalk(0, $maxrep,$oid);
+	my $nb_elm=@{$reswalk[0]};
+	
+	$nb_arg+=$nb_elm / 2; # var=val+type
+	if($nb_arg==$maxrep) {
+		#Wow, we have a lot of values
+		#TODO find a way to manage this
+		print STDERR "overflow!\n";
+	}
+	return $nb_arg;
+}

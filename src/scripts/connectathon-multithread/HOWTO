@@ -1,0 +1,9 @@
+To launch those multithread tests, execute at the same time
+all the ganeshell scripts that begin with the same number.
+
+Example:
+ganeshell 01.*.gansh
+
+Each of those scripts defines the behavior of one thread
+during the test.Threads are synchronized using the ganeshell
+"barrier" command.

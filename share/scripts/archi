@@ -1,0 +1,21 @@
+#!/bin/ksh
+
+ARG=$1
+
+UNAME_OS=`uname -s 2>/dev/null`
+UNAME_VERSION=`uname -r 2>/dev/null`
+
+UNAME_HARD_1=`uname -m 2>/dev/null`
+UNAME_HARD_2=`uname -p 2>/dev/null`
+
+if [ x$UNAME_HARD_1 = x$UNAME_HARD_2 ]; then
+	UNAME_HARD=$UNAME_HARD_1
+else
+	UNAME_HARD="${UNAME_HARD_1}_${UNAME_HARD_2}" 
+fi
+
+if [ x$ARG = x-v ]; then
+  echo "${UNAME_OS}_${UNAME_HARD}_${UNAME_VERSION}" | sed -e "s/ /_/g" | sed -e "s/\./_/g"
+else
+  echo "${UNAME_OS}_${UNAME_HARD}" | sed -e "s/ /_/g" | sed -e "s/\./_/g"
+fi

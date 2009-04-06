@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Compiling GANESHA</TITLE>
+<META NAME="description" CONTENT="Compiling GANESHA">
+<META NAME="keywords" CONTENT="using_posix_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="index.php?page=using_posix_fsal/using_posix_fsal.css">
+
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node4">
+<LINK REL="previous" HREF="index.php?page=using_posix_fsal/node2">
+<LINK REL="up" HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node4">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html36"
+  HREF="index.php?page=using_posix_fsal/node4">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html34"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html28"
+  HREF="index.php?page=using_posix_fsal/node2">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html37"
+  HREF="index.php?page=using_posix_fsal/node4">GANESHA configuration</A>
+<B> Up:</B> <A NAME="tex2html35"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">using_posix_fsal</A>
+<B> Previous:</B> <A NAME="tex2html29"
+  HREF="index.php?page=using_posix_fsal/node2">Database configuration</A>
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000">
+Compiling GANESHA</A>
+</H1>
+
+<P>
+For using GANESHA's over a POSIX filesystem, you have to build it using the configure arg <TT>--with-fsal=POSIX</TT>.<BR>
+Database can be selected using one of the following options <TT>--with-db=MYSQL</TT> or  <TT>--with-db=PGSQL</TT>.<BR>
+
+For PostGreSQL databases that support stored procedures (PostgreSQL PL), you can activate them with <TT>--enable-pl-pgsql</TT> arg.
+
+<P>
+Thus, for compiling GANESHA execute the following commands:
+<PRE>
+cd src
+./configure --with-fsal=POSIX --with-db=MYSQL
+make
+</PRE>
+
+<P>
+<BR><HR>
+<ADDRESS>
+2009-03-06
+</ADDRESS>
+</BODY>
+</HTML>

@@ -1,0 +1,114 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/" $USER "/connectathon-ganesha"
+
+# Number of blocks to be written
+set NB_BLOCKS  128
+
+# Data block to be written (63+null terminating character)
+set BLOCK_SIZE 64
+set ASCII_BLOCK "AZERTYUIOPQSDFGHJKLMWXCVBN,;:!1234567890+&(-_)~{[#^@]}=$*%<>abc"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+init_fs $CONFIG_FILE
+
+# setting Cache_inode layer
+set LAYER Cache_inode
+init_cache -v $CONFIG_FILE
+
+cd $TEST_DIR
+
+print "================================ WITH DATACACHING =============================="
+
+
+create FICHIER_1 666
+
+print "------- FICHIER_1: Size should be 0 : -----------"
+
+set STAT_1 `stat FICHIER_1`
+ls -l FICHIER_1
+
+sleep 1
+
+data_cache -v FICHIER_1
+
+set STAT_2 `stat FICHIER_1`
+ls -l FICHIER_1
+
+if ne -- $STAT_1 $STAT_2 ? print "*************> ERROR : Attributes before/after data_cache are different <****************"
+if ne -- $STAT_1 $STAT_2 ? diff $STAT_1 $STAT_2
+
+print "-------------------------------------------------"
+
+write -v -N $NB_BLOCKS -A $ASCII_BLOCK FICHIER_1
+
+print "------- FICHIER_1: Size should be 8192 : --------"
+
+set STAT_1 `stat FICHIER_1`
+ls -l FICHIER_1
+
+sleep 1
+
+flush_cache -v FICHIER_1
+
+set STAT_2 `stat FICHIER_1`
+ls -l FICHIER_1
+
+sleep 1
+
+release_cache -v FICHIER_1
+
+set STAT_3 `stat FICHIER_1`
+ls -l FICHIER_1
+
+if ne -- $STAT_1 $STAT_2 ? print "*************> ERROR : Attributes before/after flush are different <****************"
+if ne -- $STAT_1 $STAT_2 ? diff $STAT_1 $STAT_2
+if ne -- $STAT_2 $STAT_3 ? print "*************> ERROR : Attributes before/after release are different <**************"
+if ne -- $STAT_2 $STAT_3 ? diff $STAT_2 $STAT_3
+
+print "-------------------------------------------------"
+
+
+read -v -s SET,0 -B $BLOCK_SIZE all FICHIER_1
+
+unlink FICHIER_1
+
+print "================================ NO DATACACHING =============================="
+
+####################################
+# the same test without datacaching
+####################################
+
+create FICHIER_1 666
+print "------- FICHIER_1: Size should be 0 : -----------"
+ls -l FICHIER_1
+print "-------------------------------------------------"
+write -v -N $NB_BLOCKS -A $ASCII_BLOCK FICHIER_1
+print "------- FICHIER_1: Size should be 8192 : --------"
+ls -l FICHIER_1
+print "-------------------------------------------------"
+
+
+
+read -v -s SET,0 -B $BLOCK_SIZE all FICHIER_1
+
+unlink FICHIER_1
+
+

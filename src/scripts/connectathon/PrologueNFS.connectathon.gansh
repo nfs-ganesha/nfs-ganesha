@@ -1,0 +1,39 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/" $USER
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+init_fs $CONFIG_FILE
+
+# setting cache_inode layer
+set LAYER Cache_inode
+init_cache $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+# mounting a exported path
+mount $MOUNT_DIR
+
+interactive

@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Database configuration</TITLE>
+<META NAME="description" CONTENT="Database configuration">
+<META NAME="keywords" CONTENT="using_posix_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="index.php?page=using_posix_fsal/using_posix_fsal.css">
+
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node3">
+<LINK REL="previous" HREF="index.php?page=using_posix_fsal/node1">
+<LINK REL="up" HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<LINK REL="next" HREF="index.php?page=using_posix_fsal/node3">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html26"
+  HREF="index.php?page=using_posix_fsal/node3">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html24"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html18"
+  HREF="index.php?page=using_posix_fsal/node1">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html27"
+  HREF="index.php?page=using_posix_fsal/node3">Compiling GANESHA</A>
+<B> Up:</B> <A NAME="tex2html25"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">using_posix_fsal</A>
+<B> Previous:</B> <A NAME="tex2html19"
+  HREF="index.php?page=using_posix_fsal/node1">Introduction</A>
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00020000000000000000">
+Database configuration</A>
+</H1>
+
+<P>
+GANESHA supports both MySQL 5, PostgreSQL 7 and 8.
+<BR>
+This section will explain how to install/configure a database in order to use the POSIX FSAL.
+</P>
+
+<H2>MySQL Configuration</H2>
+
+<UL>
+<LI>First, install the <TT>mysql-server</TT> package</LI>
+<LI>Start the mysql server:<br>
+	<TT>service mysqld start</TT>
+</LI>
+<LI>As root, create a database for NFS-GANESHA:<br>
+	<TT>mysqladmin create <I>ganesha_db</I></TT>
+</LI>
+<LI> Then, create a database user and give it all access rights.<BR>
+     For this, open a SQL session (as root):<br>
+	<TT>mysql <I>ganesha_db</I></TT><BR>
+     And execute the following commands:<BR>
+	<TT>create user 'GANESHA' identified by 'passw0rd';</TT><BR>
+	<TT>grant usage on <I>ganesha_db</I>.*  to 'GANESHA'@'localhost' identified by 'passw0rd';</TT><BR>
+	<TT>grant all privileges on <I>ganesha_db</I>.*  to 'GANESHA'@'localhost' identified by 'passw0rd';</TT><BR>
+	Finally, commit the new settings:<BR>
+	<TT>flush privileges;</TT>	
+</LI>
+<LI>Check that this new user can access the database by openning a SQL session:<BR>
+	<TT>mysql --user=GANESHA --password=passw0rd --host=localhost ganesha_db</TT>
+<LI>
+<LI>Retrieve the database schema from nfs-ganesha sources: <TT>src/FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql</TT>, and execute the SQL statements it contains:<BR>
+	<TT>mysql --user=GANESHA --password=passw0rd --host=localhost ganesha_db &lt; posixdb_mysql5.sql</TT>
+</LI>
+<LI>Create a password file that will be used by NFS-GANESHA daemon:<BR>
+	<TT>echo "passw0rd" &gt; /var/ganesha/.dbpass</TT><BR>
+	<B>/!\</B> Don't forget setting restrictive access rights to this file:<BR>
+	<TT>chmod 600 /var/ganesha/.dbpass</TT>
+</LI>
+</UL>
+MySQL database is now ready to be used.
+
+
+<H2>PostgreSQL Configuration</H2>
+
+<P>
+This section will explain how to install/configure a PostgreSQL 8.1 database in order to use the POSIX FSAL.
+For 7.x version, configuration is very similar (differences will be noticed inline).
+<BR>
+In the following description, replace %DBNAME% and %USERNAME% signs
+with the actual database name and user name you want to use.
+</P>
+<P>
+<UL>
+<LI>First, install the postgreSQL 8.1 package.
+</LI>
+<LI>Then, take the "postgres" identity (this user is created during package setup. It has all rights on PostgreSQL engine)
+<BR>      <TT>su - postgres</TT>
+</LI>
+<LI>Create a new user for using the database with GANESHA:
+<BR>      <TT>createuser -no-superuser -no-createdb -no-createrole -login -pwprompt %USERNAME%</TT> (you will be prompted for a password).
+<BR>      
+<BR>
+With postgreSQL 7, use the following command instead:
+<BR>      <TT>createuser -no-adduser -no-createdb -pwprompt %USERNAME%</TT>  (reply 'no' to questions that will be prompted, and enter a password)
+</LI>
+<LI>Create a new database (owned by the user we have juste created):
+<BR>      <TT>createdb -O %USERNAME% %DBNAME%</TT>
+</LI>
+<LI>In order to use PGSQL Procedural Language for improving frequent database queries, we have to activate plpgsql into our database:
+<BR>      <TT>createlang plpgsql %DBNAME%</TT>
+</LI>
+<LI>Make sure you have tcp connections enabled for your database. This is set in file `<TT>postgresql.conf</TT>' (it should be located in
+      `<TT>/var/lib/pgsql/data</TT>'). Make sure `<TT>tcpip_socket</TT>' parameter is true and the line is not commented:
+<BR>      <TT>tcpip_socket = true</TT>
+</LI>
+<LI>In order to enable server's authentication, you have to modify <TT>pg_hba.conf</TT> (by default, this is located
+      in the <TT>/var/lib/pgsql/data</TT> directory).
+<BR>
+At the end of the file you should have something like this:
+      <PRE>
+local   all         all                               trust
+# IPv4 local connections:
+host    all         all         127.0.0.1/32          md5
+host    all         all         %GANESHA_NFSD_IP%/32  md5
+# IPv6 local connections:
+host    all         all         ::1/128               trust
+</PRE>
+      After this step, you have to restart the postgresql service:
+<BR>      <TT>service postgresql restart</TT>
+</LI>
+<LI>We can now create the tables in the database. To do this, retrieve the appropriate SQL script
+      from directory `<TT>src/FSAL/FSAL_POSIX/DBExt/PGSQL</TT>' in GANESHA sources: 
+      use `<TT>posixdb_v7.sql</TT>' if you have a postgreSQL v7.x database,
+      `<TT>posixdb_v8.sql</TT>' if you are using postgreSQL v8 database or higher version
+      (with stored procedures support).
+<BR>
+Then execute it like this:
+<BR>      <TT>cat posixdb_v8.sql | psql -h localhost -U %USERNAME% %DBNAME%</TT>
+</LI>
+<LI>Create a keytab file in order for GANESHA to access the database. The content of this file
+      must have the folowing syntax:
+<BR>      <TT>hostname:port:database:username:password</TT>
+<BR>
+Take care of setting exactly the same values in the GANESHA's configuration file
+      for <TT>DB_host</TT>, <TT>DB_port</TT>, <TT>DB_name</TT> and <TT>DB_login</TT>.
+<BR>
+This file's permissions MUST be 600 (rw----).            
+</LI>
+</UL>
+
+<P>
+Database is now ready.
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html26"
+  HREF="index.php?page=using_posix_fsal/node3">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/share/latex2html/icons/next.png"></A> 
+<A NAME="tex2html24"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/share/latex2html/icons/up.png"></A> 
+<A NAME="tex2html18"
+  HREF="index.php?page=using_posix_fsal/node1">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/share/latex2html/icons/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html27"
+  HREF="index.php?page=using_posix_fsal/node3">Compiling GANESHA</A>
+<B> Up:</B> <A NAME="tex2html25"
+  HREF="index.php?page=using_posix_fsal/using_posix_fsal">using_posix_fsal</A>
+<B> Previous:</B> <A NAME="tex2html19"
+  HREF="index.php?page=using_posix_fsal/node1">Introduction</A>
+<!--End of Navigation Panel-->
+<ADDRESS>
+2009-03-06
+</ADDRESS>
+</BODY>
+</HTML>

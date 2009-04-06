@@ -1,0 +1,5 @@
+etc/ganesha/proxy.ganesha.nfsd.conf
+etc/ganesha/snmp.ganesha.nfsd.conf
+etc/ganesha/posix.ganesha.nfsd.conf
+etc/ganesha/hosts.ganesha
+etc/ganesha/uidgid_mapfile.ganesha

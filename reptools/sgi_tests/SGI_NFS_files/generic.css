@@ -1,0 +1,34 @@
+#headerBackground {
+	background: #660066 url(http://www.sgi.com/images/main_template/top_nav_repeat.jpg) repeat-x; 
+	height: 84px; 
+}
+.search {
+	background: transparent url(http://www.sgi.com/images/main_template/topbar_search_arrow.gif) no-repeat center bottom; 
+	width: 13px; 
+	height: 15px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	vertical-align: middle;
+	color: #660066;
+}
+.box {margin-top: 10px; background-color: #EBEEF5; color: #333333; font-size: 9px; font-family: verdana;}
+.hideButton {visibility: hidden;}
+
+.globalSubnav a {font-family: verdana, arial, sans-serif !important; font-size: 10px; color: #CBCDCC !important; text-decoration: none;}
+.globalSubnav a:hover {color: #CBCDCC; text-decoration: underline;}
+.globalSubnav .bar {background: transparent url(http://www.sgi.com/images/main_template/topbar_subnav_sep.gif) no-repeat; background-position: center right; padding-right: 15px;}
+.globalSubnav .endbar {padding-right: 14px;}
+#globalHeader fieldset {
+	border: 0; 
+	margin: 0;
+	padding: 0; 
+	width: 150px;
+	float: right;
+}
+
+#topNav img {margin-bottom: -3px;}
+#topNav img.tighten {margin-right: -3px;}
+
+#topNavEnd {background: transparent url(http://www.sgi.com/images/main_template/topnav_end.gif) repeat-x bottom left;}
+

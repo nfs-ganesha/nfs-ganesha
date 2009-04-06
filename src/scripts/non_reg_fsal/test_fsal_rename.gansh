@@ -1,0 +1,79 @@
+set VERBOSE     OFF
+set DEBUG_LEVEL NIV_DEBUG
+set LAYER FSAL
+
+init_fs -v /tmp/hpss.ganesha.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+# je deviens leibovic
+su 3733
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+print "------------ Creation de differents repertoires -------------"
+
+mkdir -v test_non_reg 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/B 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+print "--------------------- Deplacements ----------------------"
+
+# doit renvoyer une erreur (ERR_FSAL_NOT_EMPTY)
+
+rename -v test_non_reg/B test_non_reg/A
+if ne -n -- $STATUS 93 ? print "NOTEMPTY_ERROR" : print "NOTEMPTY_OK"
+
+# doit fonctionner
+
+rename -v test_non_reg/A test_non_reg/B
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit avoir un repertoire C dans B
+# et a n'existe plus
+
+ls -ld test_non_reg/B/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+ls -ld test_non_reg/A
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+# doit fonctionner
+rename -v test_non_reg/B/C test_non_reg/C/C
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit avoir un repertoire C dans C mais plus dans B
+
+ls -ld test_non_reg/C/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+ls -ld test_non_reg/B/C
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+print "--------------------- Menage ----------------------"
+# suppression des repertoires temporaires
+
+unlink test_non_reg/B
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+

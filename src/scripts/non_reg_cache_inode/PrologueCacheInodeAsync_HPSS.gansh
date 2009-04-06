@@ -1,0 +1,15 @@
+set VERBOSE "OFF"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../../../share/conf/hpss.ganesha.conf.async
+
+if ne -- $STATUS 0 ? print "INIT_FSAL_ERROR" : print "INIT_FSAL_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../../../share/conf/hpss.ganesha.conf.async
+if ne -- $STATUS 0 ? print "INIT_CACHE_ERROR" : print "INIT_CACHE_OK"
+
+cd /cea/prot/S/lama/s8/deniel/tutu
+interactive

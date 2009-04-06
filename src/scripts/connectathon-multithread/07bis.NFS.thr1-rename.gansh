@@ -1,0 +1,449 @@
+# main script.
+
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+#set VERBOSE "ON"
+set DEBUG_LEVEL "NIV_EVENT"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/leibovic"
+set TEST_DIR  "/connectathon-ganesha-NFS"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# setting cache_inode layer
+set LAYER Cache_inode
+init_cache -v $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+# synchronization with other threads
+barrier
+
+mount $MOUNT_DIR
+mkdir $TEST_DIR  755
+
+
+cd $TEST_DIR
+
+# create many files in REP_1
+mkdir REP_1 755
+
+#ls REP_1
+
+create REP_1/fichier_0 755
+create REP_1/fichier_1 755
+create REP_1/fichier_2 755
+create REP_1/fichier_3 755
+create REP_1/fichier_4 755
+create REP_1/fichier_5 755
+create REP_1/fichier_6 755
+create REP_1/fichier_7 755
+create REP_1/fichier_8 755
+create REP_1/fichier_9 755
+create REP_1/fichier_10 755
+
+echo "10 entries created..."
+
+create REP_1/fichier_11 755
+create REP_1/fichier_12 755
+create REP_1/fichier_13 755
+create REP_1/fichier_14 755
+create REP_1/fichier_15 755
+create REP_1/fichier_16 755
+create REP_1/fichier_17 755
+create REP_1/fichier_18 755
+create REP_1/fichier_19 755
+create REP_1/fichier_20 755
+
+echo "20 entries created..."
+
+create REP_1/fichier_21 755
+create REP_1/fichier_22 755
+create REP_1/fichier_23 755
+create REP_1/fichier_24 755
+create REP_1/fichier_25 755
+create REP_1/fichier_26 755
+create REP_1/fichier_27 755
+create REP_1/fichier_28 755
+create REP_1/fichier_29 755
+create REP_1/fichier_30 755
+
+echo "30 entries created..."
+
+create REP_1/fichier_31 755
+create REP_1/fichier_32 755
+create REP_1/fichier_33 755
+create REP_1/fichier_34 755
+create REP_1/fichier_35 755
+create REP_1/fichier_36 755
+create REP_1/fichier_37 755
+create REP_1/fichier_38 755
+create REP_1/fichier_39 755
+create REP_1/fichier_40 755
+
+echo "40 entries created..."
+
+create REP_1/fichier_41 755
+create REP_1/fichier_42 755
+create REP_1/fichier_43 755
+create REP_1/fichier_44 755
+create REP_1/fichier_45 755
+create REP_1/fichier_46 755
+create REP_1/fichier_47 755
+create REP_1/fichier_48 755
+create REP_1/fichier_49 755
+create REP_1/fichier_50 755
+
+echo "50 entries created..."
+
+set WC_1 `wc \`ls -l REP_1\``
+echo "=> Entries in REP_1 : " `chomp $WC_1`
+
+# barrier at half-way
+barrier
+
+create REP_1/fichier_51 755
+create REP_1/fichier_52 755
+create REP_1/fichier_53 755
+create REP_1/fichier_54 755
+create REP_1/fichier_55 755
+create REP_1/fichier_56 755
+create REP_1/fichier_57 755
+create REP_1/fichier_58 755
+create REP_1/fichier_59 755
+create REP_1/fichier_60 755
+
+echo "60 entries created..."
+
+create REP_1/fichier_61 755
+create REP_1/fichier_62 755
+create REP_1/fichier_63 755
+create REP_1/fichier_64 755
+create REP_1/fichier_65 755
+create REP_1/fichier_66 755
+create REP_1/fichier_67 755
+create REP_1/fichier_68 755
+create REP_1/fichier_69 755
+create REP_1/fichier_70 755
+
+echo "70 entries created..."
+
+create REP_1/fichier_71 755
+create REP_1/fichier_72 755
+create REP_1/fichier_73 755
+create REP_1/fichier_74 755
+create REP_1/fichier_75 755
+create REP_1/fichier_76 755
+create REP_1/fichier_77 755
+create REP_1/fichier_78 755
+create REP_1/fichier_79 755
+create REP_1/fichier_80 755
+
+echo "80 entries created..."
+
+create REP_1/fichier_81 755
+create REP_1/fichier_82 755
+create REP_1/fichier_83 755
+create REP_1/fichier_84 755
+create REP_1/fichier_85 755
+create REP_1/fichier_86 755
+create REP_1/fichier_87 755
+create REP_1/fichier_88 755
+create REP_1/fichier_89 755
+create REP_1/fichier_90 755
+
+echo "90 entries created..."
+
+create REP_1/fichier_91 755
+create REP_1/fichier_92 755
+create REP_1/fichier_93 755
+create REP_1/fichier_94 755
+create REP_1/fichier_95 755
+create REP_1/fichier_96 755
+create REP_1/fichier_97 755
+create REP_1/fichier_98 755
+create REP_1/fichier_99 755
+
+echo "100 entries created..."
+
+set WC_1 `wc \`ls -l REP_1\``
+echo "=> Entries in REP_1 : " `chomp $WC_1`
+
+# barrier after create
+barrier
+
+# REP_2 has been created by another thread
+
+rename REP_1/fichier_0 REP_2/fichier_0
+rename REP_1/fichier_1 REP_2/fichier_1
+rename REP_1/fichier_2 REP_2/fichier_2
+rename REP_1/fichier_3 REP_2/fichier_3
+rename REP_1/fichier_4 REP_2/fichier_4
+rename REP_1/fichier_5 REP_2/fichier_5
+rename REP_1/fichier_6 REP_2/fichier_6
+rename REP_1/fichier_7 REP_2/fichier_7
+rename REP_1/fichier_8 REP_2/fichier_8
+rename REP_1/fichier_9 REP_2/fichier_9
+rename REP_1/fichier_10 REP_2/fichier_10
+
+echo "10 entries moved..."
+
+rename REP_1/fichier_11 REP_2/fichier_11
+rename REP_1/fichier_12 REP_2/fichier_12
+rename REP_1/fichier_13 REP_2/fichier_13
+rename REP_1/fichier_14 REP_2/fichier_14
+rename REP_1/fichier_15 REP_2/fichier_15
+rename REP_1/fichier_16 REP_2/fichier_16
+rename REP_1/fichier_17 REP_2/fichier_17
+rename REP_1/fichier_18 REP_2/fichier_18
+rename REP_1/fichier_19 REP_2/fichier_19
+rename REP_1/fichier_20 REP_2/fichier_20
+
+echo "20 entries moved..."
+
+rename REP_1/fichier_21 REP_2/fichier_21
+rename REP_1/fichier_22 REP_2/fichier_22
+rename REP_1/fichier_23 REP_2/fichier_23
+rename REP_1/fichier_24 REP_2/fichier_24
+rename REP_1/fichier_25 REP_2/fichier_25
+rename REP_1/fichier_26 REP_2/fichier_26
+rename REP_1/fichier_27 REP_2/fichier_27
+rename REP_1/fichier_28 REP_2/fichier_28
+rename REP_1/fichier_29 REP_2/fichier_29
+rename REP_1/fichier_30 REP_2/fichier_30
+
+echo "30 entries moved..."
+
+rename REP_1/fichier_31 REP_2/fichier_31
+rename REP_1/fichier_32 REP_2/fichier_32
+rename REP_1/fichier_33 REP_2/fichier_33
+rename REP_1/fichier_34 REP_2/fichier_34
+rename REP_1/fichier_35 REP_2/fichier_35
+rename REP_1/fichier_36 REP_2/fichier_36
+rename REP_1/fichier_37 REP_2/fichier_37
+rename REP_1/fichier_38 REP_2/fichier_38
+rename REP_1/fichier_39 REP_2/fichier_39
+rename REP_1/fichier_40 REP_2/fichier_40
+
+echo "40 entries moved..."
+
+rename REP_1/fichier_41 REP_2/fichier_41
+rename REP_1/fichier_42 REP_2/fichier_42
+rename REP_1/fichier_43 REP_2/fichier_43
+rename REP_1/fichier_44 REP_2/fichier_44
+rename REP_1/fichier_45 REP_2/fichier_45
+rename REP_1/fichier_46 REP_2/fichier_46
+rename REP_1/fichier_47 REP_2/fichier_47
+rename REP_1/fichier_48 REP_2/fichier_48
+rename REP_1/fichier_49 REP_2/fichier_49
+rename REP_1/fichier_50 REP_2/fichier_50
+
+echo "50 entries moved..."
+
+#barrier at half way
+barrier
+
+rename REP_1/fichier_51 REP_2/fichier_51
+rename REP_1/fichier_52 REP_2/fichier_52
+rename REP_1/fichier_53 REP_2/fichier_53
+rename REP_1/fichier_54 REP_2/fichier_54
+rename REP_1/fichier_55 REP_2/fichier_55
+rename REP_1/fichier_56 REP_2/fichier_56
+rename REP_1/fichier_57 REP_2/fichier_57
+rename REP_1/fichier_58 REP_2/fichier_58
+rename REP_1/fichier_59 REP_2/fichier_59
+rename REP_1/fichier_60 REP_2/fichier_60
+
+echo "60 entries moved..."
+
+rename REP_1/fichier_61 REP_2/fichier_61
+rename REP_1/fichier_62 REP_2/fichier_62
+rename REP_1/fichier_63 REP_2/fichier_63
+rename REP_1/fichier_64 REP_2/fichier_64
+rename REP_1/fichier_65 REP_2/fichier_65
+rename REP_1/fichier_66 REP_2/fichier_66
+rename REP_1/fichier_67 REP_2/fichier_67
+rename REP_1/fichier_68 REP_2/fichier_68
+rename REP_1/fichier_69 REP_2/fichier_69
+rename REP_1/fichier_70 REP_2/fichier_70
+
+echo "70 entries moved..."
+
+rename REP_1/fichier_71 REP_2/fichier_71
+rename REP_1/fichier_72 REP_2/fichier_72
+rename REP_1/fichier_73 REP_2/fichier_73
+rename REP_1/fichier_74 REP_2/fichier_74
+rename REP_1/fichier_75 REP_2/fichier_75
+rename REP_1/fichier_76 REP_2/fichier_76
+rename REP_1/fichier_77 REP_2/fichier_77
+rename REP_1/fichier_78 REP_2/fichier_78
+rename REP_1/fichier_79 REP_2/fichier_79
+rename REP_1/fichier_80 REP_2/fichier_80
+
+echo "80 entries moved..."
+
+rename REP_1/fichier_81 REP_2/fichier_81
+rename REP_1/fichier_82 REP_2/fichier_82
+rename REP_1/fichier_83 REP_2/fichier_83
+rename REP_1/fichier_84 REP_2/fichier_84
+rename REP_1/fichier_85 REP_2/fichier_85
+rename REP_1/fichier_86 REP_2/fichier_86
+rename REP_1/fichier_87 REP_2/fichier_87
+rename REP_1/fichier_88 REP_2/fichier_88
+rename REP_1/fichier_89 REP_2/fichier_89
+
+echo "90 entries moved..."
+
+rename REP_1/fichier_90 REP_2/fichier_90
+rename REP_1/fichier_91 REP_2/fichier_91
+rename REP_1/fichier_92 REP_2/fichier_92
+rename REP_1/fichier_93 REP_2/fichier_93
+rename REP_1/fichier_94 REP_2/fichier_94
+rename REP_1/fichier_95 REP_2/fichier_95
+rename REP_1/fichier_96 REP_2/fichier_96
+rename REP_1/fichier_97 REP_2/fichier_97
+rename REP_1/fichier_98 REP_2/fichier_98
+rename REP_1/fichier_99 REP_2/fichier_99
+
+echo "100 entries moved..."
+
+# barrier before unlinking
+barrier
+
+set WC_2 `wc \`ls -l REP_2\``
+echo "=> Entries in REP_2 : " `chomp $WC_2`
+
+
+echo "cleaning directory..."
+
+unlink REP_2/fichier_0
+unlink REP_2/fichier_1
+unlink REP_2/fichier_2
+unlink REP_2/fichier_3
+unlink REP_2/fichier_4
+unlink REP_2/fichier_5
+unlink REP_2/fichier_6
+unlink REP_2/fichier_7
+unlink REP_2/fichier_8
+unlink REP_2/fichier_9
+unlink REP_2/fichier_10
+unlink REP_2/fichier_11
+unlink REP_2/fichier_12
+unlink REP_2/fichier_13
+unlink REP_2/fichier_14
+unlink REP_2/fichier_15
+unlink REP_2/fichier_16
+unlink REP_2/fichier_17
+unlink REP_2/fichier_18
+unlink REP_2/fichier_19
+unlink REP_2/fichier_20
+unlink REP_2/fichier_21
+unlink REP_2/fichier_22
+unlink REP_2/fichier_23
+unlink REP_2/fichier_24
+unlink REP_2/fichier_25
+unlink REP_2/fichier_26
+unlink REP_2/fichier_27
+unlink REP_2/fichier_28
+unlink REP_2/fichier_29
+unlink REP_2/fichier_30
+unlink REP_2/fichier_31
+unlink REP_2/fichier_32
+unlink REP_2/fichier_33
+unlink REP_2/fichier_34
+unlink REP_2/fichier_35
+unlink REP_2/fichier_36
+unlink REP_2/fichier_37
+unlink REP_2/fichier_38
+unlink REP_2/fichier_39
+unlink REP_2/fichier_40
+unlink REP_2/fichier_41
+unlink REP_2/fichier_42
+unlink REP_2/fichier_43
+unlink REP_2/fichier_44
+unlink REP_2/fichier_45
+unlink REP_2/fichier_46
+unlink REP_2/fichier_47
+unlink REP_2/fichier_48
+unlink REP_2/fichier_49
+unlink REP_2/fichier_50
+unlink REP_2/fichier_51
+unlink REP_2/fichier_52
+unlink REP_2/fichier_53
+unlink REP_2/fichier_54
+unlink REP_2/fichier_55
+unlink REP_2/fichier_56
+unlink REP_2/fichier_57
+unlink REP_2/fichier_58
+unlink REP_2/fichier_59
+unlink REP_2/fichier_60
+unlink REP_2/fichier_61
+unlink REP_2/fichier_62
+unlink REP_2/fichier_63
+unlink REP_2/fichier_64
+unlink REP_2/fichier_65
+unlink REP_2/fichier_66
+unlink REP_2/fichier_67
+unlink REP_2/fichier_68
+unlink REP_2/fichier_69
+unlink REP_2/fichier_70
+unlink REP_2/fichier_71
+unlink REP_2/fichier_72
+unlink REP_2/fichier_73
+unlink REP_2/fichier_74
+unlink REP_2/fichier_75
+unlink REP_2/fichier_76
+unlink REP_2/fichier_77
+unlink REP_2/fichier_78
+unlink REP_2/fichier_79
+unlink REP_2/fichier_80
+unlink REP_2/fichier_81
+unlink REP_2/fichier_82
+unlink REP_2/fichier_83
+unlink REP_2/fichier_84
+unlink REP_2/fichier_85
+unlink REP_2/fichier_86
+unlink REP_2/fichier_87
+unlink REP_2/fichier_88
+unlink REP_2/fichier_89
+unlink REP_2/fichier_90
+unlink REP_2/fichier_91
+unlink REP_2/fichier_92
+unlink REP_2/fichier_93
+unlink REP_2/fichier_94
+unlink REP_2/fichier_95
+unlink REP_2/fichier_96
+unlink REP_2/fichier_97
+unlink REP_2/fichier_98
+unlink REP_2/fichier_99
+
+ls REP_2
+
+unlink REP_2
+cd ..
+
+#barrier before termination
+barrier
+
+unlink $TEST_DIR

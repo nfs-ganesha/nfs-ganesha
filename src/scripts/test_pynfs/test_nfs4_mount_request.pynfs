@@ -1,0 +1,14 @@
+#!/bin/ksh 
+
+../pynfs/nfs4client.py -u -p pinatubo1 << EOF
+
+putrootfhop = c.ncl.putrootfh_op()
+getfhop = c.ncl.getfh_op() ;
+attr_request = nfs4lib.list2attrmask([FATTR4_TYPE,FATTR4_CHANGE,FATTR4_SIZE,FATTR4_FSID,FATTR4_FILEID,FATTR4_MODE,FATTR4_NUMLINKS,FATTR4_OWNER,FATTR4_OWNER_GROUP,FATTR4_RAWDEV,FATTR4_SPACE_USED,FATTR4_TIME_ACCESS,FATTR4_TIME_METADATA,FATTR4_TIME_MODIFY])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+quit
+
+EOF
