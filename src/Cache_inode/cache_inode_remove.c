@@ -376,7 +376,7 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
 				  &after_attr ) ;
 #else
       fsal_status =  FSAL_unlink( &fsal_handle_parent, 
-	`			  pnode_name, 
+				  pnode_name, 
 				  pcontext, 
 				  &after_attr ) ;
 #endif
