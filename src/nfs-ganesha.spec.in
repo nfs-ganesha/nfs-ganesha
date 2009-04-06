@@ -235,7 +235,13 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
-* Tue Mar 03 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.51-1
+* Mon Apr  4 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.52-1
+- Several Bug fixes
+- MFSL_ASYNC uses preallocated entries in a cleaner way
+- Beta version of FSAL_LUSTRE for LUSTREv2
+- Several I/O optimisation
+
+* Tue Mar  3 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.51-1
 - Bug Fixes
 - FSAL_POSIX has been ported to MySQL. 
 - MFSL_ASYNC has been added for unlink/link/rename/remove/setattr/mkdir/create
