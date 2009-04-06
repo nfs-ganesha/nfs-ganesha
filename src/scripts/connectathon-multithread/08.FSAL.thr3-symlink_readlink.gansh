@@ -1,0 +1,47 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+barrier
+
+cd $TEST_DIR
+
+ln "./Contenu/du/lien 1" symlink_3.1
+ln "../Contenu/du/lien 2" symlink_3.2
+ln "../../Contenu/du/lien 3" symlink_3.3
+ln "symlink_3.1" symlink_3.4
+ln "./symlink_3.2" symlink_3.5
+ln $TEST_DIR symlink_3.6
+ln .. symlink_3.7
+ln . symlink_3.8
+
+ls -l symlink_3.1
+ls -l symlink_3.2
+ls -l symlink_3.3
+ls -l symlink_3.4
+ls -l symlink_3.5
+ls -l symlink_3.6
+ls -l symlink_3.7
+ls -l symlink_3.8
+
+unlink symlink_3.1
+unlink symlink_3.2
+unlink symlink_3.3
+unlink symlink_3.4
+unlink symlink_3.5
+unlink symlink_3.6
+unlink symlink_3.7
+unlink symlink_3.8

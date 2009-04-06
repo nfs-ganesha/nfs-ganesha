@@ -1,0 +1,136 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+#set VERBOSE "ON"
+set DEBUG_LEVEL "NIV_CRIT"
+
+#configuration file
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/leibovic"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+
+set TOP_DIR_HDL  "@0000000D000000000000000000000000000100000000000C657800000000000000008400B645000000000000"
+set SUB_DIR_HDL  "@0000000D000000000000000000000000000100000000000C657B000000000000000084004BB0000000000000"
+set SUB_FILE_HDL "@0000000D000000000000000000000000000100000000000C657D00000000000C657D8100B910000000000000"
+
+set TOP_DIR_NAME "TEST_NE_PAS_SUPPRIMER"
+set SUB_DIR_NAME "SOUS_REP_NE_PAS_SUPPRIMER"
+
+# the file tree is <mountpoint>/TOP_DIR/SUB_DIR
+
+############################
+#      BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# setting cache_inode layer
+set LAYER Cache_inode
+init_cache -v $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+# je deviens leibovic
+su 3733
+
+mount $MOUNT_DIR
+
+# Apres un arret/redemarrage du serveur NFS, les clients ont deja des handles.
+# On simule cela en effectuant des actions sur des objets
+# dont on a deja le handle. On charge ainsi certains elements dans le cache
+# puis on regarde ce qui arrive quand on fait un 'ls' sur le parent...
+
+ls -Sd $SUB_DIR_HDL
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+ls -Sd $SUB_FILE_HDL
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+cd $TOP_DIR_HDL
+if ne 0 $STATUS ? echo "ERROR LOOKUP" : echo "LOOKUP OK"
+
+ls -Sd $SUB_DIR_NAME
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+ls -S FICHIER_1
+ls -S FICHIER_10
+ls -S FICHIER_20
+ls -S FICHIER_37
+ls -S FICHIER_50
+ls -S FICHIER_51
+ls -S FICHIER_52
+ls -S FICHIER_53
+
+unlink  FICHIER_12
+if ne 0 $STATUS ? echo "ERROR UNLINK" : echo "UNLINK OK"
+
+create  FICHIER_12  644
+if ne 0 $STATUS ? echo "ERROR CREATE" : echo "CREATE OK"
+
+ls -S   FICHIER_12
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+setattr FICHIER_13 mode=755
+if ne 0 $STATUS ? echo "ERROR SETATTR" : echo "SETATTR OK"
+
+setattr FICHIER_12 mode=755
+if ne 0 $STATUS ? echo "ERROR SETATTR" : echo "SETATTR OK"
+
+# descend into subdir using lookup
+cd $SUB_DIR_NAME
+if ne 0 $STATUS ? echo "ERROR LOOKUP" : echo "LOOKUP OK"
+
+# go up
+cd ..
+if ne 0 $STATUS ? echo "ERROR LOOKUP_PARENT" : echo "LOOKUP_PARENT OK"
+
+# descend into subdir using hdle
+cd $SUB_DIR_HDL
+if ne 0 $STATUS ? echo "ERROR LOOKUP" : echo "LOOKUP OK"
+
+#go up
+cd .. # celui-la fonctionne
+if ne 0 $STATUS ? echo "ERROR LOOKUP_PARENT" : echo "LOOKUP_PARENT OK"
+
+# la preuve :
+ls -Sd $SUB_DIR_NAME
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+# on regarde s'il y a ..
+ls -Sd .. # gros malheur !!!
+if ne 0 $STATUS ? echo "ERROR LOOKUP_PARENT" : echo "LOOKUP_PARENT OK"
+
+# return to the root (just under the mount point)
+cd .. # ne fonctionne pas !!!
+if ne 0 $STATUS ? echo "ERROR LOOKUP_PARENT" : echo "LOOKUP_PARENT OK"
+
+# the proof we are at under mount point :
+ls -Sd $TOP_DIR_NAME
+if ne 0 $STATUS ? echo "ERROR GETATTR" : echo "GETATTR OK"
+
+# list the content of the directory
+ls -l $TOP_DIR_NAME
+if ne 0 $STATUS ? echo "ERROR READDIR" : echo "READDIR OK"
+
+#reset the status of fichier 13 for next tests
+set TMP_PATH $TOP_DIR_NAME "/FICHIER_13" 
+setattr $TMP_PATH mode=640
+if ne 0 $STATUS ? echo "ERROR SETATTR" : echo "SETATTR OK"
+
+
+
+
+

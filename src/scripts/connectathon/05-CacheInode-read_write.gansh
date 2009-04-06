@@ -1,0 +1,65 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/" $USER "/connectathon-ganesha"
+
+# Number of blocks to be written
+set NB_BLOCKS  128
+
+# Data block to be written (63+null terminating character)
+set BLOCK_SIZE 64
+set ASCII_BLOCK "AZERTYUIOPQSDFGHJKLMWXCVBN,;:!1234567890+&(-_)~{[#^@]}=$*%<>abc"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+init_fs $CONFIG_FILE
+
+# setting Cache_inode layer
+set LAYER Cache_inode
+init_cache -v $CONFIG_FILE
+
+cd $TEST_DIR
+
+print "================================ NO DATACACHING =============================="
+
+create FICHIER_1 666
+print "------- FICHIER_1: Size should be 0 : -----------"
+ls -l FICHIER_1
+print "-------------------------------------------------"
+write -v -N $NB_BLOCKS -A $ASCII_BLOCK FICHIER_1
+print "------- FICHIER_1: Size should be 8192 : --------"
+ls -l FICHIER_1
+print "-------------------------------------------------"
+
+
+create FICHIER_2 666
+print "------- FICHIER_2: Size should be 0 : -----------"
+ls -l FICHIER_2
+print "-------------------------------------------------"
+write -v -N $NB_BLOCKS -A $ASCII_BLOCK FICHIER_2
+print "------- FICHIER_2: Size should be 8192 : --------"
+ls -l FICHIER_2
+print "-------------------------------------------------"
+
+
+read -v -s SET,0 -B $BLOCK_SIZE all FICHIER_1
+read -v -s SET,0 -B $BLOCK_SIZE all FICHIER_2
+
+unlink FICHIER_1
+unlink FICHIER_2
+

@@ -1,0 +1,79 @@
+
+A simple table....
+
+\begin{table}[tbph]
+\begin{center}
+\caption{Summary of TAHI Conformance Test (usagi24-s20020401, \%)\label{tahi-usagi24}}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Test Series             & Pass          &       Warn    &       Fail    \\
+\hline
+\hline
+Spec.                   &       100     &       0       &       0       \\
+ICMPv6                  &       100     &       0       &       0       \\
+Neighbor Discovery      &       79      &       5       &       15      \\
+Autoconf                &       98      &       2       &       0       \\
+PMTU                    &       50      &       0       &       50      \\
+IPv6/IPv4 Tunnel        &       100     &       0       &       0       \\
+Robustness              &       100     &       0       &       0       \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A full-page, far more complex table....
+
+\begin{table*}[t]
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|l||r|r|r|r|r|r|r|r|r||r|}
+ \hline
+ \multicolumn{2}{|c||}{} & & \multicolumn{2}{|c|}{ANSI.os} 
+ &  & \multicolumn{2}{|c|}{POSIX.os} & \multicolumn{2}{|c|}{LSB.os}
+ &  & RedHat7.3 \\
+ \cline{4-5} \cline{7-10}
+ \multicolumn{2}{|c||}{\raisebox{1.3ex}[0pt]{Section}} 
+ & \multicolumn{1}{|c|}{\raisebox{1.3ex}[0pt]{ANSI.hdr}} 
+ & \multicolumn{1}{|c|}{F} & \multicolumn{1}{|c|}{M} 
+ & \multicolumn{1}{|c|}{\raisebox{1.3ex}[0pt]{POSIX.hdr}}
+ & \multicolumn{1}{|c|}{F} & \multicolumn{1}{|c|}{M} 
+ & \multicolumn{1}{|c|}{F} & \multicolumn{1}{|c|}{M} 
+ & \multicolumn{1}{|c||}{\raisebox{1.3ex}[0pt]{Total}} & Total \\
+ \hline
+ \hline
+ & Expect 
+ & 386 & 1244 & 1244 & 394 & 1600 & 1600 & 908 & 908 & 8284 & 8284 \\
+ \cline{2-12}
+ \multicolumn{1}{|c|}{\raisebox{1.3ex}[0pt]{Total}} 
+ & Actual 
+ & 386 & 1244 & 1244 & 394 & 1600 & 1600 & 908 & 908 & 8284 & 8284 \\
+ \hline
+ \multicolumn{2}{|l||}{Succeeded} 
+ & 176 & 1112 & 86 & 207 & 1333 & 0 & 695 & 0 & 3609 & 3583 \\
+ \multicolumn{2}{|l||}{Failed} 
+ & 4 & 0 & 0 & 5 & 2 & 0 & 49 & 0 & 60 & 45 \\
+ \multicolumn{2}{|l||}{Warnings} 
+ & 0 & 12 & 0 & 0 & 5 & 0 & 2 & 0 & 19 & 18 \\
+ \multicolumn{2}{|l||}{FIP} 
+ & 2 & 0 & 0 & 2 & 2 & 0 & 1 & 0 & 7 & 7 \\
+ \multicolumn{2}{|l||}{Unresolved} 
+ & 0 & 0 & 0 & 0 & 0 & 0 & 5 & 0 & 5 & 4 \\
+ \multicolumn{2}{|l||}{Uninitiated} 
+ & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+ \multicolumn{2}{|l||}{Unsupported} 
+ & 203 & 0 & 0 & 179 & 72 & 0 & 59 & 0 & 513 & 513 \\
+ \multicolumn{2}{|l||}{Untested} 
+ & 0 & 4 & 0 & 0 & 7 & 0 & 39 & 0 & 50 & 43 \\
+ \multicolumn{2}{|l||}{NotInUse} 
+ & 1 & 116 & 1158 & 1 & 179 & 1600 & 58 & 908 & 4021 & 4021 \\
+ \hline
+\end{tabular}
+Key: F:function, M:macro;\ FIP: Further Information Provided
+\end{center}
+\hspace{5mm} 
+\caption{LSB 1.2 testsuites result}
+\label{lsb_result}
+\end{table*}
+

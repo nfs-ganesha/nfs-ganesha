@@ -1,0 +1,70 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage{babel}
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\subparagraph{GANESHA, a multi-usage with large cache NFSv4 server. Work In Progress
+Submission}
+
+The NFSv4 protocol is quite different from former versions of the
+NFS protocol: it provides enhanced caching capability and is generic
+enough in its semantic to support many different filesystem. GANESHA
+is a NFS server that runs in the user space. Its design is oriented
+to take advantage of these two aspects: aggressive caching and file
+system genericity.
+
+Caching is done for data and metadata. The metadata cache is fully
+built within memory, it is based on a associative addressing made
+via hash tables developed for that purpose. These hash tables are
+using sets of RBT (Red Black Trees) and have performance that scales
+like O( log( n ) ) where n is the number of entries stored. First
+feedback showed that caching up to a million of inodes records with
+GANESHA's metadata cache was possible without loosing performances.
+The GANESHA server runs in user space which makes it able of allocating
+huge piece of memory (several Gigabytes). Ambition of the product
+is to keep several days of {}``active inodes'' in memory for several
+days.
+
+GANESHA uses backend modules called {}``File System Abstraction Layers''
+or FSAL. A FSAL provide with all the necessary calls to access a file
+system. NFSv4 requires only a few {}``madatory'' attributes for
+files and directory, which makes its possible to address very basic
+file system. Due to this, FSAL can be built on top of sets of data
+organized as trees, where each entry has a name. SNMP and LDAP for
+example meets the requirement for building a FSAL on top of them and
+being {}``plugged'' into GANESHA.
+
+For now, GANESHA supports FSAL to address the following set of data:
+
+\begin{itemize}
+\item The HPSS Namespace (HPSS is an HSM developed by the DOE and IBM Government
+Systems). GANESHA with the FSAL/HPSS module makes the NFS support
+for HPSS 
+\item {}``Posix FSAL'' which provides a way to export via NFS any file
+systems that have no {}``handle based'' API but only the standard
+POSIX interface within libc 
+\end{itemize}
+The following FSAL are under development:
+
+\begin{itemize}
+\item {}``NFSv4 Client FSAL'': having a FSAL that is a NFSv4 client, with
+GANESHA's aggressive caching will turn GANESHA into a NFSv4 proxy 
+\item SNMP FSAL: this FSAL would makes its possible to browse SNMP information
+through GANESHA via a mount point, with something similar to the /proc
+file system 
+\item LDAP FSAL: for mounting LDAP tree and parse it via a NFS mount point,
+with something similar to /proc 
+\end{itemize}
+GANESHA is used on our site in production for one year. A website
+and a submission to Freshmeat and Sourceforge should be done in a
+few weeks. \textbf{Contact: Philippe Deniel (philippe.deniel@cea.fr).} 
+\end{document}

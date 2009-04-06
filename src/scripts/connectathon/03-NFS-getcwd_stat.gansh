@@ -1,0 +1,100 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/" $USER
+set TEST_DIR  "/connectathon-ganesha"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+# sleep time for possible cache invalidation
+set SLEEP_TIME 10
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# setting Cache_inode layer
+set LAYER Cache_inode
+init_cache $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+# mounting a exported path
+mount $MOUNT_DIR
+
+cd $TEST_DIR
+
+pwd
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+
+print "Waiting " $SLEEP_TIME " sec. for detecting possible cache problems..."
+sleep $SLEEP_TIME
+
+set LAYER Cache_inode
+gc
+set LAYER NFS
+
+pwd
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd

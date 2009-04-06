@@ -1,0 +1,711 @@
+
+
+That's the Chuck Lever's patch series that adds rpcbind v4 support to svc_register()
+  I have tested on 2.6.27-rc3.
+---
+
+Chuck Lever (7):
+      SUNRPC: Support IPv6 when registering kernel RPC services
+      SUNRPC: Split portmap unregister API into separate function
+      SUNRPC: Simplify rpcb_register() API
+      SUNRPC: Use proper INADDR_ANY when setting up RPC services on IPv6
+      SUNRPC: Set V6ONLY socket option for RPC listener sockets
+      SUNRPC: Add address family field to svc_serv data structure
+      NFS: nfs_parsed_mount_options can use unsigned int
+
+---
+
+ fs/Kconfig                  |   22 +++++
+ fs/lockd/svc.c              |    2 
+ fs/nfs/callback.c           |    3 
+ fs/nfs/internal.h           |    8 +-
+ fs/nfsd/nfssvc.c            |    3 
+ include/linux/sunrpc/clnt.h |    4 -
+ include/linux/sunrpc/svc.h  |   15 ++-
+ net/sunrpc/rpcb_clnt.c      |   65 +++++++---------
+ net/sunrpc/svc.c            |  175 ++++++++++++++++++++++++++++++++++++--------
+ net/sunrpc/svc_xprt.c       |   37 +++++++--
+ net/sunrpc/svcsock.c        |   13 +++
+ 11 files changed, 260 insertions(+), 87 deletions(-)
+diff -Nru 2.6.27-rc3-server/fs/Kconfig rpcbindv4/fs/Kconfig
+--- 2.6.27-rc3-server/fs/Kconfig	2008-09-15 15:52:01.000000000 +0200
++++ rpcbindv4/fs/Kconfig	2008-09-15 14:46:09.000000000 +0200
+@@ -1765,6 +1765,28 @@
+ 
+ 	  If unsure, say N.
+ 
++config SUNRPC_REGISTER_V4
++	bool "Register local RPC services via rpcbind v4 (EXPERIMENTAL)"
++	depends on SUNRPC && EXPERIMENTAL
++	default n
++	help 
++	  Sun added support for registering RPC services at an IPv6
++	  address by creating two new versions of the rpcbind protocol
++	  (RFC 1833).
++
++	  This option enables support in the kernel RPC server for
++	  registering kernel RPC services via version 4 of the rpcbind
++	  protocol.  If you enable this option, you must run a portmapper
++	  daemon that supports rpcbind protocol version 4.
++
++	  Serving NFS over IPv6 from knfsd (the kernel's NFS server)
++	  requires that you enable this option and use a portmapper that
++	  supports rpcbind version 4.
++
++	  If unsure, say N to get traditional behavior (register kernel
++	  RPC services using only rpcbind version 2).  Distributions
++	  using the legacy Linux portmapper daemon must say N here.
++
+ config RPCSEC_GSS_KRB5
+ 	tristate "Secure RPC: Kerberos V mechanism (EXPERIMENTAL)"
+ 	depends on SUNRPC && EXPERIMENTAL
+diff -Nru 2.6.27-rc3-server/fs/lockd/svc.c rpcbindv4/fs/lockd/svc.c
+--- 2.6.27-rc3-server/fs/lockd/svc.c	2008-09-15 15:52:49.000000000 +0200
++++ rpcbindv4/fs/lockd/svc.c	2008-09-15 14:36:40.000000000 +0200
+@@ -266,7 +266,7 @@
+ 			"lockd_up: no pid, %d users??\n", nlmsvc_users);
+ 
+ 	error = -ENOMEM;
+-	serv = svc_create(&nlmsvc_program, LOCKD_BUFSIZE, NULL);
++	serv = svc_create(&nlmsvc_program, LOCKD_BUFSIZE, AF_INET, NULL);
+ 	if (!serv) {
+ 		printk(KERN_WARNING "lockd_up: create service failed\n");
+ 		goto out;
+diff -Nru 2.6.27-rc3-server/fs/nfs/callback.c rpcbindv4/fs/nfs/callback.c
+--- 2.6.27-rc3-server/fs/nfs/callback.c	2008-09-15 15:53:33.000000000 +0200
++++ rpcbindv4/fs/nfs/callback.c	2008-09-15 14:35:48.000000000 +0200
+@@ -105,7 +105,8 @@
+ 	mutex_lock(&nfs_callback_mutex);
+ 	if (nfs_callback_info.users++ || nfs_callback_info.task != NULL)
+ 		goto out;
+-	serv = svc_create(&nfs4_callback_program, NFS4_CALLBACK_BUFSIZE, NULL);
++	serv = svc_create(&nfs4_callback_program, NFS4_CALLBACK_BUFSIZE,
++				AF_INET, NULL);
+ 	ret = -ENOMEM;
+ 	if (!serv)
+ 		goto out_err;
+diff -Nru 2.6.27-rc3-server/fs/nfs/internal.h rpcbindv4/fs/nfs/internal.h
+--- 2.6.27-rc3-server/fs/nfs/internal.h	2008-09-15 15:53:47.000000000 +0200
++++ rpcbindv4/fs/nfs/internal.h	2008-09-15 14:34:51.000000000 +0200
+@@ -32,11 +32,11 @@
+  */
+ struct nfs_parsed_mount_data {
+ 	int			flags;
+-	int			rsize, wsize;
+-	int			timeo, retrans;
+-	int			acregmin, acregmax,
++	unsigned int		rsize, wsize;
++	unsigned int		timeo, retrans;
++	unsigned int		acregmin, acregmax,
+ 				acdirmin, acdirmax;
+-	int			namlen;
++	unsigned int		namlen;
+ 	unsigned int		bsize;
+ 	unsigned int		auth_flavor_len;
+ 	rpc_authflavor_t	auth_flavors[1];
+diff -Nru 2.6.27-rc3-server/fs/nfsd/nfssvc.c rpcbindv4/fs/nfsd/nfssvc.c
+--- 2.6.27-rc3-server/fs/nfsd/nfssvc.c	2008-09-15 15:54:29.000000000 +0200
++++ rpcbindv4/fs/nfsd/nfssvc.c	2008-09-15 14:37:22.000000000 +0200
+@@ -229,7 +229,8 @@
+ 
+ 	atomic_set(&nfsd_busy, 0);
+ 	nfsd_serv = svc_create_pooled(&nfsd_program, nfsd_max_blksize,
+-				      nfsd_last_thread, nfsd, THIS_MODULE);
++				      AF_INET, nfsd_last_thread,
++				      nfsd, THIS_MODULE);
+ 	if (nfsd_serv == NULL)
+ 		err = -ENOMEM;
+ 
+diff -Nru 2.6.27-rc3-server/include/linux/sunrpc/clnt.h rpcbindv4/include/linux/sunrpc/clnt.h
+--- 2.6.27-rc3-server/include/linux/sunrpc/clnt.h	2008-09-15 15:56:31.000000000 +0200
++++ rpcbindv4/include/linux/sunrpc/clnt.h	2008-09-15 14:44:22.000000000 +0200
+@@ -124,10 +124,10 @@
+ void		rpc_shutdown_client(struct rpc_clnt *);
+ void		rpc_release_client(struct rpc_clnt *);
+ 
+-int		rpcb_register(u32, u32, int, unsigned short, int *);
++int		rpcb_register(u32, u32, int, unsigned short);
+ int		rpcb_v4_register(const u32 program, const u32 version,
+ 				 const struct sockaddr *address,
+-				 const char *netid, int *result);
++				 const char *netid);
+ int		rpcb_getport_sync(struct sockaddr_in *, u32, u32, int);
+ void		rpcb_getport_async(struct rpc_task *);
+ 
+diff -Nru 2.6.27-rc3-server/include/linux/sunrpc/svc.h rpcbindv4/include/linux/sunrpc/svc.h
+--- 2.6.27-rc3-server/include/linux/sunrpc/svc.h	2008-09-15 15:56:40.000000000 +0200
++++ rpcbindv4/include/linux/sunrpc/svc.h	2008-09-15 14:39:47.000000000 +0200
+@@ -66,6 +66,7 @@
+ 	struct list_head	sv_tempsocks;	/* all temporary sockets */
+ 	int			sv_tmpcnt;	/* count of temporary sockets */
+ 	struct timer_list	sv_temptimer;	/* timer for aging temporary sockets */
++	sa_family_t		sv_family;	/* listener's address family */
+ 
+ 	char *			sv_name;	/* service name */
+ 
+@@ -381,18 +382,22 @@
+ /*
+  * Function prototypes.
+  */
+-struct svc_serv *  svc_create(struct svc_program *, unsigned int,
+-			      void (*shutdown)(struct svc_serv*));
++struct svc_serv *svc_create(struct svc_program *, unsigned int,
++					const sa_family_t,
++					void (*shutdown)(struct svc_serv *));
+ struct svc_rqst *svc_prepare_thread(struct svc_serv *serv,
+ 					struct svc_pool *pool);
+ void		   svc_exit_thread(struct svc_rqst *);
+ struct svc_serv *  svc_create_pooled(struct svc_program *, unsigned int,
+-			void (*shutdown)(struct svc_serv*), svc_thread_fn,
+-			struct module *);
++					const sa_family_t,
++					void (*shutdown)(struct svc_serv *),
++					svc_thread_fn, struct module *);
+ int		   svc_set_num_threads(struct svc_serv *, struct svc_pool *, int);
+ void		   svc_destroy(struct svc_serv *);
+ int		   svc_process(struct svc_rqst *);
+-int		   svc_register(struct svc_serv *, int, unsigned short);
++int		   svc_register(const struct svc_serv *, const unsigned short,
++				const unsigned short);
++
+ void		   svc_wake_up(struct svc_serv *);
+ void		   svc_reserve(struct svc_rqst *rqstp, int space);
+ struct svc_pool *  svc_pool_for_cpu(struct svc_serv *serv, int cpu);
+diff -Nru 2.6.27-rc3-server/net/sunrpc/rpcb_clnt.c rpcbindv4/net/sunrpc/rpcb_clnt.c
+--- 2.6.27-rc3-server/net/sunrpc/rpcb_clnt.c	2008-09-15 15:58:16.000000000 +0200
++++ rpcbindv4/net/sunrpc/rpcb_clnt.c	2008-09-15 14:43:21.000000000 +0200
+@@ -176,13 +176,12 @@
+ }
+ 
+ static int rpcb_register_call(struct sockaddr *addr, size_t addrlen,
+-			      u32 version, struct rpc_message *msg,
+-			      int *result)
++			      u32 version, struct rpc_message *msg)
+ {
+ 	struct rpc_clnt *rpcb_clnt;
+-	int error = 0;
++	int result, error = 0;
+ 
+-	*result = 0;
++	msg->rpc_resp = &result;
+ 
+ 	rpcb_clnt = rpcb_create_local(addr, addrlen, version);
+ 	if (!IS_ERR(rpcb_clnt)) {
+@@ -191,12 +190,19 @@
+ 	} else
+ 		error = PTR_ERR(rpcb_clnt);
+ 
+-	if (error < 0)
++	if (error < 0) {
+ 		printk(KERN_WARNING "RPC: failed to contact local rpcbind "
+ 				"server (errno %d).\n", -error);
+-	dprintk("RPC:       registration status %d/%d\n", error, *result);
++		return error;
++	}
++
++	if (!result) {
++		dprintk("RPC:       registration failed\n");
++		return -EACCES;
++	}
+ 
+-	return error;
++	dprintk("RPC:       registration succeeded\n");
++	return 0;
+ }
+ 
+ /**
+@@ -205,7 +211,11 @@
+  * @vers: RPC version number to bind
+  * @prot: transport protocol to register
+  * @port: port value to register
+- * @okay: OUT: result code
++ *
++ * Returns zero if the registration request was dispatched successfully
++ * and the rpcbind daemon returned success.  Otherwise, returns an errno
++ * value that reflects the nature of the error (request could not be
++ * dispatched, timed out, or rpcbind returned an error).
+  *
+  * RPC services invoke this function to advertise their contact
+  * information via the system's rpcbind daemon.  RPC services
+@@ -217,15 +227,6 @@
+  * all registered transports for [program, version] from the local
+  * rpcbind database.
+  *
+- * Returns zero if the registration request was dispatched
+- * successfully and a reply was received.  The rpcbind daemon's
+- * boolean result code is stored in *okay.
+- *
+- * Returns an errno value and sets *result to zero if there was
+- * some problem that prevented the rpcbind request from being
+- * dispatched, or if the rpcbind daemon did not respond within
+- * the timeout.
+- *
+  * This function uses rpcbind protocol version 2 to contact the
+  * local rpcbind daemon.
+  *
+@@ -236,7 +237,7 @@
+  * IN6ADDR_ANY (ie available for all AF_INET and AF_INET6
+  * addresses).
+  */
+-int rpcb_register(u32 prog, u32 vers, int prot, unsigned short port, int *okay)
++int rpcb_register(u32 prog, u32 vers, int prot, unsigned short port)
+ {
+ 	struct rpcbind_args map = {
+ 		.r_prog		= prog,
+@@ -246,7 +247,6 @@
+ 	};
+ 	struct rpc_message msg = {
+ 		.rpc_argp	= &map,
+-		.rpc_resp	= okay,
+ 	};
+ 
+ 	dprintk("RPC:       %sregistering (%u, %u, %d, %u) with local "
+@@ -259,7 +259,7 @@
+ 
+ 	return rpcb_register_call((struct sockaddr *)&rpcb_inaddr_loopback,
+ 					sizeof(rpcb_inaddr_loopback),
+-					RPCBVERS_2, &msg, okay);
++					RPCBVERS_2, &msg);
+ }
+ 
+ /*
+@@ -290,7 +290,7 @@
+ 
+ 	return rpcb_register_call((struct sockaddr *)&rpcb_inaddr_loopback,
+ 					sizeof(rpcb_inaddr_loopback),
+-					RPCBVERS_4, msg, msg->rpc_resp);
++					RPCBVERS_4, msg);
+ }
+ 
+ /*
+@@ -321,7 +321,7 @@
+ 
+ 	return rpcb_register_call((struct sockaddr *)&rpcb_in6addr_loopback,
+ 					sizeof(rpcb_in6addr_loopback),
+-					RPCBVERS_4, msg, msg->rpc_resp);
++					RPCBVERS_4, msg);
+ }
+ 
+ /**
+@@ -330,7 +330,11 @@
+  * @version: RPC version number of service to (un)register
+  * @address: address family, IP address, and port to (un)register
+  * @netid: netid of transport protocol to (un)register
+- * @result: result code from rpcbind RPC call
++ *
++ * Returns zero if the registration request was dispatched successfully
++ * and the rpcbind daemon returned success.  Otherwise, returns an errno
++ * value that reflects the nature of the error (request could not be
++ * dispatched, timed out, or rpcbind returned an error).
+  *
+  * RPC services invoke this function to advertise their contact
+  * information via the system's rpcbind daemon.  RPC services
+@@ -342,15 +346,6 @@
+  * to zero.  Callers pass a netid of "" to unregister all
+  * transport netids associated with [program, version, address].
+  *
+- * Returns zero if the registration request was dispatched
+- * successfully and a reply was received.  The rpcbind daemon's
+- * result code is stored in *result.
+- *
+- * Returns an errno value and sets *result to zero if there was
+- * some problem that prevented the rpcbind request from being
+- * dispatched, or if the rpcbind daemon did not respond within
+- * the timeout.
+- *
+  * This function uses rpcbind protocol version 4 to contact the
+  * local rpcbind daemon.  The local rpcbind daemon must support
+  * version 4 of the rpcbind protocol in order for these functions
+@@ -372,8 +367,7 @@
+  * advertises the service on all IPv4 and IPv6 addresses.
+  */
+ int rpcb_v4_register(const u32 program, const u32 version,
+-		     const struct sockaddr *address, const char *netid,
+-		     int *result)
++		     const struct sockaddr *address, const char *netid)
+ {
+ 	struct rpcbind_args map = {
+ 		.r_prog		= program,
+@@ -383,11 +377,8 @@
+ 	};
+ 	struct rpc_message msg = {
+ 		.rpc_argp	= &map,
+-		.rpc_resp	= result,
+ 	};
+ 
+-	*result = 0;
+-
+ 	switch (address->sa_family) {
+ 	case AF_INET:
+ 		return rpcb_register_netid4((struct sockaddr_in *)address,
+diff -Nru 2.6.27-rc3-server/net/sunrpc/svc.c rpcbindv4/net/sunrpc/svc.c
+--- 2.6.27-rc3-server/net/sunrpc/svc.c	2008-09-15 15:58:25.000000000 +0200
++++ rpcbindv4/net/sunrpc/svc.c	2008-09-15 14:41:42.000000000 +0200
+@@ -28,6 +28,8 @@
+ 
+ #define RPCDBG_FACILITY	RPCDBG_SVCDSP
+ 
++static void svc_unregister(const struct svc_serv *serv);
++
+ #define svc_serv_is_pooled(serv)    ((serv)->sv_function)
+ 
+ /*
+@@ -357,7 +359,7 @@
+  */
+ static struct svc_serv *
+ __svc_create(struct svc_program *prog, unsigned int bufsize, int npools,
+-	   void (*shutdown)(struct svc_serv *serv))
++	     const sa_family_t family, void (*shutdown)(struct svc_serv *serv))
+ {
+ 	struct svc_serv	*serv;
+ 	unsigned int vers;
+@@ -366,6 +368,7 @@
+ 
+ 	if (!(serv = kzalloc(sizeof(*serv), GFP_KERNEL)))
+ 		return NULL;
++	serv->sv_family    = family;
+ 	serv->sv_name      = prog->pg_name;
+ 	serv->sv_program   = prog;
+ 	serv->sv_nrthreads = 1;
+@@ -416,30 +419,30 @@
+ 		spin_lock_init(&pool->sp_lock);
+ 	}
+ 
+-
+ 	/* Remove any stale portmap registrations */
+-	svc_register(serv, 0, 0);
++	svc_unregister(serv);
+ 
+ 	return serv;
+ }
+ 
+ struct svc_serv *
+ svc_create(struct svc_program *prog, unsigned int bufsize,
+-		void (*shutdown)(struct svc_serv *serv))
++	   const sa_family_t family, void (*shutdown)(struct svc_serv *serv))
+ {
+-	return __svc_create(prog, bufsize, /*npools*/1, shutdown);
++	return __svc_create(prog, bufsize, /*npools*/1, family, shutdown);
+ }
+ EXPORT_SYMBOL(svc_create);
+ 
+ struct svc_serv *
+ svc_create_pooled(struct svc_program *prog, unsigned int bufsize,
+-		void (*shutdown)(struct svc_serv *serv),
++		  const sa_family_t family,
++		  void (*shutdown)(struct svc_serv *serv),
+ 		  svc_thread_fn func, struct module *mod)
+ {
+ 	struct svc_serv *serv;
+ 	unsigned int npools = svc_pool_map_get();
+ 
+-	serv = __svc_create(prog, bufsize, npools, shutdown);
++	serv = __svc_create(prog, bufsize, npools, family, shutdown);
+ 
+ 	if (serv != NULL) {
+ 		serv->sv_function = func;
+@@ -486,8 +489,7 @@
+ 	if (svc_serv_is_pooled(serv))
+ 		svc_pool_map_put();
+ 
+-	/* Unregister service with the portmapper */
+-	svc_register(serv, 0, 0);
++	svc_unregister(serv);
+ 	kfree(serv->sv_pools);
+ 	kfree(serv);
+ }
+@@ -718,29 +720,107 @@
+ }
+ EXPORT_SYMBOL(svc_exit_thread);
+ 
++#ifdef CONFIG_SUNRPC_REGISTER_V4
+ /*
+- * Register an RPC service with the local portmapper.
+- * To unregister a service, call this routine with
+- * proto and port == 0.
++ * Registering kernel RPC services with rpcbind version 2 will work
++ * over either IPv4 or IPv6, since the Linux kernel always registers
++ * services for the "any" address.
++ *
++ * However, the local rpcbind daemon listens on either only AF_INET
++ * or AF_INET6 (never both).  When it listens on AF_INET6, an rpcbind
++ * version 2 registration will result in registering the service at
++ * IN6ADDR_ANY, even if the RPC service being registered is not
++ * IPv6-enabled.
++ *
++ * Rpcbind version 4 allows us to be a little more specific.  Kernel
++ * RPC services that don't yet support AF_INET6 can register
++ * themselves as IPv4-only with the local rpcbind daemon, even if the
++ * daemon is listening only on AF_INET6.
++ *
++ * And, registering IPv6-enabled kernel RPC services via AF_INET6
++ * verifies that the local user space rpcbind daemon is properly
++ * configured to support remote AF_INET6 rpcbind requests.
++ *
++ * An AF_INET6 registration request will fail if the local rpcbind
++ * daemon is not set up to listen on AF_INET6.  Likewise, we fail
++ * AF_INET6 registration requests if svc_register() is configured to
++ * support only rpcbind version 2.
++ */
++static int __svc_register(const u32 program, const u32 version,
++			  const sa_family_t family,
++			  const unsigned short protocol,
++			  const unsigned short port)
++{
++	struct sockaddr_in sin = {
++		.sin_family		= AF_INET,
++		.sin_addr.s_addr	= htonl(INADDR_ANY),
++		.sin_port		= htons(port),
++	};
++	struct sockaddr_in6 sin6 = {
++		.sin6_family		= AF_INET6,
++		.sin6_addr		= IN6ADDR_ANY_INIT,
++		.sin6_port		= htons(port),
++	};
++	struct sockaddr *sap;
++	char *netid;
++
++	switch (family) {
++	case AF_INET:
++		sap = (struct sockaddr *)&sin;
++		netid = RPCBIND_NETID_TCP;
++		if (protocol == IPPROTO_UDP)
++			netid = RPCBIND_NETID_UDP;
++		break;
++	case AF_INET6:
++		sap = (struct sockaddr *)&sin6;
++		netid = RPCBIND_NETID_TCP6;
++		if (protocol == IPPROTO_UDP)
++			netid = RPCBIND_NETID_UDP6;
++		break;
++	default:
++		return -EAFNOSUPPORT;
++	}
++
++	return rpcb_v4_register(program, version, sap, netid);
++}
++#else
++static int __svc_register(const u32 program, const u32 version,
++			  sa_family_t family,
++			  const unsigned short protocol,
++			  const unsigned short port)
++{
++	if (family != AF_INET)
++		return -EAFNOSUPPORT;
++
++	return rpcb_register(program, version, protocol, port);
++}
++#endif
++
++/**
++ * svc_register - register an RPC service with the local portmapper
++ * @serv: svc_serv struct for the service to register
++ * @proto: transport protocol number to advertise
++ * @port: port to advertise
++ *
++ * Service is registered for any address in serv's address family
+  */
+-int
+-svc_register(struct svc_serv *serv, int proto, unsigned short port)
++int svc_register(const struct svc_serv *serv, const unsigned short proto,
++		 const unsigned short port)
+ {
+ 	struct svc_program	*progp;
+-	unsigned long		flags;
+ 	unsigned int		i;
+-	int			error = 0, dummy;
++	int			error = 0;
+ 
+-	if (!port)
+-		clear_thread_flag(TIF_SIGPENDING);
++	BUG_ON(proto == 0 && port == 0);
+ 
+ 	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
+ 		for (i = 0; i < progp->pg_nvers; i++) {
+ 			if (progp->pg_vers[i] == NULL)
+ 				continue;
+ 
+-			dprintk("svc: svc_register(%s, %s, %d, %d)%s\n",
++			dprintk("svc: svc_register(%s, %u, %s, %u, %d)%s\n",
+ 					progp->pg_name,
++					serv->sv_family,
+ 					proto == IPPROTO_UDP?  "udp" : "tcp",
+ 					port,
+ 					i,
+@@ -750,23 +830,60 @@
+ 			if (progp->pg_vers[i]->vs_hidden)
+ 				continue;
+ 
+-			error = rpcb_register(progp->pg_prog, i, proto, port, &dummy);
++			error = __svc_register(progp->pg_prog, i,
++						serv->sv_family, proto, port);
+ 			if (error < 0)
+ 				break;
+-			if (port && !dummy) {
+-				error = -EACCES;
+-				break;
+-			}
+ 		}
+ 	}
+ 
+-	if (!port) {
+-		spin_lock_irqsave(&current->sighand->siglock, flags);
+-		recalc_sigpending();
+-		spin_unlock_irqrestore(&current->sighand->siglock, flags);
++	return error;
++}
++
++/*
++ * All transport protocols and ports for this service are removed
++ * from the local rpcbind database if the service is not hidden.
++ *
++ * The result of unregistration is reported via dprintk for those
++ * who want verification of the result, but is otherwise not
++ * important.
++ *
++ * The local rpcbind daemon listens on either only IPv6 or only
++ * IPv4.  The kernel can't tell how it's configured.  However,
++ * AF_INET addresses are mapped to AF_INET6 in IPv6-only config-
++ * urations, so even an unregistration request on AF_INET will
++ * get to a local rpcbind daemon listening only on AF_INET6.  So
++ * we always unregister via AF_INET.
++ *
++ * At this point we don't need rpcbind version 4 for unregis-
++ * tration:  A v2 UNSET request will clear all transports (netids),
++ * addresses, and address families for [program, version].
++ */
++static void svc_unregister(const struct svc_serv *serv)
++{
++	struct svc_program *progp;
++	unsigned long flags;
++	unsigned int i;
++	int error;
++
++	clear_thread_flag(TIF_SIGPENDING);
++
++	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
++		for (i = 0; i < progp->pg_nvers; i++) {
++			if (progp->pg_vers[i] == NULL)
++				continue;
++			if (progp->pg_vers[i]->vs_hidden)
++				continue;
++
++			error = rpcb_register(progp->pg_prog, i, 0, 0);
++			dprintk("svc: svc_unregister(%sv%u), error %d\n",
++					progp->pg_name, i, error);
++		}
+ 	}
+ 
+-	return error;
++	spin_lock_irqsave(&current->sighand->siglock, flags);
++	recalc_sigpending();
++	spin_unlock_irqrestore(&current->sighand->siglock, flags);
+ }
+ 
+ /*
+diff -Nru 2.6.27-rc3-server/net/sunrpc/svcsock.c rpcbindv4/net/sunrpc/svcsock.c
+--- 2.6.27-rc3-server/net/sunrpc/svcsock.c	2008-09-15 15:58:34.000000000 +0200
++++ rpcbindv4/net/sunrpc/svcsock.c	2008-09-15 14:42:16.000000000 +0200
+@@ -1114,6 +1114,7 @@
+ 	struct svc_sock	*svsk;
+ 	struct sock	*inet;
+ 	int		pmap_register = !(flags & SVC_SOCK_ANONYMOUS);
++	int		val;
+ 
+ 	dprintk("svc: svc_setup_socket %p\n", sock);
+ 	if (!(svsk = kzalloc(sizeof(*svsk), GFP_KERNEL))) {
+@@ -1146,6 +1147,18 @@
+ 	else
+ 		svc_tcp_init(svsk, serv);
+ 
++	/*
++	 * We start one listener per sv_serv.  We want AF_INET
++	 * requests to be automatically shunted to our AF_INET6
++	 * listener using a mapped IPv4 address.  Make sure
++	 * no-one starts an equivalent IPv4 listener, which
++	 * would steal our incoming connections.
++	 */
++	val = 0;
++	if (serv->sv_family == AF_INET6)
++		kernel_setsockopt(sock, SOL_IPV6, IPV6_V6ONLY,
++					(char *)&val, sizeof(val));
++
+ 	dprintk("svc: svc_setup_socket created %p (inet %p)\n",
+ 				svsk, svsk->sk_sk);
+ 
+diff -Nru 2.6.27-rc3-server/net/sunrpc/svc_xprt.c rpcbindv4/net/sunrpc/svc_xprt.c
+--- 2.6.27-rc3-server/net/sunrpc/svc_xprt.c	2008-09-15 15:58:44.000000000 +0200
++++ rpcbindv4/net/sunrpc/svc_xprt.c	2008-09-15 14:42:40.000000000 +0200
+@@ -159,16 +159,41 @@
+ }
+ EXPORT_SYMBOL_GPL(svc_xprt_init);
+ 
+-int svc_create_xprt(struct svc_serv *serv, char *xprt_name, unsigned short port,
+-		    int flags)
++static struct svc_xprt *__svc_xpo_create(struct svc_xprt_class *xcl,
++					 struct svc_serv *serv,
++					 unsigned short port, int flags)
+ {
+-	struct svc_xprt_class *xcl;
+ 	struct sockaddr_in sin = {
+ 		.sin_family		= AF_INET,
+ 		.sin_addr.s_addr	= htonl(INADDR_ANY),
+ 		.sin_port		= htons(port),
+ 	};
+-	dprintk("svc: creating transport %s[%d]\n", xprt_name, port);
++	struct sockaddr_in6 sin6 = {
++		.sin6_family		= AF_INET6,
++		.sin6_addr		= IN6ADDR_ANY_INIT,
++		.sin6_port		= htons(port),
++	};
++
++	switch (serv->sv_family) {
++	case AF_INET:
++		return xcl->xcl_ops->xpo_create(serv,
++						(struct sockaddr *)&sin,
++						sizeof(sin), flags);
++	case AF_INET6:
++		return xcl->xcl_ops->xpo_create(serv,
++						(struct sockaddr *)&sin6,
++						sizeof(sin6), flags);
++	}
++
++	return ERR_PTR(-EAFNOSUPPORT);
++}
++
++int svc_create_xprt(struct svc_serv *serv, char *xprt_name, unsigned short port,
++		    int flags)
++{
++	struct svc_xprt_class *xcl;
++
++	dprintk("svc: creating transport %s[%u]\n", xprt_name, port);
+ 	spin_lock(&svc_xprt_class_lock);
+ 	list_for_each_entry(xcl, &svc_xprt_class_list, xcl_list) {
+ 		struct svc_xprt *newxprt;
+@@ -180,9 +205,7 @@
+ 			goto err;
+ 
+ 		spin_unlock(&svc_xprt_class_lock);
+-		newxprt = xcl->xcl_ops->
+-			xpo_create(serv, (struct sockaddr *)&sin, sizeof(sin),
+-				   flags);
++		newxprt = __svc_xpo_create(xcl, serv, port, flags);
+ 		if (IS_ERR(newxprt)) {
+ 			module_put(xcl->xcl_owner);
+ 			return PTR_ERR(newxprt);
+
+
+
+
+
+
+
+-- 
+-----------------------------------------------------------------
+Company : Bull, Architect of an Open World TM (www.bull.com)
+Name    : Aime Le Rouzic 
+Mail    : Bull - BP 208 - 38432 Echirolles Cedex - France
+E-Mail  : aime.le-rouzic@bull.net
+Phone   : 33 (4) 76.29.75.51
+Fax     : 33 (4) 76.29.75.18
+----------------------------------------------------------------- 

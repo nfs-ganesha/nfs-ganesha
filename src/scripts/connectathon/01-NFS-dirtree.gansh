@@ -1,0 +1,279 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/" $USER
+set TEST_DIR  "/connectathon-ganesha"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+init_fs $CONFIG_FILE
+
+# setting cache_inode layer
+set LAYER Cache_inode
+init_cache $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+# mounting a exported path
+mount $MOUNT_DIR
+
+mkdir $TEST_DIR  755
+cd $TEST_DIR
+
+timer start
+
+create  FICHIER_1 666
+create  FICHIER_2 666
+create  FICHIER_3 666
+
+mkdir DIR_1 755
+cd DIR_1
+
+    create  FICHIER_1 666
+    create  FICHIER_2 666
+    create  FICHIER_3 666
+
+    mkdir DIR_1 755
+    cd DIR_1
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    cd DIR_2
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    cd DIR_3
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+    
+    cd ..
+
+cd ..
+
+mkdir DIR_2 755
+cd DIR_2
+
+    create  FICHIER_1 666
+    create  FICHIER_2 666
+    create  FICHIER_3 666
+
+    mkdir DIR_1 755
+    cd DIR_1
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    cd DIR_2
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    cd DIR_3
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+    
+    cd ..
+
+cd ..
+
+
+mkdir DIR_3 755
+cd DIR_3
+
+    create  FICHIER_1 666
+    create  FICHIER_2 666
+    create  FICHIER_3 666
+
+    mkdir DIR_1 755
+    cd DIR_1
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    cd DIR_2
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    cd DIR_3
+    
+        create  FICHIER_1 666
+        create  FICHIER_2 666
+        create  FICHIER_3 666
+        mkdir DIR_1 755
+        mkdir DIR_2 755
+        mkdir DIR_3 755
+    
+    cd ..
+
+cd ..
+
+ls -ld FICHIER_1
+ls -ld FICHIER_2
+ls -ld FICHIER_3
+
+ls -ld DIR_1
+ls -ld DIR_1/FICHIER_1
+ls -ld DIR_1/FICHIER_2
+ls -ld DIR_1/FICHIER_3
+
+ls -ld DIR_1/DIR_1
+ls -ld DIR_1/DIR_1/FICHIER_1
+ls -ld DIR_1/DIR_1/FICHIER_2
+ls -ld DIR_1/DIR_1/FICHIER_3
+ls -ld DIR_1/DIR_1/DIR_1
+ls -ld DIR_1/DIR_1/DIR_2
+ls -ld DIR_1/DIR_1/DIR_3
+
+ls -ld DIR_1/DIR_2
+ls -ld DIR_1/DIR_2/FICHIER_1
+ls -ld DIR_1/DIR_2/FICHIER_2
+ls -ld DIR_1/DIR_2/FICHIER_3
+ls -ld DIR_1/DIR_2/DIR_1
+ls -ld DIR_1/DIR_2/DIR_2
+ls -ld DIR_1/DIR_2/DIR_3
+
+ls -ld DIR_1/DIR_3
+ls -ld DIR_1/DIR_3/FICHIER_1
+ls -ld DIR_1/DIR_3/FICHIER_2
+ls -ld DIR_1/DIR_3/FICHIER_3
+ls -ld DIR_1/DIR_3/DIR_1
+ls -ld DIR_1/DIR_3/DIR_2
+ls -ld DIR_1/DIR_3/DIR_3
+
+
+ls -ld DIR_2
+ls -ld DIR_2/FICHIER_1
+ls -ld DIR_2/FICHIER_2
+ls -ld DIR_2/FICHIER_3
+
+ls -ld DIR_2/DIR_1
+ls -ld DIR_2/DIR_1/FICHIER_1
+ls -ld DIR_2/DIR_1/FICHIER_2
+ls -ld DIR_2/DIR_1/FICHIER_3
+ls -ld DIR_2/DIR_1/DIR_1
+ls -ld DIR_2/DIR_1/DIR_2
+ls -ld DIR_2/DIR_1/DIR_3
+
+ls -ld DIR_2/DIR_2
+ls -ld DIR_2/DIR_2/FICHIER_1
+ls -ld DIR_2/DIR_2/FICHIER_2
+ls -ld DIR_2/DIR_2/FICHIER_3
+ls -ld DIR_2/DIR_2/DIR_1
+ls -ld DIR_2/DIR_2/DIR_2
+ls -ld DIR_2/DIR_2/DIR_3
+
+ls -ld DIR_2/DIR_3
+ls -ld DIR_2/DIR_3/FICHIER_1
+ls -ld DIR_2/DIR_3/FICHIER_2
+ls -ld DIR_2/DIR_3/FICHIER_3
+ls -ld DIR_2/DIR_3/DIR_1
+ls -ld DIR_2/DIR_3/DIR_2
+ls -ld DIR_2/DIR_3/DIR_3
+
+
+ls -ld DIR_3
+ls -ld DIR_3/FICHIER_1
+ls -ld DIR_3/FICHIER_2
+ls -ld DIR_3/FICHIER_3
+
+ls -ld DIR_3/DIR_1
+ls -ld DIR_3/DIR_1/FICHIER_1
+ls -ld DIR_3/DIR_1/FICHIER_2
+ls -ld DIR_3/DIR_1/FICHIER_3
+ls -ld DIR_3/DIR_1/DIR_1
+ls -ld DIR_3/DIR_1/DIR_2
+ls -ld DIR_3/DIR_1/DIR_3
+
+ls -ld DIR_3/DIR_2
+ls -ld DIR_3/DIR_2/FICHIER_1
+ls -ld DIR_3/DIR_2/FICHIER_2
+ls -ld DIR_3/DIR_2/FICHIER_3
+ls -ld DIR_3/DIR_2/DIR_1
+ls -ld DIR_3/DIR_2/DIR_2
+ls -ld DIR_3/DIR_2/DIR_3
+
+ls -ld DIR_3/DIR_3
+ls -ld DIR_3/DIR_3/FICHIER_1
+ls -ld DIR_3/DIR_3/FICHIER_2
+ls -ld DIR_3/DIR_3/FICHIER_3
+ls -ld DIR_3/DIR_3/DIR_1
+ls -ld DIR_3/DIR_3/DIR_2
+ls -ld DIR_3/DIR_3/DIR_3
+
+timer stop
+timer print

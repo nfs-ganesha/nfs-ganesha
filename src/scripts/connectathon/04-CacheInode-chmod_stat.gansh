@@ -1,0 +1,84 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/" $USER "/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# setting Cache_inode layer
+set LAYER Cache_inode
+init_cache -v $CONFIG_FILE
+
+cd $TEST_DIR
+
+create FICHIER_1 666
+create FICHIER_2 666
+create FICHIER_3 666
+
+setattr FICHIER_1 MODE 0000
+ls -l FICHIER_1
+setattr FICHIER_1 MODE 0666
+ls -l FICHIER_1
+
+setattr FICHIER_2 MODE 0000
+ls -l FICHIER_2
+setattr FICHIER_2 MODE 0666
+ls -l FICHIER_2
+
+setattr FICHIER_3 MODE 0000
+ls -l FICHIER_3
+setattr FICHIER_3 MODE 0666
+ls -l FICHIER_3
+
+setattr FICHIER_1 MODE 0000
+ls -l FICHIER_1
+setattr FICHIER_1 MODE 0666
+ls -l FICHIER_1
+
+setattr FICHIER_2 MODE 0000
+ls -l FICHIER_2
+setattr FICHIER_2 MODE 0666
+ls -l FICHIER_2
+
+setattr FICHIER_3 MODE 0000
+ls -l FICHIER_3
+setattr FICHIER_3 MODE 0666
+ls -l FICHIER_3
+
+setattr FICHIER_1 MODE 0000
+ls -l FICHIER_1
+setattr FICHIER_1 MODE 0666
+ls -l FICHIER_1
+
+setattr FICHIER_2 MODE 0000
+ls -l FICHIER_2
+setattr FICHIER_2 MODE 0666
+ls -l FICHIER_2
+
+setattr FICHIER_3 MODE 0000
+ls -l FICHIER_3
+setattr FICHIER_3 MODE 0666
+ls -l FICHIER_3
+
+unlink FICHIER_1
+unlink FICHIER_2
+unlink FICHIER_3

@@ -1,0 +1,74 @@
+pynfs - Python NFSv4 tools
+==========================
+
+Overview
+--------
+pynfs consists of several Python tools for NFSv4:
+
+rpc.py: An enhanced version of rpc.py distributed with Python.
+
+rpcgen.py: A Python RPC protocol compiler. It generates Python code
+from a RPC protocol specification. It constructs classes from all
+structs and union definitions.
+
+nfs4lib.py: A NFSv4 library for Python. It imports the files generated
+by rpcgen.py.
+
+nfs4client.py: A NFSv4 commandline client.
+
+nfs4st.py: A server test application.
+
+epinfo2sxw.py: Extracts test case documentation from nfs4st.py and
+creates a StarOffice 6 document from it. 
+
+test_tree_net.py: Creates a directory tree in preparation for running
+nfs4st.py. 
+
+The dependencies between the components is illustrated in
+doc/pynfsmap.epsi. 
+
+pynfs was developed during my Master's Thesis project "Design and
+Implementation of a NFSv4 Server Test Suite". You can find background
+information, problem description etc in the thesis report, which is
+available on the pynfs web page. Please note that the report describes
+pynfs version 0.1, which is old.
+
+Appendix A in the report describes pynfs. The information in the doc/
+directory is (currently) basically the same as the information in
+Appendix B. The information in the doc/ directory will be updated, the
+report will not be. 
+
+See the pynfs web page (http://www.cendio.se/~peter/pynfs/) for
+more information about pynfs. 
+
+
+Requirements
+------------
+* Python 2.1 or newer. Make sure your Python interpreter can be found
+as "python2" and is listed in your PATH.
+
+* PLY 1.1 or newer. PLY is included with the pynfs distribution.
+
+
+Installation
+------------
+First of all, compile the NFSv4 RPC definition file "nfs4.x" by
+running:
+
+$ ./rpcgen.py nfs4.x
+
+This will generate nfs4constants.py, nfs4packer.py and nfs4types.py.
+
+In theory, you should be able to install (copying files to some
+destination directory) by running:
+
+# ./setup.py install
+
+But in most cases, there is no need for this. Simple place the pynfs
+distribution in some directory and use it from there.
+
+
+Using
+-----
+Refer to the documentation in the doc/ directory, for example
+doc/nfs4st.txt and doc/nfs4client.txt.
