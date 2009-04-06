@@ -1,0 +1,157 @@
+#LyX 1.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 221
+\textclass article
+\begin_preamble
+\usepackage{babel}
+\end_preamble
+\language english
+\inputencoding latin1
+\fontscheme default
+\graphics default
+\paperfontsize default
+\papersize Default
+\paperpackage a4
+\use_geometry 0
+\use_amsmath 0
+\use_natbib 0
+\use_numerical_citations 0
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\quotes_times 2
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+
+\layout Paragraph
+
+GANESHA, a multi-usage with large cache NFSv4 server.
+ Work In Progress Submission
+\layout Standard
+
+The NFSv4 protocol is quite different from former versions of the NFS protocol:
+ it provides enhanced caching capability and is generic enough in its semantic
+ to support many different filesystem.
+ GANESHA is a NFS server that runs in the user space.
+ Its design is oriented to take advantage of these two aspects: aggressive
+ caching and file system genericity.
+\layout Standard
+
+Caching is done for data and metadata.
+ The metadata cache is fully built within memory, it is based on a associative
+ addressing made via hash tables developed for that purpose.
+ These hash tables are using sets of RBT (Red Black Trees) and have performance
+ that scales like O( log( n ) ) where n is the number of entries stored.
+ First feedback showed that caching up to a million of inodes records with
+ GANESHA's metadata cache was possible without loosing performances.
+ The GANESHA server runs in user space which makes it able of allocating
+ huge piece of memory (several Gigabytes).
+ Ambition of the product is to keep several days of 
+\begin_inset Quotes eld
+\end_inset 
+
+active inodes
+\begin_inset Quotes erd
+\end_inset 
+
+ in memory for several days.
+\layout Standard
+
+GANESHA uses backend modules called 
+\begin_inset Quotes eld
+\end_inset 
+
+File System Abstraction Layers
+\begin_inset Quotes erd
+\end_inset 
+
+ or FSAL.
+ A FSAL provide with all the necessary calls to access a file system.
+ NFSv4 requires only a few 
+\begin_inset Quotes eld
+\end_inset 
+
+madatory
+\begin_inset Quotes erd
+\end_inset 
+
+ attributes for files and directory, which makes its possible to address
+ very basic file system.
+ Due to this, FSAL can be built on top of sets of data organized as trees,
+ where each entry has a name.
+ SNMP and LDAP for example meets the requirement for building a FSAL on
+ top of them and being 
+\begin_inset Quotes eld
+\end_inset 
+
+plugged
+\begin_inset Quotes erd
+\end_inset 
+
+ into GANESHA.
+\layout Standard
+
+For now, GANESHA supports FSAL to address the following set of data:
+\layout Itemize
+
+The HPSS Namespace (HPSS is an HSM developed by the DOE and IBM Government
+ Systems).
+ GANESHA with the FSAL/HPSS module makes the NFS support for HPSS 
+\layout Itemize
+
+
+\begin_inset Quotes eld
+\end_inset 
+
+Posix FSAL
+\begin_inset Quotes erd
+\end_inset 
+
+ which provides a way to export via NFS any file systems that have no 
+\begin_inset Quotes eld
+\end_inset 
+
+handle based
+\begin_inset Quotes erd
+\end_inset 
+
+ API but only the standard POSIX interface within libc 
+\layout Standard
+
+The following FSAL are under development:
+\layout Itemize
+
+
+\begin_inset Quotes eld
+\end_inset 
+
+NFSv4 Client FSAL
+\begin_inset Quotes erd
+\end_inset 
+
+: having a FSAL that is a NFSv4 client, with GANESHA's aggressive caching
+ will turn GANESHA into a NFSv4 proxy 
+\layout Itemize
+
+SNMP FSAL: this FSAL would makes its possible to browse SNMP information
+ through GANESHA via a mount point, with something similar to the /proc
+ file system 
+\layout Itemize
+
+LDAP FSAL: for mounting LDAP tree and parse it via a NFS mount point, with
+ something similar to /proc 
+\layout Standard
+
+GANESHA is used on our site in production for one year.
+ A website and a submission to Freshmeat and Sourceforge should be done
+ in a few weeks.
+ 
+\series bold 
+Contact: Philippe Deniel (philippe.deniel@cea.fr).
+
+\series default 
+ 
+\the_end

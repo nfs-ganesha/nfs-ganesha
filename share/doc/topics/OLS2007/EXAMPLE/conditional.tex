@@ -1,0 +1,15 @@
+
+Sometimes you have to do things differently depending on whether
+you're building the entire Proceedings... here's an example...
+
+\ifols
+\usepackage{cprog}
+\usepackage[nolineno,norules]{lgrind}
+\usepackage[hang,scriptsize]{subfigure}
+\else
+\usepackage{subfigure}
+%%% both of these break the Proceedings and are thus evil
+\usepackage{listings}
+\input{llvm.lst}    % Get listing support for llvm code
+\fi
+

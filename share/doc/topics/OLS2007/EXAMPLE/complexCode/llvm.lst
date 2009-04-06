@@ -1,0 +1,15 @@
+\lstdefinelanguage{LLVM}
+  {morekeywords={
+     begin,end,true,false,declare,global,constant,const,internal,implementation,
+     null,to,except,not,
+     void,bool,sbyte,ubyte,short,ushort,int,uint,long,ulong,float,double,type,label,opaque,
+     add,sub,mul,div,rem,and,or,xor,setne,seteq,setlt,setgt,setle,setge,
+     phi,call,cast,shl,shr,
+     ret,br,switch,invoke,
+     malloc,alloca,free,load,store,getelementptr
+   },
+   sensitive=true,
+%   morecomment=[l]{;},
+%   morestring=[b]",
+  }
+

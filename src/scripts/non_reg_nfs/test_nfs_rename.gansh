@@ -1,0 +1,128 @@
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs $CONFIG_FILE
+if ne -- $STATUS 0 ? print "INIT_FSAL_ERROR" : print "INIT_FSAL_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_EVENT"
+init_cache $CONFIG_FILE
+if ne -- $STATUS 0 ? print "INIT_CACHE_ERROR" : print "INIT_CACHE_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_CRIT"
+nfs_init -v $CONFIG_FILE
+if ne -- $STATUS 0 ? print "INIT_NFS_ERROR" : print "INIT_NFS_OK"
+
+# je deviens leibovic
+su 3733
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+mount /cea/prot/S/lama/s8/leibovic
+
+cd ganeshell-NFS
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+print "------------ Creation de differents repertoires -------------"
+
+mkdir -v test_non_reg 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/A/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/B 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/C 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+create test_non_reg/D 700
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+create test_non_reg/E 700
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+print "--------------------- Deplacements ----------------------"
+
+# ne doit pas donner d'erreur (p196 NFS illustrated)
+rename -v test_non_reg/C test_non_reg/C
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+rename -v test_non_reg/D test_non_reg/D
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit renvoyer une erreur EEXIST
+rename -v test_non_reg/C test_non_reg/D
+if ne -n -- $STATUS 17 ? print "ERR_EXIST_ERROR" : print "ERR_EXIST_OK"
+
+rename -v test_non_reg/D test_non_reg/C
+if ne -n -- $STATUS 17 ? print "ERR_EXIST_ERROR" : print "ERR_EXIST_OK"
+
+# doit fonctionner
+rename -v test_non_reg/D test_non_reg/E
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# D n'existe plus
+ls -ld test_non_reg/D
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+# doit renvoyer une erreur (EEXIST pas NOTEMPTY ???)
+
+rename -v test_non_reg/B test_non_reg/A
+if ne -n -- $STATUS 17 ? print "NOTEMPTY_ERROR" : print "NOTEMPTY_OK"
+
+# doit fonctionner
+
+rename -v test_non_reg/A test_non_reg/B
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit avoir un repertoire C dans B
+
+ls -ld test_non_reg/B/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+# A n'existe plus
+ls -ld test_non_reg/A
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+# doit fonctionner
+rename -v test_non_reg/B/C test_non_reg/C/C
+if ne -- $STATUS 0 ? print "RENAME_ERROR" : print "RENAME_OK"
+
+# on doit avoir un repertoire C dans C mais plus dans B
+
+ls -ld test_non_reg/C/C
+if ne -- $STATUS 0 ? print "TARGET_ERROR" : print "TARGET_OK"
+
+ls -ld test_non_reg/B/C
+if ne -n -- $STATUS 2 ? print "STILLEXIST_ERROR" : print "STILLEXIST_OK"
+
+print "--------------------- Menage ----------------------"
+# suppression des fichiers et repertoires temporaires
+
+unlink test_non_reg/E
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/B
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink test_non_reg/C
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+# on efface meme les fichiers qui ne devraient plus etre la,
+# pour ne pas gener le test suivant au cas ou celui-ci foire.
+unlink test_non_reg/D
+unlink test_non_reg/A/C
+unlink test_non_reg/A
+
+unlink test_non_reg
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+OUTDIR=OLSReprints2007
+rm -rf $OUTDIR
+mkdir $OUTDIR
+ThisDir=$PWD
+Papers=$(echo $ThisDir/*/*-proc.pdf)
+cd $OUTDIR
+echo PWD is $PWD
+for i in $Papers ; do
+  OUT=$(basename "$i" | sed -e 's/-proc\.pdf$/-Reprint.pdf/')
+  echo pdftk ../Reprint.pdf "$i" cat output "$OUT"
+  pdftk ../Reprint.pdf "$i" cat output "$OUT"
+done
+for V in 1 2 ; do
+  cp -a ../Proceedings-V$V.pdf OLS2007-Proceedings-V$V.pdf
+  cp -a ../Proceedings-V$V.dvi OLS2007-Proceedings-V$V.dvi
+  cp -a ../Proceedings-V$V.ps  OLS2007-Proceedings-V$V.ps 
+done
+cd $ThisDir
+

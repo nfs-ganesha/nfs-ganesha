@@ -1,0 +1,59 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../share/conf/ganesha.hpss.conf"
+
+set EXPORT_FILE "/tmp/exportsfile"
+
+# mount point
+set MOUNT_POINT "/cea/prot/S/lama/s8/leibovic"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# pour comparer le filehandle
+cd $MOUNT_POINT
+
+# setting Cache_inode layer
+set LAYER Cache_inode
+init_cache $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+print "--------- mnt3_null ------------"
+mnt3_null
+print "mnt3_null:       Return code = " $?
+
+print "--------- mnt3_mount ------------"
+mnt3_mount $MOUNT_POINT
+print "mnt3_mount:      Return code = " $?
+
+print "--------- mnt3_dump ------------"
+mnt3_dump
+print "mnt3_dump:       Return code = " $?
+
+print "--------- mnt3_umount ------------"
+mnt3_umount $MOUNT_POINT
+print "mnt3_umount:     Return code = " $?
+
+print "--------- mnt3_umount_all ------------"
+mnt3_umount_all
+print "mnt3_umount_all: Return code = " $?
+
+print "--------- mnt3_export ------------"
+mnt3_export
+print "mnt3_export:     Return code = " $?

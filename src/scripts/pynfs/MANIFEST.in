@@ -1,0 +1,10 @@
+include README COPYING HACKING nfs4.x
+include MANIFEST.in
+include create_pth.sh
+graft demo
+include *.py
+global-exclude *~ *.pyo *.pyc .cvsignore
+
+
+
+

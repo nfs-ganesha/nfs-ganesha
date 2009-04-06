@@ -1,0 +1,20 @@
+The RPC compiler rpcgen.py
+==========================
+Traditionally, RPC servers and clients are written in C. In this case,
+a program called rpcgen is often used. It takes a protocol
+specification in RPC language format and generates client and server
+stubs for packing and unpacking of data. In this way, the application
+programmer can call remote procedures nearly as easy as with local
+procedures.
+
+Since no such RPC protocol compiler existed1 for Python when we
+started working on pynfs, we decided to write one. rpcgen.py generates
+classes for all structures and unions. This makes it easy to treat
+many NFSv4 data types as objects.
+
+rpcgen.py uses a lexical scanner and parser called PLY [PLY], written
+by David M. Beazley, University of Chicago. rpcgen.py is not very well
+tested with other protocol specifications than NFSv4. It has known
+deficiencies. For example, it does not handle a certain type of
+recursive data structures. See the comments in the source code for
+more information.

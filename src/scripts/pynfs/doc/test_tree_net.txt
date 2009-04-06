@@ -1,0 +1,20 @@
+Test tree creation
+==================
+Before the test suite nfs4st.py can run, a directory tree with content
+must be created. test_tree_net.py does this job. It creates the tree
+via NFSv4, over the network. It can optionally take a prefix. A
+directory tree with different kinds of files will be created under
+<prefix>/nfs4st/
+
+After (successfully) running test_tree_net.py, you can run
+nfs4st.py. You should use the same prefix. 
+
+Example:
+
+./test_tree_net.py myserver/testing
+./nfs4st.py myserver/testing AccessSuite
+
+
+If your server does not work correctly, or if you stumble into bugs in
+test_tree_net.py, you will have to fix these problems before trying
+the actual test suite. As always, Ethereal is a good friend.

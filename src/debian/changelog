@@ -1,0 +1,15 @@
+nfs-ganesha (0.99.51-1) stable; urgency=low
+
+  * MFSL function are now accessible via ganeshell if --with-msfl is specified
+  * MFS_ASYNC has been added
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Tue, 27 Jan 2009 10:05:28 -0600
+
+
+nfs-ganesha (0.99.50-1) unstable; urgency=low
+
+  * Initial release for debian
+  * Port to OpenSolaris
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 23 Jan 2009 09:27:08 -0600
+

@@ -1,0 +1,10 @@
+#!/bin/ksh 
+
+ARCHI=`ksh ./archi`
+
+TOP="../.."
+
+mkdir -p $TOP/obj/$ARCHI/dbg
+mkdir -p $TOP/lib/$ARCHI/dbg
+mkdir -p $TOP/libswig/$ARCHI/dbg
+mkdir -p $TOP/bin/$ARCHI/dbg

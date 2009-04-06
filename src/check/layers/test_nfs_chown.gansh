@@ -1,0 +1,171 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_EVENT"
+nfs_init -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+mount /
+
+# retrieving test users
+
+set USER1 `shell cat user1.sav`
+set USER2 `shell cat user2.sav`
+set USER2_ID `shell cat user2.sav | xargs id -u`
+set USER3 `shell cat user3.sav`
+set TESTDIR `shell cat testdir.sav`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER2_ID `chomp $USER2_ID`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER2_ID "" ? print "error: USER2_ID not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+set USER2_PARAM "uid=" $USER2_ID
+
+
+# je deviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+
+print "------------ Creation de differents fichiers -------------"
+
+create test_chown_Urw   600
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+create test_chown_UrwGr 640
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+create test_chown_UrwGrw 660
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+create test_chown_UrwGrwOr 664
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+create test_chown_UrwGrwOrw 666
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+print "------------ On tente de changer le owner en " $USER2 " ------"
+
+setattr test_chown_Urw   $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGr $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrw $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOr $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOrw $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+print "------------ On tente de changer le owner en root ------"
+
+setattr test_chown_Urw   uid=0
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGr uid=0
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrw uid=0
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOr uid=0
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOrw uid=0
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+print "------------ Je suis " $USER2 " -------------"
+# je deviens user2
+su $USER2
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+print "------------ On tente de changer le owner en " $USER2 " ------"
+
+setattr test_chown_Urw   $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGr $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrw $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOr $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+setattr test_chown_UrwGrwOrw $USER2_PARAM
+if eq -- $STATUS 0 ? print "SHOULDFAIL_ERROR" : print "SHOULDFAIL_OK"
+
+print "------------ Je suis root -------------"
+# je deviens root
+su 0
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+print "------------ On tente de changer le owner en " $USER2 " ------"
+
+setattr test_chown_Urw   $USER2_PARAM
+if ne -- $STATUS 0 ? print "CHOWN_ERROR" : print "CHOWN_OK"
+
+setattr test_chown_UrwGr $USER2_PARAM
+if ne -- $STATUS 0 ? print "CHOWN_ERROR" : print "CHOWN_OK"
+
+setattr test_chown_UrwGrw $USER2_PARAM
+if ne -- $STATUS 0 ? print "CHOWN_ERROR" : print "CHOWN_OK"
+
+setattr test_chown_UrwGrwOr $USER2_PARAM
+if ne -- $STATUS 0 ? print "CHOWN_ERROR" : print "CHOWN_OK"
+
+setattr test_chown_UrwGrwOrw $USER2_PARAM
+if ne -- $STATUS 0 ? print "CHOWN_ERROR" : print "CHOWN_OK"
+
+print "------------ Je suis " $USER1 " -------------"
+
+# je redeviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+#on fait le menage
+
+unlink test_chown_Urw   
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+unlink test_chown_UrwGr 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+unlink test_chown_UrwGrw 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+unlink test_chown_UrwGrwOr 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+unlink test_chown_UrwGrwOrw 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+

@@ -1,0 +1,2 @@
+A set of files used to configure sources for different linux kernels used as clients (via make xconfig)
+

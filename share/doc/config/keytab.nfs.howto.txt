@@ -1,0 +1,46 @@
+kadmin -k -t /var/hpss/krb5kdc/kadm5.keytab -p kadmin/admin
+Authenticating as principal kadmin/admin@PINATUBO1.BRUYERES.T with keytab /var/hpss/krb5kdc/kadm5.keytab.
+kadmin:  addprinc
+usage: add_principal [options] principal
+        options are:
+                [-expire expdate] [-pwexpire pwexpdate] [-maxlife maxtixlife]
+                [-kvno kvno] [-policy policy] [-randkey] [-pw password]
+                [-maxrenewlife maxrenewlife]
+                [-e keysaltlist]
+                [{+|-}attribute]
+        attributes are:
+                allow_postdated allow_forwardable allow_tgs_req allow_renewable
+                allow_proxiable allow_dup_skey allow_tix requires_preauth
+                requires_hwauth needchange allow_svr password_changing_service
+kadmin:  addprinc -e des-cbc-crc:normal -pw nfsprinc nfs/pinatubo2.bruyeres.t
+WARNING: no policy specified for nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T; defaulting to no policy
+Principal "nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T" created.
+kadmin:  addprinc -e des-cbc-crc:normal -pw nfsprinc nfs/pinatubo2
+WARNING: no policy specified for nfs/pinatubo2@PINATUBO1.BRUYERES.T; defaulting to no policy
+Principal "nfs/pinatubo2@PINATUBO1.BRUYERES.T" created.
+kadmin:  q
+pinatubo1$ kinit nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T
+Password for nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T:
+pinatubo1$ klist
+Ticket cache: FILE:/tmp/krb5cc_0
+Default principal: nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T
+
+Valid starting     Expires            Service principal
+08/08/06 17:17:23  08/09/06 03:17:23  krbtgt/PINATUBO1.BRUYERES.T@PINATUBO1.BRUYERES.T
+        renew until 08/09/06 17:17:23
+
+
+Kerberos 4 ticket cache: /tmp/tkt0
+klist: You have no tickets cached
+pinatubo1$ ktutil
+ktutil:  addent -password -p  nfs/pinatubo2.bruyeres.t -k 1 -e des-cbc-crc
+Password for nfs/pinatubo2.bruyeres.t@PINATUBO1.BRUYERES.T:
+ktutil:  addent -password -p  nfs/pinatubo2 -k 1 -e des-cbc-crc
+Password for nfs/pinatubo2@PINATUBO1.BRUYERES.T:
+ktutil:  wkt /etc/krb5.keytab
+ktutil:  h
+ktutil: Unknown request "h".  Type "?" for a request list.
+ktutil:  ?
+Available ktutil requests:
+
+
