@@ -297,6 +297,9 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   *object_handle = pprecreated->mobject ;
   object_handle->health = MFSL_ASYNC_NEVER_SYNCED ;
 
+  /* Do not forget that the parent directory becomes asynchronous too */
+  parent_directory_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_mkdir */
 

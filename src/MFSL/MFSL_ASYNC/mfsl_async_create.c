@@ -139,6 +139,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &handle,
                              &popasyncdesc->op_res.mkdir.attr );
 
+  
   return fsal_status ; 
 } /* MFSL_create_async_op */
 
@@ -204,6 +205,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   mfsl_precreated_object_t    * pprecreated = NULL ;
 
   P( p_mfsl_context->lock ) ;
+ 
+  printf( "mfsl_create\n" ) ;
 
   GET_PREALLOC( pasyncopdesc,
                 p_mfsl_context->pool_async_op,
@@ -299,6 +302,9 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   *object_attributes = newfile_pasyncdata->async_attr ;
   *object_handle = pprecreated->mobject ;
   object_handle->health = MFSL_ASYNC_NEVER_SYNCED ;
+
+  /* Do not forget that the parent directory becomes asynchronous too */
+  parent_directory_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
 } /* MFSL_create */
