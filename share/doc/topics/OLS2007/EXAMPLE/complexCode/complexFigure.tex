@@ -1,0 +1,88 @@
+\documentclass[twocolumn,12pt]{article}
+\usepackage{ols}
+\ifpdf
+\usepackage[pdftex]{epsfig}
+\else
+\usepackage{epsfig}
+\fi
+\input{ols-fonts}
+
+% These packages are Proceedings-friendly.
+\usepackage{cprog}
+\usepackage[nolineno,norules]{lgrind}
+\usepackage[hang,scriptsize]{subfigure}
+
+% These ones are only suitable for standalone
+\usepackage{subfigure}
+%%% both of these break the Proceedings and are thus evil
+\usepackage{listings}
+\input{llvm.lst}    % Get listing support for llvm code
+%%%%
+
+
+\begin{document}
+
+\date{}
+
+%make title bold and 14 pt font (Latex default is non-bold, 16 pt)
+\title{Architecture for a Next-Generation GCC}
+
+\author{
+Chris Lattner \hspace*{0.5in} Vikram Adve\\
+\emph{University of Illinois at Urbana, Champaign}\\
+\texttt{\em\normalsize \{lattner, vadve\}@cs.uiuc.edu}\\
+\emph{\normalsize \url{http://llvm.cs.uiuc.edu}}} 
+
+\maketitle
+
+% You have to do this to suppress page numbers.  Don't ask.
+\thispagestyle{empty}
+
+Formatting team's note:  The two figures here illustrate two ways of presenting
+the same information, and are hopefully more complex
+than you'll require.  The first is set using Proceedings-friendly
+packages; the second works only as a standalone paper.
+
+%%% Figure typeset in a Proceedings-friendly fashion
+%%% (thanks to Diego Novillo for inspiration)
+\begin{figure*}[t]
+\scriptsize
+%%% \centering
+\subfigure[Example function]{%
+\label{figure:example_c}
+\parbox{0.65\columnwidth}{\input{example-c}}
+}\hspace*{5pt}\vrule\hspace*{5pt}
+\subfigure[Corresponding LLVM code] {%
+\label{figure:example_llvm}
+\parbox{1.35\columnwidth}{\input{example-ll}}}
+%%% }%
+\caption{C and LLVM code for a function}
+\label{figure:example}
+\end{figure*}
+
+%%===------------------------
+%  Code example figure
+%
+\begin{figure*} [t]
+\scriptsize
+\centering
+\subfigure[Example function] {
+\label{figure2:example_c}
+\lstset{language=c}
+\lstinputlisting{Figures/example.c}
+}\hspace*{5pt}\vrule\hspace*{5pt}
+\subfigure[Corresponding LLVM code] {
+\label{figure2:example_llvm}
+\lstset{language=LLVM}
+\lstinputlisting{Figures/example.ll}
+}%
+\caption{C and LLVM code for a function}
+\label{figure2:example}
+\end{figure*}
+%
+%%===------------------------
+
+
+\end{document}
+
+

@@ -1,0 +1,17 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER FSAL
+
+init_fs -v ../../share/conf/ganesha.hpss.conf
+
+cd /cea/prot/S/lama/s8/leibovic/ganesha
+
+print "----------------------------------------------"
+print "Execute 'barrier' command to make a step"
+print "Then do 'ls -l' to check read/write operations"
+print "----------------------------------------------"
+
+barrier
+
+interactive
+
+

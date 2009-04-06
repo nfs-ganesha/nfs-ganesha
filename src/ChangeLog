@@ -1,0 +1,161 @@
+0.99.39 - Mon 21 Jul 2008
+	- Initial version submitted to sourceforge
+
+0.99.40 - Mon 28 Jul 2008 
+	- Fixed several memory issues in NFSv4 implementation 
+	- Fixed several memory issues in FSAL_PROXY
+	- Fixed a badly placed Mem_Free in support/nfs_state_id.c (function nfs4_State_Del)
+        - Added Handle Mapping feature in FSAL_PROXY which makes it possible to export
+          back in NFSv2 and NFSv3 from a proxyfied server accessed via NFSv4
+
+0.99.41 - Mon 18 Aug 2008
+	- Fixed nfs4_op_access bug due to bad interpretation of the RFC for
+	  OP_ACCESS4
+	- Added extended features in BuddyMalloc module to enable extended
+	  memory leak tracking (run the ./configure script with the following
+	  options : "--enable-debug-memleaks --disable-block-prealloc")
+	- Fixed a bug in FSAL_PROXY that made every user have root permissions
+	  in a few situations
+	- Bug fixed: bad offset management in FSAL_read/FSAL_write for
+	  FSAL_PROXY. This made the datacache behaves weirdly. 
+	- Use All-0 stateid for r/w operations made for maintaining the data
+	  cache coherent with the "proxyfied" server with FSAL_PROXY. Due to
+	  this the parameter NFSv4_Proxy::Open_by_FH_Working_Dir is no more
+	  required, making the configuration of nfs-ganesha as a proxy much
+	  easier
+	- FSAL_PROXY now supports RPCSEC_GSS authentication
+
+0.99.42 - Mon 29 Sep 2008
+	- Added xattr support in NFSv4. For object "foo" a ghost
+	  directory name ".xattr.d.foo" is used to access extended attributes
+        - Added xattr ghost directory and ghost objects for NFSv3. These "extended
+	  attributes" are read-only for the moment. These two new features may
+          be disable if "--disable-xattr-directory" is used at "./configure" time
+        - Enhancement in FSAL_GetXattrs function (file FSAL/FSAL_*/fsal_xattrs.c) for
+          making integration to xattr.d easier
+
+0.99.43 - Fri 10 Oct 2008
+        - Fixed RPCSEC_GSS support. It is now possible to mount with krb5
+	  authentication. Security tuple krb5, krb5i and krb5p are supported
+	- Add RPCSEC_GSS specifc feature for NFSv4
+	- Add RPCSEC_GSS specifc feature for NFSv3
+	- Configuration file supports "nodesets" syntax( the set
+     	  "node1,node3,node4,node5,node6" can be summarized as
+	  "node[1,3,4-6]). This feature is very useful if your client is a
+	  cluster.
+	- New RPM packaging. 
+	- The libganeshaNFS that provide NFS exports for FUSE ready product is
+	  now available as both static and shared libraries. 
+
+0.99.44 - Mon 20 Oct 2008 
+        - NFS4_OP_OPEN default behaviour is now to ask the client to confirm 
+	  the open using NFS5_OP_OPEN_CONFIRM. The default behaviour was
+	  formerly the opposite.
+	- A bug in NFS4_OP_OPEN : same open_owner could have multiple states
+	  on the same file in certain cases 
+	- Many bug fixed in NFS4_OP_LOCK
+	- libganeshaNFS (produced when FSAL_FUSELIKE is chosen) can now be
+	  managed by pkgconfig (a ".pc" file is added to the install target)
+	- Improved compatibility for old FUSE filesystems that implement getdir
+	  instead of readdir.
+	- FUSE-like binding now support filesystems with no inode numbers.
+	- TIRPC can be use as alternate RPC layer. In later releases, this
+	  feature will be used to support IPv6 with NFS-GANESHA.
+	- Added a 'init' scripts to be place in /etc/init.d 
+	- Added stuff to specfile so that it installs the .vim files
+
+0.99.45 - Wed  5 Nov 2008 
+	- Add IPv6 support via TIRPC support 
+	- Add features to configuration file parsing for IPv6 address
+	- Bug fix in handle mapping module for FSAL_PROXY
+	- Bug Fix: Bad verifier management in FSAL_PROXY's cleintid
+	  negociation
+	- Bug fix: bad management of uid=0 is uidgidmap cache when using
+	  RPCSEC_GSS authentication.
+	- Bug fix: several bug fixed in .xattr.d management for NFSv3
+
+0.99.46 - Wed 18 Nov 2008 	
+	- Bug fix: possible deadlock may occur in worker thread when using tcp
+	  clients
+	- Minor feature: MD cache now uses home made RW_Lock (the same that 
+	  Hashtable module already uses). Call rw_lock_downgrade was added to
+	  RW_Lock module
+	- DataCache GC is done by an external call to the ganesha service
+	  started in "syncers" of "flushers" mode.
+
+0.99.47 - Thu  4 Dec 2008
+	- Running the Spec benchmark on nfs-ganesha showed a bug in attributes
+	  asked at creation time in NFSPROC3_CREATE, this has been fixed
+	- Fix non-compliancy (thanks again to Spec NFS) in NFSPROC3_SYMLINK (attributes provided as 
+	  arguments were never used).
+	- Code cleanup: removed structure related to deprecated way of
+	  performing datacache's garbagge collection.
+	- Major feature added : skeleton and "basements" added for MFSL, a
+	  new module that goes between md cache and FSAL 
+	- Removed direct Cache_Inode_Async, md writeback will be provided in a
+	  future module MFSL_ASYNC in MFSL directory 
+	 
+0.99.48	- Mon 15 Dec 2008
+	- Renamed yyparse and yylex functions so that GANESHA/FUSE would no
+	  more interfer with FUSE modules that uses lex/yacc parsing
+	- FSAL_PROXY was ported to MacOS X (Darwin 9.5.0)
+	- FSAL_FUSE was ported to MacOS X (Darwin 9.5.0). This allow user
+	  space libs with fuse binding to be used from MacOS through
+	  NFS-GANESHA
+	- FSAL_SNMP has been ported to MacOS X (Darwin 9.5.0)
+	- FSAL_POSIX has been ported to MacOS X (Darwin 9.5.0)
+	 
+0.99.49	- Fri  9 Jan 2009  
+        - FSAL_PROXY has been ported to FreeBSD 7.0
+        - FSAL_FUSE has been ported to FreeBSD 7.0 (FUSE ready product can now
+	  export in NFS via NFS-GANESHA)
+        - FSAL_POSIX has been ported to FreeBSD 7.0
+        - FSAL_SNMP has been ported to FreeBSD 7.0
+	- Code has been ported and validated to ia64 architecture for all
+	  FSALs
+
+0.99.50 - Fri 23 Jan 2009
+	- Code has been validated on PPC/Linux architecture 
+	- Fixed a Makefile.am that prevent from compiling with FSAL_FUSE and
+	  gssrpc activated
+	- Added a 'debian' directory in order to produce debian packages
+	- FSAL_POSIX has been ported to OpenSolaris (alpha)
+	- FSAL_FUSE has been ported to OpenSolaris (beta)
+	- FSAL_PROXY has been ported to OpenSolaris (alpha)
+	- FSAL_SNMP has been ported to OpenSolaris (alpha)
+	- Bug fix: client's address was badly printed by the worker when nfs_export_check_access denied access
+	- Bug fix: syntax error in posix.ganesha.nfsd.conf configuration file example
+
+0.99.51 - Fri 20 Mar 2009
+        - MySQL can be used instead of PGSQL in FSAL_POSIX. It becomes the
+  	  default database for this FSAL.
+	- Bug Fix: Massive and parralel mount requests (e.g. : all nodes of a
+	  compute cluster starting at the same time after a maintenance) could
+	  lead to errors on client. This "denial of service" like trouble has
+	  been fixed.
+	- Bug Fix: bad computation in FH checksum when compiled on x86_64 architecture 
+	- MFSL_ASYNC: setattr has been made asynchronous
+	- MFSL_ASYNC: link has been made asynchronous
+	- MFSL_ASYNC: unlink has been made asynchronous
+	- MFSL_ASYNC: rename has been made asynchronous
+	- MFSL_ASYNC: truncate has been made asynchronous
+	- MFSL_ASYNC: mkdir has been made asynchronous
+	- MFSL_ASYNC: create has been made asynchronous
+	- New feature: very early alpha version of asynchronous metadata management is available via MFSL_ASYNC
+	  This is to be activated by using --with-mfsl=ASYNC at configure time. 
+
+0.99.52	-
+        - Bug Fix: possible race condition in cache_inode_readdir (badly placed rw_lock_downgrade) that could
+          lead in having cache_inode_readdir_populate called twice at the same time.
+        - MFSL_ASYNC: now, preallocated entries are owned by each 
+	- Bug Fix: bad MFSL_Context management in ganeshell
+	- Bug Fix: deleted entry can no more be lookuped and accessed before
+	  their real deletion.
+	- Lustre v2 FSAL Beta
+	- Fixed bug in RW_lock_downgrade function
+	- Fixed weak locking in cache_inode_remove
+	- I/O optimization and fixes
+	- Improved fd cache management
+	- Tweak fixes in logs
+	- A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels
+

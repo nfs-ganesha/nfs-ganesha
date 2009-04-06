@@ -1,0 +1,20 @@
+NFS-GANESHA is packaged with the autotools products, it follows the classical './configure && make && make install' schema.
+
+But, NFS-GANESHA is coming with different Namespaces' backends called FSAL (which stands for File System Abstraction Layer).
+The selection of the FSAL to be compiled with is done at './configure' time, via the --with-fsal option
+
+Compiling NFS-GANESHA with POSIX FSAL:
+	./configure --with-fsal=POSIX && make && make install
+
+Compiling NFS-GANESHA with SNMP FSAL:
+	./configure --with-fsal=SNMP && make && make install
+
+Compiling NFS-GANESHA with PROXY FSAL
+	./configure --with-fsal=PROXY && make && make install
+
+Compiling NFS-GANESHA for a "FUSE-like" binding
+	./configure --with-fsal=FUSE && make && make install
+	
+Note: if no '--with-fsal=' is provided, the PROXY FSAL will be used.
+
+

@@ -1,0 +1,363 @@
+Name: @PACKAGE@ 
+Version: @VERSION@ 
+Release: 1%{?dist}
+Summary: NFS Server running in user space with large cache 
+License: CeCILL 
+Group: Applications/System
+BuildRequires:  postgresql-devel >= 7.1
+BuildRequires:  postgresql-libs >= 7.1
+BuildRequires:  net-snmp-libs >= 5.1
+BuildRequires:  net-snmp-devel >= 5.1
+#BuildRequires:  lm_sensors-devel >= 2.8
+Url: http://nfs-ganesha.sourceforge.net
+Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+%description
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. Supported name spaces ar POSIX, PROXY, SNMP, FUSE-like and HPSS.
+
+%package common
+Summary: Common files for all NFS-GANESHA server variants
+Group: Applications/System
+Provides: %{name} = %{version}-%{release}
+Obsoletes: %{name} < @VERSION@ 
+
+%description common
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package contains the common files for all variants.
+
+
+%package proxy
+Summary: The NFS-GANESHA server compiled as a PROXY 
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description proxy
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+
+
+%package posix
+Summary: The NFS-GANESHA server compiled for using the POSIX interface 
+Group: Applications/System
+Requires: postgresql >= 7.1  postgresql-server >= 7.1
+Requires: %{name}-common = %{version}-%{release}
+
+%description posix
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for GANESHA using the POSIX
+interface.
+
+
+%package snmp
+Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
+Group: Applications/System
+Requires: net-snmp >= 5.1 
+Requires: lm_sensors-devel >= 2.10 
+Requires: %{name}-common = %{version}-%{release}
+
+%description snmp
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides a NFS gateway to SNMP, making it 
+possible to browse SNMP exported information in a procfs-like way.
+
+
+%package fuselike 
+Summary: The ganeshaNFS library for FUSE-like bindings
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description fuselike
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package contains the components for FUSE-like
+bindings.
+
+%package fuselike-devel
+Summary: The NFS-GANESHA development files for FUSE-like bindings
+Group: Applications/System
+Requires: pkgconfig
+Requires: %{name}-fuselike = %{version}-%{release}
+
+%description fuselike-devel
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package contains the development headers for FUSE-like
+
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%package hpss
+Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS.
+Group: Applications/System
+Requires: %{name}-common = %{version}-%{release}
+
+%description hpss
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various backend modules to support different file systems
+and namespaces. This package provides support for NFS-GANESHA used with HPSS.
+%endif
+
+
+%prep
+%setup -q -n %{name}-%{version}
+
+%build
+TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
+rm -rf $TMP_INSTALL_DIR
+mkdir -p $TMP_INSTALL_DIR
+
+for fsal in  @FS_ALL_LIST@ ; do                                            
+  %configure @ac_configure_args@ --with-fsal=$fsal 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
+
+  # try 1 recovery when there is a // make error, then use simple make at 2nd error 
+  make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
+  make install DESTDIR=$TMP_INSTALL_DIR
+  make clean 
+done
+
+
+%install
+TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
+
+make allinst SRCDIR=$TMP_INSTALL_DIR DESTDIR=$RPM_BUILD_ROOT
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+install -m 644 config_samples/hpss.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
+install -m 644 config_samples/posix.ganesha.nfsd.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/proxy.ganesha.nfsd.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/snmp.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/snmp.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/hosts.ganesha                $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/uidgid_mapfile.ganesha       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 755 tools/ganestat.pl                           $RPM_BUILD_ROOT%{_bindir}
+install -m 755 nfs-ganesha.posix.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
+install -m 755 nfs-ganesha.proxy.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
+install -m 755 nfs-ganesha.snmp.init                       $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
+
+mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
+install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
+install -m 644 ganesha_au.vim  $RPM_BUILD_ROOT%{_datadir}/%{name}
+for vimver in 63 64 70 71 ; do
+  mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/syntax
+  mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/autoload
+  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/syntax 
+  ln -s ../../../%{name}/ganesha.vim .
+  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/autoload 
+  ln -s ../../../%{name}/ganesha_au.vim .
+done
+
+
+%clean
+TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
+rm -rf $TMP_INSTALL_DIR
+rm -rf $RPM_BUILD_ROOT
+
+%files common
+%defattr(-,root,root,-)
+%doc Licence_CeCILL_V2-English.txt  Licence_CeCILL_V2-French.txt Docs/nfs-ganesha-userguide.pdf Docs/nfs-ganesha-adminguide.pdf Docs/nfs-ganeshell-userguide.pdf Docs/nfs-ganesha-ganestat.pdf Docs/using_ganeshell.pdf Docs/nfs-ganesha-convert_fh.pdf Docs/using_*_fsal.pdf
+%doc Docs/ganesha_snmp_adm.pdf
+%dir %{_sysconfdir}/ganesha/
+%dir %{_datadir}/%{name}
+%config(noreplace) %{_sysconfdir}/ganesha/hosts.ganesha
+%config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
+%{_bindir}/ganestat.pl
+%{_datadir}/%{name}/ganesha.vim
+%{_datadir}/%{name}/ganesha_au.vim
+%{_datadir}/vim/*/syntax/*
+%{_datadir}/vim/*/autoload/*
+
+
+%files proxy
+%defattr(-,root,root,-)
+%{_bindir}/proxy.ganesha.*
+%{_bindir}/proxy.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.proxy
+%config %{_sysconfdir}/ganesha/proxy.ganesha*
+
+
+%files posix 
+%defattr(-,root,root,-)
+%{_bindir}/posix.ganesha.*
+%{_bindir}/posix.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.posix
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql 
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql 
+%config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha* 
+
+
+%files snmp
+%defattr(-,root,root,-)
+%{_bindir}/snmp.ganesha.*
+%{_bindir}/snmp.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.snmp
+%config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
+
+%files fuselike 
+%defattr(-,root,root,-)
+%{_libdir}/libganeshaNFS.la
+%{_libdir}/libganeshaNFS.a
+%{_libdir}/libganeshaNFS.so.*
+%{_bindir}/fuse.ganesha.convertFH
+
+
+%files fuselike-devel
+%defattr(-,root,root,-)
+%{_libdir}/pkgconfig/libganeshaNFS.pc
+%{_libdir}/libganeshaNFS.a
+%{_libdir}/libganeshaNFS.so
+%{_includedir}/ganesha_fuse_wrap.h
+
+
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%files hpss
+%defattr(-,root,root,-)
+%{_bindir}/hpss.ganesha.*
+%{_bindir}/hpss.ganeshell
+%config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
+%endif
+
+%post fuselike -p /sbin/ldconfig
+
+%postun fuselike -p /sbin/ldconfig
+
+%changelog
+* Tue Mar 03 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.51-1
+- Bug Fixes
+- FSAL_POSIX has been ported to MySQL. 
+- MFSL_ASYNC has been added for unlink/link/rename/remove/setattr/mkdir/create
+
+* Fri Jan 23 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.50-1
+- several bugs fixes
+- packages for non-redhat platform
+
+* Tue Dec 23 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.49-1
+- first release of year 2009
+- product with all available FSALs has been ported to BSD 7.0 and Linux ia64
+
+* Mon Dec 15 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.48-1
+- Renamed yyparse and yylex functions so that GANESHA/FUSE would no more interfer with FUSE modules that uses lex/yacc parsing
+- FSAL_PROXY was ported to MacOS X (Darwin 9.5.0)
+- FSAL_FUSE was ported to MacOS X (Darwin 9.5.0). This allow userspace libs with fuse binding to be used from MacOS through NFS-GANESHA
+- FSAL_SNMP has been ported to MacOS X (Darwin 9.5.0)
+- FSAL_POSIX has been ported to MacOS X (Darwin 9.5.0)
+
+* Thu Dec  4 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.47-1
+- Two unprecisions in NFSv3 coding were found with Spec NFS bench, they were fixed
+- Code cleanup : removed structure related to deprecated way of making datacache's GC
+- Added a new module name MFSL (will provide additionnal features like md writeback in later versions)
+
+* Thu Nov 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.46-1
+- Bug Fix in tcp dispatcher 
+- use of RW_lock inside md cache
+- use external command to perform datacache gc 
+
+* Mon Nov  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.45-1
+- Add IPv6 support via TIRPC
+- Several bug fixed
+
+* Mon Oct 20 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-5
+- Add scripts to be installed in /etc/init.d to start nfs-ganesha as a service
+- Add "vim files" to the common rpm
+
+* Wed Oct 15 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-4
+- Add TIRPC support as possible replacement for ONCRPC (later release will support IPv6)
+
+* Wed Oct 15 2008 Thomas Leibovici <thomas.leibovici@cea.fr> 0.99.44-3
+- Compatibility stuff for FUSE filesystems that use getdir() instead of readdir().
+- FUSE-like binding now support filesystems with no inode numbers.
+
+* Wed Oct 15 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-2
+- Add libganeshaNFS.pc so that to provide with pkgconfig support 
+
+* Tue Oct 14 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-1
+- Many bug fixed in nfs4_op_lock.c
+- bug fixed in nfs4_op_open (multiple stateid for the same open_owner)
+
+* Mon Oct  9 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.43-3
+- libganeshaNFS is available as both static and shared libraries
+
+* Wed Oct  8 2008 Tom "spot" Callaway <tcallawa@redhat.com> 0.99.43-2
+- more cleanups
+
+* Mon Oct  6 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.43-1
+- NodeSets syntax can now be used in the configuration file 
+
+* Mon Oct  6 2008 Tom "spot" Callaway <tcallawa@redhat.com> 0.99.43-1
+- first pass at a Fedora package
+
+* Mon Oct  6 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.43-1
+- Added RPCSEC_GSS suppprt for NFSv3 and NFSv4 (with uidgid mapper enhancements)
+
+* Fri Oct  3 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.43-1
+- Fixed issues with RPCSEC_GSS. This now work with krb5, krb5i and krb5p
+
+* Mon Sep 29 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.42-1
+- Added xattr support in NFSv4. For object "foo" a ghost
+  directory name ".xattr.d.foo" is used to access extended attributes
+- Added xattr ghost directory and ghost objects for NFSv3. These "extended
+ attributes" are read-only for the moment
+
+* Mon Aug 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.41-1
+- Fixed nfs4_op_access bug due to bad interpretation of the RFC for OP_ACCESS4
+- Added extended features in BuddyMalloc module to enable extended memory leak tracking
+- Fixed a bug in FSAL_PROXY that made every user have root permissions  in a few situations
+- Bug fixed: bad offset management in FSAL_read/FSAL_write for FSAL_PROXY.
+- Use All-0 stateid for r/w operations made for maintaining the data
+- the parameter NFSv4_Proxy::Open_by_FH_Working_Dir is no more required for configuring FSAL_PROXY
+- FSAL_PROXY now supports RPCSEC_GSS authentication
+
+* Thu Jul 24 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.41-1
+- Fixed many memory allocation errors in FSAL_PROXY and NFSv4 implemtation with efence
+- Added Handle Mapping feature in FSAL_PROXY which makes it possible to export
+  back in NFSv2 and NFSv3 from a proxyfied server accessed via NFSv4
+
+* Wed Jul  7 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.40-1
+- Lock support in NFSv4 (alpha version)
+
+* Wed Jul  2 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.39-1
+- Update dependies
+
+* Wed Jul  2 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.38-1
+- Added filehandle conversion utility documentation
+
+* Wed Jul  2 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.38-1
+- Added filehandle conversion utility (*.ganesha.convert_fh)
+
+* Wed Jul  2 2008 Thomas Leibovici <thomas.leibovici@cea.fr> 0.99.37-1
+- Added conditionnal snmp_adm
+
+* Tue Jul  1 2008 Thomas Leibovici <thomas.leibovici@cea.fr> 0.99.36-1
+- Added extra documentation to packages 
+
+* Thu Jun  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.35-1
+- Added ganestat.pl to the different packages 
+
+* Wed Apr 16 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.34-1
+- Added sub-packages for hpss, with conditionnals
+
+* Tue Apr  4 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.33-1
+- Added sub-packages
+
+* Mon Mar 31 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.32-1
+- the rpmbuild specfile now generates all of the binaries
+
+* Tue Mar 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.31-1
+- add configuration template files
+
+* Fri Feb 22 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.30-1
+- add spec file
+

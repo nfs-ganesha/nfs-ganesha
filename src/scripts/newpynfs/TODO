@@ -1,0 +1,55 @@
+High Priority
+=============
+Add description of each test, and make it accessable w/o looking through source
+Causing timeout on rename in python server with (bad) doubled calls causes
+  xid on server to get stuck.  Why?
+Add more delegations tests.
+	Make test fail if give conflicting open w/o waiting.
+	get write deleg, then have local disk access
+	_EXPIRED after delegation revoked
+	RENEW tests with path down
+	Make sure get back proper id
+	warn if responding on first open
+	setclientid test changing callack info after delegation granted
+Add more reboot tests.
+   ask for delegation on recall, both actual and fake
+fix poll/select hack in rpc.py
+Recover gracefully if dispatcher dies.
+CID5 run against foreign server can cause pynfs to crash by running out of
+	file descriptors
+Make sure owner names are unique for each test...ie don't use 'owner1' for
+	several tests, instead use something like "%s_own1" % t.code
+When cleanup fails, give name of file it fails on.
+On cleanup, deal with remove unclosed files.
+
+Medium Priority
+===============
+Allow client to bind to restricted ports.
+Make sure change of default dircount from 0 to 4096 in do_readdir did 
+	not affect any tests.
+Deal with spurious exceptions in printout better.
+Many tests rely on c1 and c2 being different, which may not be true using
+	kerberos.  Check for this in dependency.
+c2 is always auth_sys, use given sec
+Add acl tests.
+Add permissions tests.
+Run tests in order given.
+lock test combined w/ special stateid
+setclientid tests using weird/wrong callback data
+replay of seqid op with slight change to args
+
+Low Priority
+============
+Why can't we do lookup using krb5p?
+Add timing info to tests.
+Startup time is slow while building flag database from disk.
+Use python's stringprep facilities for stringprep testing.
+Versioning info for showresults
+Dependency functions should have possibility of being non-optional (ie --force)
+  Note for example this is important with the gss tests.
+
+Test Stuff
+==========
+
+lock tests using bad lock type INVAL vs XDR
+open-write-close-remove-putfh gives OK, should be STALE

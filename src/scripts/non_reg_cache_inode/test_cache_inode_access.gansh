@@ -1,0 +1,107 @@
+set VERBOSE "ON"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs /tmp/hpss.ganesha.conf
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v /tmp/hpss.ganesha.conf
+
+print "------------ Je suis leibovic -------------"
+# je deviens leibovic
+su leibovic
+
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+
+# je mets le repertoire en access pout tous
+setattr . MODE 755
+
+print "----- Creation de differents fichiers et repertoires -----"
+
+create fichier_access_0     000
+
+create fichier_access_Ur    400
+create fichier_access_Urw   600
+
+create fichier_access_UrwGr 640
+create fichier_access_UrwGrw 660
+
+create fichier_access_UrwGrwOr 664
+create fichier_access_UrwGrwOrw 666
+
+mkdir rep_access_0     000
+
+mkdir rep_access_Ur    400
+mkdir rep_access_Ux    100
+mkdir rep_access_Uw    200
+
+mkdir rep_access_Gr    040
+mkdir rep_access_Gx    010
+mkdir rep_access_Gw    020
+
+mkdir rep_access_Or    004
+mkdir rep_access_Ox    001
+mkdir rep_access_Ow    002
+
+# all perms should be OK
+
+print "----- Test des droits avec FSAL_access -----"
+
+access R fichier_access_Ur
+access R fichier_access_Urw
+access W fichier_access_Urw
+access  R  rep_access_Ur
+access  X  rep_access_Ux
+access  W  rep_access_Uw
+
+
+print "------ Je deviens deniel --------"
+
+su deniel
+
+print "----- Test des droits avec FSAL_access -----"
+
+access R fichier_access_UrwGr
+access R fichier_access_UrwGrw
+access W fichier_access_UrwGrw
+access  R  rep_access_Gr
+access  X  rep_access_Gx
+access  W  rep_access_Gw
+
+
+print "------ Je deviens exploit --------"
+
+su exploit
+
+print "----- Test des droits avec FSAL_access -----"
+
+access R fichier_access_UrwGrwOr
+access R fichier_access_UrwGrwOrw
+access  R  rep_access_Or
+access  X  rep_access_Ox
+
+
+print "------ Je redeviens leibovic --------"
+
+su leibovic
+
+print "----- unlink -----"
+
+unlink fichier_access_0     
+unlink fichier_access_Ur    
+unlink fichier_access_Urw   
+unlink fichier_access_UrwGr 
+unlink fichier_access_UrwGrw 
+unlink fichier_access_UrwGrwOr 
+unlink fichier_access_UrwGrwOrw 
+unlink rep_access_0     
+unlink rep_access_Ur    
+unlink rep_access_Ux    
+unlink rep_access_Uw   
+unlink rep_access_Gr    
+unlink rep_access_Gx    
+unlink rep_access_Gw   
+unlink rep_access_Or    
+unlink rep_access_Ox    
+unlink rep_access_Ow   

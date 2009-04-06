@@ -1,0 +1,5 @@
+*.pyc
+*.pyo
+tqtypes.py
+tqpacker.py
+tqconstants.py

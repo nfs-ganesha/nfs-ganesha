@@ -1,0 +1,9 @@
+Test case documentation extracter
+=================================
+Each test suite and test case in nfs4st.py is documented with Python
+docstrings in the source code. With epinfo2sxw.py, this information
+can be extracted and converted into a StarOffice 6 document. The
+tables in Appendix B in the report are generated in this way. The
+program also warns about inconsistencies in test cases or test case
+documentation.
+

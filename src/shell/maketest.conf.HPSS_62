@@ -1,0 +1,2657 @@
+Test FSAL_Stat
+{
+   Product = FSAL layer.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_fsal/test_fsal_stat_hpss.gansh
+   Comment = FSAL test.
+
+        # no error occured,
+        # all the compared value are equal
+        # and directory counts are OK
+        # listed attributes count is OK
+        Success TestOk
+        {
+          STDOUT =~ /STAT_OK/
+            AND
+          STDOUT =~ /LS_OK/
+            AND
+          STDOUT =~ /STAT[^:\n]+:\s+[0-9]+\s+15$/m
+            AND
+         STDOUT =~ /LS5_1:.* 4$/m
+           AND
+           NOT
+         STDOUT =~ /LS_ERROR/
+           AND
+           NOT
+         STDOUT =~ /STAT_ERROR/
+        }
+        
+        Failure SHELL_ERROR
+        {
+          STDERR =~ /ERROR/
+        }
+        
+        # some stat are different (except atime)
+        Failure DIFFERENT_STAT
+        {
+          STDOUT =~ /STAT_ERROR/
+        }
+
+        # some stat are different
+        Failure DIFFERENT_LS
+        {
+          STDOUT =~ /LS_ERROR/
+        }
+      
+        Failure INVALID_DIRECTORY_COUNT
+        {
+          STDOUT =~ /LS5_1:\s+[0-9]+\s+(?:[^4]|4[0-9])/
+        }
+        
+        Failure INVALID_ATTRIBUTES_COUNT
+        {
+          STDOUT =~ /STAT[^:\n]+: [0-9]+ (?:[^1]|1[^5]|15[0-9])/
+        }
+
+}
+
+
+Test FSAL_Mkdir
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_fsal/test_fsal_mkdir.gansh
+   Comment = FSAL HPSS Test. Mkdir, unlink.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure ALREADY_EXIST_should_be_returned
+      {
+        STDOUT =~ /ALREADY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /ALREADY_OK/m
+      }
+ 
+      
+      Failure NOT_EMPTY_should_be_returned
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+
+
+      # verify the number of objects in each directory
+      # (including . and ..)
+      
+      Failure INVALID_DIR_COUNT
+      {
+          NOT
+          STDOUT =~ /LS1: [0-9]+ 5/
+          OR
+          NOT
+          STDOUT =~ /LS2: [0-9]+ 2/
+          OR
+          NOT
+          STDOUT =~ /LS3: [0-9]+ 2/
+          OR
+          NOT
+          STDOUT =~ /LS4: [0-9]+ 2/
+          OR
+          NOT
+          STDOUT =~ /LS5<>LS6/
+          OR
+          STDOUT =~ /LS5=LS6/
+      }
+      
+}
+
+
+
+
+
+Test FSAL_Rename
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_rename.gansh
+   Comment = FSAL HPSS Test. Rename.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure NOT_EMPTY_SHOULD_BE_RETURNED
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure RENAME_FAILED
+      {
+        STDOUT =~ /RENAME_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /RENAME_OK/m
+      }
+      
+      
+      Failure TARGET_FILE_NOT_FOUND
+      {
+        STDOUT =~ /TARGET_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /TARGET_OK/m
+      }
+
+      Failure SOURCE_FILE_STILL_EXIST
+      {
+        STDOUT =~ /STILLEXIST_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /STILLEXIST_OK/m
+      }
+
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+     
+}
+
+
+Test FSAL_Symlinks
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_fsal/test_fsal_symlinks.gansh
+   Comment = FSAL HPSS Test. Symlink/Readlink.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+
+      Failure SYMLINK_FAILED
+      {
+        STDOUT =~ /SYMLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SYMLINK_OK/m
+      }
+      
+      Failure LS_FAILED
+      {
+        STDOUT =~ /LS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /LS_OK/m
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      
+      Failure BAD_LINK_CONTENT
+      {
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+      }
+     
+     
+}
+
+
+
+Test FSAL_HandleCmp
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_handlecmp.gansh
+   Comment = FSAL HPSS hardlink and handlecmp.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+        AND
+        STDOUT =~ /_OK/
+        AND
+        NOT
+        STDOUT =~ /_ERROR/
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+      Failure CREATE_FAILED
+      {
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      Failure HARDLINK_FAILED
+      {
+        STDOUT =~ /HARDLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /HARDLINK_OK/m
+      }
+           
+}
+
+
+
+
+Test FSAL_ChownRestriction
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_chown.gansh
+   Comment = FSAL HPSS Test. Create/setattr/chown rights.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+
+      Failure CHOWN_SHOULD_FAIL
+      {
+        STDOUT =~ /SHOULDFAIL_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SHOULDFAIL_OK/m
+      }
+      
+      
+      Failure CHOWN_FAILED
+      {
+        STDOUT =~ /CHOWN_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CHOWN_OK/m   
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m   
+      }
+      
+      
+     
+}
+
+
+Test FSAL_AccessGrant
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_access.gansh
+   Comment = FSAL HPSS Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+          STDERR =~ /access returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+
+
+
+Test FSAL_AccessDeny
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_access2.gansh
+   Comment = FSAL HPSS Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned 0/m
+        OR
+        NOT
+        STDERR =~ /access returned [^0]/m
+      }
+
+      Failure ACCESS_FAILED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^3]|13[0-9])/m
+      }
+      
+     
+}
+
+Test FSAL_AltGroupsGrant
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_altgroups.gansh
+   Comment = FSAL HPSS Test. Altgroups.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHOWN_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+        STDERR =~ /access returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+Test FSAL_AltGroupsDeny
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_altgroups2.gansh
+   Comment = FSAL HPSS Test. Altgroups.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CHOWN_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^3]|13[0-9])/m
+        OR
+        NOT
+        STDERR =~ /access returned 13/m
+      }
+     
+}
+
+Test FSAL_Rights
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell  ../scripts/non_reg_fsal/test_fsal_rights.gansh
+   Comment = FSAL HPSS Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+        STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_DENIED
+      {      
+        STDOUT =~ /DENY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /DENY_OK/m   
+      }
+
+      Failure OPERATION_NOT_GRANTED
+      {      
+        STDOUT =~ /GRANT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /GRANT_OK/m   
+      }
+      
+      Failure UMASK_ERROR
+      {      
+        STDOUT =~ /UMASK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UMASK_OK/m   
+      }
+     
+}
+
+
+
+Test FSAL_RootAccess
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_fsal/test_fsal_rootaccess.gansh
+   Comment = FSAL HPSS Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+      
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m      
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_GRANTED
+      {      
+          NOT
+          STDERR =~ /ls returned 0/m
+          OR
+          NOT
+          STDERR =~ /create returned 0/m
+      }
+     
+}
+
+
+Test CacheInode_Stat
+{
+   Product = cache_inode layer.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_cache_inode/test_cache_inode_stat_hpss.gansh
+   Comment = FSAL test.
+
+        # no error occured,
+        # all the compared value are equal
+        # and directory counts are OK
+        # listed attributes count is OK
+        Success TestOk
+        {
+          STDOUT =~ /STAT_OK/
+            AND
+          STDOUT =~ /LS_OK/
+            AND
+          STDOUT =~ /STAT[^:\n]+:\s+[0-9]+\s+15$/m
+            AND
+         STDOUT =~ /LS5_1:.* 2$/m
+           AND
+           NOT
+         STDOUT =~ /LS_ERROR/
+           AND
+           NOT
+         STDOUT =~ /STAT_ERROR/
+        }
+        
+        Failure SHELL_ERROR
+        {
+          STDERR =~ /ERROR/
+        }
+        
+        # some stat are different (except atime)
+        Failure DIFFERENT_STAT
+        {
+          STDOUT =~ /STAT_ERROR/
+        }
+
+        # some stat are different
+        Failure DIFFERENT_LS
+        {
+          STDOUT =~ /LS_ERROR/
+        }
+      
+        Failure INVALID_DIRECTORY_COUNT
+        {
+          STDOUT =~ /LS5_1:\s+[0-9]+\s+(?:[^2]|2[0-9])/
+        }
+        
+        Failure INVALID_ATTRIBUTES_COUNT
+        {
+          STDOUT =~ /STAT[^:\n]+: [0-9]+ (?:[^1]|1[^5]|15[0-9])/
+        }
+
+}
+
+
+Test CacheInode_Mkdir
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_cache_inode/test_cache_inode_mkdir.gansh
+   Comment = FSAL HPSS Test. Mkdir, unlink.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure ALREADY_EXIST_should_be_returned
+      {
+        STDOUT =~ /ALREADY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /ALREADY_OK/m
+      }
+ 
+      
+      Failure NOT_EMPTY_should_be_returned
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+
+
+      # verify the number of objects in each directory
+      # (including . and ..)
+      
+      Failure INVALID_DIR_COUNT
+      {
+          NOT
+          STDOUT =~ /LS1: [0-9]+ 3/
+          OR
+          NOT
+          STDOUT =~ /LS2: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS3: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS4: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS5<>LS6/
+          OR
+          STDOUT =~ /LS5=LS6/
+      }
+      
+}
+
+
+
+
+
+Test CacheInode_Rename
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_rename.gansh
+   Comment = FSAL HPSS Test. Rename.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m
+      }
+      
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure NOT_EMPTY_SHOULD_BE_RETURNED
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure RENAME_FAILED
+      {
+        STDOUT =~ /RENAME_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /RENAME_OK/m
+      }
+      
+      
+      Failure TARGET_FILE_NOT_FOUND
+      {
+        STDOUT =~ /TARGET_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /TARGET_OK/m
+      }
+
+      Failure SOURCE_FILE_STILL_EXIST
+      {
+        STDOUT =~ /STILLEXIST_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /STILLEXIST_OK/m
+      }
+
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+     
+}
+
+
+Test CacheInode_Symlinks
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_symlinks.gansh
+   Comment = FSAL HPSS Test. Symlink/Readlink.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m
+      }
+      
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+
+      Failure SYMLINK_FAILED
+      {
+        STDOUT =~ /SYMLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SYMLINK_OK/m
+      }
+      
+      Failure LS_FAILED
+      {
+        STDOUT =~ /LS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /LS_OK/m
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      
+      Failure BAD_LINK_CONTENT
+      {
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+      }
+     
+     
+}
+
+
+
+
+Test CacheInode_ChownRestriction
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_chown.gansh
+   Comment = FSAL HPSS Test. Create/setattr/chown rights.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m
+      }
+      
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+
+      Failure CHOWN_SHOULD_FAIL
+      {
+        STDOUT =~ /SHOULDFAIL_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SHOULDFAIL_OK/m
+      }
+      
+      
+      Failure CHOWN_FAILED
+      {
+        STDOUT =~ /CHOWN_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CHOWN_OK/m   
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m   
+      }
+      
+      
+     
+}
+
+
+Test CacheInode_AccessGrant
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_access.gansh
+   Comment = FSAL HPSS Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+          STDERR =~ /access returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+
+
+
+Test CacheInode_AccessDeny
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_access2.gansh
+   Comment = FSAL HPSS Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned 0/m
+        OR
+        NOT
+        STDERR =~ /access returned [^0]/m
+      }
+
+      Failure ACCESS_FAILED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^8]|18[0-9])/m
+      }
+      
+     
+}
+
+
+Test CacheInode_AltGroupsGrant
+{
+   Product = CacheInode HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_altgroups.gansh
+   Comment = CacheInode HPSS Test. Altgroups.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHOWN_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+        STDERR =~ /access returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+Test CacheInode_AltGroupsDeny
+{
+   Product = CacheInode HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_altgroups2.gansh
+   Comment = CacheInode HPSS Test. Altgroups.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+      
+      Failure CHOWN_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^8]|18[0-9])/m
+        OR
+        NOT
+        STDERR =~ /access returned 18/m
+      }
+     
+}
+
+
+
+Test CacheInode_Rights
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_cache_inode/test_cache_inode_rights.gansh
+   Comment = FSAL HPSS Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+        STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_DENIED
+      {      
+        STDOUT =~ /DENY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /DENY_OK/m   
+      }
+
+      Failure OPERATION_NOT_GRANTED
+      {      
+        STDOUT =~ /GRANT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /GRANT_OK/m   
+      }
+      
+      Failure UMASK_ERROR
+      {      
+        STDOUT =~ /UMASK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UMASK_OK/m   
+      }
+     
+}
+
+
+
+Test CacheInode_RootAccess
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_cache_inode/test_cache_inode_rootaccess.gansh
+   Comment = FSAL HPSS Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+      }
+
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_GRANTED
+      {      
+          NOT
+          STDERR =~ /ls returned 0/m
+          OR
+          NOT
+          STDERR =~ /create returned 0/m
+      }
+     
+}
+
+
+
+
+Test NFS_Rights
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_nfs/test_nfs_rights.gansh
+   Comment = NFS HPSS Test. Access.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {      
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        STDOUT =~ /INIT_NFS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_NFS_OK/m   
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+        STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_DENIED
+      {      
+        STDOUT =~ /DENY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /DENY_OK/m   
+      }
+
+      Failure OPERATION_NOT_GRANTED
+      {      
+        STDOUT =~ /GRANT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /GRANT_OK/m   
+      }
+      
+      Failure UMASK_ERROR
+      {      
+        STDOUT =~ /UMASK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UMASK_OK/m   
+      }
+      
+      Failure UNKNOWN_ERROR_CODE
+      {
+        STDOUT =~ /UNKNOWN NFSv3 ERROR CODE/m
+      }      
+     
+}
+
+
+
+Test NFS_Symlinks
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_nfs/test_nfs_symlinks.gansh
+   Comment = NFS HPSS Test. Symlink/Readlink.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {      
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        STDOUT =~ /INIT_NFS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_NFS_OK/m   
+      }
+      
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+
+      Failure SYMLINK_FAILED
+      {
+        STDOUT =~ /SYMLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SYMLINK_OK/m
+      }
+      
+      Failure LS_FAILED
+      {
+        STDOUT =~ /LS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /LS_OK/m
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      Failure UNKNOWN_ERROR_CODE
+      {
+        STDOUT =~ /UNKNOWN NFSv3 ERROR CODE/m
+      }      
+      
+      Failure BAD_LINK_CONTENT
+      {
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+symlinks\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+      }
+     
+}
+
+
+
+Test NFS_ChownRestriction
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_nfs/test_nfs_chown.gansh
+   Comment = NFS HPSS Test. Create/setattr/chown rights.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {      
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        STDOUT =~ /INIT_NFS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_NFS_OK/m   
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+
+      Failure CHOWN_SHOULD_FAIL
+      {
+        STDOUT =~ /SHOULDFAIL_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SHOULDFAIL_OK/m
+      }
+      
+      
+      Failure CHOWN_FAILED
+      {
+        STDOUT =~ /CHOWN_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CHOWN_OK/m   
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m   
+      }
+
+      Failure UNKNOWN_ERROR_CODE
+      {
+        STDOUT =~ /UNKNOWN NFSv3 ERROR CODE/m
+      }      
+           
+}
+
+
+Test NFS_Rename
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell ../scripts/non_reg_nfs/test_nfs_rename.gansh
+   Comment = NFS HPSS Test. Rename.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {      
+        STDOUT =~ /INIT_FSAL_ERROR/m
+        OR
+        STDOUT =~ /INIT_CACHE_ERROR/m
+        OR
+        STDOUT =~ /INIT_NFS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_FSAL_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_CACHE_OK/m   
+        OR
+        NOT
+        STDOUT =~ /INIT_NFS_OK/m   
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+      Failure CREATE_FAILED
+      {
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+
+      Failure EEXIST_SHOULD_BE_RETURNED
+      {
+        STDOUT =~ /ERR_EXIST_ERROR/m
+        OR
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /ERR_EXIST_OK/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure RENAME_FAILED
+      {
+        STDOUT =~ /RENAME_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /RENAME_OK/m
+      }
+      
+      
+      Failure TARGET_FILE_NOT_FOUND
+      {
+        STDOUT =~ /TARGET_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /TARGET_OK/m
+      }
+
+      Failure SOURCE_FILE_STILL_EXIST
+      {
+        STDOUT =~ /STILLEXIST_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /STILLEXIST_OK/m
+      }
+
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+           
+}
+
+
+
+Test NFS_RootAccess
+{
+   Product = FSAL HPSS.
+   Command = ../../bin/`archi`/hpss.ganeshell -v ../scripts/non_reg_nfs/test_nfs_rootaccess.gansh
+   Comment = NFS HPSS Test. Access/Creadentials.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+      
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        STDERR =~ /init_cache returned [^0]/m
+        OR
+        STDERR =~ /nfs_init returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+        OR
+        NOT
+        STDERR =~ /init_cache returned 0/m
+        OR
+        NOT
+        STDERR =~ /nfs_init returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {      
+        STDERR =~ /setattr returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /setattr returned 0/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /mkdir returned 0/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+         OR
+         NOT
+         STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_GRANTED
+      {      
+          STDERR =~ /create returned [^0]/m
+          OR
+          STDERR =~ /ls returned [^0]/m
+          OR
+          NOT
+          STDERR =~ /ls returned 0/m
+          OR
+          NOT
+          STDERR =~ /create returned 0/m
+      }
+     
+}

@@ -1,0 +1,13 @@
+This files list the people, outside of the original development team that help in the project.
+Their contributions were very helpful, so I guess they should have their names listed somewhere.
+
+Thanks to:
+   Contributors that are not colleagues or students
+	- Tom "spot" Callaway <tcallawa@redhat.com>, for his experience and wiseness in RPM packaging. 
+
+   Students that came to make an intership with us and worked on the project
+	- Mickael Guerin who wrote the first release of the FSAL_POSIX
+	- Laureline Provost who wrote a PERL library that had been very useful to quickly write benchmarks 
+          and non-regression test
+	- Cedric Cabessa who worked on the SNMP admin module
+	- Adrien Grellier who provided us with the first TI-RPC support in the product

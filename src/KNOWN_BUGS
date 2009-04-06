@@ -1,0 +1,10 @@
+This file references the known bugs (some of them are under investigation)
+
+  - All operations made via FSAL_PROXY are done as root when RPCSEC_GSS is used to contact the remote server
+
+------------------
+Fixed bug 
+
+  - A deadlock may occur inbetween workers and tcp dispatchers in case of important traffic (fixed in 0.99.46)
+
+ 
