@@ -343,7 +343,7 @@ int main( int argc, char * argv[] )
           if( FSAL_IS_ERROR( fsal_status ) )
             {
               /* Failed init */
-              fprintf(  stderr, "FSAL library could not be inited, major=%d minor=%d\n", fsal_status.major, fsal_status.minor ) ;
+              fprintf(  stderr, "FSAL library could not be initialized, major=%d minor=%d\n", fsal_status.major, fsal_status.minor ) ;
               exit( 1 ) ;
             }
          

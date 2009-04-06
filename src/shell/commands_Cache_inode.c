@@ -254,7 +254,7 @@ static int InitThread( cmdCacheInode_thr_info_t  * thr_info )
     
   if ( FSAL_IS_ERROR( st ) )
   {    
-    printf( "%p:commands_Cache_inode: Error %d initing contexte for thread (FSAL_InitThreadCred)\n",
+    printf( "%p:commands_Cache_inode: Error %d initializing context for thread (FSAL_InitThreadCred)\n",
         (caddr_t)pthread_self(),st.major);
     return 1;
   }

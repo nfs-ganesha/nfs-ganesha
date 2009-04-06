@@ -105,7 +105,10 @@ generic_item * config_CreateBlock(char * blockname, list_items * list)
     strncpy( new->item.block.block_name, blockname, MAXSTRLEN );
             
     if ( list )
+    {
         new->item.block.block_content = *list;
+	free(list);
+    }
     else
         new->item.block.block_content = NULL;
     

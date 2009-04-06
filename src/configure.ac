@@ -6,7 +6,7 @@ AC_INIT( [nfs-ganesha], [0.99.52], [philippe.deniel@cea.fr,thomas.leibovici@cea.
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5 (prod). Locks(rc). TI-RPC (prod), IPv6 (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5 (prod). Locks(rc). TI-RPC (prod), IPv6 (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -270,7 +270,7 @@ fi
 
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -280,6 +280,7 @@ AM_CONDITIONAL(USE_FSAL_POSIX,   test "$FSAL" = "POSIX")
 AM_CONDITIONAL(USE_FSAL_PROXY,   test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,    test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,    test "$FSAL" = "FUSE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 
 # MFSL switch argument (default is NULL )
@@ -327,7 +328,7 @@ AC_DEFINE([_NO_MOUNT_LIST], 1, [Don't use MOUNT PROTOCOL's client list])
 # HOOK: we escape the '$' sign in FSAL_LIB, so that '$(top_builddir)' is kept uninterpreted until compilation time
 
 # POSIX must be the last of the list (extraneous installed file in posixdb)
-FS_ALL_LIST="PROXY SNMP FUSE POSIX"
+FS_ALL_LIST="PROXY SNMP FUSE POSIX LUSTRE"
 
 case $FSAL in
 	HPSS)
@@ -335,7 +336,7 @@ case $FSAL in
 		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
                	FS_NAME="hpss"
-		FS_ALL_LIST="HPSS PROXY SNMP FUSE POSIX"
+		FS_ALL_LIST="HPSS PROXY SNMP FUSE POSIX LUSTRE"
 
 		case "$HPSS" in
 			"5.1")
@@ -386,6 +387,14 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_FUSELIKE/libfsalfuse.la"
 		FS_NAME="fuse"
 		;;
+	LUSTRE)
+		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystems])
+		FSAL_CFLAGS=
+                FSAL_LDFLAGS="-llustreapi"
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+		FS_NAME="lustre"
+		;;
+
 	POSIX)
 
 		case "$DBTYPE" in
@@ -509,6 +518,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_PROXY/Makefile
                  include/FSAL/FSAL_SNMP/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
+                 include/FSAL/FSAL_LUSTRE/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
@@ -544,6 +554,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_PROXY/handle_mapping/Makefile
 		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
+		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile                 

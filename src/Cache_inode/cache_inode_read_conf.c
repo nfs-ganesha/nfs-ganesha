@@ -361,9 +361,9 @@ cache_inode_status_t cache_inode_read_conf_client_parameter( config_file_t in_co
 
 /**
  *
- * cache_inode_read_conf_gc_policy: read the garbagge collection policy in configuration file.
+ * cache_inode_read_conf_gc_policy: read the garbage collection policy in configuration file.
  * 
- * Reads the garbagge collection policy in configuration file.
+ * Reads the garbage collection policy in configuration file.
  * 
  * @param in_config [IN] configuration file handle
  * @param pparam [OUT] read parameters
@@ -456,9 +456,9 @@ cache_inode_status_t cache_inode_read_conf_gc_policy( config_file_t in_config,
 
 /**
  *
- * cache_inode_print_conf_gc_policy: prints the garbagge collection policy. 
+ * cache_inode_print_conf_gc_policy: prints the garbage collection policy. 
  * 
- * Prints the garbagge collection policy in configuration file.
+ * Prints the garbage collection policy in configuration file.
  * 
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
@@ -504,9 +504,9 @@ void cache_inode_print_conf_client_parameter( FILE * output,
 
 /**
  *
- * cache_inode_print_gc_pol: prints the garbagge collection policy.
+ * cache_inode_print_gc_pol: prints the garbage collection policy.
  * 
- * Prints the garbagge collection policy.
+ * Prints the garbage collection policy.
  * 
  * @param output [IN] a descriptor to the IO for printing the data.
  * @param param [IN] structure to be printed.
@@ -516,10 +516,10 @@ void cache_inode_print_conf_client_parameter( FILE * output,
  */
 void cache_inode_print_conf_gc_policy( FILE * output,  cache_inode_gc_policy_t  gcpolicy )
 {
-  fprintf( output, "Garbagge Policy: File_Lifetime       = %d\n", gcpolicy.file_expiration_delay ) ;
-  fprintf( output, "Garbagge Policy: Directory_Lifetime  = %d\n", gcpolicy.directory_expiration_delay ) ;
-  fprintf( output, "Garbagge Policy: NbEntries_HighWater = %d\n", gcpolicy.hwmark_nb_entries ) ;
-  fprintf( output, "Garbagge Policy: NbEntries_LowWater  = %d\n", gcpolicy.lwmark_nb_entries ) ;
-  fprintf( output, "Garbagge Policy: Nb_Call_Before_GC   = %d\n", gcpolicy.nb_call_before_gc ) ;
-  fprintf( output, "Garbagge Policy: Runtime_Interval    = %d\n", gcpolicy.run_interval ) ;
+  fprintf( output, "Garbage Policy: File_Lifetime       = %d\n", gcpolicy.file_expiration_delay ) ;
+  fprintf( output, "Garbage Policy: Directory_Lifetime  = %d\n", gcpolicy.directory_expiration_delay ) ;
+  fprintf( output, "Garbage Policy: NbEntries_HighWater = %d\n", gcpolicy.hwmark_nb_entries ) ;
+  fprintf( output, "Garbage Policy: NbEntries_LowWater  = %d\n", gcpolicy.lwmark_nb_entries ) ;
+  fprintf( output, "Garbage Policy: Nb_Call_Before_GC   = %d\n", gcpolicy.nb_call_before_gc ) ;
+  fprintf( output, "Garbage Policy: Runtime_Interval    = %d\n", gcpolicy.run_interval ) ;
 } /* cache_inode_print_gc_pol */

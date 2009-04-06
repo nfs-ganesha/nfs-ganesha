@@ -265,14 +265,14 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
   cache_content_status_t    cache_content_status ;
   int                       to_remove_numlinks = 0 ;
   
-  /* pentry is a directory */
-  if( use_mutex )
-    P_w( &pentry->lock ) ;
-
   /* stats */
   pclient->stat.nb_call_total += 1 ;
   pclient->stat.func_stats.nb_call[CACHE_INODE_REMOVE] += 1 ;
 
+  /* pentry is a directory */
+  if( use_mutex )
+    P_w( &pentry->lock ) ;
+ 
   /* Looks up for the entry to remove */
   if( ( to_remove_entry = cache_inode_lookup_sw( pentry, 
                                                  pnode_name, 
@@ -293,11 +293,18 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
       return *pstatus ; 
     } 
 
+   /* lock it */
+   if( use_mutex )
+     P_w( &to_remove_entry->lock ) ;
+
   
   if( pentry->internal_md.type != DIR_BEGINNING && pentry->internal_md.type != DIR_CONTINUE )
     {
       if( use_mutex )
+      {
+        V_w( &to_remove_entry->lock ) ;
         V_w( &pentry->lock ) ;
+      }
       
       *pstatus = CACHE_INODE_BAD_TYPE   ;
       return *pstatus;
@@ -307,7 +314,10 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
   if( to_remove_entry->internal_md.type == DIR_CONTINUE )
     {
       if( use_mutex )
+      {
+	V_w( &to_remove_entry->lock ) ;
         V_w( &pentry->lock ) ;
+      }
       
       *pstatus = CACHE_INODE_DIR_NOT_EMPTY ;
       return *pstatus;
@@ -320,7 +330,10 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
       if( cache_inode_is_dir_empty( to_remove_entry ) != CACHE_INODE_SUCCESS )
         { 
           if( use_mutex )
+      	   {
+	     V_w( &to_remove_entry->lock ) ;
              V_w( &pentry->lock ) ;
+	   }
 
           *pstatus = CACHE_INODE_DIR_NOT_EMPTY ;
           return *pstatus ;
@@ -388,22 +401,24 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
 
           *pstatus = cache_inode_error_convert( fsal_status ) ;
           if( use_mutex )
+      	   {
+	    V_w( &to_remove_entry->lock ) ;
             V_w( &pentry->lock ) ;
+           }
           return *pstatus ;
         }
     }
   else
     {
       if( use_mutex )
-        V_w( &pentry->lock ) ;
+      	{
+	  V_w( &to_remove_entry->lock ) ;
+          V_w( &pentry->lock ) ;
+	}
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1 ;
       return status ;
     }
 
-  /* lock the entry to be removed, because we are going to browse its parents list */
-  if( use_mutex )
-    P_w( &to_remove_entry->lock ) ;
-    
   /* Remove the entry from parent dir_entries array */
   cache_inode_remove_cached_dirent( pentry, 
                                     pnode_name, 
@@ -465,7 +480,10 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
             default:
               /* Other objects should not be hard linked */
               if( use_mutex )
-                V_w( &to_remove_entry->lock ) ;
+		{
+                  V_w( &to_remove_entry->lock ) ;
+		  V_w( &pentry->lock );
+		}
               *pstatus = CACHE_INODE_BAD_TYPE ;
               return *pstatus ;
               break ;

@@ -78,9 +78,9 @@
  * \author  $Author: deniel $
  * \date    $Date: 2005/12/20 10:51:49 $
  * \version $Revision: 1.21 $
- * \brief   Do garbagge collection on a cache inode client. 
+ * \brief   Do garbage collection on a cache inode client. 
  *
- * cache_inode_gc.c: do garbagge collection on a cache inode client. 
+ * cache_inode_gc.c: do garbage collection on a cache inode client. 
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -106,12 +106,12 @@
 #include <time.h>
 #include <pthread.h>
 
-static cache_inode_gc_policy_t cache_inode_gc_policy ; /*<< the policy to be used by the garbagge collector */
+static cache_inode_gc_policy_t cache_inode_gc_policy ; /*<< the policy to be used by the garbage collector */
 
 /**
  * @defgroup Cache_inode_gc_internal Cache Inode GC internal functions.
  *
- * These functions are used for Garbagge collector internal management. 
+ * These functions are used for Garbage collector internal management. 
  *
  * @{
  */
@@ -328,7 +328,7 @@ static int cache_inode_gc_invalidate_related_dirent(  cache_entry_t * pentry, ca
 	  else
 	   {
               parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->subdirpos].active = INVALID ;
-              /* Garbagge invalidates the effet of the readdir previously made */
+              /* Garbage invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO ;
               parent_iter->parent->object.dir_begin.nbactive -= 1 ;
 	   }
@@ -376,7 +376,7 @@ int cache_inode_gc_suppress_file( cache_entry_t * pentry, cache_inode_param_gc_t
   P_w( &pentry->lock ) ;
 
   DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, 
-                     "Entry %p (REGULAR_FILE/SYMBOLIC_LINK) will be garbagged" ) ;
+                     "Entry %p (REGULAR_FILE/SYMBOLIC_LINK) will be garbaged" ) ;
 
   /* Set the entry as invalid */
   pentry->internal_md.valid_state = INVALID ;
@@ -428,14 +428,14 @@ int cache_inode_gc_suppress_directory( cache_entry_t * pentry,  cache_inode_para
       V_w( &pentry->lock ) ;
 
       DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, 
-                         "Entry %p (DIR_BEGINNING) is not empty. The dir_chain will not be garbagged now", pentry ) ;
+                         "Entry %p (DIR_BEGINNING) is not empty. The dir_chain will not be garbaged now", pentry ) ;
       
       return LRU_LIST_DO_NOT_SET_INVALID ; /* entry is not to be suppressed */
     }
 
   /* If we reached this point, the directory contains no active entry, it should be removed from the cache */
   DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, 
-                     "Entry %p (DIR_BEGINNING) and its associated dir_chain will be garbagged", pentry ) ;
+                     "Entry %p (DIR_BEGINNING) and its associated dir_chain will be garbaged", pentry ) ;
   
 #ifdef _DEBUG_CACHE_INODE_GC
   printf( "****> cache_inode_gc_suppress_directory on %p\n", pentry ) ;
@@ -495,6 +495,7 @@ int cache_inode_gc_function( LRU_entry_t * plru_entry, void * addparam )
   time_t                   current_time = time( NULL ) ;
   cache_entry_t          * pentry       = NULL ;
   cache_inode_param_gc_t * pgcparam     = (cache_inode_param_gc_t *)addparam ;
+  cache_inode_status_t     status;
   
   time_t allocated;
   
@@ -513,7 +514,7 @@ int cache_inode_gc_function( LRU_entry_t * plru_entry, void * addparam )
   if( pgcparam->nb_to_be_purged != 0 )
     {
       DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, 
-                         "We still need %d entries to be garbagged", pgcparam->nb_to_be_purged  ) ;
+                         "We still need %d entries to be garbaged", pgcparam->nb_to_be_purged  ) ;
       
       /* Should we get ride of this entry ? */
       if( ( pentry->internal_md.type == DIR_BEGINNING ) &&
@@ -523,11 +524,11 @@ int cache_inode_gc_function( LRU_entry_t * plru_entry, void * addparam )
             {
               /* Entry should be tagged invalid */
               DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_DEBUG, 
-                                 "----->>>>>>>> DIR GC : Garbagge collection on dir entry %p", pentry ) ;
+                                 "----->>>>>>>> DIR GC : Garbage collection on dir entry %p", pentry ) ;
               return cache_inode_gc_suppress_directory( pentry, pgcparam ) ;
             }
           else
-            DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, "No garbagge on dir entry %p used:%d allocated:%d %d", 
+            DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, "No garbage on dir entry %p used:%d allocated:%d %d", 
                                pentry,  current_time - entry_time, current_time - allocated, cache_inode_gc_policy.directory_expiration_delay ) ;
         }
       else if( ( pentry->internal_md.type == REGULAR_FILE ||  pentry->internal_md.type == SYMBOLIC_LINK ) &&
@@ -537,12 +538,12 @@ int cache_inode_gc_function( LRU_entry_t * plru_entry, void * addparam )
             {
               /* Entry should be suppress and tagged invalid */
               DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_DEBUG, 
-                                 "----->>>>>> REGULAR/SYMLINK GC : Garbagge collection on regular/symlink entry %p", 
+                                 "----->>>>>> REGULAR/SYMLINK GC : Garbage collection on regular/symlink entry %p", 
                                  pentry ) ;
               return cache_inode_gc_suppress_file( pentry, pgcparam ) ;
             }
           else
-            DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, "No garbagge on regular/symlink entry %p used:%d allocated:%d %d", 
+            DisplayLogJdLevel( pgcparam->pclient->log_outputs, NIV_FULL_DEBUG, "No garbage on regular/symlink entry %p used:%d allocated:%d %d", 
                                pentry, current_time - entry_time, current_time - allocated, cache_inode_gc_policy.file_expiration_delay ) ;
         }
     }
@@ -563,7 +564,7 @@ int cache_inode_gc_function( LRU_entry_t * plru_entry, void * addparam )
 
 /**
  *
- * cache_inode_set_gc_policy: Set the cache_inode garbagge collecting policy. 
+ * cache_inode_set_gc_policy: Set the cache_inode garbage collecting policy. 
  *
  * @param policy [IN] policy to be set.
  *
@@ -578,7 +579,7 @@ void cache_inode_set_gc_policy( cache_inode_gc_policy_t policy )
 
 /**
  *
- * cache_inode_get_gc_policy: Set the cache_inode garbagge collecting policy. 
+ * cache_inode_get_gc_policy: Set the cache_inode garbage collecting policy. 
  *
  * @return the current policy.
  *
@@ -629,21 +630,21 @@ cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
   pclient->call_since_last_gc = 0 ;
   pclient->time_of_last_gc = time( NULL ) ;
 
-  DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Checking if garbagge collection is needed" ) ;
+  DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Checking if garbage collection is needed" ) ;
                      
-  /* 1st ; we get the hash table size to see if garbagge is required */
+  /* 1st ; we get the hash table size to see if garbage is required */
   hash_size = HashTable_GetSize( ht ) ;
 
 
   if( hash_size > cache_inode_gc_policy.hwmark_nb_entries )
     {
       /*
-       * Garbagge collection is made in several steps
-       *    1- Set the oldest entry as invalid and garbagge their contents
+       * Garbage collection is made in several steps
+       *    1- Set the oldest entry as invalid and garbage their contents
        *    2- Free the invalid entry in the LRU
        *         
-       *    Behaviour: - A DIR_BEGINNING is garbagged with all its DIR_CONTINUE associated
-       *               - A directory is garbagged when all its entries are garbagged
+       *    Behaviour: - A DIR_BEGINNING is garbaged with all its DIR_CONTINUE associated
+       *               - A directory is garbaged when all its entries are garbaged
        *
        */
       
@@ -651,7 +652,7 @@ cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
       gcparam.pclient         = pclient ;
       gcparam.nb_to_be_purged = hash_size - cache_inode_gc_policy.lwmark_nb_entries ; /* try to purge until lw mark is reached */
       
-      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Garbagge collection started (to be purged=%u, LRU size=%u)",
+      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Garbage collection started (to be purged=%u, LRU size=%u)",
               pclient->lru_gc->nb_entry, gcparam.nb_to_be_purged ) ;
      
       invalid_before_gc = pclient->lru_gc->nb_invalid ; 
@@ -670,13 +671,13 @@ cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
           return *pstatus ;
         }
 
-      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Garbagge collection finished, %u entries removed", invalid_after_gc - invalid_before_gc ) ;
+      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "Garbage collection finished, %u entries removed", invalid_after_gc - invalid_before_gc ) ;
 
       *pstatus = CACHE_INODE_SUCCESS ;
     }
   else
     {
-      /* no garbagge is required, just gets ride of the invalid in tyhe LRU list */
+      /* no garbage is required, just gets ride of the invalid in tyhe LRU list */
       /* Removes the LRU entries and put them back to the pool */
       if( LRU_gc_invalid( pclient->lru_gc, NULL ) != LRU_LIST_SUCCESS )
         {
@@ -689,5 +690,78 @@ cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
 
   return *pstatus ;
 } /* cache_inode_gc */
+
+
+int cache_inode_gc_fd_func( LRU_entry_t * plru_entry, void * addparam )
+{
+  time_t                   entry_time   = 0  ;
+  time_t                   current_time = time( NULL ) ;
+  cache_entry_t          * pentry       = NULL ;
+  cache_inode_param_gc_t * pgcparam     = (cache_inode_param_gc_t *)addparam ;
+  cache_inode_status_t     status;
+  
+  time_t allocated;
+  
+  /* Get the entry */
+  pentry = (cache_entry_t *)(plru_entry->buffdata.pdata) ;
+
+  /* check if a file descriptor is opened on the file for a long time */
+
+  if ( (pentry->internal_md.type == REGULAR_FILE)
+        && ( pentry->object.file.open_fd.fileno != -1 )
+        && (  time( NULL) - pentry->object.file.open_fd.last_op > pgcparam->pclient->retention ) )
+  {
+        P_w( &pentry->lock );
+        cache_inode_close( pentry, pgcparam->pclient, &status);
+        V_w( &pentry->lock );
+
+         pgcparam->nb_to_be_purged --;
+  }
+
+  /* return true for continuing */
+  if ( pgcparam->nb_to_be_purged == 0 )
+       return FALSE;
+  else
+       return TRUE;
+}
+
+/**
+ * Garbagge opened file descriptors
+ */
+cache_inode_status_t cache_inode_gc_fd( cache_inode_client_t     * pclient,
+                                        cache_inode_status_t     * pstatus )
+{
+  cache_inode_param_gc_t gcparam ;
+ 
+  /* Set the return default to CACHE_INODE_SUCCESS */
+  *pstatus = CACHE_INODE_SUCCESS ;
+
+  /* nothing to do if there is no fd cache */
+  if ( !pclient->use_cache )
+        return *pstatus;
+
+  /* do not garbage FD too frequently (wait at least for fd retention) */
+  if( time( NULL ) - pclient->time_of_last_gc_fd < pclient->retention )
+    return *pstatus ;
+
+
+  gcparam.ht              = NULL; /* not used */
+  gcparam.pclient         = pclient ;
+  gcparam.nb_to_be_purged = pclient->max_fd_per_thread;
+      
+  if( LRU_apply_function( pclient->lru_gc, cache_inode_gc_fd_func, (void *)&gcparam ) != LRU_LIST_SUCCESS )
+    {
+       *pstatus = CACHE_INODE_LRU_ERROR ;
+       return *pstatus ;
+    }
+
+  DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "File descriptor GC: %u files closed", pclient->max_fd_per_thread - gcparam.nb_to_be_purged ) ;
+  pclient->time_of_last_gc_fd = time(NULL);
+
+  *pstatus = CACHE_INODE_SUCCESS ;
+  return *pstatus ;
+}
+ 
+
 
 /* @} */

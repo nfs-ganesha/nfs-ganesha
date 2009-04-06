@@ -416,6 +416,7 @@ int nfs_RetryableError( cache_inode_status_t cache_status )
        case CACHE_INODE_INCONSISTENT_ENTRY   :
        case CACHE_INODE_HASH_TABLE_ERROR     :
        case CACHE_INODE_INSERT_ERROR         :
+       case CACHE_INODE_FSAL_DELAY            :
 	   /* Internal error, should be dropped and retryed */
 	   return TRUE ;
 	   break ;
@@ -436,6 +437,7 @@ int nfs_RetryableError( cache_inode_status_t cache_status )
        case CACHE_INODE_FSAL_ESTALE           :
        case CACHE_INODE_FSAL_ERR_SEC          :
        case CACHE_INODE_QUOTA_EXCEEDED        :
+       case CACHE_INODE_NOT_SUPPORTED         :
 	   /* Non retryable error, return error to client */
 	   return FALSE ;	
 	   break ;

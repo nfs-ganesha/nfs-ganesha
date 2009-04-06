@@ -180,7 +180,7 @@ void * nfs_file_content_flush_thread( void * flush_data_arg )
   if ( FSAL_IS_ERROR( FSAL_InitClientContext( &(fsal_context[p_flush_data->thread_index])  )) )
     {
       /* Failed init */
-      DisplayLog( "NFS DATACACHE FLUSHER THREAD #%u : Error initing thread's credential", p_flush_data->thread_index ) ;
+      DisplayLog( "NFS DATACACHE FLUSHER THREAD #%u : Error initializing thread's credential", p_flush_data->thread_index ) ;
       exit( 1 ) ;
     }
     

@@ -551,7 +551,7 @@ static void Insert_FreeBlock(BuddyThreadContext_t  * context, BuddyBlock_t * p_b
     BuddyPrintLog( context->Config.buddy_error_file, "/!\\ ***** Insert_FreeBlock: CRITICAL WARNING : block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n", p_buddyblock, p_buddyblock->Header.MagicNumber, MAGIC_NUMBER_FREE );
   
   /* Is there already a free block in the list ? */
-  if ( next = context->MemDesc[p_buddyblock->Header.StdInfo.k_size] )
+  if ( (next = context->MemDesc[p_buddyblock->Header.StdInfo.k_size]) != NULL )
   {
     
     /* check current magic number */
