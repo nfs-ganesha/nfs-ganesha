@@ -236,11 +236,11 @@ typedef struct fsal_dir__{
     
 
 typedef struct fsal_file__{
-  FILE              * p_file;
+  int 		    fd;
   int               ro; /* read only file ? */
 } fsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
+#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
 
 #endif /* _FSAL_TYPES__SPECIFIC_H */

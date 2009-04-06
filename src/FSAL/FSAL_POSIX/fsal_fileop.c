@@ -128,7 +128,7 @@ fsal_status_t FSAL_open(
 
   fsal_path_t         fsalpath;
   struct stat         buffstat;
-  char                posix_flags[4]; /* stores r, r+, w, w+, a, or a+ */
+  int                 posix_flags = 0;
   
   /* sanity checks.
    * note : file_attributes is optional.
@@ -144,7 +144,7 @@ fsal_status_t FSAL_open(
   
   
   /* convert fsal open flags to posix open flags */
-  rc = fsal2posix_openflags( openflags, posix_flags );
+  rc = fsal2posix_openflags( openflags, &posix_flags );
   
   /* flags conflicts. */
   if (rc) {
@@ -154,11 +154,11 @@ fsal_status_t FSAL_open(
   }
   
   TakeTokenFSCall();
-  p_file_descriptor->p_file = fopen( fsalpath.path, posix_flags );
+  p_file_descriptor->fd = open( fsalpath.path, posix_flags );
   errsv = errno;
   ReleaseTokenFSCall();
   
-  if ( !(p_file_descriptor->p_file) )
+  if ( p_file_descriptor->fd < 0 )
      Return( posix2fsal_error(errsv), errsv, INDEX_FSAL_open );
   
   /* set the read-only flag of the file descriptor */
@@ -220,8 +220,9 @@ fsal_status_t FSAL_read(
 ){
 
   size_t i_size;  
-  size_t nb_read;
+  ssize_t nb_read;
   int rc, errsv;
+  int pcall = FALSE;
   
   /* sanity checks. */
   
@@ -242,27 +243,27 @@ fsal_status_t FSAL_read(
       case FSAL_SEEK_CUR:
         /* set position plus offset */
         
+        pcall = FALSE;
         TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_CUR);
+        rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
         errsv = errno;          
         ReleaseTokenFSCall();
         break;
 
       case FSAL_SEEK_SET :
-        /* set absolute position to offset */
-        
-        TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_SET);
-        errsv = errno;          
-        ReleaseTokenFSCall();
-        
-        break;
+        /* use absolute position to offset:
+         * in this case, use pread call
+         * to avoid seek() call.
+         */
+        pcall = TRUE;
+        rc = 0;
+        break; 
 
       case FSAL_SEEK_END :
         /* set end of file plus offset */
-        
+        pcall = FALSE;
         TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_END);
+        rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
         errsv = errno;          
         ReleaseTokenFSCall();
         
@@ -289,19 +290,18 @@ fsal_status_t FSAL_read(
   
   TakeTokenFSCall();
   
-  nb_read = fread( buffer, 1, i_size, p_file_descriptor->p_file );
-  
+  if ( pcall )
+        nb_read = pread( p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset );
+  else
+        nb_read = read( p_file_descriptor->fd, buffer, i_size );
+
+  errsv = errno; 
   ReleaseTokenFSCall();
   
-  /** @todo: manage ssize_t to fsal_size_t convertion */
-
-  if ( feof(p_file_descriptor->p_file) )
-    *p_end_of_file = 1; 
-
-  if ( nb_read == 0 && ferror(p_file_descriptor->p_file) )
-  {
-    Return( posix2fsal_error(EBADF), EBADF, INDEX_FSAL_read );
-  }
+  if ( nb_read == -1 )
+      Return( posix2fsal_error( errsv ), errsv, INDEX_FSAL_read );
+  else if ( nb_read == 0 )
+      *p_end_of_file = 1;
 
   *p_read_amount = nb_read;
   
@@ -343,9 +343,10 @@ fsal_status_t FSAL_write(
     fsal_size_t        * p_write_amount         /* OUT */
 ){
 
-  size_t nb_written;  
+  ssize_t nb_written;  
   size_t i_size;
   int rc, errsv;
+  int pcall = FALSE;
 
   /* sanity checks. */
   if ( !p_file_descriptor || !buffer || !p_write_amount )
@@ -367,28 +368,29 @@ fsal_status_t FSAL_write(
     {
       case FSAL_SEEK_CUR:
         /* set position plus offset */
+        pcall = FALSE;
         
         TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_CUR);
+        rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_CUR);
         errsv = errno;          
         ReleaseTokenFSCall();
         break;
 
       case FSAL_SEEK_SET :
-        /* set absolute position to offset */
-        
-        TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_SET);
-        errsv = errno;          
-        ReleaseTokenFSCall();
-        
-        break;
+        /* use absolute position to offset:
+         * in this case, use pwrite call
+         * to avoid seek() call.
+         */
+        pcall = TRUE;
+        rc = 0;
+        break; 
 
       case FSAL_SEEK_END :
         /* set end of file plus offset */
+        pcall = FALSE;
         
         TakeTokenFSCall();
-        rc = fseek(p_file_descriptor->p_file, p_seek_descriptor->offset, SEEK_END);
+        rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
         errsv = errno;          
         ReleaseTokenFSCall();
         
@@ -423,20 +425,20 @@ fsal_status_t FSAL_write(
   
   TakeTokenFSCall();
   
-  nb_written = fwrite( buffer, 1, i_size, p_file_descriptor->p_file );
+  if ( pcall )
+          nb_written = pwrite( p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
+  else
+          nb_written = write( p_file_descriptor->fd, buffer, i_size );
 
-  /* With no flush, uncommited write may occur on 64 bits platforms */
-  (void)fflush( p_file_descriptor->p_file ) ;
-  
+  errsv = errno; 
   ReleaseTokenFSCall();
   
-  /** @todo: manage ssize_t to fsal_size_t convertion */
+  if ( nb_written <= 0 )
+    {
+        DisplayLogJdLevel( fsal_log, NIV_DEBUG, "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.", i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv );
+        Return( posix2fsal_error( errsv ), errsv, INDEX_FSAL_write );
+    }
 
-  if ( nb_written <= 0 && ferror( p_file_descriptor->p_file ) )
-  {
-    Return( posix2fsal_error(EBADF), EBADF, INDEX_FSAL_write );
-  }
-  
   /* set output vars */
  
   *p_write_amount = (fsal_size_t)  nb_written;
@@ -473,7 +475,7 @@ fsal_status_t FSAL_close(
   
   TakeTokenFSCall();
   
-  rc = fclose( p_file_descriptor->p_file );
+  rc = close( p_file_descriptor->fd );
   errsv = errno;
   
   ReleaseTokenFSCall();
