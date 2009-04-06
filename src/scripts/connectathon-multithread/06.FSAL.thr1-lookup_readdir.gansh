@@ -1,0 +1,95 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+barrier
+
+cd $TEST_DIR
+
+create FICHIER_0 666
+create FICHIER_1 666
+#create FICHIER_2 666
+#create FICHIER_3 666
+#create FICHIER_4 666
+#create FICHIER_5 666
+
+barrier
+
+# content of the current directory (absolute path)
+set DIR_CONTENT `ls .`
+print "> There should be 8 dir_entries: " `chomp \`wc $DIR_CONTENT\``
+
+# looking for .
+set DOT `ls -d .`
+print "> There should be 1 dot entry: " `chomp \`wc $DOT\``
+
+# looking for ..
+set DOTDOT `ls -d ..`
+print "> There should be 1 dotdot entry: " `chomp \`wc $DOTDOT\``
+
+
+# clean vars for the next test
+unset DOT
+unset DOTDOT
+unset DIR_CONTENT
+
+# content of the current directory (absolute path)
+set DIR_CONTENT `ls -l .`
+print "> There should be 8 dir_entries: " `chomp \`wc $DIR_CONTENT\``
+
+# looking for .
+set DOT `ls -ld .`
+print "> There should be 1 dot entry: " `chomp \`wc $DOT\``
+
+# looking for ..
+set DOTDOT `ls -ld ..`
+print "> There should be 1 dotdot entry: " `chomp \`wc $DOTDOT\``
+
+# clean vars for the next test
+unset DOT
+unset DOTDOT
+unset DIR_CONTENT
+
+# content of the current directory (absolute path)
+set DIR_CONTENT `ls $TEST_DIR`
+print "> There should be 8 dir_entries: " `chomp \`wc $DIR_CONTENT\``
+unset DIR_CONTENT
+
+# content of the current directory (absolute path)
+set DIR_CONTENT `ls -l $TEST_DIR`
+print "> There should be 8 dir_entries: " `chomp \`wc $DIR_CONTENT\``
+unset DIR_CONTENT
+
+
+unlink FICHIER_0
+unlink FICHIER_1
+#unlink FICHIER_2
+#unlink FICHIER_3
+#unlink FICHIER_4
+#unlink FICHIER_5
+
+barrier
+
+set DIR_CONTENT `ls -l $TEST_DIR`
+print "> There should be 2 dir_entries: " `chomp \`wc $DIR_CONTENT\``
+unset DIR_CONTENT
+

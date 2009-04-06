@@ -1,0 +1,150 @@
+set VERBOSE "ON"
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER "FSAL"
+
+init_fs -v /tmp/hpss.ganesha.conf
+
+print "------------ Je suis leibovic -------------"
+# je deviens leibovic
+su 3733
+
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+
+# je mets le repertoire courant en acces a tous.
+setattr . MODE 755
+
+print "------------ Je cree des repertoires -------------"
+
+mkdir test_rights_Ur    400
+mkdir test_rights_Uwx   300
+mkdir test_rights_Gr    740
+mkdir test_rights_Gwx   730
+mkdir test_rights_Or    774
+mkdir test_rights_Owx   773
+
+print "-------- Je tente diverses operations --------"
+
+# fail
+create test_rights_Ur/toto  755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail (no lookup rights)
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# ok
+ls test_rights_Ur
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+create test_rights_Uwx/toto 755
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail (no read rights)
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+
+print "------------ Je deviens deniel -------------"
+# je deviens deniel
+su 3051
+
+# fail (EACCES)
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Ur
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail
+create test_rights_Gr/toto 755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail 
+ls -l test_rights_Gr/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+#ok
+ls test_rights_Gr    
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+create test_rights_Gwx/toto 755
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# ok
+ls -l test_rights_Gwx/toto
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail
+ls test_rights_Gwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+
+print "------------ Je deviens exploit -------------"
+# je deviens exploit
+su exploit
+
+# fail
+ls -l test_rights_Ur/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Ur
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Uwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Uwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Gr/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Gr    
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls -l test_rights_Gwx/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+ls test_rights_Gwx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail
+create test_rights_Or/toto 755
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+# fail 
+ls -l test_rights_Or/toto
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+#ok
+ls test_rights_Or    
+if ne -n -- $STATUS 0 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail (because of umask)
+create test_rights_Owx/toto 755
+if ne -n -- $STATUS 13 ? print "UMASK_ERROR" : print "UMASK_OK"
+
+# ENOENT (but not EACCES)
+ls -l test_rights_Owx/toto
+if ne -n -- $STATUS 2 ? print "GRANT_ERROR" : print "GRANT_OK"
+
+# fail
+ls test_rights_Owx
+if ne -n -- $STATUS 13 ? print "DENY_ERROR" : print "DENY_OK"
+
+print "------------ Je redeviens leibovic -------------"
+# je deviens leibovic
+su 3733
+
+print "------------ unlink -------------"
+
+unlink test_rights_Ur    
+unlink test_rights_Uwx/toto
+unlink test_rights_Uwx   
+unlink test_rights_Gr    
+unlink test_rights_Gwx/toto
+unlink test_rights_Gwx   
+unlink test_rights_Or    
+unlink test_rights_Owx

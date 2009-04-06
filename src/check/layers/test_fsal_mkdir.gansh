@@ -1,0 +1,121 @@
+set VERBOSE     OFF
+set DEBUG_LEVEL NIV_DEBUG
+set LAYER       FSAL
+
+init_fs -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+print "------------ Creation de differents repertoires -------------"
+
+mkdir -v test_non_reg 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/test1 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/test2 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+mkdir -v test_non_reg/test3 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+print "------------ Tentatives de re-creation ----------------------"
+
+mkdir -v test_non_reg 700
+if ne -n -- $STATUS 17 ? print "ALREADY_ERROR" : print "ALREADY_OK"
+
+mkdir -v test_non_reg/test1 700
+if ne -n -- $STATUS 17 ? print "ALREADY_ERROR" : print "ALREADY_OK"
+
+mkdir -v test_non_reg/test2 700
+if ne -n -- $STATUS 17 ? print "ALREADY_ERROR" : print "ALREADY_OK"
+
+mkdir -v test_non_reg/test3 700
+if ne -n -- $STATUS 17 ? print "ALREADY_ERROR" : print "ALREADY_OK"
+
+print "------------ On se balade dans ces repertoires --------------"
+
+cd test_non_reg
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+set LS1 `ls`
+print "LS1: " `wc $LS1`
+
+cd test1
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+set LS2 `ls`
+print "LS2: " `wc $LS2`
+
+cd ../test2
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+set LS3 `ls`
+print "LS3: " `wc $LS3`
+
+cd ../test3
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+set LS4 `ls`
+print "LS4: " `wc $LS4`
+
+cd ../..
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+set LS5 `ls`
+
+print "------------ On tente de virer le parent ---------------------"
+
+unlink -v ./test_non_reg
+if ne -n -- $STATUS 93 ? print "NOTEMPTY_ERROR" : print "NOTEMPTY_OK"
+
+print "------------ On vire les enfants -----------------------------"
+
+unlink -v test_non_reg/test1 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink -v test_non_reg/test2 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink -v test_non_reg/test3 
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+print "------------ On vire le parent -------------------------------"
+
+unlink -v ./test_non_reg
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+set LS6 `ls`
+
+if cmp $LS5 $LS6 ? print "LS5<>LS6" : print "LS5=LS6"

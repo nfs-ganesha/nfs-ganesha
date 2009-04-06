@@ -1,0 +1,9 @@
+This is an example of an imaginary PhoneFinger-service. The idea is to
+have an service providing the phone number of a certain user on a
+certain host. 
+
+The remote procedure accepts an username and returns a boolean value
+indicating if the call succeded or not, and an string with the phone
+number. 
+
+This demo code has hardcoded username, statuscode and phone number.

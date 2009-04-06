@@ -1,0 +1,55 @@
+#!/bin/ksh 
+
+../pynfs/nfs4client.py -u -p pinatubo1 << EOF
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_TYPE,FATTR4_FH_EXPIRE_TYPE,FATTR4_CHANGE,FATTR4_LINK_SUPPORT,FATTR4_SYMLINK_SUPPORT,FATTR4_NAMED_ATTR,FATTR4_SIZE])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_FSID,FATTR4_UNIQUE_HANDLES,FATTR4_LEASE_TIME,FATTR4_RDATTR_ERROR,FATTR4_ACL,FATTR4_ACLSUPPORT,FATTR4_ARCHIVE,FATTR4_CANSETTIME])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_CASE_INSENSITIVE,FATTR4_CASE_PRESERVING,FATTR4_CHOWN_RESTRICTED,FATTR4_FILEID,FATTR4_FILES_AVAIL,FATTR4_FILES_FREE,FATTR4_FILES_TOTAL])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_HIDDEN,FATTR4_HOMOGENEOUS,FATTR4_MAXFILESIZE,FATTR4_MAXLINK,FATTR4_MAXNAME,FATTR4_MAXREAD,FATTR4_MAXWRITE])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_RAWDEV])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_MODE,FATTR4_NO_TRUNC,FATTR4_NUMLINKS,FATTR4_OWNER,FATTR4_OWNER_GROUP])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_SPACE_AVAIL,FATTR4_SPACE_FREE,FATTR4_SPACE_TOTAL,FATTR4_SPACE_USED,FATTR4_SYSTEM])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+putrootfhop = c.ncl.putrootfh_op()
+attr_request = nfs4lib.list2attrmask([FATTR4_TIME_ACCESS,FATTR4_TIME_DELTA,FATTR4_TIME_METADATA,FATTR4_TIME_MODIFY,FATTR4_MOUNTED_ON_FILEID,FATTR4_FILEHANDLE])
+getattrop = c.ncl.getattr_op( attr_request )
+res = c.ncl.compound([putrootfhop, getattrop])
+nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+
+quit
+
+EOF

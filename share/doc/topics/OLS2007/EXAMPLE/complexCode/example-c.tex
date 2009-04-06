@@ -1,0 +1,22 @@
+\begin{cprog}
+typedef struct QuadTree {
+  double Data;
+  struct QuadTree 
+     *Children[4];
+} QT;
+
+void Sum3rdChildren(QT *T,
+           double *Result) {
+  double Ret;
+  if (T == 0) { Ret = 0;
+  } else {
+    QT *Child3 =
+      T[0].Children[3];
+    double V;
+    Sum3rdChildren(Child3, 
+                   &V);
+    Ret = V + T[0].Data;
+  }
+  *Result = Ret;
+}
+\end{cprog} 

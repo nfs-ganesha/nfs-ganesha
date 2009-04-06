@@ -1,0 +1,45 @@
+#set DEBUG_LEVEL "NIV_FULL_DEBUG"
+set DEBUG_LEVEL "NIV_DEBUG"
+set LAYER FSAL
+
+init_fs -v /tmp/hpss.ganesha.conf
+
+cd /cea/archive
+
+ls -l lama
+if eq -- $STATUS 0 ? print "LS_OK" : print "LS_ERROR"
+
+# compare ls -l with ls -ld
+set LS1 `ls -l lama`
+set LS2 `ls -ld lama`
+if eq -- $LS1 $LS2 ? print "LS_IDENTICAL_OK" : print "LS_DIFFERENT_ERROR"
+
+# cross dev error
+ls -ld lama/.
+if eq -- $STATUS 18 ? print "XDEV_ERR_OK" : print "NO_XDEV_ERR_ERROR"
+
+# should fail
+cd lama
+if ne -- $STATUS 20 ? print "NOTDIR_ERROR" : print "NOTDIR_OK"
+
+cross lama
+if eq -- $STATUS 0 ? print "CROSS_OK" : print "CROSS_ERROR"
+
+ls -ld .
+if eq -- $STATUS 0 ? print "LS_OK" : print "LS_ERROR"
+
+set LS_AV `pwd`
+cd ..
+set LS_AP `pwd`
+if eq -- $LS_AV $LS_AP ? print "PWD_IDENTICAL_OK" : print "PWD_DIFFERENT_ERROR"
+
+cd /
+if eq -- $STATUS 0 ? print "CD_OK" : print "CD_ERROR"
+set LS_AP2 `pwd`
+if eq -- $LS_AP $LS_AP2 ? print "ROOT_ERROR" : print "ROOT_OK"
+
+cross /cea/archive/lama
+if eq -- $STATUS 0 ? print "CROSS_OK" : print "CROSS_ERROR"
+set LS_AP3 `pwd`
+if eq -- $LS_AV $LS_AP3 ? print "PWD_IDENTICAL_OK" : print "PWD_DIFFERENT_ERROR"
+

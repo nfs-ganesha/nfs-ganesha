@@ -1,0 +1,676 @@
+#!/bin/env perl 
+#
+#
+#
+# Copyright CEA/DAM/DIF  (2008)
+# contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+#                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+#
+#
+# Fichier source/executable de maketest, un logiciel de test de non-regression
+#
+# Ce logiciel est régi par la licence CeCILL soumise au droit français et
+# respectant les principes de diffusion des logiciels libres. Vous pouvez
+# utiliser, modifier et/ou redistribuer ce programme sous les conditions
+# de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA
+# sur le site "http://www.cecill.info".
+#
+# En contrepartie de l'accessibilité au code source et des droits de copie,
+# de modification et de redistribution accordés par cette licence, il n'est
+# offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+# seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+# titulaire des droits patrimoniaux et les concédants successifs.
+#
+# A cet égard  l'attention de l'utilisateur est attirée sur les risques
+# associés au chargement,  à l'utilisation,  à la modification et/ou au
+# développement et à la reproduction du logiciel par l'utilisateur étant
+# donné sa spécificité de logiciel libre, qui peut le rendre complexe à
+# manipuler et qui le réserve donc à des développeurs et des professionnels
+# avertis possédant  des  connaissances  informatiques approfondies.  Les
+# utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+# logiciel à leurs besoins dans des conditions permettant d'assurer la
+# sécurité de leurs systèmes et ou de leurs données et, plus généralement,
+# à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.
+#
+# Le fait que vous puissiez accéder à cet en-tête signifie que vous avez
+# pris connaissance de la licence CeCILL, et que vous en avez accepté les
+# termes.
+#
+# ---------------------
+#
+# Copyright CEA/DAM/DIF (2008)
+#  Contributor: Philippe DENIEL  philippe.deniel@cea.fr
+#               Thomas LEIBOVICI thomas.leibovici@cea.fr
+#
+#
+# Source code (executable) for maketest, a non-regression tool
+#
+#
+# This software is governed by the CeCILL  license under French law and
+# abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# "http://www.cecill.info".
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# In this respect, the user's attention is drawn to the risks associated
+# with loading,  using,  modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean  that it is complicated to manipulate,  and  that  also
+#herefore means  that it is reserved for developers  and  experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or
+# data to be ensured and,  more generally, to use and operate it in the
+# same conditions as regards security.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
+# ---------------------------------------
+#
+
+use strict ;
+
+# I need basename
+use File::Basename ;
+
+# I need getopt
+use Getopt::Std ;
+
+# I like to have human-readable variables 
+use English '-no_match_vars' ;
+
+# For the option's management
+my $options = "hdTqcf:D:e" ;
+my %opt ;
+my $usage = sprintf("Usage: %s [-h] [-q][-c][-e] [-f <config_file>] [-T] [-D var1=value[,var2=value[,...]]] test_name\n"
+                   ."    -h : print this help\n"
+                   ."    -q : quiet mode\n"
+                   ."    -c : colored mode\n"
+                   ."    -e : error only mode. Test only error conditions\n"
+                   ."         and consider test as OK if none of them appear.\n"
+                   ."    -f <config_file> : specify a config file\n"
+                   ."    -T : test the content of the config file\n"
+                   ."    -D var=value,var=value,... : define some\n"
+                   ."       parameters to be used in the config file.\n"
+                   ."    -d : debug mode\n",
+                   basename( $0 ));
+                   
+my $DefaultConfFile = "./maketest.conf" ;
+
+my $quiet_mode = 0;
+my $colored_mode = 0;
+my $debug = 0;
+my $error_only = 0;
+
+# definition des elements parametrables du fichier de configuration
+my %hash_vars = ();
+
+# This routine parses the -D option and fills the hash_vars array
+sub Parse_D_opt
+{
+  my ($in_str)=@_;
+  
+  my ($var,$val,$reste);
+  
+  while ( $in_str =~ m/^([^=]+)=([^,]+),(.*)/ )
+  {
+    ($var, $val, $reste ) = ( $1, $2, $3 );
+    
+    print( "$var = $val\n" ) if ($debug );
+    
+    $hash_vars{ $var } = $val;
+    $in_str = $reste;
+  }
+  
+  # last one
+  if ( $in_str =~ m/^([^=]+)=([^,]+)$/ )
+  {
+    ($var, $val) = ($1,$2);
+    
+    print( "$var = $val\n" ) if ( $debug );
+    $hash_vars{ $var } = $val;  
+  }
+  
+}
+
+
+
+# Arg = none 
+# Return = casimir ends (an exit is done)
+
+# This routine reads the configuration file and build a hash table with all the information 
+# arg 1 = path to the configuration file
+# return = the resulting hash table
+# 
+# The structure of the resulting hash is a bit complex. Here is a sample of a resulting hash
+# 0  'titi'
+# 1  HASH(0x14257c)
+#    'Command' => ' rpcinfo -u localhost portmap 2'
+#    'Comment' => ' Tester la reponse au protocole portmapper version 2'
+#    'Failure' => HASH(0x1435b0)
+#       'tata' => '           STATUS == 1
+#             OR
+#           STDOUT =~ /Program or registered/' 
+#       'toto' => '           STATUS != 0
+#              OR
+#            STDOUT =~ /Program or registered/'
+#    'Product' => ' portmap'
+#    'Success' => HASH(0x143550)
+#       'ReadyAndWaiting' => '          STATUS == 0
+#             AND
+#           STDOUT =~ /ready and waiting/'
+# 2  'gogol1'
+# 3  HASH(0x12ecc0)
+#    'Command' => ' gogol -s 3 '
+#    'Comment' => ' Tester la reponse au protocole gogol version 3'
+#    'Failure' => HASH(0x13a3a4)
+#      'golmon' => '        '
+#    'Product' => ' gogol'
+#    'Success' => HASH(0x12ec78)
+#       'machin' => "\cItototo"
+#
+# The base file for this was:
+#
+# Test titi
+# {
+#    Product = portmap
+#   Command = rpcinfo -u localhost portmap 2
+#   Comment = Tester la reponse au protocole portmapper version 2
+# 
+#         # ReadyAndWaiting
+#         Success ReadyAndWaiting
+#         {
+#           STATUS == 0
+#             AND
+#           STDOUT =~ /ready and waiting/
+#         }
+# 
+#         Failure toto
+#         {
+#            STATUS != 0
+#              OR
+#            STDOUT =~ /Program or registered/
+#         }
+# 
+#         Failure tata
+#         {
+#            STATUS == 1
+#              OR
+#            STDOUT =~ /Program or registered/
+#         }
+# 
+# 
+# }
+# 
+# Test gogol1
+# {
+#     Product = gogol
+#     Command = gogol -s 3
+#     Comment = Tester la reponse au protocole gogol version 3
+# 
+#         # truc
+#         Success machin
+#         {
+#         tototo
+#         }
+# 
+#         Failure golmon
+#         {
+#          }
+ 
+sub read_conf
+{
+    my %hashresult ;
+    my $path = $_[0] ;
+    my $filecontent ;
+    my @definedTests ;
+    my $iterTests ;
+    my @listresult  = ();
+
+    # slurp mode
+    undef $/ ;
+
+    # Let's open the file
+    open( CONFFILE, "<$path" ) or die "Cannot open file $path: $!\n" ;
+    $filecontent = <CONFFILE> ;
+    close CONFFILE ;
+
+    # replaces the variables into the config
+    
+    my $var;
+    
+    foreach $var ( keys %hash_vars )
+    {
+      my $val = $hash_vars{ $var };
+      
+      $filecontent =~ s#\$\($var\)#$val#mg ;
+            
+    }
+    
+
+    # This regexp is designed to put every test definition in one entry of @definedTests
+    @definedTests = $filecontent =~ m/(
+	                                Test \s* [0-9a-zA-Z_.]+ \s* \n                 # Header of a test clause
+	                                \{
+				          (?:                         
+                                            (?:\s* \# .*? \n )            | # comments are allowed if preceeded by a '#'
+				            (?:\s* Success \s* [0-9a-zA-Z_.]+ \s* \n   # Definition of the 'Success' clause
+					     \s* \{ \s* \n	
+					     (?: \s* \.*? \n)*
+					     \s* \} \s* \n
+					     )                            |
+				             (?:\s* Failure \s* [0-9a-zA-Z_.]+ \s* \n   # Definition of the 'Failure' clause
+					     \s* \{ \s* \n	
+					     (?: \s* \.*? \n)*
+					     \s* \} \s* \n
+					      )                           |
+				              (?:\s* \n)                  |    # Blank lines can be used, too
+					      (?:\s* Product \s* = .*?\n) |    # 'Product' keyword definition
+					      (?:\s* Command \s* = .*?\n) |    # 'Command' keyword definition
+					      (?:\s* Comment \s* = .*?\n)      # 'Comment' keyword definition
+					   )
+					\}
+				      )
+				     /mxgs ;
+
+    foreach $iterTests ( @definedTests )
+    {
+	my %hashTest    = () ;
+	my %hashSuccess = () ;
+	my %hashFailure = () ;
+
+	my ($Test)    = $iterTests =~ m/ Test \s* ([0-9a-zA-Z_.]+) \s* \n /x ;
+	my ($Product) = $iterTests =~ m/ Product \s* = (.*?) \n /x ;
+	my ($Command) = $iterTests =~ m/ Command \s* = (.*?) \n /x ;
+	my ($Comment) = $iterTests =~ m/ Comment \s* = (.*?) \n /x ;
+	
+    # concat the optional argument string
+    $Command .= " " . $opt{ A } if (defined($opt{ A }));
+    
+	my @SuccessTab = $iterTests =~ m/ Success \s* ([0-9a-zA-Z_.]+) \s* \n    # Structure d'une clause Success
+	                               \s* \{ \s* \n
+					(\s* .*?)
+					\s* \} \s* \n   /mxgs ;
+	
+	my @FailureTab = $iterTests =~ m/ Failure \s* ([0-9a-zA-Z_.]+) \s* \n  # Structure d'une clause Failure
+	                                                   \s* \{ \s* \n
+							   (\s* .*?)
+							   \s* \} \s* \n   /mxgs ;
+
+	while ( 1 ) 
+	{
+	    last if $#SuccessTab == -1 ;
+	    my $SuccessCombo = pop @SuccessTab ;
+	    my $SuccessName = pop @SuccessTab ;
+	    $hashSuccess{ $SuccessName } = $SuccessCombo ;
+	}
+	
+	while ( 1 ) 
+	{
+	    last if $#FailureTab == -1 ;
+	    my $FailureCombo = pop @FailureTab ;
+	    my $FailureName = pop @FailureTab ;
+	    $hashFailure{ $FailureName } = $FailureCombo ;
+	}
+	
+	$hashTest{ Product } = $Product ;
+	$hashTest{ Command } = $Command ;
+	$hashTest{ Comment } = $Comment ;	
+	$hashTest{ Success } = \%hashSuccess ;
+	$hashTest{ Failure } = \%hashFailure ;
+	$hashresult{ $Test } = \%hashTest ;
+
+	push @listresult, $Test ;
+    }
+    return ( \%hashresult, \@listresult )  ;
+} # read_conf
+
+# Arg 1 = reference to a hash produced by read_conf 
+# Return = Nothing, just print the result on stdout
+sub print_conf 
+{
+  my $k ;
+  my $l ;
+  my $refhash = $_[0] ;
+
+  foreach $k ( keys %$refhash )
+   {
+     print ">>>>>> $k\n" ;
+     print "   Product = ${$$refhash{ $k }}{ Product } \n";
+     print "   Command = ${$$refhash{ $k }}{ Command } \n";
+     print "   Comment = ${$$refhash{ $k }}{ Comment } \n";
+
+     foreach $l ( keys %{${$$refhash{ $k }}{ Success }} )
+     {
+	print "   Success    $l\n" ;
+	print " ${${$$refhash{ $k }}{ Success }}{ $l } \n" ;
+     }
+
+     foreach $l ( keys %{${$$refhash{ $k }}{ Failure }} )
+     {
+	print "   Failure    $l\n" ;
+        print " ${${$$refhash{ $k }}{ Failure }}{ $l } \n" ;
+     }
+  }
+} # print_conf
+
+# This function translate a Success/Failure clause to a valid PERL code 
+# used to run the test
+# ARG 1 = the clause
+# RETURN = the PERL expression
+sub translate_clause
+{
+    my $testop = $_[0] ;
+  
+ 
+    $testop =~ s#STATUS#( \$STATUS#mg ;
+    $testop =~ s#STDOUT#( \$STDOUT#mg ;
+    $testop =~ s#STDERR#( \$STDERR#mg ;
+    
+    $testop =~ s#\s*\n#) \n#mg ;
+    
+    $testop =~ s#AND\)# and #mg ;
+    $testop =~ s#OR\)# or #mg ;
+    $testop =~ s#NOT\)# not #mg ;
+		
+    $testop =~ s#\A#if (  #mg;
+    $testop =~ s#\Z# ) )#mg ;
+	
+    $testop .= "\n{\n \$testok = 1 ; \n} \nelse\n{ \n \$testok = 0 ; \n} \n;" ;
+
+} # translate_clause
+
+
+sub red_string
+{
+  my ($string)=@_;
+  
+  if ( !$colored_mode )
+  {
+    return $string;
+  }
+  else
+  {
+    return "[1;31m".$string."[0;39m";
+  }  
+}
+
+sub green_string
+{
+  my ($string)=@_;
+  
+  if ( !$colored_mode )
+  {
+    return $string;
+  }
+  else
+  {
+    return "[1;32m".$string."[0;39m";
+  }  
+}
+
+sub orange_string
+{
+  my ($string)=@_;
+  
+  if ( !$colored_mode )
+  {
+    return $string;
+  }
+  else
+  {
+    return "[1;35m".$string."[0;39m";
+  }  
+}
+
+
+# This function does the test given as an input 
+# ARG 1 = test's name
+# ARG 2  = hash table related to the test 
+# RETURN = 0 if successfull. 1 if failed, 2 if no failure or success were found. The output shows the failure's reason 
+sub do_test
+{
+    my $testname = $_[0] ;
+    my $refhash  = $_[1] ;
+
+    my $failfound = 0 ;
+    my $succfound = 0 ;
+
+    my %hashSuccess = %{$$refhash{ 'Success' }} ;
+    my %hashFailure = %{$$refhash{ 'Failure' }} ;
+
+    my $stdoutfile = "/tmp/$testname.stdout.$$" ;
+    my $stderrfile = "/tmp/$testname.stderr.$$" ;
+    my $statusfile = "/tmp/$testname.status.$$" ;
+
+    my $result_test = -1 ;
+
+    print "Now performing test '", $testname, "'\n" if( !$quiet_mode );
+    print "    Product = $$refhash{ 'Product' } \n" if( !$quiet_mode );
+    print "    Comment = $$refhash{ 'Comment' } \n" if( !$quiet_mode );
+    print "    Command = $$refhash{ 'Command' } \n" if( !$quiet_mode );
+
+    my $cmd =  $$refhash{ 'Command' } ; 
+    
+    $cmd .= " 2>$stderrfile 1>$stdoutfile ; " . ' echo "STATUS=$?"' . " >$statusfile" ;
+    print "===> Running $cmd \n" if( $debug ) ;
+    system $cmd ;
+    print "End of run for test '$testname', now parsing results\n"  if( !$quiet_mode );
+
+    # reading file will be done using slurp mode
+    undef $/ ;
+
+    # Dealing with STDOUT
+    open( STDOUTFILE, "<$stdoutfile" ) or die "Cannot open stdout file $stdoutfile: $!\n" ;
+    my $STDOUT = <STDOUTFILE> ;
+    close STDOUTFILE ;
+    unlink $stdoutfile or print "Unlink to $stdoutfile is impossible: $!\n" ;
+    print "out#$STDOUT#\n" if( $debug ); ;
+    
+    # Dealing with STDERR
+    open( STDERRFILE, "<$stderrfile" ) or die "Cannot open stderr file $stdoutfile: $!\n" ;
+    my $STDERR = <STDERRFILE> ;
+    close STDERRFILE ;
+    print "err#$STDERR#\n" if( $debug );
+    unlink $stderrfile or print "Unlink to $stderrfile is impossible: $!\n" ; 
+
+    # Now dealing with STATUS
+    open( STATUSFILE, "<$statusfile" ) or die "Cannot open status file $statusfile: $!\n" ;
+    my $statusfilecontent = <STATUSFILE> ;
+    close STATUSFILE ;
+    unlink $statusfile or print "Unlink to $statusfile is impossible: $!\n" ;
+    
+    # It is now time to evaluate the status 
+    my $STATUS = -10000 ;  # Dumb value 
+    $statusfilecontent =~ s#^STATUS#\$STATUS#;
+    $statusfilecontent =~ s#$#;# ;
+    eval $statusfilecontent ;
+    print "STATUS = $STATUS \n" if( $debug );
+
+
+    # Now, we parse the results  
+    
+    if ( ! $error_only )
+    {
+      my $succ ; 
+      foreach $succ ( keys %hashSuccess )
+      {
+        my $testop = translate_clause( $hashSuccess{ $succ } ) ;
+
+        my $testok = -1567 ; # Dumb value
+        eval $testop ;
+        print "~~~~~~> $testok \n" if( $debug );
+
+        if( $testok == 1 )
+        {
+            if( $quiet_mode )
+            {
+              print "    $testname  [ " .green_string($succ) . " ]\n";
+            }
+            else
+            {
+              print "    Test $testname has successfull status ".green_string($succ)."\n";
+            }
+
+	        $succfound = 1 ;
+	        $result_test = 0 ;
+        }
+      }
+    } #error_only
+    
+    my $fail ;
+    foreach $fail ( keys %hashFailure )
+    {
+	  my $testop = translate_clause( $hashFailure{ $fail } ) ;
+
+	  my $testok = -1567 ; # Dumb value
+	  eval $testop ;
+	  print "~~~~~~> $testok \n" if( $debug ) ;
+
+	  if( $testok == 1 )
+	  {
+          if( $quiet_mode )
+          {
+            print "    $testname  [ ".red_string($fail)." ]\n";
+          }
+          else
+          {
+            print "    Test $testname has recognized failure ".red_string($fail)."\n" ;
+          }
+
+  	      $failfound = 1 ;
+	      $result_test = 1 ;
+	  }
+    }
+     
+    # If no success or failure were identify, then tell it
+    if( !$failfound && !$succfound )
+    {
+      if ( ! $error_only )
+      {
+          if( $quiet_mode )
+          {
+            print "    $testname  [ ". orange_string("NO STATUS")." ]\n";
+          }
+          else
+          {
+            print "    ".orange_string("No success or failure could be found")." for test $testname\n" ;
+          }
+          $result_test = 2 ;
+      }
+      else # test is considered as OK
+      {
+            if( $quiet_mode )
+            {
+              print "    $testname  [ " .green_string("OK") . " ]\n";
+            }
+            else
+            {
+              print "    Test $testname has successfull status ".green_string("OK")."\n";
+            }
+
+	        $result_test = 0 ;          
+      }
+    }
+
+    print "------------------------------------------------------\n" if( !$quiet_mode ) ;
+    return $result_test ;
+} # do_test 
+
+##################
+# MAIN PROCEDURE #
+##################
+
+# Let's process the options
+getopts( $options, \%opt ) or die "Incorrect option used\n$usage\n" ;
+
+# command line help
+if( $opt{ h } )
+{
+    print "$usage\n" ;
+    exit( 1 ) ;
+}
+
+# What is my configuration file ?
+my $ConfFile = $opt{ f } || $DefaultConfFile ;
+
+$quiet_mode = defined( $opt{ q } );
+$colored_mode = defined( $opt{ c } );
+$debug = defined( $opt{ d } );
+$error_only = defined( $opt{ e } );
+
+if ( defined( $opt{ D } ) )
+{
+  Parse_D_opt( $opt{ D } );
+}
+
+
+# Now we read the configuration file
+my ( $hashconfref, $listconfref ) = read_conf $ConfFile ;
+my %hashconf = %$hashconfref ;
+my @listconf = @$listconfref ;
+
+# If flag -T is used, this is the test mode. The configuration file is just parsed
+if( $opt{ T }  )
+{ 
+    print_conf $hashconfref ;
+    exit( 0 ) ;
+}
+
+
+# Now build the list of tests to be done
+my @testlist ;
+
+if ( $#ARGV == -1 ) 
+{
+    # If no test's name is supplied, then do all the tests
+    # @testlist = keys %hashconf ;
+    @testlist = @listconf ; 
+}
+else
+{
+    @testlist = @ARGV ;
+}
+
+# It now time to performs the tests
+my $test ;
+my $NbFailed        = 0 ;
+my $NbSuccess       = 0 ;
+my $NbIndeterminate = 0 ;
+my $res ;
+
+foreach $test ( @testlist )
+{
+    if( defined( $hashconf{ $test } ) )
+    {
+	$res = do_test( $test, $hashconf{ $test } ) ;
+	if( $res == 0 ) { $NbSuccess += 1 ; } ;
+	if( $res == 1 ) { $NbFailed  += 1 ; } ;
+	if( $res == 2 ) { $NbIndeterminate += 1 } ;
+    }
+    else
+    {
+	print "Test '", $test, "' is not defined in the configuration file\n" ;
+    }
+}
+
+if( $NbFailed != 0 )
+{
+    print "    Summary: $NbFailed test(s) failed\n" ;
+}
+
+if( $NbIndeterminate != 0 )
+{
+    print "    Summary: $NbIndeterminate test(s) had indeterminate status\n" ;
+}
+
+if( ( $NbFailed == 0 )&& ( $NbIndeterminate == 0 ) )
+{
+    print "    Summary: All the requested test(s) were successfull\n" ;
+}

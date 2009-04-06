@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+use File::Basename;
+use FindBin;
+use FindBin qw($RealBin);
+
+my $pdfRotate;
+chomp ($pdfRotate = `which pdfrotate 2>/dev/null` || "${RealBin}/pdfrotate");
+
+# Dots-Per-Inch for rendering.  300 is a good number.
+my $dpi = 300;
+
+sub getImageBoundingBoxes($) {
+    my ($inFile) = @_;
+    my @bb1 = ();
+    my @bb2 = ();
+    my $ln;
+    my $f1 = "grep '^%%BoundingBox' '$inFile' 2>&1 |";
+    my $f2 = "/usr/bin/gs -q -dNOPAUSE -dBATCH  -sDEVICE=bbox '$inFile' 2>&1 |";
+    my @bbs = (\@bb1, \@bb2);
+    my $c = 0;
+    my $bbr;
+
+    foreach my $src ($f1, $f2) {
+	$bbr = $bbs[$c];
+	open(IN, "$src") || die "Cannot open $src for reading\n";
+      READLOOP:
+	while (defined($ln = <IN>)) {
+	    if ($ln =~ m/^%%BoundingBox:\s+(-*\d+)\s+(-*\d+)\s+(-*\d+)\s+(-*\d+)/) {
+		push @$bbr, $1;
+		push @$bbr, $2;
+		push @$bbr, $3;
+		push @$bbr, $4;
+		close(IN);
+		last READLOOP;
+	    } 
+		
+	}
+	close(IN);
+	$c++;
+    }
+    return (\@bb1, \@bb2);
+}
+
+
+foreach my $f (@ARGV) {
+    if ($f =~ m/help/) {
+	print "Usage: $0 file1 [...fileN]\n";
+	print "Renders an EPS to PNG at 300dpi, then to PDF.\n";
+	print "Intended to help with EPS files that take too long to render.\n";
+	exit 0;
+    }
+    my ($fbase, $fdir, $fsuffix) = fileparse($f, qr/\.[^.]*/);
+    my ($imageBBref, $gsBBref) = getImageBoundingBoxes($f);
+    my @imageBB = @$imageBBref;
+    my @gsBB = @$gsBBref;
+    my $imageYpts = $imageBB[2] - $imageBB[0];
+    my $imageXpts = $imageBB[3] - $imageBB[1];
+    print STDERR "Processing: $f ...\n";
+    print STDERR "  ImageBB: @imageBB\n";
+    print STDERR "  GhostBB: @gsBB\n";
+    print STDERR "  X: $imageXpts and Y: $imageYpts\n";
+
+    my $pngOut = "${fbase}.png";
+
+    # There are 72 points in an inch.  $dpi is Dots-Per-Inch.
+
+    # -r300 == "render at 300 dpi on US-Letter paper"
+    # The 'Letterpaper' bit is important for when we do the cropping.
+    my $gsCmd = "gs -q -dNOPAUSE -dBATCH -r$dpi -sDEVICE=png16 -sPAPERSIZE=letter -sOutputFile=$pngOut $f";
+    print STDERR "  $gsCmd\n";
+
+    # Generate temporary image
+    `$gsCmd`;
+
+    # See what we got -- ghostscript sometimes rotates it.
+    my $identify = `identify $pngOut`;
+    my ($pngX, $pngY) = (0,0);
+    # GAK.png[1] PNG 2550x3300 2550x3300+0+0 PseudoClass 16c 42kb 0.390u 0:02
+    # Note that at 300dpi, 2550x3300 is 8.5" by 11" (US Letter Size).
+    if ($identify =~ m/PNG\s+(\d+)x(\d+)\s+/) {
+	$pngX = $1;
+	$pngY = $2;
+    } else {
+	die "Cannot identify image: $pngOut\n";
+    }
+
+    # Hmm, deal with non-rotated if/when we see it.
+    if (0) {
+	$isRotated = 0;
+	if ($imageXpts > $imageYpts) {
+	    $isRotated = 1 unless ($pngX > $pngY);
+	} else {
+	    $isRotated = 1 unless ($pngY > $pngX);
+	}
+    }
+
+    $imageXSize = $dpi * $imageXpts / 72;
+    $imageYSize = $dpi * $imageYpts / 72;
+    $offsetOne = $dpi * $gsBB[0] / 72;
+    $offsetTwo = $pngY - $imageXSize - ($dpi * $gsBB[1] / 72);
+    # mogrify -crop 1050x3000+1270+87
+    # $geometry = "${imageXSize}x${imageYSize}+${offsetOne}+${offsetTwo}";
+    my $geometry = sprintf("%dx%d+%d+%d", $imageYSize, $imageXSize,$offsetOne,$offsetTwo);
+
+    my $mogrifyCmd = "mogrify -crop $geometry $pngOut";
+
+    print STDERR "  $mogrifyCmd\n";
+    `$mogrifyCmd`;
+
+    # We should now have a usable PNG file, albeit a rotated one.
+    my $convertCmd = "convert $pngOut ${fbase}-tmp.pdf";
+    print STDERR "  $convertCmd\n";
+    `$convertCmd`;
+
+    # We should now have a usable PDF file.  Now to de-rotate it.
+    my $rotateCmd = "pdfrotate --angle 270 --outfile ${fbase}.pdf ${fbase}-tmp.pdf";
+    print STDERR "  $rotateCmd\n";
+    `$rotateCmd`;
+
+    # Now ditch the temp file...
+    if ($? == 0) {
+	unlink "${fbase}-tmp.pdf";
+    }
+    print STDERR "\n";
+    # And on to the next one that needs to be converted...
+}

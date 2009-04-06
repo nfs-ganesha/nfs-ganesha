@@ -1,0 +1,6 @@
+if USE_PGSQL
+SUBDIRS=PGSQL
+endif
+if USE_MYSQL
+SUBDIRS=MYSQL
+endif

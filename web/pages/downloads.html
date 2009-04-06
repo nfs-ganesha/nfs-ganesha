@@ -1,0 +1,111 @@
+<!-- This file is included from main form //-->
+
+<h2 class="welcome">Downloads</h2>
+
+<p>
+<ul>
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=656257">NFS-GANESHA v 0.99.50</a><br>
+	<ul>
+	<li>NFS-GANESHA has been ported to OpenSolaris</li>
+	<li>The distribution now includes debian packages</li>
+	<li>the ports to various OS showed minor bugs that were fixed</li>
+	</ul>
+	</li>
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=652531">NFS-GANESHA v 0.99.49</a><br>
+	Changes:
+	<ul>
+	<li>NFS-GANESHA has been ported to FreeBSD 7.0</li>
+	<li>NFS-GANESHA has been ported to Linux/IA64 architecture</li>
+	</ul>
+	</li>
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=649152">NFS-GANESHA v 0.99.48</a><br>
+	Changes:
+	<ul>
+	<li>The way lex/yacc (or flex/bison) is used in Makefile.am was changed. There is now no more interface if a code uses libganeshaNFS (with a FUSE binding) and lex/yacc parsing</li>
+	<li>NFS-GANESHA has been ported to Mac OS X (Darwin 9.5). Other ports will follow</li>
+	</ul>
+	</li>       
+ 
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=644810">NFS-GANESHA v 0.99.47</a><br>
+	Changes:
+	<ul>
+        <li>Running the Spec benchmark on nfs-ganesha showed a bug in attributes asked at creation time in NFSPROC3_CREATE, this has been fixed</li>
+        <li> Fix non-compliancy (thanks again to Spec NFS) in NFSPROC3_SYMLINK (attributes provided as arguments were never used). </li>
+        <li> Code cleanup: removed structure related to deprecated way of performing datacache's garbagge collection. </li>
+        <li> Major feature added : skeleton and "basements" added for MFSL, a new optionnal module that goes between md cache and FSAL </li>
+        <li> Removed direct Cache_Inode_Async, md writeback will be provided in a future module MFSL_ASYNC in MFSL directory </li>
+	</ul>
+	</li>
+
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=641300">NFS-GANESHA v 0.99.46</a><br>
+        Changes:"
+	<ul>
+	<li>Bug fix: possible deadlock may occur in worker thread when using tcp clients</li>
+	<li>Minor feature: MD cache now uses home made RW_Lock </li>
+	<li>DataCache GC is done by an external call to the ganesha service</li>
+	</ul>
+	</li>
+
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=638341">NFS-GANESHA v 0.99.45</a><br>
+        Changes:
+	<ul>
+	<li> Add IPv6 support via TIRPC support</li>
+        <li> Add features to configuration file parsing for IPv6 address</li>
+        <li> Bug fix in handle mapping module for FSAL_PROXY</li>
+        <li> Bug Fix: Bad verifier management in FSAL_PROXY's cleintid negociation</li>
+        <li> Bug fix: bad management of uid=0 is uidgidmap cache when using RPCSEC_GSS quthentication</li>
+        <li> Bug fix: several bug fixed in .xattr.d management for NFSv3</li>
+	</ul>
+	</li>
+
+        <li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=634592">NFS-GANESHA v 0.99.44</a><br>
+        Changes:
+        <ul>
+	<li> NFS4_OP_OPEN default behaviour is now to ask the client to confirm the open using NFS4_OP_OPEN_CONFIRM.</li>
+	<li> A bugi fixed in NFS4_OP_OPEN : same open_owner could have multiple states on the same file in certain cases </li>
+	<li> Many bug fixed in NFS4_OP_LOCK</li>
+	<li> libganeshaNFS (produced when FSAL_FUSELIKE is chosen) can now be  managed by pkgconfig (a ".pc" file is added to the install target)</li>
+	<li> Improved compatibility for old FUSE filesystems that implement getdir instead of readdir</li>
+	<li> FUSE-like binding now support filesystems with no inode numbers.</li>
+	<li> TIRPC can be use as alternate RPC layer. In later releases, this feature will be used to support IPv6 with NFS-GANESHA.</li>
+	<li> Added a 'init' scripts to be place in /etc/init.d </li>
+	<li> Added stuff to specfile so that it installs the .vim files</li>
+        </ul>
+	</li>
+
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=632093">NFS-GANESHA v 0.99.43</a><br>
+	Changes:
+        <ul>
+        <li>RPCSEC_GSS support is fixed. NFS-GANESHA can make kerberized nfs export for linux clients (for NFSv3 and NFSv4)</li>
+        <li>Nodesets syntax can be used to describe a list of machines in the configuration file</li>
+        <li>libganeshaNFS (provided for FSAL_FUSELIKE) is now provided as both a static and a shared library</li>
+        <li>RPM packaging has been reviewd in depth
+	</ul>
+	</li>
+
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=629457">NFS-GANESHA v 0.99.42</a><br>
+	Changes:
+		<ul>
+		<li>Added xattr support in NFSv4. For object "foo", a ghost directory named ".xattr.d.foo" is used for accessing its extended attributes</li>
+                <li>Added xattr ghost directory and ghost objects for NFSv3. These "extended attributes" are read-only for the moment. This feature may be disabled if "--disable-xattr-directory" is used at ./configure time.</li>
+		</ul>
+	</li>
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=620450">NFS-GANESHA v 0.99.41</a><br>
+	Changes:
+		<ul>
+		<li>Fixed nfs4_op_access bug due to bad interpretation of the RFC</li>
+        	<li>Added extended features in BuddyMalloc module to enable extended memory leak tracking</li>
+                <li>FSAL_PROXY now supports RPCSEC_GSS authentication</li>
+		</ul>
+	</li>
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=616080">NFS-GANESHA v 0.99.40</a><br>
+	Changes:
+		<ul>
+		<li>Fixed misc. memory issues in NFSv4 and FSAL Proxy;</li>
+		<li>Added Handle Mapping feature in FSAL_PROXY which makes it possible to export back in NFSv2 and NFSv3 from a proxyfied server accessed via NFSv4.</li>
+		</ul>
+	</li> 
+	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=614717">NFS-GANESHA v 0.99.39</a></li> 
+	</ul>
+</p>
+

@@ -1,0 +1,1122 @@
+\documentclass[a4paper]{book}
+\usepackage{a4wide}
+\usepackage{makeidx}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{float}
+\usepackage{textcomp}
+\usepackage{alltt}
+
+\makeindex
+\setcounter{tocdepth}{2}
+\renewcommand{\footrulewidth}{0.4pt}
+\begin{document}
+
+
+\begin{titlepage}
+\vspace*{7cm}
+\begin{center}
+{\Large GANESHA NFS server}\\
+\vspace*{1cm}
+{\large Administration guide \\[1ex]\large v0.4}\\
+\vspace*{0.5cm}
+{\small Wed Oct 8, 2008}\\
+\end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+
+\pagenumbering{arabic}
+\chapter{How to write the GANESHA's configuration file}
+
+
+\section{Overall view of the configuration file}
+
+The configuration file for the GANESHA daemon may seemed huge at first glance.
+It is separated into several blocks. A block contain several items.\\
+
+A block will look like this: 
+
+\begin{verbatim}
+    <BLOCK_TAG>
+    {
+       <Config_Item_Tag> = <Value> ;
+
+       # Comment 
+       <Config_Item_Tag> = <Value> ;
+	    .
+	    .
+	    .
+       <Config_Item_Tag> = <Value> ;
+    }
+\end{verbatim}
+
+As we will see, there are many different blocks, each of them dedicated
+to the configuration of a specifc stuff in GANESHA. Not all the blocks 
+are mandatory and some may not be explicitely specified. In this case, default
+values will be kept> 
+Inside the blocks are items which are a way to set a internal constant in the daemon
+with direct effect to the program's behaviour. Like the blocks, not all the items are mandatory
+and some may be lacking.
+The following sections will described each blocks and items and explain all of them and their use.\\
+
+Block's names and item's name matching algorithm is case insensitive. Naming a block EXPORT or Export or 
+export work as well.\\
+
+Every character below a '\#' sign is a comment and will be ignored
+(except if it is inside a quoted string, or escaped with a backslash).\\
+
+You can also include annexe configuration files using \texttt{\%include} statement:
+\begin{verbatim}
+	E.g:
+	%include "annexe_file.conf"
+\end{verbatim}
+
+\begin{tabular}{|p{3.5cm}|p{3cm}|p{7.5cm}|}
+\hline
+{\bf Block Name }   &  {\bf Status }						& {\bf Used for... }															\\
+\hline
+EXPORT   & Mandatory. Can be duplicated			 & Set an export entry                 \\
+\hline
+FSAL   	& Recommended. One instance.		 & FSAL generic configuration      	    \\
+\hline
+FileSystem			& Optionnal. One Instance   	& Filesystem's behaviour         \\
+\hline
+HPSS   	& Recommended. One instance   & FSAL\_HPSS's specific configuration (only with hpss.ganesha.nfsd)	\\
+\hline
+POSIX       & Recommended. One instance   & FSAL\_POSIX's specific configuration (only with posix.ganesha.nfsd)  \\
+\hline
+SNMP       & Recommended. One instance   & FSAL\_SNMP's specific configuration (only with snmp.ganesha.nfsd)  \\
+\hline
+NFS\_Worker\_Param	    & Recommended. One instance   & Worker Thread configuration      		 \\
+\hline
+NFS\_Core\_Param		& Recommended. One instance   & Daemon's core configuration      		 \\
+\hline
+NFS\_DupReq\_Hash		& Optionnal. One Instance   	& RPC Duplicate Request Hash configuration   			\\
+\hline
+NFS\_IP\_Name			& Optionnal. One Instance   	& IPadress $\leftrightarrow$ hostname resolution cache configuration   \\
+\hline
+NFSv4\_ClientId\_Cache  & Optionnal. One Instance   	& Configuration of the NFSv4 Clientid cache   			 \\
+\hline
+NFSv4\_StateId\_Cache  & Optionnal. One Instance   	& Configuration of the NFSv4 State id cache   			 \\
+\hline
+NFS\_KRB5   & Recommended for using KRB5. One instance & KRB5 configuration. Needed only if sys=krb5, krb5i or krb5p is used  \\
+\hline
+NFSv4       & Recommended. One instance   & NFSv4 Specific configuration items (e.g. lease lifetime)			\\
+\hline
+CacheInode\_Hash		& Recommended. One instance   & Configuration of the Cache Inode Hash Table   		 \\
+\hline
+CacheInode\_Client	    & Recommended. One instance   & The configuration of the workers's clients to the Cache Inode		 \\
+\hline
+CacheInode\_GC\_Policy  & Recommended. One instance   & Garbagge Collection Policy for the Cache Inode entries   \\
+\hline
+FileContent\_Client	& Recommended. One instance   & The configuration of the workers's client to the File Content Cache \\
+\hline
+FileContent\_GC\_Policy & Recommended. One instance   & Garbagge Collection Policy for the File Content cache entries		 \\
+\hline
+BUDDY\_MALLOC			& Recommended. One instance   & Configuration of the internal memory manager   		\\
+\hline
+\end{tabular}
+
+
+\section{What to put in each block}
+
+	\subsection{The EXPORT Block}
+
+	This tag is used to describe the way a FSAL tree is exported via NFS. It describes clients, who has root access, which versions of the
+	protocols to be used and transport layers.\\
+
+	\subsubsection{How to describe clients ?}
+
+        Clients can be single machines, pack of machines, netgroups,
+        and networks.\\
+	
+		Single machine is identified by its name or ip address: e.g. localost or 127.0.0.1\\
+    
+		Sets of machines: you may have "farms" of machines with similar
+			name like "cluster0, cluster0, ..., cluster-gateway". With a
+			cluster, you can have bunches of such names. Using "unix
+			jokers" can help so far. GANESHA allows you to specify names
+			like "cluster*" or "cluster1?", using the old style "shell
+			joker syntax"\\
+			You can also specify ranges of machines using square brackets.
+			For example, "machine[1-3,7-9,12]-eth1" will be interpreted as "machine1-eth1, machine2-eth1, machine3-eth1, machine7-eth1, ..."\\
+    
+		Networks: this should be a network name (you may have a
+				/etc/networks describing them) or a reduced ip
+				address describing addresses belonging to this
+			networks. For example 12.13.0.0 will describe machines
+			whose address is 12.13.x.y with netmask 0xffff0000\\
+    
+		Netgroups: clients can be identified by the fact they belong
+			to a given netgroup. This is shown by adding an arobas
+			at the beginning of the netgroupname. To tell GANESHA
+			to provide access to machine in netgroup "nfsclients" specify "@nfsclients"\\
+
+		Lists of clients is comma separated: "localhost,12.13.0.0,@nfsclient"\\
+
+	\subsubsection{Export parameters}
+
+	NB: Only 'Path' , 'Export\_Id' and 'Pseudo' are mandatory keys.\\
+
+\begin{itemize}
+
+\item  Export\_Id : This tag is used to set the the id for this export. This
+		is mostly used internally, but this is a mandatory value. The value is to be a
+		non-zero integer value\\
+		e.g: Export\_Id = 1 ;
+
+\item  Access: The list if clients that can access the export entry\\
+		e.g: Access = "Machine3,Machine10*,NetworkB,@netgroupY";\\
+		NB: Using Access = "*" ; will allow everybody to access the
+		mount point.
+
+\item  Root\_Access: The list of clients (see above) that have root access
+		rights (root remains root when crossing the mount point).\\
+		e.g: Root\_Access = "localhost,12.13.0.0,@nfsclient" ;
+
+\item  Access\_Type: Describes the kind of access you can have of the mount
+		point. Acceptable values are:
+        \begin{itemize}
+			\item RO: Read-Only mount point
+			\item RW: Read-Write mount points
+			\item MDONLY: The mount point is RW for metadata, but data
+				accesses are forbidden (both read and write). This
+				means you can do everything on md, but nothing on
+				data.
+			\item MDONLY\_RO: Like RO, but reading data is forbidden.
+				You can read only metadata.
+        \end{itemize}                
+		e.g: Access\_Type = "RW" ;
+
+\item  Anonymous\_root\_uid : The uid to be used for root when no root access
+		was specified for this clients. This is the definition of the
+		'nobody' user. "Traditional" value is -2\\
+		e.g: Anonymous\_root\_uid = -2 ;
+	
+\item  NOSUID: a flag (with value TRUE or FALSE) showing if setuid bit is
+		kept. \\
+        e.g : NOSUID= TRUE;
+	
+\item  NOSGID: a flag (with value TRUE or FALSE) showing if setgid bit is
+		kept. \\
+        e.g : NOSGID= TRUE;
+
+\item  NFS\_Protocols: The version(s) of the NFS protocol you can use for
+		mounting this export entry\\
+		e.g: NFS\_Protocols = "2,3,4" ;
+
+\item  Transport\_Protocols: The transport layer to use for mount this entry
+		This should be UDP or TCP or a list.\\
+		e.g : Transport\_Protocols = "UDP,TCP" ;
+
+\item  Sec\_type: List of supported RPC\_SEC\_GSS authentication flavors for this export.
+  		 It can be a coma-separated list of the following values: sys, krb5i, krb5p.\\
+  		e.g : SecType = "sys,krb5";
+
+
+\item  MaxOffsetRead: Maximum offset allowed for a read operation (no limit if not specified). This could be
+		useful for prevently from "evil" use of NFS read (like access a TB long file via NFS)\\
+  		e.g : MaxRead = 409600;
+
+\item  MaxOffsetWrite: Like MaxOffsetRead, but for Write operation\\
+  		e.g : MaxWrite = 409600;
+
+\item  MaxRead, MaxWrite, PrefRead, PrefWrite, PrefReaddir: The value to be
+		returned to client when NFS3\_FSINFO is called. Better solution is not to use
+		this keys and so keep the default values, optimized for NFSv3.
+
+\item  Filesystem\_id: The filesystem id to provide to the client for this
+		export entry. NFS Client will use this value to address their
+		internal metadata cache. In NFSv4, both major and minor values
+		are used, in NFSv2 and NFSv3, only the major is used.\\
+  		e.g. : Filesystem\_id = 100.1 ;
+
+\item  PrivilegedPort: A flag (TRUE or FALSE) to specify is a client using an
+		ephemere port should be rejecting or not.\\
+  		e.g. PrivilegedPort = FALSE ;
+
+\item  Cache\_Data: A flag (TRUE or FALSE) To specify if files content should
+		be cached by the GANESHA server or not\\
+  		e.g : Cache\_Data = TRUE ;
+
+\item MaxCacheSize: if export entry is datacached, this value defines the
+        	maximum size of the files stored in this cache.
+
+
+\item  FS\_Specific: a comman separated list of information used by the FSAL
+		to perform initialization. See FSAL documentation for detail.\\
+		e.g. (for HPSS/FSAL): FS\_Specific = "cos=1" ;
+
+\item  Path: The path to export via NFS. Should have a leading slash.\\
+		e.g: Path = "/nfs/my\_exported\_directory" ;
+
+\item  Tag: A way of providing a shorter path for mounting an entry. 
+		For example, you could mount an entry like this:
+        \begin{verbatim}mount -o vers=3 nfsserver:/nfs/my_exported_directory /mnt \end{verbatim}
+		But if you specified "Tag = ganesha;", you can simply do
+        \begin{verbatim} mount -o vers=3 nfsserver:ganesha /mnt \end{verbatim}
+
+\item  Pseudo: a NFSv4 specific key that shows the path, in NFSv4 pseudo file
+		system were the 'actual' mount point resides.\\
+		e.g : Pseudo = "/nfsv4/pseudofs/nfs\_mount\_entry\_\#1" ;
+
+\end{itemize}
+
+	\subsection{The FSAL Block}
+
+	This block provides with general information about the FSAL. A given
+	FSAL could use other information, more specific, but not from this
+	block which remains generic.
+
+\begin{itemize}
+
+\item  DebugLevel: the level of verbosity for FSAL logs. Acceptable values
+			are:
+            \begin{itemize}
+			\item NIV\_NULL (no logging)
+			\item NIV\_MAJ  (log only major events)
+			\item NIV\_CRIT (log only erroneous events)
+			\item NIV\_EVENT (log only important events)
+			\item NIV\_DEBUG (log all events)
+			\item NIV\_FULL\_DEBUG (log all internal processing)
+            \end{itemize}
+		e.g: DebugLevel = "NIV\_EVENT" ;
+	
+\item   LogFile: The path to use for the logfile. \\
+		e.g: LogFile = "/var/log/ganesha.fsal.log" ;
+
+\item  max\_FS\_calls: FSAL provides a way (with a semaphore) to limit the
+		number of requests performed by the worker threads. This is useful to
+		prevent from 'FS flood via NFS'. If none is specify, no limits
+		exists and the semaphore will remain usused.\\
+		e.g : max\_FS\_calls = 20 ;
+
+\end{itemize}
+
+    \subsection{The FileSystem Block}
+
+  This block describes the beahavior of the file system on some points.
+  
+\begin{itemize}
+
+\item  MaxRead: Maximum read buffer size for this filesystem.\\
+		e.g. : MaxRead = 1048576 ;
+
+\item  MaxWrite: Maximum write buffer size for this filesystem\\
+		e.g. : MaxWrite = 1048576 ;
+
+\item  Umask: If set, this mask is applied on the mode of created objects.
+			 This should be an octal value, do not forget the leading 0. \\
+		e.g.: Umask = 0002 ;
+
+\item  CanSetTime, Symlink\_support, Link\_support:
+		Three flags (TRUE or FALSE) to specify if hard links, symbolic
+		links are allowed or if time is settable.
+
+\item  auth\_xdev\_export: A flag (TRUE of FALSE) to specify if crossing
+		junction is allowed or not.
+
+\end{itemize}
+
+
+    \subsection{The HPSS Block (Only for use with HPSS/FSAL)}
+	
+	This is the items needed for configuring the HPSS CLAPI that 
+	the HPSS/FSAL uses for its calls.
+
+\begin{itemize}
+
+\item  AuthMech: CLAPI Authentication mechanism. Should be "krb5" or "unix"\\
+		e.g. : AuthMech = "krb5" ;
+
+\item  PrincipalName: The Auth principal to be used by the HPSS/FSAL to run
+		CLAPI calls. Principal hpssfs is strongly suggested.\\
+		e.g. : PrincipalName = "hpssfs";
+
+\item  KeytabPath: The Keytab file to be use for acquiring principal identify\\
+		e.g. : KeytabPath = "/var/hpss/etc/hpss.keytabs" ;
+
+\item  CredentialLifetime : The duration in seconds after which a CLAPI credential is to
+		be renewed.\\
+		e.g. : CredentialLifetime = 3600 ;
+
+\item  NumRetries: Number of retries in CLAPI for connection failure with
+		HPSS. A value of 0 means no retry, a value of -1 means
+		"retry forever". This last value may cause troubles
+		because worker threads may hang. A value of 100 is a good
+		compromise.\\
+		e.g : NumRetries = 100 ;
+
+\item  BusyDelay: retry delay (in seconds) if core server is busy\\
+		e.g.: BusyDelay = 1 ;
+
+\item  BusyRetries: Number of retries when core is busy (0: no retry, -1: retry forever)\\
+		e.g. : BusyRetries = -1;
+
+\item  MaxConnections : Maximum number of connection to the Core Server
+		(check HPSS configuration for a coherent value)\\
+		e.g. : MaxConnections = 100;
+
+\end{itemize}
+
+    \subsection{The POSIX Block (only for use with a posix filesystem)}
+
+	This block is related to POSIX/FSAL, it contains the necessary items
+	to properly init the FSAL built on top of POSIX calls.
+
+\begin{itemize}
+
+\item  DB\_Host : The hostname for the machine running the DB engine\\
+		e.g. : DB\_Host = "dbserver.localdomain" ;
+
+\item  DB\_Port : The port to use for contacting the DB engine\\
+		e.g. : DB\_Port = 5432;
+
+\item  DB\_Name : The name for the database to use for the POSIX/FSAL\\
+		e.g. : DB\_Name = FSAL\_POSIX\_DB ;
+
+\item  DB\_Login : The username to use to connect to the database\\
+		e.g.: DB\_Login = DB\_USER ;
+	
+\item  DB\_keytab : The keytab to use to acquire the 'DB\_Login' identity.\\
+		e.g : DB\_keytab = "/var/etc/posix.db.keytab" ;
+
+\end{itemize}
+	
+
+    \subsection{The SNMP Block (Only for use with SNMP/FSAL)}
+	
+	This block is related to SNMP/FSAL, it contains necessary items
+	to properly init the FSAL built on top of a SNMP tree.
+
+\begin{itemize}
+
+\item snmp\_version: this indicates the SNMP protocol version that GANESHA
+      will use for communicating with SNMP agent. Expected values are
+      \texttt{1}, \texttt{2c} or \texttt{3}.
+      Default is \texttt{"2c"}.
+\item snmp\_server: this is the address of the SNMP master agent. A port number
+      can also be specified by adding {}``:<port>'' after the address.
+      Default is \texttt{"localhost:161"}.
+\item community: this is the SNMP community used for authentication.
+      Default is \texttt{"public"}.
+\item nb\_retries: number of retries for SNMP requests.
+      Default value is\\
+      \texttt{SNMP\_DEFAULT\_RETRIES}, defined in net-snmp library.
+\item microsec\_timeout: number of microseconds until first timeout,
+      then an exponential backoff algorithm is used for next timeouts.
+      Default value is \texttt{SNMP\_DEFAULT\_TIMEOUT}, defined in net-snmp library.
+\item client\_name: this is the client name that could be used internally
+      by net-snmp for its traces.
+      Default value is \texttt{"GANESHA"}.
+\item snmp\_getbulk\_count: this indicates the number of responses wanted
+      for each SNMP GETBULK request.
+      Default value is \texttt{64}.
+
+\end{itemize}
+
+
+
+    \subsection{The BUDDY\_MALLOC Block}
+
+	GANESHA manages its own memory on its own way. This is pretty useful
+	for memory use optimization. The algorithm is the Budd Block
+	algorithm. Each thread in GANESHA manages the memory it uses via this
+	method.
+
+\begin{itemize}
+
+\item  Page\_Size: The size of a page. This MUST be a power of 2.\\
+		e.g. : Page\_Size = 8388608;
+
+\item  Enable\_OnDemand\_Alloc: a flag (TRUE or FALSE) to specify if a thread
+		can extend its number of page when it lacks memory. Value of TRUE is
+		strongly recommended.\\
+		e.g. : Enable\_OnDemand\_Alloc = TRUE ;
+
+\item  Enable\_Extra\_Alloc :  a flag (TRUE or FALSE) to specify if buddy memory manager
+  		 allow threads to alloc memory areas that are larger than
+		Page\_sSize value.\\
+		e.g. : Enable\_Extra\_Alloc = TRUE;
+
+\item  Enable\_GC :  a flag (TRUE or FALSE) to specify if buddy memory manager
+  		can release unused pages, according to  GC\_Keep\_Factor and GC\_Keep\_Min parameters.
+		TRUE is strongly recommended.\\
+		e.g. : Enable\_GC = TRUE;
+		
+\item  GC\_Keep\_Factor : Buddy's GC must keep at least GC\_Keep\_Factor times the current number of used pages.\\
+		e.g. : GC\_Keep\_Factor = 2;
+
+\item  GC\_Keep\_Min: GC must keep at least this number of pages.\\
+		e.g. : 	GC\_Keep\_Min = 2;
+
+\item  LogFile: The path of the log file for BUDDY\_MALLOC messages (not very
+		verbose, shows only critical behaviours).\\
+		e.g. : LogFile: /var/log/ganesha.buddy\_malloc.log ;
+\end{itemize}
+		
+
+    \subsection{The 'CacheInode\_Hash' block}
+
+	This block defines the behavior of hash table used
+	for the internal metadata cache.
+
+	It consists of the following key/value peers:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the underlying filesystem's handle, i.e. 256.
+		However, if you notice a bad balancing in your hash tables,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the forecasted number of metadata entries, divided by the number
+		of worker threads.\\
+		e.g.: for 300k entries, and 30 worker threads, we'll have about 10k entries by thread.
+		Thus, a value between 2500 and 10000 should be set (it will result in
+		1 to 4 memory allocations during the whole life of the thread)
+\end{itemize}
+
+
+    \subsection{The 'CacheInode\_Client' block}
+
+	This block defines the behavior of the metadata cache.
+	It consists of the following key/value peers:
+
+\begin{itemize}
+
+\item  LogFile:
+		The file where the metadata cache events are logged.
+
+\item  DebugLevel:
+		The verbosity level for the metadata cache log.
+		The values can be:
+        \begin{itemize}
+			\item NIV\_NULL (no logging)
+			\item NIV\_MAJ  (log only major events)
+			\item NIV\_CRIT (log only erroneous events)
+			\item NIV\_EVENT (log only important events)
+			\item NIV\_DEBUG (log all events)
+			\item NIV\_FULL\_DEBUG (log all internal processing)
+        \end{itemize}
+        
+\item  LRU\_Nb\_Call\_Gc\_invalid:
+		Each worker maintains a LRU list of the last entries it handled.
+		When a worker handles an entry, it sets it invalid in other
+		threads' LRU's, in order to make them garbaging it.
+		This parameter so defines the periodicity for garbaging invalid
+		entries in this list. Thus, a worker will garbage its own list
+		after processing this amount of NFS requests.
+
+\item  LRU\_Prealloc\_PoolSize:
+		This parameter sets the number of LRU entries that
+		are preallocated for each worker thread.
+		Given that the total amount of theses entries equals
+		the number of cache entries + a certain working set
+		(number of working threads * LRU\_Nb\_Call\_Gc\_invalid),
+		this parameter must be close to the forecasted number
+		of metadata entries divided by the number of worker threads,
+		+ the value of LRU\_Nb\_Call\_Gc\_invalid.
+
+\item  Entry\_Prealloc\_PoolSize:
+		This parameter is the number of preallocated cache entries
+		for each worker thread. It must be close to the forecasted number
+		of metadata entries divided by the number of worker threads. 
+
+\item  DirData\_Prealloc\_PoolSize:
+		This parameter is the number of preallocated directory cache entries
+		for each worker thread. It must be close to the number of directories
+		in the exported filesystem divided by the number of worker threads.
+  
+\item  ParentData\_Prealloc\_PoolSize:
+		This parameter is the number (for each thread) of preallocated
+		entries' references to their parents (for example, a hard linked
+		object can have several parents).\\
+		It must be close to the forecasted number of metadata entries
+		divided by the number of worker threads, except if the filesystem
+		contains a huge amount of hard links (you should then multiply
+		this value by the average number of hard links on each object).
+ 
+\item State\_v4\_Prealloc\_PoolSize:
+                This parameter is the number (for each thread) of preallocated
+                state to be used by each worker for NFSv4 State management.\\
+                It is used only if NFSv4 is used.
+
+\item  Attr\_Expiration\_Time:
+		The expiration delay (in seconds) for cached attributes.
+		A value of "0" disables attributes cache expiration.
+  
+\item  Symlink\_Expiration\_Time:
+		The expiration delay (in seconds) for symbolic link content.
+		A value of "0" disables symlink cache expiration.
+
+\item  Directory\_Expiration\_Time:
+		The expiration delay (in seconds) for directory content.
+		A value of "0" disables directory cache expiration.
+
+\item  Use\_Getattr\_Directory\_Invalidation:  
+		This boolean indicates if a cached directory content is invalidated
+		when its mtime has changed on the underlying filesystem.
+		Setting this parameter to TRUE will result in an extra "getattr" operation
+		on the filesystem for each NFS "readdir" call, so it could strongly impact
+		the readdir performances.\\
+		However, it must be set if your filesystem tree is continuously modified
+		by an external actor (another NFS server, ...)
+		and if you need a good re-synchronisation of GANESHA's NFS server cache.
+
+\item  Use\_Test\_Access:
+		If set to TRUE (strongly recommended), NFS "access" calls will be
+		performed according to the cached attributes (mode, group, owner,...).\\
+		Else, each NFS "access" operation will result in an "access" call
+		to the underlying filesystem.
+
+\item  Use\_OpenClose\_cache:
+		If this boolean is set to TRUE, files will not be opened and closed
+		at each read/write NFS call: GANESHA will cache a certain amount of
+		opened file descriptors for better I/O performances (recommended).
+
+\item  Max\_Fd:
+		When datacaching is disabled and 'Use\_OpenClose\_cache' is enabled,
+		this parameter indicates the maximum number of files that can be kept
+		openned for each thread.\\
+		NB: when datacaching is enabled, use the FileContent\_Client::Max\_fd parameter instead
+
+\item  OpenFile\_Retention:
+		When datacaching is disabled and 'Use\_OpenClose\_cache' is enabled,
+		this parameter indicates the minimum time (in seconds) a file must
+		be kept opened.\\
+		If the 'max\_fd' limit is reached and all files have been opened
+		more recently than the 'OpenFile\_Retention' time, no more file descriptors
+		are cached until the previous ones are older than this value.
+
+\item Async\_Op\_Prealloc\_Poolsize (write back cache only):
+                The number of structure representing an asynchronous operation
+                to be preallocated.
+
+\item Nb\_Synclet (write back cache only):
+                The number of synclet to be started.
+
+\end{itemize}
+
+    \subsection{The 'CacheInode\_GC\_Policy' block}
+
+	This section defines the garbage collection policy
+	for the metadata cache.
+
+	In GANESHA, each worker thread ensures the garbage collection
+	of the cache entries it was the last to deal with.
+
+	The following parameters describe the conditions that must be
+	meet for a worker, in order for it to launch a garbage collection
+	of its entries.
+
+\begin{itemize}
+
+\item  Nb\_Call\_Before\_GC:
+		This parameter indicates, for each worker thread,
+		the number of NFS calls it has to process between
+		checking for garbage collection conditions.
+
+\item  Runtime\_Interval:
+		The period (in seconds) for checking cache high-watermark.
+		Thus, a worker thread does not check GC conditions
+		until the interval since the last garbage collection
+		has not been enlapsed.
+
+\item  NbEntries\_HighWater:
+		Garbage collections are launched only if the number of entries
+		in the cache is over this value.
+
+\item  NbEntries\_LowWater:
+		A garbage collection stops when the number of entries
+		in the metadata cache falls to this value.
+
+\item  File\_Lifetime:
+		the minimum delay (in seconds) a file has not been accessed,
+		for beeing a candidate to metadata cache garbage collection.\\
+		A value of "-1" disables files garbage collection.
+
+\item  Directory\_Lifetime:
+		the minimum delay (in seconds) a directory has not been accessed,
+		for beeing a candidate to metadata cache garbage collection.
+		Note that a directory is not garbaged until all its childs
+		have not been garbaged before.\\
+		A value of "-1" disables directory garbage collection.
+\end{itemize}
+
+
+    \subsection{The 'FileContent\_Client' config block}
+
+	This block sets the behavior for the datacache.
+	It consists of the following key/value peers:
+
+\begin{itemize}
+
+\item  LogFile:
+		The file where the datacache events are logged.
+
+\item  DebugLevel:
+		The verbosity level for the datacache log.
+		The values can be:
+        \begin{itemize}
+			\item NIV\_NULL (no logging)
+			\item NIV\_MAJ  (log only major events)
+			\item NIV\_CRIT (log only erroneous events)
+			\item NIV\_EVENT (log only important events)
+			\item NIV\_DEBUG (log all events)
+			\item NIV\_FULL\_DEBUG (log all internal processing)
+        \end{itemize}
+
+\item  LRU\_Nb\_Call\_Gc\_invalid:
+		Each worker maintains a LRU list of the last entries it handled
+		for read/write operations through the datacache.
+		When a worker accesses an entry, it sets it invalid in other
+		threads' LRU's, in order to make them garbaging it.
+		This parameter so defines the periodicity for garbaging invalid
+		entries in this list. Thus, a worker will garbage its own list
+		after processing this amount of read/write operations in the cache.
+
+\item  LRU\_Prealloc\_PoolSize:
+		This parameter sets the number of LRU entries that
+		are preallocated for each worker thread.
+		Given that the total amount of theses entries equals
+		the number of datacached entries + a certain working set
+		(number of working threads * LRU\_Nb\_Call\_Gc\_invalid),
+		this parameter must be close to the number of datacached
+		files divided by the number of worker threads,
+		+ the value of LRU\_Nb\_Call\_Gc\_invalid.
+
+\item  Entry\_Prealloc\_PoolSize:
+		This parameter is the number of preallocated datacache entries
+		for each worker thread. It must be close to the forecasted number
+		of entries that are to be datacached, divided by the number
+		of worker threads.
+
+\item  Cache\_Directory:
+		The local directory where the GANESHA's datacache is to be stored.
+
+\item  Refresh\_FSAL\_Force: 
+		Force to refresh a datacached file when it has been manually
+		modified in the cache ???
+
+\item  Use\_OpenClose\_cache:
+		If this boolean is set to TRUE, cached files will not be opened and closed
+		at each read/write NFS call: GANESHA will cache a certain amount of
+		opened file descriptors for better I/O performances (recommended).
+
+\item  Max\_Fd:
+		When datacaching and 'Use\_OpenClose\_cache' are enabled,
+		this parameter indicates the maximum number of files that can be kept
+		openned for each thread.\\
+		NB: when datacaching is disabled, use the CacheContent\_Client::Max\_fd parameter instead
+
+\item  OpenFile\_Retention:
+		When datacaching and 'Use\_OpenClose\_cache' are enabled,
+		this parameter indicates the minimum time (in seconds) a file must
+		be kept opened.\\
+		If the 'max\_fd' limit is reached and all files have been opened
+		more recently than the 'OpenFile\_Retention' time, no more file descriptors
+		are cached until the previous ones are older than this value.
+
+\end{itemize}
+
+    \subsection{The 'FileContent\_GC\_Policy' block}
+
+	This section defines the garbage collection policy
+	for the data cache.
+
+\begin{itemize}
+
+\item  Emergency\_Grace\_Delay:
+		When doing a global datacache flush (option -F of the ganesha), files who are younger
+		than this delay will neither be flushed nor removed from the cache.
+
+\item  Lifetime:
+		the minimum delay (in seconds) a file has not been accessed,
+		for beeing a candidate to flush and removal from the datacache.\\
+		A value of "-1" disables data flushing.
+
+\item  (not implemented yet) Inactivity\_Before\_Flush:
+		Will be used for automatic flushing (without removal).
+
+\item  Df\_HighWater:
+		When the local datacache filesystem usage is over this value (in percent),
+		a garbage collection of the datacache is launched.
+
+\item  Df\_LowWater:
+		A datacache garbage collection stops when the filesystem usage
+		falls to this value (in percent).
+
+\item  Runtime\_Interval:
+		The interval between checking datacache filesystem usage.
+
+\item  Nb\_Call\_Before\_GC:
+		This parameter indicates, for each worker thread,
+		the number of read/write calls through the datacache
+		it has to process between checking for filesystem usage.
+\end{itemize}
+
+
+    \subsection{The 'NFS\_Worker\_Param' block}
+
+	This section consists of the parameters for worker threads.
+\begin{itemize}
+
+\item  Pending\_Job\_Prealloc:
+		Each worker has a queue of pending jobs (requests that
+		have been received from NFS clients, and that have to be
+		processed yet).\\
+		This parameter indicates the number of preallocated
+		pending jobs for each worker thread.
+		This must be close to the 'Nb\_Before\_GC' parameter
+		+ the potential size of requests floods.
+
+\item  LRU\_Pending\_Job\_Prealloc\_PoolSize:
+		The pending jobs are sorted into a LRU list.
+		Thus, this parameter should be equal to the 'Pending\_Job\_Prealloc' parameter.
+
+\item  Nb\_Before\_GC:
+		When a worker is processing a flood of requests,
+		it does not clean its pending jobs immediatly.
+		The 'Nb\_Before\_GC' parameter indicates how many requests
+		a worker must process before cleaning its queue.
+
+\item  Nb\_DupReq\_Prealloc:
+		This indicates the number of preallocated entries
+		(for each worker) for the duplicate request cache.
+		This must be close to the total number of requests
+		stored in it, divided by the number of workers.
+		This greatly depends on the number of NFS requests/sec
+		and the lifetime of this cache (see the NFS\_Core\_Param::DupReq\_Expiration parameter)
+
+\item  LRU\_DupReq\_Prealloc\_PoolSize:
+		The pending requests are sorted into a LRU list.
+		Thus, this parameter should be equal to the 'Nb\_DupReq\_Prealloc' parameter.
+
+\item  Nb\_DupReq\_Before\_GC:
+		The 'Nb\_DupReq\_Before\_GC' parameter indicates how many requests
+		a worker must process before garbaging the duplicate request cache.
+
+\item  Nb\_IP\_Stats\_Prealloc:
+		The number of preallocated entries for the IP to statistics cache.
+		This must be close to the number of client nodes.
+
+\item  Nb\_Client\_Id\_Prealloc:
+		The number of preallocated entries for client information cache in NFSv4.
+		This must be close to the number of client nodes.
+\end{itemize}
+
+
+    \subsection{The 'NFS\_Core\_Param' block}
+
+	This section gives general parameters for the NFS deamon.
+
+\begin{itemize}
+
+\item  Nb\_Worker:
+		The number of worker threads (threads that process NFS requests)
+
+\item  NFS\_Port:
+		The port number for incoming NFS requests (default is 2049)
+
+\item  MNT\_Port:
+		The port number for mount protocol (default is any available port)
+
+\item  NFS\_Program:
+		The RPC program number for NFS (default is 100003)
+
+\item  MNT\_Program:
+		The RPC program number for mount protocol (default is 100005)
+
+\item  Drop\_IO\_Errors:
+		This parameter defines the behavior of the server when an EIO error
+		is returned by the filesystem.\\
+		TRUE indicates that the client request will be dropped, so the client
+		will retry it later.\\
+		FALSE indicates that an IO error is return to the client (and as a result,
+		to the client application).
+
+\item  Drop\_Inval\_Errors:
+                This parameter defines the behavior of the server when an EINVAL error
+                is returned by the filesystem.\\
+                TRUE indicates that the client request will be dropped, so the client
+                will retry it later.\\
+                FALSE indicates that an IO error is return to the client (and as a result,
+                to the client application).
+
+
+\item  DupReq\_Expiration:
+		This defines the lifetime for the duplicate NFS requests cache.
+
+\item  Core\_Dump\_Size:
+		This indicates the core size in case of a server crash (default is 0)
+
+\item Nb\_Max\_Fd:
+		This value will be used in a {\it setrlimit} call to set {\it RLIMIT\_NOFILE}. This is useful if you want the daemon to 
+be abale to use more open file descriptor (useful for use with the FSAL\_PROXY). By default, the OS "max open files" (see {\it ulimit -n} will be used).
+
+\item  Stats\_File\_Path:
+		This indicates the file for dumping server's statistics.
+
+\item  Stats\_Update\_Delay:
+		This indicates the delay for dumping server's statistics.
+
+\item Dump\_Stats\_Per\_Client:
+        Should be set to TRUE or FALSE. If set TRUE, the statistics
+        per client will be dumped . (default is FALSE)
+
+\item Stats\_Per\_Client\_Directory:
+               If Dump\_Stats\_Per\_Client is TRUE, this directory will contain
+               one file per client. (default is /tmp)
+
+
+\end{itemize}
+
+    \subsection{The 'NFS\_DupReq\_Hash' block}
+
+
+	Duplicate requests are found from their 'rpcxid' using a hash table.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the rpcxid, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the forecasted number of duplicate requests cache entries,
+		divided by the number of worker threads.
+		Thus, it must be equal to 'NFS\_Worker\_Param::Nb\_DupReq\_Prealloc'.
+
+\end{itemize}
+
+    \subsection{The 'NFS\_IP\_Name' block}
+
+
+	Hostnames are found from the associed IP address using a hash table.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the ip address, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the number of client hosts, divided by the number of worker threads.
+
+\item  Map:
+		The hash table content can be preloaded when the NFS server is starting
+		so that it won't have to issue any DNS requests at runtime.
+		This parameter specifies the file that contains the DNS items to be
+		preloaded.
+
+\end{itemize}
+
+    \subsection{The 'UidMapper\_Cache' block}
+
+
+	User names are used for the NFSv4 protocol.
+	They are found from the associated uid using a hash table.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the uid, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the total number of users, divided by the number of worker threads.
+
+\item  Map:
+		The hash table content can be preloaded when the NFS server is starting
+		so that it won't have to issue any ldap/nis request about users at runtime.
+		This parameter specifies the file that contains the passwd items to be
+		preloaded.
+\end{itemize}
+
+
+    \subsection{The 'GidMapper\_Cache' block}
+
+
+	Group names are used for the NFSv4 protocol.
+	They are found from the associated gid using a hash table.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the gid, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the total number of groups, divided by the number of worker threads.
+
+\item  Map:
+		The hash table content can be preloaded when the NFS server is starting
+		so that it won't have to issue any ldap/nis request about groups at runtime.
+		This parameter specifies the file that contains the group items to be
+		preloaded.
+
+\end{itemize}
+
+    \subsection{The 'NFSv4\_ClientId\_Cache' block}
+
+
+	Client ids are used in NFSv4 protocol, in order to keep informations about clients.
+	Those informations are stored into a hashtable.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the client\_id, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the number of client hosts, divided by the number of worker threads.
+
+\end{itemize}
+
+    \subsection{The 'NFSv4\_StateId\_Cache' block}
+
+
+	State ids are used in NFSv4 protocol, in order to keep informations about clients.
+	Those informations are stored into a hashtable.
+	This section specifies the parameters for this hastable:
+
+\begin{itemize}
+
+\item  Index\_Size:
+		The size of the hash table.
+		This MUST be a prime number, greater enough compared to the number of worker threads
+		(specified in the 'NFS\_Core\_Param' block)
+
+\item  Alphabet\_Length:
+		A parameter for the hashing algorithm.
+		This must be set to the number of possible values
+		for each byte of the client\_id, i.e. 256.\\
+		However, if you notice a bad balancing in your hash table,
+		you can try decreasing this value (but it should not exceed 256).
+
+\item  Prealloc\_Node\_Pool\_Size:
+		For better performances, each slot of the hash table
+		consists of a Red-Black Tree. Thus, this parameter is
+		the number of preallocated RBT entries for each worker thread.
+		As a result, this must be set to a value that is close to
+		the number of client hosts, divided by the number of worker threads.
+
+\end{itemize}
+
+    \subsection{The 'NFS\_KRB5' block}
+
+	This section specifies the parameters for RPCSEC\_GSS authentication.
+
+\begin{itemize}
+
+\item  PrincipalName:
+		The principal name the NFS server (default is nfs@localhost.localdomain)
+
+\item  KeytabPath:
+		The Kerberos5 keytab for this principal
+
+\end{itemize}
+
+    \subsection{The 'NFSv4' block}
+
+	This block is for NFSv4 specific parameters.
+
+\begin{itemize}
+
+\item  Lease\_Lifetime:
+		This specifies the NFSv4 lease time (see RFC 3530 for more details)
+\item  FH\_expire:
+		This specifies if NFSv4 FH will expire (see RFC 3530 for more details)
+\item Returns\_ERR\_FH\_EXPIRED:
+                Specifies if the serveur should return NFS4ERR\_FHEXPIRED. This
+                will be used only if FH\_expire is TRUE.
+\item Use\_OPEN\_CONFIRM:
+		This specifies if the server should request the client (via OP4\_OPEN\_CONFIRM) to 
+                confirm for the files it opens. Default Value is FALSE
+\end{itemize}
+
+
+\end{document}
+

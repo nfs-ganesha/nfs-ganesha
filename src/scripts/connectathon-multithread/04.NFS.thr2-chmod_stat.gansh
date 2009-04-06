@@ -1,0 +1,77 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/leibovic"
+set TEST_DIR  "/connectathon-ganesha"
+
+
+############################
+#     TEST BODY
+############################
+
+# wait for layers initialization
+barrier
+set LAYER NFS
+
+mount $MOUNT_DIR
+
+
+cd $TEST_DIR
+
+create FICHIER_2.1 666
+create FICHIER_2.2 666
+create FICHIER_2.3 666
+
+setattr FICHIER_2.1 mode=0000
+ls -l FICHIER_2.1
+setattr FICHIER_2.1 mode=0666
+ls -l FICHIER_2.1
+
+setattr FICHIER_2.2 mode=0000
+ls -l FICHIER_2.2
+setattr FICHIER_2.2 mode=0666
+ls -l FICHIER_2.2
+
+setattr FICHIER_2.3 mode=0000
+ls -l FICHIER_2.3
+setattr FICHIER_2.3 mode=0666
+ls -l FICHIER_2.3
+
+setattr FICHIER_2.1 mode=0000
+ls -l FICHIER_2.1
+setattr FICHIER_2.1 mode=0666
+ls -l FICHIER_2.1
+
+setattr FICHIER_2.2 mode=0000
+ls -l FICHIER_2.2
+setattr FICHIER_2.2 mode=0666
+ls -l FICHIER_2.2
+
+setattr FICHIER_2.3 mode=0000
+ls -l FICHIER_2.3
+setattr FICHIER_2.3 mode=0666
+ls -l FICHIER_2.3
+
+setattr FICHIER_2.1 mode=0000
+ls -l FICHIER_2.1
+setattr FICHIER_2.1 mode=0666
+ls -l FICHIER_2.1
+
+setattr FICHIER_2.2 mode=0000
+ls -l FICHIER_2.2
+setattr FICHIER_2.2 mode=0666
+ls -l FICHIER_2.2
+
+setattr FICHIER_2.3 mode=0000
+ls -l FICHIER_2.3
+setattr FICHIER_2.3 mode=0666
+ls -l FICHIER_2.3
+
+unlink FICHIER_2.1
+unlink FICHIER_2.2
+unlink FICHIER_2.3

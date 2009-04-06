@@ -1,0 +1,81 @@
+  To use directly from the package root directory, you must first
+create the auto-generated files and compile any shared libraries
+inplace via './setup.py build_ext --inplace'.
+
+  Then you can run the tests via:
+./testserver.py SERVER:/PATH [options] [flags] [testcode]
+
+Useful options are:
+all : run all standard tests (defaults to running none)
+--rundeps : run dependencies even if not specifically requested on command line
+--maketree : will (re)create the test tree. Ie it will create and populate
+	     the directories /PATH/tmp and /PATH/tree
+-o, --outfile : will save results into given file.
+		results can then be examined using ./showresults.py FILE
+--showflags : will show a list of available flags
+-v : show test status as they are being run, instead of summary at end
+
+------------------------------------------------
+
+Usage:
+Each test has a unique code.  It will also belong to one or more
+groups which are indicated by flags. Codes and flags can be put on the
+command line as is, or preceded by 'no'.  After options and the
+SERVER:/PATH argument are removed, each test is compared to the
+remaining args left to right.  Its status starts as DONTRUN, then is modified 
+in turn by each argument code or flag that it matches
+
+example1:
+./testserver.py tiffin:/pynfstest --maketree link noblock getattr BLOCK1
+
+This will (re)create the test tree, then run:
+1. the test with code BLOCK1
+2. every test that has the 'getattr' flag
+3. every test that has the 'link' flag but does not have the 'block' flag
+Before running each test, it will try to run any tests it depends on.  However,
+the dependent tests must pass the same checks on flags and codes.
+
+example2:
+./testserver.py tiffin:/pynfstest --rundep link getattr noblock 
+
+This will use the previously created test tree, and run:
+1. every test that has the 'getattr' flag but does not have the 'block' flag
+2. every test that has the 'link' flag but does not have the 'block' flag
+Before running each test, it will make sure any test dependencies are run
+first, regardless of their flags.
+
+example3:
+./testserver.py tiffin:/pynfstest --force all noblock getattr 
+
+This will use the previously created test tree, and run:
+1. every test that has the 'getattr' flag
+2. every other test in the standard suite that does not have the 'block' flag
+Each test will be run, regardless of its dependencies.
+
+------------------------------------------------
+
+The test suite will first check that the tmp directory is empty, and if not, 
+try to clean it up.  This can be skipped by using --noinit.
+
+Then 2 null calls are sent.
+
+Then each test is run, each separated by a null call.
+
+Finally, 2 null calls are sent, and the it tries to clean tmp.  This step can
+be skipped using --nocleanup.
+ 
+------------------------------------------------
+
+Problems:
+
+Get a warning message along the lines of:
+RuntimeWarning: Python C API version mismatch for module gssapi: This Python has API version 1012, module gssapi has version 1011.
+
+This imples the file lib/rpc/rpcsec/gssapi.so was compiled with header files
+from a different version of python than is curently being run.
+Delete gssapi.so and try `python2.3 setup.py build_ext --inplace' (or whatever
+version (>=2.3) that you use).
+
+If this gives an error similar to:
+error: invalid Python installation: unable to open /usr/lib/python2.3/config/Makefile (No such file or directory)
+and you installed from python-*.rpm, you need to also install python-devel-*.rpm.

@@ -1,0 +1,5 @@
+prun -n10 -p parallele  ./nfsmpi -d yack11
+prun -n20 -p parallele  ./nfsmpi -d yack11
+prun -n15 -p parallele  ./nfsmpi -d yack11
+prun -n1 -p parallele  ./nfsmpi -d yack11
+

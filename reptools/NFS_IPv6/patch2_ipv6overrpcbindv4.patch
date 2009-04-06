@@ -1,0 +1,204 @@
+
+ NFSV4 IPV6: Enable daemons server to listen on AF_INET6 sockets when IPv6 support available
+ NFSV4 IPV6: Adds AF_INET6 domain processing when AF_INET processing only available
+
+ ---
+
+ fs/lockd/svc.c       |   10 ++++++++++
+ fs/nfs/callback.c    |   12 ++++++++++++
+ fs/nfsd/nfsctl.c     |   41 +++++++++++++++++++++++++++++++----------
+ fs/nfsd/nfssvc.c     |   11 +++++++++++
+ net/sunrpc/svcsock.c |    3 ++-
+ 5 files changed, 66 insertions(+), 11 deletions(-)
+
+ Signed-off-by: Aime Le Rouzic <aime.le-rouzic@bull.net>
+---
+diff -Nru rpcbindv4/fs/lockd/svc.c ipv6overrpcbindv4/fs/lockd/svc.c
+--- rpcbindv4/fs/lockd/svc.c	2008-09-15 14:36:40.000000000 +0200
++++ ipv6overrpcbindv4/fs/lockd/svc.c	2008-09-15 15:12:29.000000000 +0200
+@@ -266,7 +266,17 @@
+ 			"lockd_up: no pid, %d users??\n", nlmsvc_users);
+ 
+ 	error = -ENOMEM;
++
++	/*
++	 * If the kernel has IPv6 support available, always listen for
++	 * both AF_INET and AF_INET6 requests.
++	 */
++	#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
++	serv = svc_create(&nlmsvc_program, LOCKD_BUFSIZE, AF_INET6, NULL);
++	#else
+ 	serv = svc_create(&nlmsvc_program, LOCKD_BUFSIZE, AF_INET, NULL);
++	#endif
++
+ 	if (!serv) {
+ 		printk(KERN_WARNING "lockd_up: create service failed\n");
+ 		goto out;
+diff -Nru rpcbindv4/fs/nfs/callback.c ipv6overrpcbindv4/fs/nfs/callback.c
+--- rpcbindv4/fs/nfs/callback.c	2008-09-15 14:35:48.000000000 +0200
++++ ipv6overrpcbindv4/fs/nfs/callback.c	2008-09-15 15:30:16.000000000 +0200
+@@ -105,8 +105,20 @@
+ 	mutex_lock(&nfs_callback_mutex);
+ 	if (nfs_callback_info.users++ || nfs_callback_info.task != NULL)
+ 		goto out;
++
++	/*
++	 * If the kernel has IPv6 support available, always listen for
++	 * both AF_INET and AF_INET6 requests.
++	 */
++	#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
++	serv = svc_create(&nfs4_callback_program, NFS4_CALLBACK_BUFSIZE,
++				AF_INET6, NULL);
++	#else
+ 	serv = svc_create(&nfs4_callback_program, NFS4_CALLBACK_BUFSIZE,
+ 				AF_INET, NULL);
++	#endif
++
++
+ 	ret = -ENOMEM;
+ 	if (!serv)
+ 		goto out_err;
+diff -Nru rpcbindv4/fs/nfsd/nfsctl.c ipv6overrpcbindv4/fs/nfsd/nfsctl.c
+--- rpcbindv4/fs/nfsd/nfsctl.c	2008-09-15 14:50:09.000000000 +0200
++++ ipv6overrpcbindv4/fs/nfsd/nfsctl.c	2008-09-15 15:18:24.000000000 +0200
+@@ -230,6 +230,7 @@
+ {
+ 	struct nfsctl_fsparm *data;
+ 	struct sockaddr_in *sin;
++	struct sockaddr_in6 *sin6;
+ 	struct auth_domain *clp;
+ 	int err = 0;
+ 	struct knfsd_fh *res;
+@@ -239,9 +240,19 @@
+ 		return -EINVAL;
+ 	data = (struct nfsctl_fsparm*)buf;
+ 	err = -EPROTONOSUPPORT;
+-	if (data->gd_addr.sa_family != AF_INET)
++	switch (data->gd_addr.sa_family) {
++	case AF_INET:
++		sin = (struct sockaddr_in *)&data->gd_addr;
++		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &in6);
++		break;
++	case AF_INET6:
++		sin6 = (struct sockaddr_in6 *)&data->gd_addr;
++		ipv6_addr_copy(&in6, &sin6->sin6_addr); 
++		break;
++	default:
+ 		goto out;
+-	sin = (struct sockaddr_in *)&data->gd_addr;
++	}
++
+ 	if (data->gd_maxlen > NFS3_FHSIZE)
+ 		data->gd_maxlen = NFS3_FHSIZE;
+ 
+@@ -249,8 +260,6 @@
+ 
+ 	exp_readlock();
+ 
+-	ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &in6);
+-
+ 	clp = auth_unix_lookup(&in6);
+ 	if (!clp)
+ 		err = -EPERM;
+@@ -269,6 +278,7 @@
+ {
+ 	struct nfsctl_fdparm *data;
+ 	struct sockaddr_in *sin;
++	struct sockaddr_in6 *sin6;
+ 	struct auth_domain *clp;
+ 	int err = 0;
+ 	struct knfsd_fh fh;
+@@ -279,20 +289,31 @@
+ 		return -EINVAL;
+ 	data = (struct nfsctl_fdparm*)buf;
+ 	err = -EPROTONOSUPPORT;
+-	if (data->gd_addr.sa_family != AF_INET)
++	if (data->gd_addr.sa_family != AF_INET &&
++	    data->gd_addr.sa_family != AF_INET6)
+ 		goto out;
++
+ 	err = -EINVAL;
+ 	if (data->gd_version < 2 || data->gd_version > NFSSVC_MAXVERS)
+ 		goto out;
+ 
+ 	res = buf;
+-	sin = (struct sockaddr_in *)&data->gd_addr;
+ 	exp_readlock();
+ 
+-	ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &in6);
++	switch (data->gd_addr.sa_family) {
++	case AF_INET:
++		sin = (struct sockaddr_in *)&data->gd_addr;
++		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &in6);
++		break;
++	case AF_INET6:
++		sin6 = (struct sockaddr_in6 *)&data->gd_addr;
++		ipv6_addr_copy(&in6, &sin6->sin6_addr);
++		break;
++	default:
++		goto out;
++	}
+ 
+-	clp = auth_unix_lookup(&in6);
+-	if (!clp)
++	if (!(clp = auth_unix_lookup(&in6)))
+ 		err = -EPERM;
+ 	else {
+ 		err = exp_rootfh(clp, data->gd_path, &fh, NFS_FHSIZE);
+@@ -305,7 +326,7 @@
+ 		memcpy(res, &fh.fh_base, fh.fh_size);
+ 		err = NFS_FHSIZE;
+ 	}
+- out:
++out:
+ 	return err;
+ }
+ 
+diff -Nru rpcbindv4/fs/nfsd/nfssvc.c ipv6overrpcbindv4/fs/nfsd/nfssvc.c
+--- rpcbindv4/fs/nfsd/nfssvc.c	2008-09-15 14:37:22.000000000 +0200
++++ ipv6overrpcbindv4/fs/nfsd/nfssvc.c	2008-09-15 14:54:58.000000000 +0200
+@@ -228,9 +228,20 @@
+ 	}
+ 
+ 	atomic_set(&nfsd_busy, 0);
++	/*
++	 * If the kernel has IPv6 support available, always listen for
++	 * both AF_INET and AF_INET6 requests.
++	 */
++	#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
++	nfsd_serv = svc_create_pooled(&nfsd_program, nfsd_max_blksize,
++                                      AF_INET6, nfsd_last_thread,
++                                      nfsd, THIS_MODULE);
++
++	#else
+ 	nfsd_serv = svc_create_pooled(&nfsd_program, nfsd_max_blksize,
+ 				      AF_INET, nfsd_last_thread,
+ 				      nfsd, THIS_MODULE);
++	#endif
+ 	if (nfsd_serv == NULL)
+ 		err = -ENOMEM;
+ 
+diff -Nru rpcbindv4/net/sunrpc/svcsock.c ipv6overrpcbindv4/net/sunrpc/svcsock.c
+--- rpcbindv4/net/sunrpc/svcsock.c	2008-09-15 14:42:16.000000000 +0200
++++ ipv6overrpcbindv4/net/sunrpc/svcsock.c	2008-09-15 15:34:47.000000000 +0200
+@@ -1176,8 +1176,9 @@
+ 
+ 	if (!so)
+ 		return err;
+-	if (so->sk->sk_family != AF_INET)
++	if ((so->sk->sk_family != AF_INET) && (so->sk->sk_family != AF_INET6)) {
+ 		err =  -EAFNOSUPPORT;
++	}
+ 	else if (so->sk->sk_protocol != IPPROTO_TCP &&
+ 	    so->sk->sk_protocol != IPPROTO_UDP)
+ 		err =  -EPROTONOSUPPORT;
+
+-- 
+-----------------------------------------------------------------
+Company : Bull, Architect of an Open World TM (www.bull.com)
+Name    : Aime Le Rouzic 
+Mail    : Bull - BP 208 - 38432 Echirolles Cedex - France
+E-Mail  : aime.le-rouzic@bull.net
+Phone   : 33 (4) 76.29.75.51
+Fax     : 33 (4) 76.29.75.18
+----------------------------------------------------------------- 

@@ -1,0 +1,23 @@
+The NFSv4 library nfs4lib.py
+============================
+nfs4lib.py is the base platform for the client and test
+suite. Although the RPC compiler automatically generates routines for
+packing and unpacking of data types, some utility and convenience
+methods are necessary. nfs4lib.py defines the classes UDPNFS4Client
+and TCPNFS4Client, which deals with state like a current directory,
+last sequence id etc. The class NFS4OpenFile is also implemented. It
+is a Python file-like object which allows reading and writing files
+via NFSv4 using the same methods as for regular, local files.
+
+The functions for unpacking replies in nfs4lib.py always checks if
+extra, unextracted data remains after unpacking returned data types as
+specified by the protocol. This means that nfs4lib.py detects if
+servers return too much data. Most C implementations do not do this.
+
+
+Unsorted notes
+--------------
+
+* When it comes to filenames/paths, the library uses lists of
+components. The only exceptions is NFS4OpenFile, which uses Unix
+pathnames (currently) and get_pathcomps_rel. 

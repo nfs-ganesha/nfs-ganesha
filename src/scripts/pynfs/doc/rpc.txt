@@ -1,0 +1,8 @@
+The RPC module rpc.py
+=====================
+This module originally comes from the Python source distribution. I
+have added exception classes. The class RPCException defined in this
+module is a base class for all exceptions in rpc.py and
+nfs4lib.py. rpc.py uses the standard Python module xdrlib.py and the
+Python socket library. 
+
