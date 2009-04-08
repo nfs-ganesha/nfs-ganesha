@@ -449,8 +449,8 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
   unsigned int                   chosen_synclet = 0 ;  
   unsigned int                   passcounter = 0 ;
   struct timeval                 current ;
+  struct timeval                 delta ;
   mfsl_async_op_desc_t         * pasyncopdesc = NULL ; 
-
   SetNameFunction( "MFSL_ASYNC ADT" ) ;
 
   if ( ( rc = BuddyInit( NULL )) != BUDDY_SUCCESS )
@@ -497,8 +497,13 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
                 pasyncopdesc = (mfsl_async_op_desc_t *)(pentry_dispatch->buffdata.pdata ) ;
 
 		/* Manage ops that are older than the duration of the asynchronous window */
-                if( current.tv_sec - pasyncopdesc->op_time.tv_sec < mfsl_param.adt_sleeptime   )
-                   break ;
+                timersub( &current, &(pasyncopdesc->op_time), &delta ) ;
+
+                if( delta.tv_sec < mfsl_param.async_window_sec ) 
+                  break ;
+
+                if( delta.tv_usec < mfsl_param.async_window_usec ) 
+                  break ;
 
 		/* Choose a synclet to operate on */
                 chosen_synclet =  mfsl_async_choose_synclet( ) ;

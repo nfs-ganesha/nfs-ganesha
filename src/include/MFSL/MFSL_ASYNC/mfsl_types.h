@@ -179,7 +179,7 @@ static const char * mfsl_async_op_name [] = { "MFSL_ASYNC_OP_CREATE",
 typedef struct mfsl_async_op_create_args__
 {
   fsal_name_t           precreate_name ;
-  fsal_handle_t      *  pfsal_handle_dirdest ;
+  mfsl_object_t      *  pmfsl_obj_dirdest ;
   fsal_name_t           filename ;
   fsal_accessmode_t     mode ;
 } mfsl_async_op_create_args_t ;
@@ -192,7 +192,7 @@ typedef struct mfsl_async_op_create_res__
 typedef struct mfsl_async_op_mkdir_args__
 {
   fsal_name_t           precreate_name ;
-  fsal_handle_t      *  pfsal_handle_dirdest ;
+  mfsl_object_t      *  pmfsl_obj_dirdest ;
   fsal_name_t           dirname ;
   fsal_accessmode_t     mode ;
 } mfsl_async_op_mkdir_args_t ;
@@ -216,7 +216,7 @@ typedef struct mfsl_async_op_link_res__
 
 typedef struct mfsl_async_op_remove_args__
 {
-  fsal_handle_t       * pfsal_handle ;
+  mfsl_object_t      *  pmobject ;
   fsal_name_t           name ;
 } mfsl_async_op_remove_args_t ;
 
@@ -227,9 +227,9 @@ typedef struct mfsl_async_op_remove_res__
 
 typedef struct mfsl_async_op_rename_args__
 {
-  fsal_handle_t       * pfsal_handle_dirsrc ;
+  mfsl_object_t      *  pmobject_src ;
   fsal_name_t           name_src ;
-  fsal_handle_t       * pfsal_handle_dirdest ;
+  mfsl_object_t      *  pmobject_dirdest ;
   fsal_name_t           name_dest ;
 } mfsl_async_op_rename_args_t ;
 
@@ -241,7 +241,7 @@ typedef struct mfsl_async_op_rename_res__
 
 typedef struct mfsl_async_op_setattr_args__
 {
-  fsal_handle_t       * pfsal_handle ;
+  mfsl_object_t      *  pmobject ;
   fsal_attrib_list_t    attr         ;
 } mfsl_async_op_setattr_args_t ;
 
@@ -252,7 +252,7 @@ typedef struct mfsl_async_op_setattr_res__
 
 typedef struct mfsl_async_op_truncate_args__
 {
-  fsal_handle_t       * pfsal_handle ;
+  mfsl_object_t      *  pmobject ;
   fsal_size_t           size ;
 } mfsl_async_op_truncate_args_t ;
 
@@ -312,7 +312,8 @@ fsal_status_t  mfsl_async_truncate( mfsl_async_op_desc_t  * popasyncdesc ) ;
 typedef struct mfsl_parameter__{
   unsigned int        nb_pre_async_op_desc ;     /**< Number of preallocated Aync Op descriptors       */
   unsigned int        nb_synclet           ;     /**< Number of synclet to be used                     */
-  unsigned int        adt_sleeptime        ;     /**< Asynchronos Task Dispatcher Sleep Time           */
+  unsigned int        async_window_sec     ;     /**< Asynchronos Task Dispatcher Window (seconds)     */
+  unsigned int        async_window_usec    ;     /**< Asynchronos Task Dispatcher Window (useconds)    */
   unsigned int        nb_before_gc         ;     /**< Numbers of calls before LRU invalide GC          */
   LRU_parameter_t     lru_async_param      ;     /**< Asynchorous Synclet Tasks LRU parameters         */
   unsigned int        nb_pre_create_dirs   ;     /**< The size of pre-created directories per synclet  */

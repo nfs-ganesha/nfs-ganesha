@@ -422,16 +422,6 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_dir_data                 = 256 ;
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_parent                   = 2048 ;
   p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_state_v4                 = 512 ;
-#ifdef _USE_ASYNC_CACHE_INODE
-  p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_async_op_desc              = 128 ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.nb_synclet                        = CACHE_INODE_ASYNC_DEFAULT_NB_SYNCLETS ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.atd_sleeptime                     = CACHE_INODE_ASYNC_DEFAULT_SLEEP_TIME ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_create_dirs                = CACHE_INODE_ASYNC_DEFAULT_NB_PREALLOCATED_DIRS ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.nb_pre_create_files               = CACHE_INODE_ASYNC_DEFAULT_NB_PREALLOCATED_FILES ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.lru_async_param.nb_entry_prealloc = 512 ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.lru_async_param.entry_to_str      = lru_data_entry_to_str ;
-  p_nfs_param->cache_layers_param.cache_inode_client_param.lru_async_param.clean_entry       = lru_inode_clean_entry ;
-#endif
   p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_link               = 0 ;
   p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_attr               = 0 ;
   p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_dirent             = 0 ;

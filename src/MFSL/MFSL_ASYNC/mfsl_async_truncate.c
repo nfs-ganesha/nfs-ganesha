@@ -115,7 +115,7 @@ fsal_status_t  MFSL_truncate_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_truncate for async op %p", popasyncdesc ) ;
 
-  fsal_status = FSAL_truncate( popasyncdesc->op_args.truncate.pfsal_handle,
+  fsal_status = FSAL_truncate( &(popasyncdesc->op_args.truncate.pmobject->handle),
                                popasyncdesc->fsal_op_context,
                                popasyncdesc->op_args.truncate.size,
 			       NULL, /* deprecated parameter */
@@ -227,11 +227,11 @@ fsal_status_t MFSL_truncate(
 
   DisplayLogLevel( NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
   
-  pasyncopdesc->op_type    = MFSL_ASYNC_OP_TRUNCATE ;
-  pasyncopdesc->op_mobject = filehandle ;
-  pasyncopdesc->op_args.truncate.pfsal_handle = &filehandle->handle ;
-  pasyncopdesc->op_args.truncate.size = length ;
-  pasyncopdesc->op_res.truncate.attr = *object_attributes ;
+  pasyncopdesc->op_type                   = MFSL_ASYNC_OP_TRUNCATE ;
+  pasyncopdesc->op_mobject                = filehandle ;
+  pasyncopdesc->op_args.truncate.pmobject = filehandle ;
+  pasyncopdesc->op_args.truncate.size     = length ;
+  pasyncopdesc->op_res.truncate.attr      = *object_attributes ;
 
   pasyncopdesc->op_func = MFSL_truncate_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;

@@ -161,7 +161,8 @@ fsal_status_t  MFSL_SetDefault_parameter(
 {
    out_parameter->nb_pre_async_op_desc = 50 ;
    out_parameter->nb_synclet = 1 ;
-   out_parameter->adt_sleeptime = 5 ;
+   out_parameter->async_window_sec = 1 ;
+   out_parameter->async_window_usec = 0 ;
    out_parameter->nb_before_gc = 500 ;
    out_parameter->nb_pre_create_dirs = 10 ;
    out_parameter->nb_pre_create_files = 10 ;
@@ -240,9 +241,13 @@ fsal_status_t  MFSL_load_parameter_from_conf(
 		//pparam->nb_synclet = atoi( key_value ) ;
 		pparam->nb_synclet = 1 ;
 	}
-      else if( !strcasecmp( key_name, "ADT_SleepTime" ) )
+      else if( !strcasecmp( key_name, "Async_Window_sec" ) )
 	{
-		pparam->adt_sleeptime = atoi( key_value ) ; /* Asynchronous Task Dispatcher sleeping time */
+		pparam->async_window_sec = atoi( key_value ) ; /* Asynchronous Task Dispatcher sleeping time */
+	}
+      else if( !strcasecmp( key_name, "Async_Window_usec" ) )
+	{
+		pparam->async_window_usec = atoi( key_value ) ; /* Asynchronous Task Dispatcher sleeping time */
 	}
       else if( !strcasecmp( key_name, "Nb_Sync_Before_GC" ) )
        {
