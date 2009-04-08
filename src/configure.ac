@@ -328,7 +328,8 @@ AC_DEFINE([_NO_MOUNT_LIST], 1, [Don't use MOUNT PROTOCOL's client list])
 # HOOK: we escape the '$' sign in FSAL_LIB, so that '$(top_builddir)' is kept uninterpreted until compilation time
 
 # POSIX must be the last of the list (extraneous installed file in posixdb)
-FS_ALL_LIST="PROXY SNMP FUSE POSIX LUSTRE"
+#FS_ALL_LIST="PROXY SNMP FUSE POSIX LUSTRE"
+FS_ALL_LIST="PROXY SNMP FUSE POSIX"
 
 case $FSAL in
 	HPSS)
