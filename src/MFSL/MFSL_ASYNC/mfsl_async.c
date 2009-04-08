@@ -829,11 +829,6 @@ fsal_status_t  MFSL_terminate( void )
    status.major = ERR_FSAL_NO_ERROR ;
    status.minor = 0 ;
 
-   /** @todo A raw approach, something cleaner is to be done */
-   DisplayLog( "MFSL_ASYNC_Terminate: sleeping for %u seconds", mfsl_param.adt_sleeptime + 2 ) ;
-
-   // sleep( mfsl_param.adt_sleeptime  + 2 ) ;
-
    return status ;
 
 } /* MFSL_terminate */

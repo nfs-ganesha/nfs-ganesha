@@ -116,9 +116,9 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_rename for async op %p", popasyncdesc ) ;
 
-  fsal_status = FSAL_rename( popasyncdesc->op_args.rename.pfsal_handle_dirsrc, 
+  fsal_status = FSAL_rename( &(popasyncdesc->op_args.rename.pmobject_src->handle), 
 			     &popasyncdesc->op_args.rename.name_src,
-			     popasyncdesc->op_args.rename.pfsal_handle_dirdest,
+			     &(popasyncdesc->op_args.rename.pmobject_dirdest->handle),
 			     &popasyncdesc->op_args.rename.name_dest,
                              popasyncdesc->fsal_op_context,
 			     &popasyncdesc->op_res.rename.attrsrc,
@@ -271,13 +271,13 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
   
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_RENAME ;
 
-  pasyncopdesc->op_args.rename.pfsal_handle_dirsrc = &old_parentdir_handle->handle ;
-  pasyncopdesc->op_args.rename.name_src            = *p_old_name ;
-  pasyncopdesc->op_res.rename.attrsrc              = *src_dir_attributes ;
+  pasyncopdesc->op_args.rename.pmobject_src = old_parentdir_handle ;
+  pasyncopdesc->op_args.rename.name_src     = *p_old_name ;
+  pasyncopdesc->op_res.rename.attrsrc       = *src_dir_attributes ;
 
-  pasyncopdesc->op_args.rename.pfsal_handle_dirdest = &new_parentdir_handle->handle ;
-  pasyncopdesc->op_args.rename.name_dest            = *p_new_name ;
-  pasyncopdesc->op_res.rename.attrdest              = *tgt_dir_attributes ;
+  pasyncopdesc->op_args.rename.pmobject_dirdest = new_parentdir_handle ;
+  pasyncopdesc->op_args.rename.name_dest        = *p_new_name ;
+  pasyncopdesc->op_res.rename.attrdest          = *tgt_dir_attributes ;
 
   pasyncopdesc->op_func = MFSL_rename_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;

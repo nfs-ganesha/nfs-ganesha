@@ -308,6 +308,7 @@ cache_inode_status_t cache_inode_open_by_name( cache_entry_t              * pent
 #ifdef _USE_MFSL
      fsal_status = MFSL_open_by_name( &(pentry_dir->mobject),
                                       pname,
+				      &(pentry_file->mobject),
                                       pcontext,
                                       &pclient->mfsl_context,
                                       openflags,
