@@ -115,7 +115,7 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_setattrs for async op %p", popasyncdesc ) ;
 
-  fsal_status = FSAL_setattrs( popasyncdesc->op_args.setattr.pfsal_handle,
+  fsal_status = FSAL_setattrs( &(popasyncdesc->op_args.setattr.pmobject->handle),
                                popasyncdesc->fsal_op_context,
                                &popasyncdesc->op_args.setattr.attr,
                                &popasyncdesc->op_res.setattr.attr ) ;
@@ -225,11 +225,11 @@ fsal_status_t MFSL_setattrs(
 
   DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
   
-  pasyncopdesc->op_type    = MFSL_ASYNC_OP_SETATTR ;
-  pasyncopdesc->op_mobject = filehandle ;
-  pasyncopdesc->op_args.setattr.pfsal_handle = &filehandle->handle ;
-  pasyncopdesc->op_args.setattr.attr = *attrib_set ;
-  pasyncopdesc->op_res.setattr.attr = *attrib_set ;
+  pasyncopdesc->op_type                  = MFSL_ASYNC_OP_SETATTR ;
+  pasyncopdesc->op_mobject               = filehandle ;
+  pasyncopdesc->op_args.setattr.pmobject = filehandle ;
+  pasyncopdesc->op_args.setattr.attr     = *attrib_set ;
+  pasyncopdesc->op_res.setattr.attr      = *attrib_set ;
 
   pasyncopdesc->op_func = MFSL_setattr_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;

@@ -123,9 +123,9 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
   DisplayLogLevel( NIV_DEBUG, "Renaming file to complete asynchronous FSAL_create for async op %p", popasyncdesc ) ;
 
   fsal_status = FSAL_rename( &dir_handle_precreate,
-                             &popasyncdesc->op_args.mkdir.precreate_name,
-                             popasyncdesc->op_args.mkdir.pfsal_handle_dirdest,
-                             &popasyncdesc->op_args.mkdir.dirname,
+                             &popasyncdesc->op_args.create.precreate_name,
+                             &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
+                             &popasyncdesc->op_args.create.filename,
                              popasyncdesc->fsal_op_context,
                              &attrsrc,
                              &attrdest )  ;
@@ -133,11 +133,11 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
     return fsal_status ;
 
   /* Lookup to get the right attributes for the object */
-  fsal_status = FSAL_lookup( popasyncdesc->op_args.mkdir.pfsal_handle_dirdest,
-			     &popasyncdesc->op_args.mkdir.dirname,
+  fsal_status = FSAL_lookup( &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
+			     &popasyncdesc->op_args.create.filename,
  			     popasyncdesc->fsal_op_context,
 			     &handle,
-                             &popasyncdesc->op_res.mkdir.attr );
+                             &popasyncdesc->op_res.create.attr );
 
   
   return fsal_status ; 
@@ -259,7 +259,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_CREATE ;
 
-  pasyncopdesc->op_args.create.pfsal_handle_dirdest      = &parent_directory_handle->handle ;
+  pasyncopdesc->op_args.create.pmfsl_obj_dirdest         = parent_directory_handle ;
   pasyncopdesc->op_args.create.precreate_name            = pprecreated->name ;
   pasyncopdesc->op_args.create.filename                  = *p_dirname ;
   pasyncopdesc->op_args.create.mode                      = accessmode ;

@@ -123,7 +123,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   fsal_status = FSAL_rename( &dir_handle_precreate,
                              &popasyncdesc->op_args.mkdir.precreate_name,
-                             popasyncdesc->op_args.mkdir.pfsal_handle_dirdest,
+                             &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
                              &popasyncdesc->op_args.mkdir.dirname,
                              popasyncdesc->fsal_op_context,
                              &attrsrc,
@@ -132,7 +132,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
     return fsal_status ;
 
   /* Lookup to get the right attributes for the object */
-  fsal_status = FSAL_lookup( popasyncdesc->op_args.mkdir.pfsal_handle_dirdest,
+  fsal_status = FSAL_lookup( &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
 			     &popasyncdesc->op_args.mkdir.dirname,
  			     popasyncdesc->fsal_op_context,
 			     &handle,
@@ -254,7 +254,7 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
   
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_MKDIR ;
-  pasyncopdesc->op_args.mkdir.pfsal_handle_dirdest      = &parent_directory_handle->handle ;
+  pasyncopdesc->op_args.mkdir.pmfsl_obj_dirdest         = parent_directory_handle ;
   pasyncopdesc->op_args.mkdir.precreate_name            = pprecreated->name ;
   pasyncopdesc->op_args.mkdir.dirname                   = *p_dirname ;
   pasyncopdesc->op_args.mkdir.mode                      = accessmode ;

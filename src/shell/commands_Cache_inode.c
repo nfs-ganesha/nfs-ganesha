@@ -682,16 +682,6 @@ int cacheinode_init(char * filename,
   
   cache_client_param.lru_param.entry_to_str = lru_entry_to_str ;
   cache_client_param.lru_param.clean_entry = lru_clean_entry ;
-#ifdef _USE_ASYNC_CACHE_INODE
-  cache_client_param.atd_sleeptime       = CACHE_INODE_ASYNC_DEFAULT_SLEEP_TIME ;
-  cache_client_param.nb_synclet          = CACHE_INODE_ASYNC_DEFAULT_NB_SYNCLETS ;
-  cache_client_param.nb_pre_create_dirs  = CACHE_INODE_ASYNC_DEFAULT_NB_PREALLOCATED_DIRS ;
-  cache_client_param.nb_pre_create_files = CACHE_INODE_ASYNC_DEFAULT_NB_PREALLOCATED_FILES ;
-
-  cache_client_param.lru_async_param.nb_entry_prealloc = 512 ;
-  cache_client_param.lru_async_param.entry_to_str      = lru_entry_to_str ;
-  cache_client_param.lru_async_param.clean_entry       = lru_clean_entry ;
-#endif
 
   /* We need a cache_client to acces the cache */
   rc = cache_inode_read_conf_client_parameter( config_file, &cache_client_param );

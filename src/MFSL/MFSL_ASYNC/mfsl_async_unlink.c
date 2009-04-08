@@ -115,7 +115,7 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_unlink for async op %p", popasyncdesc ) ;
 
-  fsal_status = FSAL_unlink( popasyncdesc->op_args.remove.pfsal_handle,
+  fsal_status = FSAL_unlink( &(popasyncdesc->op_args.remove.pmobject->handle),
 			     &popasyncdesc->op_args.remove.name,
                              popasyncdesc->fsal_op_context,
                              &popasyncdesc->op_res.remove.attr ) ;
@@ -228,9 +228,9 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_REMOVE ;
 
-  pasyncopdesc->op_args.remove.pfsal_handle = &dir_handle->handle ;
-  pasyncopdesc->op_args.remove.name         = *p_object_name ;
-  pasyncopdesc->op_res.remove.attr          = *dir_attributes ;
+  pasyncopdesc->op_args.remove.pmobject = dir_handle ;
+  pasyncopdesc->op_args.remove.name     = *p_object_name ;
+  pasyncopdesc->op_res.remove.attr      = *dir_attributes ;
 
   pasyncopdesc->op_func = MFSL_unlink_async_op ;
   pasyncopdesc->fsal_op_context = p_context ;
