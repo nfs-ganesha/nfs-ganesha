@@ -1,7 +1,6 @@
 noinst_LTLIBRARIES    = librwlock.la
 
 librwlock_la_SOURCES  = RW_Lock.c            \
-                        RW_Lock.h            \
                         ../include/RW_Lock.h 
                           
 
