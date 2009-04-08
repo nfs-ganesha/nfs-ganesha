@@ -1,3 +1,15 @@
+nfs-ganesha (0.99.52-1) stable; urgency=low
+
+  * Bug Fix: possible race condition in cache_inode_readdir 
+  * MFSL_ASYNC: now, preallocated entries are owned by each worker
+  * Bug Fix: bad MFSL_Context management in ganeshell
+  * Bug Fixi (MFSL): deleted entry can no more be looked up
+  * Lustre v2 FSAL Beta support (new FSAL)
+  * Fixed bug in rw_lock_downgrade
+  * I/O optimization and fd cache management
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  4 Mar 2009 10:05:28 -0600
+
 nfs-ganesha (0.99.51-1) stable; urgency=low
 
   * MFSL function are now accessible via ganeshell if --with-msfl is specified

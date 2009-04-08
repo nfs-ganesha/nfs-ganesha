@@ -337,7 +337,7 @@ case $FSAL in
 		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
                	FS_NAME="hpss"
-		FS_ALL_LIST="HPSS PROXY SNMP FUSE POSIX LUSTRE"
+		FS_ALL_LIST="HPSS PROXY SNMP FUSE POSIX"
 
 		case "$HPSS" in
 			"5.1")
@@ -394,6 +394,7 @@ case $FSAL in
                 FSAL_LDFLAGS="-llustreapi"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
+		FS_ALL_LIST="LUSTRE PROXY SNMP FUSE POSIX"
 		;;
 
 	POSIX)
