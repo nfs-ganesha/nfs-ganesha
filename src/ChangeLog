@@ -144,7 +144,7 @@
 	- New feature: very early alpha version of asynchronous metadata management is available via MFSL_ASYNC
 	  This is to be activated by using --with-mfsl=ASYNC at configure time. 
 
-0.99.52	-
+0.99.52	- Wed  8 Apr 2009
         - Bug Fix: possible race condition in cache_inode_readdir (badly placed rw_lock_downgrade) that could
           lead in having cache_inode_readdir_populate called twice at the same time.
         - MFSL_ASYNC: now, preallocated entries are owned by each 
@@ -159,3 +159,6 @@
 	- Tweak fixes in logs
 	- A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels
 
+0.99.53 -
+        - Bug fix in the non-regression test suite (badly managed
+	  configuration file)

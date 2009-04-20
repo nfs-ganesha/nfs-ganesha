@@ -164,7 +164,7 @@ int main( int argc, char * argv[] )
 	fprintf(stdout, "\
 %s: symlink and readlink not supported on this client\n", Myname);
 #else /* S_IFLNK */
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		count = 1;
 	}

@@ -155,7 +155,7 @@ int main( int argc, char *argv[] )
 
   free_testparam(param);
   
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		count = 1;
 	}
