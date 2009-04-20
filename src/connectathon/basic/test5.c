@@ -195,7 +195,7 @@ int main( int argc, char * argv[] )
     exit(1);
   }
 
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		count = 1;
 	}

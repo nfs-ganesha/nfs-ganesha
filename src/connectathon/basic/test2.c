@@ -151,10 +151,10 @@ int main( int argc, char *argv[] )
 	dname = b->dname;
   test_dir = get_test_directory(param);
   log_file = get_log_file(param);
-  
+ 
   free_testparam(param);
 
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		levels = 2;
 		files = 2;

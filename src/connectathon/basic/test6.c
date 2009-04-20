@@ -183,7 +183,7 @@ int main( int argc, char * argv[] )
 
 	nmoffset = strlen(fname);
 
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		count = 1;
 	}

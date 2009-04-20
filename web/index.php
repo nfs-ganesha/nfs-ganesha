@@ -101,7 +101,7 @@
                     <td class="date">January 26, 2009</td>
               	  </tr>
                   <tr>
-                    <td height="50"><a href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=656257" class="smallred">v 0.99.50 is available</a></td>
+                    <td height="50"><a href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=674351" class="smallred">v 0.99.52 is available</a></td>
                   </tr>
 		  <tr>
                     <td class="date">January 2006</td>
