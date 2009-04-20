@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
   free_testparam(param);
 
-	if (Fflag) {
+	if (!Fflag) {
 		Tflag = 0;
 		levels = 2;
 		files = 2;

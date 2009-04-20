@@ -4,6 +4,31 @@
 
 <p>
 <ul>
+	<li>
+	<a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=674351">NFS-GANESHA v 0.99.52</a><br>
+	</li>
+	<ul>
+        <li>Bug Fix: possible race condition in cache_inode_readdir</li>
+        <li>MFSL_ASYNC: now, preallocated entries are owned by each worker</li>
+        <li>Bug Fix: bad MFSL_Context management in ganeshell</li>
+        <li>Bug Fix: MFSL deleted entry can no more be lookuped and accessed before their actual deletion</li>
+        <li>Lustre v2 FSAL Beta</li>
+        <li>Fixed bug in RW_lock_downgrade function</li>
+        <li>Fixed weak locking in cache_inode_remove</li>
+        <li>I/O optimization and fixes</li>
+        <li>Improved fd cache management</li>
+        <li>Tweak fixes in logs</li>
+        <li>A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels</li>
+	</ul>
+	<li>
+	<a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=670224">NFS-GANESHA v 0.99.51</a><br>
+	</li>
+	<ul>
+	<li>FSAL_POSIX has been ported to MySQL. Both PGSQL and MySQL can now be used as ancillary database.</li>
+	<li>Bug Fix: massive mount request in parallel could lead to a denial of service</li>
+	<li>Bug Fix: Bad computation of FH checksum on x86_64 platform.</li>
+	<li>early implementation of asynchronous metadata caching. This is to be completed in later packages</li>
+	</ul>
 	<li><a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=656257">NFS-GANESHA v 0.99.50</a><br>
 	<ul>
 	<li>NFS-GANESHA has been ported to OpenSolaris</li>
