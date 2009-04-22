@@ -333,3 +333,29 @@ int mfsl_async_remove_specdata( mfsl_object_t   * key )
    return status ;
 } /* mfsl_async_remove_specdata */
 
+int mfsl_async_is_object_asynchronous( mfsl_object_t * object ) 
+{
+  hash_buffer_t     buffkey  ;
+  hash_buffer_t     buffval ;
+  int               status ;
+  int               rc = 0 ;
+
+  if( object == NULL )
+    return 0 ; 
+
+#ifdef _DEBUG_HASHTABLE
+  HashTable_Print( mfsl_ht ) ;
+#endif
+
+  buffkey.pdata = (caddr_t)object ;
+  buffkey.len   = sizeof( mfsl_object_t ) ;
+
+  rc = HashTable_Get( mfsl_ht, &buffkey, &buffval ) ;
+  if( rc == HASHTABLE_SUCCESS )
+    status = 1 ;
+  else
+    status = 0 ;
+
+  return status ;
+} /* mfsl_async_is_object_asynchronous */
+

@@ -160,5 +160,9 @@
 	- A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels
 
 0.99.53 -
-        - Bug fix in the non-regression test suite (badly managed
+        - Bug Fix in the non-regression test suite (badly managed
 	  configuration file)
+	- Bug Fix: in MFSL_ASYNC, an entry is not looked up by cache_inode
+	  layer if its parent is asynchronous, this will prevent from an
+	  encountered incoherency (this issue was discovered with cthon's
+	  basic test3)

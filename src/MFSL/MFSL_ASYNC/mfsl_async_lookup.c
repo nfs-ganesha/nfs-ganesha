@@ -128,16 +128,16 @@ fsal_status_t MFSL_lookup(  mfsl_object_t         * parent_directory_handle, /* 
                              &object_handle->handle,
                              object_attributes ) ;
 
-   if( FSAL_IS_ERROR( fsal_status ) )
+  if( FSAL_IS_ERROR( fsal_status ) )
      return fsal_status ;
 
-   if( mfsl_async_get_specdata( object_handle, &pasyncdata ) )
+  if( mfsl_async_get_specdata( object_handle, &pasyncdata ) )
     {
 	/* if object is asynchronous and deleted, then return ENOENT */
 	if( pasyncdata->deleted == TRUE )
           MFSL_return( ERR_FSAL_NOENT, ENOENT ) ;
     }
-     
+
   /* object was found in FSAL, is not asynchronously deleted, everything is OK */ 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;
 } /* MFSL_lookup */
