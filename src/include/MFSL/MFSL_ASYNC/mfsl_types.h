@@ -354,6 +354,7 @@ fsal_status_t mfsl_async_init_precreated_directories( fsal_op_context_t         
 fsal_status_t mfsl_async_init_precreated_files( fsal_op_context_t         * pcontext,
 						mfsl_precreated_object_t  * pool_dirs ) ;
 
+int mfsl_async_is_object_asynchronous( mfsl_object_t * object ) ;
 
 void constructor_preacreated_entries( void * ptr ) ;
 
