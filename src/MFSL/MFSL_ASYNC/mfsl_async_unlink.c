@@ -262,7 +262,12 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
         /* Possible bug here with getattr because it has not data */
    }
 
-  obj_pasyncdata->deleted = TRUE ;
+  /* Depending on the value of numlinks, the object should be deleted or not */
+  if( ( obj_pasyncdata->async_attr.numlinks > 1 ) && ( obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE ) )
+     obj_pasyncdata->async_attr.numlinks -= 1 ;
+  else
+    obj_pasyncdata->deleted = TRUE ;
+
   if( !mfsl_async_set_specdata( object_handle, obj_pasyncdata ) )
     		MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
 
