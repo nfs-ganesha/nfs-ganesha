@@ -252,7 +252,7 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   if( !mfsl_async_get_specdata( object_handle, &obj_pasyncdata ) )
    {
         /* The object to be deleted is not asynchronous, but it has
-         * has to becomo asynchronous to be correctly managed until the FSAL deletes it */   
+         * has to become asynchronous to be correctly managed until the FSAL deletes it */   
   	GET_PREALLOC( obj_pasyncdata,
         	      p_mfsl_context->pool_spec_data,
                       mfsl_param.nb_pre_async_op_desc,
