@@ -8,6 +8,7 @@
 #include "posixdb_internal.h"
 #include "stuff_alloc.h"
 
+#include <ctype.h>
 #include <string.h>
 
 /* forward declaration of function */
