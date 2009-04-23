@@ -187,6 +187,8 @@ typedef struct {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)
 
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 /* Directory stream descriptor. */
 
 typedef struct fsal_dir__{  

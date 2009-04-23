@@ -1649,7 +1649,8 @@ int fn_mfsl_mkdir( int argc ,         /* IN : number of args in argv */
 				     &objname,
 				     &context->context,
 				     &context->mcontext,
-                                     fsalmode,&subdir_hdl,NULL))){
+                                     fsalmode,&subdir_hdl,
+				     NULL, NULL))){ /* Will probably segfault */
     fprintf(output,"Error executing MFSL_mkdir:");
     print_fsal_status(output,st);
     fprintf(output,"\n");
@@ -2328,7 +2329,8 @@ int fn_mfsl_create( int argc ,         /* IN : number of args in argv */
           fsalmode,  /* IN */
           &file_hdl, /* OUT */
           /*&context->current_fd,*/ /* OUT */
-          NULL  /* [ IN/OUT ] */
+          NULL  /* [ IN/OUT ] */,
+	  NULL /* will probably segfault */
         );
   
   

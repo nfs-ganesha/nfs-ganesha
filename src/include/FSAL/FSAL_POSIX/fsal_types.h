@@ -207,6 +207,9 @@ typedef struct {
   fsal_posixdb_conn       * p_conn;
 } fsal_op_context_t;
 
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+
 typedef struct fs_specific_initinfo__{    
   fsal_posixdb_conn_params_t   dbparams;
 } fs_specific_initinfo_t;

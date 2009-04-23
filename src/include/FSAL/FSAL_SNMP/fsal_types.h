@@ -190,6 +190,9 @@
 
   } fsal_op_context_t;
   
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+
   typedef struct fsal_dir__
   {
 	fsal_handle_t       node_handle; 
