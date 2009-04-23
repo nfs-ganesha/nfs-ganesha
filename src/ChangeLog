@@ -168,3 +168,6 @@
 	  basic test3)
 	- Bug Fix: in MFSL_ASYNC, numlinks was badly managed in MFSL_unlink,
 	  files with numlinks >1 were deleted by MFSL_unlink
+	- Bug Fix: in MFSL_ASYNC, symbolic links can't be proceeded
+	  asynchronously. Mechanism were added to bypass the asynchronous
+	  management for this specific case

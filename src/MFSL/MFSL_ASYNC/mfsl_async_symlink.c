@@ -88,65 +88,50 @@
 #endif
 
 /* fsal_types contains constants and type definitions for FSAL */
+#include "log_functions.h"
+#include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal.h"
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
+
+#include <pthread.h>
+#include <errno.h>
 
 #ifndef _USE_SWIG
 
 
-/**
- *
- * MFSL_getattrs : performs getattr but takes care of the asynchronous logic.
- *
- * Performs getattr but takes care of the asynchronous logic.
- *
- * @param filehandle         [IN]    mfsl object related to the object
- * @param p_context          [IN]    associated fsal context
- * @param p_mfsl_context     [INOUT] associated mfsl context
- * @param object_attributes  [INOUT] attributes for the object
- *
- * @return the same as FSAL_getattrs
- */
-fsal_status_t MFSL_lookup(  mfsl_object_t         * parent_directory_handle, /* IN */
-			    fsal_name_t           * p_filename,              /* IN */
-    			    fsal_op_context_t     * p_context,               /* IN */
-			    mfsl_context_t        * p_mfsl_context,          /* IN */
-			    mfsl_object_t         * object_handle,           /* OUT */
-			    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */ )
-{   
-  fsal_status_t                  fsal_status ;
-  mfsl_object_specific_data_t  * pasyncdata ;
+fsal_status_t MFSL_symlink(
+    mfsl_object_t         * parent_directory_handle,   /* IN */
+    fsal_name_t           * p_linkname,                /* IN */
+    fsal_path_t           * p_linkcontent,             /* IN */
+    fsal_op_context_t     * p_context,                 /* IN */
+    mfsl_context_t        * p_mfsl_context,            /* IN */
+    fsal_accessmode_t       accessmode,                /* IN (ignored); */
+    mfsl_object_t         * link_handle,               /* OUT */
+    fsal_attrib_list_t    * link_attributes            /* [ IN/OUT ] */
+)
+{
+   fsal_status_t fsal_status ;
 
+   fsal_status = FSAL_symlink( &parent_directory_handle->handle,
+	   		       p_linkname,
+			       p_linkcontent,
+			       p_context,
+		               accessmode,
+		               &link_handle->handle,
+			       link_attributes ) ;
 
-  fsal_status = FSAL_lookup( &parent_directory_handle->handle,
-                             p_filename,
-                             p_context,
-                             &object_handle->handle,
-                             object_attributes ) ;
-
-  if( FSAL_IS_ERROR( fsal_status ) )
+   if( FSAL_IS_ERROR( fsal_status ) ) 
      return fsal_status ;
 
-  if( mfsl_async_get_specdata( object_handle, &pasyncdata ) )
-    {
-	/* if object is asynchronous and deleted, then return ENOENT */
-	if( pasyncdata->deleted == TRUE )
-          MFSL_return( ERR_FSAL_NOENT, ENOENT ) ;
-    }
+   /* If successful, the symlink's mobject should be clearly indentified as a symbolic link: a symbolic link can't be an asynchronous 
+    * object and it has to remain synchronous everywhere */
+   link_handle->health = MFSL_ASYNC_IS_SYMLINK ;
  
-  /* Stamp the object as a symbolic link if needed */
-  if( object_attributes->type == FSAL_TYPE_LNK )
-    object_handle->health = MFSL_ASYNC_IS_SYMLINK ;
-
-  /* object was found in FSAL, is not asynchronously deleted, everything is OK */ 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;
-} /* MFSL_lookup */
-
-
+   MFSL_return( ERR_FSAL_NO_ERROR, 0 );
+} /* MFSL_symlink */
 
 #endif /* ! _USE_SWIG */
 

@@ -746,26 +746,6 @@ fsal_status_t MFSL_readlink(
                           link_attributes ) ;
 } /* MFSL_readlink */
 
-fsal_status_t MFSL_symlink(
-    mfsl_object_t         * parent_directory_handle,   /* IN */
-    fsal_name_t           * p_linkname,                /* IN */
-    fsal_path_t           * p_linkcontent,             /* IN */
-    fsal_op_context_t     * p_context,                 /* IN */
-    mfsl_context_t        * p_mfsl_context,            /* IN */
-    fsal_accessmode_t       accessmode,                /* IN (ignored); */
-    mfsl_object_t         * link_handle,               /* OUT */
-    fsal_attrib_list_t    * link_attributes            /* [ IN/OUT ] */
-)
-{
-    return FSAL_symlink( &parent_directory_handle->handle,
-			 p_linkname,
-			 p_linkcontent,
-			 p_context,
-			 accessmode,
-		         &link_handle->handle,
-			 link_attributes ) ;
-} /* MFSL_symlink */
-
 fsal_status_t MFSL_mknode(
     mfsl_object_t             * parentdir_handle,       /* IN */
     fsal_name_t               * p_node_name,            /* IN */
