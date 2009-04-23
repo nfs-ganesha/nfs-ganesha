@@ -195,13 +195,23 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   			   mfsl_context_t        * p_mfsl_context,          /* IN */
     			   fsal_accessmode_t       accessmode,              /* IN */
     			   mfsl_object_t         * object_handle,           /* OUT */
-    			   fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */ )
+    			   fsal_attrib_list_t    * object_attributes,       /* [ IN/OUT ] */ 
+			   fsal_attrib_list_t    * parent_attributes        /* IN */)
 {
   fsal_status_t                 fsal_status ;
   mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
   mfsl_object_specific_data_t * newdir_pasyncdata   = NULL ;
   mfsl_object_t               * pnewdir_handle = NULL ;
   mfsl_precreated_object_t    * pprecreated = NULL ;
+
+  fsal_status = MFSAL_mkdir_check_perms( parent_directory_handle,
+                                         p_dirname,
+					 p_context, 
+					 p_mfsl_context,
+                                         parent_attributes ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) )
+   return fsal_status ;
 
   P( p_mfsl_context->lock ) ;
 
@@ -229,15 +239,7 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
       exit( 1 ) ;
    }
 
-  fsal_status = MFSAL_mkdir_check_perms( parent_directory_handle,
-                                         p_dirname,
-					 p_context, 
-					 p_mfsl_context,
-                                         object_attributes ) ;
-
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return fsal_status ;
-
+ 
   /* Now get a pre-allocated directory from the synclet data */
   P( p_mfsl_context->lock ) ;
   GET_PREALLOC_CONSTRUCT( pprecreated,
@@ -281,8 +283,8 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   newdir_pasyncdata->async_attr.spaceused = DEV_BSIZE ;
   newdir_pasyncdata->async_attr.numlinks = 2 ;
 
-  newdir_pasyncdata->async_attr.owner = 0 ; /** @todo penser a mettre la "vraie" uid ici */
-  newdir_pasyncdata->async_attr.group = 0 ; /** @todo penser a mettre la "vraie" gid ici */
+  newdir_pasyncdata->async_attr.owner = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
+  newdir_pasyncdata->async_attr.group = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
   
   newdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   newdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */

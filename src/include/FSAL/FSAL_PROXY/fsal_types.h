@@ -206,6 +206,9 @@ typedef struct fsal_path__ {
     uint64_t          file_counter         ;
   } fsal_op_context_t;
  
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
+
   typedef struct fsal_dir__ 
   {
     fsal_handle_t       fhandle ;

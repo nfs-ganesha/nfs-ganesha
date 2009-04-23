@@ -187,6 +187,7 @@ fsal_status_t MFSAL_create_check_perms( mfsl_object_t                * target_ha
  * @param accessmode               [IN]    access mode for file create
  * @param object_handle            [INOUT] new mfsl object
  * @param object_attributes        [INOUT] resulting attributes for new object
+ * @param parent_attributes        [IN]    attributes of the parent entry
  *
  * @return the same as FSAL_link
  */
@@ -196,7 +197,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   			    mfsl_context_t        * p_mfsl_context,          /* IN */
     			    fsal_accessmode_t       accessmode,              /* IN */
     			    mfsl_object_t         * object_handle,           /* OUT */
-    			    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */ )
+    			    fsal_attrib_list_t    * object_attributes,       /* [ IN/OUT ] */
+			    fsal_attrib_list_t    * parent_attributes        /* IN */ )
 {
   fsal_status_t                 fsal_status ;
   mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
@@ -204,10 +206,17 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   mfsl_object_t               * pnewfile_handle = NULL ;
   mfsl_precreated_object_t    * pprecreated = NULL ;
 
+  fsal_status = MFSAL_create_check_perms( parent_directory_handle,
+                                          p_dirname,
+					  p_context, 
+					  p_mfsl_context,
+                                          parent_attributes ) ;
+
+  if( FSAL_IS_ERROR( fsal_status ) )
+   return fsal_status ;
+
   P( p_mfsl_context->lock ) ;
  
-  printf( "mfsl_create\n" ) ;
-
   GET_PREALLOC( pasyncopdesc,
                 p_mfsl_context->pool_async_op,
                 mfsl_param.nb_pre_async_op_desc,
@@ -225,15 +234,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   if( pasyncopdesc == NULL )
     MFSL_return( ERR_FSAL_INVAL, 0 ) ;
    
-  fsal_status = MFSAL_create_check_perms( parent_directory_handle,
-                                          p_dirname,
-					  p_context, 
-					  p_mfsl_context,
-                                          object_attributes ) ;
-
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return fsal_status ;
-
+ 
   if( gettimeofday( &pasyncopdesc->op_time, NULL ) != 0 )
    {
       /* Could'not get time of day... Stopping, this may need a major failure */
@@ -287,8 +288,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   newfile_pasyncdata->async_attr.spaceused = 0 ;
   newfile_pasyncdata->async_attr.numlinks = 1 ; /* New file */
 
-  newfile_pasyncdata->async_attr.owner = 0 ; /** @todo penser a mettre la "vraie" uid ici */
-  newfile_pasyncdata->async_attr.group = 0 ; /** @todo penser a mettre la "vraie" gid ici */
+  newfile_pasyncdata->async_attr.owner = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
+  newfile_pasyncdata->async_attr.group = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
   
   newfile_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   newfile_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
