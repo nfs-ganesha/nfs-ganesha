@@ -11,6 +11,7 @@ libmfslasync_la_SOURCES = mfsl_async.c              \
                           mfsl_async_link.c         \
                           mfsl_async_unlink.c       \
                           mfsl_async_rename.c       \
+                          mfsl_async_symlink.c      \
                           mfsl_async_truncate.c     \
                           mfsl_async_setattr.c      \
                           mfsl_async_getattr.c      \
