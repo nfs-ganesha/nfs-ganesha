@@ -235,12 +235,24 @@ typedef struct fsal_dir__{
 } fsal_dir_t;
     
 
+#ifdef _FSAL_POSIX_USE_STREAM
 typedef struct fsal_file__{
   FILE              * p_file;
   int               ro; /* read only file ? */
 } fsal_file_t;
 
 #define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
+
+#else
+typedef struct fsal_file__{
+  int              filefd;
+  int              ro; /* read only file ? */
+} fsal_file_t;
+
+#define FSAL_FILENO( filefd )  ( (int)filefd )
+
+#endif /* _FSAL_POSIX_USE_STREAM */
+
 
 
 #endif /* _FSAL_TYPES__SPECIFIC_H */

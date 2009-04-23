@@ -19,7 +19,11 @@ int posix2fsal_error(int posix_errorcode);
 fsal_status_t posixdb2fsal_error(fsal_posixdb_status_t statusdb);
 
 /** converts an fsal open flag to an hpss open flag. */
+#ifdef _FSAL_POSIX_USE_STREAM
 int   fsal2posix_openflags( fsal_openflags_t fsal_flags, char * p_posix_flags );
+#else
+int   fsal2posix_openflags( fsal_openflags_t fsal_flags, int * p_posix_flags );
+#endif
  
 
 /** converts an FSAL permission test to a Posix permission test. */
