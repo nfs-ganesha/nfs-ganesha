@@ -128,7 +128,11 @@ fsal_status_t FSAL_open(
 
   fsal_path_t         fsalpath;
   struct stat         buffstat;
+#ifdef _FSAL_POSIX_USE_STREAM
   char                posix_flags[4]; /* stores r, r+, w, w+, a, or a+ */
+#else
+  int                posix_flags; 
+#endif
   
   /* sanity checks.
    * note : file_attributes is optional.
@@ -144,7 +148,7 @@ fsal_status_t FSAL_open(
   
   
   /* convert fsal open flags to posix open flags */
-  rc = fsal2posix_openflags( openflags, posix_flags );
+  rc = fsal2posix_openflags( openflags, &posix_flags );
   
   /* flags conflicts. */
   if (rc) {
@@ -154,12 +158,18 @@ fsal_status_t FSAL_open(
   }
   
   TakeTokenFSCall();
+#ifdef _FSAL_POSIX_USE_STREAM
   p_file_descriptor->p_file = fopen( fsalpath.path, posix_flags );
   errsv = errno;
   ReleaseTokenFSCall();
   
   if ( !(p_file_descriptor->p_file) )
      Return( posix2fsal_error(errsv), errsv, INDEX_FSAL_open );
+#else
+  p_file_descriptor->filefd = open( fsalpath.path, posix_flags );
+  errsv = errno;
+  ReleaseTokenFSCall();
+#endif
   
   /* set the read-only flag of the file descriptor */
   p_file_descriptor->ro = openflags & FSAL_O_RDONLY;
@@ -210,6 +220,7 @@ fsal_status_t FSAL_open(
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
+#ifdef _FSAL_POSIX_USE_STREAM
 fsal_status_t FSAL_read(
     fsal_file_t     * p_file_descriptor,  /* IN */
     fsal_seek_t     * p_seek_descriptor,  /* [IN] */
@@ -308,7 +319,93 @@ fsal_status_t FSAL_read(
   Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read ); 
   
 }
+#else
+fsal_status_t FSAL_read(
+    fsal_file_t     * p_file_descriptor,  /* IN */
+    fsal_seek_t     * p_seek_descriptor,  /* [IN] */
+    fsal_size_t     buffer_size,        /* IN */
+    caddr_t         buffer,             /* OUT */
+    fsal_size_t     * p_read_amount,      /* OUT */
+    fsal_boolean_t  * p_end_of_file       /* OUT */
+){
 
+  size_t i_size;  
+  size_t nb_read;
+  int rc, errsv;
+  
+  /* sanity checks. */
+  if ( !p_file_descriptor ||!buffer || !p_read_amount || !p_end_of_file )
+    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_read);
+
+  /** @todo: manage fsal_size_t to size_t convertion */
+  i_size = (size_t) buffer_size;
+  
+  
+  /* positioning */
+ 
+  if ( p_seek_descriptor )
+  {
+  
+    switch ( p_seek_descriptor->whence )
+    {
+      case FSAL_SEEK_CUR:
+      case FSAL_SEEK_END :
+        /* set position plus offset */
+        
+        TakeTokenFSCall();
+        rc = lseek(p_file_descriptor->filefd, p_seek_descriptor->offset, p_seek_descriptor->whence);
+        errsv = errno;          
+
+        if ( rc )
+         {
+           DisplayLogJdLevel( fsal_log, NIV_EVENT,
+                              "Error in posix fseek operation (whence=%s, offset=%lld)",
+                              ( p_seek_descriptor->whence==FSAL_SEEK_CUR ? "SEEK_CUR" :
+                              ( p_seek_descriptor->whence==FSAL_SEEK_SET ? "SEEK_SET" :
+                              ( p_seek_descriptor->whence==FSAL_SEEK_END ? "SEEK_END" : "ERROR" ))),
+                              p_seek_descriptor->offset );
+
+           ReleaseTokenFSCall();
+
+           Return( posix2fsal_error(errsv), errsv, INDEX_FSAL_read );
+         }
+
+        nb_read = read( p_file_descriptor->filefd, buffer, i_size );
+
+        ReleaseTokenFSCall();
+        break;
+
+      case FSAL_SEEK_SET :
+        /* set absolute position to offset */
+        
+        TakeTokenFSCall();
+        nb_read = pread( p_file_descriptor->filefd, buffer, i_size, p_seek_descriptor->offset);
+        errsv = errno;          
+
+        ReleaseTokenFSCall();
+        
+        break;
+    }
+  }
+  else
+  {
+     TakeTokenFSCall();
+
+     nb_read = read( p_file_descriptor->filefd, buffer, i_size );
+
+     ReleaseTokenFSCall();
+  }
+
+  /** @todo: manage ssize_t to fsal_size_t convertion */
+  if( nb_read == -1 )
+    Return( posix2fsal_error(EBADF), EBADF, INDEX_FSAL_read );
+  
+  *p_read_amount = nb_read;
+  
+  Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read ); 
+  
+}
+#endif /* _FSAL_POSIX_USE_STREAM */
 
 
 
@@ -335,6 +432,7 @@ fsal_status_t FSAL_read(
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
+#ifdef _FSAL_POSIX_USE_STREAM
 fsal_status_t FSAL_write(
     fsal_file_t        * p_file_descriptor,     /* IN */
     fsal_seek_t        * p_seek_descriptor,     /* IN */
@@ -444,7 +542,93 @@ fsal_status_t FSAL_write(
   Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_write ); 
   
 }
+#else
+fsal_status_t FSAL_write(
+    fsal_file_t        * p_file_descriptor,     /* IN */
+    fsal_seek_t        * p_seek_descriptor,     /* IN */
+    fsal_size_t        buffer_size,           /* IN */
+    caddr_t            buffer,                /* IN */
+    fsal_size_t        * p_write_amount         /* OUT */
+){
 
+  size_t i_size;  
+  size_t nb_written;
+  int rc, errsv;
+  
+  /* sanity checks. */
+  if ( !p_file_descriptor ||!buffer || !p_write_amount )
+    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_read);
+
+  /** @todo: manage fsal_size_t to size_t convertion */
+  i_size = (size_t) buffer_size;
+  
+  
+  /* positioning */
+ 
+  if ( p_seek_descriptor )
+  {
+  
+    switch ( p_seek_descriptor->whence )
+    {
+      case FSAL_SEEK_CUR:
+      case FSAL_SEEK_END :
+        /* set position plus offset */
+        
+        TakeTokenFSCall();
+        rc = lseek(p_file_descriptor->filefd, p_seek_descriptor->offset, p_seek_descriptor->whence);
+        errsv = errno;          
+
+        if ( rc )
+         {
+           DisplayLogJdLevel( fsal_log, NIV_EVENT,
+                              "Error in posix fseek operation (whence=%s, offset=%lld)",
+                              ( p_seek_descriptor->whence==FSAL_SEEK_CUR ? "SEEK_CUR" :
+                              ( p_seek_descriptor->whence==FSAL_SEEK_SET ? "SEEK_SET" :
+                              ( p_seek_descriptor->whence==FSAL_SEEK_END ? "SEEK_END" : "ERROR" ))),
+                              p_seek_descriptor->offset );
+
+           ReleaseTokenFSCall();
+
+           Return( posix2fsal_error(errsv), errsv, INDEX_FSAL_write );
+         }
+
+        nb_written = write( p_file_descriptor->filefd, buffer, i_size );
+
+        ReleaseTokenFSCall();
+        break;
+
+      case FSAL_SEEK_SET :
+        /* set absolute position to offset */
+        
+        TakeTokenFSCall();
+        nb_written = pwrite( p_file_descriptor->filefd, buffer, i_size, p_seek_descriptor->offset);
+        errsv = errno;          
+
+        ReleaseTokenFSCall();
+        
+        break;
+    }
+  }
+  else
+  {
+     TakeTokenFSCall();
+
+     nb_written = write( p_file_descriptor->filefd, buffer, i_size );
+
+     ReleaseTokenFSCall();
+  }
+
+  /** @todo: manage ssize_t to fsal_size_t convertion */
+  if( nb_written == -1 )
+    Return( posix2fsal_error(EBADF), EBADF, INDEX_FSAL_write );
+  
+  *p_write_amount = nb_written;
+  
+  Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_write ); 
+  
+}
+
+#endif /* _FSAL_POSIX_USE_STREAM */
 
 
 /**
@@ -472,8 +656,13 @@ fsal_status_t FSAL_close(
   /* call to close */
   
   TakeTokenFSCall();
-  
+
+#ifdef _FSAL_POSIX_USE_STREAM
   rc = fclose( p_file_descriptor->p_file );
+#else
+  rc = close( p_file_descriptor->filefd ) ;
+#endif
+
   errsv = errno;
   
   ReleaseTokenFSCall();

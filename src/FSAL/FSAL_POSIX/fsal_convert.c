@@ -202,6 +202,7 @@ pen_by_n
  *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
  *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
  */
+#ifdef _FSAL_POSIX_USE_STREAM
 int   fsal2posix_openflags( fsal_openflags_t fsal_flags, char * p_posix_flags )
 { 
   int cpt;
@@ -247,6 +248,43 @@ int   fsal2posix_openflags( fsal_openflags_t fsal_flags, char * p_posix_flags )
   return ERR_FSAL_NO_ERROR;
   
 }
+#else
+int   fsal2posix_openflags( fsal_openflags_t fsal_flags, int * p_posix_flags )
+{
+  int cpt;
+  
+  if (!p_posix_flags) return ERR_FSAL_FAULT;
+  
+  /* check that all used flags exist */
+  
+  if ( fsal_flags &
+       ~( FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC ))
+    return ERR_FSAL_INVAL;
+ 
+  *p_posix_flags = 0 ;
+
+  if( fsal_flags & FSAL_O_RDONLY )
+     *p_posix_flags |= O_RDONLY ; 
+
+  if( fsal_flags & FSAL_O_RDWR ) 
+     *p_posix_flags |= O_RDWR ; 
+
+  if( fsal_flags & FSAL_O_WRONLY ) 
+     *p_posix_flags |= O_WRONLY ; 
+
+  if( fsal_flags & FSAL_O_APPEND )
+     *p_posix_flags |= O_APPEND ; 
+
+  if( fsal_flags & FSAL_O_TRUNC ) 
+     *p_posix_flags |= O_TRUNC ; 
+
+  if( fsal_flags & FSAL_O_CREATE ) 
+     *p_posix_flags |= O_CREAT ; 
+
+
+  return ERR_FSAL_NO_ERROR ;
+}
+#endif /* _FSAL_POSIX_USE_STREAM */
 
 
 
