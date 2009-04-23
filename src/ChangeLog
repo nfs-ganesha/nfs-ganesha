@@ -171,3 +171,6 @@
 	- Bug Fix: in MFSL_ASYNC, symbolic links can't be proceeded
 	  asynchronously. Mechanism were added to bypass the asynchronous
 	  management for this specific case
+	- MFSL_ASYNC: MFSL_create and MFSL_mkdir now use correctly the
+	  credentials provided by the caller
+	c

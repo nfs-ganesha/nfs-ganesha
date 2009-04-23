@@ -176,6 +176,9 @@ typedef struct {
   fsal_export_context_t   * export_context;
 } fsal_op_context_t;
 
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+
 typedef struct fs_specific_initinfo__{
 	int dummy;
 } fs_specific_initinfo_t;

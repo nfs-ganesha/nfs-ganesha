@@ -177,7 +177,7 @@ cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent,
   /* Check if an entry of the same name exists */
   if( ( pentry = cache_inode_lookup( pentry_parent, 
                                      pname,
-                                     &parent_attributes, 
+                                     &object_attributes, 
                                      ht, 
                                      pclient, 
                                      pcontext, 
@@ -225,13 +225,15 @@ cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent,
      {
      case REGULAR_FILE: 
 #ifdef _USE_MFSL
+       cache_inode_get_attributes( pentry_parent, &parent_attributes ) ;
        fsal_status = MFSL_create( &pentry_parent->mobject,
                                   pname, 
                                   pcontext,  
 				  &pclient->mfsl_context,
                                   mode, 
                                   &object_handle, 
-                                  &object_attributes ) ;
+                                  &object_attributes,
+                                  &parent_attributes ) ;
 #else
        fsal_status = FSAL_create( &dir_handle,
                                   pname, 
@@ -244,13 +246,15 @@ cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent,
        
      case DIR_BEGINNING:
 #ifdef _USE_MFSL
+       cache_inode_get_attributes( pentry_parent, &parent_attributes ) ;
        fsal_status = MFSL_mkdir( &pentry_parent->mobject,
                                  pname, 
                                  pcontext,
 				 &pclient->mfsl_context,
                                  mode, 
                                  &object_handle, 
-                                 &object_attributes ) ;
+                                 &object_attributes,
+				 &parent_attributes  ) ;
 #else
        fsal_status = FSAL_mkdir( &dir_handle,
                                  pname, 

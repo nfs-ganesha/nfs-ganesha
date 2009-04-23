@@ -202,7 +202,8 @@ fsal_status_t MFSL_create(
     mfsl_context_t        * p_mfsl_context,          /* IN */
     fsal_accessmode_t       accessmode,              /* IN */
     mfsl_object_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
+    fsal_attrib_list_t    * object_attributes,       /* [ IN/OUT ] */
+    fsal_attrib_list_t    * parent_attributes        /* IN */ 
 );
 
 fsal_status_t MFSL_mkdir(
@@ -212,7 +213,8 @@ fsal_status_t MFSL_mkdir(
     mfsl_context_t        * p_mfsl_context,          /* IN */
     fsal_accessmode_t       accessmode,              /* IN */
     mfsl_object_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
+    fsal_attrib_list_t    * object_attributes,       /* [ IN/OUT ] */
+    fsal_attrib_list_t    * parent_attributes        /* IN */ 
 );
 
 fsal_status_t MFSL_truncate(

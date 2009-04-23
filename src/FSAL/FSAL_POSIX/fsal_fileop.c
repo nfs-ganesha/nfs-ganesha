@@ -399,7 +399,10 @@ fsal_status_t FSAL_read(
   /** @todo: manage ssize_t to fsal_size_t convertion */
   if( nb_read == -1 )
     Return( posix2fsal_error(EBADF), EBADF, INDEX_FSAL_read );
-  
+ 
+  if( nb_read == 0 && i_size != 0 )
+    *p_end_of_file = 1; 
+     
   *p_read_amount = nb_read;
   
   Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read ); 

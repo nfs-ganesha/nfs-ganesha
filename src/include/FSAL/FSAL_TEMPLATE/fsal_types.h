@@ -170,6 +170,9 @@ typedef struct fsal_path__ {
 
   } fsal_op_context_t;
   
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
+
   typedef int fsal_dir_t;
   typedef int fsal_file_t;
   

@@ -200,6 +200,13 @@ typedef struct {
       
 } fsal_op_context_t;
 
+#ifdef _USE_HPSS_51
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.hpss_usercred.SecPwent.Uid )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.hpss_usercred.SecPwent.Gid )
+#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.hpss_usercred.Uid )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.hpss_usercred.Gid )
+#endif
 
 /** directory stream descriptor */
 typedef struct fsal_dir__ {
