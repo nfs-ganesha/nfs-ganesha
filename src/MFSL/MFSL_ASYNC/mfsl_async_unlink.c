@@ -182,6 +182,16 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   mfsl_object_specific_data_t * dir_pasyncdata   = NULL ;
   mfsl_object_specific_data_t * obj_pasyncdata   = NULL ;
 
+  if( object_handle->health == MFSL_ASYNC_IS_SYMLINK )
+   {
+      /* Operations on symbolic links can't be done asynchronously. Because of this, the mfsl_async is 
+       * bypassed in this case */
+      return FSAL_unlink( &dir_handle->handle,
+			  p_object_name,
+			  p_context,
+			  dir_attributes ) ;
+   }
+
   GET_PREALLOC( pasyncopdesc,
                 p_mfsl_context->pool_async_op,
                 mfsl_param.nb_pre_async_op_desc,
