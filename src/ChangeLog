@@ -173,4 +173,5 @@
 	  management for this specific case
 	- MFSL_ASYNC: MFSL_create and MFSL_mkdir now use correctly the
 	  credentials provided by the caller
-	c
+	- FSAL_POSIX uses pread/pwrite instead of fseek+fwrite/fseek+fread
+	
