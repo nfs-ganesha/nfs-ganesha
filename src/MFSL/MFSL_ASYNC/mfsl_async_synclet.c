@@ -507,6 +507,7 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
 
 		/* Choose a synclet to operate on */
                 chosen_synclet =  mfsl_async_choose_synclet( ) ;
+		pasyncopdesc->related_synclet_index = chosen_synclet ;
 
 		/* Insert async op to this synclet's LRU */
                 P( synclet_data[chosen_synclet].mutex_op_lru ) ;

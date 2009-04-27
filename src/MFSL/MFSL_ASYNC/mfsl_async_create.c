@@ -115,7 +115,7 @@ extern mfsl_synclet_data_t  * synclet_data ;
 fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 {
   fsal_status_t fsal_status ;
-  fsal_attrib_list_t attrsrc, attrdest ;
+  fsal_attrib_list_t attrsrc, attrdest, chown_attr ;
   fsal_handle_t      handle ;
 
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr ;
@@ -139,7 +139,20 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &handle,
                              &popasyncdesc->op_res.create.attr );
 
-  
+   if( FSAL_IS_ERROR( fsal_status ) )
+    return fsal_status ;
+
+  /* If user is not root, setattr to chown the entry */
+  if( popasyncdesc->op_args.create.owner != 0 )
+   {
+     chown_attr.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP ; 
+     chown_attr.mode  = popasyncdesc->op_args.create.mode  ; 
+     chown_attr.owner = popasyncdesc->op_args.create.owner ; 
+     chown_attr.group = popasyncdesc->op_args.create.group ;
+ 
+     fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.create.attr ) ;
+   }
+ 
   return fsal_status ; 
 } /* MFSL_create_async_op */
 
@@ -263,6 +276,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   pasyncopdesc->op_args.create.pmfsl_obj_dirdest         = parent_directory_handle ;
   pasyncopdesc->op_args.create.precreate_name            = pprecreated->name ;
   pasyncopdesc->op_args.create.filename                  = *p_dirname ;
+  pasyncopdesc->op_args.create.owner                     = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
+  pasyncopdesc->op_args.create.group                     = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
   pasyncopdesc->op_args.create.mode                      = accessmode ;
   pasyncopdesc->op_res.create.attr.asked_attributes      = object_attributes->asked_attributes ;
   pasyncopdesc->op_res.create.attr.supported_attributes  = object_attributes->supported_attributes ;
@@ -274,7 +289,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
 
 
   pasyncopdesc->op_func = MFSL_create_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  //pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = &synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
 
   fsal_status = MFSL_async_post( pasyncopdesc ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
@@ -288,8 +304,8 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
   newfile_pasyncdata->async_attr.spaceused = 0 ;
   newfile_pasyncdata->async_attr.numlinks = 1 ; /* New file */
 
-  newfile_pasyncdata->async_attr.owner = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
-  newfile_pasyncdata->async_attr.group = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
+  newfile_pasyncdata->async_attr.owner = pasyncopdesc->op_args.create.owner ;
+  newfile_pasyncdata->async_attr.group = pasyncopdesc->op_args.create.group ;
   
   newfile_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   newfile_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
