@@ -152,7 +152,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
      fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.mkdir.attr ) ;
    }
   return fsal_status ; 
-} /* MFSL_link_async_op */
+} /* MFSL_mkdir_async_op */
 
 /**
  *
