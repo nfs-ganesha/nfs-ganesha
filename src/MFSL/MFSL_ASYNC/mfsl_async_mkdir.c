@@ -114,7 +114,7 @@ extern mfsl_synclet_data_t  * synclet_data ;
 fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 {
   fsal_status_t fsal_status ;
-  fsal_attrib_list_t attrsrc, attrdest ;
+  fsal_attrib_list_t attrsrc, attrdest, chown_attr ;
   fsal_handle_t      handle ;
 
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr ;
@@ -138,6 +138,19 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &handle,
                              &popasyncdesc->op_res.mkdir.attr );
 
+  if( FSAL_IS_ERROR( fsal_status ) )
+    return fsal_status ;
+
+  /* If user is not root, setattr to chown the entry */
+  if( popasyncdesc->op_args.mkdir.owner != 0 )
+   {
+     chown_attr.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP ; 
+     chown_attr.mode  = popasyncdesc->op_args.mkdir.mode  ; 
+     chown_attr.owner = popasyncdesc->op_args.mkdir.owner ; 
+     chown_attr.group = popasyncdesc->op_args.mkdir.group ;
+ 
+     fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.mkdir.attr ) ;
+   }
   return fsal_status ; 
 } /* MFSL_link_async_op */
 
@@ -260,6 +273,8 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   pasyncopdesc->op_args.mkdir.precreate_name            = pprecreated->name ;
   pasyncopdesc->op_args.mkdir.dirname                   = *p_dirname ;
   pasyncopdesc->op_args.mkdir.mode                      = accessmode ;
+  pasyncopdesc->op_args.mkdir.owner                     = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
+  pasyncopdesc->op_args.mkdir.group                     = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
   pasyncopdesc->op_res.mkdir.attr.asked_attributes      = object_attributes->asked_attributes ;
   pasyncopdesc->op_res.mkdir.attr.supported_attributes  = object_attributes->supported_attributes ;
 
@@ -267,7 +282,8 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
     return fsal_status ;
 
   pasyncopdesc->op_func = MFSL_mkdir_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  //pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = &synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 
@@ -283,8 +299,8 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
   newdir_pasyncdata->async_attr.spaceused = DEV_BSIZE ;
   newdir_pasyncdata->async_attr.numlinks = 2 ;
 
-  newdir_pasyncdata->async_attr.owner = FSAL_OP_CONTEXT_TO_UID( p_context ) ;
-  newdir_pasyncdata->async_attr.group = FSAL_OP_CONTEXT_TO_GID( p_context ) ;
+  newdir_pasyncdata->async_attr.owner = pasyncopdesc->op_args.mkdir.owner ; 
+  newdir_pasyncdata->async_attr.group = pasyncopdesc->op_args.mkdir.group ;
   
   newdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
   newdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */

@@ -183,6 +183,8 @@ typedef struct mfsl_async_op_create_args__
   mfsl_object_t      *  pmfsl_obj_dirdest ;
   fsal_name_t           filename ;
   fsal_accessmode_t     mode ;
+  fsal_uid_t            owner ;
+  fsal_gid_t            group ;
 } mfsl_async_op_create_args_t ;
 
 typedef struct mfsl_async_op_create_res__
@@ -196,6 +198,8 @@ typedef struct mfsl_async_op_mkdir_args__
   mfsl_object_t      *  pmfsl_obj_dirdest ;
   fsal_name_t           dirname ;
   fsal_accessmode_t     mode ;
+  fsal_uid_t            owner ;
+  fsal_gid_t            group ;
 } mfsl_async_op_mkdir_args_t ;
 
 typedef struct mfsl_async_op_mkdir_res__
@@ -295,6 +299,7 @@ typedef struct mfsl_async_op_desc__
   fsal_status_t                   (*op_func)( struct mfsl_async_op_desc__ *) ;
   fsal_op_context_t             * fsal_op_context ;
   caddr_t                         ptr_mfsl_context ;
+  unsigned int                    related_synclet_index ;
   struct  mfsl_async_op_desc__  * next_alloc ;
 } mfsl_async_op_desc_t ;
 
