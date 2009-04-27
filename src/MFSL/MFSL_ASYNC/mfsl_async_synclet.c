@@ -165,9 +165,9 @@ fsal_status_t  mfsl_async_process_async_op( mfsl_async_op_desc_t  * pasyncopdesc
   fsal_status = (pasyncopdesc->op_func)( pasyncopdesc ) ;
 
   if( FSAL_IS_ERROR( fsal_status ) )
-   {
-     return fsal_status ; 
-   }
+     DisplayLogLevel( NIV_MAJOR, "op_type=%u %s : error (%u,%u)", 
+		      pasyncopdesc->op_type, mfsl_async_op_name[pasyncopdesc->op_type],
+		      fsal_status.major, fsal_status.minor ) ;
 
   /* Free the previously allocated structures */
   pmfsl_context = (mfsl_context_t *)pasyncopdesc->ptr_mfsl_context ;
