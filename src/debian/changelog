@@ -1,6 +1,6 @@
-nfs-ganesha (0.99.52-1) stable; urgency=low
+nfs-ganesha (0.99.53-1) stable; urgency=low
 
-  *  Bug Fix in the non-regression test suite 
+  * Bug Fix in the non-regression test suite 
   * Many bug fixed in MFSL_ASYNC (tested with FSAL_PROXY)
   * FSAL_POSIX uses pread/pwrite instead of fseek+fwrite/fseek+fread
 
