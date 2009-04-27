@@ -235,6 +235,10 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Mon Apr 27 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.53-1
+- Many bugs fixed in MFSL_ASYNC (for FSAL_PROXY)
+- FSAL_POSIX now uses file descriptor and pread/pwrite instead of FILE* and fseek
+
 * Mon Apr  4 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.52-1
 - Several Bug fixes
 - MFSL_ASYNC uses preallocated entries in a cleaner way
