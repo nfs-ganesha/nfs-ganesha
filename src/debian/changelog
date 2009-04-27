@@ -1,5 +1,13 @@
 nfs-ganesha (0.99.52-1) stable; urgency=low
 
+  *  Bug Fix in the non-regression test suite 
+  * Many bug fixed in MFSL_ASYNC (tested with FSAL_PROXY)
+  * FSAL_POSIX uses pread/pwrite instead of fseek+fwrite/fseek+fread
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed, 27 Mar 2009 15:14:00 -0600
+
+nfs-ganesha (0.99.52-1) stable; urgency=low
+
   * Bug Fix: possible race condition in cache_inode_readdir 
   * MFSL_ASYNC: now, preallocated entries are owned by each worker
   * Bug Fix: bad MFSL_Context management in ganeshell
