@@ -304,10 +304,23 @@ int nfs4_op_lookup(  struct nfs_argop4 * op ,
         res_LOOKUP4.status = nfs4_fh_to_xattrfh( &(data->currentFH), &(data->currentFH) )  ;
 #endif
 
+
+     if( nfs_Referral_Name( strname ) )
+      {
+        return NFS4_OK ;
+
+        if( !nfs4_Set_Fh_Referral( &(data->currentFH ) ) ) 
+          {
+            res_LOOKUP4.status = NFS4ERR_SERVERFAULT ;
+            printf( "===> Erreur\n" ) ;
+            return res_LOOKUP4.status ;
+          }
+      }
+
       return NFS4_OK ;
       
     }
-  
+ 
   /* If the part of the code is reached, then something wrong occured in the lookup process, status is not HPSS_E_NOERROR 
    * and contains the code for the error */
   

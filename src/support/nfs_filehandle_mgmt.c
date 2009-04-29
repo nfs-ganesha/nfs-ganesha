@@ -656,7 +656,6 @@ int nfs4_Is_Fh_Pseudo( nfs_fh4 * pfh )
   return  pfhandle4->pseudofs_flag ;
 } /* nfs4_Is_Fh_Pseudo */
 
-
 /**
  *
  * nfs4_Is_Fh_Expired
@@ -681,8 +680,6 @@ int nfs4_Is_Fh_Expired( nfs_fh4 * pfh )
   if( ( nfs_param.nfsv4_param.fh_expire == TRUE )
         && ( pfilehandle4->srvboot_time != (unsigned int)ServerBootTime ) )
    {
-    printf( "============================================================---> Un fh a expire\n" ) ;
-    
     if( nfs_param.nfsv4_param.returns_err_fh_expired == TRUE )
     	return NFS4ERR_FHEXPIRED ; 
    }
@@ -714,6 +711,33 @@ int nfs4_Is_Fh_Invalid( nfs_fh4 * pfh )
 
   return NFS4_OK ;
 } /* nfs4_Is_Fh_Invalid */
+
+/**
+ * 
+ * nfs4_Is_Fh_Referral
+ *
+ * This routine is used to identify fh related to a pure referral
+ *
+ * @param pfh [IN] file handle to test.
+ *
+ * @return TRUE is fh is a referral, FALSE otherwise
+ *
+ */
+int nfs4_Is_Fh_Referral( nfs_fh4 * pfh )
+{
+  file_handle_v4_t * pfhandle4;
+
+  if( pfh == NULL )
+    return 0 ;
+
+  pfhandle4 = (file_handle_v4_t *)(pfh->nfs_fh4_val) ;
+
+  /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
+  if( pfhandle4->refid != 0 )
+     return TRUE ;
+
+  return FALSE ;
+} /* nfs4_Is_Fh_Referral */
 
 
 /**
