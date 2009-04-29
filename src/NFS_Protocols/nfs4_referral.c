@@ -70,13 +70,27 @@
  *
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
- * ---------------------------------------*/
+ * ---------------------------------------
+ */
+
+/**
+ * \file    nfs4_referral.c
+ * \author  $Author: deniel $
+ * \date    $Date: 2006/02/08 12:49:32 $
+ * \version $Revision: 1.24 $
+ * \brief   Routines used for managing NFSv4 referrals.
+ *
+ * nfs4_pseudo.c: Routines used for managing NFSv4 referrals.
+ * 
+ */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -98,120 +112,41 @@
 
 #include "log_functions.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
+#include "nfs_proto_functions.h"
+#include "nfs_tools.h"
+#include "nfs_exports.h"
+#include "nfs_file_handle.h"
 #include "cache_inode.h"
 #include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
 
-/**
- *
- *	nfs4_op_getfh: The NFS4_OP_GETFH operation
- *
- * Gets the currentFH for the current compound requests.
- * This operation returns the current FH in the reply structure.
- *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
- *
- * @see all the nfs4_op_<*> function
- * @see nfs4_Compound
- *
- */
 
-int nfs4_op_getfh(  struct nfs_argop4 * op ,   
-                    compound_data_t   * data,
-                    struct nfs_resop4 * resp)
+int nfs4_Set_Fh_Referral( nfs_fh4 * pfh )
 {
-  int error ;
-  char __attribute__(( __unused__ )) funcname[] = "nfs4_op_getfh" ;
-#ifdef _DEBUG_NFS_V4
-  int i ;
-  char fhstr[LEN_FH_STR] ;
-#endif
+  file_handle_v4_t * pfhandle4;
+
+  if( pfh == NULL )
+    return 0 ;
+
+
+  printf( "===> Referral traversed\n" ) ;
+  pfhandle4->refid = 1 ;
   
-  resp->resop = NFS4_OP_GETFH ;
+  return 1 ;
+}
 
-#ifdef _DEBUG_NFS_V4
-  nfs4_sprint_fhandle( &data->currentFH, fhstr ) ;
-  DisplayLog( "NFS4 GETFH BEFORE: %s", fhstr ) ;
-#endif
-
-  /* If there is no FH */
-  if( nfs4_Is_Fh_Empty( &(data->currentFH) ) )
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_NOFILEHANDLE ;
-      return NFS4ERR_NOFILEHANDLE ;
-    }
-  
-  /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->currentFH) ) )
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_BADHANDLE ;
-      return NFS4ERR_BADHANDLE ;
-    }
-  
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED ;
-      return NFS4ERR_FHEXPIRED ;
-    }
- 
-  /* Test if the filehandle is related to a referral */
-  if( nfs4_Is_Fh_Referral( &(data->currentFH) ) )
-    {
-	printf( "===> Je tiens un fh de junction\n" ) ;
-      // resp->nfs_resop4_u.opgetfh.status = NFS4ERR_MOVED ;
-      // return NFS4ERR_MOVED ;
-    }
-  /* Copy the filehandle to the reply structure */
-  resp->nfs_resop4_u.opgetfh.status = NFS4_OK ;
-
-  if( ( error = nfs4_AllocateFH( &(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object) ) ) != NFS4_OK )
-    {
-      resp->nfs_resop4_u.opgetfh.status = error ;
-      return error ;
-    }
-  
-  /* Put the data in place */
-  resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =  data->currentFH.nfs_fh4_len ;
-  memcpy( resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val, 
-          data->currentFH.nfs_fh4_val,  
-          data->currentFH.nfs_fh4_len  ) ;
-
-  /* Test */
-#ifdef _DEBUG_NFS_V4
-  nfs4_sprint_fhandle( &resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object, fhstr ) ;
-  DisplayLog( "NFS4 GETFH AFTER: %s", fhstr ) ;
-#endif
-
-  return NFS4_OK ;
-} /* nfs4_op_getfh */
-
-
-/**
- * nfs4_op_getfh_Free: frees what was allocared to handle nfs4_op_getfh.
- * 
- * Frees what was allocared to handle nfs4_op_getfh.
- *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- * 
- */
-void nfs4_op_getfh_Free( GETFH4res * resp )
+int nfs_Referral_Name( char * strname )
 {
-  if( resp->status == NFS4_OK ) 
-    Mem_Free( resp->GETFH4res_u.resok4.object.nfs_fh4_val ) ;
-  return ;
-} /* nfs4_op_getfh_Free */
+  if( strname == NULL )
+    return 0 ;
+
+  if( !strncmp( strname, "nfs_refer", strlen( "nfs_refer" ) ) )
+   {
+      return 1 ;
+   }
+
+  return 0 ;
+} /* nfs_Is_XattrD_Name */
+
+
