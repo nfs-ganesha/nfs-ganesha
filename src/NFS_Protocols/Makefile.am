@@ -15,6 +15,7 @@ libnfsproto_la_SOURCES = mnt_Null.c                       \
                          nfs_Null.c                       \
                          nfs_proto_tools.c                \
                          nfs4_pseudo.c                    \
+                         nfs4_referral.c                  \
                          nfs4_xattr.c                     \
                          nfs_xattr.c                      \
                          nfs4_Compound.c                  \

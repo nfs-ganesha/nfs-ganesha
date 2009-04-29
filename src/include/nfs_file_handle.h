@@ -128,13 +128,14 @@ typedef struct file_handle_v4__
 {
   char           checksum[16] ;  /* FH checksum, for encryption support      len = 16 bytes  */
   unsigned short exportid ;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
+  unsigned short refid ;         /* used for referral                        len = 2 bytes   */
   unsigned int   pseudofs_id ;   /* Id for the pseudo fs related to this fh  len = 4 bytes   */
   unsigned char  pseudofs_flag ; /* TRUE if FH is within pseudofs            len = 1 byte    */
   unsigned int   srvboot_time ;  /* 0 if FH won't expire                     len = 4 bytes   */
 #ifdef _USE_PROXY
-  char           fsopaque[95] ;  /* persistent part of FSAL handle */
+  char           fsopaque[93] ;  /* persistent part of FSAL handle */
 #else
-  char           fsopaque[24] ;
+  char           fsopaque[22] ;
 #endif
   char           xattr_pos ;     /*                                          len = 1 byte    */
 } file_handle_v4_t ;
@@ -167,6 +168,7 @@ int nfs4_Is_Fh_Xattr( nfs_fh4 * pfh ) ;
 int nfs4_Is_Fh_Pseudo( nfs_fh4 * pfh ) ;
 int nfs4_Is_Fh_Expired( nfs_fh4 * pfh ) ;
 int nfs4_Is_Fh_Invalid(  nfs_fh4 * pfh ) ;
+int nfs4_Is_Fh_Referral( nfs_fh4 * pfh ) ;
 
 /* This one is used to detect Xattr related FH */
 int nfs3_Is_Fh_Xattr( nfs_fh3 * pfh ) ;
