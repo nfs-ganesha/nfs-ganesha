@@ -176,6 +176,14 @@ int nfs4_op_getattr(  struct nfs_argop4 * op ,
       return NFS4ERR_FHEXPIRED ;
     }
 
+  /* Test if the filehandle is related to a referral */
+  if( nfs4_Is_Fh_Referral( &(data->currentFH) ) )
+    {
+	printf( "===> NFS4_OP_GETATTR : Je tiens un fh de junction\n" ) ;
+      // resp->nfs_resop4_u.opgetfh.status = NFS4ERR_MOVED ;
+      // return NFS4ERR_MOVED ;
+    }
+
   /* Pseudo Fs management */
   if( nfs4_Is_Fh_Pseudo( &(data->currentFH) ) )
     return nfs4_op_getattr_pseudo( op, data, resp ) ;

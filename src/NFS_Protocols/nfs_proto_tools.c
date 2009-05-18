@@ -1038,6 +1038,8 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           break ;
           
         case FATTR4_FS_LOCATIONS:
+          /* This attributes is equivalent to a "mount" command line,
+           * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
 	  fs_locations.fs_root.pathname4_len = htonl( 0 ) ;
 	  fs_locations.locations.locations_len = htonl( 0 ) ; /* No FS_LOCATIONS no now */
 	  LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;

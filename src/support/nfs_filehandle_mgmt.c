@@ -357,6 +357,7 @@ int nfs4_FSALToFhandle( nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, compound_da
   /* No Pseudo fs here */
   file_handle.pseudofs_id = 0 ;
   file_handle.pseudofs_flag = FALSE ;
+  file_handle.refid = 0 ;
 
   /* if FH expires, set it there */
   if( nfs_param.nfsv4_param.fh_expire == TRUE )
@@ -733,8 +734,12 @@ int nfs4_Is_Fh_Referral( nfs_fh4 * pfh )
   pfhandle4 = (file_handle_v4_t *)(pfh->nfs_fh4_val) ;
 
   /* Referrals are fh whose pseudofs_id is set without pseudofs_flag set */
-  if( pfhandle4->refid != 0 )
+  if( pfhandle4->refid > 0 )
+   {
+     printf( "====> refid =%u \n", pfhandle4->refid ) ;
+
      return TRUE ;
+   }
 
   return FALSE ;
 } /* nfs4_Is_Fh_Referral */
