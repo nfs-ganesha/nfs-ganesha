@@ -129,6 +129,7 @@ int nfs4_Set_Fh_Referral( nfs_fh4 * pfh )
   if( pfh == NULL )
     return 0 ;
 
+  pfhandle4 = (file_handle_v4_t *)(pfh->nfs_fh4_val) ;
 
   printf( "===> Referral traversed\n" ) ;
   pfhandle4->refid = 1 ;

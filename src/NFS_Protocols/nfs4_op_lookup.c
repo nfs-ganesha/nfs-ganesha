@@ -307,8 +307,6 @@ int nfs4_op_lookup(  struct nfs_argop4 * op ,
 
      if( nfs_Referral_Name( strname ) )
       {
-        return NFS4_OK ;
-
         if( !nfs4_Set_Fh_Referral( &(data->currentFH ) ) ) 
           {
             res_LOOKUP4.status = NFS4ERR_SERVERFAULT ;

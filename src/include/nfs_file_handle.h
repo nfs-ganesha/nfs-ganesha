@@ -127,9 +127,9 @@ typedef struct file_handle_v3__
 typedef struct file_handle_v4__
 {
   char           checksum[16] ;  /* FH checksum, for encryption support      len = 16 bytes  */
-  unsigned short exportid ;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
+  unsigned int   exportid ;      /* must be correlated to exportlist_t::id   len = 4 bytes   */
+  unsigned short pseudofs_id ;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
   unsigned short refid ;         /* used for referral                        len = 2 bytes   */
-  unsigned int   pseudofs_id ;   /* Id for the pseudo fs related to this fh  len = 4 bytes   */
   unsigned char  pseudofs_flag ; /* TRUE if FH is within pseudofs            len = 1 byte    */
   unsigned int   srvboot_time ;  /* 0 if FH won't expire                     len = 4 bytes   */
 #ifdef _USE_PROXY
