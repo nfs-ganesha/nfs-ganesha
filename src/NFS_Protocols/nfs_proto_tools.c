@@ -507,6 +507,8 @@ void nfs_SetFailedStatus( fsal_op_context_t      * pcontext,
  * @return -1 if failed, 0 if successful.
  *
  */
+static char server_ref[] = "ref/nfs_refer:refer@192.168.223.30"  ;
+
 int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
                             fsal_attrib_list_t * pattr, 
                             fattr4             * Fattr, 
@@ -569,6 +571,10 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
   fattr4_quota_used         quota_used ;
   fattr4_time_modify_set    __attribute__(( __unused__ )) time_modify_set ;
   fattr4_time_access_set    __attribute__(( __unused__ )) time_access_set ; 
+
+  u_int    tmp_int ;
+  char     tmp_buff[1024] ;
+
   uint32_t attribute_to_set = 0 ; 
 
   u_int    fhandle_len = 0 ; 
@@ -1038,11 +1044,10 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           break ;
           
         case FATTR4_FS_LOCATIONS:
-          /* This attributes is equivalent to a "mount" command line,
-           * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
-	  fs_locations.fs_root.pathname4_len = htonl( 0 ) ;
-	  fs_locations.locations.locations_len = htonl( 0 ) ; /* No FS_LOCATIONS no now */
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
+                    
+          nfs4_referral_str_To_Fattr_fs_location( server_ref, tmp_buff, &tmp_int ) ;
+          memcpy( (char *)(attrvalsBuffer + LastOffset), tmp_buff, tmp_int ) ;
+          LastOffset += tmp_int ; 
           op_attr_success = 1 ;
           break ;
               
