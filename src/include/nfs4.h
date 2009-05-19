@@ -202,7 +202,7 @@ struct fs_location4 {
 typedef struct fs_location4 fs_location4;
 
 struct fs_locations4 {
-	pathname4 fs_root;
+		pathname4 fs_root;
 	struct {
 		u_int locations_len;
 		fs_location4 *locations_val;
