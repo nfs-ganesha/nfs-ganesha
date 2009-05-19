@@ -507,7 +507,7 @@ void nfs_SetFailedStatus( fsal_op_context_t      * pcontext,
  * @return -1 if failed, 0 if successful.
  *
  */
-static char server_ref[] = "ref/nfs_refer:refer@192.168.223.30"  ;
+static char server_ref[] = "posix_fs/ref/nfs_refer:refer@192.168.223.30"  ;
 
 int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
                             fsal_attrib_list_t * pattr, 
@@ -805,6 +805,17 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           /* The file system id (taken from the configuration file) */
           fsid.major = nfs_htonl64( (uint64_t)pexport->filesystem_id.major );
           fsid.minor = nfs_htonl64( (uint64_t)pexport->filesystem_id.minor ) ;
+
+          /* If object is a directory attached to a referral, then a different fsid is to be returned
+           * to tell the client that a different fs is being crossed */
+          if( nfs4_Is_Fh_Referral( objFH ) )
+           {
+             printf( "----> Referral in FATTR4_FSID !!\n" ) ;
+               
+            fsid.major = nfs_htonl64( (uint64_t)pexport->filesystem_id.major ) + 10 ;
+            fsid.minor = nfs_htonl64( (uint64_t)pexport->filesystem_id.minor ) + 10 ;
+	   }
+     
           memcpy( (char *)(attrvalsBuffer + LastOffset), &fsid, sizeof( fattr4_fsid) ) ;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
           op_attr_success = 1 ;
@@ -1477,28 +1488,10 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           break ;
           
         case FATTR4_MOUNTED_ON_FILEID :
-          /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
-           * I use hpss_GetObjId to extract this information from the Name Server's handle */
-          /* Here, the filehandle used is the "mouted on FH" kept in compound_data_t */
-          if( !nfs4_FhandleToFSAL( &data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext ) )
-            {
-              if( FSAL_IS_ERROR( fsal_status = FSAL_DigestHandle( data->pcontext->export_context,
-					                          FSAL_DIGEST_FILEID4 , 
-                                                                  &mounted_on_fsal_handle,
-                                                                  (caddr_t)&mounted_on_fileid ) ) )  
-                {
-             	  op_attr_success = 0 ;
-                }
-              else
-                { 
-		  mounted_on_fileid = nfs_htonl64( mounted_on_fileid ) ;
-                  memcpy( (char *)(attrvalsBuffer + LastOffset),  &mounted_on_fileid, sizeof( fattr4_mounted_on_fileid ) ) ; 
-                  LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
-                  op_attr_success = 1 ; 
-		}
-            }
-          else
-            op_attr_success = 0 ;
+          file_id = nfs_htonl64( pattr->fileid ) ;
+          memcpy( (char *)(attrvalsBuffer + LastOffset),  &file_id, sizeof( fattr4_fileid ) ) ; 
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
+          op_attr_success = 1 ; 
           break ;
           
         default:
