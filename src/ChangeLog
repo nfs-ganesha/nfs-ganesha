@@ -159,7 +159,7 @@
 	- Tweak fixes in logs
 	- A lot of debug messages now only appear for DEBUG and FULL_DEBUG log levels
 
-0.99.53 -
+0.99.53 - Wed 20 May 2009
         - Bug Fix in the non-regression test suite (badly managed
 	  configuration file)
 	- Bug Fix: in MFSL_ASYNC, an entry is not looked up by cache_inode
@@ -174,4 +174,5 @@
 	- MFSL_ASYNC: MFSL_create and MFSL_mkdir now use correctly the
 	  credentials provided by the caller
 	- FSAL_POSIX uses pread/pwrite instead of fseek+fwrite/fseek+fread
+	- NFSv4 implementation now supports NFSv4 referrals
 	

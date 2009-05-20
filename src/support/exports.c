@@ -171,6 +171,7 @@ cache_content_client_t         recover_datacache_client ;
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
+#define CONF_EXPORT_REFERRAL           "Referral"
 
 /** @todo : add encrypt handles option */
 
@@ -992,6 +993,10 @@ static int BuildExportEntry( config_item_t block,
       p_entry->options |= EXPORT_OPTION_PSEUDO;
       
     }
+    else if ( ! STRCMP( var_name, CONF_EXPORT_REFERRAL ) )
+    {
+	 strncpy( p_entry->referral, var_value, MAXPATHLEN ) ;
+    }
     else if ( ! STRCMP( var_name, CONF_EXPORT_ACCESSTYPE ) )
     {
       
@@ -1764,7 +1769,7 @@ static int BuildExportEntry( config_item_t block,
       set_options |= FLAG_EXPORT_MAX_CACHE_SIZE ;
 
     }
-     else if ( ! STRCMP( var_name, CONF_EXPORT_MAX_OFF_READ ) )
+   else if ( ! STRCMP( var_name, CONF_EXPORT_MAX_OFF_READ ) )
     {
       long long int offset ;
       char * end_ptr;
@@ -1892,6 +1897,7 @@ exportlist_t * BuildDefaultExport()
   strcpy(p_entry->dirname, "/" );
   strcpy(p_entry->fsname, "" );
   strcpy( p_entry->pseudopath, "/" );
+  strcpy(p_entry->referral, "" );
         
   /**
    * Grant root access to all clients
@@ -2498,6 +2504,14 @@ int nfs_export_create_root_entry( exportlist_t *  pexportlist, hash_table_t * ht
 
 	  /* Attach to the exportlist entry */
           pcurrent->fs_static_info = pstaticinfo ;
+
+          /* Set the pentry as a referral if needed */
+	  if( strcmp( pcurrent->referral, "" ) )
+           {
+		/* Set the cache_entry object as a referral by setting the 'referral' field */
+                pentry->object.dir_begin.referral = pcurrent->referral ;
+		DisplayLog( "A referral is set : %s", pentry->object.dir_begin.referral = pcurrent->referral ) ;
+           }
 
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */

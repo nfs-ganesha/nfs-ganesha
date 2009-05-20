@@ -207,6 +207,7 @@ typedef struct exportlist__
   char                  fullpath[MAXPATHLEN];    /* the path from the root */ 
   char                  fsname[MAXNAMLEN];       /* File system name, MAXNAMLEN is used for wanting of a better constant */
   char                  pseudopath[MAXPATHLEN] ; /* nfsv4 pseudo-filesystem 'virtual' path */
+  char                  referral[MAXPATHLEN] ;   /* String describing NFSv4 referral */
   
   char                  FS_specific[MAXPATHLEN] ; /* filesystem specific option string */
   char                  FS_tag[MAXPATHLEN] ;      /* filesystem "tag" string */

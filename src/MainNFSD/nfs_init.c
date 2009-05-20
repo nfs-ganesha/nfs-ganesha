@@ -155,6 +155,7 @@ pthread_t            fcc_gc_thrid ;
 char config_path[MAXPATHLEN] ;
 
 extern int nfs_do_terminate;
+extern char my_config_path[MAXPATHLEN] ;
 
 #ifdef _USE_GSSRPC
 bool_t Svcauth_gss_set_svc_name(gss_name_t name) ;

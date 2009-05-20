@@ -377,6 +377,7 @@ typedef struct cache_entry__
       unsigned int           nbactive ;         /**< Number of known active childrens                        */
       unsigned int           nbdircont ;        /**< Number of DIR_CONT associated with the DIR_BEGIN        */
       cache_inode_flag_t     has_been_readdir ; /**< True if a full readdir was performed on the directory   */
+      char                 * referral ;         /**< NULL is not a referral, is not this a 'referral string' */
 
       struct cache_inode_dir_data__
       {

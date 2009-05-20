@@ -179,6 +179,7 @@
 #define CONF_LABEL_UID_MAPPER_TABLE "Users"
 #define CONF_LABEL_GID_MAPPER_TABLE "Groups"
 #define CONF_LABEL_IP_NAME_HOSTS    "Hosts"
+#define CONF_LABEL_NFSV4_REFERRALS  "NFSv4_Referrals"
 
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
