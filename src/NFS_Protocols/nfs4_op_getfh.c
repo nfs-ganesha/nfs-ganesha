@@ -170,7 +170,6 @@ int nfs4_op_getfh(  struct nfs_argop4 * op ,
   /* Test if the filehandle is related to a referral */
   if( nfs4_Is_Fh_Referral( &(data->currentFH) ) )
     {
-	printf( "===> NFS4_OP_GETFH : Je tiens un fh de junction\n" ) ;
         resp->nfs_resop4_u.opgetfh.status = NFS4ERR_MOVED ;
         return NFS4ERR_MOVED ;
     }
