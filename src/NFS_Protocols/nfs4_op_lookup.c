@@ -304,13 +304,12 @@ int nfs4_op_lookup(  struct nfs_argop4 * op ,
         res_LOOKUP4.status = nfs4_fh_to_xattrfh( &(data->currentFH), &(data->currentFH) )  ;
 #endif
 
-
-     if( nfs_Referral_Name( strname ) )
+     if( ( data->current_entry->internal_md.type == DIR_BEGINNING ) &&
+         ( data->current_entry->object.dir_begin.referral != NULL ) )
       {
         if( !nfs4_Set_Fh_Referral( &(data->currentFH ) ) ) 
           {
             res_LOOKUP4.status = NFS4ERR_SERVERFAULT ;
-            printf( "===> Erreur\n" ) ;
             return res_LOOKUP4.status ;
           }
       }

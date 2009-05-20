@@ -507,7 +507,6 @@ void nfs_SetFailedStatus( fsal_op_context_t      * pcontext,
  * @return -1 if failed, 0 if successful.
  *
  */
-static char server_ref[] = "posix_fs/ref/nfs_refer:refer@192.168.223.30"  ;
 
 int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
                             fsal_attrib_list_t * pattr, 
@@ -602,7 +601,7 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
   fsal_staticfsinfo_t  staticinfo ;
   fsal_dynamicfsinfo_t dynamicinfo ;
   
-  fsal_handle_t mounted_on_fsal_handle ;
+  fsal_handle_t fsal_handle ;
   fsal_status_t fsal_status ;
 
   /* basic init */
@@ -810,10 +809,8 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
            * to tell the client that a different fs is being crossed */
           if( nfs4_Is_Fh_Referral( objFH ) )
            {
-             printf( "----> Referral in FATTR4_FSID !!\n" ) ;
-               
-            fsid.major = nfs_htonl64( (uint64_t)pexport->filesystem_id.major ) + 10 ;
-            fsid.minor = nfs_htonl64( (uint64_t)pexport->filesystem_id.minor ) + 10 ;
+            fsid.major = ~(nfs_htonl64( (uint64_t)pexport->filesystem_id.major ))  ;
+            fsid.minor = ~(nfs_htonl64( (uint64_t)pexport->filesystem_id.minor ))  ;
 	   }
      
           memcpy( (char *)(attrvalsBuffer + LastOffset), &fsid, sizeof( fattr4_fsid) ) ;
@@ -1055,8 +1052,18 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           break ;
           
         case FATTR4_FS_LOCATIONS:
-                    
-          nfs4_referral_str_To_Fattr_fs_location( server_ref, tmp_buff, &tmp_int ) ;
+          if( data->current_entry->internal_md.type != DIR_BEGINNING )
+           {
+	      op_attr_success = 0 ;
+              break ;
+           }
+
+          if( !nfs4_referral_str_To_Fattr_fs_location( data->current_entry->object.dir_begin.referral , tmp_buff, &tmp_int ) )
+           {
+	      op_attr_success = 0 ;
+              break ;
+           }
+          
           memcpy( (char *)(attrvalsBuffer + LastOffset), tmp_buff, tmp_int ) ;
           LastOffset += tmp_int ; 
           op_attr_success = 1 ;

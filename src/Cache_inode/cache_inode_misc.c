@@ -472,6 +472,7 @@ cache_entry_t * cache_inode_new_entry( cache_inode_fsal_data_t  * pfsdata,
       pentry->object.dir_begin.pdir_last = pentry ;
       pentry->object.dir_begin.nbactive = 0 ;
       pentry->object.dir_begin.nbdircont = 0 ;
+      pentry->object.dir_begin.referral = NULL ;
       
       for( i = 0 ; i < CHILDREN_ARRAY_SIZE ; i++ )
         {

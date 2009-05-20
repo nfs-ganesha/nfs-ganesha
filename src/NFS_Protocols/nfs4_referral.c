@@ -131,24 +131,10 @@ int nfs4_Set_Fh_Referral( nfs_fh4 * pfh )
 
   pfhandle4 = (file_handle_v4_t *)(pfh->nfs_fh4_val) ;
 
-  printf( "===> Referral traversed\n" ) ;
   pfhandle4->refid = 1 ;
   
   return 1 ;
 }
-
-int nfs_Referral_Name( char * strname )
-{
-  if( strname == NULL )
-    return 0 ;
-
-  if( !strncmp( strname, "nfs_refer", strlen( "nfs_refer" ) ) )
-   {
-      return 1 ;
-   }
-
-  return 0 ;
-} /* nfs_Is_XattrD_Name */
 
 int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int * plen )
 {
@@ -180,6 +166,13 @@ int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int
 
    strncpy( local_part, str, MAXPATHLEN ) ; 
    strncpy( remote_part, ptr, MAXPATHLEN ) ;
+
+   /* Each part should not start with a leading slash */
+   if( local_part[0] == '/' )
+     strncpy( local_part, str+1, MAXPATHLEN ) ; 
+
+   if( remote_part[0] == '/' )
+     strncpy( remote_part, ptr+1, MAXPATHLEN ) ;
 
    /* Find the "@" in the remote_part */
    for( ptr = remote_part; *ptr != '@' ; ptr ++ ) ;
@@ -217,7 +210,7 @@ int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int
    /* This attributes is equivalent to a "mount" command line,
     * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
 
-
+#ifdef _DEBUG_REFERRAL
    printf( "--> %s\n", input_str ) ;
 
    printf( "   %u comp local\n", nb_comp_local ) ;
@@ -229,6 +222,7 @@ int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int
     printf( "     #%s#\n", remote_comp[tmp_int] ) ;  
 
    printf( "   server = #%s#\n", server_part ) ;
+#endif
 
    /* 1- Number of component in local path */
    tmp_int = htonl( nb_comp_local ) ;
@@ -316,8 +310,8 @@ int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int
     }
 
  /* Set the len then return */
- printf( "------> lastoff=%u\n", lastoff ) ;
  *plen = lastoff ;
  
  return 1 ; 
 } /* nfs4_referral_str_To_Fattr_fs_location */
+

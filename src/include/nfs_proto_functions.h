@@ -946,6 +946,7 @@ int nfs4_Fattr_Supported( fattr4 * Fattr ) ;
 int nfs4_Fattr_Supported_Bitmap( bitmap4 * pbitmap ) ;
 int nfs4_Fattr_cmp( fattr4 * Fattr1, fattr4 * Fattr2 ) ;
 
+int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int * plen ) ;
 
 /**** Glue related functions ****/
 /*  nfs4_stringid_split - split a 'user@domain' string in two separated parts
