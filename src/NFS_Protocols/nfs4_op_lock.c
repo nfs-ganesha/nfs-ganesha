@@ -279,8 +279,25 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                     } 
                 }
              }
+         } /* if( ... == CACHE_INODE_STATE_LOCK */
+
+	if( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE )
+         {
+            /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
+	    if(  ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE )        &&
+		 !(  pstate_found_iterate->state_data.share.share_access &  OPEN4_SHARE_ACCESS_WRITE ) && 
+	         ( arg_LOCK4.locktype == WRITE_LT ) )
+              {
+		 /* A conflicting open state, return NFS4ERR_OPENMODE
+                  * This behavior is implemented to comply with newpynfs's test LOCK4 */
+                 res_LOCK4.status = NFS4ERR_OPENMODE ;
+                 return res_LOCK4.status ;
+
+	      }
          }
-       }
+
+
+       } /* if( pstate_found_iterate != NULL ) */
      pstate_previous_iterate = pstate_found_iterate ;
    } while( pstate_found_iterate != NULL ) ;
 

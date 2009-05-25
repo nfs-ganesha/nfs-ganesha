@@ -1098,4 +1098,8 @@ uint64_t nfs_ntohl64( uint64_t arg64 ) ;
 
 int idmap_compute_hash_value( char      * name,
                               uint32_t  * phashval ) ;
+
+int nfs4_Is_Fh_Referral( nfs_fh4 * pfh ) ;
+int nfs4_Set_Fh_Referral( nfs_fh4 * pfh ) ;
+
 #endif
