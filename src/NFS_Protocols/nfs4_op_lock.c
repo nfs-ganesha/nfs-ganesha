@@ -156,6 +156,7 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   cache_inode_state_type_t   candidate_type ;
   int                        rc = 0 ; 
   cache_inode_state_t      * file_state = NULL ;
+  cache_inode_state_t      * pstate_exists = NULL ;
   cache_inode_state_t      * pstate_found = NULL ;
   cache_inode_state_t      * pstate_previous_iterate = NULL ;
   cache_inode_state_t      * pstate_found_iterate = NULL ;
@@ -221,6 +222,30 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
              return res_LOCK4.status ;
           }
     }
+
+  /* Is get the lockowner */
+  if( arg_LOCK4.locker.new_lock_owner == TRUE )
+   {
+      /* this is a new lockowner */
+      lockowner = arg_LOCK4.locker.locker4_u.open_owner.lock_owner ;
+   }
+  else
+   {
+     if( cache_inode_get_state( arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
+                                &pstate_exists,
+                                data->pclient,
+                                &cache_status ) != CACHE_INODE_SUCCESS ) 
+	 {
+           res_LOCK4.status = NFS4ERR_INVAL ;
+           return res_LOCK4.status ;
+         }
+ 
+      /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
+       * are different types but with the same definition*/
+      lockowner.clientid        = pstate_exists->state_owner.clientid ;
+      lockowner.owner.owner_len = pstate_exists->state_owner.owner.owner_len ;
+      lockowner.owner.owner_val = pstate_exists->state_owner.owner.owner_val ;
+   }
 
   /* loop into the states related to this pentry to find the related lock */
   pstate_found_iterate = NULL ;

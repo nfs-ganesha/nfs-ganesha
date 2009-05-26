@@ -330,7 +330,7 @@ typedef struct cache_inode_lock__
 {
   uint64_t                    offset          ;     /**< The offset for the beginning of the lock             */
   uint64_t                    length          ;     /**< The length of the range for this lock                */
-  nfs_lock_type4              lock_type       ;     /**< The kind of lok to be used                           */
+  nfs_lock_type4              lock_type       ;     /**< The kind of lock to be used                          */
 } cache_inode_lock_t ;
 
 
