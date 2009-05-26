@@ -575,8 +575,8 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
   /* Try to get the related state */
   if( !nfs4_State_Get( pstate->other, &state ) )
    {
-     /* State no longer exist in the hashtable */
-     return NFS4ERR_OLD_STATEID ;
+     /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
+     return NFS4ERR_BAD_STATEID ;
    }
 
   /* Get the related clientid */
@@ -587,7 +587,7 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
   memcpy( (char *)&counter_digest, (char *)(state.stateid_other + 10), 2 ) ;
 
   if( counter_digest < pentry->object.file.state_head_counter ) 
-     return NFS4ERR_BAD_STATEID ;
+     return NFS4ERR_BAD_STATEID ; /* Old state id ? */
 
   /* Check if stateid was made from this server instance */
   memcpy( (char *)&time_digest, pstate->other, 2 ) ;
