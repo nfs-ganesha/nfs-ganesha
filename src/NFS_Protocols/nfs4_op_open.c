@@ -789,16 +789,27 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 	     
 			   }
 
-                       /* In all cases opening in read access a read denied file should fail, even if the owner
-                        * is the same, see discussion in 14.2.16 and 8.9 */
+                       /* In all cases opening in read access a read denied file or write access to a write denied file 
+                        * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9 */
                        if( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE )
                         {
+			   /* deny read access on read denied file */
 			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ ) &&
                                ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ ) )
                               {
 			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                  return res_OPEN4.status ;
                               }
+			
+                           /* deny write access on write denied file */
+			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE ) &&
+                               ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE ) )
+                              {
+			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
+                                 return res_OPEN4.status ;
+                              }
+			
+			
                         } 
 
                      } /*  if( pstate_found_iterate != NULL ) */
