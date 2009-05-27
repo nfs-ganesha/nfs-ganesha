@@ -184,4 +184,5 @@
 	  badly managed. This was dedected through newpynfs's test LOCK8a
 	- Bug fixed in NFSv4 lock management : NFS4ERR_OLD_STATEID was
  	  returned instead of NFS4ERR_BAD_STATEID in severals cases
+	- Update nfs4_op_open's behaviour related to NFS4ERR_SHARE_DENIED
 	
