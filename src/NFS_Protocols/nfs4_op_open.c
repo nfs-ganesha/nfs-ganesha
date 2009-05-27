@@ -165,7 +165,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     int                        retval ;
     fsal_name_t                filename ;
     bool_t                     AttrProvided = FALSE ;
-    bool_t                     found_state_owner = FALSE ;
     fsal_accessmode_t          mode = 0000;
     nfs_fh4                    newfh4 ;
     nfs_client_id_t            nfs_clientid ;
@@ -177,7 +176,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     cache_inode_state_t      * pfile_state = NULL ;
     cache_inode_state_t      * pstate_found_iterate = NULL ;
     cache_inode_state_t      * pstate_previous_iterate = NULL ;
-
+    cache_inode_state_t      * pstate_found_same_owner = NULL ;
 
 
     resp->resop = NFS4_OP_OPEN ;
@@ -755,27 +754,61 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     /* Check is open_owner is the same */
                     if( pstate_found_iterate != NULL )
                      {
-                       if( pstate_found_iterate->state_owner.clientid == arg_OPEN4.owner.clientid ) 
-                        {
-                          if( pstate_found_iterate->state_owner.owner.owner_len == arg_OPEN4.owner.owner.owner_len ) 
+                       if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
+			   ( pstate_found_iterate->state_owner.clientid == arg_OPEN4.owner.clientid ) &&
+                           ( ( pstate_found_iterate->state_owner.owner.owner_len == arg_OPEN4.owner.owner.owner_len ) &&
+                              ( !memcmp( arg_OPEN4.owner.owner.owner_val, 
+			   	         pstate_found_iterate->state_owner.owner.owner_val,
+                                         pstate_found_iterate->state_owner.owner.owner_len ) ) ) )
                            {
-                              if( !memcmp( arg_OPEN4.owner.owner.owner_val, 
-			   	           pstate_found_iterate->state_owner.owner.owner_val,
-                                           pstate_found_iterate->state_owner.owner.owner_len ) )
-                               {
-                                   /* We'll be re-using the found state */
-                                   found_state_owner = TRUE ;
-                                   break ;
-                               }
+                              /* We'll be re-using the found state */
+                              pstate_found_same_owner = pstate_found_iterate ;
                            }
-                        }
-                     }
+			else
+			   {
+				/* This is a different owner, check for possible conflicts */
+
+				  if( memcmp( arg_OPEN4.owner.owner.owner_val, 
+			   	             pstate_found_iterate->state_owner.owner.owner_val,
+                                             pstate_found_iterate->state_owner.owner.owner_len ) )
+				    {
+					switch( pstate_found_iterate->state_type )
+					 {
+					    case CACHE_INODE_STATE_SHARE:
+					      if( ( pstate_found_iterate->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE ) &&
+				                  ( arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE ) )
+                                                {
+						   res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
+                                                   return res_OPEN4.status ;
+                                                }
+						  
+					      break ;
+					 }
+				    } 
+
+	     
+			   }
+
+                       /* In all cases opening in read access a read denied file should fail, even if the owner
+                        * is the same, see discussion in 14.2.16 and 8.9 */
+                       if( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE )
+                        {
+			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ ) &&
+                               ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ ) )
+                              {
+			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
+                                 return res_OPEN4.status ;
+                              }
+                        } 
+
+                     } /*  if( pstate_found_iterate != NULL ) */
+
                     pstate_previous_iterate = pstate_found_iterate ;
                   } while( pstate_found_iterate != NULL ) ;
 
-                if( found_state_owner == TRUE ) 
+                if( pstate_found_same_owner != NULL ) 
                  {
-                    pfile_state = pstate_found_iterate ;
+                    pfile_state = pstate_found_same_owner ;
                     pfile_state->seqid += 1 ; 
                  }
                 else

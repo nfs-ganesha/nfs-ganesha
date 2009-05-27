@@ -237,6 +237,14 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
     }
 
   /* Check the seqid */
+  if( arg_LOCKU4.seqid != pstate_found->seqid )
+   {
+       res_LOCKU4.status = NFS4ERR_BAD_SEQID ;
+       return res_LOCKU4.status ;
+   }
+
+
+  /* Check the seqid for the lock */
   if( ( arg_LOCKU4.lock_stateid.seqid !=  pstate_found->seqid ) &&
       ( arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid + 1 ) )
    {
