@@ -145,6 +145,9 @@
 #define arg_LOCK4 op->nfs_argop4_u.oplock
 #define res_LOCK4 resp->nfs_resop4_u.oplock
 
+extern char all_zero[] ;
+extern char all_one[12] ;
+
 int nfs4_op_lock(  struct nfs_argop4 * op ,   
                      compound_data_t   * data,
                      struct nfs_resop4 * resp)
@@ -162,6 +165,7 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   cache_inode_state_t      * pstate_found_iterate = NULL ;
   uint64_t                   distance = 0LL ;
   nfs_client_id_t            nfs_client_id ;
+
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK ;
@@ -236,16 +240,26 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                                 data->pclient,
                                 &cache_status ) != CACHE_INODE_SUCCESS ) 
 	 {
-           res_LOCK4.status = NFS4ERR_INVAL ;
-           return res_LOCK4.status ;
+	   /* Handle the case where all-0 stateid is used */
+           if( ! ( !memcmp( (char *)all_zero,  arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other, 12 ) &&
+                    arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid == 0 ) )
+             {
+               res_LOCK4.status = NFS4ERR_INVAL ;
+               return res_LOCK4.status ;
+	     }
          }
- 
-      /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
-       * are different types but with the same definition*/
-      lockowner.clientid        = pstate_exists->state_owner.clientid ;
-      lockowner.owner.owner_len = pstate_exists->state_owner.owner.owner_len ;
-      lockowner.owner.owner_val = pstate_exists->state_owner.owner.owner_val ;
+
+      if( pstate_exists != NULL ) 
+       {
+         /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
+          * are different types but with the same definition*/
+         lockowner.clientid        = pstate_exists->state_owner.clientid ;
+         lockowner.owner.owner_len = pstate_exists->state_owner.owner.owner_len ;
+         lockowner.owner.owner_val = pstate_exists->state_owner.owner.owner_val ;
+       }
    }
+
+  /* At this step of the code, if pstate_exists == NULL, then all-o or all-1 stateid is used */
 
   /* loop into the states related to this pentry to find the related lock */
   pstate_found_iterate = NULL ;
@@ -268,6 +282,14 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
        {
         if( pstate_found_iterate->state_type == CACHE_INODE_STATE_LOCK )
          {
+            /* Check lock upgrade/downgrade */
+            if( pstate_exists != NULL )
+             {
+		if( ( pstate_exists == pstate_found_iterate ) &&
+		    ( pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype ) )
+			printf( "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n" ) ;
+             }
+           
             /* We found a lock, check is they overlap */
             if( arg_LOCK4.offset > pstate_found_iterate->state_data.lock.offset )
                distance = arg_LOCK4.offset -  pstate_found_iterate->state_data.lock.offset ;
@@ -283,10 +305,11 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                if(  ( arg_LOCK4.locktype != READ_LT ) || (  pstate_found_iterate->state_data.lock.lock_type != READ_LT ) )
                  {
                    /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-                   if( ( lockowner.owner.owner_len == pstate_found_iterate->state_owner.owner.owner_len ) &&
-                       ( !memcmp( lockowner.owner.owner_val,
+                   if( ( pstate_exists != NULL ) && /* all-O/all-1 stateid is considered a different owner */ 
+                       ( ( lockowner.owner.owner_len == pstate_found_iterate->state_owner.owner.owner_len ) &&
+                         ( !memcmp( lockowner.owner.owner_val,
                                   pstate_found_iterate->state_owner.owner.owner_val, 
-                                  pstate_found_iterate->state_owner.owner.owner_len ) ) )
+                                  pstate_found_iterate->state_owner.owner.owner_len ) ) ) )
                     {
                        /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                         * lock and continue iterating on the other states */        
