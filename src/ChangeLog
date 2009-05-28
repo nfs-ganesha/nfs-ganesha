@@ -177,12 +177,13 @@
 	- NFSv4 implementation now supports NFSv4 referrals
 	
 0.99.54 - 
-	- Bug Fixed in NFSV4 lock management : NFS4ERR_OPENMODE was not returned in 
-	  case a WRITE lock was requested on a read-only file (see newpynfs
-	  test LOCK4)
+	- Bug Fixed in NFSV4 lock management : NFS4ERR_OPENMODE was not 
+	  returned in case a WRITE lock was requested on a read-only file 
 	- Bug fixed in NFSv4 lock management : previously know lockowner where 
-	  badly managed. This was dedected through newpynfs's test LOCK8a
+	  badly managed. 
 	- Bug fixed in NFSv4 lock management : NFS4ERR_OLD_STATEID was
  	  returned instead of NFS4ERR_BAD_STATEID in severals cases
 	- Update nfs4_op_open's behaviour related to NFS4ERR_SHARE_DENIED
+	- Update nfs4_op_write and nfs4_op_read behavior regardings locks and
+	  share reservations.
 	

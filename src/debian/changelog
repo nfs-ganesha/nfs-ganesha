@@ -1,3 +1,9 @@
+nfs-ganesha (0.99.54-1) stable; urgency=low
+
+  * Many bugs fixed in NFSv4 locks and states management
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 28 May 2009 09:14:00 -0600
+
 nfs-ganesha (0.99.53-1) stable; urgency=low
 
   * Bug Fix in the non-regression test suite 
