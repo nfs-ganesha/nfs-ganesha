@@ -235,6 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Thu May 28 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.54-1
+- Many bugs fixed in NFSv4 locks and states management
+
 * Wed May 20 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.53-1
 - Many bugs fixed in MFSL_ASYNC (for FSAL_PROXY)
 - FSAL_POSIX now uses file descriptor and pread/pwrite instead of FILE* and fseek
