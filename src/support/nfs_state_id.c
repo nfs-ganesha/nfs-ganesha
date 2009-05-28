@@ -136,6 +136,9 @@ extern nfs_parameter_t nfs_param ;
 
 hash_table_t * ht_state_id ;
 
+char all_zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0" ;
+char all_one[12] ;
+
 int display_state_id_key( hash_buffer_t * pbuff, char * str )
 {
   unsigned int i   = 0 ;
@@ -218,6 +221,9 @@ unsigned long state_id_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t
  */
 int nfs4_Init_state_id( nfs_state_id_parameter_t  param ) 
 { 
+  /* Init  all_one */
+  memset( all_one, 0xFF, 12 ) ;
+
   if( ( ht_state_id = HashTable_Init( param.hash_param  ) ) == NULL )
     {
       DisplayLog( "NFS STATE_ID: Cannot init State Id cache" ) ;

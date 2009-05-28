@@ -146,6 +146,9 @@ extern verifier4    NFS4_write_verifier ; /* NFS V4 write verifier from nfs_Main
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 
+extern char all_zero[] ;
+extern char all_one[12] ;
+
 int nfs4_op_write(  struct nfs_argop4 * op ,   
                      compound_data_t   * data,
                      struct nfs_resop4 * resp)
@@ -164,10 +167,10 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
   cache_inode_status_t     cache_status ;
   fsal_attrib_list_t       attr ;
   cache_entry_t          * entry = NULL ;
-  int                      rc = 0 ;
+  cache_inode_state_t    * pstate_iterate = NULL ;
+  cache_inode_state_t    * pstate_previous_iterate = NULL ;
 
-  char                     all_zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0" ;
-  char                     all_one[]  = "\1\1\1\1\1\1\1\1\1\1\1\1" ;
+  int                      rc = 0 ;
 
   cache_content_policy_data_t datapol ;
 
@@ -201,30 +204,29 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
    /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if( nfs4_Is_Fh_Xattr( &(data->currentFH ) ) ) 
     return nfs4_op_write_xattr( op, data, resp ) ;
+  
+ 
 
   /* Check for special stateid */
   if( !memcmp( (char *)all_zero, arg_WRITE4.stateid.other, 12 ) &&
       arg_WRITE4.stateid.seqid == 0 )
    {
-      /* "All 0 stateid special case", see RFC3530 page 220-221 for details */
-      /* This will be treated as a client that held no lock at all,
+      /* "All 0 stateid special case", see RFC3530 page 220-221 for details 
+       * This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL ;
    }
   else if ( !memcmp( (char *)all_one, arg_WRITE4.stateid.other, 12 ) &&
-             arg_WRITE4.stateid.seqid == 1 )
+             arg_WRITE4.stateid.seqid == 0xFFFFFFFF )
   {
-      /* "All 1 stateid special case", see RFC3530 page 220-221 for details */
-      /* This will be treated as a client that held no lock at all,
+      /* "All 1 stateid special case", see RFC3530 page 220-221 for details 
+       * This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL ;
   }
   /* Check for correctness of the provided stateid */
-  else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) )  != NFS4_OK )
+  else  if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) 
    {
-      res_WRITE4.status = rc ;
-      return res_WRITE4.status ;
-      
       /* Get the related state */
       if( cache_inode_get_state( arg_WRITE4.stateid.other,
                                  &pstate_found,
@@ -235,13 +237,22 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
            return res_WRITE4.status ;
         }
 
+      /* This is a read operation, this means that the file MUST have been opened for reading */
+      if( ( pstate_found->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE )  &&
+          !( pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE ) )
+        {
+	   /* Bad open mode, return NFS4ERR_OPENMODE */
+           res_WRITE4.status = NFS4ERR_OPENMODE ;
+           return res_WRITE4.status ;
+        }
+
       /* Check the seqid */
       if( ( arg_WRITE4.stateid.seqid !=  pstate_found->seqid ) &&
           ( arg_WRITE4.stateid.seqid != pstate_found->seqid + 1 ) )
-       {
+        {
            res_WRITE4.status = NFS4ERR_BAD_SEQID ;
            return res_WRITE4.status ;
-       }
+        }
 
 
       /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
@@ -253,10 +264,58 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
              return res_WRITE4.status ;
            }
        }
-   } /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) )  != NFS4_OK ) */
+   } /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) */
+  else
+   {
+	res_WRITE4.status = rc ;
+        return res_WRITE4.status ;
+   }
 
-  /* vnode to manage is the current one */
-  entry = data->current_entry ;
+   /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
+
+   /* vnode to manage is the current one */
+   entry = data->current_entry ;
+
+   /* Iterate through file's state to look for conflicts */ 
+   pstate_iterate    = NULL ;
+   pstate_previous_iterate = NULL ;
+   do
+   {
+      cache_inode_state_iterate( data->current_entry,
+                                 &pstate_iterate,
+                                 pstate_previous_iterate,
+                                 data->pclient,
+                                 data->pcontext, 
+                                 &cache_status ) ;
+      if( cache_status == CACHE_INODE_STATE_ERROR )
+        break ; /* Get out of the loop */
+
+      if( cache_status == CACHE_INODE_INVALID_ARGUMENT )
+       {
+          res_WRITE4.status = NFS4ERR_INVAL ;
+          return res_WRITE4.status ;
+       }
+
+      if( pstate_iterate != NULL )
+       {
+         switch( pstate_iterate->state_type )
+           {
+       		case CACHE_INODE_STATE_SHARE:
+		      if( pstate_found != pstate_iterate )
+		        {
+			   if( pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE )
+                            {
+			       /* Writing to this file if prohibited, file is write-denied */
+			       res_WRITE4.status = NFS4ERR_LOCKED ;
+          		       return res_WRITE4.status ;
+                            }
+                        }
+		      break ;
+               }
+           }
+          pstate_previous_iterate = pstate_iterate ;
+   } while( pstate_iterate != NULL ) ;
+
 
   /* Only files can be written */
   if( data->current_filetype != REGULAR_FILE )
