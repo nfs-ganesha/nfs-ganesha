@@ -205,30 +205,36 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
     }
 #endif
 
-  /* Get the related state */
-  if( cache_inode_get_state( arg_CLOSE4.open_stateid.other,
-                             &pstate_found,
-                             data->pclient,
-                             &cache_status ) != CACHE_INODE_SUCCESS )
-    {
-       res_CLOSE4.status = nfs4_Errno( cache_status ) ;
-       return res_CLOSE4.status ;
-    }
-
-  /* Check the seqid */
-  if( ( arg_CLOSE4.seqid !=  pstate_found->seqid ) &&
-      ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
-     {
-	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
-	return res_CLOSE4.status ;
-     }
-
   /* Does the stateid match ? */
   if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry ) )  != NFS4_OK )
     {
 	res_CLOSE4.status = rc ;
 	return res_CLOSE4.status ;
     }
+
+
+  /* Get the related state */
+  if( cache_inode_get_state( arg_CLOSE4.open_stateid.other,
+                             &pstate_found,
+                             data->pclient,
+                             &cache_status ) != CACHE_INODE_SUCCESS )
+    {
+       if( cache_status == CACHE_INODE_NOT_FOUND )
+          res_CLOSE4.status = NFS4ERR_BAD_STATEID ;
+       else
+          res_CLOSE4.status = NFS4ERR_INVAL  ;
+           
+       return res_CLOSE4.status ;
+    }
+
+  /* Check the seqid */
+  printf( "arg_CLOSE4.seqid=%u  pstate_found->seqid=%u type=%u\n", arg_CLOSE4.seqid,  pstate_found->seqid,  pstate_found->state_type ) ;
+  if( ( arg_CLOSE4.seqid !=  pstate_found->seqid ) &&
+      ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
+     {
+	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
+	return res_CLOSE4.status ;
+     }
 
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1 ;
