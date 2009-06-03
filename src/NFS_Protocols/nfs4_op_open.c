@@ -485,19 +485,98 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                        /* if open is EXCLUSIVE, but verifier is the same, return NFS4_OK (RFC3530 page 173) */
                        if( arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4 )
                          {
-#ifdef BUGAZOMEU
-                            if( pentry_lookup != NULL )
-                             if( ( pentry_lookup->internal_md.type == REGULAR_FILE ) && ( pentry_lookup->object.file.pshare != NULL ) )
-                              if( !strncmp( pentry_lookup->object.file.pshare->data.share.oexcl_verifier, 
-                                            arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf, NFS4_VERIFIER_SIZE ) )
-                                {  
-                                   /* This is a duplicated ESCLUSIVE4 call, verifier matches, return NFS4_OK */
-                                   res_OPEN4.status = NFS4_OK ;
-                                   return res_OPEN4.status ;
-                                }
-#else
-			printf( "I went through unimplemented case where  arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4 \n" ) ;
-#endif
+                            if( ( pentry_lookup != NULL ) && (pentry_lookup->internal_md.type == REGULAR_FILE ) )
+                             {
+                               pstate_found_iterate = NULL ;
+                               pstate_previous_iterate = NULL ;
+
+			       do
+                               {
+				    cache_inode_state_iterate( pentry_lookup, 
+							       &pstate_found_iterate,
+                                                               pstate_previous_iterate,
+                                                               data->pclient,
+                                                               data->pcontext, 
+                                                               &cache_status ) ;
+                      		    if( cache_status == CACHE_INODE_STATE_ERROR )
+				      break ;
+
+				     if( cache_status == CACHE_INODE_INVALID_ARGUMENT )
+		                      {
+                		        res_OPEN4.status = NFS4ERR_INVAL ;
+                        		return res_OPEN4.status ;
+                     		      }
+				   
+                                    /* Check is open_owner is the same */
+		                    if( pstate_found_iterate != NULL )
+                		     {
+					if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
+				            !memcmp( arg_OPEN4.owner.owner.owner_val,
+					             pstate_found_iterate->state_owner.owner.owner_val,
+                                                     pstate_found_iterate->state_owner.owner.owner_len )    &&
+			 		    !memcmp( pstate_found_iterate->state_data.share.oexcl_verifier, 
+						     arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf, 
+						     NFS4_VERIFIER_SIZE ) ) 
+					  {
+
+					    /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
+    					    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pstate_found_iterate->seqid ;
+					    memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pstate_found_iterate->stateid_other, 12 ) ;
+   
+					    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
+    
+					    memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
+    					    res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
+    					    res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
+    
+    					    /* No delegation */
+    					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
+
+					    /* If server use OPEN_CONFIRM4, set the correct flag */
+    					    if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
+        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM ;
+    					    else
+        					res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
+
+					    /* Now produce the filehandle to this file */
+				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
+      					     {
+        					res_OPEN4.status = nfs4_Errno( cache_status ) ;
+        					return  res_OPEN4.status ;
+      					     }
+
+  					    /* Allocation of a new file handle */
+    					    if( ( rc = nfs4_AllocateFH( &newfh4 ) ) != NFS4_OK )
+      					     {
+        					res_OPEN4.status = rc ;
+        					return res_OPEN4.status ;
+      				             }
+  
+					    /* Building a new fh */
+    				 	    if( !nfs4_FSALToFhandle( &newfh4, pnewfsal_handle, data ) )
+      					     {
+        					res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+        					return res_OPEN4.status ;
+      					     }
+    
+    					    /* This new fh replaces the current FH */
+					    data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len ;
+					    memcpy( data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val, newfh4.nfs_fh4_len ) ;
+    
+					    data->current_entry = pentry_lookup ;
+					    data->current_filetype = REGULAR_FILE ;
+
+					    /* regular exit */
+    					    res_OPEN4.status = NFS4_OK ; 
+    					    return res_OPEN4.status;
+                                          }
+     
+				     } /* if( pstate_found_iterate != NULL ) */
+
+  				    pstate_previous_iterate = pstate_found_iterate ;
+                               }  while( pstate_found_iterate != NULL ) ;
+
+                             }
                          }
 
                        /* Managing GUARDED4 mode */
@@ -506,12 +585,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                        else 
                          res_OPEN4.status = NFS4ERR_EXIST ; /* File already exists */
                        return res_OPEN4.status ;
-                     }
+                     } /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
+
 
 #ifdef _DEBUG_NFS_V4
                    printf( "    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode ) ;
 #endif
-        
+       
                    /* CLient may have provided fattr4 to set attributes at creation time */
                    if( arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 || 
                        arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4 )
@@ -565,10 +645,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          }
                      }
     
-
-                    /** @todo */
-                    /* State management to be done here */
-
 
                     /* Prepare state management structure */
                     candidate_type = CACHE_INODE_STATE_SHARE ;
