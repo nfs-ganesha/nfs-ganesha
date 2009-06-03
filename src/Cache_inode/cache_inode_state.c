@@ -553,36 +553,24 @@ cache_inode_status_t cache_inode_update_state( cache_inode_state_t        * psta
  *
  */
 cache_inode_status_t cache_inode_del_state_by_key( char                         other[12], 
-						   cache_inode_state_t        * pstate,
                                                    cache_inode_client_t       * pclient,
                                                    cache_inode_status_t       * pstatus )
 {
-  cache_inode_state_t  * ptest_state = NULL ;
+  cache_inode_state_t  * pstate = NULL ;
   cache_entry_t        * pentry = NULL ;
   
   if( pstatus == NULL ) 
     return CACHE_INODE_INVALID_ARGUMENT ;
 
-  if( pstate == NULL || pclient == NULL ) 
+  if( pstatus == NULL || pclient == NULL ) 
    {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
       return *pstatus ;
    }
 
-#ifdef _DEBUG_STATES
-   {
-     unsigned int i = 0 ;
-
-     printf( "         -----  cache_inode_del_state : " ) ;
-     for( i = 0 ; i < 12 ; i++ )
-       printf( "%02x", (unsigned char)pstate->stateid_other[i] ) ;
-     printf( "\n" ) ;
-   }
-#endif
-
 
   /* Does this state exists ? */
-  if( !nfs4_State_Get_Pointer( pstate->stateid_other, &ptest_state ) )
+  if( !nfs4_State_Get_Pointer( other, &pstate ) )
    {
       *pstatus = CACHE_INODE_NOT_FOUND ;
 

@@ -431,6 +431,9 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
      candidate_data.lock.offset     = arg_LOCK4.offset ;
      candidate_data.lock.length     = arg_LOCK4.length ;
      candidate_data.lock.popenstate = (void *)pstate_found ;
+     
+     /* update the lock counter in the related open-stateid */
+     pstate_found->state_data.share.lockheld += 1 ;
    }
   else
    {
