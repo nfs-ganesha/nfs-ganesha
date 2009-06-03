@@ -427,9 +427,10 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 
      /* No conflict found. Prepare state management structure */
      candidate_type = CACHE_INODE_STATE_LOCK ;
-     candidate_data.lock.lock_type = arg_LOCK4.locktype ;
-     candidate_data.lock.offset    = arg_LOCK4.offset ;
-     candidate_data.lock.length    = arg_LOCK4.length ;
+     candidate_data.lock.lock_type  = arg_LOCK4.locktype ;
+     candidate_data.lock.offset     = arg_LOCK4.offset ;
+     candidate_data.lock.length     = arg_LOCK4.length ;
+     candidate_data.lock.popenstate = (void *)pstate_found ;
    }
   else
    {

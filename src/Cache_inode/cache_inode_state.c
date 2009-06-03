@@ -540,6 +540,128 @@ cache_inode_status_t cache_inode_update_state( cache_inode_state_t        * psta
 
 /**
  *
+ * cache_inode_del_state_by_key: deletes a state from the hash's state associated with a given stateid
+ *
+ * Deletes a state from the hash's state
+ *
+ * @param other    [IN]    stateid.other used as hash key
+ * @param pstate   [OUT]   pointer to the new state
+ * @param pclient  [INOUT] related cache inode client
+ * @param pstatus  [OUT]   returned status 
+ *
+ * @return the same as *pstatus
+ *
+ */
+cache_inode_status_t cache_inode_del_state_by_key( char                         other[12], 
+						   cache_inode_state_t        * pstate,
+                                                   cache_inode_client_t       * pclient,
+                                                   cache_inode_status_t       * pstatus )
+{
+  cache_inode_state_t  * ptest_state = NULL ;
+  cache_entry_t        * pentry = NULL ;
+  
+  if( pstatus == NULL ) 
+    return CACHE_INODE_INVALID_ARGUMENT ;
+
+  if( pstate == NULL || pclient == NULL ) 
+   {
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
+      return *pstatus ;
+   }
+
+#ifdef _DEBUG_STATES
+   {
+     unsigned int i = 0 ;
+
+     printf( "         -----  cache_inode_del_state : " ) ;
+     for( i = 0 ; i < 12 ; i++ )
+       printf( "%02x", (unsigned char)pstate->stateid_other[i] ) ;
+     printf( "\n" ) ;
+   }
+#endif
+
+
+  /* Does this state exists ? */
+  if( !nfs4_State_Get_Pointer( pstate->stateid_other, &ptest_state ) )
+   {
+      *pstatus = CACHE_INODE_NOT_FOUND ;
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1 ;
+
+      return *pstatus ;
+   }
+
+  /* The state exists, locks the related pentry before operating on it */
+  pentry = pstate->pentry ;
+
+  P_w( &pentry->lock ) ;
+
+  /* Set the head counter */
+  if( pstate->my_id == pentry->object.file.state_head_counter )
+   {
+     /* This is the first state managed */ 
+     if( pstate->next == NULL )
+      {
+        /* I am the only remaining state, set the head counter to 0 in the pentry */
+        pentry->object.file.state_head_counter    = 0 ;
+      }
+     else
+      {
+        /* The state that is next to me become the new head */
+        pentry->object.file.state_head_counter = pstate->next->my_id ;
+      }
+   }
+
+  /* redo the double chained list */
+  if( pstate->next != NULL )
+    pstate->next->prev = pstate->prev ;
+
+  if( pstate->prev != NULL ) 
+    pstate->prev->next = pstate->next ; 
+
+  if( !memcmp(  (char *)pstate->stateid_other, other, 12 ) )
+    {
+  	/* Remove the entry from the HashTable */
+        if( !nfs4_State_Del( pstate->stateid_other ) )
+    	 {
+      	    *pstatus = CACHE_INODE_STATE_ERROR ;
+
+      	    /* stat */
+      	    pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1 ;
+
+      	    V_w( &pentry->lock ) ;
+
+      	    return *pstatus ;
+   	 }
+
+
+        /* reset the pstate field to avoid later mistakes */
+        memset( (char *)pstate->stateid_other, 0, 12 ) ;
+        Mem_Free( pstate->state_owner.owner.owner_val ) ; 
+        pstate->state_owner.clientid        = 0LL ;
+        pstate->state_owner.owner.owner_len = 0 ;
+        pstate->state_owner.owner.owner_val = NULL ;
+        pstate->state_type                  = CACHE_INODE_STATE_NONE ;
+        pstate->my_id                       = 0 ;
+        pstate->next                        = NULL ;
+        pstate->prev                        = NULL ;
+        pstate->pentry                      = NULL ;
+
+        RELEASE_PREALLOC( pstate,
+                          pclient->pool_state_v4,
+                          next ) ; 
+     }
+
+  *pstatus = CACHE_INODE_SUCCESS ;
+ 
+ V_w( &pentry->lock ) ;
+
+ return *pstatus ;
+} /* cache_inode_del_state_by_key */
+
+/**
+ *
  * cache_inode_del_state: deletes a state from the hash's state
  *
  * Deletes a state from the hash's state
