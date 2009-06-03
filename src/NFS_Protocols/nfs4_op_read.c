@@ -211,7 +211,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
          pstate_found = NULL ;
       }
      else if ( !memcmp( (char *)all_one, arg_READ4.stateid.other, 12 ) &&
-                arg_READ4.stateid.seqid == 1 )
+                arg_READ4.stateid.seqid == 0xFFFFFFFF )
       {
          /* "All 1 stateid special case" */
          /* This will be treated as a client that held no lock at all, but may goes through locks 
