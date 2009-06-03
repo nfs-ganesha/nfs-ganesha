@@ -149,6 +149,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
   int                    rc = 0 ;
   char                   __attribute__(( __unused__ )) funcname[] = "nfs4_op_close" ;
   cache_inode_state_t  * pstate_found = NULL ; 
+
   cache_inode_status_t   cache_status ;
   
   memset( &res_CLOSE4, 0, sizeof( res_CLOSE4 ) ) ;
@@ -227,8 +228,14 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
        return res_CLOSE4.status ;
     }
 
+  /* Check is held locks remain */
+  if(  pstate_found->state_data.share.lockheld > 0 )
+   {
+      res_CLOSE4.status = NFS4ERR_LOCKS_HELD ;
+      return res_CLOSE4.status ;
+   }
+ 
   /* Check the seqid */
-  printf( "arg_CLOSE4.seqid=%u  pstate_found->seqid=%u type=%u\n", arg_CLOSE4.seqid,  pstate_found->seqid,  pstate_found->state_type ) ;
   if( ( arg_CLOSE4.seqid !=  pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
      {
@@ -241,10 +248,9 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
   memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
 
   /* File is closed, release the corresponding state */
-  if( cache_inode_state_del_all( data->current_entry,
-                                 data->pclient, 
-                                 data->pcontext,
-                                 &cache_status ) != CACHE_INODE_SUCCESS ) 
+  if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
+                                    data->pclient, 
+                                    &cache_status ) != CACHE_INODE_SUCCESS ) 
     {
 	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
 	return res_CLOSE4.status ;

@@ -651,6 +651,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                     candidate_data.share.share_access = arg_OPEN4.share_access ;
                     candidate_data.share.confirmed    = FALSE ;
+                    candidate_data.share.lockheld     = 0 ;
 
                     /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
                     if( arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4 )

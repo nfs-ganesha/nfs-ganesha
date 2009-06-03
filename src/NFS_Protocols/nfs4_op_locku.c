@@ -256,7 +256,11 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   /* Increment the seqid for the open-stateid related to this lock */
   pstate_open = (cache_inode_state_t *)(pstate_found->state_data.lock.popenstate) ;
   if( pstate_open != NULL )
+    {
 	pstate_open->seqid += 1 ;
+	if( pstate_open->state_data.share.lockheld > 0 )
+            pstate_open->state_data.share.lockheld -= 1 ;
+    }
 
   /* Remove the state associated with the lock */
   if( cache_inode_del_state( pstate_found,
