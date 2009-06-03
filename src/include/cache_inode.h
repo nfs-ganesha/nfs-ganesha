@@ -211,7 +211,7 @@ static char * cache_inode_function_names[] = {
 #define CACHE_INODE_UPDATE_STATE        31
   "cache_inode_update_state"
 #define CACHE_INODE_DEL_ALL_STATE       32
-  "cache_inode_state_dell_all"
+  "cache_inode_state_del_all"
 };
 
 
@@ -326,12 +326,6 @@ struct cache_inode_symlink__
   fsal_path_t         content ;                     /**< Content of the link */
 };
 
-typedef struct cache_inode_lock__
-{
-  uint64_t                    offset          ;     /**< The offset for the beginning of the lock             */
-  uint64_t                    length          ;     /**< The length of the range for this lock                */
-  nfs_lock_type4              lock_type       ;     /**< The kind of lock to be used                          */
-} cache_inode_lock_t ;
 
 
 typedef struct cache_inode_share__
@@ -341,6 +335,14 @@ typedef struct cache_inode_share__
   unsigned int                    share_deny        ;              /**< The NFSv4 Share Deny state                           */
   bool_t                          confirmed         ;              /**< Is the reservation confirmed or not ?                */ 
 } cache_inode_share_t ;
+
+typedef struct cache_inode_lock__
+{
+  uint64_t                    offset          ;     /**< The offset for the beginning of the lock             */
+  uint64_t                    length          ;     /**< The length of the range for this lock                */
+  nfs_lock_type4              lock_type       ;     /**< The kind of lock to be used                          */
+  void                      * popenstate      ;     /**< The related open-stateid                             */
+} cache_inode_lock_t ;
 
 typedef struct cache_inode_deleg__
 { 
@@ -1056,6 +1058,12 @@ cache_inode_status_t cache_inode_state_del_all( cache_entry_t         * pentry,
                                                 cache_inode_client_t  * pclient,
                                                 fsal_op_context_t     * pcontext,
                                                 cache_inode_status_t  * pstatus ) ;
+
+cache_inode_status_t cache_inode_del_state_by_key( char                         other[12], 
+						   cache_inode_state_t        * pstate,
+                                                   cache_inode_client_t       * pclient,
+                                                   cache_inode_status_t       * pstatus ) ;
+
 
 
 /* Hash functions for hashtables and RBT */

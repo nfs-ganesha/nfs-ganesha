@@ -154,6 +154,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   char                       __attribute__(( __unused__ )) funcname[] = "nfs4_op_locku" ;
   cache_inode_status_t       cache_status ;
   cache_inode_state_t    *   pstate_found = NULL ;
+  cache_inode_state_t    *   pstate_open  = NULL ;
   unsigned int               rc = 0 ;
 
   /* Lock are not supported */
@@ -251,6 +252,11 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
        res_LOCKU4.status = NFS4ERR_BAD_SEQID ;
        return res_LOCKU4.status ;
    }
+
+  /* Increment the seqid for the open-stateid related to this lock */
+  pstate_open = (cache_inode_state_t *)(pstate_found->state_data.lock.popenstate) ;
+  if( pstate_open != NULL )
+	pstate_open->seqid += 1 ;
 
   /* Remove the state associated with the lock */
   if( cache_inode_del_state( pstate_found,
