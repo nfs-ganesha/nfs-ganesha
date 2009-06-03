@@ -332,6 +332,7 @@ fsal_status_t FSAL_read(
   size_t i_size;  
   size_t nb_read;
   int rc, errsv;
+  char c ;
   
   /* sanity checks. */
   if ( !p_file_descriptor ||!buffer || !p_read_amount || !p_end_of_file )
@@ -382,6 +383,10 @@ fsal_status_t FSAL_read(
         nb_read = pread( p_file_descriptor->filefd, buffer, i_size, p_seek_descriptor->offset);
         errsv = errno;          
 
+        rc = pread( p_file_descriptor->filefd, &c, 1, p_seek_descriptor->offset+i_size ) ;
+        if( rc == 0 )
+    		*p_end_of_file = 1; 
+        
         ReleaseTokenFSCall();
         
         break;
@@ -402,7 +407,7 @@ fsal_status_t FSAL_read(
  
   if( nb_read == 0 && i_size != 0 )
     *p_end_of_file = 1; 
-     
+    
   *p_read_amount = nb_read;
   
   Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read ); 

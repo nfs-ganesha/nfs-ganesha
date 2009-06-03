@@ -275,6 +275,8 @@ cache_content_status_t cache_content_rdwr( cache_content_entry_t        * pentry
   size_t                    iosize_before ;
   ssize_t                   iosize_after ;
   struct stat               buffstat ;
+  int rc                             ;
+  char c                             ;
   
   *pstatus = CACHE_CONTENT_SUCCESS ;
 
@@ -388,8 +390,13 @@ cache_content_status_t cache_content_rdwr( cache_content_entry_t        * pentry
       if( iosize_after == 0 )
         *p_fsal_eof = TRUE ;
       else
-        *p_fsal_eof = FALSE ;
-          
+       {
+        rc = pread( pentry->local_fs_entry.opened_file.local_fd, &c, 1, offset+iosize_before ) ;
+        if( rc == 0 )
+          *p_fsal_eof = TRUE ;
+        else 
+          *p_fsal_eof = FALSE ;
+       }  
       break ;
       
     case CACHE_CONTENT_WRITE:
