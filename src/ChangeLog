@@ -186,4 +186,9 @@
 	- Update nfs4_op_open's behaviour related to NFS4ERR_SHARE_DENIED
 	- Update nfs4_op_write and nfs4_op_read behavior regardings locks and
 	  share reservations.
+	- OP4_LOCK/OP4_LOCKU bad behavior fixed
+	- add a missing relation between lock-stateids and related
+	  open-stateids for managing seqid at state transition
+	- better management of OPEN4 with EXCLIVE4 repeated with same verifier
+
 	
