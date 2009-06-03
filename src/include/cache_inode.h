@@ -334,6 +334,7 @@ typedef struct cache_inode_share__
   unsigned int                    share_access      ;              /**< The NFSv4 Share Access state                         */
   unsigned int                    share_deny        ;              /**< The NFSv4 Share Deny state                           */
   bool_t                          confirmed         ;              /**< Is the reservation confirmed or not ?                */ 
+  unsigned int                    lockheld          ;              /**< How many locks did I open ?                          */
 } cache_inode_share_t ;
 
 typedef struct cache_inode_lock__
@@ -1060,7 +1061,6 @@ cache_inode_status_t cache_inode_state_del_all( cache_entry_t         * pentry,
                                                 cache_inode_status_t  * pstatus ) ;
 
 cache_inode_status_t cache_inode_del_state_by_key( char                         other[12], 
-						   cache_inode_state_t        * pstate,
                                                    cache_inode_client_t       * pclient,
                                                    cache_inode_status_t       * pstatus ) ;
 
