@@ -191,5 +191,6 @@
 	  open-stateids for managing seqid at state transition
 	- better management of OPEN4 with EXCLIVE4 repeated with same verifier
 	- Return NFS4ERR_LOCKS_HELD when closing a file with held locks
+	- all-one stateid is correctly managed in OP4_WRITE and OP4_READ
 
 	
