@@ -244,7 +244,11 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
            if( ! ( !memcmp( (char *)all_zero,  arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other, 12 ) &&
                     arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid == 0 ) )
              {
-               res_LOCK4.status = NFS4ERR_INVAL ;
+	       if( cache_status == CACHE_INODE_NOT_FOUND )
+                  res_LOCK4.status = NFS4ERR_STALE_STATEID ;
+               else
+                  res_LOCK4.status = NFS4ERR_INVAL ;
+
                return res_LOCK4.status ;
 	     }
          }

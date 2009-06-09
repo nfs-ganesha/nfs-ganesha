@@ -163,14 +163,8 @@ int nfs4_op_renew(  struct nfs_argop4 * op ,
   /* Is this an existing client id ? */ 
   if( nfs_client_id_get( arg_RENEW4.clientid, &nfs_clientid ) == CLIENT_ID_SUCCESS )
     {
-	/* The client exists, but do not renew a client  id that is expired */
-	if( ( time( NULL ) - nfs_clientid.last_renew ) > (int)nfs_param.nfsv4_param.lease_lifetime ) 
-	  {
-	      /* The lease is expired */
-	      res_RENEW4.status = NFS4ERR_EXPIRED ;
-	  }
-	else
-   	   res_RENEW4.status =  NFS4_OK ; /* Regular exit */
+ 	nfs_clientid.last_renew = time( NULL ) ;
+   	res_RENEW4.status =  NFS4_OK ; /* Regular exit */
     }
   else
     {
