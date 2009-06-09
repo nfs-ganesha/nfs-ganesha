@@ -236,12 +236,20 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
    }
  
   /* Check the seqid */
-  if( ( arg_CLOSE4.seqid !=  pstate_found->seqid ) &&
+  if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
      {
 	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
 	return res_CLOSE4.status ;
      }
+
+  if( ( arg_CLOSE4.open_stateid.seqid != pstate_found->seqid ) &&
+      ( arg_CLOSE4.open_stateid.seqid != pstate_found->seqid + 1 ) )
+     {
+	res_CLOSE4.status = NFS4ERR_OLD_STATEID ;
+	return res_CLOSE4.status ;
+     }
+
 
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1 ;
