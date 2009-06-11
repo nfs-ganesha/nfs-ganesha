@@ -1037,7 +1037,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
        res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2 ;
      } 
     
-    memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
     res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
     res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
     

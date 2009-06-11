@@ -183,7 +183,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
    }
 
   /* Should not operate on directories */
-  if( data->current_entry->internal_md.type == DIR_CONTINUE ||
+  if( data->current_entry->internal_md.type == DIR_BEGINNING ||
       data->current_entry->internal_md.type == DIR_CONTINUE )
     {
        res_CLOSE4.status = NFS4ERR_ISDIR ;
