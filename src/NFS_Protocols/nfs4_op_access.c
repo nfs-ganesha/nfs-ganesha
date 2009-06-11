@@ -300,7 +300,7 @@ int nfs4_op_access(  struct nfs_argop4 * op ,
       }
    }
 
-  if( arg_ACCESS4.access & ACCESS4_DELETE )
+  if( ( arg_ACCESS4.access & ACCESS4_DELETE ) && ( attr.type == FSAL_TYPE_DIR) )
    {
      res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE ;
 #if !defined( _USE_HPSS_62) && !defined( _USE_HPSS_622)
@@ -329,7 +329,7 @@ int nfs4_op_access(  struct nfs_argop4 * op ,
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE ;
       }
    }
-  
+ 
   res_ACCESS4.status = NFS4_OK ;
   
   return res_ACCESS4.status;
