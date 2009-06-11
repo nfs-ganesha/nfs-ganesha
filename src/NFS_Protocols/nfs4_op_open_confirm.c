@@ -175,6 +175,25 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
         return res_OPEN_CONFIRM4.status ;
       }
 
+
+    /* Should not operate on non-file objects */
+    if( data->current_entry->internal_md.type != REGULAR_FILE )
+     {
+       switch( data->current_entry->internal_md.type )
+         {  
+	    case DIR_BEGINNING:
+	    case DIR_CONTINUE:
+         	res_OPEN_CONFIRM4.status = NFS4ERR_ISDIR ;
+         	return res_OPEN_CONFIRM4.status ;
+		break ;
+	    default:
+         	res_OPEN_CONFIRM4.status = NFS4ERR_INVAL ;
+         	return res_OPEN_CONFIRM4.status ;
+		break ;
+		
+         }
+     }
+
     /* Does the stateid match ? */
     if( ( rc = nfs4_Check_Stateid( &arg_OPEN_CONFIRM4.open_stateid, data->current_entry ) )  != NFS4_OK )
      {
@@ -191,16 +210,23 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
          res_OPEN_CONFIRM4.status = nfs4_Errno( cache_status ) ;
          return res_OPEN_CONFIRM4.status ;
       }
- 
-#ifdef _BUGAZOMEU 
-   /* Check the seqid */
-   if( ( arg_OPEN_CONFIRM4.seqid !=  pstate_found->seqid ) ||
-      ( arg_OPEN_CONFIRM4.seqid != pstate_found->seqid + 1 ) )
+
+   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
+   if( pstate_found->state_data.share.confirmed == TRUE )
      {
-        res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID ;
+        res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID ;
         return res_OPEN_CONFIRM4.status ;
      }
-#endif
+
+   if(  pstate_found->seqid != arg_OPEN_CONFIRM4.seqid )
+     {
+        if( pstate_found->seqid +1 != arg_OPEN_CONFIRM4.seqid )
+         {
+            res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID ;
+            return res_OPEN_CONFIRM4.status ;
+         }
+     }
+
 
    /* Set the state as confirmed */
    pstate_found->state_data.share.confirmed = TRUE ;

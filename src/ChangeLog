@@ -192,5 +192,9 @@
 	- better management of OPEN4 with EXCLIVE4 repeated with same verifier
 	- Return NFS4ERR_LOCKS_HELD when closing a file with held locks
 	- all-one stateid is correctly managed in OP4_WRITE and OP4_READ
+	- Minor bug fixed in nfs4_op_open_confirm (errors when bad arguments
+	  are used)
+	- bad seqid management in nfs4_op_close
+	- Fix bug in the use of ACCES4resok::supported flag
 
 	
