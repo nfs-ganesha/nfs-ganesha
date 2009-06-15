@@ -356,6 +356,13 @@ void * mfsl_async_synclet_thread( void * Arg )
       exit( 1 ) ;
    }
 
+  if( FSAL_IS_ERROR( MFSL_PrepareContext( &synclet_data[index].root_fsal_context ) ) )
+   {
+      /* Failed init */
+      DisplayLog( "MFSL Synclet context could not be cleaned up before using, exiting..." ) ;
+      exit( 1 ) ;
+   }
+
   /* Showtime... */
   DisplayLog( "Started..." ) ;
 
