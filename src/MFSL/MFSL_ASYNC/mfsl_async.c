@@ -117,6 +117,106 @@ void constructor_preacreated_entries( void * ptr )
 
 /**
  * 
+ * mfsl_async_init_clean_precreated_objects: deletes every previously allocated object (allocation done by a former instance of the server).
+ *
+ * Deletes every previously allocated object (allocation done by a former instance of the server).
+ *
+ * @param pcontext    [INOUT] pointer to FSAL context to be used 
+ *
+ * @return a FSAL status
+ *
+ */
+#define NB_DIRENT_CLEAN 100 
+
+fsal_status_t mfsl_async_init_clean_precreated_objects( fsal_op_context_t  * pcontext )
+{
+  fsal_status_t        fsal_status ;
+  fsal_path_t          fsal_path ;
+  fsal_handle_t        dir_handle ;
+  fsal_attrib_list_t   dir_attr ;
+  fsal_dir_t           dir_descriptor ;
+  fsal_dirent_t        dirent[NB_DIRENT_CLEAN] ;
+  fsal_cookie_t        end_cookie ;
+  fsal_count_t         nb_entries ;
+  fsal_count_t         nb_count ;
+  fsal_boolean_t       eod = FALSE ; 
+  fsal_status.major = ERR_FSAL_NO_ERROR ;
+  fsal_status.minor = 0 ;
+
+
+  fsal_status = FSAL_str2path(  mfsl_param.pre_create_obj_dir, MAXPATHLEN, &fsal_path ) ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+   {
+      DisplayLog( "Impossible to convert path %s", mfsl_param.pre_create_obj_dir ) ;
+      exit( 1 ) ; 
+   }
+
+  fsal_status = FSAL_lookupPath( &fsal_path, pcontext, &dir_handle, &dir_attr ) ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+   {
+      DisplayLog( "Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+  		  mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor ) ;
+      exit( 1 ) ; 
+   }
+
+  while( eod == FALSE )
+   {
+     fsal_status = FSAL_opendir( &dir_handle, 
+                                 pcontext, 
+                                 &dir_descriptor, 
+                                 &dir_attr ) ;
+     if( FSAL_IS_ERROR( fsal_status ) )
+      {
+         DisplayLog( "Impossible to opendir directory %s to be used to store precreated objects: status=(%u,%u)",
+      		     mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor ) ;
+         exit( 1 ) ; 
+      }
+
+
+     fsal_status =  FSAL_readdir( &dir_descriptor,
+    		                 FSAL_READDIR_FROM_BEGINNING, 
+  			         FSAL_ATTRS_MANDATORY,
+  			         NB_DIRENT_CLEAN * sizeof( fsal_dirent_t ), 			        	
+			         dirent,
+			         &end_cookie,
+			         &nb_entries,
+			         &eod ) ;
+     if( FSAL_IS_ERROR( fsal_status ) )
+      {  
+         DisplayLog( "Impossible to readdir directory %s to be used to store precreated objects: status=(%u,%u)",
+  	   	     mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor ) ;
+         exit( 1 ) ; 
+      }
+
+     fsal_status = FSAL_closedir( &dir_descriptor ) ;
+     if( FSAL_IS_ERROR( fsal_status ) )
+      {
+         DisplayLog( "Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
+  		     mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor ) ;
+         exit( 1 ) ; 
+      }
+
+     for( nb_count = 0 ; nb_count < nb_entries ; nb_count ++ )
+      {
+         fsal_status =  FSAL_unlink( &dir_handle,
+				     &dirent[nb_count].name,
+				     pcontext, 
+				     &dir_attr ) ;
+         if( FSAL_IS_ERROR( fsal_status ) )
+          {
+             DisplayLog( "Impossible to unlink %s/%s to be used to store precreated objects: status=(%u,%u)",
+  		         mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name, fsal_status.major, fsal_status.minor ) ;
+             exit( 1 ) ; 
+          } /* if */
+      } /* for */
+
+   } /* while( eod ) */
+
+  return fsal_status ;
+} /* mfsl_async_init_clean_precreated_object */
+
+/**
+ * 
  * mfsl_async_init_precreated_directories: allocate pre-created directories for asynchronous create.
  *
  * Allocate pre-created directories for asynchronous create.
@@ -124,7 +224,7 @@ void constructor_preacreated_entries( void * ptr )
  * @param pcontext    [INOUT] pointer to FSAL context to be used 
  * @param pool_dirs   [INOUT] pointer to MFSL precreated entries to be created
  *
- * @ return a FSAL status
+ * @return a FSAL status
  *
  */
 fsal_status_t mfsl_async_init_precreated_directories( fsal_op_context_t         * pcontext,
@@ -294,6 +394,22 @@ fsal_status_t mfsl_async_init_precreated_files( fsal_op_context_t         * pcon
  return fsal_status ;
 } /* mfsl_async_init_precreated_files */
 
+/**
+ * 
+ * MFSL_PrepareContext: Prepares a MFSL context for a thead.
+ *
+ * Prepares a MFSL context for a thread.
+ *
+ * @param pcontext      [INOUT] pointer to MFSL context to be used 
+ *
+ * @return a FSAL status
+ *
+ */
+fsal_status_t MFSL_PrepareContext( fsal_op_context_t  * pcontext )
+{
+   return mfsl_async_init_clean_precreated_objects( pcontext ) ;
+} /* MFSL_PrepareContext */
+ 
 
 /**
  * 
