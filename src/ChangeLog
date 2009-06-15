@@ -196,5 +196,7 @@
 	  are used)
 	- bad seqid management in nfs4_op_close
 	- Fix bug in the use of ACCES4resok::supported flag
+	- MFSL_ASYNC now has startup routines to clean preallocated stuff left
+	  by older instance of the server
 
 	
