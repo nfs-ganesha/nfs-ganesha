@@ -89,7 +89,7 @@ esac
 
 AM_CONDITIONAL(IS_LINUX, test "$MYOS" = "LINUX")
 AM_CONDITIONAL(IS_SOLARIS, test "$MYOS" = "SOLARIS" )
-AC_SUBST( EXTRA_LIB )
+AC_SUBST(EXTRA_LIB)
 
 # checking endianess
 AC_C_BIGENDIAN( [AC_DEFINE( [BIGEND],	1,[Big endian system])],
