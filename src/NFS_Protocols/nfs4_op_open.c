@@ -465,10 +465,12 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
         			res_OPEN4.status = NFS4ERR_SERVERFAULT ;
         			return res_OPEN4.status ;
       			     }
-                            res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0 ; 
-                            res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1] = 0 ; 
+			
+			    tmp_int = 1 ;
+       		            tmp_attr[0] = FATTR4_MODE ;
+		            nfs4_list_to_bitmap4( &(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr ) ;
+       			    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2 ;
 
-    
                             memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
                             res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
                             res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
@@ -482,9 +484,9 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
                           /* If server use OPEN_CONFIRM4, set the correct flag */
                           if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-                              res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM ;
+                              res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
 			  else
-                              res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
+                              res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
 
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
@@ -552,9 +554,9 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
 					    /* If server use OPEN_CONFIRM4, set the correct flag */
     					    if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM ;
+        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
     					    else
-        					res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
+        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
 
 					    /* Now produce the filehandle to this file */
 				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
@@ -1049,9 +1051,9 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
     /* If server use OPEN_CONFIRM4, set the correct flag */
     if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM ;
+        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
     else
-        res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
+        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
    
 #ifdef _DEBUG_STATES
     nfs_State_PrintAll(  ) ;
