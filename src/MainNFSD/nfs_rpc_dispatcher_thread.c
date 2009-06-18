@@ -800,6 +800,8 @@ int nfs_Init_svc( )
  
 #endif
 
+#ifndef _NO_PORTMAPPER
+
   /* Perform all the RPC registration, for UDP and TCP, for NFS_V2, NFS_V3 and NFS_V4 */
   DisplayLogLevel( NIV_EVENT, "Registration to the portmapper for NFS and MOUNT, on UDP and TCP" ) ;
 
@@ -1211,6 +1213,8 @@ int nfs_Init_svc( )
   freenetconfigent( netconfig_udpv4 );
   freenetconfigent( netconfig_tcpv4 );
 #endif
+
+#endif /* _NO_PORTMAPPER */
  
   return 0 ;
 } /* nfs_Init_svc */
