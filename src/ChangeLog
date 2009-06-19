@@ -198,5 +198,9 @@
 	- Fix bug in the use of ACCES4resok::supported flag
 	- MFSL_ASYNC now has startup routines to clean preallocated stuff left
 	  by older instance of the server
+	- Bug Fix in OP_OPEN4 : if the file already existed as an
+	  OPEN_CREATE operation was made with the UNCHECKED mode, the parent
+	  directory remain as the cfh as the operation returned NFS4_OK,
+	  leading to lots of mess about the file. 
 
 	

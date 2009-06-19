@@ -491,10 +491,40 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
 #endif
+			  
+		          /* Now produce the filehandle to this file */
+			  if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
+      			   {
+        		        res_OPEN4.status = nfs4_Errno( cache_status ) ;
+        			return  res_OPEN4.status ;
+      			   }
 
-           		   res_OPEN4.status = NFS4_OK ;
-	           	   return res_OPEN4.status ;
-                         }
+	
+			  /* Allocation of a new file handle */
+    			  if( ( rc = nfs4_AllocateFH( &newfh4 ) ) != NFS4_OK )
+      			   {
+        			res_OPEN4.status = rc ;
+        			return res_OPEN4.status ;
+      			    }
+
+			  /* Building a new fh */
+    		          if( !nfs4_FSALToFhandle( &newfh4, pnewfsal_handle, data ) )
+      			   {
+        		        res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+        			return res_OPEN4.status ;
+      			   }
+    
+    		          /* This new fh replaces the current FH */
+			  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len ;
+			  memcpy( data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val, newfh4.nfs_fh4_len ) ;
+    
+			  data->current_entry = pentry_lookup ;
+			  data->current_filetype = REGULAR_FILE ;
+
+
+           		  res_OPEN4.status = NFS4_OK ;
+	           	  return res_OPEN4.status ;
+                       }
 
                        /* if open is EXCLUSIVE, but verifier is the same, return NFS4_OK (RFC3530 page 173) */
                        if( arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4 )
