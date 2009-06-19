@@ -4,6 +4,8 @@ Their contributions were very helpful, so I guess they should have their names l
 Thanks to:
    Contributors that are not colleagues or students
 	- Tom "spot" Callaway <tcallawa@redhat.com>, for his experience and wiseness in RPM packaging. 
+	- People from maling-list nfsv4@linux-nfs.org (with special attention to J. Bruce Fields 
+	  and Trond Myklebust) for their help understanding the complex logic within NFSv4
 
    Students that came to make an intership with us and worked on the project
 	- Mickael Guerin who wrote the first release of the FSAL_POSIX
@@ -11,3 +13,4 @@ Thanks to:
           and non-regression test
 	- Cedric Cabessa who worked on the SNMP admin module
 	- Adrien Grellier who provided us with the first TI-RPC support in the product
+
