@@ -4,6 +4,26 @@
 
 <p>
 <ul>
+	<li>
+        <a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=691591">NFS-GANESHA v 0.99.53</a><br>
+	</li>
+	<ul>
+	<li>Bug Fixed in NFSV4 lock management : NFS4ERR_OPENMODE was not returned in case a WRITE lock was requested on a read-only file</li>
+	<li>Bug fixed in NFSv4 lock management : previously know lockowner where badly managed. </li>
+	<li>Bug fixed in NFSv4 lock management : NFS4ERR_OLD_STATEID wasreturned instead of NFS4ERR_BAD_STATEID in severals cases</li>
+	<li>Update nfs4_op_open's behaviour related to NFS4ERR_SHARE_DENIED</li>
+	<li>Update nfs4_op_write and nfs4_op_read behavior regardings locks and share reservations.</li>
+	<li>OP4_LOCK/OP4_LOCKU bad behavior fixed</li>
+	<li>add a missing relation between lock-stateids and related open-stateids for managing seqid at state transition</li>
+	<li>better management of OPEN4 with EXCLIVE4 repeated with same verifier</li>
+	<li>Return NFS4ERR_LOCKS_HELD when closing a file with held locks</li>
+	<li>all-one stateid is correctly managed in OP4_WRITE and OP4_READ</li>
+	<li>Minor bug fixed in nfs4_op_open_confirm (errors when bad arguments are used)</li>
+	<li>bad seqid management in nfs4_op_close </li>
+	<li>Fix bug in the use of ACCES4resok::supported flag</li>
+	<li>MFSL_ASYNC now has startup routines to clean preallocated stuff left by older instance of the server</li>
+	<li>Bug Fix in OP_OPEN4 : if the file already existed as an OPEN_CREATE operation was made with the UNCHECKED mode, the parent  directory remain as the cfh as the operation returned NFS4_OK</li>
+	</ul>
   	<li>
         <a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=683946">NFS-GANESHA v 0.99.53</a><br>
         </li>
