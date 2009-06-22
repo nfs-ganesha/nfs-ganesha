@@ -176,7 +176,7 @@
 	- FSAL_POSIX uses pread/pwrite instead of fseek+fwrite/fseek+fread
 	- NFSv4 implementation now supports NFSv4 referrals
 	
-0.99.54 - 
+0.99.54 - Mon 22 Jun 2009
 	- Bug Fixed in NFSV4 lock management : NFS4ERR_OPENMODE was not 
 	  returned in case a WRITE lock was requested on a read-only file 
 	- Bug fixed in NFSv4 lock management : previously know lockowner where 
