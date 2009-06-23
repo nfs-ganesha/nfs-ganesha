@@ -339,6 +339,11 @@ typedef struct nfs_state_id_param__
   hash_parameter_t hash_param ;
 } nfs_state_id_parameter_t ;
 
+typedef struct nfs_open_owner_param__
+{
+  hash_parameter_t hash_param ;
+} nfs_open_owner_parameter_t ;
+
 typedef struct nfs_krb5_param__
 {
   char principal[MAXNAMLEN] ;
@@ -373,6 +378,7 @@ typedef struct nfs_param__
   nfs_version4_parameter_t          nfsv4_param ;
   nfs_client_id_parameter_t         client_id_param ;
   nfs_state_id_parameter_t          state_id_param ;
+  nfs_open_owner_parameter_t        open_owner_param ;
   nfs_cache_layers_parameter_t      cache_layers_param ;
   fsal_parameter_t                  fsal_param ;
   external_tools_parameter_t        extern_param ;
@@ -579,6 +585,18 @@ int nfs_client_id_compute( char      * name,
 int nfs_client_id_basic_compute( char      * name,
                                  clientid4 * pclientid ) ;
 
+int display_open_owner_val( hash_buffer_t * pbuff, char * str ) ;
+int display_open_owner_key( hash_buffer_t * pbuff, char * str ) ;
+int compare_open_owner( hash_buffer_t * buff1, hash_buffer_t * buff2 ) ;
+unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
+unsigned long open_owner_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
+int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param ) ;
+int nfs4_Open_Owner_Set( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) ; 
+int nfs4_Open_Owner_Get( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) ;
+int nfs4_Open_Owner_Get_Pointer( open_owner4 * popen_owner, cache_inode_state_t *  *pstate_data ) ;
+int nfs4_Open_Owner_Update( open_owner4 * popen_owner, cache_inode_state_t * pstate_data )  ;
+int nfs4_Open_Owner_Del( open_owner4 * popen_owner ) ;
+void nfs_Open_Owner_PrintAll( void ) ;
 
 int display_client_id( hash_buffer_t * pbuff, char * str ) ;
 int display_client_id_reverse( hash_buffer_t * pbuff, char * str ) ;

@@ -377,7 +377,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->client_id_param.hash_param.key_to_str       = display_client_id ; 
   p_nfs_param->client_id_param.hash_param.val_to_str       = display_client_id_val ;
 
-  /*  Worker parameters : NFSv4 Client id reverse table */
+  /* NFSv4 Client id reverse table */
   p_nfs_param->client_id_param.hash_param_reverse.index_size       = PRIME_CLIENT_ID ;
   p_nfs_param->client_id_param.hash_param_reverse.alphabet_length  = 10 ; /* ipaddr is a numerical decimal value */
   p_nfs_param->client_id_param.hash_param_reverse.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID ;
@@ -387,7 +387,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->client_id_param.hash_param_reverse.key_to_str       = display_client_id_reverse ;
   p_nfs_param->client_id_param.hash_param_reverse.val_to_str       = display_client_id_val ;
 
-  /* Worker parameters : NFSv4 State Id hash */
+  /* NFSv4 State Id hash */
   p_nfs_param->state_id_param.hash_param.index_size       = PRIME_STATE_ID ;
   p_nfs_param->state_id_param.hash_param.alphabet_length  = 10 ; /* ipaddr is a numerical decimal value */
   p_nfs_param->state_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID ;
@@ -396,6 +396,16 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->state_id_param.hash_param.compare_key      = compare_state_id ; 
   p_nfs_param->state_id_param.hash_param.key_to_str       = display_state_id_key ;
   p_nfs_param->state_id_param.hash_param.val_to_str       = display_state_id_val ;
+
+  /* NFSv4 Open Owner hash */
+  p_nfs_param->open_owner_param.hash_param.index_size       = PRIME_STATE_ID ;
+  p_nfs_param->open_owner_param.hash_param.alphabet_length  = 10 ; /* ipaddr is a numerical decimal value */
+  p_nfs_param->open_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID ;
+  p_nfs_param->open_owner_param.hash_param.hash_func_key    = open_owner_value_hash_func ;
+  p_nfs_param->open_owner_param.hash_param.hash_func_rbt    = open_owner_rbt_hash_func ;
+  p_nfs_param->open_owner_param.hash_param.compare_key      = compare_open_owner ; 
+  p_nfs_param->open_owner_param.hash_param.key_to_str       = display_open_owner_key ;
+  p_nfs_param->open_owner_param.hash_param.val_to_str       = display_open_owner_val ;
 
   /* Cache inode parameters : hash table */ 
   p_nfs_param->cache_layers_param.cache_param.hparam.index_size       = PRIME_CACHE_INODE ;
@@ -1405,7 +1415,7 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
     }
   DisplayLogLevel( NIV_EVENT, "NFS_INIT: NFSv4 clientid cache reverse successfully initialized" ) ;
 
-  /* Init Rhe NFSv4 State id cache */
+  /* Init The NFSv4 State id cache */
   DisplayLogLevel( NIV_DEBUG, "NFS_INIT: Now building NFSv4 State Id cache" ) ;
   if( nfs4_Init_state_id( nfs_param.state_id_param ) != 0 ) 
     {
@@ -1415,6 +1425,15 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
   DisplayLogLevel( NIV_EVENT, "NFS_INIT: NFSv4 State Id cache successfully initialized" ) ;
      
 
+  /* Init The NFSv4 Open Owner cache */
+  DisplayLogLevel( NIV_DEBUG, "NFS_INIT: Now building NFSv4 Open Owner cache" ) ;
+  if( nfs4_Init_open_owner( nfs_param.open_owner_param ) != 0 ) 
+    {
+      DisplayLog( "NFS_INIT: Error %d while initializing NFSv4 Open Owner cache" ) ;
+      exit( 1 ) ;
+    }
+  DisplayLogLevel( NIV_EVENT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized" ) ;
+     
   /* Create the root entries for each exported FS */
   if( rc = nfs_export_create_root_entry( nfs_param.pexportlist, ht ) != TRUE )
     {

@@ -235,6 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Thu Jun 22 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.55-1
+- Bug fixed in nfs4_op_open (bad allocation)
+
 * Thu May 28 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.54-1
 - Many bugs fixed in NFSv4 locks and states management
 
