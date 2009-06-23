@@ -137,10 +137,15 @@ hash_table_t * ht_open_owner ;
 
 int display_open_owner_key( hash_buffer_t * pbuff, char * str )
 {
-  unsigned int i   = 0 ;
-  unsigned int len = 0 ;
+  open_owner4 * popen_owner ;
+  char lstr[MAXPATHLEN] ;
 
-  strcpy( str, (char *)pbuff->pdata ) ;
+  popen_owner = (open_owner4 *)pbuff->pdata ;
+
+  strncpy( lstr, popen_owner->owner.owner_val, MAXPATHLEN ) ;
+  lstr[popen_owner->owner.owner_len] = 0 ;
+  sprintf( str, "{clientid =%llu, owner_len=%u, owner_val=%s}", 
+          popen_owner->clientid, popen_owner->owner.owner_len, lstr ) ;
 
   return 1 ;
 } /* display_state_id_val */
@@ -168,7 +173,7 @@ int compare_open_owner( hash_buffer_t * buff1, hash_buffer_t * buff2 )
    if( powner1->owner.owner_len != powner2->owner.owner_len )
       return 1 ;
 
-   return strncmp( powner1->owner.owner_val, powner2->owner.owner_val, powner1->owner.owner_len ) ;
+   return memcmp( (char *)powner1->owner.owner_val, (char *)powner2->owner.owner_val, powner1->owner.owner_len ) ;
 } /* compare_state_id */
 
 unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef )
@@ -177,6 +182,7 @@ unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buff
   unsigned int  i   = 0 ;
   unsigned char c   = 0 ;
   unsigned long res = 0 ;
+
 
   open_owner4 * powner = (open_owner4 *)buffclef->pdata ;
 
@@ -200,22 +206,25 @@ unsigned long open_owner_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer
 {
   open_owner4 * powner = (open_owner4 *)buffclef->pdata ;
 
-  u_int32_t i1 = 0 ;
-  u_int32_t i2 = 0 ;
-  u_int32_t i3 = 0 ;
+  unsigned int  sum = 0 ;
+  unsigned int  i   = 0 ;
+  unsigned char c   = 0 ;
+  unsigned long res = 0 ;
 
-  memcpy( &i1, &(powner->clientid) , sizeof( u_int32_t ) ) ;
-  memcpy( &i2, &(powner->owner.owner_val), (powner->owner.owner_len < sizeof( u_int32_t ))?powner->owner.owner_len:sizeof( u_int32_t ) ) ;
-  if( powner->owner.owner_len > sizeof( u_int32_t ) )
-    memcpy( &i3, &(powner->owner.owner_val) +sizeof( u_int32_t), 
-	    (powner->owner.owner_len < 2*sizeof( u_int32_t ))?powner->owner.owner_len-sizeof(u_int32_t):sizeof( u_int32_t ) ) ;
-  else
-    i3 = 0xF0F0F0F0 ;
- 
+  /* Compute the sum of all the characters */
+  for( i = 0 ; i < powner->owner.owner_len ; i++ ) 
+   { 
+       c=((char *)powner->owner.owner_val)[i] ;
+       sum += c ;
+   }
+
+  res = (unsigned long)(powner->clientid) + (unsigned long)sum ;
+
 #ifdef _DEBUG_STATES 
-  printf( "--->  state_id_rbt_hash_func=%lu\n",  (unsigned long)(i1 ^ i2 ^ i3) );
+  printf( "--->  state_id_rbt_hash_func=%lu\n", res );
 #endif
-  return (unsigned long)(i1 ^ i2 ^ i3);
+
+  return res ; 
 } /* state_id_rbt_hash_func */
 
 
@@ -261,6 +270,14 @@ int nfs4_Open_Owner_Set( open_owner4 * popen_owner, cache_inode_state_t * pstate
   hash_buffer_t buffval ;
   open_owner4 * powner_key = NULL ;
 
+#ifdef _DEBUG_STATES
+  char str[MAXPATHLEN] ;
+
+  strncpy( str, popen_owner->owner.owner_val, MAXPATHLEN ) ;
+  str[popen_owner->owner.owner_len] = 0 ;
+  printf( "=-=-=-=-=-=- nfs4_Open_Owner_Set =-=-=-=-=-=- clientid =%llu, owner_len=%u, owner_val=%s\n", 
+          popen_owner->clientid, popen_owner->owner.owner_len, str ) ;
+#endif
 
   if( (  powner_key = (open_owner4 *)Mem_Alloc( sizeof( open_owner4 ) ) ) == NULL )
         return 0 ;
@@ -270,7 +287,7 @@ int nfs4_Open_Owner_Set( open_owner4 * popen_owner, cache_inode_state_t * pstate
 
   powner_key->clientid = popen_owner->clientid ;
   powner_key->owner.owner_len = popen_owner->owner.owner_len ;
-  strncpy( powner_key->owner.owner_val, popen_owner->owner.owner_val, popen_owner->owner.owner_len ) ; 
+  memcpy( (char *)powner_key->owner.owner_val, (char *)popen_owner->owner.owner_val, popen_owner->owner.owner_len ) ; 
 
   buffkey.pdata = (caddr_t)powner_key ;
   buffkey.len = sizeof( open_owner4 ) + popen_owner->owner.owner_len ; 
@@ -335,6 +352,15 @@ int nfs4_Open_Owner_Get_Pointer( open_owner4 * popen_owner, cache_inode_state_t 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
+
+#ifdef _DEBUG_STATES
+  char str[MAXPATHLEN] ;
+
+  strncpy( str, popen_owner->owner.owner_val, MAXPATHLEN ) ;
+  str[popen_owner->owner.owner_len] = 0 ;
+  printf( "=-=-=-=-=-=- nfs4_Open_Owner_Get_Pointer =-=-=-=-=-=- clientid =%llu, owner_len=%u, owner_val=%s\n", 
+          popen_owner->clientid, popen_owner->owner.owner_len, str ) ;
+#endif
 
    buffkey.pdata = (char *)popen_owner ;
    buffkey.len   = sizeof( open_owner4 ) + popen_owner->owner.owner_len ;

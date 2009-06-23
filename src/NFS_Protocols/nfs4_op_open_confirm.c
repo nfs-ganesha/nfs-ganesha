@@ -240,7 +240,14 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
          res_OPEN_CONFIRM4.status = nfs4_Errno( cache_status ) ;
          return res_OPEN_CONFIRM4.status ;
       }
- 
+
+   /* Set the open_owner as known */
+   if( !nfs4_Open_Owner_Set( &pstate_found->state_owner, pstate_found ) )
+    {
+       res_OPEN_CONFIRM4.status = NFS4ERR_SERVERFAULT ;
+       return res_OPEN_CONFIRM4.status ;
+    }
+    
    /* Return the stateid to the client */
    res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid = pstate_found->seqid ;
    memcpy( res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other, pstate_found->stateid_other, 12 ) ;
