@@ -567,13 +567,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pstate_found_iterate->seqid ;
 					    memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pstate_found_iterate->stateid_other, 12 ) ;
    
-					    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
-    			    		    if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
-				                (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
-    			                     {
-        					res_OPEN4.status = NFS4ERR_SERVERFAULT ;
-        					return res_OPEN4.status ;
-      			     		     }
+					    // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
+    			    		    //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
+				            //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
+    			                    // {
+        				    //		res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+        				    //		return res_OPEN4.status ;
+      			     		    //	     }
     
 					    memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
     					    res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
