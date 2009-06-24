@@ -262,6 +262,11 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
             pstate_open->state_data.share.lockheld -= 1 ;
     }
 
+  /* Increment the seqid */
+  pstate_found->seqid += 1 ;
+  res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->seqid ;
+  memcpy( res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12 ) ;
+
   /* Remove the state associated with the lock */
   if( cache_inode_del_state( pstate_found,
                              data->pclient, 
