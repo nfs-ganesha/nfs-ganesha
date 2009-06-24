@@ -1080,13 +1080,13 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
       return *pstatus ;
     }
   
-  P_w( &dir_pentry->lock ) ;          
+  P_r( &dir_pentry->lock ) ;          
 
     /* Renew the entry (to avoid having it being garbagged */
   if( cache_inode_renew_entry( dir_pentry, NULL, ht, pclient, pcontext, pstatus ) != CACHE_INODE_SUCCESS )
     {
       pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1 ;
-      V_w( &dir_pentry->lock ) ;          
+      V_r( &dir_pentry->lock ) ;          
       return *pstatus ;
     }
 
@@ -1094,7 +1094,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
   if( dir_pentry->internal_md.type != DIR_BEGINNING &&
       dir_pentry->internal_md.type != DIR_CONTINUE )
     {
-      V_w( &dir_pentry->lock ) ;
+      V_r( &dir_pentry->lock ) ;
       *pstatus = CACHE_INODE_BAD_TYPE ;
 
       /* stats */
@@ -1111,7 +1111,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
                                    pcontext,
                                    pstatus ) != CACHE_INODE_SUCCESS )
      {
-       V_w( &dir_pentry->lock ) ;
+       V_r( &dir_pentry->lock ) ;
        
        pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READDIR] += 1 ;
        return *pstatus ;
@@ -1134,7 +1134,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
                /* stats */
                pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READDIR] += 1 ;
          
-               V_w( &dir_pentry->lock ) ;
+               V_r( &dir_pentry->lock ) ;
                return *pstatus ;
              }
            
@@ -1165,7 +1165,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
                /* stats */
                pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READDIR] += 1 ;
          
-               V_w( &dir_pentry->lock ) ;
+               V_r( &dir_pentry->lock ) ;
                return *pstatus ;
              }
            
@@ -1175,9 +1175,6 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
       first_pentry_cookie = dir_pentry->object.dir_cont.dir_cont_pos * CHILDREN_ARRAY_SIZE ;
     }
   
-  /* Downgrade Writer lock to a reader one */
-  rw_lock_downgrade( &dir_pentry->lock ) ;
-
   /* Now go through the pdir_chain for filling in dirent_array 
    * the first cookie is parameter 'cookie'
    * number of entries queried is set by parameter 'nbwanted'
