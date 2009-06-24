@@ -197,7 +197,6 @@ int fsal2posix_testperm( fsal_accessflags_t testperm )
 
 
 /**
-pen_by_n
  * fsal2posix_openflags:
  * Convert FSAL open flags to Posix open flags.
  *

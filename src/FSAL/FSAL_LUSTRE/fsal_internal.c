@@ -532,7 +532,7 @@ fsal_status_t  fsal_internal_Handle2FidPath( fsal_op_context_t * p_context,   /*
    curr += FIDDIRLEN+2;
 
    /* add fid string */
-   curr += sprintf( curr, "0x%llx:0x%x:0x%x", p_handle->seq, p_handle->oid, p_handle->ver );
+   curr += sprintf( curr, SFID, p_handle->seq, p_handle->oid, p_handle->ver );
 
    p_fsalpath->len = ( curr - p_fsalpath->path  );
 
@@ -552,30 +552,30 @@ fsal_status_t  fsal_internal_Path2Handle( fsal_op_context_t * p_context,        
 {
    int rc;
    struct stat ino;
-   unsigned long longoid, longver;
+   lustre_fid fid;
 
    if ( !p_context || !p_handle || !p_fsalpath )
         ReturnCode( ERR_FSAL_FAULT, 0 );
 
     memset( p_handle, 0, sizeof(fsal_handle_t) );
-    longoid = longver = 0;
 
 #ifdef _DEBUG_FSAL
     DisplayLogLevel( NIV_FULL_DEBUG, "Lookup handle for %s", p_fsalpath->path );
 #endif
 
-   rc = llapi_path2fid(p_fsalpath->path, &p_handle->seq, &longoid, &longver);
+   rc = llapi_path2fid(p_fsalpath->path, &fid );
 
 #ifdef _DEBUG_FSAL
-    DisplayLogLevel( NIV_FULL_DEBUG, "llapi_path2fid(%s)=%d, seq=%llx, oid=%lx, ver=%lx", p_fsalpath->path, rc,
-        p_handle->seq, longoid, longver );
+    DisplayLogLevel( NIV_FULL_DEBUG, "llapi_path2fid(%s)=%d, seq=%llx, oid=%x, ver=%x", p_fsalpath->path, rc,
+        fid.f_seq, fid.f_oid, fid.f_ver );
 #endif
 
    if (rc)
        ReturnCode( posix2fsal_error( -rc ), -rc );
 
-   p_handle->oid = longoid;
-   p_handle->ver = longver;
+   p_handle->seq = fid.f_seq;
+   p_handle->oid = fid.f_oid;
+   p_handle->ver = fid.f_ver;
 
    /* retrieve inode */
    rc = lstat( p_fsalpath->path, &ino ); 
