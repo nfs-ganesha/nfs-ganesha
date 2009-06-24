@@ -206,4 +206,4 @@
 0.99.55 -
 	- Stupid bug fix in nfs4_op_open.c (allocating a zero length
 	  buffer...)
-	
+	- Bug fix in OP_LOCKU4 implementation : no stateid was returned	
