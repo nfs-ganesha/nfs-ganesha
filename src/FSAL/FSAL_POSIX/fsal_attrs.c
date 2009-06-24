@@ -166,7 +166,9 @@ fsal_status_t FSAL_setattrs(
     if ( ! S_ISLNK( buffstat.st_mode ) )
     {
       
-      if ( p_context->credential.user != buffstat.st_uid ) Return( ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs );
+      if ( (p_context->credential.user != 0)
+           && ( p_context->credential.user != buffstat.st_uid ) )
+        Return( ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs );
 
       TakeTokenFSCall();
       rc = chmod( fsalpath.path, fsal2unix_mode(attrs.mode) ); 
@@ -220,10 +222,20 @@ fsal_status_t FSAL_setattrs(
     
     struct utimbuf timebuf;
     
-    /* check write permissions */
-    status = fsal_internal_testAccess( p_context, FSAL_W_OK, &buffstat, NULL);
-    if (FSAL_IS_ERROR(status)) Return(status.major, status.minor, INDEX_FSAL_setattrs);
-    
+    /* user must be the owner or have read access to modify 'atime' */
+    if ( FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_ATIME)
+         && (p_context->credential.user != 0)
+         && (p_context->credential.user != buffstat.st_uid)
+         && ( (status=fsal_internal_testAccess( p_context, FSAL_R_OK, &buffstat, NULL )).major != ERR_FSAL_NO_ERROR ) )
+            Return( status.major, status.minor, INDEX_FSAL_setattrs );
+
+    /* user must be the owner or have write access to modify 'mtime' */
+    if ( FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_MTIME)
+         && (p_context->credential.user != 0)
+         && (p_context->credential.user != buffstat.st_uid)
+         && ( (status=fsal_internal_testAccess( p_context, FSAL_W_OK, &buffstat, NULL )).major != ERR_FSAL_NO_ERROR ) )
+            Return( status.major, status.minor, INDEX_FSAL_setattrs );
+
     timebuf.actime = (FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_ATIME ) ? (time_t) attrs.atime.seconds : buffstat.st_atime);
     timebuf.modtime = (FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_MTIME ) ? (time_t) attrs.mtime.seconds : buffstat.st_mtime);
 

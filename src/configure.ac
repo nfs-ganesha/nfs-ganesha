@@ -229,6 +229,8 @@ GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a bloc
 GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, for debug purpose only],   [-D_NO_BUDDY_SYSTEM] )
 GA_DISABLE_FLAG( [block-prealloc],       [disable GANESHA's memory chunks allocator, for debug purpose only],   [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
+GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
+
 GA_ENABLE_FLAG(  [memcorrupt-check],     [enable allocator features for tracking memory corruption],     [-D_DETECT_MEMCORRUPT] )
 GA_ENABLE_FLAG(  [debug-memalloc],       [enable debug traces in memory allocator],                      [-D_DEBUG_MEMALLOC] )
 GA_ENABLE_FLAG(  [debug-states],         [enable debug traces for nfsv4 states],                         [-D_DEBUG_STATES] )
