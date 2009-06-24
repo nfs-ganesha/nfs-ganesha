@@ -177,7 +177,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     cache_inode_state_t      * pstate_found_iterate = NULL ;
     cache_inode_state_t      * pstate_previous_iterate = NULL ;
     cache_inode_state_t      * pstate_found_same_owner = NULL ;
-    cache_inode_state_t      * pstate_tmp = NULL ;
+    cache_inode_state_t      * pstate_open_owner_known = NULL ;
     bool_t                     open_owner_known = FALSE ;
 
 
@@ -343,7 +343,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
             }
 
           /* Is this open_owner known ? */
-          open_owner_known = nfs4_Open_Owner_Get_Pointer(  &arg_OPEN4.owner, &pstate_tmp ) ;
+          open_owner_known = nfs4_Open_Owner_Get_Pointer(  &arg_OPEN4.owner, &pstate_open_owner_known ) ;
 
           /* Status of parent directory before the operation */
           if( ( cache_status = cache_inode_getattr( pentry_parent, 
@@ -489,10 +489,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
                           /* If server use OPEN_CONFIRM4, set the correct flag */
-                          if( nfs_param.nfsv4_param.use_open_confirm == TRUE && !open_owner_known )
-                              res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-			  else
-                              res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+                          if( !open_owner_known )
+                           {
+                             if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
+                                res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
+			    else
+                                res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+                           }
 
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
@@ -589,10 +592,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
 					    /* If server use OPEN_CONFIRM4, set the correct flag */
-    					    if( nfs_param.nfsv4_param.use_open_confirm == TRUE && !open_owner_known )
-        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-    					    else
-        					res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+                                            if( !open_owner_known )
+                                             {
+    					       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
+        				  	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
+    					       else
+        				 	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+                                             }
 
 					    /* Now produce the filehandle to this file */
 				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
@@ -1086,10 +1092,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
     /* If server use OPEN_CONFIRM4, set the correct flag */
-    if( nfs_param.nfsv4_param.use_open_confirm == TRUE && !open_owner_known )
-        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-    else
-        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+    if( !open_owner_known )
+     {
+       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
+          res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
+       else
+          res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
+     }
    
 #ifdef _DEBUG_STATES
     nfs_State_PrintAll(  ) ;
