@@ -358,6 +358,32 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
             }
           memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.before), 0, sizeof( changeid4) ) ;
           res_OPEN4.OPEN4res_u.resok4.cinfo.before = (changeid4)pentry_parent->internal_md.mod_time ;
+      
+          /* CLient may have provided fattr4 to set attributes at creation time */
+          if( arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 || 
+              arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4 )
+            {
+               if( arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask.bitmap4_len != 0 )
+                 {
+                    /* Convert fattr4 so nfs4_sattr */
+                    convrc = nfs4_Fattr_To_FSAL_attr( &sattr, &(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs ) ) ;
+
+                    if( convrc == 0 )
+                      {
+                         res_OPEN4.status = NFS4ERR_ATTRNOTSUPP  ;
+                         return res_OPEN4.status ;
+                      }
+
+                    if( convrc == -1 )
+                     {
+                        res_OPEN4.status = NFS4ERR_BADXDR ;
+                        return res_OPEN4.status ;
+                     }
+                            
+                    AttrProvided = TRUE ;
+                 }
+            
+            }
 
           /* Second switch is based upon "openhow" */
           switch( arg_OPEN4.openhow.opentype )
@@ -411,6 +437,25 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                        }
                                     openflags = FSAL_O_RDONLY ;
                                }
+
+                             if( AttrProvided == TRUE ) /* Set the attribute if provided */
+                              {
+                        	if( ( cache_status = cache_inode_setattr( pentry_lookup, 
+                                	                                  &sattr, 
+                                        	                          data->ht, 
+                                                	                  data->pclient, 
+                                                        	          data->pcontext, 
+                                                                	  &cache_status ) ) != CACHE_INODE_SUCCESS )
+                          	   {
+                            		res_OPEN4.status = nfs4_Errno( cache_status ) ;
+                            		return  res_OPEN4.status ;
+                          	   }
+           
+				res_OPEN4.OPEN4res_u.resok4.attrset = arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask ;
+                      	       }
+			     else
+       			       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ;
+ 
 
                             /* Same check on write */
                             if( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE )
@@ -472,11 +517,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
         			return res_OPEN4.status ;
       			     }
 			
-			    tmp_int = 1 ;
-       		            tmp_attr[0] = FATTR4_MODE ;
-		            nfs4_list_to_bitmap4( &(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr ) ;
-       			    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2 ;
-
                             memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
                             res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
                             res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
@@ -654,33 +694,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    printf( "    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode ) ;
 #endif
        
-                   /* CLient may have provided fattr4 to set attributes at creation time */
-                   if( arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 || 
-                       arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4 )
-                     {
-                       if( arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask.bitmap4_len != 0 )
-                         {
-                           /* Convert fattr4 so nfs4_sattr */
-                           convrc = nfs4_Fattr_To_FSAL_attr( &sattr, &(arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs ) ) ;
-
-                           if( convrc == 0 )
-                             {
-                               res_OPEN4.status = NFS4ERR_ATTRNOTSUPP  ;
-                               return res_OPEN4.status ;
-                             }
-
-                           if( convrc == -1 )
-                             {
-                               res_OPEN4.status = NFS4ERR_BADXDR ;
-                               return res_OPEN4.status ;
-                             }
-
-                            
-                           AttrProvided = TRUE ;
-                         }
-            
-                     }
-        
+                    
                    /* Create the file, if we reach this point, it does not exist, we can create it */
                    if( ( pentry_newfile = cache_inode_create( pentry_parent, 
                                                               &filename, 
