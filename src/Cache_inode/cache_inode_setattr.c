@@ -136,6 +136,7 @@ cache_inode_status_t cache_inode_setattr( cache_entry_t        * pentry,
   fsal_status_t        fsal_status ;
   fsal_attrib_list_t * p_object_attributes ;
   fsal_attrib_list_t   result_attributes ;
+  fsal_attrib_list_t   truncate_attributes ;
   
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS ;
@@ -216,6 +217,40 @@ cache_inode_status_t cache_inode_setattr( cache_entry_t        * pentry,
 
       return *pstatus ;
     }
+
+  if( pattr->asked_attributes  & FSAL_ATTR_SIZE ) 
+    {
+        truncate_attributes.asked_attributes = pclient->attrmask;
+
+        fsal_status = FSAL_truncate( pfsal_handle, 
+				     pcontext,
+                                     pattr->filesize, 
+				     NULL, 
+                                     &truncate_attributes ) ;
+	if( FSAL_IS_ERROR( fsal_status ) )
+	  {
+       	      *pstatus = cache_inode_error_convert( fsal_status ) ;
+	      V_w( &pentry->lock ) ;
+      
+              /* stat */
+              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1 ;
+
+             if( fsal_status.major == ERR_FSAL_STALE ) 
+              {
+	        cache_inode_status_t kill_status ;
+
+	        DisplayLog( "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p", pentry ) ;
+
+ 	        if( cache_inode_kill_entry( pentry, ht, pclient, &kill_status ) != CACHE_INODE_SUCCESS )
+                      DisplayLog( "cache_inode_setattr: Could not kill entry %p, status = %u", pentry, kill_status ) ;
+
+               *pstatus = CACHE_INODE_FSAL_ESTALE ;
+              }
+
+            return *pstatus ;
+          }
+
+    } 
 
   /* Keep the new attribute in cache */
   switch( pentry->internal_md.type )
