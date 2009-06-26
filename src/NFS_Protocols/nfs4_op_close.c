@@ -225,6 +225,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
        else
           res_CLOSE4.status = NFS4ERR_INVAL  ;
            
+        printf( "====> Sortie A\n" ) ;
        return res_CLOSE4.status ;
     }
 
@@ -234,7 +235,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
       res_CLOSE4.status = NFS4ERR_LOCKS_HELD ;
       return res_CLOSE4.status ;
    }
- 
+
   /* Check the seqid */
   if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
@@ -242,16 +243,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
 	return res_CLOSE4.status ;
      }
-
-#ifdef _BUGAZOMEU
-  if( ( arg_CLOSE4.open_stateid.seqid != pstate_found->seqid ) &&
-      ( arg_CLOSE4.open_stateid.seqid != pstate_found->seqid + 1 ) )
-     {
-	res_CLOSE4.status = NFS4ERR_OLD_STATEID ;
-	return res_CLOSE4.status ;
-     }
-#endif
-
 
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1 ;

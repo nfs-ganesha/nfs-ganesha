@@ -207,3 +207,6 @@
 	- Stupid bug fix in nfs4_op_open.c (allocating a zero length
 	  buffer...)
 	- Bug fix in OP_LOCKU4 implementation : no stateid was returned	
+	- cache_inode_setattr was modified so that cache_inode_setattr can 
+	  set the size of a file (by calling FSAL_setattr). This is required 
+	  for a correct implementation of OP_OPEN4
