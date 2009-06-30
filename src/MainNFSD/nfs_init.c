@@ -218,7 +218,8 @@ int nfs_prereq_init( char * program_name,
  */
 int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
 {
-    
+  memset( (char *)p_nfs_param, 0, sizeof( nfs_parameter_t ) );  
+  
   /* Core parameters */
   p_nfs_param->core_param.nb_worker             = NB_WORKER_THREAD_DEFAULT ;
   p_nfs_param->core_param.nb_max_concurrent_gc  = NB_MAX_CONCURRENT_GC ;
@@ -1218,6 +1219,7 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
       DisplayErrorLog( ERR_SYS, ERR_MALLOC, errno ) ;
       exit( 1 ) ;
     }
+  memset( (char *)workers_data, 0, sizeof( nfs_worker_data_t ) * nfs_param.core_param.nb_worker ) ;
 
   if( nfs_Init_gc_counter() != 0 )
     {

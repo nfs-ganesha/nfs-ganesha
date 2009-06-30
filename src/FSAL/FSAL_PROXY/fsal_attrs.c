@@ -237,6 +237,9 @@ fsal_status_t FSAL_setattrs(
   PRINT_HANDLE( "FSAL_setattr", filehandle ) ;
 #endif
  
+  memset( (char *)&argnfs4, 0, sizeof( COMPOUND4args ) ) ;
+  memset( (char *)&resnfs4, 0, sizeof( COMPOUND4res ) ) ;
+
   /* Setup results structures */
   argnfs4.argarray.argarray_val = argoparray ;
   resnfs4.resarray.resarray_val = resoparray ;

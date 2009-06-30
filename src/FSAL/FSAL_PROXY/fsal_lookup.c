@@ -197,6 +197,7 @@ fsal_status_t FSAL_lookup (
     if( fsal_internal_proxy_extract_fh( &nfs4fh, parent_directory_handle ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookup);
 
+    memset( (char *)&name, 0, sizeof( component4 ) ) ;
     name.utf8string_val = nameval ; 
     if( fsal_internal_proxy_fsal_name_2_utf8( p_filename, &name ) == FALSE ) 
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookup);

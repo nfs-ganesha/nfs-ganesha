@@ -137,8 +137,6 @@ fsal_status_t FSAL_readdir(
     fsal_count_t          * nb_entries,         /* OUT */
     fsal_boolean_t        * end_of_dir          /* OUT */
 ){
-  COMPOUND4args                         argnfs4 ;
-  COMPOUND4res                          resnfs4 ;
   nfs_fh4                               nfs4fh ;
   bitmap4                               bitmap ;
   uint32_t                              bitmap_val[2] ;
@@ -155,6 +153,8 @@ fsal_status_t FSAL_readdir(
 #define FSAL_READDIR_NB_OP_ALLOC 2
   nfs_argop4                            argoparray[FSAL_READDIR_NB_OP_ALLOC] ;
   nfs_resop4                            resoparray[FSAL_READDIR_NB_OP_ALLOC] ;
+  COMPOUND4args                         argnfs4 ;
+  COMPOUND4res                          resnfs4 ;
 
   /* sanity checks */
   
