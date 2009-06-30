@@ -145,8 +145,8 @@ int nfs4_op_readdir(  struct nfs_argop4 * op ,
   entry4 *                   entry_nfs_array ;
   cache_inode_dir_entry_t  * dirent_array;
   verifier4                  cookie_verifier;
-  unsigned int               cookie ;
-  unsigned int               end_cookie ;
+  unsigned int               cookie = 0  ;
+  unsigned int               end_cookie = 0;
   unsigned int             * cookie_array ;
   fsal_handle_t            * entry_FSALhandle ;
   nfs_fh4                    entryFH ;

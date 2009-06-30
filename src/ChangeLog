@@ -203,7 +203,7 @@
 	  directory remain as the cfh as the operation returned NFS4_OK,
 	  leading to lots of mess about the file. 
 
-0.99.55 -
+0.99.55 -Tue 30 Jun 2009 
 	- Stupid bug fix in nfs4_op_open.c (allocating a zero length
 	  buffer...)
 	- Bug fix in OP_LOCKU4 implementation : no stateid was returned	

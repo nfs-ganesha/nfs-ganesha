@@ -5,6 +5,15 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=693441">NFS-GANESHA v 0.99.55</a><br>
+	</li>	
+	<ul>
+	<li>Stupid bug fix in nfs4_op_open.c (allocating a zero length buffer...)</li>
+	<li>Bug fix in OP_LOCKU4 implementation : no stateid was returned</li>
+	<li>cache_inode_setattr was modified so that cache_inode_setattr can   set the size of a file </li>
+	<li>Added by default a simplified implementation of NFSv4 state's model. More sophisticated (and experiment) model is available at ./configure time</li>
+	</ul>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=691591">NFS-GANESHA v 0.99.54</a><br>
 	</li>
 	<ul>

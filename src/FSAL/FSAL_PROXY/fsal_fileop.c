@@ -157,6 +157,7 @@ fsal_status_t FSAL_open_by_name(
 
   fsal_internal_proxy_setup_fattr( &fattr_internal ) ;
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( filename, &name ) == FALSE )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_open_by_name);

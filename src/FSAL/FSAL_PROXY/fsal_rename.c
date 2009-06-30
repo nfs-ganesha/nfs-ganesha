@@ -147,6 +147,7 @@ fsal_status_t FSAL_rename(
    if( fsal_internal_proxy_extract_fh( &nfs4fh_old, old_parentdir_handle ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
 
+   memset( (char *)&oldname, 0, sizeof( component4 ) ) ;
    oldname.utf8string_val = oldnameval ;
    if( fsal_internal_proxy_fsal_name_2_utf8( p_old_name, &oldname ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
@@ -158,6 +159,7 @@ fsal_status_t FSAL_rename(
    if( fsal_internal_proxy_extract_fh( &nfs4fh_new, new_parentdir_handle ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
 
+   memset( (char *)&newname, 0, sizeof( component4 ) ) ;
    newname.utf8string_val = newnameval ;
    if( fsal_internal_proxy_fsal_name_2_utf8( p_new_name, &newname ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
