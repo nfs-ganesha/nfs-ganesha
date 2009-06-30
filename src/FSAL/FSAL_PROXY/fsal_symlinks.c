@@ -278,7 +278,7 @@ fsal_status_t FSAL_symlink(
        !p_linkcontent )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_symlink);
   
-
+  
   /* Tests if symlinking is allowed by configuration. */
   
   if ( !global_fs_info.symlink_support )
@@ -287,7 +287,7 @@ fsal_status_t FSAL_symlink(
   /* Setup results structures */
   argnfs4.argarray.argarray_val = argoparray ;
   resnfs4.resarray.resarray_val = resoparray ;
-  argnfs4.minorversion = 0 ;                                                                           \
+  argnfs4.minorversion = 0 ;                                                                           
   /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Symlink" ; */
   argnfs4.tag.utf8string_val = NULL ;
   argnfs4.tag.utf8string_len = 0 ;
@@ -304,10 +304,12 @@ fsal_status_t FSAL_symlink(
   convert_bitmap.bitmap4_val = bitmap_conv_val ;
   convert_bitmap.bitmap4_len = 2 ;
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( p_linkname, &name ) == FALSE )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_symlink);
 
+  memset( (char *)&linkname, 0, sizeof( component4 ) ) ;
   linkname.utf8string_val = linknameval ;
   if( fsal_internal_proxy_fsal_path_2_utf8( p_linkcontent, &linkname ) == FALSE )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_symlink);

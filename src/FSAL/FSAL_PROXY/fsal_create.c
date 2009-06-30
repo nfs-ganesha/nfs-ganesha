@@ -163,6 +163,7 @@ fsal_status_t FSAL_create(
   convert_bitmap.bitmap4_val = bitmap_conv_val ;
   convert_bitmap.bitmap4_len = 2 ;
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( p_filename, &name ) == FALSE )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_create);
@@ -402,6 +403,7 @@ fsal_status_t FSAL_mkdir(
   convert_bitmap.bitmap4_val = bitmap_conv_val ;
   convert_bitmap.bitmap4_len = 2 ;
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( p_dirname, &name ) == FALSE )
     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_mkdir);
@@ -600,6 +602,7 @@ fsal_status_t FSAL_link(
   if( fsal_internal_proxy_extract_fh( &nfs4fh_dest, dir_handle ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_link);
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( p_link_name, &name ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_link);

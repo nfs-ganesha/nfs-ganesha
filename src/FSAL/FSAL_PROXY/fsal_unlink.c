@@ -124,6 +124,7 @@ fsal_status_t FSAL_unlink(
   if( fsal_internal_proxy_extract_fh( &nfs4fh, parentdir_handle ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_unlink);
 
+  memset( (char *)&name, 0, sizeof( component4 ) ) ;
   name.utf8string_val = nameval ;
   if( fsal_internal_proxy_fsal_name_2_utf8( p_object_name, &name ) == FALSE )
         Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_unlink);

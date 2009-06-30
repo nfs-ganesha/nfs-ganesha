@@ -225,7 +225,8 @@ void * FSAL_proxy_clientid_renewer_thread( void * Arg )
       exit( 1 ) ;
     }
 #endif
-
+  
+  memset( (char *)&fsal_context, 0, sizeof( fsal_op_context_t ) );
   fsal_status = FSAL_InitClientContext( p_context ) ;
 
   if( FSAL_IS_ERROR( fsal_status ) ) 
