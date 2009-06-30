@@ -197,6 +197,9 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
         return res_READ4.status ;
       }
 
+    /* vnode to manage is the current one */
+    entry = data->current_entry ;
+
     /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
     if( nfs4_Is_Fh_Xattr( &(data->currentFH ) ) ) 
       return nfs4_op_read_xattr( op, data, resp ) ;
@@ -218,6 +221,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
           * I set pstate_found to 1 to remember this situation later */
          pstate_found = NULL ;
       }
+#ifdef _WITH_STATEID
     /* Check for correctness of the provided stateid */
     else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK )
      {
@@ -266,9 +270,6 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
      }
 
     /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
-
-    /* vnode to manage is the current one */
-    entry = data->current_entry ;
 
     /* Iterate through file's state to look for conflicts */ 
     pstate_iterate    = NULL ;
@@ -323,6 +324,8 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
        return res_READ4.status ;
      }
     
+#endif /* WITH_STATEID */
+
     /* Get the size and offset of the read operation */    
     offset = arg_READ4.offset ;
     size   = arg_READ4.count ;
@@ -353,8 +356,8 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
       {
         res_READ4.READ4res_u.resok4.eof = FALSE ; /* end of file was not reached because READ occured, and a size = 0 can not lead to eof */
         res_READ4.READ4res_u.resok4.data.data_len = 0 ;
-        res_READ4.READ4res_u.resok4.data.data_val = NULL ;
-        
+		res_READ4.READ4res_u.resok4.data.data_val = NULL ;
+		
         res_READ4.status = NFS4_OK ;
         return  res_READ4.status ;
       }

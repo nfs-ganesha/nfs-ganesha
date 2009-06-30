@@ -206,6 +206,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
     }
 #endif
 
+#ifdef _WITH_STATEID
   /* Does the stateid match ? */
   if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry ) )  != NFS4_OK )
     {
@@ -225,7 +226,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
        else
           res_CLOSE4.status = NFS4ERR_INVAL  ;
            
-        printf( "====> Sortie A\n" ) ;
        return res_CLOSE4.status ;
     }
 
@@ -244,10 +244,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	return res_CLOSE4.status ;
      }
 
-  /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1 ;
-  memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
-
   /* File is closed, release the corresponding state */
   if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
                                     data->pclient, 
@@ -256,6 +252,11 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
 	return res_CLOSE4.status ;
     }
+#endif
+
+  /* Prepare the result */
+  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = arg_CLOSE4.seqid  ;
+  memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
 
   /* Close the file in FSAL through the cache inode */
   P_w( &data->current_entry->lock ) ;

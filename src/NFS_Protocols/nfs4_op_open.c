@@ -481,7 +481,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                             candidate_data.share.share_access = arg_OPEN4.share_access ;
                             candidate_data.share.confirmed    = FALSE ;
 
-
+#ifdef _WITH_STATEID
                             if( cache_inode_add_state( pentry_lookup, 
                                                        candidate_type,
                                                        &candidate_data, 
@@ -495,6 +495,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                    res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                    return res_OPEN4.status ;
                                 }
+#endif
 
                             /* Open the file */
                             if( cache_inode_open_by_name( pentry_parent, 
@@ -521,9 +522,15 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                             res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
                             res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
     
-
+#ifdef _WITH_STATEID
                            res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->seqid ;
                            memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pfile_state->stateid_other, 12 ) ;
+#else
+			   res_OPEN4.OPEN4res_u.resok4.stateid.seqid = arg_OPEN4.seqid ;
+			   nfs4_BuildStateId_Other( pentry_lookup, 
+						    data->pcontext, 
+						   res_OPEN4.OPEN4res_u.resok4.stateid.other ) ;
+#endif
 
                            /* No delegation */
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
@@ -580,6 +587,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          {
                             if( ( pentry_lookup != NULL ) && (pentry_lookup->internal_md.type == REGULAR_FILE ) )
                              {
+#ifdef _WITH_STATEID
                                pstate_found_iterate = NULL ;
                                pstate_previous_iterate = NULL ;
 
@@ -677,7 +685,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
   				    pstate_previous_iterate = pstate_found_iterate ;
                                }  while( pstate_found_iterate != NULL ) ;
-
+#endif
                              }
                          }
 
@@ -736,7 +744,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                     arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf, 
                                     NFS4_VERIFIER_SIZE ) ;
                       } 
-
+#ifdef _WITH_STATEID
                     if( cache_inode_add_state( pentry_newfile, 
                                                candidate_type,
                                                &candidate_data, 
@@ -750,7 +758,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                            res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                            return res_OPEN4.status ;
                         }
- 
+#endif 
                     if( AttrProvided == TRUE ) /* Set the attribute if provided */
                       {
                         if( ( cache_status = cache_inode_setattr( pentry_newfile, 
@@ -877,13 +885,16 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          openflags = FSAL_O_RDWR ;
                     }
 
+#ifdef WITH_MODE_0_CHECK
                   /* If file mode is 000 then NFS4ERR_ACCESS should be returned for all cases and users */
                   if( attr_newfile.mode == 0 ) 
                    {
                         res_OPEN4.status = NFS4ERR_ACCESS ;
                         return res_OPEN4.status ;
                    }
+#endif
 
+#ifdef _WITH_STATEID
                   /* Try to find if the same open_owner already has acquired a stateid for this file */
                   pstate_found_iterate    = NULL ;
                   pstate_previous_iterate = NULL ;
@@ -999,6 +1010,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          return res_OPEN4.status ;
                       }
                   }
+#endif
                  /* Open the file */
                  if( cache_inode_open_by_name( pentry_parent, 
                                                &filename, 
@@ -1097,10 +1109,16 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     
     res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
     res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
-    
-
+   
+#ifdef _WITH_STATEID 
     res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->seqid ;
     memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pfile_state->stateid_other, 12 ) ;
+#else
+    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = arg_OPEN4.seqid ;
+    nfs4_BuildStateId_Other( pentry_newfile, 
+			     data->pcontext, 
+			     res_OPEN4.OPEN4res_u.resok4.stateid.other ) ;
+#endif
 
     /* No delegation */
     res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;

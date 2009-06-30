@@ -210,3 +210,9 @@
 	- cache_inode_setattr was modified so that cache_inode_setattr can 
 	  set the size of a file (by calling FSAL_setattr). This is required 
 	  for a correct implementation of OP_OPEN4
+	- Lots of problems were met when implementing NFSv4 state mechanism
+	  and work is still in progress. To provide users with usable NFSv4
+	  exports, a "rather stateless" model has been implemented. More
+	  complex implementation of NFSv4 state modelscan be activated by
+	  using "--enable-nfs4-stateid" at ./configure time. In this last
+	  case, the targeted client is 2.6.29-4 (Fedora11).  

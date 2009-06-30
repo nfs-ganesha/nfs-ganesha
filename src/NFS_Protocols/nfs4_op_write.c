@@ -206,6 +206,9 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
     return nfs4_op_write_xattr( op, data, resp ) ;
   
  
+   /* vnode to manage is the current one */
+   entry = data->current_entry ;
+
 
   /* Check for special stateid */
   if( !memcmp( (char *)all_zero, arg_WRITE4.stateid.other, 12 ) &&
@@ -225,6 +228,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
       pstate_found = NULL ;
   }
   /* Check for correctness of the provided stateid */
+#ifdef _WITH_STATEID
   else  if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) 
    {
       /* Get the related state */
@@ -254,7 +258,6 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
            return res_WRITE4.status ;
         }
 
-
       /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
        {
@@ -272,9 +275,6 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
    }
 
    /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
-
-   /* vnode to manage is the current one */
-   entry = data->current_entry ;
 
    /* Iterate through file's state to look for conflicts */ 
    pstate_iterate    = NULL ;
@@ -315,7 +315,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
            }
           pstate_previous_iterate = pstate_iterate ;
    } while( pstate_iterate != NULL ) ;
-
+#endif /* WITH_STATEID */
 
   /* Only files can be written */
   if( data->current_filetype != REGULAR_FILE )
