@@ -171,6 +171,10 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   resp->resop = NFS4_OP_LOCK ;
   res_LOCK4.status =  NFS4ERR_LOCK_NOTSUPP ;
 
+#ifndef _WITH_STATEID
+  return res_LOCK4.status ;
+#endif
+
   /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
     {

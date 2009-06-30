@@ -279,7 +279,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->nfsv4_param.lease_lifetime         = NFS4_LEASE_LIFETIME ;
   p_nfs_param->nfsv4_param.fh_expire              = FALSE ;
   p_nfs_param->nfsv4_param.returns_err_fh_expired = TRUE ;
-  p_nfs_param->nfsv4_param.use_open_confirm       = TRUE ;
+  p_nfs_param->nfsv4_param.use_open_confirm       = FALSE ;
 
   /* Worker parameters : dupreq hash table */
   p_nfs_param->dupreq_param.hash_param.index_size       = PRIME_DUPREQ ;
