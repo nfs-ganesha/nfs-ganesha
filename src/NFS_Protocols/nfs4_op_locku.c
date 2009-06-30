@@ -159,7 +159,12 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKU ;
-  
+
+#ifndef _WITH_STATEID
+  res_LOCKU4.status =  NFS4ERR_LOCK_NOTSUPP ;
+  return res_LOCKU4.status ;
+#endif
+ 
   /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
     {
