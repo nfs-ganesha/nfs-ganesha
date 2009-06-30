@@ -1,3 +1,13 @@
+nfs-ganesha (0.99.55-1) stable; urgency=low
+
+  * Bug fixed in nfs4_op_open (bad allocation)
+  * For compatibility reason with older clients, a "rather stateless"
+    implementation of the NFSv4 state model was set my default.
+  * Regular stateid model (still in progress) is still available as a
+    ./configure argument
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Tue, 30 June 2009 09:14:00 -0600
+
 nfs-ganesha (0.99.54-1) stable; urgency=low
 
   * Many bugs fixed in NFSv4 locks and states management
