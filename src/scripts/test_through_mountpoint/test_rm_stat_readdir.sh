@@ -161,6 +161,71 @@ while (( $I < (($NB_FILES/2)) )) ; do
 done
 
 echo
+echo "create/getattr/readdir sequence AGAIN... ($NB_FILES files)"
+
+I=0
+while (( $I < (($NB_FILES/2)) )) ; do
+
+  printf "#"
+  
+  # create file
+  PATH1="$TEST_DIR/$SUB_DIR1/${FILENAME_1}_$I"
+
+  touch $PATH1
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error creating file $PATH1"
+    ls -li $PATH1
+  fi
+
+  # first, getattr
+  stat $PATH1 > /dev/null
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error getting file attributes for $PATH1"
+    ls -li $PATH1
+  fi
+ 
+  # then, check readdir
+  ls $TEST_DIR/$SUB_DIR1 | egrep -e "^${FILENAME_1}_$I$" > /dev/null
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error: ${FILENAME_1}_$I does not appear in readdir($TEST_DIR/$SUB_DIR1)"
+    ls $TEST_DIR/$SUB_DIR1
+  fi
+
+  # create a second file
+  PATH2="$TEST_DIR/$SUB_DIR1/${FILENAME_2}_$I"
+
+  touch $PATH2
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error creating file $PATH2"
+    ls -li $PATH2
+  fi
+
+  # for this file, we first check readdir
+  ls $TEST_DIR/$SUB_DIR1 | egrep -e "^${FILENAME_2}_$I$" > /dev/null
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error: ${FILENAME_2}_$I does not appear in readdir($TEST_DIR/$SUB_DIR1)"
+    ls $TEST_DIR/$SUB_DIR1
+  fi
+
+
+  # then, getattr
+  stat $PATH2 > /dev/null
+  if (( $? != 0 )); then
+    ((ERR=$ERR+1))
+    echo "Error getting file attributes for $PATH2"
+    ls -li $PATH2
+  fi
+ 
+  (( I = $I + 1 ))  
+  
+done
+
+echo
 
 echo "cleaning test directory..."
 
