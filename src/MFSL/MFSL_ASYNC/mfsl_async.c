@@ -285,7 +285,6 @@ fsal_status_t mfsl_async_init_precreated_directories( fsal_op_context_t         
       pprecreated->name = fsal_name ;
       pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX ;
       pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX ;
-      pprecreated->mobject.plock = NULL ;
 
       piter->inited = 1 ;
 
@@ -376,7 +375,6 @@ fsal_status_t mfsl_async_init_precreated_files( fsal_op_context_t         * pcon
       pprecreated->name = fsal_name ;
       pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX ;
       pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX ;
-      pprecreated->mobject.plock = NULL ;
       piter->inited = 1 ;
 
       fsal_status = FSAL_create( &dir_handle_precreate, 

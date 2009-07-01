@@ -410,7 +410,7 @@ cache_entry_t * cache_inode_lookup_sw( cache_entry_t        * pentry_parent,
               
               return NULL ;
             }
-          
+         
           /* Entry was found in the FSAL, add this entry to the parent directory */
           cache_status = cache_inode_add_cached_dirent( pentry_parent,
                                                         pname, 
