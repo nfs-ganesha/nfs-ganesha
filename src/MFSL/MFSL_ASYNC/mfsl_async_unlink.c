@@ -222,7 +222,6 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
 	dir_pasyncdata->async_attr = *dir_attributes ;
    }
  
- 
   fsal_status = MFSAL_unlink_check_perms( dir_handle, 
 					  dir_pasyncdata, 
 					  p_object_name,
