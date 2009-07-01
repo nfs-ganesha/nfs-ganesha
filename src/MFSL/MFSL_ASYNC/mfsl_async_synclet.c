@@ -243,6 +243,7 @@ void * mfsl_async_synclet_refresher_thread( void * Arg )
 
   SetNameFunction( "MFSL_ASYNC Context refresher"  ) ;
 
+#ifndef _NO_BUDDY_SYSTEM
   if ( ( rc = BuddyInit( NULL )) != BUDDY_SUCCESS )
     {
       /* Failed init */
@@ -250,6 +251,7 @@ void * mfsl_async_synclet_refresher_thread( void * Arg )
       exit( 1 ) ;
     }
   DisplayLog( "Memory manager successfully initialized" ) ;
+#endif
 
   /* Init FSAL root fsal_op_context */
   if( FSAL_IS_ERROR( FSAL_BuildExportContext( &fsal_export_context,
@@ -309,6 +311,7 @@ void * mfsl_async_synclet_thread( void * Arg )
   sprintf( namestr, "MFSL_ASYNC Synclet #%ld", index ) ;
   SetNameFunction( namestr ) ;
 
+#ifndef _NO_BUDDY_SYSTEM
   if ( ( rc = BuddyInit( NULL )) != BUDDY_SUCCESS )
     {
       /* Failed init */
@@ -316,6 +319,7 @@ void * mfsl_async_synclet_thread( void * Arg )
       exit( 1 ) ;
     }
   DisplayLog( "Memory manager successfully initialized" ) ;
+#endif
 
   /* Init FSAL root fsal_op_context */
   if( FSAL_IS_ERROR( FSAL_BuildExportContext( &fsal_export_context,
@@ -460,6 +464,7 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
   mfsl_async_op_desc_t         * pasyncopdesc = NULL ; 
   SetNameFunction( "MFSL_ASYNC ADT" ) ;
 
+#ifndef _NO_BUDDY_SYSTEM
   if ( ( rc = BuddyInit( NULL )) != BUDDY_SUCCESS )
     {
       /* Failed init */
@@ -467,7 +472,7 @@ void * mfsl_async_asynchronous_dispatcher_thread( void * Arg )
       exit( 1 ) ;
     }
   DisplayLog( "Memory manager successfully initialized" ) ;
-
+#endif
 
   /* Structure initialisation */
   if( ( async_op_lru = LRU_Init( mfsl_param.lru_param, &lru_status ) ) == NULL )

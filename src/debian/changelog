@@ -1,3 +1,9 @@
+nfs-ganesha (0.99.56-1) stable; urgency=low
+
+  * Fix log messages in MFS_ASYNC
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  1 July 2009 09:14:00 -0600
+
 nfs-ganesha (0.99.55-1) stable; urgency=low
 
   * Bug fixed in nfs4_op_open (bad allocation)

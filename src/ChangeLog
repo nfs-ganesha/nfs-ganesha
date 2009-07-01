@@ -216,3 +216,6 @@
 	  complex implementation of NFSv4 state modelscan be activated by
 	  using "--enable-nfs4-stateid" at ./configure time. In this last
 	  case, the targeted client is 2.6.29-4 (Fedora11).  
+
+0.99.56 - 
+	- Change 2 log messages in MFSL_ASYNC

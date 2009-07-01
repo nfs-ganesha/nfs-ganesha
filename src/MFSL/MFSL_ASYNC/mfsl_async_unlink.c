@@ -233,9 +233,8 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   if( FSAL_IS_ERROR( fsal_status ) )
    return fsal_status ;
 
+  DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ; 
 
-  DisplayLogLevel( NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
-  
   pasyncopdesc->op_type    = MFSL_ASYNC_OP_REMOVE ;
 
   pasyncopdesc->op_args.remove.pmobject = dir_handle ;
