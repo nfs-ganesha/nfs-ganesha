@@ -441,6 +441,9 @@ cache_entry_t * cache_inode_new_entry( cache_inode_fsal_data_t  * pfsdata,
       pentry->object.file.handle                = pfsdata->handle ;
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.file.handle ;
+#ifdef _USE_MFSL_PROXY
+      pentry->mobject.plock  = &pentry->lock ;
+#endif
 #endif
       pentry->object.file.attributes            = fsal_attributes ;
       pentry->object.file.pentry_content        = NULL ;   /* Not yet a File Content entry associated with this entry */
