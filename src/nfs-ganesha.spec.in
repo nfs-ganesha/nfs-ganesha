@@ -235,6 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Thu Jul  1 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
+- Change two debug messages in MFSL_ASYNC
+
 * Thu Jun 22 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.55-1
 - Bug fixed in nfs4_op_open (bad allocation)
 - For compatibility reason with older clients, a "rather stateless" implementation of the NFSv4 state model was set my default.

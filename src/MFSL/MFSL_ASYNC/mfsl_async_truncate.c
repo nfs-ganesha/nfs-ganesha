@@ -225,7 +225,7 @@ fsal_status_t MFSL_truncate(
   if( FSAL_IS_ERROR( fsal_status ) )
    return fsal_status ;
 
-  DisplayLogLevel( NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
+  DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
   
   pasyncopdesc->op_type                   = MFSL_ASYNC_OP_TRUNCATE ;
   pasyncopdesc->op_mobject                = filehandle ;
