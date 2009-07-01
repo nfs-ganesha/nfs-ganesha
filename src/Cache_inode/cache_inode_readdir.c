@@ -878,22 +878,22 @@ cache_inode_status_t cache_inode_readdir_populate(  cache_entry_t           * pe
                                    &pclient->mfsl_context );
 #else
        fsal_status = FSAL_readdir( &fsal_dirhandle, 
-                                    begin_cookie, 
-                                    pclient->attrmask, 
-                                    FSAL_READDIR_SIZE * sizeof( fsal_dirent_t ),
-                                    array_dirent,
-                                    &end_cookie, 
-                                    &nbfound, 
-                                    &fsal_eod ) ;
+                                   begin_cookie, 
+                                   pclient->attrmask, 
+                                   FSAL_READDIR_SIZE * sizeof( fsal_dirent_t ),
+                                   array_dirent,
+                                   &end_cookie, 
+                                   &nbfound, 
+                                   &fsal_eod ) ;
 #endif
       
        if( FSAL_IS_ERROR( fsal_status ) ) 
-         {
+        {
            *pstatus = cache_inode_error_convert( fsal_status ) ;
            return *pstatus ;
-         }
+        }
       
-	for( iter = 0 ; iter < nbfound ; iter++ )
+       for( iter = 0 ; iter < nbfound ; iter++ )
         {
           DisplayLogJdLevel( pclient->log_outputs, 
                              NIV_FULL_DEBUG, 

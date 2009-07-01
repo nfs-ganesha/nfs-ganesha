@@ -125,7 +125,7 @@ typedef struct mfsl_object_specific_data__{
 typedef struct mfsl_object__
 {
   fsal_handle_t          handle ; 
-  pthread_mutex_t     *  plock ;
+  pthread_mutex_t        lock ;
   mfsl_async_health_t    health ;
 } mfsl_object_t ;
 

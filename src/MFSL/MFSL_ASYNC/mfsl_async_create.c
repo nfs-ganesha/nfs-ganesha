@@ -94,6 +94,7 @@
 #include "mfsl.h"
 #include "common_utils.h"
 #include "stuff_alloc.h"
+#include "RW_Lock.h"
 
 #ifndef _USE_SWIG
 
@@ -130,7 +131,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              &attrsrc,
                              &attrdest )  ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+      return fsal_status ;
 
   /* Lookup to get the right attributes for the object */
   fsal_status = FSAL_lookup( &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
@@ -139,8 +140,8 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &handle,
                              &popasyncdesc->op_res.create.attr );
 
-   if( FSAL_IS_ERROR( fsal_status ) )
-    return fsal_status ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+      return fsal_status ;
 
   /* If user is not root, setattr to chown the entry */
   if( popasyncdesc->op_args.create.owner != 0 )
@@ -152,7 +153,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  
      fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.create.attr ) ;
    }
- 
+
   return fsal_status ; 
 } /* MFSL_create_async_op */
 

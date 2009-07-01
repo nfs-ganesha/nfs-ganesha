@@ -119,6 +119,7 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &popasyncdesc->op_args.remove.name,
                              popasyncdesc->fsal_op_context,
                              &popasyncdesc->op_res.remove.attr ) ;
+
   return fsal_status ; 
 } /* MFSL_unlink_async_op */
 
