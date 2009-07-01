@@ -204,7 +204,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects( fsal_op_context_t  * pco
 				     &dir_attr ) ;
          if( FSAL_IS_ERROR( fsal_status ) )
           {
-             DisplayLog( "Impossible to unlink %s/%s to be used to store precreated objects: status=(%u,%u)",
+             DisplayLog( "Impossible to unlink %s/%s status=(%u,%u)",
   		         mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name, fsal_status.major, fsal_status.minor ) ;
              exit( 1 ) ; 
           } /* if */
