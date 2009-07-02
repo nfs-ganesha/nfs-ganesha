@@ -814,7 +814,7 @@ int nfs_set_param_from_conf( nfs_parameter_t * p_nfs_param,
     }
   else
     DisplayLogLevel( NIV_DEBUG, "NFS STARTUP: Cache Inode Client configuration read from config file" ) ;
-  
+ 
 
   /* Data cache client parameters */
   if( ( cache_content_status = cache_content_read_conf_client_parameter( config_struct, 
@@ -925,6 +925,33 @@ int nfs_check_param_consistency( nfs_parameter_t * p_nfs_param )
                   p_nfs_param->worker_param.lru_dupreq.nb_entry_prealloc ) ;
       return 1 ;
     }
+
+#ifdef _USE_MFSL_ASYNC
+   if( p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_attr != 0 )
+    {
+      DisplayLog( "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be 0 when used with MFSL_ASYNC" ) ;
+      return 1 ;
+    }
+
+   if( p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_dirent != 0 )
+    {
+      DisplayLog( "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be 0 when used with MFSL_ASYNC" ) ;
+      return 1 ;
+    }
+
+   if(  p_nfs_param->cache_layers_param.cache_inode_client_param.grace_period_link != 0 )
+    {
+      DisplayLog( "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be 0 when used with MFSL_ASYNC" ) ;
+      return 1 ;
+    }
+
+   if(  p_nfs_param->cache_layers_param.cache_inode_client_param.getattr_dir_invalidation  != 0 )
+    {
+      DisplayLog( "BAD PARAMETER (Cache_Inode): Use_Getattr_Directory_Invalidation should be NO when used with MFSL_ASYNC" ) ;
+      return 1 ;
+    }
+        
+#endif /* _USE_MFSL_ASYNC */
  
   return 0 ;
 }
