@@ -115,10 +115,12 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_setattrs for async op %p", popasyncdesc ) ;
 
+  P( popasyncdesc->op_args.setattr.pmobject->lock ) ;
   fsal_status = FSAL_setattrs( &(popasyncdesc->op_args.setattr.pmobject->handle),
                                popasyncdesc->fsal_op_context,
                                &popasyncdesc->op_args.setattr.attr,
                                &popasyncdesc->op_res.setattr.attr ) ;
+  V( popasyncdesc->op_args.setattr.pmobject->lock ) ;
 
   return fsal_status ; 
 } /* MFSL_setattr_async_op */

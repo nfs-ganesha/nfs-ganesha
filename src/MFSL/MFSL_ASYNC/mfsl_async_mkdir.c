@@ -121,6 +121,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Renaming directory to complete asynchronous FSAL_mkdir for async op %p", popasyncdesc ) ;
 
+  P( popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock ) ;
   fsal_status = FSAL_rename( &dir_handle_precreate,
                              &popasyncdesc->op_args.mkdir.precreate_name,
                              &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
@@ -128,8 +129,13 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              popasyncdesc->fsal_op_context,
                              &attrsrc,
                              &attrdest )  ;
+
   if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+   {
+     V( popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock ) ;
+
+     return fsal_status ;
+   }
 
   /* Lookup to get the right attributes for the object */
   fsal_status = FSAL_lookup( &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
@@ -137,6 +143,8 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  			     popasyncdesc->fsal_op_context,
 			     &handle,
                              &popasyncdesc->op_res.mkdir.attr );
+
+  V( popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock ) ;
 
   if( FSAL_IS_ERROR( fsal_status ) )
     return fsal_status ;

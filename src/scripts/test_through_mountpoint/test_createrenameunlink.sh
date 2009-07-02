@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 # ce test cree plein d'entrees dans un repertoire
 # et les rename une par une

@@ -151,11 +151,13 @@ fsal_status_t MFSL_getattrs(
 
   if( mfsl_async_get_specdata( filehandle, &pasyncdata ) )
    {
+     P( filehandle->lock ) ;
      fsal_status = MFSAL_getattrs_check_perms( filehandle,
 					       pasyncdata,
 					       p_context, 
 					       p_mfsl_context, 
 					       object_attributes ) ;
+     V( filehandle->lock ) ;
 
      if( FSAL_IS_ERROR( fsal_status ) )
        return fsal_status ;
