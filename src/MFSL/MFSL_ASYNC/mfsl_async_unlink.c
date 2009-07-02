@@ -115,10 +115,12 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_unlink for async op %p", popasyncdesc ) ;
 
+  P( popasyncdesc->op_args.remove.pmobject->lock ) ;
   fsal_status = FSAL_unlink( &(popasyncdesc->op_args.remove.pmobject->handle),
 			     &popasyncdesc->op_args.remove.name,
                              popasyncdesc->fsal_op_context,
                              &popasyncdesc->op_res.remove.attr ) ;
+  V( popasyncdesc->op_args.remove.pmobject->lock ) ;
 
   return fsal_status ; 
 } /* MFSL_unlink_async_op */

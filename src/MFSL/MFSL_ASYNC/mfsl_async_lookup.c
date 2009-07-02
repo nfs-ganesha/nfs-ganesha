@@ -121,12 +121,13 @@ fsal_status_t MFSL_lookup(  mfsl_object_t         * parent_directory_handle, /* 
   fsal_status_t                  fsal_status ;
   mfsl_object_specific_data_t  * pasyncdata ;
 
-
+  P( parent_directory_handle->lock ) ;
   fsal_status = FSAL_lookup( &parent_directory_handle->handle,
                              p_filename,
                              p_context,
                              &object_handle->handle,
                              object_attributes ) ;
+  V( parent_directory_handle->lock ) ;
 
   if( FSAL_IS_ERROR( fsal_status ) )
      return fsal_status ;

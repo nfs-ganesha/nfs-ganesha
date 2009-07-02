@@ -116,6 +116,14 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_rename for async op %p", popasyncdesc ) ;
 
+  if( popasyncdesc->op_args.rename.pmobject_src != popasyncdesc->op_args.rename.pmobject_dirdest )
+   {
+      P( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
+      P( popasyncdesc->op_args.rename.pmobject_dirdest->lock ) ;
+   }
+  else
+      P( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
+
   fsal_status = FSAL_rename( &(popasyncdesc->op_args.rename.pmobject_src->handle), 
 			     &popasyncdesc->op_args.rename.name_src,
 			     &(popasyncdesc->op_args.rename.pmobject_dirdest->handle),
@@ -123,6 +131,14 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              popasyncdesc->fsal_op_context,
 			     &popasyncdesc->op_res.rename.attrsrc,
 			     &popasyncdesc->op_res.rename.attrdest )  ;
+
+  if( popasyncdesc->op_args.rename.pmobject_src != popasyncdesc->op_args.rename.pmobject_dirdest )
+   {
+      V( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
+      V( popasyncdesc->op_args.rename.pmobject_dirdest->lock ) ;
+   }
+  else
+      V( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
 
   return fsal_status ; 
 } /* MFSL_rename_async_op */

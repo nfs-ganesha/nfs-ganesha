@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 COMMANDE_CONTENU="find /etc -ls"
 

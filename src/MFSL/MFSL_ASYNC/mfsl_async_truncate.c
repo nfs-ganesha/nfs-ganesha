@@ -115,11 +115,13 @@ fsal_status_t  MFSL_truncate_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_truncate for async op %p", popasyncdesc ) ;
 
+  P( popasyncdesc->op_args.truncate.pmobject->lock ) ;
   fsal_status = FSAL_truncate( &(popasyncdesc->op_args.truncate.pmobject->handle),
                                popasyncdesc->fsal_op_context,
                                popasyncdesc->op_args.truncate.size,
 			       NULL, /* deprecated parameter */
                                &popasyncdesc->op_res.truncate.attr ) ;
+  V( popasyncdesc->op_args.truncate.pmobject->lock ) ;
 
   return fsal_status ; 
 } /* MFSL_truncate_async_op */
