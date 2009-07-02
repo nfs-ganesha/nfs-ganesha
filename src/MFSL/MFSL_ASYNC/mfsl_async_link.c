@@ -115,11 +115,32 @@ fsal_status_t  MFSL_link_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_link for async op %p", popasyncdesc ) ;
 
+  if( popasyncdesc->op_args.link.pmobject_src != popasyncdesc->op_args.link.pmobject_dirdest )
+   {
+	P( popasyncdesc->op_args.link.pmobject_src->lock ) ;
+        P( popasyncdesc->op_args.link.pmobject_dirdest->lock ) ; 
+   }
+  else
+   {
+	P( popasyncdesc->op_args.link.pmobject_src->lock ) ;
+   }
+	
   fsal_status = FSAL_link( &popasyncdesc->op_args.link.pmobject_src->handle,
 			   &popasyncdesc->op_args.link.pmobject_dirdest->handle,
 			   &popasyncdesc->op_args.link.name_link,
                            popasyncdesc->fsal_op_context,
                            &popasyncdesc->op_res.link.attr ) ;
+
+  if( popasyncdesc->op_args.link.pmobject_src != popasyncdesc->op_args.link.pmobject_dirdest )
+   {
+	V( popasyncdesc->op_args.link.pmobject_src->lock ) ;
+        V( popasyncdesc->op_args.link.pmobject_dirdest->lock ) ; 
+   }
+  else
+   {
+	V( popasyncdesc->op_args.link.pmobject_src->lock ) ;
+   }
+
   return fsal_status ; 
 } /* MFSL_link_async_op */
 

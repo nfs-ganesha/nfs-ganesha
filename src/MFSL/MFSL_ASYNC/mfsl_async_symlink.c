@@ -115,6 +115,7 @@ fsal_status_t MFSL_symlink(
 {
    fsal_status_t fsal_status ;
 
+   P( parent_directory_handle->lock ) ;
    fsal_status = FSAL_symlink( &parent_directory_handle->handle,
 	   		       p_linkname,
 			       p_linkcontent,
@@ -122,6 +123,7 @@ fsal_status_t MFSL_symlink(
 		               accessmode,
 		               &link_handle->handle,
 			       link_attributes ) ;
+   V( parent_directory_handle->lock ) ;
 
    if( FSAL_IS_ERROR( fsal_status ) ) 
      return fsal_status ;

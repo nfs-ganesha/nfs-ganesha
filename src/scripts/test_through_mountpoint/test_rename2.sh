@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 # de test cree simplement deux fichiers dans un repertoire
 # et les rename
