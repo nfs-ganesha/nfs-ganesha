@@ -212,6 +212,11 @@ fsal_status_t mfsl_async_init_clean_precreated_objects( fsal_op_context_t  * pco
           {
              if( fsal_status.major != ERR_FSAL_NOTEMPTY )
               {
+#ifdef _USE_PROXY
+		if( fsal_status.minor == NFS4ERR_GRACE )
+		    DisplayLog( "The remote server is within grace period. Wait for grace period to end and retry" ) ;
+                else
+#endif
                 DisplayLog( "Impossible to unlink %s/%s status=(%u,%u)",
   		             mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name, fsal_status.major, fsal_status.minor ) ;
                 exit( 1 ) ; 
@@ -266,6 +271,11 @@ fsal_status_t mfsl_async_init_clean_precreated_objects( fsal_op_context_t  * pco
          	      {
              	         if( fsal_status.major != ERR_FSAL_NOTEMPTY )
              	          {
+#ifdef _USE_PROXY
+                 	    if( fsal_status.minor == NFS4ERR_GRACE )
+		              DisplayLog( "The remote server is within grace period. Wait for grace period to end and retry" ) ;
+                	    else
+#endif
                 	    DisplayLog( "Impossible to unlink %s/%s/%s status=(%u,%u)",
   		                         mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name, subdirent[subnb_count], 
 				         fsal_status.major, fsal_status.minor ) ;

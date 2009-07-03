@@ -212,6 +212,7 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
   p_thr_context->retry_sleeptime = global_fsal_proxy_specific_info.retry_sleeptime ;
   p_thr_context->file_counter    = 0LL ;
   strncpy( p_thr_context->srv_proto, global_fsal_proxy_specific_info.srv_proto, MAXNAMLEN ) ;
+  pthread_mutex_init( &p_thr_context->lock, NULL ) ;
 
   memset( &addr_rpc, 0, sizeof( addr_rpc ) ) ;
   addr_rpc.sin_port        = p_thr_context->srv_port ;
