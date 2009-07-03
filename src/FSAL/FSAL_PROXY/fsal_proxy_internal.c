@@ -1484,7 +1484,8 @@ void * FSAL_proxy_change_user( fsal_op_context_t  * p_thr_context )
 {
    static char hostname[MAXNAMLEN] ;
    static bool_t done = FALSE ;
-
+   
+   P( p_thr_context->lock ) ;
    switch( p_thr_context->rpc_client->cl_auth->ah_cred.oa_flavor ) 
     {
       case AUTH_NONE:
@@ -1502,10 +1503,10 @@ void * FSAL_proxy_change_user( fsal_op_context_t  * p_thr_context )
        auth_destroy( p_thr_context->rpc_client->cl_auth ) ;
   
        p_thr_context->rpc_client->cl_auth = authunix_create( hostname,
-                                                            p_thr_context->user_credential.user,
-                                                            p_thr_context->user_credential.group,
-  	                                                    p_thr_context->user_credential.nbgroups,
-                                                            p_thr_context->user_credential.alt_groups ) ;
+                                                             p_thr_context->user_credential.user,
+                                                             p_thr_context->user_credential.group,
+  	                                                     p_thr_context->user_credential.nbgroups,
+                                                             p_thr_context->user_credential.alt_groups ) ;
        break ;
 #ifdef _USE_GSSRPC
      case RPCSEC_GSS:
@@ -1515,6 +1516,8 @@ void * FSAL_proxy_change_user( fsal_op_context_t  * p_thr_context )
         break ;
 
     } /* switch( pthr_context->rpc_client->cl_auth->ah_cred.oa_flavor ) */
+
+   V( p_thr_context->lock ) ;
 
    /* Return authentication */
    return p_thr_context->rpc_client->cl_auth ;
