@@ -201,6 +201,7 @@ typedef struct fsal_path__ {
     char              srv_proto[MAXNAMLEN] ;
     clientid4         clientid             ;
     CLIENT          * rpc_client           ;    
+    pthread_mutex_t   lock                 ;
     fsal_handle_t     openfh_wd_handle     ;
     time_t            last_lease_renewal   ; 
     uint64_t          file_counter         ;
