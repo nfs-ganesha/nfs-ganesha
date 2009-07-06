@@ -531,7 +531,9 @@ fsal_status_t MFSL_GetContext( mfsl_context_t     * pcontext,
   pcontext->log_outputs = log_outputs ;
 
   /* Preallocate files and dirs for this thread */
+  P( pcontext->lock ) ;
   status = MFSL_RefreshContext( pcontext, pfsal_context ) ;
+  V( pcontext->lock ) ;
 
   return status ;
 } /* MFSL_GetContext */
