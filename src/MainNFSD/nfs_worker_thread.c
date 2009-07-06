@@ -837,6 +837,7 @@ void * worker_thread( void * IndexArg )
   char                   thr_name[128];
   char                   auth_str[AUTH_STR_LEN] ;
   bool_t                 no_dispatch = FALSE ;
+  fsal_status_t          fsal_status ;
 #ifdef _USE_GSSRPC
   struct rpc_gss_cred  * gc;
 #endif 
@@ -1211,9 +1212,13 @@ void * worker_thread( void * IndexArg )
   /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is 
    * set as "making garbagge collection" to avoid new requests to come in its pending queue */
   pmydata->gc_in_progress = TRUE ;
-
-  if( FSAL_IS_ERROR( MFSL_RefreshContext( &pmydata->cache_inode_client.mfsl_context,
-                                          &pmydata->thread_fsal_context  ) ) )
+ 
+  P( pmydata->cache_inode_client.mfsl_context.lock ) ;
+  fsal_status = MFSL_RefreshContext( &pmydata->cache_inode_client.mfsl_context,
+                                     &pmydata->thread_fsal_context  ) ;
+  V( pmydata->cache_inode_client.mfsl_context.lock ) ;
+  
+  if( FSAL_IS_ERROR( fsal_status ) ) 
     {
       /* Failed init */
       DisplayLog( "NFS  WORKER #%d: Error regreshing MFSL context", index ) ;
