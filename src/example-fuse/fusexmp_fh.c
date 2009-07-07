@@ -39,7 +39,9 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
     if (res == -1)
         return -errno;
 
+#ifdef _FULL_DEBUG
 	printf("inode=%llu\n", (unsigned long long) stbuf->st_ino );
+#endif
 
     return 0;
 }
