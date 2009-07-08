@@ -178,7 +178,7 @@ fsal_status_t MFSL_setattrs(
     fsal_attrib_list_t    * object_attributes  /* [ IN/OUT ] */
 )
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t                 fsal_status ;
   mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
   mfsl_object_specific_data_t * pasyncdata   = NULL ;
 

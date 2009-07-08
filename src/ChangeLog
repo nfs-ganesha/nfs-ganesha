@@ -220,3 +220,5 @@
 0.99.56 - 
 	- Change 2 log messages in MFSL_ASYNC
 	- Removed a debug messages in fusexmp_fh
+	- Bug fix in RW_Lock (may lead to deadlock when used in parralel with
+	  several clients
