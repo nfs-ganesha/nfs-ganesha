@@ -140,10 +140,10 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
 fsal_status_t MFSL_setattrs_check_perms( mfsl_object_t                * filehandle,        /* IN */
-                                          mfsl_object_specific_data_t  * pspecdata,         /* IN */ 
-					  fsal_op_context_t            * p_context,         /* IN */
-    					  mfsl_context_t               * p_mfsl_context,    /* IN */
-    					  fsal_attrib_list_t           * attrib_set         /* IN */ )
+                                         mfsl_object_specific_data_t  * pspecdata,         /* IN */ 
+					 fsal_op_context_t            * p_context,         /* IN */
+    					 mfsl_context_t               * p_mfsl_context,    /* IN */
+    					 fsal_attrib_list_t           * attrib_set         /* IN */ )
 {
   fsal_status_t fsal_status ;
 
