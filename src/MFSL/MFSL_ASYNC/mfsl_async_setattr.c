@@ -127,7 +127,7 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
 /**
  *
- * MFSAL_setattrs_check_perms : Checks authorization to perform an asynchronous setattr.
+ * MFSL_setattrs_check_perms : Checks authorization to perform an asynchronous setattr.
  *
  * Checks authorization to perform an asynchronous setattr.
  *
@@ -139,13 +139,20 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_setattrs_check_perms( mfsl_object_t                * filehandle,        /* IN */
+fsal_status_t MFSL_setattrs_check_perms( mfsl_object_t                * filehandle,        /* IN */
                                           mfsl_object_specific_data_t  * pspecdata,         /* IN */ 
 					  fsal_op_context_t            * p_context,         /* IN */
     					  mfsl_context_t               * p_mfsl_context,    /* IN */
     					  fsal_attrib_list_t           * attrib_set         /* IN */ )
 {
   fsal_status_t fsal_status ;
+
+  /* Root is the only one that can chown or chgrp */
+  if( attrib_set->asked_attributes & ( FSAL_ATTR_OWNER | FSAL_ATTR_GROUP ) )
+   {
+      if( p_context->user_credential.user != 0 )
+	 MFSL_return( ERR_FSAL_ACCESS, 0 );
+   }
 
   fsal_status = FSAL_setattr_access( p_context, attrib_set, &pspecdata->async_attr ) ;
   
@@ -220,7 +227,7 @@ fsal_status_t MFSL_setattrs(
 	pasyncdata->async_attr = *object_attributes ;
    }
 
-  fsal_status = MFSAL_setattrs_check_perms( filehandle, pasyncdata, p_context, p_mfsl_context, attrib_set ) ;
+  fsal_status = MFSL_setattrs_check_perms( filehandle, pasyncdata, p_context, p_mfsl_context, attrib_set ) ;
 
   if( FSAL_IS_ERROR( fsal_status ) )
    return fsal_status ;
