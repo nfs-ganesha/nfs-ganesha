@@ -278,7 +278,6 @@ fsal_status_t FSAL_create(
   if( resnfs4.resarray.resarray_val[FSAL_CREATE_IDX_OP_OPEN_CREATE].nfs_resop4_u.opopen.OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM )
    {
      fsal_status = FSAL_proxy_open_confirm( &fd ) ;
-     printf( "----> Fsal_status _confirm=%u,%u\n", fsal_status.major, fsal_status.minor ) ;
      if( FSAL_IS_ERROR( fsal_status ) )
         Return(fsal_status.major, fsal_status.minor , INDEX_FSAL_create);
    }

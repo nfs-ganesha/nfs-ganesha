@@ -469,7 +469,7 @@ fsal_status_t mfsl_async_init_precreated_files( fsal_op_context_t         * pcon
        {
           DisplayLog( "Impossible to create %s/%s, status=(%u,%u)", 
 		      mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major, fsal_status.minor ) ;
-          exit( 1 ) ; 
+          /* exit( 1 ) ;  */
        }
    }
 
