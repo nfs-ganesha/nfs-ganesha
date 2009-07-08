@@ -222,3 +222,7 @@
 	- Removed a debug messages in fusexmp_fh
 	- Bug fix in RW_Lock (may lead to deadlock when used in parralel with
 	  several clients
+	- Prevent FSAL_PROXY to use udp as a transport layer, the
+	  "NFSv4_Proxy::NFS_Proto" field from the configuration file as been
+	  removed as well 
+	- MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
