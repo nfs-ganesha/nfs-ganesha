@@ -278,14 +278,17 @@ fsal_status_t FSAL_create(
   if( resnfs4.resarray.resarray_val[FSAL_CREATE_IDX_OP_OPEN_CREATE].nfs_resop4_u.opopen.OPEN4res_u.resok4.rflags & OPEN4_RESULT_CONFIRM )
    {
      fsal_status = FSAL_proxy_open_confirm( &fd ) ;
+     printf( "----> Fsal_status _confirm=%u,%u\n", fsal_status.major, fsal_status.minor ) ;
      if( FSAL_IS_ERROR( fsal_status ) )
         Return(fsal_status.major, fsal_status.minor , INDEX_FSAL_create);
    }
 
+#ifdef _FSAL_CREATE_CLOSE_FILE
   /* The craeted file is still opened, to preserve the correct seqid for later use, we close it */
   fsal_status = FSAL_close( &fd ) ;
   if( FSAL_IS_ERROR( fsal_status ) )
     Return(fsal_status.major, fsal_status.minor , INDEX_FSAL_create);
+#endif
 
   /* OK */
   Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_create);
