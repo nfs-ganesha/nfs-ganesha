@@ -1,8 +1,14 @@
 nfs-ganesha (0.99.56-1) stable; urgency=low
 
   * Fix log messages in MFS_ASYNC
+  * Change two debug messages in MFSL_ASYNC
+  * Removed a debug messages in fusexmp_fh
+  * Bug fix in RW_Lock (may lead to deadlock when used in massively parralel
+    environment
+  * Prevent FSAL_PROXY to use udp as a transport layer
+  * MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  1 July 2009 09:14:00 -0600
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  8 July 2009 09:14:00 -0600
 
 nfs-ganesha (0.99.55-1) stable; urgency=low
 
