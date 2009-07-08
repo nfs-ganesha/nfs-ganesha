@@ -979,6 +979,7 @@ fsal_status_t  FSAL_load_FS_specific_parameter_from_conf(
     {
        out_parameter->fs_specific_info.retry_sleeptime = (unsigned int)atoi( key_value ) ;
     }
+#ifdef _ALLOW_NFS_PROTO_CHOICE
     else if( !STRCMP( key_name, "NFS_Proto" ) ) 
     {
        /* key_value should be either "udp" or "tcp" */
@@ -989,6 +990,7 @@ fsal_status_t  FSAL_load_FS_specific_parameter_from_conf(
          }
        strncpy( out_parameter->fs_specific_info.srv_proto, key_value, MAXNAMLEN ) ;
     }
+#endif
     else if( !STRCMP( key_name, "Active_krb5" ) )
     {
        out_parameter->fs_specific_info.active_krb5 = StrToBoolean( key_value ) ;
