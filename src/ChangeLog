@@ -217,7 +217,7 @@
 	  using "--enable-nfs4-stateid" at ./configure time. In this last
 	  case, the targeted client is 2.6.29-4 (Fedora11).  
 
-0.99.56 - 
+0.99.56 - Thu  9 Jul 2009
 	- Change 2 log messages in MFSL_ASYNC
 	- Removed a debug messages in fusexmp_fh
 	- Bug fix in RW_Lock (may lead to deadlock when used in parralel with
@@ -226,3 +226,4 @@
 	  "NFSv4_Proxy::NFS_Proto" field from the configuration file as been
 	  removed as well 
 	- MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
+	- MFSL_ASYNC: the way mfsl_async_symlink is work was fully reviewd
