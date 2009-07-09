@@ -139,10 +139,6 @@ fsal_status_t MFSL_lookup(  mfsl_object_t         * parent_directory_handle, /* 
           MFSL_return( ERR_FSAL_NOENT, ENOENT ) ;
     }
  
-  /* Stamp the object as a symbolic link if needed */
-  if( object_attributes->type == FSAL_TYPE_LNK )
-    object_handle->health = MFSL_ASYNC_IS_SYMLINK ;
-
   /* object was found in FSAL, is not asynchronously deleted, everything is OK */ 
   MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;
 } /* MFSL_lookup */

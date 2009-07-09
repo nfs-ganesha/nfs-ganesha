@@ -167,6 +167,7 @@ fsal_status_t  MFSL_SetDefault_parameter(
    out_parameter->nb_pre_create_dirs = 10 ;
    out_parameter->nb_pre_create_files = 10 ;
    strncpy( out_parameter->pre_create_obj_dir, "/tmp", MAXPATHLEN ) ;
+   strncpy( out_parameter->tmp_symlink_dir, "/tmp", MAXPATHLEN ) ;
 
    out_parameter->lru_param.nb_entry_prealloc  = 100 ;
    out_parameter->lru_param.nb_call_gc_invalid = 30 ;
@@ -256,6 +257,10 @@ fsal_status_t  MFSL_load_parameter_from_conf(
       else if( !strcasecmp( key_name, "PreCreatedObject_Directory" ) )
        {
           strncpy( pparam->pre_create_obj_dir, key_value, MAXPATHLEN ) ;
+       }
+      else if( !strcasecmp( key_name, "Tmp_Symlink_Directory" ) )
+       {
+          strncpy( pparam->tmp_symlink_dir, key_value, MAXPATHLEN ) ;
        }
       else if( !strcasecmp( key_name, "Nb_PreCreated_Directories" ) ) 
        {
