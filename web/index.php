@@ -98,10 +98,10 @@
                 <td>
 		<table width="80%" border="0" align="center" cellpadding="0" cellspacing="0">
 		  <tr>
-                    <td class="date">Jun 22, 2009</td>
+                    <td class="date">Jul  9, 2009</td>
               	  </tr>
                   <tr>
-                    <td height="50"><a href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=693441" class="smallred">v 0.99.55 is available</a></td>
+                    <td height="50"><a href="http://sourceforge.net/projects/nfs-ganesha/files/" class="smallred">v 0.99.56 is available</a></td>
                   </tr>
 		  <tr>
                     <td class="date">January 2006</td>
