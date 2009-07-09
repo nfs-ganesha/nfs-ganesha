@@ -7,6 +7,7 @@ nfs-ganesha (0.99.56-1) stable; urgency=low
     environment
   * Prevent FSAL_PROXY to use udp as a transport layer
   * MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
+  * MFSL_ASYNC: the way mfsl_async_symlink is work was fully reviewd
 
  -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  8 July 2009 09:14:00 -0600
 
