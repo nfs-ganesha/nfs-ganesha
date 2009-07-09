@@ -267,6 +267,7 @@ cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent,
        
      case SYMBOLIC_LINK:
 #ifdef _USE_MFSL
+       cache_inode_get_attributes( pentry_parent, &object_attributes ) ;
        fsal_status = MFSL_symlink( &pentry_parent->mobject,
                                    pname, 
                                    &pcreate_arg->link_content,

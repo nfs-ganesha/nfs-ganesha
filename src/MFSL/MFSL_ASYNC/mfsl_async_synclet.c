@@ -331,7 +331,7 @@ void * mfsl_async_synclet_thread( void * Arg )
       exit( 1 ) ;
    }
 
-  if( FSAL_IS_ERROR( FSAL_InitClientContext(  &synclet_data[index].root_fsal_context ) ) ) 
+  if( FSAL_IS_ERROR( FSAL_InitClientContext( &synclet_data[index].root_fsal_context ) ) ) 
    {
       /* Failed init */
       DisplayLog( "MFSL Synclet context could not build thread context, exiting..." ) ;
@@ -364,6 +364,13 @@ void * mfsl_async_synclet_thread( void * Arg )
    {
       /* Failed init */
       DisplayLog( "MFSL Synclet context could not be cleaned up before using, exiting..." ) ;
+      exit( 1 ) ;
+   }
+
+  if( FSAL_IS_ERROR( mfsl_async_init_symlinkdir( &synclet_data[index].root_fsal_context ) ) )
+   {
+      /* Failed init */
+      DisplayLog( "MFSL Synclet context could init symlink's nursery, exiting..." ) ;
       exit( 1 ) ;
    }
 

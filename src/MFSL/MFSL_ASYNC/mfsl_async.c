@@ -110,10 +110,48 @@ unsigned int       end_of_mfsl = FALSE ;
 
 void constructor_preacreated_entries( void * ptr )
 {
+  fsal_status_t fsal_status ;
+  fsal_path_t   fsal_path ;
   mfsl_precreated_object_t * pobject = ( mfsl_precreated_object_t *)ptr ;
   
   pobject->inited = 0 ;
 } /* constructor_preacreated_entries */
+
+/**
+ * 
+ * mfsl_async_init_symlinkdir: gets the filehandle to the directory for symlinks's nursery.
+ *
+ * Gets the filehandle to the directory for symlinks's nursery.
+ *
+ * @param pcontext    [INOUT] pointer to FSAL context to be used 
+ *
+ * @return a FSAL status
+ *
+ */
+fsal_handle_t tmp_symlink_dirhandle ; /**< Global variable that will contain the handle to the symlinks's nursery */
+
+fsal_status_t mfsl_async_init_symlinkdir( fsal_op_context_t  * pcontext )
+{
+  fsal_attrib_list_t   dir_attr ;
+  fsal_status_t        fsal_status ;
+  fsal_path_t          fsal_path ;
+
+  fsal_status = FSAL_str2path(  mfsl_param.tmp_symlink_dir, MAXPATHLEN, &fsal_path ) ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+   {
+      DisplayLog( "Impossible to convert path %s", mfsl_param.tmp_symlink_dir ) ;
+      exit( 1 ) ; 
+   }
+
+  fsal_status = FSAL_lookupPath( &fsal_path, pcontext, &tmp_symlink_dirhandle, &dir_attr ) ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+   {
+      DisplayLog( "Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+  		  mfsl_param.tmp_symlink_dir, fsal_status.major, fsal_status.minor ) ;
+      exit( 1 ) ; 
+   }
+} /* mfsl_async_init_symlinkdir */
+
 
 /**
  * 

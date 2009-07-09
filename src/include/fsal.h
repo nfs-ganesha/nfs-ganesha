@@ -497,7 +497,7 @@ fsal_status_t FSAL_access(
  */
 fsal_status_t FSAL_test_access(
     fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
+    fsal_accessflags_t           access_type,        /* IN */
     fsal_attrib_list_t         * object_attributes   /* IN */
 );
 
@@ -505,7 +505,7 @@ fsal_status_t FSAL_create(
     fsal_handle_t         * parent_directory_handle, /* IN */
     fsal_name_t           * p_filename,              /* IN */
     fsal_op_context_t     * p_context,               /* IN */
-    fsal_accessmode_t     accessmode,                /* IN */
+    fsal_accessmode_t       accessmode,              /* IN */
     fsal_handle_t         * object_handle,           /* OUT */
     fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
 );
@@ -514,17 +514,17 @@ fsal_status_t FSAL_mkdir(
     fsal_handle_t         * parent_directory_handle, /* IN */
     fsal_name_t           * p_dirname,               /* IN */
     fsal_op_context_t     * p_context,               /* IN */
-    fsal_accessmode_t     accessmode,                /* IN */
+    fsal_accessmode_t       accessmode,              /* IN */
     fsal_handle_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
+    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
 );
 
 fsal_status_t FSAL_truncate(
     fsal_handle_t         * filehandle,              /* IN */
     fsal_op_context_t     * p_context,               /* IN */
-    fsal_size_t           length,                    /* IN */
+    fsal_size_t             length,                  /* IN */
     fsal_file_t           * file_descriptor,         /* INOUT */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
+    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
 );
 
 fsal_status_t FSAL_getattrs(
@@ -633,9 +633,9 @@ fsal_status_t FSAL_symlink(
     fsal_name_t           * p_linkname,                /* IN */
     fsal_path_t           * p_linkcontent,                /* IN */
     fsal_op_context_t     * p_context,              /* IN */
-    fsal_accessmode_t     accessmode,        /* IN (ignored); */
+    fsal_accessmode_t       accessmode,        /* IN (ignored); */
     fsal_handle_t         * link_handle,        /* OUT */
-    fsal_attrib_list_t         * link_attributes        /* [ IN/OUT ] */
+    fsal_attrib_list_t    * link_attributes        /* [ IN/OUT ] */
 );
 
 fsal_status_t FSAL_rename(
