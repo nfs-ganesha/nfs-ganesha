@@ -178,8 +178,8 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  * @param p_dirname         [IN]    name of the object to be created
  * @param p_context         [IN]    associated fsal context
  * @param p_mfsl_context    [INOUT] associated mfsl context
+ * @param object_attributes [INOUT] parent's attributes
  *
- * @return always FSAL_NO_ERROR (not yet implemented 
  */
 fsal_status_t MFSAL_create_check_perms( mfsl_object_t                * target_handle,     
     			                fsal_name_t                  * p_dirname,        
