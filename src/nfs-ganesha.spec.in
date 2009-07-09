@@ -235,12 +235,13 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
-* Thu Jul  8 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
+* Thu Jul  9 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
 - Change two debug messages in MFSL_ASYNC
 - Removed a debug messages in fusexmp_fh
 - Bug fix in RW_Lock (may lead to deadlock when used in parralel with several clients
 - Prevent FSAL_PROXY to use udp as a transport layer
 - MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
+- MFSL_ASYNC: the way mfsl_async_symlink is work was fully reviewd
 
 * Thu Jun 22 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.55-1
 - Bug fixed in nfs4_op_open (bad allocation)
