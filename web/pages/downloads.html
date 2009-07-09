@@ -5,6 +5,18 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.56</a><br>
+	</li>
+	<ul>
+        <li> Change 2 log messages in MFSL_ASYNC</li>
+        <li>Removed a debug messages in fusexmp_fh</li>
+        <li>Bug fix in RW_Lock (may lead to deadlock when used in parralel withi several clients</li>
+        <li>Prevent FSAL_PROXY to use udp as a transport layer, the "NFSv4_Proxy::NFS_Proto" field from the configuration file as been removed as well</li>
+        <li>MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink</li>
+        <li>MFSL_ASYNC: the way mfsl_async_symlink is work was fully reviewd</li>
+	</ul>
+	<li>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/project/showfiles.php?group_id=221673&package_id=267784&release_id=693441">NFS-GANESHA v 0.99.55</a><br>
 	</li>	
 	<ul>
