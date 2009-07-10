@@ -221,7 +221,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
           * I set pstate_found to 1 to remember this situation later */
          pstate_found = NULL ;
       }
-#ifdef _WITH_STATEID
+
     /* Check for correctness of the provided stateid */
     else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK )
      {
@@ -324,7 +324,6 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
        return res_READ4.status ;
      }
     
-#endif /* WITH_STATEID */
 
     /* Get the size and offset of the read operation */    
     offset = arg_READ4.offset ;
