@@ -206,7 +206,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
     }
 #endif
 
-#ifdef _WITH_STATEID
   /* Does the stateid match ? */
   if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry ) )  != NFS4_OK )
     {
@@ -252,7 +251,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
 	return res_CLOSE4.status ;
     }
-#endif
 
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = arg_CLOSE4.seqid  ;
