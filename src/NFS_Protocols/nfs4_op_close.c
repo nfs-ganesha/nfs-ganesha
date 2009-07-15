@@ -235,13 +235,16 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
       return res_CLOSE4.status ;
    }
 
+#ifdef _TOTO
   /* Check the seqid */
   if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
      {
+        printf( "-- arg_CLOSE.seqid=%u  pstate_found->seqid=%u\n",  arg_CLOSE4.seqid, pstate_found->seqid ) ;
 	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
 	return res_CLOSE4.status ;
      }
+#endif
 
   /* File is closed, release the corresponding state */
   if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,

@@ -254,7 +254,7 @@ GA_ENABLE_FLAG(  [full-debug],           [enable FULL_DEBUG logging level (very 
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		         [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                 [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	         [-D_HANDLE_MAPPING])
-GA_ENABLE_FLAG(  [nfs4-stateid],	 [enable advanced NFSv4 stateid mechanism (experimental) ],      [-D_WITH_STATEID])
+GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                           [-D_WITH_NFSV4_LOCKS])
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
 
 # for using it in makefiles
