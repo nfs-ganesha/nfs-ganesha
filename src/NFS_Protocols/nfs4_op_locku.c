@@ -160,7 +160,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKU ;
 
-#ifndef _WITH_STATEID
+#ifndef _WITH_NFSV4_LOCKS
   res_LOCKU4.status =  NFS4ERR_LOCK_NOTSUPP ;
   return res_LOCKU4.status ;
 #endif
