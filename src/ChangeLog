@@ -226,4 +226,7 @@
 	  "NFSv4_Proxy::NFS_Proto" field from the configuration file as been
 	  removed as well 
 	- MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
-	- MFSL_ASYNC: the way mfsl_async_symlink is work was fully reviewd
+	- MFSL_ASYNC: the way mfsl_async_symlink was fully reviewd
+
+0.99.57 -
+	- Add NFSv3 commit/write logic 

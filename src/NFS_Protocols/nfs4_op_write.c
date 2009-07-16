@@ -160,6 +160,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
   fsal_size_t              written_size;
   fsal_off_t               offset ;
   fsal_boolean_t           eof_met ;
+  bool_t                   stable_flag = TRUE ;
   caddr_t                  bufferdata ;
   stable_how4              stable_how ;
   cache_content_status_t   content_status ;
@@ -402,7 +403,18 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
         }
 
     }
-  
+
+  if( ( nfs_param.core_param.use_nfs_commit == TRUE ) &&
+      ( arg_WRITE4.stable == UNSTABLE4 ) )
+   {
+      //stable_flag = FALSE ;
+      stable_flag = TRUE ;
+   }
+  else
+   {
+     stable_flag = TRUE ;
+   }
+ 
   /* An actual write is to be made, prepare it */
   /* only FILE_SYNC mode is supported */
   /* Set up uio to define the transfer */
@@ -420,18 +432,20 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
                         data->ht, 
                         data->pclient, 
                         data->pcontext, 
-                        FALSE,
+                        stable_flag,
                         &cache_status )  != CACHE_INODE_SUCCESS )
     {
       res_WRITE4.status = nfs4_Errno( cache_status ) ;
       return res_WRITE4.status ;
     }
   
-  
-  
   /* Set the returned value */
+  if( stable_flag == TRUE )  
+    res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4 ;
+  else
+    res_WRITE4.WRITE4res_u.resok4.committed = UNSTABLE4 ;
+  
   res_WRITE4.WRITE4res_u.resok4.count = written_size ;
-  res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4 ;
   memcpy( res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier, sizeof(verifier4) );
   
   
