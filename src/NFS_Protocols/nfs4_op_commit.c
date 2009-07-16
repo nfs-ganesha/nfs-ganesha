@@ -149,6 +149,8 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
 {
   char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_commit" ;
   
+  fsal_attrib_list_t    attr ;
+  cache_inode_status_t  cache_status ;
  
   /* for the moment, read/write are not done asynchronously, no commit is necessary */
   resp->resop = NFS4_OP_COMMIT ;
@@ -158,7 +160,7 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
   printf( "      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n", arg_COMMIT4.offset, arg_COMMIT4.count ) ;
 #endif
 
- /* If there is no FH */
+  /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
     {
       res_COMMIT4.status = NFS4ERR_NOFILEHANDLE ;
@@ -195,9 +197,23 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
 	  }
     }
 
+  if( cache_inode_commit( data->current_entry,
+			  arg_COMMIT4.offset,
+			  arg_COMMIT4.count,
+                          &attr,
+		       	  data->ht, 
+                          data->pclient, 
+                          data->pcontext, 
+                          &cache_status ) != CACHE_INODE_SUCCESS )
+    {
+      res_COMMIT4.status = NFS4ERR_IO ;
+      return res_COMMIT4.status ;
+    }
+
   memset( res_COMMIT4.COMMIT4res_u.resok4.writeverf, 0 , NFS4_VERIFIER_SIZE ) ;
   
   /* If you reach this point, then an error occured */
+  res_COMMIT4.status = NFS4_OK ;
   return res_COMMIT4.status;
 } /* nfs4_op_commit */
 

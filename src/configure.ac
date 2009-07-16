@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [0.99.56], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [0.99.57], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5 (prod). Locks(rc). TI-RPC (prod), IPv6 (alpha), MFSL_ASYNC(beta) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5 (prod). Locks(rc). TI-RPC (prod), IPv6 (alpha), MFSL_ASYNC(beta), NFS Commit/Write (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
