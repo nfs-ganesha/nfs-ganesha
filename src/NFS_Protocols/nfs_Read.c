@@ -217,7 +217,7 @@ int nfs_Read( nfs_arg_t             * parg,
   filetype = cache_inode_fsal_type_convert( pre_attr.type ) ;
 
   /* Sanity check: read only from a regular file */
-	if( filetype != REGULAR_FILE )
+  if( filetype != REGULAR_FILE )
     {
       switch (preq->rq_vers)
         {
