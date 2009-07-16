@@ -135,7 +135,7 @@
 #define CHILDREN_ARRAY_SIZE 16 
 #define NB_CHUNCK_READDIR 4   /* Should be equal to FSAL_READDIR_SIZE divided by CHILDREN_ARRAY_SIZE */
 
-#define CACHE_INODE_UNSTABLE_BUFFERSIZE 10*1024*1024
+#define CACHE_INODE_UNSTABLE_BUFFERSIZE 100*1024*1024
 #define DIR_ENTRY_NAMLEN 1024
 
 #define CACHE_INODE_TIME( pentry ) (pentry->internal_md.read_time > pentry->internal_md.mod_time)?pentry->internal_md.read_time:pentry->internal_md.mod_time
@@ -873,6 +873,15 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
 
 #define cache_inode_read( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_READ, b, c, d, e, f, g, h, i, j, k )
 #define cache_inode_write( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_WRITE, b, c, d, e, f, g, h, i, j. k )
+
+cache_inode_status_t cache_inode_commit( cache_entry_t              * pentry, 
+                                         uint64_t                     offset,
+                                         fsal_size_t                  count,  
+                                         fsal_attrib_list_t         * pfsal_attr,
+                                         hash_table_t               * ht,  
+                                         cache_inode_client_t       * pclient, 
+                                         fsal_op_context_t          * pcontext, 
+                                         cache_inode_status_t       * pstatus ) ;
 
 cache_inode_status_t cache_inode_readdir_populate(  cache_entry_t           * pentry_dir, 
                                                     hash_table_t            * ht,

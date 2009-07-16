@@ -158,6 +158,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
   fsal_attrib_list_t           post_write_attr; 
   fsal_status_t                fsal_status_getattr ;
   struct stat                  buffstat ;
+  bool_t                       stable_flag = stable ;
  
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS ;
@@ -224,11 +225,9 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
      }
 
    /* Do we use stable or unstable storage ? */
-   if( stable == FALSE )
+   if( stable_flag == FALSE )
     {
       /* Data will be stored in memory and not flush to FSAL */
-
-      printf( "=============> STABLE == FALSE !!!!!!!!!!!!!!!!!\n" ) ;
 
       /* If the unstable_data buffer allocated ? */
       if( pentry->object.file.unstable_data.buffer == NULL )
@@ -243,9 +242,45 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
        
               return *pstatus ;
            }
+
+          pentry->object.file.unstable_data.offset = seek_descriptor->offset ;
+          pentry->object.file.unstable_data.length = buffer_size ;
+
+          memcpy(  pentry->object.file.unstable_data.buffer, buffer, buffer_size ) ;
+
+          /* Set mtime and ctime */
+          pentry->object.file.attributes.mtime.seconds  = time( NULL ) ;
+          pentry->object.file.attributes.mtime.nseconds = 0 ;
+       
+          /* BUGAZOMEU : write operation must NOT modify file's ctime */
+          pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+       
        } /* if( pentry->object.file.unstable_data.buffer == NULL ) */
-    } /* if( stable == FALSE ) */
-   else
+      else
+       {
+          if( ( pentry->object.file.unstable_data.offset < seek_descriptor->offset ) && 
+              ( buffer_size + seek_descriptor->offset < CACHE_INODE_UNSTABLE_BUFFERSIZE ) )
+            {
+		pentry->object.file.unstable_data.length = buffer_size + seek_descriptor->offset ;
+                memcpy( (char *)( pentry->object.file.unstable_data.buffer + seek_descriptor->offset), buffer, buffer_size ) ;
+
+                /* Set mtime and ctime */
+                pentry->object.file.attributes.mtime.seconds  = time( NULL ) ;
+                pentry->object.file.attributes.mtime.nseconds = 0 ;
+       
+                /* BUGAZOMEU : write operation must NOT modify file's ctime */
+                pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+            }
+	  else
+            {
+		/* Go back to regular situation */
+		stable_flag = TRUE ;
+            }
+       }
+
+    } /* if( stable_flag == FALSE ) */
+
+   if( stable_flag == TRUE )
     {
       /* Calls file content cache to operate on the cache */
       if( pentry->object.file.pentry_content != NULL )
@@ -515,7 +550,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
        
           break ;
         }
-     }  /* else (stable == FALSE ) */
+     }  /* if(stable_flag == TRUE ) */
 
    /* Return attributes to caller */ 
    if( pfsal_attr != NULL ) 
@@ -548,7 +583,111 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
    return *pstatus ;
 } /* cache_inode_rdwr */
 
-  
+/**
+ *
+ * cache_inode_commit: commits a write operation on unstable storage
+ *
+ * Reads/Writes through the cache layer.
+ *
+ * @param pentry [IN] entry in cache inode layer whose content is to be accessed.
+ * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done. 
+ * @param seek_descriptor [IN] absolute position (in the FSAL file) where the IO will be done.
+ * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'. 
+ * @param pio_size [OUT] the size of the io that was successfully made.
+ * @param pfsal_attr [OUT] the FSAL attributes after the operation.
+ * @param buffer write:[IN] read:[OUT] the buffer for the data.
+ * @param ht [INOUT] the hashtable used for managing the cache. 
+ * @param pclient [IN]  ressource allocated by the client for the nfs management.
+ * @param pcontext [IN] fsal context for the operation.
+ * @pstatus [OUT] returned status.
+ *
+ * @return CACHE_CONTENT_SUCCESS is successful .
+ *
+ * @todo: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.
+ *
+ */
+
+cache_inode_status_t cache_inode_commit( cache_entry_t              * pentry, 
+                                         uint64_t                     offset,
+                                         fsal_size_t                  count,  
+                                         fsal_attrib_list_t         * pfsal_attr,
+                                         hash_table_t               * ht,  
+                                         cache_inode_client_t       * pclient, 
+                                         fsal_op_context_t          * pcontext, 
+                                         cache_inode_status_t       * pstatus )
+{
+  fsal_seek_t    seek_descriptor ;
+  fsal_size_t    size_io_done ;  
+  fsal_boolean_t eof ;
+
+
+  if( pentry->object.file.unstable_data.buffer == NULL )
+   {
+     *pstatus = CACHE_INODE_SUCCESS ;
+     return *pstatus ;
+   }
+
+  if( count == 0 )
+   {
+     /* Count = 0 means "flush all data to permanent storage */
+     seek_descriptor.offset = pentry->object.file.unstable_data.offset ;
+     seek_descriptor.whence = FSAL_SEEK_SET ;
+
+
+    if( cache_inode_rdwr( pentry,
+		          CACHE_INODE_WRITE,
+			  &seek_descriptor,
+			  pentry->object.file.unstable_data.length,
+			  &size_io_done,
+			  pfsal_attr,
+			  pentry->object.file.unstable_data.buffer,
+			  &eof,
+			  ht,
+			  pclient,
+			  pcontext,
+			  TRUE,
+			  pstatus ) != CACHE_INODE_SUCCESS )
+	return *pstatus ;
+     
+    P_w( &pentry->lock ) ; 
+
+    Mem_Free( pentry->object.file.unstable_data.buffer ) ;
+    pentry->object.file.unstable_data.buffer = NULL ;	      
+
+    V_w( &pentry->lock ) ; 
+
+   }
+  else
+   {
+     if( offset < pentry->object.file.unstable_data.offset )
+      {
+         *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
+         return *pstatus ;
+      }
+
+     seek_descriptor.offset = offset ;
+     seek_descriptor.whence = FSAL_SEEK_SET ;
+
+
+     return cache_inode_rdwr( pentry,
+			      CACHE_INODE_WRITE,
+			      &seek_descriptor,
+			      count,
+			      &size_io_done,
+			      pfsal_attr,
+			      (char *)(pentry->object.file.unstable_data.buffer + offset - pentry->object.file.unstable_data.offset ),
+			      &eof,
+			      ht,
+			      pclient,
+			      pcontext,
+			      TRUE,
+			      pstatus ) ;	  
+   }
+
+  /* Regulat exit */
+  *pstatus = CACHE_INODE_SUCCESS ;
+  return *pstatus ;
+} /* cache_inode_commit */
 
 
  
