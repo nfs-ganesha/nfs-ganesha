@@ -3880,6 +3880,7 @@ int fn_Cache_inode_read( int argc ,         /* IN : number of args in argv */
                             ht, 
                             &context->client, 
                             &context->context, 
+			    TRUE,
                             &context->cache_status ) != CACHE_INODE_SUCCESS )
       {
         log_fprintf( output, "Error executing cache_inode_read : %J%r\n",
@@ -4342,6 +4343,7 @@ int fn_Cache_inode_write( int argc ,         /* IN : number of args in argv */
                           ht, 
                           &context->client, 
                           &context->context, 
+			  TRUE,
                           &context->cache_status ) != CACHE_INODE_SUCCESS )
     {
       log_fprintf( output, "Error executing cache_inode_write : %J%r\n",

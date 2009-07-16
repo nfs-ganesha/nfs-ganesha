@@ -411,6 +411,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
                           data->ht, 
                           data->pclient, 
                           data->pcontext, 
+			  FALSE,
                           &cache_status )  != CACHE_INODE_SUCCESS )
       {
         res_READ4.status = nfs4_Errno( cache_status ) ;

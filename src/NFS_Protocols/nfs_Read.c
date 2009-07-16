@@ -415,6 +415,7 @@ int nfs_Read( nfs_arg_t             * parg,
                           ht, 
                           pclient, 
                           pcontext, 
+			  TRUE,
                           &cache_status ) == CACHE_INODE_SUCCESS )
       
       {
