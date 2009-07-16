@@ -135,6 +135,7 @@
 #define CHILDREN_ARRAY_SIZE 16 
 #define NB_CHUNCK_READDIR 4   /* Should be equal to FSAL_READDIR_SIZE divided by CHILDREN_ARRAY_SIZE */
 
+#define CACHE_INODE_UNSTABLE_BUFFERSIZE 10*1024*1024
 #define DIR_ENTRY_NAMLEN 1024
 
 #define CACHE_INODE_TIME( pentry ) (pentry->internal_md.read_time > pentry->internal_md.mod_time)?pentry->internal_md.read_time:pentry->internal_md.mod_time
@@ -350,22 +351,30 @@ typedef struct cache_inode_deleg__
    unsigned int nothing ;
 } cache_inode_deleg_t ;
 
+typedef struct cache_inode_unstable_data__
+{
+  caddr_t   buffer ;
+  uint64_t  offset ;
+  uint32_t  length ;
+} cache_inode_unstable_data_t ;
+
 typedef struct cache_entry__
 {
   union cache_inode_fsobj__
   {
     struct cache_inode_file__                
       {
-        fsal_handle_t                handle                ;        /**< The FSAL Handle                                      */
+        fsal_handle_t                 handle                ;        /**< The FSAL Handle                                      */
 #ifdef _USE_PROXY
-        fsal_name_t                * pname                 ;        /**< Pointer to filename, for PROXY only                  */
-        struct cache_entry__       * pentry_parent_open    ;        /**< Parent associated with pname, for PROXY only         */
+        fsal_name_t                 * pname                 ;        /**< Pointer to filename, for PROXY only                  */
+        struct cache_entry__        * pentry_parent_open    ;        /**< Parent associated with pname, for PROXY only         */
 #endif
-        fsal_attrib_list_t           attributes            ;        /**< The FSAL Attributes                                  */
-        void                       * pentry_content        ;        /**< Entry in file content cache (NULL if not cached)     */
-        cache_inode_opened_file_t    open_fd               ;        /**< Cached fsal_file_t for optimized access              */
-        u_int16_t                    state_head_counter    ;        /**< Counter used for the head of the state chain         */
-        u_int16_t                    state_current_counter ;        /**< Current counter for the state chain                  */
+        fsal_attrib_list_t            attributes            ;        /**< The FSAL Attributes                                  */
+        void                        * pentry_content        ;        /**< Entry in file content cache (NULL if not cached)     */
+        cache_inode_opened_file_t     open_fd               ;        /**< Cached fsal_file_t for optimized access              */
+        u_int16_t                     state_head_counter    ;        /**< Counter used for the head of the state chain         */
+        u_int16_t                     state_current_counter ;        /**< Current counter for the state chain                  */
+        cache_inode_unstable_data_t   unstable_data         ;        /**< Unstable data, for use with WRITE/COMMIT             */
       }                            file ;     /**< file related filed     */
 
     struct cache_inode_symlink__   symlink ;  /**< symlink related field  */
@@ -612,14 +621,14 @@ cache_inode_status_t cache_inode_access_no_mutex( cache_entry_t           * pent
                                                   fsal_accessflags_t        access_type,
                                                   hash_table_t            * ht,
                                                   cache_inode_client_t    * pclient,
-                                                  fsal_op_context_t          * pcontext, 
+                                                  fsal_op_context_t       * pcontext, 
                                                   cache_inode_status_t    * pstatus );
 
 cache_inode_status_t cache_inode_access( cache_entry_t           * pentry, 
                                          fsal_accessflags_t        access_type,
                                          hash_table_t            * ht,
                                          cache_inode_client_t    * pclient,
-                                         fsal_op_context_t          * pcontext, 
+                                         fsal_op_context_t       * pcontext, 
                                          cache_inode_status_t    * pstatus );
 
 /* functio not found in sources ??!!?? */
@@ -628,7 +637,7 @@ cache_inode_status_t cache_inode_close( cache_entry_t           * pentry,
                                         fsal_attrib_list_t      * pattr, 
                                         hash_table_t            * ht,
                                         cache_inode_client_t    * pclient,
-                                        fsal_op_context_t          * pcontext, 
+                                        fsal_op_context_t       * pcontext, 
                                         cache_inode_status_t    * pstatus) ;
 #endif
 
@@ -665,7 +674,7 @@ cache_inode_status_t cache_inode_getattr( cache_entry_t        * pentry,
                                           fsal_attrib_list_t   * pattr, 
                                           hash_table_t         * ht,  
                                           cache_inode_client_t * pclient, 
-                                          fsal_op_context_t       * pcontext, 
+                                          fsal_op_context_t    * pcontext, 
                                           cache_inode_status_t * pstatus ) ;
 
 cache_entry_t * cache_inode_lookup_sw( cache_entry_t        * pentry_parent,
@@ -673,7 +682,7 @@ cache_entry_t * cache_inode_lookup_sw( cache_entry_t        * pentry_parent,
                                        fsal_attrib_list_t   * pattr, 
                                        hash_table_t         * ht,  
                                        cache_inode_client_t * pclient, 
-                                       fsal_op_context_t       * pcontext, 
+                                       fsal_op_context_t    * pcontext, 
                                        cache_inode_status_t * pstatus,
                                        int                    use_mutex ) ;
 
@@ -682,7 +691,7 @@ cache_entry_t * cache_inode_lookup_no_mutex( cache_entry_t        * pentry_paren
                                              fsal_attrib_list_t   * pattr, 
                                              hash_table_t         * ht,  
                                              cache_inode_client_t * pclient, 
-                                             fsal_op_context_t       * pcontext, 
+                                             fsal_op_context_t    * pcontext, 
                                              cache_inode_status_t * pstatus );
 
 cache_entry_t * cache_inode_lookup( cache_entry_t        * pentry_parent,
@@ -690,33 +699,33 @@ cache_entry_t * cache_inode_lookup( cache_entry_t        * pentry_parent,
                                     fsal_attrib_list_t   * pattr, 
                                     hash_table_t         * ht,  
                                     cache_inode_client_t * pclient, 
-                                    fsal_op_context_t       * pcontext, 
+                                    fsal_op_context_t    * pcontext, 
                                     cache_inode_status_t * pstatus );
 
 cache_entry_t * cache_inode_lookupp_sw( cache_entry_t        * pentry,
                                         hash_table_t         * ht,  
                                         cache_inode_client_t * pclient, 
-                                        fsal_op_context_t       * pcontext, 
+                                        fsal_op_context_t    * pcontext, 
                                         cache_inode_status_t * pstatus,
                                         int                    use_mutex );
 
 cache_entry_t * cache_inode_lookupp_no_mutex( cache_entry_t        * pentry,
                                               hash_table_t         * ht,  
                                               cache_inode_client_t * pclient, 
-                                              fsal_op_context_t       * pcontext, 
+                                              fsal_op_context_t    * pcontext, 
                                               cache_inode_status_t * pstatus );
 
 cache_entry_t * cache_inode_lookupp( cache_entry_t        * pentry,
                                      hash_table_t         * ht,  
                                      cache_inode_client_t * pclient, 
-                                     fsal_op_context_t       * pcontext, 
+                                     fsal_op_context_t    * pcontext, 
                                      cache_inode_status_t * pstatus );
 
 cache_inode_status_t cache_inode_readlink( cache_entry_t        * pentry, 
                                            fsal_path_t          * plink_content ,
                                            hash_table_t         * ht, 
                                            cache_inode_client_t * pclient, 
-                                           fsal_op_context_t       * pcontext, 
+                                           fsal_op_context_t    * pcontext, 
                                            cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_link( cache_entry_t        * pentry_src, 
@@ -725,7 +734,7 @@ cache_inode_status_t cache_inode_link( cache_entry_t        * pentry_src,
                                        fsal_attrib_list_t   * pattr, /* the directory attributes */
                                        hash_table_t         * ht,
                                        cache_inode_client_t * pclient, 
-                                       fsal_op_context_t       * pcontext, 
+                                       fsal_op_context_t    * pcontext, 
                                        cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /**< Parent entry */
@@ -733,7 +742,7 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
                                             fsal_attrib_list_t   * pattr,
                                             hash_table_t         * ht,  
                                             cache_inode_client_t * pclient, 
-                                            fsal_op_context_t       * pcontext, 
+                                            fsal_op_context_t    * pcontext, 
                                             cache_inode_status_t * pstatus,
                                             int                    use_mutex ) ;
 
@@ -742,7 +751,7 @@ cache_inode_status_t cache_inode_remove_no_mutex( cache_entry_t        * pentry,
                                                   fsal_attrib_list_t   * pattr,
                                                   hash_table_t         * ht,  
                                                   cache_inode_client_t * pclient, 
-                                                  fsal_op_context_t       * pcontext, 
+                                                  fsal_op_context_t    * pcontext, 
                                                   cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_remove( cache_entry_t        * pentry, 
@@ -750,7 +759,7 @@ cache_inode_status_t cache_inode_remove( cache_entry_t        * pentry,
                                          fsal_attrib_list_t   * pattr,
                                          hash_table_t         * ht,  
                                          cache_inode_client_t * pclient, 
-                                         fsal_op_context_t       * pcontext, 
+                                         fsal_op_context_t    * pcontext, 
                                          cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_clean_internal(cache_entry_t        * to_remove_entry,
@@ -785,14 +794,14 @@ cache_inode_status_t cache_inode_rename( cache_entry_t           * pentry,
                                          fsal_attrib_list_t      * pattr_dst, 
                                          hash_table_t            * ht,
                                          cache_inode_client_t    * pclient,
-                                         fsal_op_context_t          * pcontext, 
+                                         fsal_op_context_t       * pcontext, 
                                          cache_inode_status_t    * pstatus);
 
 cache_inode_status_t cache_inode_setattr( cache_entry_t        * pentry, 
                                           fsal_attrib_list_t   * pattr, /* INOUT */
                                           hash_table_t         * ht, 
                                           cache_inode_client_t * pclient,  
-                                          fsal_op_context_t       * pcontext, 
+                                          fsal_op_context_t    * pcontext, 
                                           cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_truncate_sw( cache_entry_t        * pentry, 
@@ -800,7 +809,7 @@ cache_inode_status_t cache_inode_truncate_sw( cache_entry_t        * pentry,
                                               fsal_attrib_list_t   * pattr, 
                                               hash_table_t         * ht,  
                                               cache_inode_client_t * pclient, 
-                                              fsal_op_context_t       * pcontext, 
+                                              fsal_op_context_t    * pcontext, 
                                               cache_inode_status_t * pstatus,
                                               int                    use_mutex ) ;
 
@@ -809,7 +818,7 @@ cache_inode_status_t cache_inode_truncate_no_mutex( cache_entry_t        * pentr
                                                     fsal_attrib_list_t   * pattr, 
                                                     hash_table_t         * ht,  
                                                     cache_inode_client_t * pclient, 
-                                                    fsal_op_context_t       * pcontext, 
+                                                    fsal_op_context_t    * pcontext, 
                                                     cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_truncate( cache_entry_t        * pentry, 
@@ -817,7 +826,7 @@ cache_inode_status_t cache_inode_truncate( cache_entry_t        * pentry,
                                            fsal_attrib_list_t   * pattr, 
                                            hash_table_t         * ht,  
                                            cache_inode_client_t * pclient, 
-                                           fsal_op_context_t       * pcontext, 
+                                           fsal_op_context_t    * pcontext, 
                                            cache_inode_status_t * pstatus ) ;
 
 cache_inode_status_t cache_inode_error_convert( fsal_status_t fsal_status ) ;
@@ -838,14 +847,14 @@ cache_entry_t * cache_inode_new_entry( cache_inode_fsal_data_t  * pfsdata,
 cache_inode_status_t  cache_inode_add_data_cache( cache_entry_t           * pentry,
                                                   hash_table_t            * ht,
                                                   cache_inode_client_t    * pclient,
-                                                  fsal_op_context_t          * pcontext, 
+                                                  fsal_op_context_t       * pcontext, 
                                                   cache_inode_status_t    * pstatus) ;
 
 
 cache_inode_status_t cache_inode_release_data_cache( cache_entry_t           * pentry,
                                                      hash_table_t            * ht,
                                                      cache_inode_client_t    * pclient,
-                                                     fsal_op_context_t          * pcontext, 
+                                                     fsal_op_context_t       * pcontext, 
                                                      cache_inode_status_t    * pstatus) ;
 
 cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry, 
@@ -858,7 +867,8 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
                                        fsal_boolean_t             * p_fsal_eof,
                                        hash_table_t               * ht,  
                                        cache_inode_client_t       * pclient, 
-                                       fsal_op_context_t             * pcontext, 
+                                       fsal_op_context_t          * pcontext, 
+                                       bool_t                       stable,
                                        cache_inode_status_t       * pstatus ) ;
 
 #define cache_inode_read( a, b, c, d, e, f, g, h, i, j, k ) cache_inode_rdwr( a, CACHE_INODE_READ, b, c, d, e, f, g, h, i, j, k )
@@ -867,7 +877,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
 cache_inode_status_t cache_inode_readdir_populate(  cache_entry_t           * pentry_dir, 
                                                     hash_table_t            * ht,
                                                     cache_inode_client_t    * pclient,
-                                                    fsal_op_context_t          * pcontext, 
+                                                    fsal_op_context_t       * pcontext, 
                                                     cache_inode_status_t    * pstatus) ;
 
 cache_inode_status_t cache_inode_readdir( cache_entry_t           * pentry, 
@@ -880,7 +890,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * pentry,
                                           unsigned int            * cookie_array,
                                           hash_table_t            * ht,
                                           cache_inode_client_t    * pclient,
-                                          fsal_op_context_t          * pcontext, 
+                                          fsal_op_context_t       * pcontext, 
                                           cache_inode_status_t    * pstatus) ;
 
  
@@ -888,7 +898,7 @@ cache_inode_status_t cache_inode_renew_entry( cache_entry_t        * pentry,
                                               fsal_attrib_list_t   * pattr, 
                                               hash_table_t         * ht,
                                               cache_inode_client_t * pclient, 
-                                              fsal_op_context_t       * pcontext, 
+                                              fsal_op_context_t    * pcontext, 
                                               cache_inode_status_t *pstatus ) ;
 
 cache_inode_status_t  cache_inode_add_cached_dirent( cache_entry_t        *  pdir, 
@@ -897,13 +907,13 @@ cache_inode_status_t  cache_inode_add_cached_dirent( cache_entry_t        *  pdi
                                                      cache_entry_t        ** pentry_next,
                                                      hash_table_t         *  ht,
                                                      cache_inode_client_t *  pclient,
-                                                     fsal_op_context_t       *  pcontext,  
+                                                     fsal_op_context_t    *  pcontext,  
                                                      cache_inode_status_t *  pstatus ) ;
 
 cache_entry_t * cache_inode_make_root( cache_inode_fsal_data_t * pfsdata, 
                                        hash_table_t            * ht,  
                                        cache_inode_client_t    * pclient, 
-                                       fsal_op_context_t          * pcontext, 
+                                       fsal_op_context_t       * pcontext, 
                                        cache_inode_status_t    * pstatus ) ;
 
 cache_inode_status_t cache_inode_valid( cache_entry_t  * pentry, 
@@ -944,7 +954,7 @@ cache_inode_status_t cache_inode_gc( hash_table_t             * ht,
                                      cache_inode_client_t     * pclient,
                                      cache_inode_status_t     * pstatus) ;
 
-cache_inode_status_t cache_inode_gc_fd( cache_inode_client_t     * pclient,
+cache_inode_status_t cache_inode_gc_fd( cache_inode_client_t  * pclient,
                        	             cache_inode_status_t     * pstatus );
 
 cache_inode_status_t cache_inode_kill_entry( cache_entry_t            * pentry, 

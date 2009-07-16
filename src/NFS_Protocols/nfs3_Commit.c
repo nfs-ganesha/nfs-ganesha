@@ -189,19 +189,19 @@ int nfs3_Commit( nfs_arg_t         * parg,
   /* Set the pre_attr */
   ppre_attr = &pre_attr;
 
-	nfs_SetWccData( pcontext,
+  nfs_SetWccData( pcontext,
                   pexport,
                   pentry, 
                   ppre_attr, 
                   ppre_attr,
                   &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
 
-	/* Set the write verifier */
-	memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-	       sizeof(writeverf3));
 
-	pres->res_commit3.status = NFS3_OK;
-	return NFS_REQ_OK;
+  /* Set the write verifier */
+  memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier, sizeof(writeverf3));
+  pres->res_commit3.status = NFS3_OK;
+
+  return NFS_REQ_OK;
 } /* nfs3_Commit */
 
 /**

@@ -420,6 +420,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
                         data->ht, 
                         data->pclient, 
                         data->pcontext, 
+                        FALSE,
                         &cache_status )  != CACHE_INODE_SUCCESS )
     {
       res_WRITE4.status = nfs4_Errno( cache_status ) ;
