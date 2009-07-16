@@ -233,6 +233,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->core_param.core_dump_size        = 0 ;
   p_nfs_param->core_param.nb_max_fd             = -1 ; /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay    = 60 ;
+  p_nfs_param->core_param.use_nfs_commit        = FALSE ;
   strncpy( p_nfs_param->core_param.stats_file_path, "/tmp/ganesha.stat", MAXPATHLEN ) ;
   p_nfs_param->core_param.dump_stats_per_client = 0 ;
   strncpy( p_nfs_param->core_param.stats_per_client_directory, "/tmp", MAXPATHLEN ) ;

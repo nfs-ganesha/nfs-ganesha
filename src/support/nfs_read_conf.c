@@ -336,6 +336,10 @@ int nfs_read_core_conf( config_file_t          in_config,
         {
           pparam->expiration_dupreq = atoi( key_value ) ;
         }
+      else if( !strcasecmp( key_name, "Use_NFS_Commit" ) )
+        {
+          pparam->use_nfs_commit = StrToBoolean( key_value ) ;
+        }
       else if( !strcasecmp( key_name, "NFS_Port" ) )
         {
           pparam->nfs_port = (unsigned short)atoi( key_value ) ;

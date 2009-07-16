@@ -146,8 +146,9 @@
  *         NFS_REQ_FAILED if failed and not retryable.
  *
  */
-extern writeverf3  NFS3_write_verifier ; /* NFS V3 write verifier      */
- 
+extern writeverf3        NFS3_write_verifier ; /* NFS V3 write verifier      */
+extern nfs_parameter_t   nfs_param  ;
+
 int nfs_Write( nfs_arg_t              * parg,    
                exportlist_t           * pexport, 
                fsal_op_context_t      * pcontext,   
@@ -173,6 +174,7 @@ int nfs_Write( nfs_arg_t              * parg,
   enum stable_how           stable;	/* NFS V3 storage stability, see RFC1813 page 50 */
   cache_inode_file_type_t   filetype      ;
   fsal_boolean_t            eof_met ;
+  bool_t                    stable_flag = TRUE ;
  
   cache_content_policy_data_t datapol ;
 
@@ -294,19 +296,29 @@ int nfs_Write( nfs_arg_t              * parg,
       size = parg->arg_write2.data.nfsdata2_len;	/* totalcount is obsolete  */
       data = parg->arg_write2.data.nfsdata2_val;
       stable = FILE_SYNC;
+      stable_flag = TRUE ;
       break;
       
     case NFS_V3:
-			offset = parg->arg_write3.offset;
-			size = parg->arg_write3.count;
+        offset = parg->arg_write3.offset;
+	size = parg->arg_write3.count;
 
-			if( size > parg->arg_write3.data.data_len)
+	if( size > parg->arg_write3.data.data_len)
         {
           /* should never happen */
           pres->res_write3.status = NFS3ERR_INVAL;
           return NFS_REQ_OK ;
         }
-
+     
+       if( ( nfs_param.core_param.use_nfs_commit == TRUE ) &&
+           ( parg->arg_write3.stable == UNSTABLE ) )
+         {
+           stable_flag = FALSE ;
+         }
+       else
+         {
+           stable_flag = TRUE ;
+         }
 #ifdef _DEBUG_NFSPROTO
       printf( "----> Write offset=%lld count=%u\n", parg->arg_write3.offset, parg->arg_write3.count ) ;
 #endif
@@ -363,9 +375,9 @@ int nfs_Write( nfs_arg_t              * parg,
            */
           size = pexport->MaxWrite ;
         }
-			data = parg->arg_write3.data.data_val;
-			stable = parg->arg_write3.stable;
-			break;
+       data = parg->arg_write3.data.data_val;
+       stable = parg->arg_write3.stable;
+       break;
     }
  
   
@@ -442,6 +454,7 @@ int nfs_Write( nfs_arg_t              * parg,
                             ht, 
                             pclient, 
                             pcontext, 
+                            stable_flag, 
                             &cache_status )  == CACHE_INODE_SUCCESS )
         {
 
@@ -468,9 +481,16 @@ int nfs_Write( nfs_arg_t              * parg,
               /* Set the written size */
               pres->res_write3.WRITE3res_u.resok.count = written_size;
               
-              /* We always use FILE_SYNC mode */
-              pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC; 
-              
+              /* How do we commit data ? */
+              if( stable_flag == TRUE )
+               {
+                 pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC; 
+               }
+              else
+               {
+                pres->res_write3.WRITE3res_u.resok.committed = UNSTABLE ; 
+               }
+
               /* Set the write verifier */
               memcpy(pres->res_write3.WRITE3res_u.resok.verf, 
                      NFS3_write_verifier,
