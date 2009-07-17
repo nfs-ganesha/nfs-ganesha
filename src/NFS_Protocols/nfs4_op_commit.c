@@ -140,6 +140,8 @@
  * 
  */
 
+extern verifier4            NFS4_write_verifier ; /* NFS V4 write verifier */
+
 #define arg_COMMIT4 op->nfs_argop4_u.opcommit
 #define res_COMMIT4 resp->nfs_resop4_u.opcommit
 
@@ -195,6 +197,9 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
 		res_COMMIT4.status = NFS4ERR_INVAL ;
                 break ;
 	  }
+	
+	/* Exit with an error */
+	return res_COMMIT4.status ;
     }
 
   if( cache_inode_commit( data->current_entry,
@@ -206,11 +211,11 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
                           data->pcontext, 
                           &cache_status ) != CACHE_INODE_SUCCESS )
     {
-      res_COMMIT4.status = NFS4ERR_IO ;
+      res_COMMIT4.status = NFS4ERR_INVAL ;
       return res_COMMIT4.status ;
     }
 
-  memset( res_COMMIT4.COMMIT4res_u.resok4.writeverf, 0 , NFS4_VERIFIER_SIZE ) ;
+  memcpy( res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier , NFS4_VERIFIER_SIZE ) ;
   
   /* If you reach this point, then an error occured */
   res_COMMIT4.status = NFS4_OK ;
