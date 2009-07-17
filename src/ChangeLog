@@ -230,3 +230,5 @@
 
 0.99.57 -
 	- Add NFSv3 commit/write logic 
+	- newpynfs helped locating bug in nfs4_op_commit (bad types and write
+	  verifier not set)

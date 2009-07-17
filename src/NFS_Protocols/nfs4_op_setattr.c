@@ -316,7 +316,7 @@ int nfs4_op_setattr(  struct nfs_argop4 * op ,
 
 
 /**
- * nfs4_op_setattr_Free: frees what was allocared to handle nfs4_op_setattr.
+ * nfs4_op_setattr_Free: frees what was allocated to handle nfs4_op_setattr.
  * 
  * Frees what was allocared to handle nfs4_op_setattr.
  *
