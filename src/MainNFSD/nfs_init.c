@@ -211,6 +211,53 @@ int nfs_prereq_init( char * program_name,
         
 }
 
+/**
+ * nfs_print_param_config
+ * print a nfs_parameter_structure under the format of the configuration file 
+ */
+int nfs_print_param_config( nfs_parameter_t * p_nfs_param )
+{
+  printf( "NFS_Core_Param\n{\n" ) ;
+
+  printf( "\tNFS_Port = %u ;\n", p_nfs_param->core_param.nfs_port ) ;
+  printf( "\tMNT_Port = %u ;\n", p_nfs_param->core_param.mnt_port ) ;
+  printf( "\tNFS_Program = %u ;\n", p_nfs_param->core_param.nfs_program ) ;
+  printf( "\tMNT_Program = %u ;\n", p_nfs_param->core_param.mnt_program ) ;
+  printf( "\tNb_Worker = %u ; \n",  p_nfs_param->core_param.nb_worker ) ;
+  printf( "\tNb_MaxConcurrentGC = %u ; \n",  p_nfs_param->core_param.nb_max_concurrent_gc ) ;
+  printf( "\tDupReq_Expiration = %lu ; \n",  p_nfs_param->core_param.expiration_dupreq ) ;
+  printf( "\tCore_Dump_Size = %ld ; \n",  p_nfs_param->core_param.core_dump_size ) ;
+  printf( "\tNb_Max_Fd = %d ; \n",  p_nfs_param->core_param.nb_max_fd ) ;
+  printf( "\tStats_File_Path = %s ; \n",  p_nfs_param->core_param.stats_file_path );
+  printf( "\tStats_Update_Delay = %d ; \n",  p_nfs_param->core_param.stats_update_delay ) ;
+  printf( "\tStats_Per_Client_Directory = %s ; \n",  p_nfs_param->core_param.stats_per_client_directory );
+
+  if(  p_nfs_param->core_param.dump_stats_per_client )
+    printf( "\tDump_Stats_Per_Client = TRUE ; \n" ) ;
+  else
+    printf( "\tDump_Stats_Per_Client = FALSE ;\n" ) ;
+
+  if(  p_nfs_param->core_param.use_nfs_commit )
+    printf( "\tUse_NFS_Commit = TRUE ; \n" ) ;
+  else
+    printf( "\tUse_NFS_Commit = FALSE ;\n" ) ;
+
+  if(  p_nfs_param->core_param.drop_io_errors )
+    printf( "\tDrop_IO_Errors = TRUE ; \n" ) ;
+  else
+    printf( "\tDrop_IO_Errors = FALSE ;\n" ) ;
+
+  if(  p_nfs_param->core_param.drop_inval_errors )
+    printf( "\tDrop_Inval_Errors = TRUE ; \n" ) ;
+  else
+    printf( "\tDrop_Inval_Errors = FALSE ;\n" ) ;
+  printf( "}\n\n" ) ;
+ 
+  printf( "NFS_Worker_Param\n{\n" ) ;
+  printf( "}\n\n" ) ;
+
+  return 0 ;
+} /* nfs_print_param_config */
 
 /**
  * nfs_set_param_default:
@@ -1548,6 +1595,12 @@ int nfs_start( nfs_parameter_t * p_nfs_param,
     nfs_param = *p_nfs_param;
     nfs_start_info = *p_start_info;
 
+    if( p_start_info->dump_default_config == TRUE )
+     {
+        nfs_print_param_config( p_nfs_param ) ;
+        exit( 0 ) ;
+     }
+    
     /* Set the Core dump size if set */
     if( nfs_param.core_param.core_dump_size !=  -1 )
     {
