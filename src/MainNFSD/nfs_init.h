@@ -96,6 +96,7 @@ extern unsigned int force_flush_by_signal ;
 typedef struct __nfs_start_info
 {
     int                                 flush_datacache_mode;
+    int                                 dump_default_config;
     unsigned int                        nb_flush_threads;
     cache_content_flush_behaviour_t     flush_behaviour;
     int                                 lw_mark_trigger ;
