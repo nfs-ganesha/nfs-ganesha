@@ -254,7 +254,8 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
        
           /* BUGAZOMEU : write operation must NOT modify file's ctime */
           pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
-       
+      
+          *pio_size = buffer_size ; 
        } /* if( pentry->object.file.unstable_data.buffer == NULL ) */
       else
        {
@@ -270,6 +271,8 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
        
                 /* BUGAZOMEU : write operation must NOT modify file's ctime */
                 pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+          
+		*pio_size = buffer_size ; 
             }
 	  else
             {
