@@ -104,6 +104,7 @@
 nfs_start_info_t    my_nfs_start_info =
 {
    .flush_datacache_mode = FALSE,
+   .dump_default_config  = FALSE,
    .nb_flush_threads     = 1,
    .flush_behaviour      = CACHE_CONTENT_FLUSH_AND_DELETE,
    .lw_mark_trigger      = FALSE
@@ -121,7 +122,7 @@ char ganesha_exec_path[MAXPATHLEN] ;
 
 /* command line syntax */
 
-char  options[] = "h@RdS:F:S:P:f:L:N:" ;
+char  options[] = "h@RTdS:F:S:P:f:L:N:" ;
 char  usage[] = 
     "Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
     "\t[-h]                display this help\n"
@@ -130,6 +131,7 @@ char  usage[] =
     "\t[-f <config_file>]  set the config file to be used\n"
     "\t[-d]                the daemon starts in background, in a new process group\n"
     "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
+    "\t[-T]                dump the default configuration on stdout\n"
     "\t[-F] <nb_flushers>  flushes the data cache with purge, but do not answer to requests\n"
     "\t[-S] <nb_flushers>  flushes the data cache without purge, but do not answer to requests\n"
     "\t[-P] <nb_flushers>  flushes the data cache with purge until lw mark is reached, then just sync. Do not answer to requests\n"
@@ -275,6 +277,11 @@ int main( int argc, char * argv[] )
 	  exit( 1 ) ; 
           break ;
 
+        case 'T':
+	  /* Dump the default configuration on stdout */
+          my_nfs_start_info.dump_default_config = TRUE ;
+	  break ;
+          
         case 'F':
           /* Flushes the data cache to the FSAL and purges the cache */	
           my_nfs_start_info.flush_datacache_mode = TRUE ;
