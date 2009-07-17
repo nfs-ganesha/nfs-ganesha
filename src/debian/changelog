@@ -1,3 +1,9 @@
+nfs-ganesha (0.99.57-1) stable; urgency=low
+
+  * Add write/commit logic to NFSv3 / NFSv4
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed, 15 July 2009 09:14:00 -0600
+
 nfs-ganesha (0.99.56-1) stable; urgency=low
 
   * Fix log messages in MFS_ASYNC

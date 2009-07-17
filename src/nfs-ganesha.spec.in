@@ -235,6 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Thu Jul 16  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
+- Add write/commit logic to NFSv3 / NFSv4 
+
 * Thu Jul  9 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
 - Change two debug messages in MFSL_ASYNC
 - Removed a debug messages in fusexmp_fh
