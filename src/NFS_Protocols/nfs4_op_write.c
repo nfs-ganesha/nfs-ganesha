@@ -407,8 +407,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
   if( ( nfs_param.core_param.use_nfs_commit == TRUE ) &&
       ( arg_WRITE4.stable == UNSTABLE4 ) )
    {
-      //stable_flag = FALSE ;
-      stable_flag = TRUE ;
+      stable_flag = FALSE ;
    }
   else
    {
