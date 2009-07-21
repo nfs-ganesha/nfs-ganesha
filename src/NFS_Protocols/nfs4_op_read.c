@@ -255,7 +255,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
         /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
         if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
          {
-            if( pstate_found->state_data.share.confirmed == FALSE )
+            if( pstate_found->popen_owner->confirmed == FALSE )
              {
                res_READ4.status = NFS4ERR_BAD_STATEID ;
                return res_READ4.status ;

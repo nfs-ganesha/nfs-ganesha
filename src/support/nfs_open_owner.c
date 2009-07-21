@@ -72,7 +72,7 @@
  * knowledge of the CeCILL license and that you accept its terms.
  * ---------------------------------------
  *
- * nfs_open_owner.c : The management of the open_owner cache.
+ * nfs_open_owner.c : The management of the open owner cache.
  *
  * $Header$
  *
@@ -126,55 +126,53 @@
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
+#include "cache_inode.h"
 
 
 size_t strnlen(const char *s, size_t maxlen);
 
 
+extern time_t   ServerBootTime ;
 extern nfs_parameter_t nfs_param ;
 
 hash_table_t * ht_open_owner ;
 
 int display_open_owner_key( hash_buffer_t * pbuff, char * str )
 {
-  open_owner4 * popen_owner ;
-  char lstr[MAXPATHLEN] ;
+  unsigned int i   = 0 ;
+  unsigned int len = 0 ;
+ 
+  cache_inode_open_owner_name_t * pname = (cache_inode_open_owner_name_t *)pbuff->pdata ;
 
-  popen_owner = (open_owner4 *)pbuff->pdata ;
-
-  strncpy( lstr, popen_owner->owner.owner_val, MAXPATHLEN ) ;
-  lstr[popen_owner->owner.owner_len] = 0 ;
-  sprintf( str, "{clientid =%llu, owner_len=%u, owner_val=%s}", 
-          popen_owner->clientid, popen_owner->owner.owner_len, lstr ) ;
-
-  return 1 ;
+  for( i = 0 ; pname->owner_len < 12 ; i++ )
+     len += sprintf( &(str[i*2]), "%02x", (unsigned char)pname->owner_val[i] ) ;
+  return len ;
 } /* display_state_id_val */
 
 int display_open_owner_val( hash_buffer_t * pbuff, char * str )
 {
-  cache_inode_state_t * pstate = (cache_inode_state_t *)(pbuff->pdata) ;
+  cache_inode_open_owner_t * powner = (cache_inode_open_owner_t *)(pbuff->pdata) ;
 
-  return sprintf( str, "state %p is associated with pentry=%p and clientid=%llx type=%u my_id=%u seqid=%u prev=%p next=%p\n", 
-                  pstate, pstate->pentry, (unsigned long long)pstate->state_owner.clientid, pstate->state_type, pstate->my_id, pstate->seqid,
-                  pstate->prev, pstate->next ) ;
+  return sprintf( str, "confirmed=%u\n", 
+                  powner->confirmed ) ;
 } /* display_state_id_val */
 
 int compare_open_owner( hash_buffer_t * buff1, hash_buffer_t * buff2 )
 {
-   open_owner4 * powner1 = (open_owner4 * )buff1->pdata ;
-   open_owner4 * powner2 = (open_owner4 * )buff2->pdata ;
+  cache_inode_open_owner_name_t * pname1 = (cache_inode_open_owner_name_t *)buff1->pdata ;
+  cache_inode_open_owner_name_t * pname2 = (cache_inode_open_owner_name_t *)buff2->pdata ;
 
-   if( powner1 == NULL || powner2 == NULL ) 
-     return 1 ;
+  if( pname1 == NULL || pname2 == NULL )
+   return 1 ;
 
-   if( powner1->clientid != powner2->clientid )
-     return 1 ;
+  if( pname1->clientid != pname2->clientid )
+   return 1 ;
 
-   if( powner1->owner.owner_len != powner2->owner.owner_len )
-      return 1 ;
+  if( pname1->owner_len != pname2->owner_len )
+   return 1 ;
 
-   return memcmp( (char *)powner1->owner.owner_val, (char *)powner2->owner.owner_val, powner1->owner.owner_len ) ;
-} /* compare_state_id */
+  return memcmp( (char *)pname1->owner_val, (char *)pname2->owner_val, pname1->owner_len ) ;
+} /* compare_open_owner */
 
 unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef )
 {
@@ -184,27 +182,28 @@ unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buff
   unsigned long res = 0 ;
 
 
-  open_owner4 * powner = (open_owner4 *)buffclef->pdata ;
+  cache_inode_open_owner_name_t * pname = (cache_inode_open_owner_name_t *)buffclef->pdata ;
 
   /* Compute the sum of all the characters */
-  for( i = 0 ; i < powner->owner.owner_len ; i++ ) 
-   { 
-       c=((char *)powner->owner.owner_val)[i] ;
+  for( i = 0 ; i < pname->owner_len ; i++ )
+   {
+       c=((char *)pname->owner_val)[i] ;
        sum += c ;
    }
 
 #ifdef _DEBUG_STATES
-  printf( "---> state_id_value_hash_func=%lu\n",(unsigned long)( sum % p_hparam->index_size ) ) ; 
+  printf( "---> state_id_value_hash_func=%lu\n",(unsigned long)( sum % p_hparam->index_size ) ) ;
 #endif
-  
-  res = (unsigned long)(powner->clientid) + (unsigned long)sum ;
+
+  res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len ;
 
   return (unsigned long)( res % p_hparam->index_size ) ;
-} /*  client_id_reverse_value_hash_func */
+
+} /* open_owner_value_hash_func */
 
 unsigned long open_owner_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef )
 {
-  open_owner4 * powner = (open_owner4 *)buffclef->pdata ;
+  cache_inode_open_owner_name_t * pname = (cache_inode_open_owner_name_t *)buffclef->pdata ;
 
   unsigned int  sum = 0 ;
   unsigned int  i   = 0 ;
@@ -212,36 +211,32 @@ unsigned long open_owner_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer
   unsigned long res = 0 ;
 
   /* Compute the sum of all the characters */
-  for( i = 0 ; i < powner->owner.owner_len ; i++ ) 
-   { 
-       c=((char *)powner->owner.owner_val)[i] ;
+  for( i = 0 ; i < pname->owner_len ; i++ )
+   {
+       c=((char *)pname->owner_val)[i] ;
        sum += c ;
    }
 
-  res = (unsigned long)(powner->clientid) + (unsigned long)sum ;
+  res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len ;
 
-#ifdef _DEBUG_STATES 
-  printf( "--->  state_id_rbt_hash_func=%lu\n", res );
-#endif
-
-  return res ; 
+  return res ;
 } /* state_id_rbt_hash_func */
 
 
 /**
  *
- * nfs4_Init_open_owner: Init the hashtable for Open Owner cache.
+ * nfs4_Init_state_id: Init the hashtable for Client Id cache.
  *
- * Perform all the required initialization for hashtable Open Owner cache
+ * Perform all the required initialization for hashtable State Id cache
  * 
- * @param param [IN] parameter used to init open owner cache
+ * @param param [IN] parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise
  *
  */
 int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param ) 
-{
-  /* I reused nfs_state_id_parameter, they are for the same kind of purpose */ 
+{ 
+
   if( ( ht_open_owner = HashTable_Init( param.hash_param  ) ) == NULL )
     {
       DisplayLog( "NFS STATE_ID: Cannot init State Id cache" ) ;
@@ -249,98 +244,69 @@ int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param )
     }
 
   return 0 ;
-} /* nfs_Init_open_owner */
-
-
+} /* nfs4_Init_open_owner */
 
 /**
+ * nfs_open_owner_Set
+ * 
  *
- * nfs4_Open_Owner_Set
- *
- * This routine sets a open_owner into the open_owner's hashtable.
- *
- * @param popen_owner [IN] pointer to the open_owner to be checked.
+ * This routine sets a open owner into the related hashtable
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Open_Owner_Set( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) 
+int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
 {
   hash_buffer_t buffkey ;
   hash_buffer_t buffval ;
-  open_owner4 * powner_key = NULL ;
 
-#ifdef _DEBUG_STATES
-  char str[MAXPATHLEN] ;
+  buffkey.pdata = (caddr_t)pname ;
+  buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
-  strncpy( str, popen_owner->owner.owner_val, MAXPATHLEN ) ;
-  str[popen_owner->owner.owner_len] = 0 ;
-  printf( "=-=-=-=-=-=- nfs4_Open_Owner_Set =-=-=-=-=-=- clientid =%llu, owner_len=%u, owner_val=%s\n", 
-          popen_owner->clientid, popen_owner->owner.owner_len, str ) ;
-#endif
-
-  if( (  powner_key = (open_owner4 *)Mem_Alloc( sizeof( open_owner4 ) ) ) == NULL )
-        return 0 ;
-
-  if( ( powner_key->owner.owner_val = (char *)Mem_Alloc( popen_owner->owner.owner_len ) ) == NULL )
-	return 0 ;
-
-  powner_key->clientid = popen_owner->clientid ;
-  powner_key->owner.owner_len = popen_owner->owner.owner_len ;
-  memcpy( (char *)powner_key->owner.owner_val, (char *)popen_owner->owner.owner_val, popen_owner->owner.owner_len ) ; 
-
-  buffkey.pdata = (caddr_t)powner_key ;
-  buffkey.len = sizeof( open_owner4 ) + popen_owner->owner.owner_len ; 
-
-  buffval.pdata = (caddr_t)pstate_data ;
-  buffval.len = sizeof( cache_inode_state_t ) ;
+  buffval.pdata = (caddr_t)popen_owner ;
+  buffval.len = sizeof( cache_inode_open_owner_t ) ;
 
   if( HashTable_Test_And_Set( ht_open_owner, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) != HASHTABLE_SUCCESS )
     return 0 ;
 
   return 1 ;
-} /* nfs4_Open_Owner_Set */
+} /* nfs_open_owner_Set */
 
 /**
  *
- * nfs4_Open_Owner_Get
+ * nfs_open_owner_Get
  *
- * This routine gets a open_owner from the open_owners hashtable.
+ * This routine gets open owner from the openowner's hashtable.
  *
- * @param pstate      [IN] pointer to the open_owner to be checked.
+ * @param pstate      [IN] pointer to the stateid to be checked.
  * @param pstate_data [OUT] found state
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Open_Owner_Get( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) 
+int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
 
-   buffkey.pdata = (char *)popen_owner ;
-   buffkey.len   = sizeof( open_owner4 ) + popen_owner->owner.owner_len ;
+   buffkey.pdata = (caddr_t)pname ;
+   buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
    if( HashTable_Get( ht_open_owner, &buffkey, &buffval ) != HASHTABLE_SUCCESS ) 
     {
-#ifdef _DEBUG_STATES
-        printf( "---> nfs4_Open_Owner_Get  NOT FOUND !!!!!!\n" ) ;
-#endif
         return 0 ;
      }
 
-   memcpy( pstate_data, buffval.pdata, sizeof( cache_inode_state_t ) ) ;
-#ifdef _DEBUG_STATES
-   printf( "---> nfs4_Open_Owner_Get Found :-)\n" ) ;
-#endif
+   memcpy( (char *)popen_owner, buffval.pdata, sizeof( cache_inode_open_owner_t ) ) ;
+
    return 1 ;
-} /* nfs4_Open_Owner_Get */
+} /* nfs_open_owner_Get */
 
 /**
  *
- * nfs4_Open_Owner_Get_Pointer
+ * nfs_open_owner_Get_Pointer
  *
- * This routine gets a pointer to a state from the open_owner's hashtable.
+ * This routine gets a pointer to an open owner from the open owners's hashtable.
  *
  * @param pstate       [IN] pointer to the stateid to be checked.
  * @param ppstate_data [OUT] pointer's state found 
@@ -348,44 +314,29 @@ int nfs4_Open_Owner_Get( open_owner4 * popen_owner, cache_inode_state_t * pstate
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Open_Owner_Get_Pointer( open_owner4 * popen_owner, cache_inode_state_t *  *pstate_data ) 
+int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * * popen_owner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
 
-#ifdef _DEBUG_STATES
-  char str[MAXPATHLEN] ;
-
-  strncpy( str, popen_owner->owner.owner_val, MAXPATHLEN ) ;
-  str[popen_owner->owner.owner_len] = 0 ;
-  printf( "=-=-=-=-=-=- nfs4_Open_Owner_Get_Pointer =-=-=-=-=-=- clientid =%llu, owner_len=%u, owner_val=%s\n", 
-          popen_owner->clientid, popen_owner->owner.owner_len, str ) ;
-#endif
-
-   buffkey.pdata = (char *)popen_owner ;
-   buffkey.len   = sizeof( open_owner4 ) + popen_owner->owner.owner_len ;
+   buffkey.pdata = (caddr_t)pname ;
+   buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
    if( HashTable_Get( ht_open_owner, &buffkey, &buffval ) != HASHTABLE_SUCCESS )
     {
-#ifdef _DEBUG_STATES
-        printf( "---> nfs4_Open_Owner_Get_Pointer  NOT FOUND !!!!!!\n" ) ;
-#endif
         return 0 ;
      }
 
-   *pstate_data = (cache_inode_state_t *)buffval.pdata ;
+   *popen_owner = (cache_inode_open_owner_t *)buffval.pdata ;
 
-#ifdef _DEBUG_STATES
-   printf( "---> nfs4_Open_Owner_Get_Pointer Found :-)\n" ) ;
-#endif
    return 1 ;
-} /* nfs4_Open_Owner_Get_Pointer */
+} /* nfs_open_owner_Get_Pointer */
 
 /**
  * 
- * nfs4_State_Update
+ * nfs_open_owner_Update
  *
- * This routine updates a state from the states's hashtable.
+ * This routine updates a open owner from the open owners's hashtable.
  *
  * @param pstate      [IN] pointer to the stateid to be checked.
  * @param pstate_data [IN] new state
@@ -393,46 +344,47 @@ int nfs4_Open_Owner_Get_Pointer( open_owner4 * popen_owner, cache_inode_state_t 
  * @return 1 if ok, 0 otherwise.
  * 
  */
-int nfs4_Open_Owner_Update( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) 
+int nfs_open_owner_Update( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
 
-   buffkey.pdata = (char *)popen_owner ;
-   buffkey.len   = sizeof( open_owner4 ) + popen_owner->owner.owner_len ;
+   buffkey.pdata = (caddr_t)pname ;
+   buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
    if( HashTable_Get( ht_open_owner, &buffkey, &buffval ) != HASHTABLE_SUCCESS )
     {
 #ifdef _DEBUG_STATES
-        printf( "---> nfs4_Open_Owner_Update  NOT FOUND !!!!!!\n" ) ;
+        printf( "---> nfs4_State_Update  NOT FOUND !!!!!!\n" ) ;
 #endif
         return 0 ;
      }
 
-   memcpy( buffval.pdata, pstate_data, sizeof( cache_inode_state_t ) ) ;
+   memcpy( buffval.pdata, popen_owner, sizeof( cache_inode_open_owner_t ) ) ;
 #ifdef _DEBUG_STATES
-   printf( "---> nfs4_Open_Owner_Update Found :-)\n" ) ;
+   printf( "---> nfs4_State_Update Found :-)\n" ) ;
 #endif
    return 1 ;
-} /* nfs4_Open_Owner_Update */
+} /* nfs_open_owner_Update */
 
 /**
  *
- * nfs4_Open_Owner_Del
+ * nfs_open_owner_Del
  *
- * This routine removes a open_owner from the states's hashtable.
+ * This routine removes a open owner from the open_owner's hashtable.
  *
  * @param other [IN] stateid'other field, used as a hash key
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Open_Owner_Del( open_owner4 * popen_owner )
+int nfs_open_owner_Del( cache_inode_open_owner_name_t *pname )
 {
   hash_buffer_t     buffkey , old_key, old_value ;
 
-  buffkey.pdata = (char *)popen_owner ;
-  buffkey.len   = sizeof( open_owner4 ) + popen_owner->owner.owner_len ;
+
+  buffkey.pdata = (caddr_t)pname ;
+  buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
   if( HashTable_Del( ht_open_owner, &buffkey, &old_key, &old_value ) == HASHTABLE_SUCCESS )
      {
@@ -445,18 +397,31 @@ int nfs4_Open_Owner_Del( open_owner4 * popen_owner )
      }
   else 
         return 0 ;
-} /* nfs4_Open_Owner_Del */
+} /* nfs_open_owner_Del */
+
 
 /**
  * 
- *  nfs4_Open_Owner_PrintAll
+ *  nfs_open_owner_PrintAll
  *  
- * This routine displays the content of the hashtable used to store the open_owners. 
+ * This routine displays the content of the hashtable used to store the open owners. 
  * 
  * @return nothing (void function)
  */
 
-void nfs_Open_Owner_PrintAll( void )
+void nfs_open_owner_PrintAll( void )
 {
    HashTable_Print( ht_open_owner ) ;
-} /* nfs_State_PrintAll */
+} /* nfs_open_owner_PrintAll */
+
+int nfs_convert_open_owner( open_owner4 * pnfsowner, cache_inode_open_owner_name_t * pname_owner )
+{
+  if( pnfsowner == NULL || pname_owner == NULL )
+    return 0 ;
+
+  pname_owner->clientid  = pnfsowner->clientid ;
+  pname_owner->owner_len = pnfsowner->owner.owner_len ;
+  memcpy( (char *)pname_owner->owner_val, (char *)pnfsowner->owner.owner_val,  pnfsowner->owner.owner_len ) ;
+
+  return 1 ;
+} /* nfs_convert_open_owner */
