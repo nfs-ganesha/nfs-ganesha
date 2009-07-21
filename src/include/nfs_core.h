@@ -477,7 +477,6 @@ typedef struct nfs_worker_data__
   fsal_op_context_t        thread_fsal_context;
 } nfs_worker_data_t ;
 
-
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
 {
@@ -490,14 +489,7 @@ typedef struct nfs_flush_thread_data__
   unsigned int nb_orphans;
   
 } nfs_flush_thread_data_t;
-        
-
-typedef struct cache_inode_client__toto 
-{
-  LRU_list_t * lru_gc ;         /**< Pointer to the worker's LRU used for Garbagge collection */
-  cache_entry_t * pool_entry ;  /**< Worker's preallocad cache entries pool                   */
-  unsigned int nb_prealloc ;    /**< Size of the preallocated pool                            */
-} cache_inode_client_toto_t ;
+ 
 /* 
  *functions prototypes
  */
@@ -591,13 +583,6 @@ int display_open_owner_key( hash_buffer_t * pbuff, char * str ) ;
 int compare_open_owner( hash_buffer_t * buff1, hash_buffer_t * buff2 ) ;
 unsigned long open_owner_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
 unsigned long open_owner_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
-int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param ) ;
-int nfs4_Open_Owner_Set( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) ; 
-int nfs4_Open_Owner_Get( open_owner4 * popen_owner, cache_inode_state_t * pstate_data ) ;
-int nfs4_Open_Owner_Get_Pointer( open_owner4 * popen_owner, cache_inode_state_t *  *pstate_data ) ;
-int nfs4_Open_Owner_Update( open_owner4 * popen_owner, cache_inode_state_t * pstate_data )  ;
-int nfs4_Open_Owner_Del( open_owner4 * popen_owner ) ;
-void nfs_Open_Owner_PrintAll( void ) ;
 
 int display_client_id( hash_buffer_t * pbuff, char * str ) ;
 int display_client_id_reverse( hash_buffer_t * pbuff, char * str ) ;
@@ -621,8 +606,19 @@ unsigned long int namemapper_rbt_hash_func( hash_parameter_t * p_hparam, hash_bu
 unsigned long int namemapper_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
 unsigned long idmapper_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
 
-int idmap_populate( char * path, idmap_type_t maptype ) ;
+int nfs_convert_open_owner( open_owner4 * pnfsowoner, cache_inode_open_owner_name_t * pname_owner ) ;
+void nfs_open_owner_PrintAll( void ) ;
+int nfs_open_owner_Del( cache_inode_open_owner_name_t *pname ) ;
+int nfs_open_owner_Update( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) ;
+int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * * popen_owner ) ;
+int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) ;
+int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) ;
+int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param ) ;
 
+
+
+
+int idmap_populate( char * path, idmap_type_t maptype ) ;
 
 int idmap_gid_init( nfs_idmap_cache_parameter_t param ) ;
 int idmap_gname_init( nfs_idmap_cache_parameter_t param ) ;

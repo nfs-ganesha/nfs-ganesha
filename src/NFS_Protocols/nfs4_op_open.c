@@ -177,9 +177,10 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     cache_inode_state_t      * pstate_found_iterate = NULL ;
     cache_inode_state_t      * pstate_previous_iterate = NULL ;
     cache_inode_state_t      * pstate_found_same_owner = NULL ;
-    cache_inode_state_t      * pstate_open_owner_known = NULL ;
-    bool_t                     open_owner_known = FALSE ;
 
+    cache_inode_open_owner_name_t   owner_name ;
+    cache_inode_open_owner_t      * popen_owner = NULL ;
+    bool_t                          open_owner_known = FALSE ;
 
     resp->resop = NFS4_OP_OPEN ;
     res_OPEN4.status =  NFS4_OK  ;
@@ -343,7 +344,42 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
             }
 
           /* Is this open_owner known ? */
-          open_owner_known = nfs4_Open_Owner_Get_Pointer(  &arg_OPEN4.owner, &pstate_open_owner_known ) ;
+          if( !nfs_convert_open_owner( &arg_OPEN4.owner, &owner_name ) )
+            {
+              res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+              return res_OPEN4.status ;
+            }
+
+          if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
+           {
+             /* This open owner is not known yet, allocated and set up a new one */
+             GET_PREALLOC( popen_owner,
+                           data->pclient->pool_open_owner,
+                           data->pclient->nb_pre_state_v4,
+                           cache_inode_open_owner_t,
+                           next ) ;
+
+             if( popen_owner == NULL )
+               {
+                 res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+                 return res_OPEN4.status ;
+               }
+
+             /* set up the content of the open_owner */
+             popen_owner->confirmed = FALSE ;
+             popen_owner->seqid     = 0 ;
+             popen_owner->next      = NULL ;      
+             popen_owner->clientid  = arg_OPEN4.owner.clientid ;
+             popen_owner->owner_len = arg_OPEN4.owner.owner.owner_len ;
+             memcpy( (char *)popen_owner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
+
+             if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
+               {
+                 res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+                 return res_OPEN4.status ;
+               }
+
+           }
 
           /* Status of parent directory before the operation */
           if( ( cache_status = cache_inode_getattr( pentry_parent, 
@@ -479,7 +515,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                             candidate_type = CACHE_INODE_STATE_SHARE ;
                             candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                             candidate_data.share.share_access = arg_OPEN4.share_access ;
-                            candidate_data.share.confirmed    = FALSE ;
 
                             if( cache_inode_add_state( pentry_lookup, 
                                                        candidate_type,
@@ -603,8 +638,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                 		     {
 					if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
 				            !memcmp( arg_OPEN4.owner.owner.owner_val,
-					             pstate_found_iterate->state_owner.owner.owner_val,
-                                                     pstate_found_iterate->state_owner.owner.owner_len )    &&
+					             pstate_found_iterate->popen_owner->owner_val,
+                                                     pstate_found_iterate->popen_owner->owner_len )    &&
 			 		    !memcmp( pstate_found_iterate->state_data.share.oexcl_verifier, 
 						     arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf, 
 						     NFS4_VERIFIER_SIZE ) ) 
@@ -723,7 +758,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     candidate_type = CACHE_INODE_STATE_SHARE ;
                     candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                     candidate_data.share.share_access = arg_OPEN4.share_access ;
-                    candidate_data.share.confirmed    = FALSE ;
                     candidate_data.share.lockheld     = 0 ;
 
                     /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
@@ -907,11 +941,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     if( pstate_found_iterate != NULL )
                      {
                        if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
-			   ( pstate_found_iterate->state_owner.clientid == arg_OPEN4.owner.clientid ) &&
-                           ( ( pstate_found_iterate->state_owner.owner.owner_len == arg_OPEN4.owner.owner.owner_len ) &&
+			   ( pstate_found_iterate->popen_owner->clientid == arg_OPEN4.owner.clientid ) &&
+                           ( ( pstate_found_iterate->popen_owner->owner_len == arg_OPEN4.owner.owner.owner_len ) &&
                               ( !memcmp( arg_OPEN4.owner.owner.owner_val, 
-			   	         pstate_found_iterate->state_owner.owner.owner_val,
-                                         pstate_found_iterate->state_owner.owner.owner_len ) ) ) )
+			   	         pstate_found_iterate->popen_owner->owner_val,
+                                         pstate_found_iterate->popen_owner->owner_len ) ) ) )
                            {
                               /* We'll be re-using the found state */
                               pstate_found_same_owner = pstate_found_iterate ;
@@ -921,8 +955,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 				/* This is a different owner, check for possible conflicts */
 
 				  if( memcmp( arg_OPEN4.owner.owner.owner_val, 
-			   	             pstate_found_iterate->state_owner.owner.owner_val,
-                                             pstate_found_iterate->state_owner.owner.owner_len ) )
+			   	             pstate_found_iterate->popen_owner->owner_val,
+                                             pstate_found_iterate->popen_owner->owner_len ) )
 				    {
 					switch( pstate_found_iterate->state_type )
 					 {
@@ -981,7 +1015,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    candidate_type = CACHE_INODE_STATE_SHARE ;
                    candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                    candidate_data.share.share_access = arg_OPEN4.share_access ;
-                   candidate_data.share.confirmed    = FALSE ;
 
                    if( cache_inode_add_state( pentry_newfile, 
                                               candidate_type,
@@ -1105,7 +1138,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
     /* If server use OPEN_CONFIRM4, set the correct flag */
-    if( !open_owner_known )
+    if( popen_owner->confirmed == FALSE )
      {
        if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
           res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;

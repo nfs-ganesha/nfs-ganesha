@@ -162,7 +162,7 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
 #ifndef _WITH_NFSV4_LOCKS
   res_LOCKT4.status =  NFS4ERR_LOCK_NOTSUPP ;
   return res_LOCKT4.status ;
-#endif
+#else
 
  /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
@@ -292,6 +292,7 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
   res_LOCKT4.status = NFS4_OK ;
   return res_LOCKT4.status;
 
+#endif
 } /* nfs4_op_lockt */
 
     

@@ -187,16 +187,18 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
                                             cache_inode_state_t      * * ppstate,
                                             cache_inode_status_t       * pstatus )
 {
-  cache_inode_state_t * phead_state   = NULL ;
-  cache_inode_state_t * pnew_state    = NULL ;
-  cache_inode_state_t * piter_state   = NULL ;
-  cache_inode_state_t * piter_saved   = NULL ;
-  u_int64_t             fileid_digest = 0 ;
-  u_int16_t             new_counter   = 0 ;
-  char                  other_head[12] ;
-  bool_t                conflict_found = FALSE ;
+  cache_inode_state_t           * phead_state   = NULL ;
+  cache_inode_state_t           * pnew_state    = NULL ;
+  cache_inode_state_t           * piter_state   = NULL ;
+  cache_inode_state_t           * piter_saved   = NULL ;
+  cache_inode_open_owner_t      * popen_owner   = NULL ;
+  cache_inode_open_owner_name_t   owner_name ;
+  u_int64_t                       fileid_digest = 0 ;
+  u_int16_t                       new_counter   = 0 ;
+  char                            other_head[12] ;
+  bool_t                          conflict_found = FALSE ;
 #ifdef _DEBUG_STATES
-  unsigned int          i = 0 ;
+  unsigned int                    i = 0 ;
 #endif
 
   /* Sanity Check */
@@ -237,6 +239,63 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
 
       return *pstatus ;
     }
+
+  if( !nfs_convert_open_owner( pstate_owner, &owner_name ) )
+    {
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
+     
+      V_w( &pentry->lock ) ;
+
+      return *pstatus ;
+    }
+
+  if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
+   {
+      /* This open owner is not known yet, allocated and set up a new one */
+      GET_PREALLOC( popen_owner,
+                    pclient->pool_open_owner,
+                    pclient->nb_pre_state_v4,
+                    cache_inode_open_owner_t,
+                    next ) ;
+
+      if( popen_owner == NULL )
+        {
+          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't allocate a new open_owner from cache pool" ) ;
+          *pstatus = CACHE_INODE_MALLOC_ERROR ;
+
+           /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
+     
+          V_w( &pentry->lock ) ;
+
+          return *pstatus ;
+        }
+
+      /* set up the content of the open_owner */
+      popen_owner->confirmed = FALSE ;
+      popen_owner->seqid     = 0 ;
+      popen_owner->next      = NULL ;      
+      popen_owner->clientid  = pstate_owner->clientid ;
+      popen_owner->owner_len = pstate_owner->owner.owner_len ;
+      memcpy( (char *)popen_owner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
+
+      if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
+        {
+          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't set a new open_owner to hash" ) ;
+          *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
+
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
+     
+          V_w( &pentry->lock ) ;
+
+          return *pstatus ;
+        }
+
+   }
 
 #ifdef _DEBUG_STATES
   printf( "         ----- Entering cache_inode_add_state: head_counter=%u current_counter=%u\n",
@@ -288,23 +347,8 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
        }
     
       /* Set the type and data for this state */
-      pnew_state->state_type = state_type ;
-      pnew_state->state_owner.clientid =  pstate_owner->clientid ;
-      pnew_state->state_owner.owner.owner_len = pstate_owner->owner.owner_len ;
-      if( (  pnew_state->state_owner.owner.owner_val = (char *)Mem_Alloc( pstate_owner->owner.owner_len )  ) == NULL )
-       {
-         DisplayLogJd( pclient->log_outputs, "Can't allocate memory" ) ;
-         *pstatus = CACHE_INODE_MALLOC_ERROR ;
-
-         /* stat */
-         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-
-         V_w( &pentry->lock ) ;
-
-         return *pstatus ;
-
-       }
-      memcpy( pnew_state->state_owner.owner.owner_val, pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
+      pnew_state->state_type  = state_type ;
+      pnew_state->popen_owner = popen_owner ;
       memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
       pnew_state->seqid = initial_seqid ;
       pnew_state->pentry = pentry ;
@@ -391,22 +435,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   
     /* Set the type and data for this state */
     pnew_state->state_type = state_type ;
-    pnew_state->state_owner.clientid =  pstate_owner->clientid ;
-    pnew_state->state_owner.owner.owner_len = pstate_owner->owner.owner_len ;
-    if( (  pnew_state->state_owner.owner.owner_val = (char *)Mem_Alloc( pstate_owner->owner.owner_len )  ) == NULL )
-     {
-       DisplayLogJd( pclient->log_outputs, "Can't allocate memory" ) ;
-       *pstatus = CACHE_INODE_MALLOC_ERROR ;
-
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-
-       V_w( &pentry->lock ) ;
-
-       return *pstatus ;
-
-     }
-    memcpy( pnew_state->state_owner.owner.owner_val, pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
+    pnew_state->popen_owner = popen_owner ;
     memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
     pnew_state->seqid = initial_seqid ;
     pnew_state->pentry = pentry ;
@@ -626,10 +655,6 @@ cache_inode_status_t cache_inode_del_state_by_key( char                         
 
         /* reset the pstate field to avoid later mistakes */
         memset( (char *)pstate->stateid_other, 0, 12 ) ;
-        Mem_Free( pstate->state_owner.owner.owner_val ) ; 
-        pstate->state_owner.clientid        = 0LL ;
-        pstate->state_owner.owner.owner_len = 0 ;
-        pstate->state_owner.owner.owner_val = NULL ;
         pstate->state_type                  = CACHE_INODE_STATE_NONE ;
         pstate->my_id                       = 0 ;
         pstate->next                        = NULL ;
@@ -743,10 +768,6 @@ cache_inode_status_t cache_inode_del_state( cache_inode_state_t        * pstate,
 
   /* reset the pstate field to avoid later mistakes */
   memset( (char *)pstate->stateid_other, 0, 12 ) ;
-  Mem_Free( pstate->state_owner.owner.owner_val ) ; 
-  pstate->state_owner.clientid        = 0LL ;
-  pstate->state_owner.owner.owner_len = 0 ;
-  pstate->state_owner.owner.owner_val = NULL ;
   pstate->state_type                  = CACHE_INODE_STATE_NONE ;
   pstate->my_id                       = 0 ;
   pstate->next                        = NULL ;
@@ -871,11 +892,11 @@ cache_inode_status_t cache_inode_find_state_by_owner( cache_entry_t           * 
   /* Search loop */
   for( piter_state = piter_state_start ; piter_state != NULL ; piter_state = piter_state->next )
    {
-      if( piter_state->state_owner.clientid == powner->clientid )
+      if( piter_state->popen_owner->clientid == powner->clientid )
        {
           /* Client ids match, check the owner */
-          if( piter_state->state_owner.owner.owner_len == powner->owner.owner_len )
-           if( !memcmp( piter_state->state_owner.owner.owner_val, powner->owner.owner_val, powner->owner.owner_len ) )
+          if( piter_state->popen_owner->owner_len == powner->owner.owner_len )
+           if( !memcmp( piter_state->popen_owner->owner_val, powner->owner.owner_val, powner->owner.owner_len ) )
             {
                 found = TRUE ;
                 break ;
@@ -983,10 +1004,6 @@ cache_inode_status_t cache_inode_state_del_all( cache_entry_t         * pentry,
 
     /* reset the pstate field to avoid later mistakes */
     memset( (char *)piter_state->stateid_other, 0, 12 ) ;
-    Mem_Free( piter_state->state_owner.owner.owner_val ) ;
-    piter_state->state_owner.clientid        = 0LL ;
-    piter_state->state_owner.owner.owner_len = 0 ;
-    piter_state->state_owner.owner.owner_val = NULL ;
     piter_state->state_type                  = CACHE_INODE_STATE_NONE ;
     piter_state->my_id                       = 0 ;
     piter_state->next                        = NULL ;
