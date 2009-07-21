@@ -163,7 +163,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
 #ifndef _WITH_NFSV4_LOCKS
   res_LOCKU4.status =  NFS4ERR_LOCK_NOTSUPP ;
   return res_LOCKU4.status ;
-#endif
+#else
  
   /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
@@ -288,6 +288,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK ;
   return res_LOCKU4.status;
+#endif
 } /* nfs4_op_locku */
 
 

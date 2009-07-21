@@ -212,7 +212,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
       }
 
    /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
-   if( pstate_found->state_data.share.confirmed == TRUE )
+   if( pstate_found->popen_owner->confirmed == TRUE )
      {
         res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID ;
         return res_OPEN_CONFIRM4.status ;
@@ -229,7 +229,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
 
 
    /* Set the state as confirmed */
-   pstate_found->state_data.share.confirmed = TRUE ;
+   pstate_found->popen_owner->confirmed = TRUE ;
    pstate_found->seqid =  arg_OPEN_CONFIRM4.seqid ;
 
    /* Update the state */
@@ -241,13 +241,6 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
          return res_OPEN_CONFIRM4.status ;
       }
 
-   /* Set the open_owner as known */
-   if( !nfs4_Open_Owner_Set( &pstate_found->state_owner, pstate_found ) )
-    {
-       res_OPEN_CONFIRM4.status = NFS4ERR_SERVERFAULT ;
-       return res_OPEN_CONFIRM4.status ;
-    }
-    
    /* Return the stateid to the client */
    res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid = pstate_found->seqid ;
    memcpy( res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other, pstate_found->stateid_other, 12 ) ;

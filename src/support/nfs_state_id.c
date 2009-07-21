@@ -153,8 +153,8 @@ int display_state_id_val( hash_buffer_t * pbuff, char * str )
 {
   cache_inode_state_t * pstate = (cache_inode_state_t *)(pbuff->pdata) ;
 
-  return sprintf( str, "state %p is associated with pentry=%p and clientid=%llx type=%u my_id=%u seqid=%u prev=%p next=%p\n", 
-                  pstate, pstate->pentry, (unsigned long long)pstate->state_owner.clientid, pstate->state_type, pstate->my_id, pstate->seqid,
+  return sprintf( str, "state %p is associated with pentry=%p type=%u my_id=%u seqid=%u prev=%p next=%p\n", 
+                  pstate, pstate->pentry, pstate->state_type, pstate->my_id, pstate->seqid,
                   pstate->prev, pstate->next ) ;
 } /* display_state_id_val */
 
@@ -586,7 +586,7 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
    }
 
   /* Get the related clientid */
-  if( nfs_client_id_get( state.state_owner.clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
+  if( nfs_client_id_get( state.popen_owner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
      return NFS4ERR_BAD_STATEID ; /* Refers to a non-existing client... */
 
   /* Check for state availability */
