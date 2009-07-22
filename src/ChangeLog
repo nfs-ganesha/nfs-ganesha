@@ -233,3 +233,4 @@
 	- newpynfs helped locating bug in nfs4_op_commit (bad types and write
 	  verifier not set)
 	- Add NFSv4 commit/write logic 
+	- Brand new management of the NFSv4 open_owner

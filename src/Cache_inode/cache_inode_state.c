@@ -1,4 +1,4 @@
-/* vim:expandtab:shiftwidth=8:tabstop=8:
+         /* vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -106,6 +106,9 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+
+void nfs_open_owner_lock( );
+void nfs_open_owner_unlock( );
 
 /**
  *
@@ -252,6 +255,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       return *pstatus ;
     }
 
+  nfs_open_owner_lock() ;
   if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
    {
       /* This open owner is not known yet, allocated and set up a new one */
@@ -271,6 +275,8 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
      
           V_w( &pentry->lock ) ;
 
+          nfs_open_owner_unlock() ;
+
           return *pstatus ;
         }
 
@@ -281,6 +287,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       popen_owner->clientid  = pstate_owner->clientid ;
       popen_owner->owner_len = pstate_owner->owner.owner_len ;
       memcpy( (char *)popen_owner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
+      pthread_mutex_init( &popen_owner->lock, NULL ) ;
 
       if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
         {
@@ -292,10 +299,13 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
      
           V_w( &pentry->lock ) ;
 
+          nfs_open_owner_unlock() ;
+
           return *pstatus ;
         }
 
    }
+ nfs_open_owner_unlock() ;
 
 #ifdef _DEBUG_STATES
   printf( "         ----- Entering cache_inode_add_state: head_counter=%u current_counter=%u\n",
@@ -348,10 +358,10 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
     
       /* Set the type and data for this state */
       pnew_state->state_type  = state_type ;
-      pnew_state->popen_owner = popen_owner ;
       memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
       pnew_state->seqid = initial_seqid ;
       pnew_state->pentry = pentry ;
+      pnew_state->popen_owner = popen_owner ;
 
      /* Set the head state id */
      pentry->object.file.state_current_counter = new_counter ;
@@ -435,10 +445,10 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   
     /* Set the type and data for this state */
     pnew_state->state_type = state_type ;
-    pnew_state->popen_owner = popen_owner ;
     memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
     pnew_state->seqid = initial_seqid ;
     pnew_state->pentry = pentry ;
+    pnew_state->popen_owner = popen_owner ;
 
     /* Set the head state id */
     pentry->object.file.state_current_counter = new_counter ;
