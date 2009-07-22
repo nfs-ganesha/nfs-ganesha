@@ -128,17 +128,6 @@
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
 
-pthread_mutex_t lock_hash_open_owner = PTHREAD_MUTEX_INITIALIZER ;
-void nfs_open_owner_lock( )
-{
-   pthread_mutex_lock( &lock_hash_open_owner );
-}
-
-void nfs_open_owner_unlock( )
-{
-   pthread_mutex_unlock( &lock_hash_open_owner );
-}
-
 size_t strnlen(const char *s, size_t maxlen);
 
 extern time_t   ServerBootTime ;
@@ -181,7 +170,7 @@ int compare_open_owner( hash_buffer_t * buff1, hash_buffer_t * buff2 )
 {
   unsigned int rc ;
 
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
   char str1[MAXPATHLEN] ;
   char str2[MAXPATHLEN] ;
 
@@ -294,7 +283,7 @@ int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_o
 {
   hash_buffer_t buffkey ;
   hash_buffer_t buffval ;
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
   char str[MAXPATHLEN] ;
 
   buffkey.pdata = (caddr_t)pname ;
@@ -367,7 +356,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
    char str[MAXPATHLEN] ;
 
    buffkey.pdata = (caddr_t)pname ;
@@ -383,7 +372,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
 
    if( HashTable_Get( ht_open_owner, &buffkey, &buffval ) != HASHTABLE_SUCCESS )
     {
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
       printf( "nfs_open_owner_Get_Pointer => NOTFOUND\n" ) ;
 #endif
       return 0 ;
@@ -391,7 +380,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
 
    *popen_owner = (cache_inode_open_owner_t *)buffval.pdata ;
 
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
       printf( "nfs_open_owner_Get_Pointer => FOUND\n" ) ;
 #endif
 

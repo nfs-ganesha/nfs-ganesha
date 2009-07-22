@@ -212,8 +212,10 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
       }
 
    /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
+   P( pstate_found->popen_owner->lock ) ;
    if( pstate_found->popen_owner->confirmed == TRUE )
      {
+        V( pstate_found->popen_owner->lock ) ;
         res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID ;
         return res_OPEN_CONFIRM4.status ;
      }
@@ -222,6 +224,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
      {
         if( pstate_found->seqid +1 != arg_OPEN_CONFIRM4.seqid )
          {
+            V( pstate_found->popen_owner->lock ) ;
             res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID ;
             return res_OPEN_CONFIRM4.status ;
          }
@@ -231,6 +234,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
    /* Set the state as confirmed */
    pstate_found->popen_owner->confirmed = TRUE ;
    pstate_found->popen_owner->seqid =  arg_OPEN_CONFIRM4.seqid ;
+   V( pstate_found->popen_owner->lock ) ;
 
    /* Update the state */
    if( cache_inode_update_state( pstate_found,
