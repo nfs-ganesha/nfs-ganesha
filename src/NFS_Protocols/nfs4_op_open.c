@@ -178,6 +178,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     cache_inode_state_t      * pstate_found_same_owner = NULL ;
 
     cache_inode_open_owner_name_t   owner_name ;
+    cache_inode_open_owner_name_t * powner_name = NULL ;
     cache_inode_open_owner_t      * popen_owner = NULL ;
     bool_t                          open_owner_known = FALSE ;
 
@@ -359,11 +360,19 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                            cache_inode_open_owner_t,
                            next ) ;
 
-             if( popen_owner == NULL )
+             GET_PREALLOC( powner_name,
+                           data->pclient->pool_open_owner_name,
+                           data->pclient->nb_pre_state_v4,
+                           cache_inode_open_owner_name_t,
+                           next ) ;
+
+             if( popen_owner == NULL || powner_name == NULL )
                {
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
                }
+ 
+             memcpy( (char *)powner_name, (char *)&owner_name, sizeof( cache_inode_open_owner_name_t ) ) ;
 
              /* set up the content of the open_owner */
              popen_owner->confirmed = FALSE ;
@@ -374,7 +383,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
              memcpy( (char *)popen_owner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
              pthread_mutex_init( &popen_owner->lock, NULL ) ;
 
-             if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
+             if( !nfs_open_owner_Set( powner_name, popen_owner ) )
                {
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
