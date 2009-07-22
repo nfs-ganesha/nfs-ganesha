@@ -128,6 +128,8 @@
 
 extern nfs_parameter_t nfs_param ;
 
+void nfs_open_owner_lock( );
+void nfs_open_owner_unlock( );
 
 /**
  * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
@@ -349,7 +351,9 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
               res_OPEN4.status = NFS4ERR_SERVERFAULT ;
               return res_OPEN4.status ;
             }
-
+         
+          
+          nfs_open_owner_lock() ;
           if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
            {
              /* This open owner is not known yet, allocated and set up a new one */
@@ -361,6 +365,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
              if( popen_owner == NULL )
                {
+                 nfs_open_owner_unlock() ;
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
                }
@@ -375,11 +380,13 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
              if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
                {
+ 		 nfs_open_owner_unlock() ;
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
                }
 
            }
+          nfs_open_owner_unlock() ;
 
           /* Status of parent directory before the operation */
           if( ( cache_status = cache_inode_getattr( pentry_parent, 
@@ -562,7 +569,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
                           /* If server use OPEN_CONFIRM4, set the correct flag */
-                          if( !open_owner_known )
+                          if( popen_owner->confirmed == FALSE )
                            {
                              if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
                                 res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
@@ -665,7 +672,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
 					    /* If server use OPEN_CONFIRM4, set the correct flag */
-                                            if( !open_owner_known )
+    					    if( popen_owner->confirmed == FALSE )
                                              {
     					       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
         				  	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;

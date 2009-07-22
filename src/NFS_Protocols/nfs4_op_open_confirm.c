@@ -230,7 +230,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
 
    /* Set the state as confirmed */
    pstate_found->popen_owner->confirmed = TRUE ;
-   pstate_found->seqid =  arg_OPEN_CONFIRM4.seqid ;
+   pstate_found->popen_owner->seqid =  arg_OPEN_CONFIRM4.seqid ;
 
    /* Update the state */
    if( cache_inode_update_state( pstate_found,

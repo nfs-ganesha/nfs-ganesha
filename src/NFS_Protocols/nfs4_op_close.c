@@ -235,7 +235,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
       return res_CLOSE4.status ;
    }
 
-#ifdef _TOTO
+#ifdef _TOTO /* The seqid to be checked here is the one related to the open owner */
   /* Check the seqid */
   if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
@@ -245,6 +245,9 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	return res_CLOSE4.status ;
      }
 #endif
+
+  /* Update the seqid for the open_owner */
+  pstate_found->popen_owner->seqid += 1 ;
 
   /* File is closed, release the corresponding state */
   if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,

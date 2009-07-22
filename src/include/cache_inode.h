@@ -456,6 +456,7 @@ typedef struct cache_inode_open_owner__
   char                              owner_val[MAXNAMLEN] ;
   unsigned int                      confirmed ;
   unsigned int                      seqid ;
+  pthread_mutex_t                   lock ;
   struct cache_inode_open_owner__ * next ;
 } cache_inode_open_owner_t ;
 
