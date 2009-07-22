@@ -247,7 +247,9 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 #endif
 
   /* Update the seqid for the open_owner */
+  P( pstate_found->popen_owner->lock ) ;
   pstate_found->popen_owner->seqid += 1 ;
+  V( pstate_found->popen_owner->lock ) ;
 
   /* File is closed, release the corresponding state */
   if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
