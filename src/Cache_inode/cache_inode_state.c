@@ -194,6 +194,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   cache_inode_state_t           * piter_saved   = NULL ;
   cache_inode_open_owner_t      * popen_owner   = NULL ;
   cache_inode_open_owner_name_t   owner_name ;
+  cache_inode_open_owner_name_t * powner_name   = NULL ;
   u_int64_t                       fileid_digest = 0 ;
   u_int16_t                       new_counter   = 0 ;
   char                            other_head[12] ;
@@ -262,7 +263,13 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
                     cache_inode_open_owner_t,
                     next ) ;
 
-      if( popen_owner == NULL )
+      GET_PREALLOC( powner_name,
+                    pclient->pool_open_owner_name,
+                    pclient->nb_pre_state_v4,
+                    cache_inode_open_owner_name_t,
+                    next ) ;
+
+      if( popen_owner == NULL || powner_name == NULL )
         {
           DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't allocate a new open_owner from cache pool" ) ;
           *pstatus = CACHE_INODE_MALLOC_ERROR ;
@@ -275,6 +282,8 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
           return *pstatus ;
         }
 
+      memcpy( (char *)powner_name, (char *)&owner_name, sizeof( cache_inode_open_owner_name_t ) ) ;
+
       /* set up the content of the open_owner */
       popen_owner->confirmed = FALSE ;
       popen_owner->seqid     = 0 ;
@@ -284,7 +293,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       memcpy( (char *)popen_owner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
       pthread_mutex_init( &popen_owner->lock, NULL ) ;
 
-      if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
+      if( !nfs_open_owner_Set( powner_name, popen_owner ) )
         {
           DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't set a new open_owner to hash" ) ;
           *pstatus = CACHE_INODE_INVALID_ARGUMENT ;

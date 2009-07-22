@@ -293,10 +293,7 @@ int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_o
   printf( "nfs_open_owner_Set => KEY {%s}\n", str ) ;
 #endif
 
-  if( ( buffkey.pdata = (caddr_t)Mem_Alloc( sizeof( cache_inode_open_owner_name_t ) ) ) == NULL )
-    return 0 ;
-
-  memcpy( buffkey.pdata, pname, sizeof( cache_inode_open_owner_name_t ) ) ;
+  buffkey.pdata = (caddr_t)pname ;
   buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
   buffval.pdata = (caddr_t)popen_owner ;

@@ -235,12 +235,15 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
       return res_CLOSE4.status ;
    }
 
+
 #ifdef _TOTO /* The seqid to be checked here is the one related to the open owner */
   /* Check the seqid */
   if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
      {
-        printf( "-- arg_CLOSE.seqid=%u  pstate_found->seqid=%u\n",  arg_CLOSE4.seqid, pstate_found->seqid ) ;
+        printf( "-- arg_CLOSE.seqid=%u  pstate_found->popen_owner->seqid=%u\n",  
+  	        arg_CLOSE4.seqid, pstate_found->popen_owner->seqid ) ;
+
 	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
 	return res_CLOSE4.status ;
      }
