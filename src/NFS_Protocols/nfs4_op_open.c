@@ -128,9 +128,6 @@
 
 extern nfs_parameter_t nfs_param ;
 
-void nfs_open_owner_lock( );
-void nfs_open_owner_unlock( );
-
 /**
  * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
  * 
@@ -353,7 +350,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
             }
          
           
-          nfs_open_owner_lock() ;
           if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
            {
              /* This open owner is not known yet, allocated and set up a new one */
@@ -365,7 +361,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
              if( popen_owner == NULL )
                {
-                 nfs_open_owner_unlock() ;
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
                }
@@ -377,16 +372,15 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
              popen_owner->clientid  = arg_OPEN4.owner.clientid ;
              popen_owner->owner_len = arg_OPEN4.owner.owner.owner_len ;
              memcpy( (char *)popen_owner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
+             pthread_mutex_init( &popen_owner->lock, NULL ) ;
 
              if( !nfs_open_owner_Set( &owner_name, popen_owner ) )
                {
- 		 nfs_open_owner_unlock() ;
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
                }
 
            }
-          nfs_open_owner_unlock() ;
 
           /* Status of parent directory before the operation */
           if( ( cache_status = cache_inode_getattr( pentry_parent, 
@@ -569,6 +563,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
                           /* If server use OPEN_CONFIRM4, set the correct flag */
+                          P( popen_owner->lock ) ;
                           if( popen_owner->confirmed == FALSE )
                            {
                              if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
@@ -576,6 +571,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 			    else
                                 res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
                            }
+                          V( popen_owner->lock ) ;
 
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
@@ -672,6 +668,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
 					    /* If server use OPEN_CONFIRM4, set the correct flag */
+                                            P( popen_owner->lock ) ;
     					    if( popen_owner->confirmed == FALSE )
                                              {
     					       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
@@ -679,6 +676,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					       else
         				 	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
                                              }
+                                            V( popen_owner->lock ) ;
 
 					    /* Now produce the filehandle to this file */
 				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
@@ -959,6 +957,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                            }
 			else
 			   {
+
 				/* This is a different owner, check for possible conflicts */
 
 				  if( memcmp( arg_OPEN4.owner.owner.owner_val, 

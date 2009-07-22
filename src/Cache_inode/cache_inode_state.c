@@ -107,8 +107,6 @@
 #include <pthread.h>
 #include <string.h>
 
-void nfs_open_owner_lock( );
-void nfs_open_owner_unlock( );
 
 /**
  *
@@ -255,7 +253,6 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       return *pstatus ;
     }
 
-  nfs_open_owner_lock() ;
   if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
    {
       /* This open owner is not known yet, allocated and set up a new one */
@@ -274,8 +271,6 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
      
           V_w( &pentry->lock ) ;
-
-          nfs_open_owner_unlock() ;
 
           return *pstatus ;
         }
@@ -299,13 +294,10 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
      
           V_w( &pentry->lock ) ;
 
-          nfs_open_owner_unlock() ;
-
           return *pstatus ;
         }
 
    }
- nfs_open_owner_unlock() ;
 
 #ifdef _DEBUG_STATES
   printf( "         ----- Entering cache_inode_add_state: head_counter=%u current_counter=%u\n",
