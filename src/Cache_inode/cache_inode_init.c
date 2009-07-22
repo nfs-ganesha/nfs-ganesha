@@ -250,9 +250,19 @@ int cache_inode_client_init( cache_inode_client_t * pclient,
                   pclient->nb_pre_state_v4,
                   cache_inode_open_owner_t,
                   next ) ;
-  if( pclient->pool_state_v4 == NULL )
+  if( pclient->pool_open_owner == NULL )
     {
       DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client open owner pool" ) ;
+      return 1 ;
+    }
+
+  STUFF_PREALLOC( pclient->pool_open_owner_name,
+                  pclient->nb_pre_state_v4,
+                  cache_inode_open_owner_name_t,
+                  next ) ;
+  if( pclient->pool_open_owner_name == NULL )
+    {
+      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client open owner name pool" ) ;
       return 1 ;
     }
 
