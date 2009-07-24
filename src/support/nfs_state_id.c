@@ -586,7 +586,7 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
    }
 
   /* Get the related clientid */
-  if( nfs_client_id_get( state.popen_owner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
+  if( nfs_client_id_get( state.powner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
      return NFS4ERR_BAD_STATEID ; /* Refers to a non-existing client... */
 
   /* Check for state availability */
