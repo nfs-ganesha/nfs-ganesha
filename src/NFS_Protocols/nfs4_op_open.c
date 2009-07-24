@@ -179,7 +179,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
     cache_inode_open_owner_name_t   owner_name ;
     cache_inode_open_owner_name_t * powner_name = NULL ;
-    cache_inode_open_owner_t      * popen_owner = NULL ;
+    cache_inode_open_owner_t      * powner = NULL ;
     bool_t                          open_owner_known = FALSE ;
 
     resp->resop = NFS4_OP_OPEN ;
@@ -351,10 +351,10 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
             }
          
           
-          if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
+          if( !nfs_open_owner_Get_Pointer( &owner_name, &powner ) )
            {
              /* This open owner is not known yet, allocated and set up a new one */
-             GET_PREALLOC( popen_owner,
+             GET_PREALLOC( powner,
                            data->pclient->pool_open_owner,
                            data->pclient->nb_pre_state_v4,
                            cache_inode_open_owner_t,
@@ -366,7 +366,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                            cache_inode_open_owner_name_t,
                            next ) ;
 
-             if( popen_owner == NULL || powner_name == NULL )
+             if( powner == NULL || powner_name == NULL )
                {
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
@@ -375,15 +375,16 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
              memcpy( (char *)powner_name, (char *)&owner_name, sizeof( cache_inode_open_owner_name_t ) ) ;
 
              /* set up the content of the open_owner */
-             popen_owner->confirmed = FALSE ;
-             popen_owner->seqid     = 0 ;
-             popen_owner->next      = NULL ;      
-             popen_owner->clientid  = arg_OPEN4.owner.clientid ;
-             popen_owner->owner_len = arg_OPEN4.owner.owner.owner_len ;
-             memcpy( (char *)popen_owner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
-             pthread_mutex_init( &popen_owner->lock, NULL ) ;
+             powner->confirmed = FALSE ;
+             powner->seqid     = 0 ;
+	     powner->related_owner = NULL ;
+             powner->next      = NULL ;      
+             powner->clientid  = arg_OPEN4.owner.clientid ;
+             powner->owner_len = arg_OPEN4.owner.owner.owner_len ;
+             memcpy( (char *)powner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
+             pthread_mutex_init( &powner->lock, NULL ) ;
 
-             if( !nfs_open_owner_Set( powner_name, popen_owner ) )
+             if( !nfs_open_owner_Set( powner_name, powner ) )
                {
                  res_OPEN4.status = NFS4ERR_SERVERFAULT ;
                  return res_OPEN4.status ;
@@ -572,15 +573,15 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
                           /* If server use OPEN_CONFIRM4, set the correct flag */
-                          P( popen_owner->lock ) ;
-                          if( popen_owner->confirmed == FALSE )
+                          P( powner->lock ) ;
+                          if( powner->confirmed == FALSE )
                            {
                              if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
                                 res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
 			    else
                                 res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
                            }
-                          V( popen_owner->lock ) ;
+                          V( powner->lock ) ;
 
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
@@ -650,8 +651,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                 		     {
 					if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
 				            !memcmp( arg_OPEN4.owner.owner.owner_val,
-					             pstate_found_iterate->popen_owner->owner_val,
-                                                     pstate_found_iterate->popen_owner->owner_len )    &&
+					             pstate_found_iterate->powner->owner_val,
+                                                     pstate_found_iterate->powner->owner_len )    &&
 			 		    !memcmp( pstate_found_iterate->state_data.share.oexcl_verifier, 
 						     arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf, 
 						     NFS4_VERIFIER_SIZE ) ) 
@@ -677,15 +678,15 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
 					    /* If server use OPEN_CONFIRM4, set the correct flag */
-                                            P( popen_owner->lock ) ;
-    					    if( popen_owner->confirmed == FALSE )
+                                            P( powner->lock ) ;
+    					    if( powner->confirmed == FALSE )
                                              {
     					       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
         				  	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
     					       else
         				 	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
                                              }
-                                            V( popen_owner->lock ) ;
+                                            V( powner->lock ) ;
 
 					    /* Now produce the filehandle to this file */
 				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
@@ -955,11 +956,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     if( pstate_found_iterate != NULL )
                      {
                        if( ( pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE ) &&
-			   ( pstate_found_iterate->popen_owner->clientid == arg_OPEN4.owner.clientid ) &&
-                           ( ( pstate_found_iterate->popen_owner->owner_len == arg_OPEN4.owner.owner.owner_len ) &&
+			   ( pstate_found_iterate->powner->clientid == arg_OPEN4.owner.clientid ) &&
+                           ( ( pstate_found_iterate->powner->owner_len == arg_OPEN4.owner.owner.owner_len ) &&
                               ( !memcmp( arg_OPEN4.owner.owner.owner_val, 
-			   	         pstate_found_iterate->popen_owner->owner_val,
-                                         pstate_found_iterate->popen_owner->owner_len ) ) ) )
+			   	         pstate_found_iterate->powner->owner_val,
+                                         pstate_found_iterate->powner->owner_len ) ) ) )
                            {
                               /* We'll be re-using the found state */
                               pstate_found_same_owner = pstate_found_iterate ;
@@ -970,8 +971,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 				/* This is a different owner, check for possible conflicts */
 
 				  if( memcmp( arg_OPEN4.owner.owner.owner_val, 
-			   	             pstate_found_iterate->popen_owner->owner_val,
-                                             pstate_found_iterate->popen_owner->owner_len ) )
+			   	             pstate_found_iterate->powner->owner_val,
+                                             pstate_found_iterate->powner->owner_len ) )
 				    {
 					switch( pstate_found_iterate->state_type )
 					 {
@@ -1153,7 +1154,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
     /* If server use OPEN_CONFIRM4, set the correct flag */
-    if( popen_owner->confirmed == FALSE )
+    if( powner->confirmed == FALSE )
      {
        if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
           res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;

@@ -212,19 +212,22 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
       }
 
    /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
-   P( pstate_found->popen_owner->lock ) ;
-   if( pstate_found->popen_owner->confirmed == TRUE )
+   P( pstate_found->powner->lock ) ;
+   if( pstate_found->powner->confirmed == TRUE )
      {
-        V( pstate_found->popen_owner->lock ) ;
+        V( pstate_found->powner->lock ) ;
         res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID ;
         return res_OPEN_CONFIRM4.status ;
      }
 
-   if(  pstate_found->seqid != arg_OPEN_CONFIRM4.seqid )
+   printf( "--> Open Confirm : owner.seqid=%u arg_OPEN_CONFIRM4.seqid=%u\n", 
+	   pstate_found->powner->seqid, arg_OPEN_CONFIRM4.seqid ) ;
+
+   if(  pstate_found->powner->seqid != arg_OPEN_CONFIRM4.seqid )
      {
-        if( pstate_found->seqid +1 != arg_OPEN_CONFIRM4.seqid )
+        if( pstate_found->powner->seqid +1 != arg_OPEN_CONFIRM4.seqid )
          {
-            V( pstate_found->popen_owner->lock ) ;
+            V( pstate_found->powner->lock ) ;
             res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID ;
             return res_OPEN_CONFIRM4.status ;
          }
@@ -232,11 +235,12 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
 
 
    /* Set the state as confirmed */
-   pstate_found->popen_owner->confirmed = TRUE ;
-   pstate_found->popen_owner->seqid =  arg_OPEN_CONFIRM4.seqid ;
-   V( pstate_found->popen_owner->lock ) ;
+   pstate_found->powner->confirmed = TRUE ;
+   pstate_found->powner->seqid += 1 ;
+   V( pstate_found->powner->lock ) ;
 
    /* Update the state */
+   pstate_found->seqid +=1 ;
    if( cache_inode_update_state( pstate_found,
                                  data->pclient,
                                  &cache_status ) != CACHE_INODE_SUCCESS )
@@ -246,7 +250,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
       }
 
    /* Return the stateid to the client */
-   res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid = pstate_found->seqid ;
+   res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid = arg_OPEN_CONFIRM4.seqid ;
    memcpy( res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other, pstate_found->stateid_other, 12 ) ;
    
    return res_OPEN_CONFIRM4.status;

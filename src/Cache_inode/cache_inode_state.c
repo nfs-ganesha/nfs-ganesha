@@ -192,7 +192,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   cache_inode_state_t           * pnew_state    = NULL ;
   cache_inode_state_t           * piter_state   = NULL ;
   cache_inode_state_t           * piter_saved   = NULL ;
-  cache_inode_open_owner_t      * popen_owner   = NULL ;
+  cache_inode_open_owner_t      * powner   = NULL ;
   cache_inode_open_owner_name_t   owner_name ;
   cache_inode_open_owner_name_t * powner_name   = NULL ;
   u_int64_t                       fileid_digest = 0 ;
@@ -254,10 +254,10 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       return *pstatus ;
     }
 
-  if( !nfs_open_owner_Get_Pointer( &owner_name, &popen_owner ) )
+  if( !nfs_open_owner_Get_Pointer( &owner_name, &powner ) )
    {
       /* This open owner is not known yet, allocated and set up a new one */
-      GET_PREALLOC( popen_owner,
+      GET_PREALLOC( powner,
                     pclient->pool_open_owner,
                     pclient->nb_pre_state_v4,
                     cache_inode_open_owner_t,
@@ -269,7 +269,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
                     cache_inode_open_owner_name_t,
                     next ) ;
 
-      if( popen_owner == NULL || powner_name == NULL )
+      if( powner == NULL || powner_name == NULL )
         {
           DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't allocate a new open_owner from cache pool" ) ;
           *pstatus = CACHE_INODE_MALLOC_ERROR ;
@@ -285,15 +285,16 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       memcpy( (char *)powner_name, (char *)&owner_name, sizeof( cache_inode_open_owner_name_t ) ) ;
 
       /* set up the content of the open_owner */
-      popen_owner->confirmed = FALSE ;
-      popen_owner->seqid     = 0 ;
-      popen_owner->next      = NULL ;      
-      popen_owner->clientid  = pstate_owner->clientid ;
-      popen_owner->owner_len = pstate_owner->owner.owner_len ;
-      memcpy( (char *)popen_owner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
-      pthread_mutex_init( &popen_owner->lock, NULL ) ;
+      powner->confirmed = FALSE ;
+      powner->seqid     = 0 ;
+      powner->related_owner = NULL ; /* No parent owner, this is a open_owner */
+      powner->next      = NULL ;      
+      powner->clientid  = pstate_owner->clientid ;
+      powner->owner_len = pstate_owner->owner.owner_len ;
+      memcpy( (char *)powner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
+      pthread_mutex_init( &powner->lock, NULL ) ;
 
-      if( !nfs_open_owner_Set( powner_name, popen_owner ) )
+      if( !nfs_open_owner_Set( powner_name, powner ) )
         {
           DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't set a new open_owner to hash" ) ;
           *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
@@ -362,7 +363,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
       pnew_state->seqid = initial_seqid ;
       pnew_state->pentry = pentry ;
-      pnew_state->popen_owner = popen_owner ;
+      pnew_state->powner = powner ;
 
      /* Set the head state id */
      pentry->object.file.state_current_counter = new_counter ;
@@ -449,7 +450,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
     memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
     pnew_state->seqid = initial_seqid ;
     pnew_state->pentry = pentry ;
-    pnew_state->popen_owner = popen_owner ;
+    pnew_state->powner = powner ;
 
     /* Set the head state id */
     pentry->object.file.state_current_counter = new_counter ;
@@ -903,11 +904,11 @@ cache_inode_status_t cache_inode_find_state_by_owner( cache_entry_t           * 
   /* Search loop */
   for( piter_state = piter_state_start ; piter_state != NULL ; piter_state = piter_state->next )
    {
-      if( piter_state->popen_owner->clientid == powner->clientid )
+      if( piter_state->powner->clientid == powner->clientid )
        {
           /* Client ids match, check the owner */
-          if( piter_state->popen_owner->owner_len == powner->owner.owner_len )
-           if( !memcmp( piter_state->popen_owner->owner_val, powner->owner.owner_val, powner->owner.owner_len ) )
+          if( piter_state->powner->owner_len == powner->owner.owner_len )
+           if( !memcmp( piter_state->powner->owner_val, powner->owner.owner_val, powner->owner.owner_len ) )
             {
                 found = TRUE ;
                 break ;

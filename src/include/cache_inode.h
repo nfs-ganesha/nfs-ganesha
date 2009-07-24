@@ -458,6 +458,7 @@ typedef struct cache_inode_open_owner__
   unsigned int                      confirmed ;
   unsigned int                      seqid ;
   pthread_mutex_t                   lock ;
+  struct cache_inode_open_owner__ * related_owner ;
   struct cache_inode_open_owner__ * next ;
 } cache_inode_open_owner_t ;
 
@@ -470,13 +471,13 @@ typedef struct cache_inode_state__
      cache_inode_lock_t  lock ;
      cache_inode_deleg_t deleg ;
    } state_data ;
-   u_int32_t                       seqid             ;              /**< The NFSv4 Sequence id                                */
-   u_int32_t                       my_id             ;              /**< The id for the owner pair                            */
-   char                            stateid_other[12] ;              /**< "Other" part of state id, used as hash key           */
-   cache_inode_open_owner_t      * popen_owner       ;              /**< Open Owner related to this state                     */
-   struct cache_inode_state__    * next              ;              /**< Next entry in the state list                         */
-   struct cache_inode_state__    * prev              ;              /**< Prev entry in the state list                         */
-   struct cache_entry__          * pentry     ;                     /**< Related pentry                                       */
+   u_int32_t                       seqid             ;   /**< The NFSv4 Sequence id                      */
+   u_int32_t                       my_id             ;   /**< The id for the owner pair                  */
+   char                            stateid_other[12] ;   /**< "Other" part of state id, used as hash key */
+   cache_inode_open_owner_t      * powner            ;   /**< Open Owner related to this state           */
+   struct cache_inode_state__    * next              ;   /**< Next entry in the state list               */
+   struct cache_inode_state__    * prev              ;   /**< Prev entry in the state list               */
+   struct cache_entry__          * pentry            ;   /**< Related pentry                             */
 } cache_inode_state_t ;
 
 typedef struct cache_inode_dir_begin__    cache_inode_dir_begin_t ;

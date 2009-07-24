@@ -279,7 +279,7 @@ int nfs4_Init_open_owner( nfs_open_owner_parameter_t  param )
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
+int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * powner ) 
 {
   hash_buffer_t buffkey ;
   hash_buffer_t buffval ;
@@ -296,7 +296,7 @@ int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_o
   buffkey.pdata = (caddr_t)pname ;
   buffkey.len   = sizeof( cache_inode_open_owner_name_t ) ;
 
-  buffval.pdata = (caddr_t)popen_owner ;
+  buffval.pdata = (caddr_t)powner ;
   buffval.len = sizeof( cache_inode_open_owner_t ) ;
 
 
@@ -319,7 +319,7 @@ int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_o
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
+int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * powner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
@@ -332,7 +332,7 @@ int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_o
         return 0 ;
      }
 
-   memcpy( (char *)popen_owner, buffval.pdata, sizeof( cache_inode_open_owner_t ) ) ;
+   memcpy( (char *)powner, buffval.pdata, sizeof( cache_inode_open_owner_t ) ) ;
 
    return 1 ;
 } /* nfs_open_owner_Get */
@@ -349,7 +349,7 @@ int nfs_open_owner_Get( cache_inode_open_owner_name_t *pname, cache_inode_open_o
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * * popen_owner ) 
+int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * * powner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
@@ -375,7 +375,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
       return 0 ;
     }
 
-   *popen_owner = (cache_inode_open_owner_t *)buffval.pdata ;
+   *powner = (cache_inode_open_owner_t *)buffval.pdata ;
 
 #ifdef _DEBUG_OPEN_OWNER_HASH 
       printf( "nfs_open_owner_Get_Pointer => FOUND\n" ) ;
@@ -396,7 +396,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
  * @return 1 if ok, 0 otherwise.
  * 
  */
-int nfs_open_owner_Update( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * popen_owner ) 
+int nfs_open_owner_Update( cache_inode_open_owner_name_t *pname, cache_inode_open_owner_t * powner ) 
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
@@ -409,7 +409,7 @@ int nfs_open_owner_Update( cache_inode_open_owner_name_t *pname, cache_inode_ope
         return 0 ;
      }
 
-   memcpy( buffval.pdata, popen_owner, sizeof( cache_inode_open_owner_t ) ) ;
+   memcpy( buffval.pdata, powner, sizeof( cache_inode_open_owner_t ) ) ;
 
    return 1 ;
 } /* nfs_open_owner_Update */

@@ -241,8 +241,8 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
   if( ( arg_CLOSE4.seqid != pstate_found->seqid ) &&
       ( arg_CLOSE4.seqid != pstate_found->seqid + 1 ) )
      {
-        printf( "-- arg_CLOSE.seqid=%u  pstate_found->popen_owner->seqid=%u\n",  
-  	        arg_CLOSE4.seqid, pstate_found->popen_owner->seqid ) ;
+        printf( "-- arg_CLOSE.seqid=%u  pstate_found->powner->seqid=%u\n",  
+  	        arg_CLOSE4.seqid, pstate_found->powner->seqid ) ;
 
 	res_CLOSE4.status = NFS4ERR_BAD_SEQID ;
 	return res_CLOSE4.status ;
@@ -250,9 +250,12 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 #endif
 
   /* Update the seqid for the open_owner */
-  P( pstate_found->popen_owner->lock ) ;
-  pstate_found->popen_owner->seqid += 1 ;
-  V( pstate_found->popen_owner->lock ) ;
+  P( pstate_found->powner->lock ) ;
+  pstate_found->powner->seqid += 1 ;
+  V( pstate_found->powner->lock ) ;
+
+  /* Prepare the result */
+  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid +1 ;
 
   /* File is closed, release the corresponding state */
   if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
@@ -263,8 +266,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 	return res_CLOSE4.status ;
     }
 
-  /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = arg_CLOSE4.seqid  ;
   memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
 
   /* Close the file in FSAL through the cache inode */

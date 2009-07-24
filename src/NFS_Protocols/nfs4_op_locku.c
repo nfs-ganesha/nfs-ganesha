@@ -262,7 +262,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   pstate_open = (cache_inode_state_t *)(pstate_found->state_data.lock.popenstate) ;
   if( pstate_open != NULL )
     {
-	pstate_open->seqid += 1 ;
+	pstate_open->seqid += 1 ; /** @todo BUGAZOMEU may not be useful */
 	if( pstate_open->state_data.share.lockheld > 0 )
             pstate_open->state_data.share.lockheld -= 1 ;
     }
@@ -271,6 +271,11 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   pstate_found->seqid += 1 ;
   res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->seqid ;
   memcpy( res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12 ) ;
+
+  /* Increment the seqid for the related open_owner */
+  P( pstate_found->powner->related_owner->lock ) ; 
+  pstate_found->powner->related_owner->seqid +=1  ; 
+  V( pstate_found->powner->related_owner->lock ) ; 
 
   /* Remove the state associated with the lock */
   if( cache_inode_del_state( pstate_found,
