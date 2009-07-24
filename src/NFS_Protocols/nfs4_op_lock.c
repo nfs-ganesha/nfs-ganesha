@@ -160,12 +160,12 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   int                        rc = 0 ; 
   cache_inode_state_t      * file_state = NULL ;
   cache_inode_state_t      * pstate_exists = NULL ;
+  cache_inode_state_t      * pstate_open = NULL ;
   cache_inode_state_t      * pstate_found = NULL ;
   cache_inode_state_t      * pstate_previous_iterate = NULL ;
   cache_inode_state_t      * pstate_found_iterate = NULL ;
   uint64_t                   distance = 0LL ;
   nfs_client_id_t            nfs_client_id ;
-
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK ;
@@ -236,6 +236,20 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
    {
       /* this is a new lockowner */
       lockowner = arg_LOCK4.locker.locker4_u.open_owner.lock_owner ;
+
+      if( cache_inode_get_state( arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
+                                 &pstate_open,
+                                 data->pclient,
+                                 &cache_status ) != CACHE_INODE_SUCCESS ) 
+        {
+	   res_LOCK4.status = NFS4ERR_STALE_STATEID ;
+           return res_LOCK4.status ;
+        }
+
+      /* increment the open state */
+      P( pstate_open->powner->lock ) ;
+      pstate_open->powner->seqid += 1 ;
+      V( pstate_open->powner->lock ) ;
    }
   else
    {
@@ -261,9 +275,9 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
        {
          /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
           * are different types but with the same definition*/
-         lockowner.clientid        = pstate_exists->state_owner.clientid ;
-         lockowner.owner.owner_len = pstate_exists->state_owner.owner.owner_len ;
-         lockowner.owner.owner_val = pstate_exists->state_owner.owner.owner_val ;
+         lockowner.clientid        = pstate_exists->powner->clientid  ;
+         lockowner.owner.owner_len = pstate_exists->powner->owner_len ;
+         lockowner.owner.owner_val = pstate_exists->powner->owner_val ;
        }
    }
 
@@ -314,10 +328,10 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                  {
                    /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
                    if( ( pstate_exists != NULL ) && /* all-O/all-1 stateid is considered a different owner */ 
-                       ( ( lockowner.owner.owner_len == pstate_found_iterate->state_owner.owner.owner_len ) &&
+                       ( ( lockowner.owner.owner_len == pstate_found_iterate->powner->owner_len ) &&
                          ( !memcmp( lockowner.owner.owner_val,
-                                  pstate_found_iterate->state_owner.owner.owner_val, 
-                                  pstate_found_iterate->state_owner.owner.owner_len ) ) ) )
+                                    pstate_found_iterate->powner->owner_val, 
+                                    pstate_found_iterate->powner->owner_len ) ) ) )
                     {
                        /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                         * lock and continue iterating on the other states */        
@@ -328,8 +342,8 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                        res_LOCK4.LOCK4res_u.denied.offset   = pstate_found_iterate->state_data.lock.offset ;
                        res_LOCK4.LOCK4res_u.denied.length   = pstate_found_iterate->state_data.lock.length ;
                        res_LOCK4.LOCK4res_u.denied.locktype = pstate_found_iterate->state_data.lock.lock_type ;
-                       res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len = pstate_found_iterate->state_owner.owner.owner_len ;
-                       res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val = pstate_found_iterate->state_owner.owner.owner_val ;
+                       res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len = pstate_found_iterate->powner->owner_len ;
+                       res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val = pstate_found_iterate->powner->owner_val ;
                        res_LOCK4.status = NFS4ERR_DENIED ;
                        return res_LOCK4.status ;
                     } 
@@ -382,18 +396,10 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
          return res_LOCK4.status ;
        }
 
-      /* Try to get the related stateid */
-      if( cache_inode_get_state( arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
-                                 &pstate_found,
-                                 data->pclient,
-                                 &cache_status ) != CACHE_INODE_SUCCESS )
-       {
-          res_LOCK4.status = nfs4_Errno( cache_status ) ;
-          return res_LOCK4.status ;
-       }
+      /* The related stateid is already stored in pstate_open*/
 
      /* An open state has been found. Check its type */
-     if( pstate_found->state_type != CACHE_INODE_STATE_SHARE )
+     if( pstate_open->state_type != CACHE_INODE_STATE_SHARE )
       {
          res_LOCK4.status = NFS4ERR_BAD_STATEID ;
          return res_LOCK4.status ;
@@ -405,22 +411,22 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 #endif
 
      /* check the stateid */
-     if( arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_found->seqid )
+     if( arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_open->seqid )
        {
           res_LOCK4.status = NFS4ERR_OLD_STATEID ;
           return res_LOCK4.status ;
        } 
 
      /* Check validity of the seqid */
-     if( ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid < pstate_found->seqid ) ||
-         ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid > pstate_found->seqid +2 ) )
+     if( ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid < pstate_open->seqid ) ||
+         ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid > pstate_open->seqid +2 ) )
        {
           res_LOCK4.status = NFS4ERR_BAD_SEQID ;
           return res_LOCK4.status ;
        } 
 
      /* Sanity check : Is this the right file ? */
-     if( pstate_found->pentry != data->current_entry )
+     if( pstate_open->pentry != data->current_entry )
       {
          res_LOCK4.status = NFS4ERR_BAD_STATEID ;
          return res_LOCK4.status ;
@@ -438,10 +444,10 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
      candidate_data.lock.lock_type  = arg_LOCK4.locktype ;
      candidate_data.lock.offset     = arg_LOCK4.offset ;
      candidate_data.lock.length     = arg_LOCK4.length ;
-     candidate_data.lock.popenstate = (void *)pstate_found ;
+     candidate_data.lock.popenstate = (void *)pstate_open ;
      
      /* update the lock counter in the related open-stateid */
-     pstate_found->state_data.share.lockheld += 1 ;
+     pstate_open->state_data.share.lockheld += 1 ;
    }
   else
    {
@@ -506,7 +512,11 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
          return res_LOCK4.status ;
       }
 
-     memcpy( (char *)&lockowner, (char *)&(pstate_found->state_owner), sizeof( lock_owner4 ) ) ; 
+     lockowner.clientid = pstate_found->powner->clientid ;
+     lockowner.owner.owner_len = pstate_found->powner->owner_len ;
+     memcpy( (char *)lockowner.owner.owner_val, 
+	     (char *)pstate_found->powner->owner_val,
+	     pstate_found->powner->owner_len ) ;
    } 
  
 
@@ -530,6 +540,15 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
       /** @todo BUGAZOMEU: Manage the case if lock conflicts */
       res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = file_state->seqid ;
       memcpy( res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, file_state->stateid_other, 12 ) ;
+
+      /* Set the related open_owner */
+      file_state->powner->related_owner = pstate_open->powner ;
+
+      /* Increment the seqid for the related open_owner */
+      P( pstate_open->powner->lock ) ; 
+      pstate_open->powner->seqid += 1 ;
+      V( pstate_open->powner->lock ) ; 
+
     }
   else
     {
@@ -537,6 +556,16 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
       pstate_found->seqid += 1 ;
       res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = pstate_found->seqid ;
       memcpy( res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, pstate_found->stateid_other, 12 ) ;
+
+      /* Increment the related seqid for the related popen_owner */
+      if( pstate_found->powner->related_owner != NULL )
+       {
+	 P( pstate_found->powner->related_owner->lock ) ;
+	 pstate_found->powner->related_owner->seqid +=1  ;
+	 V( pstate_found->powner->related_owner->lock ) ;
+       }
+      else
+	printf( "----> ERREUR !!!!!!!!! related_owner ne doit pas valoir NULL \n" ) ; 
     }
 #ifdef _DEBUG_STATES
   nfs_State_PrintAll(  ) ;

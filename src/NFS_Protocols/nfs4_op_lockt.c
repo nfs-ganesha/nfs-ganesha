@@ -263,10 +263,10 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
                if(  ( arg_LOCKT4.locktype != READ_LT ) || (  pstate_found->state_data.lock.lock_type != READ_LT ) )
                 {
                    /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-                   if( ( arg_LOCKT4.owner.owner.owner_len == pstate_found->state_owner.owner.owner_len ) &&
+                   if( ( arg_LOCKT4.owner.owner.owner_len == pstate_found->powner->owner_len ) &&
                        ( !memcmp( arg_LOCKT4.owner.owner.owner_val,
-                                  pstate_found->state_owner.owner.owner_val, 
-                                  pstate_found->state_owner.owner.owner_len ) ) )
+                                  pstate_found->powner->owner_val, 
+                                  pstate_found->powner->owner_len ) ) )
                     {
                        /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                         * lock and continue iterating on the other states */        
@@ -277,8 +277,8 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
                        res_LOCKT4.LOCKT4res_u.denied.offset   = pstate_found->state_data.lock.offset ;
                        res_LOCKT4.LOCKT4res_u.denied.length   = pstate_found->state_data.lock.length ;
                        res_LOCKT4.LOCKT4res_u.denied.locktype = pstate_found->state_data.lock.lock_type ;
-                       res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len = pstate_found->state_owner.owner.owner_len ;
-                       res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val = pstate_found->state_owner.owner.owner_val ;
+                       res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len = pstate_found->powner->owner_len ;
+                       res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val = pstate_found->powner->owner_val ;
                        res_LOCKT4.status = NFS4ERR_DENIED ;
                        return res_LOCKT4.status ;
                     } 
