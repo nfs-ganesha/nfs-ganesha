@@ -235,8 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
-* Thu Jul 16  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
+* Mon Jul 27  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
 - Add write/commit logic to NFSv3 / NFSv4 
+- Fix many bugs related to clientid/open_owner/lockonwner/seqid
 
 * Thu Jul  9 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
 - Change two debug messages in MFSL_ASYNC
