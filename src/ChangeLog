@@ -234,3 +234,5 @@
 	  verifier not set)
 	- Add NFSv4 commit/write logic 
 	- Brand new management of the NFSv4 open_owner
+	- Bug fix in clientid generation (very bad hash function)
+
