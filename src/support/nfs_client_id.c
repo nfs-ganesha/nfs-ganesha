@@ -640,24 +640,25 @@ int nfs_Init_client_id_reverse( nfs_client_id_parameter_t  param )
 int nfs_client_id_basic_compute( char      * name,
                                  clientid4 * pclientid )
 {
-  static uint64_t pid = 0 ;
-  static uint64_t count = 0 ;
-  static pthread_mutex_t local_mutex = PTHREAD_MUTEX_INITIALIZER ;
-  if( pid == 0 ) 
-    pid = (uint64_t)getpid() ;
+  char * str = NULL ;
+  char   stock[MAXNAMLEN] ;
+  unsigned int i = 0 ;
+  unsigned int sum = 0 ;
 
   if( name == NULL || pclientid == NULL )
     return CLIENT_ID_INVALID_ARGUMENT ;
 
-  P( local_mutex ) ;
-  *pclientid = ((uint64_t)pid << 32) + count ;
-  count += 1 ;
-  V( local_mutex ) ;
- 
+  strncpy( stock, name, MAXNAMLEN ) ;
+
+  for( str = stock, i = 0 ; *str != '\0' ; str ++, i++ )
+    sum  += (unsigned int)str[i]  ;
+
+  *pclientid = (clientid4)sum ;
+  
+  printf( "=============================================================> i=%u Name=%s Clientid=%llu\n", i, name, *pclientid ) ;
+
   return CLIENT_ID_SUCCESS ;
-
 } /* nfs_client_id_basic_compute */
-
 
 /** 
  * 
