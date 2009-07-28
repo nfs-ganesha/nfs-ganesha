@@ -651,12 +651,10 @@ int nfs_client_id_basic_compute( char      * name,
   strncpy( stock, name, MAXNAMLEN ) ;
 
   for( str = stock, i = 0 ; *str != '\0' ; str ++, i++ )
-    sum  += (unsigned int)str[i]  ;
+    sum  += (unsigned int)( str[i] * 10^i ) ;
 
   *pclientid = (clientid4)sum ;
   
-  printf( "=============================================================> i=%u Name=%s Clientid=%llu\n", i, name, *pclientid ) ;
-
   return CLIENT_ID_SUCCESS ;
 } /* nfs_client_id_basic_compute */
 

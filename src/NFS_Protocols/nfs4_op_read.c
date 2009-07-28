@@ -244,13 +244,15 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
              return res_READ4.status ;
           }
 
+#ifdef TOTO
         /* Check the seqid */
-        if( ( arg_READ4.stateid.seqid !=  pstate_found->seqid ) &&
-            ( arg_READ4.stateid.seqid != pstate_found->seqid + 1 ) )
+        if( ( arg_READ4.stateid.seqid !=  pstate_found->powner->seqid ) &&
+            ( arg_READ4.stateid.seqid != pstate_found->powner->seqid + 1 ) )
          {
              res_READ4.status = NFS4ERR_BAD_SEQID ;
              return res_READ4.status ;
          }
+#endif
 
         /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
         if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
