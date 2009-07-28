@@ -170,16 +170,17 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     nfs_worker_data_t        * pworker = NULL ;
     int                        convrc = 0 ;
     char                       __attribute__(( __unused__ )) funcname[] = "nfs4_op_open" ;
+
     cache_inode_state_data_t   candidate_data ;
     cache_inode_state_type_t   candidate_type ;
-    cache_inode_state_t      * pfile_state = NULL ;
-    cache_inode_state_t      * pstate_found_iterate = NULL ;
+    cache_inode_state_t      * pfile_state             = NULL ;
+    cache_inode_state_t      * pstate_found_iterate    = NULL ;
     cache_inode_state_t      * pstate_previous_iterate = NULL ;
     cache_inode_state_t      * pstate_found_same_owner = NULL ;
 
     cache_inode_open_owner_name_t   owner_name ;
-    cache_inode_open_owner_name_t * powner_name = NULL ;
-    cache_inode_open_owner_t      * powner = NULL ;
+    cache_inode_open_owner_name_t * powner_name      = NULL ;
+    cache_inode_open_owner_t      * powner           = NULL ;
     bool_t                          open_owner_known = FALSE ;
 
     resp->resop = NFS4_OP_OPEN ;
@@ -187,6 +188,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
     uint32_t tmp_attr[2]   ;
     uint_t   tmp_int   = 2 ;
+
+    printf( "---> nfs4_op_open\n" ) ;
 
     pworker = (nfs_worker_data_t *)data->pclient->pworker ;
 
@@ -393,8 +396,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
            }
          else
            {
-               printf( "A previously known open_owner is used\n" ) ;
-               printf( "Found owner:seqid=%u arg_OPEN4.seqid=%u\n", powner->seqid, arg_OPEN4.seqid ) ;
+               printf( "A previously known open_owner is used :seqid=%u arg_OPEN4.seqid=%u\n", powner->seqid, arg_OPEN4.seqid ) ;
 	     
                if( arg_OPEN4.seqid == 0 ) 
                 {
@@ -543,8 +545,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                             if( cache_inode_add_state( pentry_lookup, 
                                                        candidate_type,
                                                        &candidate_data, 
-                                                       0, /* Unconfirmed open have a seqid of 0 */
-                                                       &arg_OPEN4.owner,
+                                                       powner, 
                                                        data->pclient,             
                                                        data->pcontext,
                                                        &pfile_state,
@@ -799,8 +800,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     if( cache_inode_add_state( pentry_newfile, 
                                                candidate_type,
                                                &candidate_data, 
-                                               0, /* Unconfirmed open have a seqid of 0 */
-                                               &arg_OPEN4.owner,
+                                               powner, 
                                                data->pclient, 
                                                data->pcontext,
                                                &pfile_state,
@@ -1032,6 +1032,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                     pstate_previous_iterate = pstate_found_iterate ;
                   } while( pstate_found_iterate != NULL ) ;
 
+
                 if( pstate_found_same_owner != NULL ) 
                  {
                     pfile_state = pstate_found_same_owner ;
@@ -1045,12 +1046,12 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                    candidate_data.share.share_access = arg_OPEN4.share_access ;
 
+    printf( "powner->seqid = %u\n", powner->seqid ) ;
+
                    if( cache_inode_add_state( pentry_newfile, 
                                               candidate_type,
                                               &candidate_data, 	
-			 		      /* Use the provided seqid, the same client may have opened the file */
-                                              arg_OPEN4.seqid,  
-                                              &arg_OPEN4.owner,
+                                              powner,
                                               data->pclient, 
                                               data->pcontext,
                                               &pfile_state,
@@ -1059,6 +1060,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                          return res_OPEN4.status ;
                       }
+     printf( "00 pfile_state->powner->seqid=%u\n", pfile_state->powner->seqid ) ;
                   }
 
                  /* Open the file */
@@ -1160,7 +1162,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
     res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
    
-    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->seqid ;
+    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = powner->seqid ;
     memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pfile_state->stateid_other, 12 ) ;
 
     /* No delegation */
@@ -1179,10 +1181,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     nfs_State_PrintAll(  ) ;
 #endif 
 
+     printf( "pfile_state->powner->seqid=%u\n", pfile_state->powner->seqid ) ;
+
     /* regular exit */
     res_OPEN4.status = NFS4_OK ; 
     return res_OPEN4.status;
- 
 } /* nfs4_op_open */
 
     

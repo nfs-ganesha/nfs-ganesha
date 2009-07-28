@@ -243,7 +243,8 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
     }
 
   /* Check the seqid */
-  if( arg_LOCKU4.seqid != pstate_found->seqid )
+  if( ( arg_LOCKU4.seqid != pstate_found->powner->seqid ) &&
+      ( arg_LOCKU4.seqid != pstate_found->powner->seqid + 1 ) )
    {
        res_LOCKU4.status = NFS4ERR_BAD_SEQID ;
        return res_LOCKU4.status ;
@@ -271,6 +272,10 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
   pstate_found->seqid += 1 ;
   res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->seqid ;
   memcpy( res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12 ) ;
+
+  P( pstate_found->powner->lock ) ;
+  pstate_found->powner->seqid +=1 ;
+  V( pstate_found->powner->lock ) ;
 
   /* Increment the seqid for the related open_owner */
   P( pstate_found->powner->related_owner->lock ) ; 

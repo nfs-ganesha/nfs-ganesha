@@ -369,7 +369,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
 
    if( HashTable_Get( ht_open_owner, &buffkey, &buffval ) != HASHTABLE_SUCCESS )
     {
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
       printf( "nfs_open_owner_Get_Pointer => NOTFOUND\n" ) ;
 #endif
       return 0 ;
