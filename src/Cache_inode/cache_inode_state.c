@@ -168,8 +168,7 @@ int cache_inode_state_conflict( cache_inode_state_t       * pstate,
  * @param pentry        [INOUT] cache entry to operate on
  * @param state_type    [IN]    state to be defined
  * @param pstate_data   [IN]    data related to this state
- * @param initial_seqid [IN]    the initial value for the seqid
- * @param pstate_owner  [IN]    state's owner structure
+ * @param powner_input  [IN]    related open_owner
  * @param pclient       [INOUT] cache inode client to be used
  * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
@@ -181,8 +180,7 @@ int cache_inode_state_conflict( cache_inode_state_t       * pstate,
 cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry, 
                                             cache_inode_state_type_t     state_type,
                                             cache_inode_state_data_t   * pstate_data,
-                                            seqid4                       initial_seqid,
-                                            open_owner4                * pstate_owner,
+                                            cache_inode_open_owner_t   * powner_input,
                                             cache_inode_client_t       * pclient,
                                             fsal_op_context_t          * pcontext,
                                             cache_inode_state_t      * * ppstate,
@@ -192,9 +190,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   cache_inode_state_t           * pnew_state    = NULL ;
   cache_inode_state_t           * piter_state   = NULL ;
   cache_inode_state_t           * piter_saved   = NULL ;
-  cache_inode_open_owner_t      * powner   = NULL ;
-  cache_inode_open_owner_name_t   owner_name ;
-  cache_inode_open_owner_name_t * powner_name   = NULL ;
+  cache_inode_open_owner_t      * powner   = powner_input ;
   u_int64_t                       fileid_digest = 0 ;
   u_int16_t                       new_counter   = 0 ;
   char                            other_head[12] ;
@@ -206,8 +202,10 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   /* Sanity Check */
   if( pstatus == NULL ) 
     return CACHE_INODE_INVALID_ARGUMENT ;
+ 
+  printf( "cache_inode_add_state\n" ) ;
 
-  if( pentry == NULL || pstate_data == NULL || pclient == NULL || pcontext == NULL || ppstate == NULL )
+  if( pentry == NULL || pstate_data == NULL || pclient == NULL || pcontext == NULL || powner_input == NULL || ppstate == NULL )
    {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
       return *pstatus ;
@@ -241,73 +239,6 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
 
       return *pstatus ;
     }
-
-  if( !nfs_convert_open_owner( pstate_owner, &owner_name ) )
-    {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-     
-      V_w( &pentry->lock ) ;
-
-      return *pstatus ;
-    }
-
-  if( !nfs_open_owner_Get_Pointer( &owner_name, &powner ) )
-   {
-      /* This open owner is not known yet, allocated and set up a new one */
-      GET_PREALLOC( powner,
-                    pclient->pool_open_owner,
-                    pclient->nb_pre_state_v4,
-                    cache_inode_open_owner_t,
-                    next ) ;
-
-      GET_PREALLOC( powner_name,
-                    pclient->pool_open_owner_name,
-                    pclient->nb_pre_state_v4,
-                    cache_inode_open_owner_name_t,
-                    next ) ;
-
-      if( powner == NULL || powner_name == NULL )
-        {
-          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't allocate a new open_owner from cache pool" ) ;
-          *pstatus = CACHE_INODE_MALLOC_ERROR ;
-
-           /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-     
-          V_w( &pentry->lock ) ;
-
-          return *pstatus ;
-        }
-
-      memcpy( (char *)powner_name, (char *)&owner_name, sizeof( cache_inode_open_owner_name_t ) ) ;
-
-      /* set up the content of the open_owner */
-      powner->confirmed = FALSE ;
-      powner->seqid     = 0 ;
-      powner->related_owner = NULL ; /* No parent owner, this is a open_owner */
-      powner->next      = NULL ;      
-      powner->clientid  = pstate_owner->clientid ;
-      powner->owner_len = pstate_owner->owner.owner_len ;
-      memcpy( (char *)powner->owner_val, (char *)pstate_owner->owner.owner_val, pstate_owner->owner.owner_len ) ;
-      pthread_mutex_init( &powner->lock, NULL ) ;
-
-      if( !nfs_open_owner_Set( powner_name, powner ) )
-        {
-          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't set a new open_owner to hash" ) ;
-          *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-     
-          V_w( &pentry->lock ) ;
-
-          return *pstatus ;
-        }
-
-   }
 
 #ifdef _DEBUG_STATES
   printf( "         ----- Entering cache_inode_add_state: head_counter=%u current_counter=%u\n",
@@ -361,7 +292,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       /* Set the type and data for this state */
       pnew_state->state_type  = state_type ;
       memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
-      pnew_state->seqid = initial_seqid ;
+      pnew_state->seqid = 0 ;
       pnew_state->pentry = pentry ;
       pnew_state->powner = powner ;
 
@@ -448,7 +379,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
     /* Set the type and data for this state */
     pnew_state->state_type = state_type ;
     memcpy( (char *)&(pnew_state->state_data), (char *)pstate_data, sizeof( cache_inode_state_data_t ) ) ;
-    pnew_state->seqid = initial_seqid ;
+    pnew_state->seqid = 0;
     pnew_state->pentry = pentry ;
     pnew_state->powner = powner ;
 
