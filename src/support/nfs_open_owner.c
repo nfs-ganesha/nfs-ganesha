@@ -353,7 +353,7 @@ int nfs_open_owner_Get_Pointer( cache_inode_open_owner_name_t *pname, cache_inod
 {
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
-#ifndef _DEBUG_OPEN_OWNER_HASH 
+#ifdef _DEBUG_OPEN_OWNER_HASH 
    char str[MAXPATHLEN] ;
 
    buffkey.pdata = (caddr_t)pname ;
