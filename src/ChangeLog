@@ -236,3 +236,4 @@
 	- Brand new management of the NFSv4 open_owner
 	- Bug fix in clientid generation (very bad hash function)
 	- File nfs4_op_lock.c was fully rewritten to fix bugs
+	- open_owner's seqid is to be incremented even if OPEN fails
