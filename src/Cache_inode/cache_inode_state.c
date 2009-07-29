@@ -203,8 +203,6 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   if( pstatus == NULL ) 
     return CACHE_INODE_INVALID_ARGUMENT ;
  
-  printf( "cache_inode_add_state\n" ) ;
-
   if( pentry == NULL || pstate_data == NULL || pclient == NULL || pcontext == NULL || powner_input == NULL || ppstate == NULL )
    {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
