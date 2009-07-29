@@ -385,6 +385,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
              powner->clientid  = arg_OPEN4.owner.clientid ;
              powner->owner_len = arg_OPEN4.owner.owner.owner_len ;
              memcpy( (char *)powner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val, arg_OPEN4.owner.owner.owner_len ) ;
+             powner->owner_val[ powner->owner_len ] = '\0' ;
+
              pthread_mutex_init( &powner->lock, NULL ) ;
 
              if( !nfs_open_owner_Set( powner_name, powner ) )
@@ -396,7 +398,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
            }
          else
            {
-               printf( "A previously known open_owner is used :seqid=%u arg_OPEN4.seqid=%u\n", powner->seqid, arg_OPEN4.seqid ) ;
+               printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
+		       powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
 	     
                if( arg_OPEN4.seqid == 0 ) 
                 {
@@ -1046,7 +1049,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                    candidate_data.share.share_access = arg_OPEN4.share_access ;
 
-    printf( "powner->seqid = %u\n", powner->seqid ) ;
+    printf( "powner->seqid = %u #%s#\n", powner->seqid, powner->owner_val ) ;
 
                    if( cache_inode_add_state( pentry_newfile, 
                                               candidate_type,
@@ -1060,7 +1063,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                          res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                          return res_OPEN4.status ;
                       }
-     printf( "00 pfile_state->powner->seqid=%u\n", pfile_state->powner->seqid ) ;
+     printf( "00 , pfile_state->powner->seqid=%u #%s#\n", pfile_state->powner->seqid,  pfile_state->powner->owner_val ) ;
                   }
 
                  /* Open the file */
@@ -1181,7 +1184,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     nfs_State_PrintAll(  ) ;
 #endif 
 
-     printf( "pfile_state->powner->seqid=%u\n", pfile_state->powner->seqid ) ;
+     printf( "pfile_state->powner->seqid=%u #%s#\n", pfile_state->powner->seqid, pfile_state->powner->owner_val ) ;
 
     /* regular exit */
     res_OPEN4.status = NFS4_OK ; 
