@@ -189,8 +189,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     uint32_t tmp_attr[2]   ;
     uint_t   tmp_int   = 2 ;
 
-    printf( "---> nfs4_op_open\n" ) ;
-
     pworker = (nfs_worker_data_t *)data->pclient->pworker ;
 
     /* If there is no FH */
@@ -398,13 +396,17 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
            }
          else
            {
-               printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
-		       powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
+#ifdef _FULL_DEBUG
+               DisplayLogLevel( NIV_FULL_DEBUG, "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u", 
+		                powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
+#endif
 	     
+               printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
+		                powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
+
                if( arg_OPEN4.seqid == 0 ) 
                 {
-                  printf( "Previously known open_owner is used with seqid=0, ask the client to confirm it again\n" ) ;
-                  DisplayLog( "Previously known open_owner is used with seqid=0, ask the client to confirm it again" ) ;
+                  DisplayLogLevel( NIV_DEBUG, "Previously known open_owner is used with seqid=0, ask the client to confirm it again" ) ;
                   powner->seqid = 0 ;
                   powner->confirmed = FALSE ;
                 }
@@ -554,6 +556,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                        &pfile_state,
                                                        &cache_status ) != CACHE_INODE_SUCCESS )
                                 {
+                                   printf( "---> 1 \n" ) ;
                                    res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                    return res_OPEN4.status ;
                                 }
@@ -809,6 +812,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                &pfile_state,
                                                &cache_status ) != CACHE_INODE_SUCCESS )
                         {
+                                   printf( "---> 2 \n" ) ;
                            res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                            return res_OPEN4.status ;
                         }
@@ -996,6 +1000,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 					      if( ( pstate_found_iterate->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE ) &&
 				                  ( arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE ) )
                                                 {
+                                   printf( "---> 3 \n" ) ;
 						   res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                                    return res_OPEN4.status ;
                                                 }
@@ -1015,6 +1020,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ ) &&
                                ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ ) )
                               {
+                                   printf( "---> 4 \n" ) ;
+				 powner->seqid += 1 ;
 			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                  return res_OPEN4.status ;
                               }
@@ -1023,6 +1030,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE ) &&
                                ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE ) )
                               {
+                                   printf( "---> 5 \n" ) ;
 			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                  return res_OPEN4.status ;
                               }
@@ -1049,8 +1057,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                    candidate_data.share.share_access = arg_OPEN4.share_access ;
 
-    printf( "powner->seqid = %u #%s#\n", powner->seqid, powner->owner_val ) ;
-
                    if( cache_inode_add_state( pentry_newfile, 
                                               candidate_type,
                                               &candidate_data, 	
@@ -1060,10 +1066,10 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                               &pfile_state,
                                               &cache_status ) != CACHE_INODE_SUCCESS )
                       {
+                                   printf( "---> 6 \n" ) ;
                          res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                          return res_OPEN4.status ;
                       }
-     printf( "00 , pfile_state->powner->seqid=%u #%s#\n", pfile_state->powner->seqid,  pfile_state->powner->owner_val ) ;
                   }
 
                  /* Open the file */
@@ -1183,8 +1189,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 #ifdef _DEBUG_STATES
     nfs_State_PrintAll(  ) ;
 #endif 
-
-     printf( "pfile_state->powner->seqid=%u #%s#\n", pfile_state->powner->seqid, pfile_state->powner->owner_val ) ;
 
     /* regular exit */
     res_OPEN4.status = NFS4_OK ; 

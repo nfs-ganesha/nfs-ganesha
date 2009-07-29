@@ -180,8 +180,6 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   return res_LOCK4.status ;
 #else
 
-  printf( "---> nfs4_op_lock\n" ) ;
-
   /* If there is no FH */
   if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
     {
@@ -424,8 +422,6 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
         if( ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid < popen_owner->seqid ) ||
             ( arg_LOCK4.locker.locker4_u.open_owner.open_seqid > popen_owner->seqid +2 ) )
           {
-             printf( "===========++++++++++++++++++> pstate_open->seqid=%u arg_LOCK4.locker.locker4_u.open_owner.open_seqid=%u arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid=%u\n", pstate_open->seqid,  arg_LOCK4.locker.locker4_u.open_owner.open_seqid, arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid ) ;
-
              res_LOCK4.status = NFS4ERR_BAD_SEQID ;
              return res_LOCK4.status ;
           } 
@@ -552,12 +548,6 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
              return res_LOCK4.status ;
           }
 
-        /* Check good seq id */
-        if( arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid > arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid )
-          {
-             res_LOCK4.status = NFS4ERR_BAD_SEQID ;
-             return res_LOCK4.status ;
-          }
 
         /* Check validity of the desired seqid */
         if( (  arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid !=  pstate_found->seqid ) &&
@@ -595,7 +585,7 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
            V( pstate_found->powner->related_owner->lock ) ;
          }
         else
-          printf( "----> ERREUR !!!!!!!!! related_owner ne doit pas valoir NULL \n" ) ;
+	  DisplayLog( "/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",__FILE__, __LINE__ ) ;
 
 	break ;
    } /* switch( arg_LOCK4.locker.new_lock_owner ) */
