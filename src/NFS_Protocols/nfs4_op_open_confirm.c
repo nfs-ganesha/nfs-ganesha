@@ -220,9 +220,6 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
         return res_OPEN_CONFIRM4.status ;
      }
 
-   printf( "--> Open Confirm : owner.seqid=%u arg_OPEN_CONFIRM4.seqid=%u\n", 
-	   pstate_found->powner->seqid, arg_OPEN_CONFIRM4.seqid ) ;
-
    if(  pstate_found->powner->seqid != arg_OPEN_CONFIRM4.seqid )
      {
         if( pstate_found->powner->seqid +1 != arg_OPEN_CONFIRM4.seqid )
