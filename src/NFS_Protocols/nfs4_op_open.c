@@ -401,8 +401,8 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 		                powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
 #endif
 	     
-               printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
-		                powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
+               //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
+		 //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
 
                if( arg_OPEN4.seqid == 0 ) 
                 {
@@ -556,7 +556,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                        &pfile_state,
                                                        &cache_status ) != CACHE_INODE_SUCCESS )
                                 {
-                                   printf( "---> 1 \n" ) ;
+				   /* Seqid has to be incremented even in this case */
+                                   P( powner->lock ) ;
+				   powner->seqid += 1 ;
+                                   V( powner->lock ) ;
+					
                                    res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                    return res_OPEN4.status ;
                                 }
@@ -570,6 +574,12 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                           data->pcontext,
                                                           &cache_status ) != CACHE_INODE_SUCCESS )
                               {
+				   /* Seqid has to be incremented even in this case */
+                                   P( powner->lock ) ;
+				   powner->seqid += 1 ;
+                                   V( powner->lock ) ;
+					
+                                   res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                   res_OPEN4.status = NFS4ERR_ACCESS ;
                                   return res_OPEN4.status ;
                               }
@@ -662,6 +672,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 
 				     if( cache_status == CACHE_INODE_INVALID_ARGUMENT )
 		                      {
+				        /* Seqid has to be incremented even in this case */
+                                        P( powner->lock ) ;
+				        powner->seqid += 1 ;
+                                        V( powner->lock ) ;
+					
                 		        res_OPEN4.status = NFS4ERR_INVAL ;
                         		return res_OPEN4.status ;
                      		      }
@@ -812,7 +827,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                &pfile_state,
                                                &cache_status ) != CACHE_INODE_SUCCESS )
                         {
-                                   printf( "---> 2 \n" ) ;
+			   /* Seqid has to be incremented even in this case */
+                           P( powner->lock ) ;
+			   powner->seqid += 1 ;
+                           V( powner->lock ) ;
+					
                            res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                            return res_OPEN4.status ;
                         }
@@ -847,6 +866,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                  data->pcontext,
                                                  &cache_status ) != CACHE_INODE_SUCCESS )
                       {
+			  /* Seqid has to be incremented even in this case */
+                          P( powner->lock ) ;
+			  powner->seqid += 1 ;
+                          V( powner->lock ) ;
+					
                           res_OPEN4.status = NFS4ERR_ACCESS ;
                           return res_OPEN4.status ;
                       }
@@ -1000,7 +1024,6 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 					      if( ( pstate_found_iterate->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE ) &&
 				                  ( arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE ) )
                                                 {
-                                   printf( "---> 3 \n" ) ;
 						   res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                                    return res_OPEN4.status ;
                                                 }
@@ -1020,7 +1043,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ ) &&
                                ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ ) )
                               {
-                                   printf( "---> 4 \n" ) ;
+			         /* Seqid has to be incremented even in this case */
+                                 P( powner->lock ) ;
+			         powner->seqid += 1 ;
+                                 V( powner->lock ) ;
+					
 				 powner->seqid += 1 ;
 			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                  return res_OPEN4.status ;
@@ -1030,7 +1057,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
 			   if( ( pstate_found_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE ) &&
                                ( arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE ) )
                               {
-                                   printf( "---> 5 \n" ) ;
+			         /* Seqid has to be incremented even in this case */
+                                 P( powner->lock ) ;
+			         powner->seqid += 1 ;
+                                 V( powner->lock ) ;
+					
 			         res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                                  return res_OPEN4.status ;
                               }
@@ -1066,7 +1097,11 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                               &pfile_state,
                                               &cache_status ) != CACHE_INODE_SUCCESS )
                       {
-                                   printf( "---> 6 \n" ) ;
+			 /* Seqid has to be incremented even in this case */
+                         P( powner->lock ) ;
+			 powner->seqid += 1 ;
+                         V( powner->lock ) ;
+					
                          res_OPEN4.status = NFS4ERR_SHARE_DENIED ;
                          return res_OPEN4.status ;
                       }
@@ -1081,12 +1116,25 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                                                data->pcontext,
                                                &cache_status ) != CACHE_INODE_SUCCESS )
                    {
+		       /* Seqid has to be incremented even in this case */
+                       P( powner->lock ) ;
+		       powner->seqid += 1 ;
+                       V( powner->lock ) ;
+					
                        res_OPEN4.status = NFS4ERR_ACCESS ;
                        return res_OPEN4.status ;
                    }
                  break ; 
              
                 default:
+		   /* Seqid has to be incremented even in this case */
+                   if( powner != NULL ) 
+                    {
+                     P( powner->lock ) ;
+		     powner->seqid += 1 ;
+                     V( powner->lock ) ;
+		    }
+			
                    res_OPEN4.status = NFS4ERR_INVAL ;
                    return res_OPEN4.status ;
                    break ;
@@ -1098,6 +1146,14 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
           break ;
 
         default:
+	  /* Seqid has to be incremented even in this case */
+          if( powner != NULL ) 
+            {
+              P( powner->lock ) ;
+	      powner->seqid += 1 ;
+              V( powner->lock ) ;
+	    }
+			
           res_OPEN4.status = NFS4ERR_INVAL ;
           return res_OPEN4.status ;
           break ;
