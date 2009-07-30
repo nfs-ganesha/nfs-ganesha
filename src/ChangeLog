@@ -228,7 +228,7 @@
 	- MFSL_ASYNC: now, only root can chmod or chgrp on a file/dir/symlink
 	- MFSL_ASYNC: the way mfsl_async_symlink was fully reviewd
 
-0.99.57 -
+0.99.57 - Thu 30 Jul 2009
 	- Add NFSv3 commit/write logic 
 	- newpynfs helped locating bug in nfs4_op_commit (bad types and write
 	  verifier not set)
@@ -237,3 +237,5 @@
 	- Bug fix in clientid generation (very bad hash function)
 	- File nfs4_op_lock.c was fully rewritten to fix bugs
 	- open_owner's seqid is to be incremented even if OPEN fails
+	- lock overlapping check was reviewed
+	- no seqid checking when making read/write

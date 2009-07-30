@@ -252,7 +252,6 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
              res_READ4.status = NFS4ERR_BAD_SEQID ;
              return res_READ4.status ;
          }
-#endif
 
         /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
         if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
@@ -264,6 +263,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
              }
          }
  
+#endif
      }  /* else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK ) */
     else
      {
