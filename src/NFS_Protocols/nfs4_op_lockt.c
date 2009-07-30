@@ -150,11 +150,12 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
                      struct nfs_resop4 * resp)
 {
   char                       __attribute__(( __unused__ )) funcname[] = "nfs4_op_lockt" ;
-  cache_inode_status_t       cache_status ;
-  nfs_client_id_t            nfs_client_id ;
-  cache_inode_state_t     *  pstate_found = NULL ;
-  uint64_t                   distance = 0LL ;
 
+  cache_inode_status_t             cache_status        ;
+  nfs_client_id_t                  nfs_client_id       ;
+  cache_inode_state_t            * pstate_found = NULL ;
+  uint64_t                         a,b,a1,b1 ;
+  unsigned int                     overlap = FALSE ;
   
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKT ;
@@ -201,7 +202,7 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
           }
         return res_LOCKT4.status ;
     }
- 
+
   /* Lock length should not be 0 */
   if( arg_LOCKT4.length == 0LL )
     {
@@ -251,14 +252,28 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
         if( pstate_found->state_type == CACHE_INODE_STATE_LOCK )
          {
             /* We found a lock, check is they overlap */
-            if( arg_LOCKT4.offset > pstate_found->state_data.lock.offset )
-                 distance = arg_LOCKT4.offset - pstate_found->state_data.lock.offset ;
-             else
-                 distance = pstate_found->state_data.lock.offset - arg_LOCKT4.offset ;
+            a  = pstate_found->state_data.lock.offset ;
+            b  = pstate_found->state_data.lock.offset +  pstate_found->state_data.lock.length ;
+	    a1 = arg_LOCKT4.offset ;
+            b1 = arg_LOCKT4.offset + arg_LOCKT4.length ;
 
-            /* lock range are like "one-dimensional sphere". If the distance between their center is less than the sum of 
-             * their radiuses, they do overlap */
-            if( distance < ( arg_LOCKT4.length + pstate_found->state_data.lock.length ) )
+	    /* Locks overlap is a <= a1 <= b or a <= b1 <= b */
+            overlap = FALSE ;
+            if( a <= a1 )
+             {
+                if( a1 <= b )
+                  overlap = TRUE ;
+             }
+            else
+             {
+               if( a <= b1 )
+                {
+                  if( b1 <= b )
+                   overlap = TRUE ;
+                }
+             }
+  
+	    if( overlap == TRUE ) 
              {
                if(  ( arg_LOCKT4.locktype != READ_LT ) || (  pstate_found->state_data.lock.lock_type != READ_LT ) )
                 {
@@ -287,7 +302,7 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
          }
        }
    } while( pstate_found != NULL ) ;
-  
+
   /* Succssful exit, no conflicting lock were found */
   res_LOCKT4.status = NFS4_OK ;
   return res_LOCKT4.status;

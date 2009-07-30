@@ -168,7 +168,8 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
   cache_inode_open_owner_t       * popen_owner             = NULL ;
   cache_inode_open_owner_t       * powner_exists           = NULL ;
   cache_inode_open_owner_name_t  * powner_name             = NULL ;
-  uint64_t                         distance                = 0LL ;
+  uint64_t                         a, b, a1, b1 ;
+  unsigned int                     overlap                 = FALSE ;
   cache_inode_open_owner_name_t    owner_name ;
   nfs_client_id_t                  nfs_client_id ;
 
@@ -250,7 +251,6 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 
 	popen_owner = pstate_open->powner ;
 
-
 	break ;
 
      case FALSE:
@@ -315,14 +315,32 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 		    ( pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype ) )
 			printf( "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!\n" ) ;
              }
-           
-            /* We found a lock, check is they overlap */
-            if( arg_LOCK4.offset > pstate_found_iterate->state_data.lock.offset )
-               distance = arg_LOCK4.offset -  pstate_found_iterate->state_data.lock.offset ;
-            else
-               distance = pstate_found_iterate->state_data.lock.offset -  arg_LOCK4.offset ;
 
-            if( distance <= ( arg_LOCK4.length + pstate_found_iterate->state_data.lock.length ) )
+            a  = pstate_found_iterate->state_data.lock.offset ;
+            b  = pstate_found_iterate->state_data.lock.offset +  pstate_found_iterate->state_data.lock.length ;
+	    a1 = arg_LOCK4.offset ;
+            b1 = arg_LOCK4.offset + arg_LOCK4.length ;
+
+            /* Locks overlap is a < a1 < b or a < b1 < b */
+            overlap = FALSE ;
+            if( a <= a1 )
+             {
+                if( a1 <= b )
+                  overlap = TRUE ;
+             }
+            else
+             {
+               if( a <= b1 )
+                {
+                  if( b1 <= b )
+                   overlap = TRUE ;
+                }
+             }
+  
+	    if( overlap == TRUE ) 
+
+	    /* Locks overlap is a < a1 < b or a < b1 < b */
+	    if( overlap == TRUE )
              {
 	       /* Locks are overlapping */
                
@@ -342,6 +360,14 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
                     }
                    else
                     {
+		       /* Increment seqid */
+                       if( pstate_exists != NULL ) 
+                        {
+		          P( pstate_exists->powner->lock ) ;
+		          pstate_exists->powner->seqid += 1 ;
+		          V( pstate_exists->powner->lock ) ;
+                        }
+
                        /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
                        res_LOCK4.LOCK4res_u.denied.offset   = pstate_found_iterate->state_data.lock.offset ;
                        res_LOCK4.LOCK4res_u.denied.length   = pstate_found_iterate->state_data.lock.length ;
@@ -362,6 +388,14 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 		 !(  pstate_found_iterate->state_data.share.share_access &  OPEN4_SHARE_ACCESS_WRITE ) && 
 	         ( arg_LOCK4.locktype == WRITE_LT ) )
               {
+                 if( pstate_exists != NULL )
+                  {
+		     /* Increment seqid */
+		     P( pstate_exists->powner->lock ) ;
+		     pstate_exists->powner->seqid += 1 ;
+		     V( pstate_exists->powner->lock ) ;
+                  }
+
 		 /* A conflicting open state, return NFS4ERR_OPENMODE
                   * This behavior is implemented to comply with newpynfs's test LOCK4 */
                  res_LOCK4.status = NFS4ERR_OPENMODE ;
