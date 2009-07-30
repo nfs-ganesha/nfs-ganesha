@@ -251,22 +251,23 @@ int nfs4_op_lockt(  struct nfs_argop4 * op ,
        {
         if( pstate_found->state_type == CACHE_INODE_STATE_LOCK )
          {
+
             /* We found a lock, check is they overlap */
             a  = pstate_found->state_data.lock.offset ;
             b  = pstate_found->state_data.lock.offset +  pstate_found->state_data.lock.length ;
 	    a1 = arg_LOCKT4.offset ;
             b1 = arg_LOCKT4.offset + arg_LOCKT4.length ;
 
-	    /* Locks overlap is a <= a1 <= b or a <= b1 <= b */
+	    /* Locks overlap is a <= a1 < b or a < b1 <= b */
             overlap = FALSE ;
             if( a <= a1 )
              {
-                if( a1 <= b )
+                if( a1 < b )
                   overlap = TRUE ;
              }
             else
              {
-               if( a <= b1 )
+               if( a < b1 )
                 {
                   if( b1 <= b )
                    overlap = TRUE ;
