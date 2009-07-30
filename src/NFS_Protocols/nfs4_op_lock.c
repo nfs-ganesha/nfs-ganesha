@@ -321,16 +321,16 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
 	    a1 = arg_LOCK4.offset ;
             b1 = arg_LOCK4.offset + arg_LOCK4.length ;
 
-            /* Locks overlap is a < a1 < b or a < b1 < b */
+             /* Locks overlap is a <= a1 < b or a < b1 <= b */
             overlap = FALSE ;
             if( a <= a1 )
              {
-                if( a1 <= b )
+                if( a1 < b )
                   overlap = TRUE ;
              }
             else
              {
-               if( a <= b1 )
+               if( a < b1 )
                 {
                   if( b1 <= b )
                    overlap = TRUE ;

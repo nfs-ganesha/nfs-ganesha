@@ -258,7 +258,6 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
            res_WRITE4.status = NFS4ERR_BAD_SEQID ;
            return res_WRITE4.status ;
         }
-#endif
 
       /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
@@ -269,6 +268,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
              return res_WRITE4.status ;
            }
        }
+#endif
    } /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) */
   else
    {
