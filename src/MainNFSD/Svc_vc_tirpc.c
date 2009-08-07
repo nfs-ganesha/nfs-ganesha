@@ -73,8 +73,6 @@
 #include "RW_Lock.h"
 #include <pthread.h>
 
-#define MAX_CONN 32 
-
 pthread_mutex_t   mutex_cond_xprt[FD_SETSIZE] ;
 pthread_cond_t    condvar_xprt[FD_SETSIZE] ;
 int               etat_xprt[FD_SETSIZE] ;
@@ -191,7 +189,7 @@ Svc_vc_create(fd, sendsize, recvsize)
 	xprt->xp_fd = fd;
 
 	slen = sizeof (struct sockaddr_storage);
-        listen( fd, MAX_CONN ) ;
+        listen( fd, SOMAXCONN ) ;
 	if (getsockname(fd, (struct sockaddr *)(void *)&sslocal, &slen) < 0  )
 	{
 		warnx("Svc_vc_create: could not retrieve local addr");

@@ -35,8 +35,6 @@ typedef unsigned int u_int32_t ;
 #include   <errno.h> 
 #include   <pthread.h>
 
-#define MAX_CONN 32 
-
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
@@ -151,7 +149,7 @@ SVCXPRT * Svctcp_create(register int  sock, u_int sendsize, u_int recvsize)
 		(void)bind(sock, (struct sockaddr *)&addr, len);
 	}
 	if ((getsockname(sock, (struct sockaddr *)&addr, (socklen_t *)&len) != 0)  ||
-	    (listen(sock, MAX_CONN) != 0)) {
+	    (listen(sock, SOMAXCONN) != 0)) {
 		perror("svctcp_.c - cannot getsockname or listen");
 		if (madesock)
 		       (void)close(sock);
