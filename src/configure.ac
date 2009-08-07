@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [0.99.57], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [0.99.58], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -286,6 +286,13 @@ AM_CONDITIONAL(USE_FSAL_FUSE,    test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 
+# NFSv4.0 NFSv4.1 switch
+AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
+             NFS4_MINOR="$withval", NFS4_MINOR="0" )
+
+AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
+AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
+
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
 	     MFSL="$withval", MFSL="NONE" )
@@ -492,6 +499,18 @@ case $MFSL in
 	*)
 		AC_MSG_ERROR([This MFSL is not supported yet])
 	
+esac
+
+
+case $NFS4_MINOR in
+	"0")
+		AC_DEFINE([_USE_NFS4_0],1, [Use NFSv4.0] )
+		;;
+	"1")
+		AC_DEFINE([_USE_NFS4_1],1, [Use NFSv4.1] )
+		;;
+	*)
+		AC_MSG_ERROR([This NFSv4 minor version is not supported])
 esac
 
 # MFSL_ASYNC should not be used with HPSS

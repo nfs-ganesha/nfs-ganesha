@@ -239,3 +239,8 @@
 	- open_owner's seqid is to be incremented even if OPEN fails
 	- lock overlapping check was reviewed
 	- no seqid checking when making read/write
+
+0.99.58 - 
+	- Use SOMAXCON in listen
+	- XDR modules now support NFSv4.1 protocol, the rest is to be
+	  implemented
