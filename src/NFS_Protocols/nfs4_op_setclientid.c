@@ -169,8 +169,13 @@ int nfs4_op_setclientid(  struct nfs_argop4 * op ,
   /*DisplayLogLevel( NIV_DEBUG, "SETCLIENTID Verifier = #%s#", str_verifier ) ; */
   DisplayLogLevel( NIV_DEBUG, "SETCLIENTID Callback: cb_program = %u|0x%x, cb_location = { r_addr = %s   r_netid = %s }",
                    arg_SETCLIENTID4.callback.cb_program, arg_SETCLIENTID4.callback.cb_program,
+#ifdef _USE_NFS4_1
+                   arg_SETCLIENTID4.callback.cb_location.na_r_addr, 
+                   arg_SETCLIENTID4.callback.cb_location.na_r_netid ) ;
+#else
                    arg_SETCLIENTID4.callback.cb_location.r_addr, 
                    arg_SETCLIENTID4.callback.cb_location.r_netid ) ;
+#endif
 
   DisplayLogLevel( NIV_DEBUG, "SETCLIENTID callback_ident : %u", arg_SETCLIENTID4.callback_ident ) ;
 
@@ -205,9 +210,13 @@ int nfs4_op_setclientid(  struct nfs_argop4 * op ,
                                      clientid, nfs_clientid.client_name ) ;
 
                     res_SETCLIENTID4.status = NFS4ERR_CLID_INUSE ;
+#ifdef _USE_NFS4_1
+                    res_SETCLIENTID4.SETCLIENTID4res_u.client_using.na_r_netid = nfs_clientid.client_r_netid ;
+                    res_SETCLIENTID4.SETCLIENTID4res_u.client_using.na_r_addr = nfs_clientid.client_r_addr ;
+#else
                     res_SETCLIENTID4.SETCLIENTID4res_u.client_using.r_netid = nfs_clientid.client_r_netid ;
                     res_SETCLIENTID4.SETCLIENTID4res_u.client_using.r_addr = nfs_clientid.client_r_addr ;
-
+#endif
                     return res_SETCLIENTID4.status ;
                   }
                  else
@@ -228,8 +237,13 @@ int nfs4_op_setclientid(  struct nfs_argop4 * op ,
                        /* Update the record, but set it as REBOOTED */
                        strncpy(  nfs_clientid.client_name,  arg_SETCLIENTID4.client.id.id_val, arg_SETCLIENTID4.client.id.id_len) ;
                        nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0' ;
+#ifdef _USE_NFS4_1
+                       strncpy( nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.na_r_addr, MAXNAMLEN ) ;
+                       strncpy( nfs_clientid.client_r_netid, arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN ) ;
+#else
                        strncpy( nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.r_addr, MAXNAMLEN ) ;
                        strncpy( nfs_clientid.client_r_netid, arg_SETCLIENTID4.callback.cb_location.r_netid, MAXNAMLEN ) ;
+#endif
                        strncpy( nfs_clientid.incoming_verifier, arg_SETCLIENTID4.client.verifier, NFS4_VERIFIER_SIZE ) ;
                        snprintf( nfs_clientid.verifier, NFS4_VERIFIER_SIZE, "%u", (unsigned int)ServerBootTime ) ;
                        nfs_clientid.confirmed  = REBOOTED_CLIENT_ID ;
@@ -282,8 +296,13 @@ int nfs4_op_setclientid(  struct nfs_argop4 * op ,
        /* Build the client record */
        strncpy(  nfs_clientid.client_name,  arg_SETCLIENTID4.client.id.id_val, arg_SETCLIENTID4.client.id.id_len) ;
        nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0' ;
+#ifdef _USE_NFS4_1
+       strncpy( nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.na_r_addr, MAXNAMLEN ) ;
+       strncpy( nfs_clientid.client_r_netid, arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN ) ;
+#else
        strncpy( nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.r_addr, MAXNAMLEN ) ;
        strncpy( nfs_clientid.client_r_netid, arg_SETCLIENTID4.callback.cb_location.r_netid, MAXNAMLEN ) ;
+#endif
        strncpy( nfs_clientid.incoming_verifier, arg_SETCLIENTID4.client.verifier, NFS4_VERIFIER_SIZE ) ;
        snprintf( nfs_clientid.verifier, NFS4_VERIFIER_SIZE, "%u", (unsigned int)ServerBootTime ) ;
        nfs_clientid.confirmed  = UNCONFIRMED_CLIENT_ID ;
