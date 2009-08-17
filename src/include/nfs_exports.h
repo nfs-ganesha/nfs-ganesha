@@ -339,6 +339,7 @@ typedef struct compoud_data
   nfs_fh4                    savedFH ;                /**< Saved filehandle                                              */
   nfs_fh4                    publicFH ;               /**< Public filehandle                                             */
   nfs_fh4                    mounted_on_FH ;          /**< File handle to "mounted on" File System                       */
+  unsigned int               minorversion  ;          /**< NFSv4 minor version                                           */
   cache_entry_t            * current_entry ;          /**< cache entry related to current filehandle                     */
   cache_entry_t            * saved_entry ;            /**< cache entry related to saved filehandle                       */
   cache_inode_file_type_t    current_filetype ;       /**< File type associated with the current filehandle and inode    */
