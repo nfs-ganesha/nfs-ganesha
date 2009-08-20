@@ -98,6 +98,14 @@ libnfsproto_la_SOURCES = mnt_Null.c                       \
                          ../include/nfs_tools.h           \
                          ../include/nfs_file_handle.h
 
+if USE_NFS4_1
+libnfsproto_la_SOURCES += nfs41_op_exchange_id.c     \
+                          nfs41_op_create_session.c  \
+                          nfs41_op_lock.c            \
+                          nfs41_op_lockt.c           \
+                          nfs41_op_locku.c           \
+                          nfs41_op_sequence.c
+endif
 
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c

@@ -673,6 +673,33 @@ int nfs4_op_illegal(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments
                       compound_data_t * data,          /* [IN] current data for the compound request */
                       struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
 
+#ifdef _USE_NFS4_1
+int nfs41_op_exchange_id(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                           compound_data_t * data,          /* [IN] current data for the compound request */
+                           struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
+int nfs41_op_create_session(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                              compound_data_t * data,          /* [IN] current data for the compound request */
+                              struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
+int nfs41_op_lock(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                    compound_data_t * data,          /* [IN] current data for the compound request */
+                    struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
+int nfs41_op_lockt(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                     compound_data_t * data,          /* [IN] current data for the compound request */
+                     struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
+int nfs41_op_locku(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                     compound_data_t * data,          /* [IN] current data for the compound request */
+                     struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
+int nfs41_op_sequence(  struct nfs_argop4 * op ,      /* [IN] NFS4 OP arguments */
+                        compound_data_t   * data,     /* [IN] current data for the compound request */
+                        struct nfs_resop4 * resp) ;   /* [OUT] NFS4 OP results */
+
+#endif /* _USE_NFS4_1 */
+
 /* Available operations on pseudo fs */
 int nfs4_op_getattr_pseudo(  struct nfs_argop4 * op ,   
                              compound_data_t   * data,
@@ -905,7 +932,7 @@ void nfs4_op_nverify_Free( NVERIFY4res * resp ) ;
 void nfs4_op_open_Free( OPEN4res * resp ) ;
 void nfs4_op_open_confirm_Free( OPEN_CONFIRM4res * resp ) ;
 void nfs4_op_open_downgrade_Free( OPEN_DOWNGRADE4res * resp ) ;
-//void nfs4_op_openattr_FREE( OPENATTR4res * resp ) ; ????
+void nfs4_op_openattr_Free( OPENATTR4res * resp ) ; 
 void nfs4_op_openattr_Free( OPENATTR4res * resp ) ;
 void nfs4_op_putfh_Free( PUTFH4res * resp ) ;
 void nfs4_op_putpubfh_Free( PUTPUBFH4res * resp ) ;
@@ -925,6 +952,14 @@ void nfs4_op_setclientid_Free( SETCLIENTID4res * resp ) ;
 void nfs4_op_setclientid_confirm_Free( SETCLIENTID_CONFIRM4res * resp ) ;
 void nfs4_op_verify_Free( VERIFY4res * resp ) ;
 void nfs4_op_write_Free( WRITE4res * resp ) ;
+
+#ifdef _USE_NFS4_1
+void nfs41_op_exchange_id_Free( EXCHANGE_ID4res * resp ) ;
+void nfs41_op_create_session_Free( SETCLIENTID_CONFIRM4res * resp ) ;
+void nfs41_op_lock_Free( LOCK4res * resp ) ;
+void nfs41_op_lockt_Free( LOCKT4res * resp ) ;
+void nfs41_op_locku_Free( LOCKU4res * resp ) ;
+#endif /* _USE_NFS4_1 */
 
 void compound_data_Free( compound_data_t * data ) ;
 
