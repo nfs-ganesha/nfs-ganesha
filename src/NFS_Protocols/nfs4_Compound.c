@@ -187,6 +187,8 @@ static const nfs4_op_desc_t optab4v0[] =
     {"OP_ILLEGAL",             NFS4_OP_ILLEGAL,             nfs4_op_illegal		}
 }; 
 
+
+#ifdef _USE_NFS4_1
 static const nfs4_op_desc_t optab4v1[] = 
 {
     {"OP_ACCESS",               NFS4_OP_ACCESS,               nfs4_op_access 		  },
@@ -198,9 +200,9 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_GETATTR",              NFS4_OP_GETATTR,              nfs4_op_getattr		  },
     {"OP_GETFH",                NFS4_OP_GETFH,                nfs4_op_getfh		  }, 
     {"OP_LINK",                 NFS4_OP_LINK,                 nfs4_op_link		  },
-    {"OP_LOCK",                 NFS4_OP_LOCK,                 nfs4_op_lock		  },
-    {"OP_LOCKT",                NFS4_OP_LOCKT,                nfs4_op_lockt		  },
-    {"OP_LOCKU",                NFS4_OP_LOCKU,                nfs4_op_locku		  },
+    {"OP_LOCK",                 NFS4_OP_LOCK,                 nfs41_op_lock		  },
+    {"OP_LOCKT",                NFS4_OP_LOCKT,                nfs41_op_lockt		  },
+    {"OP_LOCKU",                NFS4_OP_LOCKU,                nfs41_op_locku		  },
     {"OP_LOOKUP",               NFS4_OP_LOOKUP,               nfs4_op_lookup		  },
     {"OP_LOOKUPP",              NFS4_OP_LOOKUPP,              nfs4_op_lookupp		  },
     {"OP_NVERIFY",              NFS4_OP_NVERIFY,              nfs4_op_nverify		  },
@@ -228,8 +230,8 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_RELEASE_LOCKOWNER",    NFS4_OP_RELEASE_LOCKOWNER,    nfs4_op_release_lockowner   },
     {"OP_BACKCHANNEL_CTL",      NFS4_OP_BACKCHANNEL_CTL,      nfs4_op_illegal             },  /* tbd */
     {"OP_BIND_CONN_TO_SESSION", NFS4_OP_BIND_CONN_TO_SESSION, nfs4_op_illegal             },  /* tbd */
-    {"OP_EXCHANGE_ID",          NFS4_OP_EXCHANGE_ID,          nfs4_op_illegal             },  /* tbd */
-    {"OP_CREATE_SESSION",       NFS4_OP_CREATE_SESSION,       nfs4_op_illegal             },  /* tbd */
+    {"OP_EXCHANGE_ID",          NFS4_OP_EXCHANGE_ID,          nfs41_op_exchange_id        },  /* tbd */
+    {"OP_CREATE_SESSION",       NFS4_OP_CREATE_SESSION,       nfs41_op_create_session     },  /* tbd */
     {"OP_DESTROY_SESSION",      NFS4_OP_DESTROY_SESSION,      nfs4_op_illegal             },  /* tbd */
     {"OP_FREE_STATEID",         NFS4_OP_FREE_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_GET_DIR_DELEGATION",   NFS4_OP_GET_DIR_DELEGATION,   nfs4_op_illegal             },  /* tbd */
@@ -239,7 +241,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_LAYOUTGET",            NFS4_OP_LAYOUTGET,            nfs4_op_illegal             },  /* tbd */
     {"OP_LAYOUTRETURN",         NFS4_OP_LAYOUTRETURN,         nfs4_op_illegal             },  /* tbd */
     {"OP_SECINFO_NO_NAME",      NFS4_OP_SECINFO_NO_NAME,      nfs4_op_illegal             },  /* tbd */
-    {"OP_SEQUENCE",             NFS4_OP_SEQUENCE,             nfs4_op_illegal             },  /* tbd */
+    {"OP_SEQUENCE",             NFS4_OP_SEQUENCE,             nfs41_op_sequence           },  /* tbd */
     {"OP_SET_SSV",              NFS4_OP_SET_SSV,              nfs4_op_illegal             },  /* tbd */
     {"OP_TEST_STATEID",         NFS4_OP_TEST_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_WANT_DELEGATION",      NFS4_OP_WANT_DELEGATION,      nfs4_op_illegal             },  /* tbd */
@@ -247,6 +249,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_RECLAIM_COMPLETE",     NFS4_OP_RECLAIM_COMPLETE,     nfs4_op_illegal             },  /* tbd */
     {"OP_ILLEGAL",              NFS4_OP_ILLEGAL,              nfs4_op_illegal		  }
 }; 
+#endif /* _USE_NFS4_1 */
 
 /**
  * nfs4_COMPOUND: The NFS PROC4 COMPOUND
@@ -615,10 +618,21 @@ void nfs4_Compound_Free( nfs_res_t * pres)
           nfs4_op_release_lockowner_Free( &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.oprelease_lockowner ) ) ;
           break ;
 
+#ifdef _USE_NFS4_1
+        case NFS4_OP_EXCHANGE_ID: 
+	  nfs41_op_exchange_id_Free(  &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opexchange_id ) ) ;
+          break ;
+	    
+        case NFS4_OP_CREATE_SESSION:
+	  nfs41_op_create_session_Free(  &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opcreate_session ) ) ;
+          break ;
+
+        case NFS4_OP_SEQUENCE: 
+	  nfs41_op_sequence_Free(  &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opsequence ) ) ;
+          break ;
+
         case NFS4_OP_BACKCHANNEL_CTL: 
         case NFS4_OP_BIND_CONN_TO_SESSION: 
-        case NFS4_OP_EXCHANGE_ID: 
-        case NFS4_OP_CREATE_SESSION:
         case NFS4_OP_DESTROY_SESSION:
         case NFS4_OP_FREE_STATEID:
         case NFS4_OP_GET_DIR_DELEGATION:
@@ -628,13 +642,12 @@ void nfs4_Compound_Free( nfs_res_t * pres)
         case NFS4_OP_LAYOUTGET: 
         case NFS4_OP_LAYOUTRETURN: 
         case NFS4_OP_SECINFO_NO_NAME: 
-        case NFS4_OP_SEQUENCE: 
         case NFS4_OP_SET_SSV: 
         case NFS4_OP_TEST_STATEID:
         case NFS4_OP_WANT_DELEGATION: 
         case NFS4_OP_DESTROY_CLIENTID:
         case NFS4_OP_RECLAIM_COMPLETE:
-
+#endif
           
         case NFS4_OP_ILLEGAL:
           nfs4_op_illegal_Free( &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opillegal ) ) ;
