@@ -74,13 +74,13 @@
  */
 
 /**
- * \file    nfs4_op_open.c
+ * \file    nfs41_op_open.c
  * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:51 $
  * \version $Revision: 1.18 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_open.c : Routines used for managing the NFS4 COMPOUND functions.
+ * nfs41_op_open.c : Routines used for managing the NFS4 COMPOUND functions.
  *
  *
  */
@@ -129,7 +129,7 @@
 extern nfs_parameter_t nfs_param ;
 
 /**
- * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
+ * nfs41_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
  * 
  * NFS4_OP_OPEN, opens and eventually creates a regular file.
  *
@@ -146,7 +146,7 @@ extern time_t ServerBootTime ;
 #define arg_OPEN4 op->nfs_argop4_u.opopen
 #define res_OPEN4 resp->nfs_resop4_u.opopen
 
-int nfs4_op_open(  struct nfs_argop4 * op ,   
+int nfs41_op_open(  struct nfs_argop4 * op ,   
                    compound_data_t   * data,
                    struct nfs_resop4 * resp)
 {
@@ -1249,7 +1249,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
     /* regular exit */
     res_OPEN4.status = NFS4_OK ; 
     return res_OPEN4.status;
-} /* nfs4_op_open */
+} /* nfs41_op_open */
 
     
 /**
@@ -1262,10 +1262,10 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_open_Free( OPEN4res * resp )
+void nfs41_op_open_Free( OPEN4res * resp )
 {
   Mem_Free( (char *)resp->OPEN4res_u.resok4.attrset.bitmap4_val ) ;
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0 ;
 
   return ;
-} /* nfs4_op_open_Free */
+} /* nfs41_op_open_Free */

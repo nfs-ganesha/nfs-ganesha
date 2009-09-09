@@ -174,6 +174,7 @@
 #define CONF_LABEL_NFS_VERSION4     "NFSv4"
 #define CONF_LABEL_CLIENT_ID        "NFSv4_ClientId_Cache"
 #define CONF_LABEL_STATE_ID         "NFSv4_StateId_Cache"
+#define CONF_LABEL_SESSION_ID       "NFSv4_Session_Cache"
 #define CONF_LABEL_UID_MAPPER       "UidMapper_Cache"
 #define CONF_LABEL_GID_MAPPER       "GidMapper_Cache"
 #define CONF_LABEL_UID_MAPPER_TABLE "Users"
@@ -340,6 +341,13 @@ typedef struct nfs_state_id_param__
   hash_parameter_t hash_param ;
 } nfs_state_id_parameter_t ;
 
+#ifdef _USE_NFS4_1
+typedef struct nfs_session_id_param__
+{
+  hash_parameter_t hash_param ;
+} nfs_session_id_parameter_t ;
+#endif
+
 typedef struct nfs_open_owner_param__
 {
   hash_parameter_t hash_param ;
@@ -379,6 +387,9 @@ typedef struct nfs_param__
   nfs_version4_parameter_t          nfsv4_param ;
   nfs_client_id_parameter_t         client_id_param ;
   nfs_state_id_parameter_t          state_id_param ;
+#ifdef _USE_NFS4_1
+  nfs_session_id_parameter_t        session_id_param ;
+#endif
   nfs_open_owner_parameter_t        open_owner_param ;
   nfs_cache_layers_parameter_t      cache_layers_param ;
   fsal_parameter_t                  fsal_param ;
@@ -434,6 +445,7 @@ typedef struct nfs_request_data__
   struct nfs_request_data__ * next_alloc ;
 } nfs_request_data_t ;
 
+
 typedef struct nfs_client_id__
 {
   char                             client_name[MAXNAMLEN] ;
@@ -449,6 +461,7 @@ typedef struct nfs_client_id__
 #ifdef _USE_NFS4_1
   char                             server_owner[MAXNAMLEN] ;
   char                             server_scope[MAXNAMLEN] ;
+  unsigned int                     nb_session ;
 #endif
   struct nfs_client_id__         * next_alloc ;
 } nfs_client_id_t ;
@@ -530,8 +543,10 @@ int nfs_read_gidmap_conf( config_file_t                 in_config,
                           nfs_idmap_cache_parameter_t * pparam ) ;
 int nfs_read_state_id_conf( config_file_t               in_config,
                               nfs_state_id_parameter_t * pparam ) ;
-
-
+#ifdef _USE_NFS4_1
+int nfs_read_session_id_conf( config_file_t                in_config,
+                              nfs_session_id_parameter_t * pparam ) ;
+#endif
 
 int nfs_export_create_root_entry( exportlist_t *  pexportlist, hash_table_t * ht ) ;
 
@@ -702,6 +717,21 @@ int nfs4_State_Del( char other[12] ) ;
 int nfs4_State_Update( char other[12], cache_inode_state_t * pstate_data ) ;
 void nfs_State_PrintAll( void ) ;
 
+#ifdef _USE_NFS4_1
+int display_session_id_key( hash_buffer_t * pbuff, char * str ) ;
+int display_session_id_val( hash_buffer_t * pbuff, char * str ) ;
+int compare_session_id( hash_buffer_t * buff1, hash_buffer_t * buff2 ) ;
+unsigned long session_id_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
+unsigned long session_id_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
+int nfs41_Init_session_id( nfs_session_id_parameter_t  param ) ;
+int nfs41_Session_Set( char sessionid[NFS4_SESSIONID_SIZE], nfs41_session_t * psession_data ) ;
+int nfs41_Session_Get( char sessionid[NFS4_SESSIONID_SIZE], nfs41_session_t * psession_data ) ;
+int nfs41_Session_Get_Pointer( char sessionid[NFS4_SESSIONID_SIZE], nfs41_session_t * * psession_data ) ;
+int nfs41_Session_Update( char sessionid[NFS4_SESSIONID_SIZE], nfs41_session_t * psession_data ) ;
+int nfs41_Session_Del( char sessionid[NFS4_SESSIONID_SIZE] ) ;
+int nfs41_Build_sessionid( clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE] ) ;
+void nfs41_Session_PrintAll( void ) ;
+#endif
 
 int nfs_Init_ip_name( nfs_ip_name_parameter_t  param ) ;
 hash_table_t * nfs_Init_ip_stats( nfs_ip_stats_parameter_t  param ) ;

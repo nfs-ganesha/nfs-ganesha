@@ -126,7 +126,7 @@
 
 /**
  *
- * nfs41_op_savefh: the NFS4_OP_SEQUENCE operation
+ * nfs41_op_sequence: the NFS4_OP_SEQUENCE operation
  *
  * This functions handles the NFS4_OP_SEQUENCE operation in NFSv4. This function can be called only from nfs4_Compound.
  *
@@ -140,23 +140,47 @@
  * @see nfs4_Compound
  *
  */ 
- 
-
 int nfs41_op_sequence(  struct nfs_argop4 * op ,   
                         compound_data_t   * data,
                         struct nfs_resop4 * resp)
 {
-  int error ;
-#ifdef _DEBUG_NFS_V4
-  int i ;
-#endif
-
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
- 
+
+   nfs41_session_t * psession ;
+  
+   resp->resop = NFS4_OP_SEQUENCE ;
+   res_SEQUENCE4.sr_status = NFS4_OK ;
+
+   if( !nfs41_Session_Get_Pointer( arg_SEQUENCE4.sa_sessionid, &psession ) )
+    {
+        res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION ;
+        return res_SEQUENCE4.sr_status ;
+    } 
+
+  P( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
+  if( psession->slots[arg_SEQUENCE4.sa_slotid].sequence +1 != arg_SEQUENCE4.sa_sequenceid )
+    {
+        V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
+        res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED ;
+        return res_SEQUENCE4.sr_status ;
+    } 
+
+  /* Update the sequence id within the slot */
+  psession->slots[arg_SEQUENCE4.sa_slotid].sequence += 1 ;
+
+  memcpy( (char *)res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sessionid, (char *)arg_SEQUENCE4.sa_sessionid, NFS4_SESSIONID_SIZE ) ;
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sequenceid = psession->slots[arg_SEQUENCE4.sa_slotid].sequence ;
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_slotid = arg_SEQUENCE4.sa_slotid ;
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_highest_slotid = NFS41_NB_SLOTS -1 ;
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4.sa_slotid ; /* Maybe not the best choice */
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0 ; /* What is to be set here ? */ 
+
+  V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
+
   res_SEQUENCE4.sr_status = NFS4_OK ; 
-  return NFS4_OK ;
-} /* nfs4_op_savefh */
+  return res_SEQUENCE4.sr_status ;
+} /* nfs41_op_sequence */
 
 
 /**
@@ -173,4 +197,4 @@ void nfs41_op_sequence_Free( SEQUENCE4res * resp )
 {
   /* Nothing to be done */
   return ;
-} /* nfs4_op_savefh_Free */
+} /* nfs4_op_sequence_Free */

@@ -266,6 +266,21 @@ int cache_inode_client_init( cache_inode_client_t * pclient,
       return 1 ;
     }
 
+#ifdef _USE_NFS4_1
+  STUFF_PREALLOC( pclient->pool_session, 
+                  pclient->nb_pre_state_v4,
+                  nfs41_session_t,
+                  next_alloc ) ;
+ 
+  if( pclient->pool_session == NULL )
+    {
+      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client session pool" ) ;
+      return 1 ;
+    }
+	
+#endif /* _USE_NFS4_1 */
+
+
 #endif
 
   
