@@ -275,7 +275,7 @@ int nfs41_Session_Set( char sessionid[NFS4_SESSIONID_SIZE], nfs41_session_t * ps
   hash_buffer_t buffkey ;
   hash_buffer_t buffval ;
 
-#ifndef _DEBUG_SESSIONS
+#ifdef _DEBUG_SESSIONS
   int i = 0 ;
 
   printf( "         -----  SetSSession : " ) ;
@@ -360,7 +360,7 @@ int nfs41_Session_Get_Pointer( char sessionid[NFS4_SESSIONID_SIZE], nfs41_sessio
    hash_buffer_t buffkey ;
    hash_buffer_t buffval ;
 
-#ifndef _DEBUG_SESSIONS
+#ifdef _DEBUG_SESSIONS
    int i = 0 ;
 
    printf( "         -----  Get_PointerSession : " ) ;
