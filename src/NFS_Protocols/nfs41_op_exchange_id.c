@@ -165,7 +165,7 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
 
   DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID Client id len = %u",arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len ) ;
   DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID Client name = #%s#", str_client ) ;
-  DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID Verifier = #%s#", str_verifier ) ; 
+  //DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID Verifier = #%s#", str_verifier ) ; 
 
   /* There was no pb, returns the clientid */
   resp->resop = NFS4_OP_EXCHANGE_ID ;
@@ -256,9 +256,10 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
        strncpy( nfs_clientid.incoming_verifier, arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE ) ;
        snprintf( nfs_clientid.verifier, NFS4_VERIFIER_SIZE, "%u", (unsigned int)ServerBootTime ) ;
        nfs_clientid.confirmed  = UNCONFIRMED_CLIENT_ID ;
-       nfs_clientid.cb_program = 0 ; /* to be set in the session */
+       nfs_clientid.cb_program = 0 ; /* to be set at create_session time */
        nfs_clientid.clientid   = clientid ;
        nfs_clientid.last_renew = 0 ;
+       nfs_clientid.nb_session = 0 ;
        nfs_clientid.credential = data->credential ;
 
        if( gethostname( nfs_clientid.server_owner, MAXNAMLEN ) == -1 )

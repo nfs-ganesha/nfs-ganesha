@@ -101,10 +101,12 @@ libnfsproto_la_SOURCES = mnt_Null.c                       \
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c     \
                           nfs41_op_create_session.c  \
+                          nfs41_op_open.c            \
                           nfs41_op_lock.c            \
                           nfs41_op_lockt.c           \
                           nfs41_op_locku.c           \
-                          nfs41_op_sequence.c
+                          nfs41_op_sequence.c        \
+                          nfs41_op_set_ssv.c
 endif
 
 
