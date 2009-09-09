@@ -233,7 +233,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_BIND_CONN_TO_SESSION", NFS4_OP_BIND_CONN_TO_SESSION, nfs4_op_illegal             },  /* tbd */
     {"OP_EXCHANGE_ID",          NFS4_OP_EXCHANGE_ID,          nfs41_op_exchange_id        },  
     {"OP_CREATE_SESSION",       NFS4_OP_CREATE_SESSION,       nfs41_op_create_session     },  
-    {"OP_DESTROY_SESSION",      NFS4_OP_DESTROY_SESSION,      nfs4_op_illegal             },  /* tbd */
+    {"OP_DESTROY_SESSION",      NFS4_OP_DESTROY_SESSION,      nfs41_op_destroy_session    },  
     {"OP_FREE_STATEID",         NFS4_OP_FREE_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_GET_DIR_DELEGATION",   NFS4_OP_GET_DIR_DELEGATION,   nfs4_op_illegal             },  /* tbd */
     {"OP_GETDEVICEINFO",        NFS4_OP_GETDEVICEINFO,        nfs4_op_illegal             },  /* tbd */
@@ -243,7 +243,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_LAYOUTRETURN",         NFS4_OP_LAYOUTRETURN,         nfs4_op_illegal             },  /* tbd */
     {"OP_SECINFO_NO_NAME",      NFS4_OP_SECINFO_NO_NAME,      nfs4_op_illegal             },  /* tbd */
     {"OP_SEQUENCE",             NFS4_OP_SEQUENCE,             nfs41_op_sequence           },  
-    {"OP_SET_SSV",              NFS4_OP_SET_SSV,              nfs4_op_illegal             },  /* tbd */
+    {"OP_SET_SSV",              NFS4_OP_SET_SSV,              nfs41_op_set_ssv            },  
     {"OP_TEST_STATEID",         NFS4_OP_TEST_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_WANT_DELEGATION",      NFS4_OP_WANT_DELEGATION,      nfs4_op_illegal             },  /* tbd */
     {"OP_DESTROY_CLIENTID",     NFS4_OP_DESTROY_CLIENTID,     nfs4_op_illegal             },  /* tbd */
