@@ -446,6 +446,18 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->state_id_param.hash_param.key_to_str       = display_state_id_key ;
   p_nfs_param->state_id_param.hash_param.val_to_str       = display_state_id_val ;
 
+#ifdef _USE_NFS4_1
+  /* NFSv4 State Id hash */
+  p_nfs_param->session_id_param.hash_param.index_size       = PRIME_STATE_ID ;
+  p_nfs_param->session_id_param.hash_param.alphabet_length  = 10 ; /* ipaddr is a numerical decimal value */
+  p_nfs_param->session_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID ;
+  p_nfs_param->session_id_param.hash_param.hash_func_key    = session_id_value_hash_func ;
+  p_nfs_param->session_id_param.hash_param.hash_func_rbt    = session_id_rbt_hash_func ;
+  p_nfs_param->session_id_param.hash_param.compare_key      = compare_session_id ; 
+  p_nfs_param->session_id_param.hash_param.key_to_str       = display_session_id_key ;
+  p_nfs_param->session_id_param.hash_param.val_to_str       = display_session_id_val ;
+#endif
+
   /* NFSv4 Open Owner hash */
   p_nfs_param->open_owner_param.hash_param.index_size       = PRIME_STATE_ID ;
   p_nfs_param->open_owner_param.hash_param.alphabet_length  = 10 ; /* ipaddr is a numerical decimal value */
@@ -783,12 +795,29 @@ int nfs_set_param_from_conf( nfs_parameter_t * p_nfs_param,
      {
       /* No such stanza in configuration file */
       if( rc == 1 )
-        DisplayLog("NFS STARTUP: No State id configuration found in config file, using default" ) ;
+        DisplayLog("NFS STARTUP: No state id configuration found in config file, using default" ) ;
       else
-        DisplayLogLevel( NIV_DEBUG,"NFS STARTUP: State id configuration read from config file" ) ;
+        DisplayLogLevel( NIV_DEBUG,"NFS STARTUP: state id configuration read from config file" ) ;
     }
 
- 
+#ifdef _USE_NFS4_1
+  /* Worker paramters: session_id hash table */
+  if( ( rc = nfs_read_session_id_conf( config_struct, &p_nfs_param->session_id_param ) ) < 0 )
+    {
+      DisplayLog("NFS STARTUP: Error while parsing session id configuration" );
+      return -1;
+    }
+  else
+     {
+      /* No such stanza in configuration file */
+      if( rc == 1 )
+        DisplayLog("NFS STARTUP: No session id configuration found in config file, using default" ) ;
+      else
+        DisplayLogLevel( NIV_DEBUG,"NFS STARTUP: session id configuration read from config file" ) ;
+    }
+
+#endif
+
   /* NFS kerberos5 configuration */
   if( ( rc = nfs_read_krb5_conf( config_struct, &p_nfs_param->krb5_param ) ) < 0 )
     {
@@ -1313,7 +1342,6 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
           DisplayLog( "NFS_INIT: Error while initializing worker data #%d", i ) ;
           exit( 1 ) ;
         }
-      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: worker data #%d successfully initialized", i ) ;
       
       /* Set the index (mostly used for debug purpose */
       workers_data[i].index = i ;
@@ -1327,7 +1355,6 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
           DisplayLog( "NFS_INIT: Error %d while initializing IP/stats cache #%d", i ) ;
           exit( 1 ) ;
         }
-      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: IP/stats cache #%d successfully initialized", i ) ;
       workers_data[i].ht_ip_stats = ht_ip_stats[i] ;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -1350,9 +1377,8 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
           exit( 1 ) ;         
         }
 #endif
-                
-      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: worker data #%d successfully initialized", i ) ;
       workers_data[i].request_pool = reqpool ;
+
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -1374,8 +1400,6 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
           exit( 1 ) ; 
         }
 #endif
-              
-      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: duplicate request pool #%d successfully initialized", i ) ;
       workers_data[i].dupreq_pool = dupreq_pool ;
       
 #ifdef _DEBUG_MEMLEAKS
@@ -1403,10 +1427,9 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
         }
 #endif
         
-      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: IP stats cache pool #%d successfully initialized", i ) ;
       workers_data[i].ip_stats_pool = ip_stats_pool ;
 
-      
+      DisplayLogLevel( NIV_DEBUG, "NFS_INIT: worker data #%d successfully initialized", i ) ;
     } /* for i */
 
   /* Set the stats to zero */
@@ -1510,7 +1533,17 @@ static void nfs_Init( const nfs_start_info_t * p_start_info )
       exit( 1 ) ;
     }
   DisplayLogLevel( NIV_EVENT, "NFS_INIT: NFSv4 Open Owner cache successfully initialized" ) ;
-     
+    
+#ifdef _USE_NFS4_1
+  DisplayLogLevel( NIV_DEBUG, "NFS_INIT: Now building NFSv4 Session Id cache" ) ;
+  if( nfs41_Init_session_id( nfs_param.session_id_param ) != 0 ) 
+    {
+      DisplayLog( "NFS_INIT: Error %d while initializing NFSv4 Session Id cache" ) ;
+      exit( 1 ) ;
+    }
+  DisplayLogLevel( NIV_EVENT, "NFS_INIT: NFSv4 Session Id cache successfully initialized" ) ;
+#endif
+
   /* Create the root entries for each exported FS */
   if( rc = nfs_export_create_root_entry( nfs_param.pexportlist, ht ) != TRUE )
     {

@@ -716,7 +716,7 @@ int nfs_read_state_id_conf( config_file_t               in_config,
         {
            fprintf( stderr,
                    "Unknown or unsettable key: %s (item %s)\n",
-                    key_name, CONF_LABEL_CLIENT_ID ) ;
+                    key_name, CONF_LABEL_STATE_ID ) ;
            return -1 ;
         }
     }
@@ -725,6 +725,71 @@ int nfs_read_state_id_conf( config_file_t               in_config,
   return  0 ;
 } /* nfs_state_id_conf */
 
+#ifdef _USE_NFS4_1
+int nfs_read_session_id_conf( config_file_t                in_config,
+                              nfs_session_id_parameter_t * pparam )
+{
+  int     var_max ;
+  int     var_index ;
+  int     err ;
+  char *  key_name ;
+  char *  key_value ;
+  config_item_t   block;
+
+   /* Is the config tree initialized ? */
+  if( in_config == NULL || pparam == NULL )
+    return -1 ;
+
+  /* Get the config BLOCK */
+  if( ( block = config_FindItemByName( in_config, CONF_LABEL_SESSION_ID ) ) == NULL )
+    {
+      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_STATE_ID ) ; */
+      return 1 ;
+    }
+
+  var_max = config_GetNbItems( block );
+
+  for( var_index = 0 ; var_index < var_max ; var_index++ )
+    {
+      config_item_t item;
+    
+      item = config_GetItemByIndex( block, var_index );
+      
+      /* Get key's name */
+      if( ( err = config_GetKeyValue( item,
+                                      &key_name,
+                                      &key_value ) ) != 0 )
+        {
+          fprintf(stderr, "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_SESSION_ID ) ;
+          return  -1 ;
+        }
+
+      if( !strcasecmp( key_name, "Index_Size" ) )
+        {
+          pparam->hash_param.index_size = atoi( key_value ) ;
+        }
+      else if( !strcasecmp( key_name, "Alphabet_Length" ) )
+        {
+          pparam->hash_param.alphabet_length = atoi( key_value ) ;
+        }
+      else if( !strcasecmp( key_name, "Prealloc_Node_Pool_Size" ) )
+        {
+          pparam->hash_param.nb_node_prealloc = atoi( key_value ) ;
+        }
+      else
+        {
+           fprintf( stderr,
+                   "Unknown or unsettable key: %s (item %s)\n",
+                    key_name, CONF_LABEL_SESSION_ID ) ;
+           return -1 ;
+        }
+    }
+
+
+  return  0 ;
+} /* nfs_session_id_conf */
+#endif
 
 /**
  *

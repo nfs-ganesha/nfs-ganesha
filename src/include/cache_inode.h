@@ -116,7 +116,6 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-
 /* Some habits concerning mutex management */
 #ifndef P
 #define P( a ) pthread_mutex_lock( &a ) 
@@ -462,6 +461,31 @@ typedef struct cache_inode_open_owner__
   struct cache_inode_open_owner__ * next ;
 } cache_inode_open_owner_t ;
 
+
+#ifdef _USE_NFS4_1
+
+#define NFS41_SESSION_PER_CLIENT 3 
+#define NFS41_NB_SLOTS           10 
+
+typedef struct nfs41_session_slot__
+{
+  sequenceid4      sequence ;
+  pthread_mutex_t  lock ;
+} nfs41_session_slot_t ;
+
+typedef struct nfs41_session__
+{
+  clientid4                clientid ;
+  uint32_t                 sequence ;
+  uint32_t                 session_flags ;
+  char                     session_id[NFS4_SESSIONID_SIZE] ;
+  channel_attrs4           fore_channel_attrs ;
+  channel_attrs4           back_channel_attrs ;
+  nfs41_session_slot_t     slots[NFS41_NB_SLOTS] ;
+  struct nfs41_session__ * next_alloc ; 
+} nfs41_session_t ;
+#endif 
+
 typedef struct cache_inode_state__
 {
    cache_inode_state_type_t state_type ;
@@ -507,6 +531,9 @@ typedef struct cache_inode_client__
   cache_inode_state_t            * pool_state_v4           ;       /**< Pool for NFSv4 files's states                            */
   cache_inode_open_owner_t       * pool_open_owner         ;       /**< Pool for NFSv4 files's open owner                        */
   cache_inode_open_owner_name_t  * pool_open_owner_name    ;       /**< Pool for NFSv4 files's open_owner                        */
+#ifdef _USE_NFS4_1
+  nfs41_session_t                * pool_session            ;       /**< Pool for NFSv4.1 session                                 */
+#endif
   unsigned int                    nb_prealloc              ;       /**< Size of the preallocated pool                            */
   unsigned int                    nb_pre_dir_data          ;       /**< Number of preallocated pdir data buffers                 */
   unsigned int                    nb_pre_parent            ;       /**< Number of preallocated parent list entries               */

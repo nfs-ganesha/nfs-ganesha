@@ -40,6 +40,10 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/nfs_stat.h              \
                          ../include/stuff_alloc.h
 
+if USE_NFS4_1
+libsupport_la_SOURCES += nfs_session_id.c 
+endif
+
 
 new: clean all 
 

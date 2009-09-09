@@ -74,13 +74,12 @@
  */
 
 /**
- * \file    nfs4_op_create_session.c
+ * \file    nfs41_op_sequence.c
  * \author  $Author: deniel $
- * \date    $Date: 2009/08/19 17:02:52 $
- * \brief   Routines used for managing the NFS4_OP_CREATE_SESSION operation.
+ * \brief   Routines used for managing the NFS4_OP_SEQUENCE operation.
  *
- * nfs4_op_create_session.c :  Routines used for managing the NFS4_OP_CREATE_SESSION operation.
- * 
+ * nfs41_op_sequence.c : Routines used for managing the NFS4_OP_SEQUENCE operation.
+ *
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -121,123 +120,52 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "nfs_file_handle.h"
 
-extern time_t ServerBootTime ;
 
 /**
  *
- * nfs4_op_create_session:  The NFS4_OP_CREATE_SESSION operation.
+ * nfs41_op_set_ssv: the NFS4_OP_SET_SSV operation
  *
- * The NFS4_OP_CREATE_SESSION operation.
+ * This functions handles the NFS4_OP_SET_SSV operation in NFSv4. This function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- *
+ * 
  * @return NFS4_OK if successfull, other values show an error. 
  *
+ * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
  *
- */
-
-int nfs41_op_create_session(  struct nfs_argop4 * op ,    
-                              compound_data_t * data,
-                              struct nfs_resop4 * resp)
+ */ 
+int nfs41_op_set_ssv(  struct nfs_argop4 * op ,   
+                        compound_data_t   * data,
+                        struct nfs_resop4 * resp)
 {
-  nfs_client_id_t       nfs_clientid ;
-  nfs41_session_t     * pnfs41_session = NULL ;
-  clientid4             clientid = 0 ;
-  nfs_worker_data_t   * pworker = NULL ;
+#define arg_SET_SSV4  op->nfs_argop4_u.opset_ssv
+#define res_SET_SSV4  resp->nfs_resop4_u.opset_ssv
 
-  pworker = (nfs_worker_data_t *)data->pclient->pworker ;
+  resp->resop = NFS4_OP_SET_SSV ;
+  res_SET_SSV4.ssr_status = NFS4_OK ;
 
-
-#define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
-#define res_CREATE_SESSION4 resp->nfs_resop4_u.opcreate_session
-
-  resp->resop = NFS4_OP_CREATE_SESSION ;
-  res_CREATE_SESSION4.csr_status = NFS4_OK ;
-  clientid =  arg_CREATE_SESSION4.csa_clientid ;
-
-  DisplayLogLevel( NIV_DEBUG, "CREATE_SESSION clientid = %llx", clientid ) ;
-
-  
-  /* Does this id already exists ? */
-  if( nfs_client_id_get( clientid , &nfs_clientid ) != CLIENT_ID_SUCCESS )
-    {
-       /* The client id does not exist: stale client id */
-       res_CREATE_SESSION4.csr_status = NFS4ERR_STALE_CLIENTID ;
-       return res_CREATE_SESSION4.csr_status ;
-    }
-
-  nfs_clientid.confirmed = CONFIRMED_CLIENT_ID ;
-  nfs_clientid.cb_program = arg_CREATE_SESSION4.csa_cb_program ;
-  /** @todo: BUGAZOMEU Gerer les parametres de secu */
-
-  /* Record session related information at the right place */
-  GET_PREALLOC( pnfs41_session,
-                data->pclient->pool_session,
-                data->pclient->nb_pre_state_v4,
-		nfs41_session_t,
- 		next_alloc ) ;
-
-  if( pnfs41_session == NULL )
-   {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ;
-       return res_CREATE_SESSION4.csr_status ;
-   }
-
-  memset( (char *)pnfs41_session, 0, sizeof( nfs41_session_t ) ) ;
-  pnfs41_session->clientid = clientid ;
-  pnfs41_session->sequence = 1 ;
-  pnfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN ;
-  pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs ;
-  pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs ;
-
-  if( nfs41_Build_sessionid( &clientid, pnfs41_session->session_id ) != 1 )
-    {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ;
-       return res_CREATE_SESSION4.csr_status ;
-    }
-
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence = 1 ;
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN ;
-
-  /* return the input for wantinf of something better (will change in later versions) */
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs ; 
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs ; 
- 
-  memcpy( res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid, pnfs41_session->session_id, NFS4_SESSIONID_SIZE ) ;
-
-  if( !nfs41_Session_Set(  pnfs41_session->session_id, pnfs41_session ) )
-    {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ; /* Maybe a more precise status would be better */
-       return res_CREATE_SESSION4.csr_status ;
-    }
-
-  nfs41_Session_PrintAll() ;
-
-  /* Successful exit */
-  res_CREATE_SESSION4.csr_status = NFS4_OK ;
-  return res_CREATE_SESSION4.csr_status ;
-} /* nfs41_op_create_session */
-
+  return res_SET_SSV4.ssr_status ; /* I know this is pretty dirty... But this is an early implementation... */
+} /* nfs41_op_set_ssv */
 
 
 /**
- * nfs41_op_create_session_Free: frees what was allocared to handle nfs41_op_create_session.
+ * nfs41_op_set_ssv_Free: frees what was allocared to handle nfs41_op_set_ssv.
  * 
- * Frees what was allocared to handle nfs41_op_create_session.
+ * Frees what was allocared to handle nfs41_op_set_ssv.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
  * 
- */ 
-void nfs41_op_create_session_Free( CREATE_SESSION4res * resp )
+ */
+void nfs41_op_set_ssv_Free( SET_SSV4res * resp )
 {
-  /* To be completed */
+  /* Nothing to be done */
   return ;
-} /* nfs41_op_create_session_Free */
+} /* nfs4_op_set_ssv_Free */
