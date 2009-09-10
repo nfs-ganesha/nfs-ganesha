@@ -706,9 +706,17 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,      /* [IN] NFS4 OP arguments 
                         compound_data_t   * data,     /* [IN] current data for the compound request */
                         struct nfs_resop4 * resp) ;   /* [OUT] NFS4 OP results */
 
+int nfs41_op_read(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                    compound_data_t * data,          /* [IN] current data for the compound request */
+                    struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
 int nfs41_op_set_ssv(  struct nfs_argop4 * op ,      /* [IN] NFS4 OP arguments */
                        compound_data_t   * data,     /* [IN] current data for the compound request */
                        struct nfs_resop4 * resp) ;   /* [OUT] NFS4 OP results */
+
+int nfs41_op_write(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                     compound_data_t * data,          /* [IN] current data for the compound request */
+                     struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
 
 #endif /* _USE_NFS4_1 */
 
@@ -972,8 +980,10 @@ void nfs41_op_destroy_session_Free( DESTROY_SESSION4res * resp ) ;
 void nfs41_op_lock_Free( LOCK4res * resp ) ;
 void nfs41_op_lockt_Free( LOCKT4res * resp ) ;
 void nfs41_op_locku_Free( LOCKU4res * resp ) ;
+void nfs41_op_read_Free( READ4res * resp ) ;
 void nfs41_op_sequence_Free( SEQUENCE4res * resp ) ;
 void nfs41_op_set_ssv_Free( SET_SSV4res * resp ) ;
+void nfs41_op_write_Free( WRITE4res * resp ) ;
 #endif /* _USE_NFS4_1 */
 
 void compound_data_Free( compound_data_t * data ) ;
