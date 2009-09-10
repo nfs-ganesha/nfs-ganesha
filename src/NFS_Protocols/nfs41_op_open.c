@@ -331,19 +331,6 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
 #ifdef _DEBUG_NFS_V4
           DisplayLogLevel( NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid ) ;
 #endif
-          if( nfs_client_id_get( arg_OPEN4.owner.clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
-            {
-              res_OPEN4.status = NFS4ERR_STALE_CLIENTID ;
-              return res_OPEN4.status ;
-            }
-
-          /* The client id should be confirmed */
-          if( nfs_clientid.confirmed != CONFIRMED_CLIENT_ID )
-            {
-              res_OPEN4.status = NFS4ERR_STALE_CLIENTID ;
-              return res_OPEN4.status ;
-            }
-
           /* Is this open_owner known ? */
           if( !nfs_convert_open_owner( &arg_OPEN4.owner, &owner_name ) )
             {
@@ -601,17 +588,7 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
 
                            /* No delegation */
                           res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
-
-                          /* If server use OPEN_CONFIRM4, set the correct flag */
-                          P( powner->lock ) ;
-                          if( powner->confirmed == FALSE )
-                           {
-                             if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-                                res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-			    else
-                                res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
-                           }
-                          V( powner->lock ) ;
+                          res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
 
 #ifdef _DEBUG_STATES
 			   nfs_State_PrintAll(  ) ;
@@ -697,31 +674,13 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
     					    res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pstate_found_iterate->seqid ;
 					    memcpy( res_OPEN4.OPEN4res_u.resok4.stateid.other, pstate_found_iterate->stateid_other, 12 ) ;
    
-					    // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
-    			    		    //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
-				            //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
-    			                    // {
-        				    //		res_OPEN4.status = NFS4ERR_SERVERFAULT ;
-        				    //		return res_OPEN4.status ;
-      			     		    //	     }
-    
 					    memset( &(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0, sizeof( changeid4 ) ) ;
     					    res_OPEN4.OPEN4res_u.resok4.cinfo.after  = (changeid4)pentry_parent->internal_md.mod_time ;
     					    res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE ;
     
     					    /* No delegation */
     					    res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
-
-					    /* If server use OPEN_CONFIRM4, set the correct flag */
-                                            P( powner->lock ) ;
-    					    if( powner->confirmed == FALSE )
-                                             {
-    					       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-        				  	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-    					       else
-        				 	  res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
-                                             }
-                                            V( powner->lock ) ;
+        				    res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
 
 					    /* Now produce the filehandle to this file */
 				            if( ( pnewfsal_handle = cache_inode_get_fsal_handle( pentry_lookup, &cache_status ) ) == NULL )
@@ -1233,14 +1192,7 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
     /* No delegation */
     res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE ;
 
-    /* If server use OPEN_CONFIRM4, set the correct flag */
-    if( powner->confirmed == FALSE )
-     {
-       if( nfs_param.nfsv4_param.use_open_confirm == TRUE )
-          res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX ;
-       else
-          res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
-     }
+    res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX ;
    
 #ifdef _DEBUG_STATES
     nfs_State_PrintAll(  ) ;
