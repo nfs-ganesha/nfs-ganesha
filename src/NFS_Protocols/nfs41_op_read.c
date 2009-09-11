@@ -222,35 +222,6 @@ int nfs41_op_read(  struct nfs_argop4 * op ,
          pstate_found = NULL ;
       }
 
-    /* Check for correctness of the provided stateid */
-    else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK )
-     {
-
-        /* Get the related state */
-        if( cache_inode_get_state( arg_READ4.stateid.other,
-                                   &pstate_found,
-                                   data->pclient,
-                                   &cache_status ) != CACHE_INODE_SUCCESS )
-          {
-             res_READ4.status = nfs4_Errno( cache_status ) ;
-             return res_READ4.status ;
-          }
-
-        /* This is a read operation, this means that the file MUST have been opened for reading */
-        if( !( pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ ) )
-          {
-	     /* Bad open mode, return NFS4ERR_OPENMODE */
-             res_READ4.status = NFS4ERR_OPENMODE ;
-             return res_READ4.status ;
-          }
-
-     }  /* else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK ) */
-    else
-     {
-        res_READ4.status = rc ;
-        return res_READ4.status ;
-     }
-
     /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
 
     /* Iterate through file's state to look for conflicts */ 
