@@ -235,6 +235,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Fri Sep 14  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.58-1
+- Early implementation of NFSv4.1 added 
+
 * Thu Jul 30  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
 - Add write/commit logic to NFSv3 / NFSv4 
 - Fix many bugs related to clientid/open_owner/lockonwner/seqid
