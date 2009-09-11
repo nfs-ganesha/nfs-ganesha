@@ -76,7 +76,7 @@
 /**
  * \file    nfs41_op_write.c
  * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:52 $
+ * \date    $Date: 20heck
  * \version $Revision: 1.15 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
@@ -228,34 +228,6 @@ int nfs41_op_write(  struct nfs_argop4 * op ,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL ;
   }
-  /* Check for correctness of the provided stateid */
-  else  if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) 
-   {
-      /* Get the related state */
-      if( cache_inode_get_state( arg_WRITE4.stateid.other,
-                                 &pstate_found,
-                                 data->pclient,
-                                 &cache_status ) != CACHE_INODE_SUCCESS )
-        {
-           res_WRITE4.status = nfs4_Errno( cache_status ) ;
-           return res_WRITE4.status ;
-        }
-
-      /* This is a read operation, this means that the file MUST have been opened for reading */
-      if( ( pstate_found->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE )  &&
-          !( pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE ) )
-        {
-	   /* Bad open mode, return NFS4ERR_OPENMODE */
-           res_WRITE4.status = NFS4ERR_OPENMODE ;
-           return res_WRITE4.status ;
-        }
-
-   } /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) */
-  else
-   {
-	res_WRITE4.status = rc ;
-        return res_WRITE4.status ;
-   }
 
    /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
 
