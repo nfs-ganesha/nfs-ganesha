@@ -465,12 +465,14 @@ typedef struct cache_inode_open_owner__
 #ifdef _USE_NFS4_1
 
 #define NFS41_SESSION_PER_CLIENT 3 
-#define NFS41_NB_SLOTS           10 
+#define NFS41_NB_SLOTS           3 
+#define NFS41_DRC_SIZE          32768
 
 typedef struct nfs41_session_slot__
 {
   sequenceid4      sequence ;
   pthread_mutex_t  lock ;
+  char             cached_result[NFS41_DRC_SIZE] ;
 } nfs41_session_slot_t ;
 
 typedef struct nfs41_session__

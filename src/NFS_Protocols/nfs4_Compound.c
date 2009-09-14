@@ -363,6 +363,10 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
   data.reqp                      = preq ;
   data.ht                        = ht ;
   data.pclient                   = pclient ;
+#ifdef _USE_NFS4_1
+  data.pcached_res               = NULL ;
+  data.use_drc                   = FALSE ;
+#endif
   strcpy( data.MntPath, "/" ) ;
 
   /* Building the client credential field */
@@ -445,7 +449,38 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
           
           break ;
         }
+
+#ifdef _USE_NFS4_1
+     /* Manage sessions's DRC : replay previously cached request */
+     if( parg->arg_compound4.minorversion == 1 )
+      {
+        if( i == 0 ) /* OP_SEQUENCE is always the first operation within the request */
+         {
+	   if( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_SEQUENCE )
+            {
+               if( data.use_drc == TRUE )
+		{
+		  /* Replay cache */
+		  memcpy( (char *)pres, data.pcached_res, (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 ) ); 
+		  break ; /* Exit the for loop */
+		}
+            }
+         }
+      }
+#endif
     }
+
+#ifdef _USE_NFS4_1
+    /* Manage session's DRC : keep NFS4.1 replay for later use */
+    if( parg->arg_compound4.minorversion == 1 )
+     {
+	if( data.pcached_res != NULL ) /* Pointer has been set by nfs41_op_sequence and points to cached zone */
+         {
+	    memcpy( data.pcached_res, (char *)pres,  (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 )  ) ; 
+         }
+     }
+#endif
+  
 
   /* Complete the reply, in particular, tell where you stopped if unsuccessfull COMPOUD */
   pres->res_compound4.status = status ;

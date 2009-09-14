@@ -122,9 +122,6 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
-#ifdef _USE_NFS4_1
-#include "nfs_op41_drc.h"
-#endif
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
 #include "err_rpc.h"
@@ -479,9 +476,6 @@ typedef struct nfs_worker_data__
   LRU_list_t             * duplicate_request ;
   nfs_request_data_t     * request_pool;
   dupreq_entry_t         * dupreq_pool ;
-#ifdef _USE_NFS4_1
-  op41_drc_entry_t       * op41_drc_pool ;
-#endif
   nfs_ip_stats_t         * ip_stats_pool ;
   nfs_client_id_t        * clientid_pool ;
   cache_inode_client_t     cache_inode_client ;
