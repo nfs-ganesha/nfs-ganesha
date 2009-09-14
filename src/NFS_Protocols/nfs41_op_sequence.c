@@ -158,13 +158,26 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
         return res_SEQUENCE4.sr_status ;
     } 
 
+  /* By default, no DRC replay */
+  data->use_drc = FALSE ;
+
   P( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
   if( psession->slots[arg_SEQUENCE4.sa_slotid].sequence +1 != arg_SEQUENCE4.sa_sequenceid )
     {
+        if( psession->slots[arg_SEQUENCE4.sa_slotid].sequence == arg_SEQUENCE4.sa_sequenceid )
+         {
+            /* Replay operation through the DRC */
+            data->use_drc = TRUE ;
+	    data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
+
+            res_SEQUENCE4.sr_status = NFS4_OK ;
+            return res_SEQUENCE4.sr_status ;
+         }
         V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
         res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED ;
         return res_SEQUENCE4.sr_status ;
     } 
+ 
 
   /* Update the sequence id within the slot */
   psession->slots[arg_SEQUENCE4.sa_slotid].sequence += 1 ;
@@ -175,6 +188,11 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_highest_slotid = NFS41_NB_SLOTS -1 ;
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4.sa_slotid ; /* Maybe not the best choice */
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0 ; /* What is to be set here ? */ 
+
+  if( arg_SEQUENCE4.sa_cachethis == TRUE )
+    data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
+  else
+    data->pcached_res = NULL ;
 
   V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
 

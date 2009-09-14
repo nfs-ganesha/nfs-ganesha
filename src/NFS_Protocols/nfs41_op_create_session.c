@@ -217,8 +217,6 @@ int nfs41_op_create_session(  struct nfs_argop4 * op ,
        return res_CREATE_SESSION4.csr_status ;
     }
 
-  nfs41_Session_PrintAll() ;
-
   /* Successful exit */
   res_CREATE_SESSION4.csr_status = NFS4_OK ;
   return res_CREATE_SESSION4.csr_status ;
