@@ -54,6 +54,9 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  Rpc_com_tirpc.h                 \
                  solaris_port.h
 
+if USE_NFS4_1
+noinst_HEADERS	+= nfs_op41_drc.h
+endif
 
 if USE_FSAL_FUSE
 include_HEADERS = ganesha_fuse_wrap.h
