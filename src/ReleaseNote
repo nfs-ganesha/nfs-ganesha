@@ -1,11 +1,10 @@
-0.99.57 - Thu 30 Jul 2009
-	- Add NFSv3 commit/write logic 
-	- newpynfs helped locating bug in nfs4_op_commit (bad types and write
-	  verifier not set)
-	- Add NFSv4 commit/write logic 
-	- Brand new management of the NFSv4 open_owner
-	- Bug fix in clientid generation (very bad hash function)
-	- File nfs4_op_lock.c was fully rewritten to fix bugs
-	- open_owner's seqid is to be incremented even if OPEN fails
-	- lock overlapping check was reviewed
-	- no seqid checking when making read/write
+0.99.58 - Mon 14 Sep 2009
+	- Use SOMAXCON in listen
+	- XDR modules now support NFSv4.1 protocol, the rest is to be
+	  implemented
+	- Added nfs41_op_exchange_id, nfs41_op_create_session,
+	  nfs41_op_sequence, nfs41_op_lock, nfs41_op_locku, nfs41_op_lockt
+	- Added early support for nfs41_op_create_session,
+	  nfs41_op_exchange_id, nfs41_op_destroy_session
+	- command like 'mount -t nfs4 -o minorversion=1 ..' is now possible
+	  but basic connectathon is not fully ok
