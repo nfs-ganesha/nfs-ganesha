@@ -1,5 +1,4 @@
-
-CONTRAT DE LICENCE DE LOGICIEL LIBRE CeCILL
+CONTRAT DE LICENCE DE LOGICIEL LIBRE CeCILL-C
 
 
     Avertissement
@@ -17,7 +16,7 @@ sa rédaction:
       et de la protection qu'il offre aux auteurs et titulaires des
       droits patrimoniaux sur un logiciel.
 
-Les auteurs de la licence CeCILL (pour Ce[a] C[nrs] I[nria] L[ogiciel]
+Les auteurs de la licence CeCILL-C (pour Ce[a] C[nrs] I[nria] L[ogiciel]
 L[ibre]) sont:
 
 Commissariat à l'Energie Atomique - CEA, établissement public de
@@ -37,19 +36,18 @@ Le Chesnay cedex.
     Préambule
 
 Ce contrat est une licence de logiciel libre dont l'objectif est de
-conférer aux utilisateurs la liberté de modification et de
-redistribution du logiciel régi par cette licence dans le cadre d'un
-modèle de diffusion en logiciel libre.
+conférer aux utilisateurs la liberté de modifier et de réutiliser le
+logiciel régi par cette licence.
 
-L'exercice de ces libertés est assorti de certains devoirs à la charge
-des utilisateurs afin de préserver ce statut au cours des
-redistributions ultérieures.
+L'exercice de cette liberté est assorti d'une obligation de remettre à
+la disposition de la communauté les modifications apportées au code
+source du logiciel afin de contribuer à son évolution.
 
 L'accessibilité au code source et les droits de copie, de modification
-et de redistribution qui en découlent ont pour contrepartie de n'offrir
-aux utilisateurs qu'une garantie limitée et de ne faire peser sur
-l'auteur du logiciel, le titulaire des droits patrimoniaux et les
-concédants successifs qu'une responsabilité restreinte.
+et de redistribution qui découlent de ce contrat ont pour contrepartie
+de n'offrir aux utilisateurs qu'une garantie limitée et de ne faire
+peser sur l'auteur du logiciel, le titulaire des droits patrimoniaux et
+les concédants successifs qu'une responsabilité restreinte.
 
 A cet égard l'attention de l'utilisateur est attirée sur les risques
 associés au chargement, à l'utilisation, à la modification et/ou au
@@ -86,7 +84,7 @@ Logiciel Initial: désigne le Logiciel sous sa forme de Code Source et
 leur état au moment de leur première diffusion sous les termes du Contrat.
 
 Logiciel Modifié: désigne le Logiciel modifié par au moins une
-Contribution.
+Contribution Intégrée.
 
 Code Source: désigne l'ensemble des instructions et des lignes de
 programme du Logiciel et auquel l'accès est nécessaire en vue de
@@ -101,29 +99,23 @@ sur le Logiciel Initial.
 Licencié: désigne le ou les utilisateurs du Logiciel ayant accepté le
 Contrat.
 
-Contributeur: désigne le Licencié auteur d'au moins une Contribution.
+Contributeur: désigne le Licencié auteur d'au moins une Contribution
+Intégrée.
 
 Concédant: désigne le Titulaire ou toute personne physique ou morale
 distribuant le Logiciel sous le Contrat.
 
-Contribution: désigne l'ensemble des modifications, corrections,
-traductions, adaptations et/ou nouvelles fonctionnalités intégrées dans
-le Logiciel par tout Contributeur, ainsi que tout Module Interne.
+Contribution Intégrée: désigne l'ensemble des modifications,
+corrections, traductions, adaptations et/ou nouvelles fonctionnalités
+intégrées dans le Code Source par tout Contributeur.
 
-Module: désigne un ensemble de fichiers sources y compris leur
-documentation qui permet de réaliser des fonctionnalités ou services
-supplémentaires à ceux fournis par le Logiciel.
+Module Lié: désigne un ensemble de fichiers sources y compris leur
+documentation qui, sans modification du Code Source, permet de réaliser
+des fonctionnalités ou services supplémentaires à ceux fournis par le
+Logiciel.
 
-Module Externe: désigne tout Module, non dérivé du Logiciel, tel que ce
-Module et le Logiciel s'exécutent dans des espaces d'adressage
-différents, l'un appelant l'autre au moment de leur exécution.
-
-Module Interne: désigne tout Module lié au Logiciel de telle sorte
-qu'ils s'exécutent dans le même espace d'adressage.
-
-GNU GPL: désigne la GNU General Public License dans sa version 2 ou
-toute version ultérieure, telle que publiée par Free Software Foundation
-Inc.
+Logiciel Dérivé: désigne toute combinaison du Logiciel, modifié ou non,
+et d'un Module Lié.
 
 Parties: désigne collectivement le Licencié et le Concédant.
 
@@ -206,15 +198,16 @@ aux domaines d'application, étant ci-après précisé que cela comporte:
       Logiciel qu'il est en droit d'effectuer en vertu du Contrat.
 
 
-      5.2 DROIT D'APPORTER DES CONTRIBUTIONS
+      5.2 DROIT DE MODIFICATION
 
-Le droit d'apporter des Contributions comporte le droit de traduire,
-d'adapter, d'arranger ou d'apporter toute autre modification au Logiciel
-et le droit de reproduire le logiciel en résultant.
+Le droit de modification comporte le droit de traduire, d'adapter,
+d'arranger ou d'apporter toute autre modification au Logiciel et le
+droit de reproduire le logiciel en résultant. Il comprend en particulier
+le droit de créer un Logiciel Dérivé.
 
-Le Licencié est autorisé à apporter toute Contribution au Logiciel sous
+Le Licencié est autorisé à apporter toute modification au Logiciel sous
 réserve de mentionner, de façon explicite, son nom en tant qu'auteur de
-cette Contribution et la date de création de celle-ci.
+cette modification et la date de création de celle-ci.
 
 
       5.3 DROIT DE DISTRIBUTION
@@ -242,19 +235,19 @@ soit accompagnée:
       et 9,
 
 et que, dans le cas où seul le Code Objet du Logiciel est redistribué,
-le Licencié permette aux futurs Licenciés d'accéder facilement au Code
-Source complet du Logiciel en indiquant les modalités d'accès, étant
-entendu que le coût additionnel d'acquisition du Code Source ne devra
-pas excéder le simple coût de transfert des données.
+le Licencié permette un accès effectif au Code Source complet du
+Logiciel pendant au moins toute la durée de sa distribution du Logiciel,
+étant entendu que le coût additionnel d'acquisition du Code Source ne
+devra pas excéder le simple coût de transfert des données.
 
 
         5.3.2 DISTRIBUTION DU LOGICIEL MODIFIE
 
-Lorsque le Licencié apporte une Contribution au Logiciel, les conditions
-de distribution du Logiciel Modifié en résultant sont alors soumises à
-l'intégralité des dispositions du Contrat.
+Lorsque le Licencié apporte une Contribution Intégrée au Logiciel, les
+conditions de distribution du Logiciel Modifié en résultant sont alors
+soumises à l'intégralité des dispositions du Contrat.
 
-Le Licencié est autorisé à distribuer le Logiciel Modifié, sous forme de
+Le Licencié est autorisé à distribuer le Logiciel Modifié sous forme de
 code source ou de code objet, à condition que cette distribution
 respecte les dispositions du Contrat dans leur totalité et soit
 accompagnée:
@@ -266,29 +259,40 @@ accompagnée:
       et 9,
 
 et que, dans le cas où seul le code objet du Logiciel Modifié est
-redistribué, le Licencié permette aux futurs Licenciés d'accéder
-facilement au code source complet du Logiciel Modifié en indiquant les
-modalités d'accès, étant entendu que le coût additionnel d'acquisition
-du code source ne devra pas excéder le simple coût de transfert des données.
+redistribué, le Licencié permette un accès effectif à son code source
+complet pendant au moins toute la durée de sa distribution du Logiciel
+Modifié, étant entendu que le coût additionnel d'acquisition du code
+source ne devra pas excéder le simple coût de transfert des données.
 
 
-        5.3.3 DISTRIBUTION DES MODULES EXTERNES
+        5.3.3 DISTRIBUTION DU LOGICIEL DERIVE
 
-Lorsque le Licencié a développé un Module Externe les conditions du
-Contrat ne s'appliquent pas à ce Module Externe, qui peut être distribué
-sous un contrat de licence différent.
+Lorsque le Licencié crée un Logiciel Dérivé, ce Logiciel Dérivé peut
+être distribué sous un contrat de licence autre que le présent Contrat à
+condition de respecter les obligations de mention des droits sur le
+Logiciel telles que définies à l'article 6.4. Dans le cas où la création du
+Logiciel Dérivé a nécessité une modification du Code Source le licencié
+s'engage à ce que: 
+
+   1. le Logiciel Modifié correspondant à cette modification soit régi
+      par le présent Contrat,
+   2. les Contributions Intégrées dont le Logiciel Modifié résulte
+      soient clairement identifiées et documentées,
+   3. le Licencié permette un accès effectif au code source du Logiciel
+      Modifié, pendant au moins toute la durée de la distribution du
+      Logiciel Dérivé, de telle sorte que ces modifications puissent
+      être reprises dans une version ultérieure du Logiciel, étant
+      entendu que le coût additionnel d'acquisition du code source du
+      Logiciel Modifié ne devra pas excéder le simple coût du transfert
+      des données.
 
 
-        5.3.4 COMPATIBILITE AVEC LA LICENCE GNU GPL
+        5.3.4 COMPATIBILITE AVEC LA LICENCE CeCILL
 
-Le Licencié peut inclure un code soumis aux dispositions d'une des
-versions de la licence GNU GPL dans le Logiciel modifié ou non et
-distribuer l'ensemble sous les conditions de la même version de la
-licence GNU GPL.
-
-Le Licencié peut inclure le Logiciel modifié ou non dans un code soumis
-aux dispositions d'une des versions de la licence GNU GPL et distribuer
-l'ensemble sous les conditions de la même version de la licence GNU GPL.
+Lorsqu'un Logiciel Modifié contient une Contribution Intégrée soumise au
+contrat de licence CeCILL, ou lorsqu'un Logiciel Dérivé contient un
+Module Lié soumis au contrat de licence CeCILL, les stipulations prévues
+au troisième item de l'article 6.4 sont facultatives.
 
 
     Article 6 - PROPRIETE INTELLECTUELLE
@@ -306,22 +310,22 @@ Le Titulaire s'engage à ce que le Logiciel Initial reste au moins régi
 par le Contrat et ce, pour la durée visée à l'article 4.2.
 
 
-      6.2 SUR LES CONTRIBUTIONS
+      6.2 SUR LES CONTRIBUTIONS INTEGREES
 
-Le Licencié qui a développé une Contribution est titulaire sur celle-ci
-des droits de propriété intellectuelle dans les conditions définies par
-la législation applicable.
-
-
-      6.3 SUR LES MODULES EXTERNES
-
-Le Licencié qui a développé un Module Externe est titulaire sur celui-ci
-des droits de propriété intellectuelle dans les conditions définies par
-la législation applicable et reste libre du choix du contrat régissant
-sa diffusion.
+Le Licencié qui a développé une Contribution Intégrée est titulaire sur
+celle-ci des droits de propriété intellectuelle dans les conditions
+définies par la législation applicable.
 
 
-      6.4 DISPOSITIONS COMMUNES
+      6.3 SUR LES MODULES LIES
+
+Le Licencié qui a développé un Module Lié est titulaire sur celui-ci des
+droits de propriété intellectuelle dans les conditions définies par la
+législation applicable et reste libre du choix du contrat régissant sa
+diffusion dans les conditions définies à l'article 5.3.3.
+
+
+      6.4 MENTIONS DES DROITS
 
 Le Licencié s'engage expressément:
 
@@ -329,7 +333,12 @@ Le Licencié s'engage expressément:
       mentions de propriété intellectuelle apposées sur le Logiciel;
 
    2. à reproduire à l'identique lesdites mentions de propriété
-      intellectuelle sur les copies du Logiciel modifié ou non.
+      intellectuelle sur les copies du Logiciel modifié ou non;
+
+   3. à faire en sorte que l'utilisation du Logiciel, ses mentions de
+      propriété intellectuelle et le fait qu'il est régi par le Contrat
+      soient indiqués dans un texte facilement accessible notamment
+      depuis l'interface de tout Logiciel Dérivé.
 
 Le Licencié s'engage à ne pas porter atteinte, directement ou
 indirectement, aux droits de propriété intellectuelle du Titulaire et/ou
@@ -399,7 +408,7 @@ droits visés à l'article 5).
 
 9.3 Le Licencié reconnaît que le Logiciel est fourni "en l'état" par le
 Concédant sans autre garantie, expresse ou tacite, que celle prévue à
-l'article 9.2 et notamment sans aucune garantie sur sa valeur commerciale, 
+l'article 9.2 et notamment sans aucune garantie sur sa valeur commerciale,
 son caractère sécurisé, innovant ou pertinent.
 
 En particulier, le Concédant ne garantit pas que le Logiciel est exempt
@@ -493,8 +502,7 @@ compte de nouvelles problématiques rencontrées par les logiciels libres.
 
 12.3 Tout Logiciel diffusé sous une version donnée du Contrat ne pourra
 faire l'objet d'une diffusion ultérieure que sous la même version du
-Contrat ou une version postérieure, sous réserve des dispositions de
-l'article 5.3.4.
+Contrat ou une version postérieure.
 
 
     Article 13 - LOI APPLICABLE ET COMPETENCE TERRITORIALE
@@ -509,4 +517,5 @@ les différends ou litiges seront portés par la Partie la plus diligente
 devant les Tribunaux compétents de Paris.
 
 
-Version 2.0 du 2006-09-05.
+Version 1.0 du 2006-09-05.
+
