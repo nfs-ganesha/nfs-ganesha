@@ -90,18 +90,18 @@ srpm: nfs-ganesha.spec remove_hpss
 
 endif
 
-EXTRA_DIST=nfs-ganesha.spec              \
-           COMPILING_HOWTO.txt           \
-           Licence_CeCILL_V2-French.txt  \
-           Licence_CeCILL_V2-English.txt \
-           ganesha.vim                   \
-           ganesha_au.vim                \
-           ChangeLog                     \
-           TODO                          \
-           THANKS                        \
-           KNOWN_BUGS                    \
-           nfs-ganesha.posix.init        \
-           nfs-ganesha.proxy.init        \
+EXTRA_DIST=nfs-ganesha.spec           \
+           COMPILING_HOWTO.txt        \
+           Licence_CeCILL-French.txt  \
+           Licence_CeCILL-English.txt \
+           ganesha.vim                \
+           ganesha_au.vim             \
+           ChangeLog                  \
+           TODO                       \
+           THANKS                     \
+           KNOWN_BUGS                 \
+           nfs-ganesha.posix.init     \
+           nfs-ganesha.proxy.init     \
            nfs-ganesha.snmp.init        
 
 pkgconfigdir=$(libdir)/pkgconfig
