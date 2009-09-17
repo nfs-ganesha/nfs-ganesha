@@ -152,9 +152,23 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
    resp->resop = NFS4_OP_SEQUENCE ;
    res_SEQUENCE4.sr_status = NFS4_OK ;
 
+   /* OP_SEQUENCE is always the first operation of the request */
+   if( data->oppos != 0 )
+    {
+        res_SEQUENCE4.sr_status = NFS4ERR_SEQUENCE_POS ;
+        return res_SEQUENCE4.sr_status ;
+    }
+
    if( !nfs41_Session_Get_Pointer( arg_SEQUENCE4.sa_sessionid, &psession ) )
     {
         res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION ;
+        return res_SEQUENCE4.sr_status ;
+    } 
+
+  /* Check is slot is compliant with ca_maxrequests */
+  if( arg_SEQUENCE4.sa_slotid >= psession->fore_channel_attrs.ca_maxrequests )
+    {
+        res_SEQUENCE4.sr_status = NFS4ERR_BADSLOT ;
         return res_SEQUENCE4.sr_status ;
     } 
 
@@ -177,7 +191,9 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
         res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED ;
         return res_SEQUENCE4.sr_status ;
     } 
- 
+
+  /* Keep memory of the session in the COMPOUND's data */
+  data->psession = psession ; 
 
   /* Update the sequence id within the slot */
   psession->slots[arg_SEQUENCE4.sa_slotid].sequence += 1 ;

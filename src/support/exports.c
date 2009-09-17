@@ -628,7 +628,8 @@ static int nfs_AddClientsToExportList( exportlist_t   * ExportEntry,
           else
             {
               /* Last case: type for client could not be identified. This should not occur */
-              printf( "Unsupported type for client %s\n", client_hostname ) ;
+              DisplayLog( "Unsupported type for client %s", client_hostname ) ;
+              //printf( "Unsupported type for client %s\n", client_hostname ) ;
             }
         }
     }	/* for i */

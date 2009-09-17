@@ -381,23 +381,6 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
                }
 
            }
-         else
-           {
-#ifdef _FULL_DEBUG
-               DisplayLogLevel( NIV_FULL_DEBUG, "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u", 
-		                powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
-#endif
-	     
-               //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
-		 //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
-
-               if( arg_OPEN4.seqid == 0 ) 
-                {
-                  DisplayLogLevel( NIV_DEBUG, "Previously known open_owner is used with seqid=0, ask the client to confirm it again" ) ;
-                  powner->seqid = 0 ;
-                  powner->confirmed = FALSE ;
-                }
-           }
 
           /* Status of parent directory before the operation */
           if( ( cache_status = cache_inode_getattr( pentry_parent, 

@@ -295,7 +295,6 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
   compound_data_t data;
   int opindex ;
  
- 
   /* A "local" #define to avoid typo with nfs (too) long structure names */
 #define COMPOUND4_ARRAY parg->arg_compound4.argarray
 
@@ -366,6 +365,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 #ifdef _USE_NFS4_1
   data.pcached_res               = NULL ;
   data.use_drc                   = FALSE ;
+  data.psession                  = NULL ;
 #endif
   strcpy( data.MntPath, "/" ) ;
 
@@ -400,6 +400,8 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
     {
       /* Use optab4index to reference the operation */
 #ifdef _USE_NFS4_1
+      data.oppos = i ; /* Useful to check if OP_SEQUENCE is used as the first operation */
+
       if( ( COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER  && parg->arg_compound4.minorversion == 0 ) ||
 	  ( COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE  && parg->arg_compound4.minorversion == 1 ) ) 
 #else
@@ -417,13 +419,13 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
                        optabvers[parg->arg_compound4.minorversion][opindex].name,
                        opindex ) ;
 #endif
-      
-      memset( &res, 0, sizeof( res ) ) ;
-      status = (optabvers[parg->arg_compound4.minorversion][opindex].funct)( &(COMPOUND4_ARRAY.argarray_val[i]),
-                                        &data,
-                                        &res ) ;
 
-      memcpy( &(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof( res ) ) ;
+     memset( &res, 0, sizeof( res ) ) ;
+     status = (optabvers[parg->arg_compound4.minorversion][opindex].funct)( &(COMPOUND4_ARRAY.argarray_val[i]),
+                                                                             &data,
+                                                                             &res ) ;
+
+     memcpy( &(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof( res ) ) ;
 
 #ifdef _DEBUG_NFS_V4
       utf82str( tmpstr, &(pres->res_compound4.tag) ) ;
@@ -451,6 +453,8 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
         }
 
 #ifdef _USE_NFS4_1
+     /* Check Req size */
+
      /* Manage sessions's DRC : replay previously cached request */
      if( parg->arg_compound4.minorversion == 1 )
       {
