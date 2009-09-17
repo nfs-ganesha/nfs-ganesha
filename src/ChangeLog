@@ -250,3 +250,7 @@
 	  nfs41_op_exchange_id, nfs41_op_destroy_session
 	- command like 'mount -t nfs4 -o minorversion=1 ..' is now possible
 	  but basic connectathon is not fully ok
+
+0.99.59 -
+	- Implementation of SEQUENCE's DRC
+	- Add new "NFSv4.1 specific errors" management in OP_SEQUENCE
