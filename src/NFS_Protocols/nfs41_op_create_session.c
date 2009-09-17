@@ -196,6 +196,10 @@ int nfs41_op_create_session(  struct nfs_argop4 * op ,
   pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs ;
   pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs ;
 
+  /* Set ca_maxrequests */
+  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS ;
+  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS ;
+
   if( nfs41_Build_sessionid( &clientid, pnfs41_session->session_id ) != 1 )
     {
        res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ;
@@ -206,8 +210,8 @@ int nfs41_op_create_session(  struct nfs_argop4 * op ,
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN ;
 
   /* return the input for wantinf of something better (will change in later versions) */
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs ; 
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs ; 
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs = pnfs41_session->fore_channel_attrs ;
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs = pnfs41_session->back_channel_attrs ;
  
   memcpy( res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid, pnfs41_session->session_id, NFS4_SESSIONID_SIZE ) ;
 
