@@ -123,7 +123,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-
 /**
  *
  * nfs41_op_sequence: the NFS4_OP_SEQUENCE operation
