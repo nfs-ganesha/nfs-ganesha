@@ -455,13 +455,14 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 #ifdef _USE_NFS4_1
      /* Check Req size */
 
-     /* Manage sessions's DRC : replay previously cached request */
+     /* NFSV4.1 specific stuff */
      if( parg->arg_compound4.minorversion == 1 )
       {
         if( i == 0 ) /* OP_SEQUENCE is always the first operation within the request */
          {
 	   if( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_SEQUENCE )
             {
+               /* Manage sessions's DRC : replay previously cached request */
                if( data.use_drc == TRUE )
 		{
 		  /* Replay cache */
@@ -470,9 +471,11 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 		}
             }
          }
-      }
+             }
+
+
 #endif
-    }
+    } /* for */
 
 #ifdef _USE_NFS4_1
     /* Manage session's DRC : keep NFS4.1 replay for later use */
@@ -482,9 +485,18 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
          {
 	    memcpy( data.pcached_res, (char *)pres,  (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 )  ) ; 
          }
-     }
-#endif
   
+	if( data.psession != NULL )
+    	 {
+	   if( data.psession->fore_channel_attrs.ca_maxoperations <= COMPOUND4_ARRAY.argarray_len ) 
+	     {
+	       status = NFS4ERR_TOO_MANY_OPS ;
+	     }
+         }
+     }
+  
+
+#endif
 
   /* Complete the reply, in particular, tell where you stopped if unsuccessfull COMPOUD */
   pres->res_compound4.status = status ;
