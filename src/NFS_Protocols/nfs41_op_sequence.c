@@ -179,12 +179,21 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
     {
         if( psession->slots[arg_SEQUENCE4.sa_slotid].sequence == arg_SEQUENCE4.sa_sequenceid )
          {
-            /* Replay operation through the DRC */
-            data->use_drc = TRUE ;
-	    data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
+            if( psession->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE )
+             {
+               /* Replay operation through the DRC */
+               data->use_drc = TRUE ;
+	       data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
 
-            res_SEQUENCE4.sr_status = NFS4_OK ;
-            return res_SEQUENCE4.sr_status ;
+               res_SEQUENCE4.sr_status = NFS4_OK ;
+               return res_SEQUENCE4.sr_status ;
+             }
+	    else
+             {
+		/* Illegal replay */
+                res_SEQUENCE4.sr_status = NFS4ERR_RETRY_UNCACHED_REP ;
+		return res_SEQUENCE4.sr_status ;
+	     }
          }
         V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
         res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED ;
@@ -205,10 +214,15 @@ int nfs41_op_sequence(  struct nfs_argop4 * op ,
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0 ; /* What is to be set here ? */ 
 
   if( arg_SEQUENCE4.sa_cachethis == TRUE )
-    data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
+   {
+     data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result ;
+     psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE ;
+   }
   else
-    data->pcached_res = NULL ;
-
+   {
+     data->pcached_res = NULL ;
+     psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = FALSE ;
+   }
   V( psession->slots[arg_SEQUENCE4.sa_slotid].lock ) ;
 
   res_SEQUENCE4.sr_status = NFS4_OK ; 

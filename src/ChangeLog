@@ -254,3 +254,8 @@
 0.99.59 -
 	- Implementation of SEQUENCE's DRC
 	- Add new "NFSv4.1 specific errors" management in OP_SEQUENCE
+	- Bug Fix: test SEQ9c showed that the request replayed from the
+	  session's DRC always had status NFS4_OK
+	- Bug Fix : Management of NFS4ERR_RETRY_UNCACHED_REP and non cached sequence
+	- Bug Fix : correct use of NFS4ERR_TOO_MANY_OPS 
+
