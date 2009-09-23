@@ -402,6 +402,22 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 #ifdef _USE_NFS4_1
       data.oppos = i ; /* Useful to check if OP_SEQUENCE is used as the first operation */
 
+     if( parg->arg_compound4.minorversion == 1 )
+      {
+       if( data.psession != NULL )
+        {
+	 if( data.psession->fore_channel_attrs.ca_maxoperations == i ) 
+          {
+             status = NFS4ERR_TOO_MANY_OPS ;
+             pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status = status ;  
+             pres->res_compound4.resarray.resarray_val[i].resop = COMPOUND4_ARRAY.argarray_val[i].argop ;
+   	     pres->res_compound4.status = status ;
+	     break ; /* stop loop */
+          }
+        }
+      }
+
+
       if( ( COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER  && parg->arg_compound4.minorversion == 0 ) ||
 	  ( COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE  && parg->arg_compound4.minorversion == 1 ) ) 
 #else
@@ -467,39 +483,31 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 		{
 		  /* Replay cache */
 		  memcpy( (char *)pres, data.pcached_res, (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 ) ); 
+                  status = ((COMPOUND4res *)data.pcached_res)->status ;
 		  break ; /* Exit the for loop */
 		}
             }
          }
-             }
+      }
 
 
 #endif
     } /* for */
 
-#ifdef _USE_NFS4_1
-    /* Manage session's DRC : keep NFS4.1 replay for later use */
-    if( parg->arg_compound4.minorversion == 1 )
-     {
-	if( data.pcached_res != NULL ) /* Pointer has been set by nfs41_op_sequence and points to cached zone */
-         {
-	    memcpy( data.pcached_res, (char *)pres,  (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 )  ) ; 
-         }
-  
-	if( data.psession != NULL )
-    	 {
-	   if( data.psession->fore_channel_attrs.ca_maxoperations <= COMPOUND4_ARRAY.argarray_len ) 
-	     {
-	       status = NFS4ERR_TOO_MANY_OPS ;
-	     }
-         }
-     }
-  
-
-#endif
 
   /* Complete the reply, in particular, tell where you stopped if unsuccessfull COMPOUD */
   pres->res_compound4.status = status ;
+
+#ifdef _USE_NFS4_1
+  /* Manage session's DRC : keep NFS4.1 replay for later use */
+  if( parg->arg_compound4.minorversion == 1 )
+   {
+     if( data.pcached_res != NULL ) /* Pointer has been set by nfs41_op_sequence and points to cached zone */
+      {
+        memcpy( data.pcached_res, (char *)pres,  (COMPOUND4_ARRAY.argarray_len)*sizeof( struct nfs_resop4 )  ) ; 
+      }
+   }
+#endif
 
 #ifdef _DEBUG_NFS_V4
   DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d  last status = %d",

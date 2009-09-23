@@ -171,6 +171,13 @@ int nfs4_op_rename(  struct nfs_argop4 * op ,
     
     resp->resop = NFS4_OP_RENAME ;
     res_RENAME4.status =  NFS4_OK  ;
+   
+    /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
+    if( ( arg_RENAME4.oldname.utf8string_len  == 0 )  || ( arg_RENAME4.newname.utf8string_len == 0 ) )
+      {
+        res_RENAME4.status = NFS4ERR_INVAL ;
+        return NFS4ERR_INVAL ;
+      }
 
     /* If there is no FH */
     if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
@@ -229,13 +236,6 @@ int nfs4_op_rename(  struct nfs_argop4 * op ,
             res_RENAME4.status = error ;
             return res_RENAME4.status ;
           }
-      }
-
-    /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
-    if( ( arg_RENAME4.oldname.utf8string_len  == 0 )  || ( arg_RENAME4.newname.utf8string_len == 0 ) )
-      {
-        res_RENAME4.status = NFS4ERR_INVAL ;
-        return NFS4ERR_INVAL ;
       }
 
     /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */

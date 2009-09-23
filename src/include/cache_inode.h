@@ -473,6 +473,7 @@ typedef struct nfs41_session_slot__
   sequenceid4      sequence ;
   pthread_mutex_t  lock ;
   char             cached_result[NFS41_DRC_SIZE] ;
+  unsigned int     cache_used ;
 } nfs41_session_slot_t ;
 
 typedef struct nfs41_session__
