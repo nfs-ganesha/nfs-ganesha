@@ -440,6 +440,9 @@ int nfs4_PseudoToFattr( pseudofs_entry_t * psfsp,
                    Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],  attrmasklen ) ;
 #endif
 
+ if( attrmasklen == 0 )
+   return 0 ; /* Nothing to be done */
+
  
  for( i = 0 ; i < attrmasklen ; i++ )
     {
