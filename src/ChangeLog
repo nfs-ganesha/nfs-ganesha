@@ -258,4 +258,6 @@
 	  session's DRC always had status NFS4_OK
 	- Bug Fix : Management of NFS4ERR_RETRY_UNCACHED_REP and non cached sequence
 	- Bug Fix : correct use of NFS4ERR_TOO_MANY_OPS 
-
+	- Bug Fix : initial seqid value is 1 in NFSv4.1 
+	- Bug Fix : stateid's sequence increment was badly manage in case the
+	  file was opened without being created at the same time.
