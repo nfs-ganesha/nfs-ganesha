@@ -397,7 +397,8 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
    * because this shows that the FSAL may hang in a specific call */
   for( i = 0 ; i <  nfs_param.core_param.nb_worker ; i++ )
     {
-	if( workers_data[i].current_xid == rpcxid )
+	if( ( workers_data[i].current_xid == rpcxid ) && 
+            ( workers_data[i].current_xid != 0 ) ) 
 	  {
 	     DisplayLogLevel( NIV_MAJOR, "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...", rpcxid ) ;
 

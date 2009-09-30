@@ -261,3 +261,4 @@
 	- Bug Fix : initial seqid value is 1 in NFSv4.1 
 	- Bug Fix : stateid's sequence increment was badly manage in case the
 	  file was opened without being created at the same time.
+	- Minor change in rpcxid dupreq management
