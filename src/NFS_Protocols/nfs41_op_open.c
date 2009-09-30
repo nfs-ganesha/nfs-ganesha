@@ -364,7 +364,7 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
 
              /* set up the content of the open_owner */
              powner->confirmed = FALSE ;
-             powner->seqid     = 0 ;
+             powner->seqid     = 1 ;  /* NFSv4.1 specific, initial seqid is 1 */
 	     powner->related_owner = NULL ;
              powner->next      = NULL ;      
              powner->clientid  = arg_OPEN4.owner.clientid ;
@@ -817,7 +817,6 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
                           return res_OPEN4.status ;
                       }
 
-
                    break ;
 
 
@@ -908,15 +907,6 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
                             }
                          openflags = FSAL_O_RDWR ;
                     }
-
-#ifdef WITH_MODE_0_CHECK
-                  /* If file mode is 000 then NFS4ERR_ACCESS should be returned for all cases and users */
-                  if( attr_newfile.mode == 0 ) 
-                   {
-                        res_OPEN4.status = NFS4ERR_ACCESS ;
-                        return res_OPEN4.status ;
-                   }
-#endif
 
                   /* Try to find if the same open_owner already has acquired a stateid for this file */
                   pstate_found_iterate    = NULL ;
@@ -1021,6 +1011,11 @@ int nfs41_op_open(  struct nfs_argop4 * op ,
                  {
                     pfile_state = pstate_found_same_owner ;
                     pfile_state->seqid += 1 ; 
+
+                    P( powner->lock ) ;
+		    powner->seqid += 1 ;
+                    V( powner->lock ) ;
+
                  }
                 else
                  {
