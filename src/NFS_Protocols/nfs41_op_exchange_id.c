@@ -244,7 +244,10 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
                   }
 	  }
 	else
-	  DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID ClientId %llx already in use for client '%s', but unconfirmed", clientid, nfs_clientid.client_name ) ;
+         {
+	    DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID ClientId %llx already in use for client '%s', but unconfirmed", clientid, nfs_clientid.client_name ) ;
+	    DisplayLog( "Reuse of a formerly obtained clientid that is not yet confirmed. Code needs to be improved here" ) ;
+         }
     }
   else
     {
