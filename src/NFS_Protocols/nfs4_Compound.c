@@ -476,7 +476,8 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
       {
         if( i == 0 ) /* OP_SEQUENCE is always the first operation within the request */
          {
-	   if( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_SEQUENCE )
+	   if(  ( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_SEQUENCE ) ||
+                ( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_CREATE_SESSION ) )
             {
                /* Manage sessions's DRC : replay previously cached request */
                if( data.use_drc == TRUE )
