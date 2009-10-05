@@ -126,6 +126,10 @@
 #include "err_HashTable.h"
 #include "err_rpc.h"
 
+#ifdef _USE_NFS4_1
+#include "nfs41_session.h"
+#endif 
+
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 100
 #define NB_MAX_FLUSHER_THREAD 100
@@ -462,6 +466,8 @@ typedef struct nfs_client_id__
   char                             server_owner[MAXNAMLEN] ;
   char                             server_scope[MAXNAMLEN] ;
   unsigned int                     nb_session ;
+  nfs41_session_slot_t             create_session_slot ;
+  unsigned                         create_session_sequence ;
 #endif
   struct nfs_client_id__         * next_alloc ;
 } nfs_client_id_t ;
@@ -581,8 +587,12 @@ int nfs_client_id_remove( clientid4         clientid,
 
 int  nfs_client_id_get( clientid4         clientid,
                         nfs_client_id_t * client_id_res ) ;
+
 int  nfs_client_id_get_reverse( char * key,
                                 nfs_client_id_t * client_id_res ) ;
+
+int  nfs_client_id_Get_Pointer( clientid4          clientid,
+                                nfs_client_id_t ** ppclient_id_res ) ;
 
 int nfs_client_id_add(  clientid4         clientid,
                         nfs_client_id_t   client_record,
