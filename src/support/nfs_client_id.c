@@ -503,6 +503,49 @@ int  nfs_client_id_get( clientid4         clientid,
   return status ;
 } /* nfs_client_id_get */
 
+int  nfs_client_id_Get_Pointer( clientid4          clientid,
+                                nfs_client_id_t ** ppclient_id_res )
+{
+  hash_buffer_t       buffkey ;
+  hash_buffer_t       buffval ;
+  int                 status ;
+  clientid4         * pclientid      = NULL ;
+ 
+  if( ppclient_id_res == NULL ) 
+    return CLIENT_ID_INVALID_ARGUMENT ;
+ 
+  if( ( pclientid = (clientid4 *)Mem_Alloc( sizeof( clientid4 ) ) ) == NULL )
+    return CLIENT_ID_INSERT_MALLOC_ERROR ;
+
+  *pclientid = clientid ; 
+  buffkey.pdata = (caddr_t)pclientid ;
+  buffkey.len = sizeof( clientid4 )  ;
+  
+  if( HashTable_Get( ht_client_id, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+    {
+      *ppclient_id_res = (nfs_client_id_t *)buffval.pdata ;
+
+      status = CLIENT_ID_SUCCESS ;
+
+#ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
+      printf( "-=-=-=-=-=-=-=-=-=-> ht_client_id \n" ) ;
+      HashTable_Print( ht_client_id ) ;
+      printf( "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n" ) ;
+      HashTable_Print( ht_client_id_reverse ) ;
+#endif
+    }
+  else
+    {
+      status = CLIENT_ID_NOT_FOUND ;
+    }
+
+  /* free the allocated key */
+  Mem_Free( pclientid ) ;
+
+
+  return status ;
+} /* nfs_client_id_Get_Pointer */
+
 int  nfs_client_id_get_reverse( char * key,
                                 nfs_client_id_t * client_id_res )
 {

@@ -263,6 +263,7 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
        nfs_clientid.clientid   = clientid ;
        nfs_clientid.last_renew = 0 ;
        nfs_clientid.nb_session = 0 ;
+       nfs_clientid.create_session_sequence = 1 ;
        nfs_clientid.credential = data->credential ;
 
        if( gethostname( nfs_clientid.server_owner, MAXNAMLEN ) == -1 )
@@ -280,7 +281,7 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
     }
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid = clientid ; 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid = 1;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid = nfs_clientid.create_session_sequence ;
   /* No pNFS for the moment (this will come later), but referrals are supported */
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags = EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER ;
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE ;
