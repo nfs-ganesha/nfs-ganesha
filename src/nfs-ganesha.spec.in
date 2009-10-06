@@ -133,20 +133,21 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
 make allinst SRCDIR=$TMP_INSTALL_DIR DESTDIR=$RPM_BUILD_ROOT
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
-install -m 644 config_samples/hpss.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
-install -m 644 config_samples/posix.ganesha.nfsd.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/proxy.ganesha.nfsd.conf      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/snmp.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/snmp.ganesha.nfsd.conf       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/hosts.ganesha                $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/uidgid_mapfile.ganesha       $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 755 tools/ganestat.pl                           $RPM_BUILD_ROOT%{_bindir}
-install -m 755 nfs-ganesha.posix.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
-install -m 755 nfs-ganesha.proxy.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
-install -m 755 nfs-ganesha.snmp.init                       $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
+install -m 644 config_samples/posix.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
+install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
+install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
+install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -195,6 +196,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.posix
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql 
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha* 
 
