@@ -109,6 +109,8 @@
 #include <pwd.h>
 #include <grp.h>
 
+extern nfs_parameter_t nfs_param ;
+
 /**
  *
  * uid2name: convert a uid to a name. 
@@ -294,7 +296,7 @@ int uid2str( uid_t uid, char * str )
   if( uid2name( buffer, uid ) == 0 )
     return -1 ;
   
-  return sprintf( str, "%s@localdomain", buffer ) ; /* BUGAZOMEU temporary: domain name should be setable somewhere */
+  return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
 } /* uid2utf8 */
 
 /**
@@ -316,7 +318,7 @@ int gid2str(  gid_t gid, char * str )
   if( gid2name( buffer, gid ) == 0 )
     return -1 ;
 
-  return sprintf( str, "%s@localdomain", buffer ) ; /* BUGAZOMEU temporary: domain name should be setable somewhere */
+  return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
 } /* gid2str */
 
 

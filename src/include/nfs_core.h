@@ -373,6 +373,7 @@ typedef struct nfs_version4_parameter__
   unsigned int fh_expire ;
   unsigned int returns_err_fh_expired ;
   unsigned int use_open_confirm ;
+  char         domainname[MAXNAMLEN] ;
 } nfs_version4_parameter_t ;
 
 typedef struct nfs_param__
