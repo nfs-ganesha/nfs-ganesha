@@ -263,3 +263,5 @@
 	  file was opened without being created at the same time.
 	- Minor change in rpcxid dupreq management
 	- Fix bad default parameters in config_samples/proxy.ganesha.nfsd.conf
+	- Add config file parameter NFSv4::DomainName (formerly domain was
+	  alway "localdomain" which was a big lack of flexibility)
