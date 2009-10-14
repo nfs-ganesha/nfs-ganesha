@@ -888,6 +888,7 @@ static const fattr4_dent_t __attribute__(( __unused__ ))  fattr4tab[] =
 #define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1024
 #define NFS4_ROOT_UID 0 
 #define NFS_MAXPATHLEN MAXPATHLEN
+#define DEFAULT_DOMAIN "localdomain" 
 #endif /* _NFS_PROTO_FUNCTIONS_H */
 
 #define NFS_REQ_OK   0 
