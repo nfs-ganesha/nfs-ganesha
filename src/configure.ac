@@ -195,6 +195,13 @@ if test "$enable_ipv6" == "yes"; then
 	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
 fi
 
+# libnfsidmap
+GA_ENABLE_AM_CONDITION([nfsidmap],[enable the use of libnfsidmap], [USE_NFSIDMAP])
+
+if test "$enable_nfsidmap" == "yes"; then
+	AC_DEFINE(_USE_NFSIDMAP, 1, [enable Id Mapping through libnfsidmap])
+fi
+
 
 CACHE_INODE_DIR="Cache_inode"
 
@@ -230,6 +237,7 @@ GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, fo
 GA_DISABLE_FLAG( [block-prealloc],       [disable GANESHA's memory chunks allocator, for debug purpose only],   [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
+GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
 
 GA_ENABLE_FLAG(  [memcorrupt-check],     [enable allocator features for tracking memory corruption],     [-D_DETECT_MEMCORRUPT] )
 GA_ENABLE_FLAG(  [debug-memalloc],       [enable debug traces in memory allocator],                      [-D_DEBUG_MEMALLOC] )
@@ -255,7 +263,6 @@ GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		 
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                 [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	         [-D_HANDLE_MAPPING])
 GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                           [-D_WITH_NFSV4_LOCKS])
-GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
 
 # for using it in makefiles
 AM_CONDITIONAL(ENABLE_HANDLE_MAPPING,    test "$enable_handle_mapping" = "yes" )

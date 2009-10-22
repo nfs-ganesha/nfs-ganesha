@@ -111,6 +111,44 @@
 
 extern nfs_parameter_t nfs_param ;
 
+#ifdef _USE_NFSIDMAP
+
+#define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
+#define NFS4_MAX_DOMAIN_LEN 512
+
+typedef void (*nfs4_idmap_log_function_t)(const char *, ...);
+
+int nfs4_init_name_mapping(char *conffile);
+int nfs4_get_default_domain(char *server, char *domain, size_t len);
+int nfs4_uid_to_name(uid_t uid, char *domain, char *name, size_t len);
+int nfs4_gid_to_name(gid_t gid, char *domain, char *name, size_t len);
+int nfs4_name_to_uid(char *name, uid_t *uid);
+int nfs4_name_to_gid(char *name, gid_t *gid);
+int nfs4_gss_princ_to_ids(char *secname, char *princ, uid_t *uid, gid_t *gid);
+int nfs4_gss_princ_to_grouplist(char *secname, char *princ, gid_t *groups, int *ngroups);
+void nfs4_set_debug(int dbg_level, nfs4_idmap_log_function_t dbg_logfunc);
+
+char idmap_domain[NFS4_MAX_DOMAIN_LEN];
+static int nfsidmap_conf_read = FALSE ;
+
+int nfsidmap_set_conf()
+{
+  if( !nfsidmap_conf_read )
+     {
+        if (nfs4_init_name_mapping( _PATH_IDMAPDCONF ))
+          return 0 ;  
+ 
+	if( nfs4_get_default_domain(NULL, idmap_domain, sizeof(idmap_domain)) )
+	  return 0 ;
+
+	printf( "==========================================> INIT DONE !!! \n" ) ;
+
+	nfsidmap_conf_read = TRUE ;
+     }
+  return 1 ;
+}
+#endif /* _USE_NFSIDMAP */
+
 /**
  *
  * uid2name: convert a uid to a name. 
@@ -128,6 +166,15 @@ int uid2name( char * name, uid_t uid )
   struct passwd   p ;
   struct passwd * pp ;
   char buff[MAXPATHLEN] ;
+#ifdef _USE_NFSIDMAP
+    if( !nfsidmap_set_conf() )
+      return 0 ;
+
+    if( nfs4_uid_to_name( uid, idmap_domain, name, sizeof(name) ) )
+	return 0 ;
+    
+    printf( "Name=%s Uid=%u\n", name, uid ) ;
+#else
 
 #ifdef _SOLARIS
   if( getpwuid_r( uid, &p, buff, MAXPATHLEN ) !=0 )
@@ -136,7 +183,8 @@ int uid2name( char * name, uid_t uid )
 #endif
     return 0 ;
 
-  strncpy( name, p.pw_name, MAXNAMLEN ) ;
+#endif /* _USE_NFSIDMAP */
+
   return 1 ;
 } /* uid2name */
 
@@ -175,6 +223,16 @@ int name2uid( char * name, uid_t * puid )
    }
   else
    {
+#ifdef _USE_NFSIDMAP
+    if( !nfsidmap_set_conf() )
+     return 0 ;
+
+    if( nfs4_name_to_uid( name, puid ) )
+	return 0 ;
+    
+    printf( "Name=%s Uid=%u\n", name, uid ) ;
+
+#else
 #ifdef _SOLARIS
     if( getpwnam_r( name, &passwd, buff, MAXPATHLEN ) != 0 )
 #else
@@ -195,6 +253,7 @@ int name2uid( char * name, uid_t * puid )
 	  return 0 ;
 
       }
+#endif
     }
 
   return 1 ;
@@ -217,6 +276,17 @@ int gid2name( char * name, gid_t gid )
   struct group    g ;
   struct group * pg ;
   char buff[MAXPATHLEN] ;
+#ifdef _USE_NFSIDMAP
+  if( !nfsidmap_set_conf() )
+     return 0 ;
+
+
+  if( nfs4_gid_to_name( gid, idmap_domain, name, sizeof(name) ) )
+	return 0 ;
+    
+  printf( "Name=%s Gid=%u\n", name, gid ) ;
+#else
+
 
 #ifdef _SOLARIS
   if( getgrgid_r( gid, &g, buff, MAXPATHLEN ) != 0 )
@@ -226,6 +296,7 @@ int gid2name( char * name, gid_t gid )
     return 0 ;
 
   strncpy( name, g.gr_name, MAXNAMLEN ) ;
+#endif /* _USE_NFSIDMAP */
 
   return 1 ;
 } /* gid2name */
@@ -256,6 +327,16 @@ int name2gid( char * name, gid_t * pgid )
    }
   else
    {
+#ifdef _USE_NFSIDMAP
+  if( !nfsidmap_set_conf() )
+     return 0 ;
+
+  if( nfs4_name_to_gid( name, pgid ) )
+	return 0 ;
+    
+  printf( "Name=%s Gid=%u\n", name, gid ) ;
+#else
+
 #ifdef _SOLARIS
      if( getgrnam_r( name, &g, buff, MAXPATHLEN ) != 0 )
 #else
@@ -272,6 +353,7 @@ int name2gid( char * name, gid_t * pgid )
          if( gidmap_add( name, g.gr_gid ) != ID_MAPPER_SUCCESS )
 	   return 0 ;
        }
+#endif /* _USE_NFSIDMAP */
    }
   return 1 ;
 } /* name2gid */
@@ -295,8 +377,14 @@ int uid2str( uid_t uid, char * str )
   
   if( uid2name( buffer, uid ) == 0 )
     return -1 ;
-  
+#ifndef _USE_NFSIDMAP
   return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
+#else
+  if( !nfsidmap_set_conf() )
+     return -1 ;
+
+  return sprintf( str, "%s@%s", buffer, idmap_domain ) ; 
+#endif
 } /* uid2utf8 */
 
 /**
@@ -318,7 +406,14 @@ int gid2str(  gid_t gid, char * str )
   if( gid2name( buffer, gid ) == 0 )
     return -1 ;
 
+#ifndef _USE_NFSIDMAP
   return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
+#else
+  if( !nfsidmap_set_conf() )
+     return -1 ;
+
+  return sprintf( str, "%s@%s", buffer, idmap_domain ) ; 
+#endif
 } /* gid2str */
 
 
@@ -434,9 +529,11 @@ int utf82uid( utf8string * utf8str, uid_t * Uid )
   
   strncpy( buff, utf8str->utf8string_val, utf8str->utf8string_len );
   buff[utf8str->utf8string_len] = '\0' ;
-  
-  /* User is shown as a string 'user@domain' */
+
+#ifndef _USE_NFSIDMAP
+  /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
   nfs4_stringid_split( buff, uidname, domainname ) ;
+#endif
   
   name2uid( uidname, Uid ) ;
 
@@ -470,8 +567,10 @@ int utf82gid( utf8string * utf8str, gid_t * Gid )
   strncpy( buff, utf8str->utf8string_val, utf8str->utf8string_len );
   buff[utf8str->utf8string_len] = '\0' ;
   
-  /* Group is shown as a string 'group@domain' */
+#ifndef _USE_NFSIDMAP
+  /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */
   nfs4_stringid_split( buff, gidname, domainname ) ;
+#endif
 
   name2gid( gidname, Gid ) ;
  

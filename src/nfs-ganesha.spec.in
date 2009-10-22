@@ -13,6 +13,8 @@ Url: http://nfs-ganesha.sourceforge.net
 Source0: http://downloads.sourceforge.net/nfs-ganesha/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+%define tmp_install_dir %{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
+
 %description
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
@@ -94,7 +96,7 @@ and namespaces. This package contains the development headers for FUSE-like
 %package hpss
 Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS.
 Group: Applications/System
-Requires: %{name}-common = %{version}-%{release}
+Rpquires: %{name}-common = %{version}-%{release}
 
 %description hpss
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -107,22 +109,20 @@ and namespaces. This package provides support for NFS-GANESHA used with HPSS.
 %setup -q -n %{name}-%{version}
 
 %build
-TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
-rm -rf $TMP_INSTALL_DIR
-mkdir -p $TMP_INSTALL_DIR
+rm -rf %tmp_install_dir
+mkdir -p %tmp_install_dir
 
 for fsal in  @FS_ALL_LIST@ ; do                                            
   %configure @ac_configure_args@ --with-fsal=$fsal 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
 
   # try 1 recovery when there is a // make error, then use simple make at 2nd error 
   make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
-  make install DESTDIR=$TMP_INSTALL_DIR
+  make install DESTDIR=%tmp_install_dir
   make clean 
 done
 
 
 %install
-TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
@@ -131,7 +131,7 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
 
-make allinst SRCDIR=$TMP_INSTALL_DIR DESTDIR=$RPM_BUILD_ROOT
+make allinst SRCDIR=%tmp_install_dir DESTDIR=$RPM_BUILD_ROOT
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
@@ -163,8 +163,7 @@ done
 
 
 %clean
-TMP_INSTALL_DIR=%{_tmppath}/%{name}-%{version}-%{release}-tmp_install_dir-%(%{__id_u} -n)
-rm -rf $TMP_INSTALL_DIR
+rm -rf %tmp_install_dir
 rm -rf $RPM_BUILD_ROOT
 
 %files common
@@ -239,6 +238,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Fri Sep 14  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.58-1
 - Early implementation of NFSv4.1 added 
+- Add use of libnfsidmap
 
 * Thu Jul 30  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
 - Add write/commit logic to NFSv3 / NFSv4 

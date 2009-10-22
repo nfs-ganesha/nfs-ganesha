@@ -24,6 +24,12 @@ SVC_LIB_FLAGS =
 endif
 endif
 
+if USE_NFSIDMAP
+NFSIDMAP_LIB_FLAGS = -lnfsidmap
+else
+NFSIDMAP_LIB_FLAGS = 
+endif
+
 if USE_SNMP_ADM
 STAT_SNMP_FILES = nfs_stats_snmp.c
 else
@@ -94,7 +100,9 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 
 
 libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
-                                      $(SEC_LIB_FLAGS)  $(SVC_LIB_FLAGS)                \
+                                      $(SEC_LIB_FLAGS)                                  \
+                                      $(SVC_LIB_FLAGS)                                  \
+                                      $(NFSIDMAP_LIB_FLAGS)                             \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
 					../NodeList/libNodeList.la			\

@@ -265,3 +265,6 @@
 	- Fix bad default parameters in config_samples/proxy.ganesha.nfsd.conf
 	- Add config file parameter NFSv4::DomainName (formerly domain was
 	  alway "localdomain" which was a big lack of flexibility)
+	- Add macro %tmp_install_dir to spec file to avoid using dirty
+	  variable TMP_INSTALL_DIR
+	- Add optional use of nfsidmap library 
