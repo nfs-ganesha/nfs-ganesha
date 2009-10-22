@@ -1,6 +1,7 @@
 nfs-ganesha (0.99.58-1) stable; urgency=low
 
   * Added early implementation of NFSv4.1
+  * Added optional use of libnfsidmap
 
 
  -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 14 Sep 2009 13:14:00 -0600
