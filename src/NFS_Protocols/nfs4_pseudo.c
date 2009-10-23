@@ -439,7 +439,6 @@ int nfs4_PseudoToFattr( pseudofs_entry_t * psfsp,
                    "Asked Attributes (Pseudo): Bitmap = (len=%d, val[0]=%d, val[1]=%d), %d item in list", 
                    Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],  attrmasklen ) ;
 #endif
- printf( "bitmap4_len=%u  bitmap4_val=%p  attrmasklen=%u\n", Bitmap->bitmap4_len,  Bitmap->bitmap4_val, attrmasklen ) ;
 
  if( attrmasklen == 0 )
   {

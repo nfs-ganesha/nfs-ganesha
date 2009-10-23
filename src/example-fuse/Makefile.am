@@ -36,3 +36,11 @@ endif
 endif
 endif
 
+if USE_NFSIDMAP
+fusexmp_LDADD += -lnfsidmap
+if IS_LINUX
+fusexmp_use_shared_LDADD +=  -lnfsidmap
+endif
+endif
+
+
