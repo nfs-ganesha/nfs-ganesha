@@ -5,5 +5,8 @@ bin_PROGRAMS               = $(FS_NAME).ganesha.convertFH
 __FS_NAME__ganesha_convertFH_SOURCES    = ConvertFh.c \
                                      	  ../MainNFSD/nfs_init.h
 
-__FS_NAME__ganesha_convertFH_LDADD  =  ../MainNFSD/libMainServices.la $(FSAL_LDFLAGS) $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
+__FS_NAME__ganesha_convertFH_LDADD  =  ../MainNFSD/libMainServices.la $(FSAL_LDFLAGS)  $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@
 
+if USE_NFSIDMAP
+__FS_NAME__ganesha_convertFH_LDADD += -lnfsidmap
+endif
