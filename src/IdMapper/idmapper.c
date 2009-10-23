@@ -165,18 +165,15 @@ int uid2name( char * name, uid_t uid )
   struct passwd * pp ;
   char buff[MAXPATHLEN] ;
 
-  unsigned int ret  ;
 #ifdef _USE_NFSIDMAP
   if( !nfsidmap_set_conf() )
       return 0 ;
 
-  if( ( ret = nfs4_uid_to_name( uid, idmap_domain, name, MAXNAMLEN ) ) )
+  if(  nfs4_uid_to_name( uid, idmap_domain, name, MAXNAMLEN ) ) 
     {
-	printf( "===> ret = %u\n", ret ) ;
 	return 0 ;
     }
  
-  printf( "Name=%s Uid=%u\n", name, uid ) ;
 #else
 
 #ifdef _SOLARIS
@@ -233,7 +230,8 @@ int name2uid( char * name, uid_t * puid )
     if( nfs4_name_to_uid( name, puid ) )
 	return 0 ;
     
-    printf( "Name=%s Uid=%u\n", name, uid ) ;
+    if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
+	 return 0 ;
 
 #ifdef _USE_GSSRPC
 	if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
@@ -294,7 +292,6 @@ int gid2name( char * name, gid_t gid )
   if( nfs4_gid_to_name( gid, idmap_domain, name, MAXNAMLEN ) )
 	return 0 ;
     
-  printf( "Name=%s Gid=%u\n", name, gid ) ;
 #else
 
 
@@ -343,8 +340,10 @@ int name2gid( char * name, gid_t * pgid )
 
   if( nfs4_name_to_gid( name, pgid ) )
 	return 0 ;
-    
-  printf( "Name=%s Gid=%u\n", name, *pgid ) ;
+
+  if( gidmap_add( name, *pgid ) != ID_MAPPER_SUCCESS )
+	   return 0 ;
+ 
 #else
 
 #ifdef _SOLARIS
@@ -390,10 +389,8 @@ int uid2str( uid_t uid, char * str )
 #ifndef _USE_NFSIDMAP
   return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
 #else
-  if( !nfsidmap_set_conf() )
-     return -1 ;
 
-  return sprintf( str, "%s@%s", buffer, idmap_domain ) ; 
+  return sprintf( str, "%s", buffer ) ; 
 #endif
 } /* uid2utf8 */
 
@@ -419,10 +416,8 @@ int gid2str(  gid_t gid, char * str )
 #ifndef _USE_NFSIDMAP
   return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
 #else
-  if( !nfsidmap_set_conf() )
-     return -1 ;
 
-  return sprintf( str, "%s@%s", buffer, idmap_domain ) ; 
+  return sprintf( str, "%s", buffer ) ; 
 #endif
 } /* gid2str */
 

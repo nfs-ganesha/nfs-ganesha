@@ -1107,6 +1107,10 @@ int nfs_read_version4_conf( config_file_t                in_config,
         {
 	   strncpy( pparam->domainname, key_value, MAXNAMLEN ) ;
         }
+      else if( !strcasecmp( key_name, "IdmapConf" ) )
+        {
+	   strncpy( pparam->idmapconf, key_value, MAXPATHLEN ) ;
+        }
       else if( !strcasecmp( key_name, "FH_Expire" ) ) 
         {
 	  pparam->fh_expire = StrToBoolean( key_value ) ;
