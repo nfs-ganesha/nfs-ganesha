@@ -5,6 +5,23 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.59</a><br>
+	</li>
+	<ul>
+	<li>Implementation of SEQUENCE's DRC</li>
+	<li>Add new "NFSv4.1 specific errors" management in OP_SEQUENCE</li>
+	<li>Bug Fix: test SEQ9c showed that the request replayed from the session's DRC always had status NFS4_OK </li>
+	<li>Bug Fix : Management of NFS4ERR_RETRY_UNCACHED_REP and non cached sequence</li>
+	<li>Bug Fix : correct use of NFS4ERR_TOO_MANY_OPS</li>
+	<li>Bug Fix : initial seqid value is 1 in NFSv4.1</li>
+	<li>Bug Fix : stateid's sequence increment was badly manage in case the file was opened without being created at the same time.</li>
+	<li>Minor change in rpcxid dupreq management</li>
+	<li>Fix bad default parameters in config_samples/proxy.ganesha.nfsd.conf</li>
+	<li>Add config file parameter NFSv4::DomainName (formerly domain was  alway "localdomain" which was a big lack of flexibility)</li>
+	<li>Add macro %tmp_install_dir to spec file to avoid using dirty variable TMP_INSTALL_DIR</li>
+	<li>Add optional use of nfsidmap library</li>
+	</ul>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.58</a><br>
 	</li>
 	<ul>
