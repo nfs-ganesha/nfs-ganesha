@@ -72,6 +72,9 @@ xdr_bitmap4 (XDR *xdrs, bitmap4 *objp)
 {
 	register int32_t *buf;
 
+         if( objp->bitmap4_val == NULL && objp->bitmap4_len != 0 )
+	    objp->bitmap4_len = 0 ;
+
 	 if (!xdr_array (xdrs, (char **)&objp->bitmap4_val, (u_int *) &objp->bitmap4_len, ~0,
 		sizeof (uint32_t), (xdrproc_t) xdr_uint32_t))
 		 return FALSE;

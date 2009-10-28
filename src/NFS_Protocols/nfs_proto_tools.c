@@ -2049,6 +2049,7 @@ void nfs4_bitmap4_to_list( bitmap4 * b, uint_t * plen, uint32_t * pval )
         }
     }
   *plen = index ;
+  
 } /* nfs4_bitmap4_to_list */
 
 /**
