@@ -159,33 +159,54 @@ int nfsidmap_set_conf()
  * return 1 if successful, 0 otherwise
  *
  */
-int uid2name( char * name, uid_t uid )
+int uid2name( char * name, uid_t * puid )
 {
-  struct passwd   p ;
-  struct passwd * pp ;
-  char buff[MAXPATHLEN] ;
-
 #ifdef _USE_NFSIDMAP
   if( !nfsidmap_set_conf() )
       return 0 ;
 
-  if(  nfs4_uid_to_name( uid, idmap_domain, name, MAXNAMLEN ) ) 
-    {
-	return 0 ;
+  if( unamemap_get( *puid, name ) == ID_MAPPER_SUCCESS )
+   {
+	return 1;
+   }
+  else
+   {
+      if( !nfsidmap_set_conf() )
+        return 0 ;
+
+      if(  nfs4_uid_to_name( *puid, idmap_domain, name, MAXNAMLEN ) ) 
+   	return 0 ;
+
+     if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
+       return 0 ;
     }
- 
-#else
-
-#ifdef _SOLARIS
-  if( getpwuid_r( uid, &p, buff, MAXPATHLEN ) !=0 )
-#else
-  if( getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp ) !=0 )
-#endif
-    return 0 ;
-
-#endif /* _USE_NFSIDMAP */
-
   return 1 ;
+
+#else
+  struct passwd   p ;
+  struct passwd * pp ;
+  char buff[MAXPATHLEN] ;
+
+  if( unamemap_get( *puid, name ) == UD_MAPPER_SUCCESS )
+   {
+	return 1;
+   }
+  else
+   { 
+#ifdef _SOLARIS
+      if( getpwuid_r( *puid, &p, buff, MAXPATHLEN ) !=0 )
+#else
+      if( getpwuid_r( *puid, &p, buff, MAXPATHLEN, &pp ) !=0 )
+#endif /* _SOLARIS */
+        return 0 ;
+
+      if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
+        return 0 ;
+
+   }
+ 
+ return 1 ;
+#endif /* _USE_NFSIDMAP */
 } /* uid2name */
 
 /**
@@ -231,7 +252,8 @@ int name2uid( char * name, uid_t * puid )
 	return 0 ;
     
     if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
-	 return 0 ;
+	return 0 ;
+
 
 #ifdef _USE_GSSRPC
 	if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
@@ -279,33 +301,54 @@ int name2uid( char * name, uid_t * puid )
  * return 1 if successful, 0 otherwise
  *
  */
-int gid2name( char * name, gid_t gid )
+int gid2name( char * name, gid_t * pgid )
 {
   struct group    g ;
   struct group * pg ;
   char buff[MAXPATHLEN] ;
 #ifdef _USE_NFSIDMAP
-  if( !nfsidmap_set_conf() )
-     return 0 ;
+
+  if( gnamemap_get( *pgid, name ) == ID_MAPPER_SUCCESS )
+   {
+	return 1;
+   }
+  else
+   {
+     if( !nfsidmap_set_conf() )
+       return 0 ;
 
 
-  if( nfs4_gid_to_name( gid, idmap_domain, name, MAXNAMLEN ) )
+     if( nfs4_gid_to_name( *pgid, idmap_domain, name, MAXNAMLEN ) )
 	return 0 ;
     
-#else
-
-
-#ifdef _SOLARIS
-  if( getgrgid_r( gid, &g, buff, MAXPATHLEN ) != 0 )
-#else
-  if( getgrgid_r( gid, &g, buff, MAXPATHLEN, &pg ) != 0 )
-#endif
-    return 0 ;
-
-  strncpy( name, g.gr_name, MAXNAMLEN ) ;
-#endif /* _USE_NFSIDMAP */
+     if( gidmap_add( name, *pgid ) != ID_MAPPER_SUCCESS )
+	return 0 ;
+   }
 
   return 1 ;
+
+#else
+  if( gnamemap_get( *pgid, name ) == ID_MAPPER_SUCCESS )
+   {
+	return 1;
+   }
+  else
+   {
+#ifdef _SOLARIS
+     if( getgrgid_r( *pgid, &g, buff, MAXPATHLEN ) != 0 )
+#else
+     if( getgrgid_r( *pgid, &g, buff, MAXPATHLEN, &pg ) != 0 )
+#endif /* _SOLARIS */
+       return 0 ;
+ 
+     if( gidmap_add( name, *pgid ) != ID_MAPPER_SUCCESS )
+	return 0 ;
+
+     strncpy( name, g.gr_name, MAXNAMLEN ) ;
+    }
+
+  return 1 ;
+#endif /* _USE_NFSIDMAP */
 } /* gid2name */
 
 /**
@@ -339,10 +382,10 @@ int name2gid( char * name, gid_t * pgid )
      return 0 ;
 
   if( nfs4_name_to_gid( name, pgid ) )
-	return 0 ;
+     return 0 ;
 
   if( gidmap_add( name, *pgid ) != ID_MAPPER_SUCCESS )
-	   return 0 ;
+     return 0 ;
  
 #else
 
@@ -361,6 +404,7 @@ int name2gid( char * name, gid_t * pgid )
 
          if( gidmap_add( name, g.gr_gid ) != ID_MAPPER_SUCCESS )
 	   return 0 ;
+
        }
 #endif /* _USE_NFSIDMAP */
    }
@@ -383,8 +427,9 @@ int name2gid( char * name, gid_t * pgid )
 int uid2str( uid_t uid, char * str ) 
 {
   char buffer[MAXNAMLEN] ;
+  uid_t local_uid = uid ;
   
-  if( uid2name( buffer, uid ) == 0 )
+  if( uid2name( buffer, &local_uid ) == 0 )
     return -1 ;
 #ifndef _USE_NFSIDMAP
   return sprintf( str, "%s@%s", buffer, nfs_param.nfsv4_param.domainname ) ; 
@@ -409,8 +454,9 @@ int uid2str( uid_t uid, char * str )
 int gid2str(  gid_t gid, char * str )
 {
   char buffer[MAXNAMLEN] ;
+  gid_t local_gid = gid ;
 
-  if( gid2name( buffer, gid ) == 0 )
+  if( gid2name( buffer, &local_gid ) == 0 )
     return -1 ;
 
 #ifndef _USE_NFSIDMAP

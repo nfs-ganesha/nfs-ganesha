@@ -1026,10 +1026,10 @@ int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int
  *  nfs4_list_to_bitmap4  - convert a list of attributes to an attributes's bitmap
  */
 
-int uid2name( char * name, uid_t uid ) ;
+int uid2name( char * name, uid_t * puid ) ;
 int name2uid( char * name, uid_t * puid ) ;
 
-int gid2name( char * name, gid_t gid ) ;
+int gid2name( char * name, gid_t * pgid ) ;
 int name2gid( char * name, gid_t * pgid ) ;
 
 int utf82str( char * str, utf8string * utf8str ) ;

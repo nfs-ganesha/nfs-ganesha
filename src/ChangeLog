@@ -251,7 +251,7 @@
 	- command like 'mount -t nfs4 -o minorversion=1 ..' is now possible
 	  but basic connectathon is not fully ok
 
-0.99.59 -
+0.99.59 - Wed 28 Oct 2009
 	- Implementation of SEQUENCE's DRC
 	- Add new "NFSv4.1 specific errors" management in OP_SEQUENCE
 	- Bug Fix: test SEQ9c showed that the request replayed from the
@@ -268,3 +268,7 @@
 	- Add macro %tmp_install_dir to spec file to avoid using dirty
 	  variable TMP_INSTALL_DIR
 	- Add optional use of nfsidmap library 
+
+0.99.60 - 
+	- The uid/gid mapping functions did a bad use of their related
+	  idmapper_cache functions (the cache was not used in several cases)
