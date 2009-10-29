@@ -187,7 +187,7 @@ int uid2name( char * name, uid_t * puid )
   struct passwd * pp ;
   char buff[MAXPATHLEN] ;
 
-  if( unamemap_get( *puid, name ) == UD_MAPPER_SUCCESS )
+  if( unamemap_get( *puid, name ) == ID_MAPPER_SUCCESS )
    {
 	return 1;
    }
