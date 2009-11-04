@@ -310,6 +310,11 @@ cache_inode_status_t cache_inode_remove_sw( cache_entry_t        * pentry,     /
       return *pstatus;
     } 
 
+#ifdef _DEBUG_CACHE_INODE
+  printf( "---> Cache_inode_remove : %s\n", pnode_name->name ) ;
+  fflush( stdout ) ;
+#endif
+
   /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
   if( to_remove_entry->internal_md.type == DIR_CONTINUE )
     {
