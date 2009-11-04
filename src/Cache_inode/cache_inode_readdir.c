@@ -1305,6 +1305,7 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
 #ifdef _DEBUG_CACHE_INODE
               printf( "--> Cache_inode_readdir: Found slot with file named %s\n", 
                       pentry_to_read->object.dir_cont.pdir_data->dir_entries[cookie_iter % CHILDREN_ARRAY_SIZE].name.name ) ;
+	      fflush( stdout ) ;
 #endif
               /* Step to next iter */
               *pnbfound += 1 ;
@@ -1325,7 +1326,9 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
               if( pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR )
                 {
                   /* End of dir is reached */
-                  *peod_met = END_OF_DIR ;
+                  if( pnbfound == 0 )
+                    *peod_met = END_OF_DIR ;
+
                   *pstatus  = CACHE_INODE_SUCCESS ;
                   V_r( &dir_pentry->lock ) ;
 
@@ -1343,7 +1346,9 @@ cache_inode_status_t cache_inode_readdir( cache_entry_t           * dir_pentry,
               if( pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR )
                 {
                   /* End of dir is reached */
-                  *peod_met = END_OF_DIR ;
+                  if( pnbfound == 0 )
+                    *peod_met = END_OF_DIR ;
+
                   *pstatus  = CACHE_INODE_SUCCESS ;
                   V_r( &dir_pentry->lock ) ;
 
