@@ -306,7 +306,7 @@ int nfs4_op_readdir(  struct nfs_argop4 * op ,
       res_READDIR4.status = nfs4_Errno( cache_status ) ;
       return res_READDIR4.status;
     }
-  
+
   if( eod_met == END_OF_DIR )
     {
       /* This is the end of the directory */

@@ -141,7 +141,8 @@
 #define FSAL_NGROUPS_MAX  32
 
 /* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
+//#define FSAL_READDIR_SIZE 2048
+#define FSAL_READDIR_SIZE 4096
 
 
 /** object POSIX infos */
