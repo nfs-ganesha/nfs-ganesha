@@ -272,3 +272,7 @@
 0.99.60 - 
 	- The uid/gid mapping functions did a bad use of their related
 	  idmapper_cache functions (the cache was not used in several cases)
+	- Bug Fix : with kernel newer than 2.6.29, Connectathon's test6 failed
+	  on NFSv4 and NFSv4.1. This is now fixed : eod is returned only when
+	  the array of requested entries is empty (no more entry to be read in
+	  the directory).
