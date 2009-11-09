@@ -236,6 +236,9 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Mon Nov  9  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.60-1
+- Lock supports goes successfully through BULL's locktest when used on top of NFSv4.1
+
 * Fri Sep 14  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.58-1
 - Early implementation of NFSv4.1 added 
 - Add use of libnfsidmap
