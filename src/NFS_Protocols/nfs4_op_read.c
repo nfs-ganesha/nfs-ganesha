@@ -223,7 +223,7 @@ int nfs4_op_read(  struct nfs_argop4 * op ,
       }
 
     /* Check for correctness of the provided stateid */
-    else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK )
+    else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry, 0LL ) ) == NFS4_OK )
      {
 
         /* Get the related state */

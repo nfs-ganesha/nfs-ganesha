@@ -222,7 +222,7 @@ int nfs4_op_locku(  struct nfs_argop4 * op ,
     }
 
   /* Check for correctness of the provided stateid */
-  if( ( rc = nfs4_Check_Stateid( &arg_LOCKU4.lock_stateid, data->current_entry ) ) != NFS4_OK )
+  if( ( rc = nfs4_Check_Stateid( &arg_LOCKU4.lock_stateid, data->current_entry, 0LL ) ) != NFS4_OK )
    {
       res_LOCKU4.status = rc ;
       return res_LOCKU4.status ;

@@ -229,7 +229,7 @@ int nfs4_op_write(  struct nfs_argop4 * op ,
       pstate_found = NULL ;
   }
   /* Check for correctness of the provided stateid */
-  else  if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) 
+  else  if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry, 0LL ) ) == NFS4_OK ) 
    {
       /* Get the related state */
       if( cache_inode_get_state( arg_WRITE4.stateid.other,

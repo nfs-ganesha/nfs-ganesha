@@ -171,7 +171,6 @@ int nfs41_op_lock(  struct nfs_argop4 * op ,
   uint64_t                         a, b, a1, b1 ;
   unsigned int                     overlap                 = FALSE ;
   cache_inode_open_owner_name_t    owner_name ;
-  nfs_client_id_t                  nfs_client_id ;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK ;
@@ -401,22 +400,13 @@ int nfs41_op_lock(  struct nfs_argop4 * op ,
           * which has itself a previously made stateid */
 
          /* Check stateid correctness */
-         if( ( rc = nfs4_Check_Stateid( &arg_LOCK4.locker.locker4_u.open_owner.open_stateid, data->current_entry ) )  != NFS4_OK )
+         if( ( rc = nfs4_Check_Stateid( &arg_LOCK4.locker.locker4_u.open_owner.open_stateid, 
+					data->current_entry, data->psession->clientid ) )  != NFS4_OK )
           {
             res_LOCK4.status = rc ;
             return res_LOCK4.status ;
           }
 
-         /* Check is the clientid is known or not */
-         if( nfs_client_id_get( arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid, 
-                                &nfs_client_id ) == CLIENT_ID_NOT_FOUND )
-          {
-            res_LOCK4.status = NFS4ERR_STALE_CLIENTID ;
-            return res_LOCK4.status ;
-          }
-
-         /* The related stateid is already stored in pstate_open*/
-   
         /* An open state has been found. Check its type */
         if( pstate_open->state_type != CACHE_INODE_STATE_SHARE )
          {
