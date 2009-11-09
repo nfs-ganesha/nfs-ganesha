@@ -417,7 +417,8 @@ int nfs4_op_lock(  struct nfs_argop4 * op ,
           * which has itself a previously made stateid */
 
          /* Check stateid correctness */
-         if( ( rc = nfs4_Check_Stateid( &arg_LOCK4.locker.locker4_u.open_owner.open_stateid, data->current_entry ) )  != NFS4_OK )
+         if( ( rc = nfs4_Check_Stateid( &arg_LOCK4.locker.locker4_u.open_owner.open_stateid, 
+					data->current_entry, 0LL ) )  != NFS4_OK )
           {
             res_LOCK4.status = rc ;
             return res_LOCK4.status ;

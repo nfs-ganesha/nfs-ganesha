@@ -152,7 +152,6 @@ int nfs41_op_lockt(  struct nfs_argop4 * op ,
   char                       __attribute__(( __unused__ )) funcname[] = "nfs41_op_lockt" ;
 
   cache_inode_status_t             cache_status        ;
-  nfs_client_id_t                  nfs_client_id       ;
   cache_inode_state_t            * pstate_found = NULL ;
   uint64_t                         a,b,a1,b1 ;
   unsigned int                     overlap = FALSE ;
@@ -221,14 +220,6 @@ int nfs41_op_lockt(  struct nfs_argop4 * op ,
              res_LOCKT4.status = NFS4ERR_INVAL ;
              return res_LOCKT4.status ;
           }
-    }
-
-  /* Check clientid */
-  if(  nfs_client_id_get( arg_LOCKT4.owner.clientid, 
-                          &nfs_client_id ) != CLIENT_ID_SUCCESS )
-    {
-        res_LOCKT4.status = NFS4ERR_STALE_CLIENTID ;
-        return res_LOCKT4.status ;
     }
 
   /* loop into the states related to this pentry to find the related lock */

@@ -207,7 +207,7 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
 #endif
 
   /* Does the stateid match ? */
-  if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry ) )  != NFS4_OK )
+  if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry, 0LL ) )  != NFS4_OK )
     {
 	res_CLOSE4.status = rc ;
 	return res_CLOSE4.status ;
