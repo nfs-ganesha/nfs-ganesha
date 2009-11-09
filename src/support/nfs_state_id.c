@@ -552,7 +552,7 @@ int nfs4_State_Del( char other[12] )
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
+int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry, clientid4 clientid )
 {
    u_int16_t             time_digest    = 0 ;
    u_int16_t             counter_digest = 0 ;
@@ -584,10 +584,23 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry )
      /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
      return NFS4ERR_BAD_STATEID ;
    }
+ 
+#ifdef _DEBUG_STATES 
+   printf( "         -----  CheckStateid state found : " ) ;
+   for( i = 0 ; i < 12 ; i++ )
+     printf( "%02x", (unsigned char )state.stateid_other[i] ) ;
+   printf( "\n" ) ;
+#endif
 
   /* Get the related clientid */
-  if( nfs_client_id_get( state.powner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
-     return NFS4ERR_BAD_STATEID ; /* Refers to a non-existing client... */
+  /* If call from NFSv4.1 request, the clientid is provided through the session's structure, 
+   * with NFSv4.0, the clientid is related to the stateid itself */
+  if( clientid == 0LL )
+   {
+     if( nfs_client_id_get( state.powner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
+       return NFS4ERR_BAD_STATEID ; /* Refers to a non-existing client... */
+   }
+
 
   /* Check for state availability */
   memcpy( (char *)&counter_digest, (char *)(state.stateid_other + 10), 2 ) ;

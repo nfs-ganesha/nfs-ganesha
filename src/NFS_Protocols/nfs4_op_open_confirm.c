@@ -195,7 +195,7 @@ int nfs4_op_open_confirm(  struct nfs_argop4 * op ,
      }
 
     /* Does the stateid match ? */
-    if( ( rc = nfs4_Check_Stateid( &arg_OPEN_CONFIRM4.open_stateid, data->current_entry ) )  != NFS4_OK )
+    if( ( rc = nfs4_Check_Stateid( &arg_OPEN_CONFIRM4.open_stateid, data->current_entry, 0LL ) )  != NFS4_OK )
      {
         res_OPEN_CONFIRM4.status = rc ;
         return res_OPEN_CONFIRM4.status ;
