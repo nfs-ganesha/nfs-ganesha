@@ -276,3 +276,6 @@
 	  on NFSv4 and NFSv4.1. This is now fixed : eod is returned only when
 	  the array of requested entries is empty (no more entry to be read in
 	  the directory).
+	- Lock supports goes successfully through BULL's locktest when used 
+	  on top of NFSv4.1 (problems remains with NFSv4.0)
+
