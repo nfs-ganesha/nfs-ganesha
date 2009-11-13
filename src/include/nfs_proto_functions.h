@@ -884,8 +884,8 @@ static const fattr4_dent_t __attribute__(( __unused__ ))  fattr4tab[] =
 #define NFS4_LEASE_LIFETIME 120
 #define FSINFO_MAX_FILESIZE  0xFFFFFFFFFFFFFFFFll
 #define MAX_HARD_LINK_VALUE           (0xffff)
-#define NFS4_PSEUDOFS_MAX_READ_SIZE  1024
-#define NFS4_PSEUDOFS_MAX_WRITE_SIZE 1024
+#define NFS4_PSEUDOFS_MAX_READ_SIZE  32768
+#define NFS4_PSEUDOFS_MAX_WRITE_SIZE 32768
 #define NFS4_ROOT_UID 0 
 #define NFS_MAXPATHLEN MAXPATHLEN
 #define DEFAULT_DOMAIN "localdomain" 
