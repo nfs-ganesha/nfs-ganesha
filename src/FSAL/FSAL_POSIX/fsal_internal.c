@@ -368,7 +368,7 @@ fsal_status_t fsal_internal_init_global( fsal_init_info_t       * fsal_info ,
   /* setting default values. */
   global_fs_info = default_posix_info;
 
-#ifdef _DEBUG_FSAL
+#ifndef _DEBUG_FSAL
   
 DisplayLogJdLevel( fsal_log, NIV_DEBUG,"{");
 DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxfilesize  = %llX    ",default_posix_info.maxfilesize);
@@ -449,7 +449,34 @@ DisplayLogJdLevel( fsal_log, NIV_DEBUG,"}");
   if ( fsal_posixdb_cache_init() )
       ReturnCode(ERR_FSAL_FAULT,0);
 
+#ifndef _DEBUG_FSAL
   
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"global_fs_info {");
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxfilesize  = %llX    ",global_fs_info.maxfilesize);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxlink  = %lu   ",global_fs_info.maxlink);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxnamelen  = %lu  ",global_fs_info.maxnamelen);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxpathlen  = %lu  ",global_fs_info.maxpathlen);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  no_trunc  = %d ",global_fs_info.no_trunc);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  chown_restricted  = %d ",global_fs_info.chown_restricted);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  case_insensitive  = %d ",global_fs_info.case_insensitive);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  case_preserving  = %d ",global_fs_info.case_preserving);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  fh_expire_type  = %hu ",global_fs_info.fh_expire_type);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  link_support  = %d  ",global_fs_info.link_support);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  symlink_support  = %d  ",global_fs_info.symlink_support);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  lock_support  = %d  ",global_fs_info.lock_support);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  named_attr  = %d  ",global_fs_info.named_attr);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  unique_handles  = %d  ",global_fs_info.unique_handles);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  acl_support  = %hu  ",global_fs_info.acl_support);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  cansettime  = %d  ",global_fs_info.cansettime);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  homogenous  = %d  ",global_fs_info.homogenous);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  supported_attrs  = %llX  ",global_fs_info.supported_attrs);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxread  = %llX     ",global_fs_info.maxread);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  maxwrite  = %llX     ",global_fs_info.maxwrite);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"  umask  = %X ",global_fs_info.umask);
+DisplayLogJdLevel( fsal_log, NIV_DEBUG,"}");
+  
+#endif
+
   ReturnCode(ERR_FSAL_NO_ERROR,0);
 }
 
