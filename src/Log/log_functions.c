@@ -640,11 +640,12 @@ static int DisplayLogPath_valist( char * path, char * format, va_list arguments 
           /* Si l'ouverture du fichier s'est mal passee */
           my_status = errno ;
         } 
-      fprintf( stderr, "Error %s : %s : status %d\n", 
+      fprintf( stderr, "Error %s : %s : status %d on file %s\n", 
                tab_systeme_err[ERR_FICHIER_LOG].label,
                tab_systeme_err[ERR_FICHIER_LOG].msg, 
-               my_status ) ;
-      
+               my_status, 
+	       path ) ;
+     
       return ERR_FICHIER_LOG ;
     } /* if path */
  
