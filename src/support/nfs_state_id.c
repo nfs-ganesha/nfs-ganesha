@@ -153,8 +153,8 @@ int display_state_id_val( hash_buffer_t * pbuff, char * str )
 {
   cache_inode_state_t * pstate = (cache_inode_state_t *)(pbuff->pdata) ;
 
-  return sprintf( str, "state %p is associated with pentry=%p type=%u my_id=%u seqid=%u prev=%p next=%p\n", 
-                  pstate, pstate->pentry, pstate->state_type, pstate->my_id, pstate->seqid,
+  return sprintf( str, "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p\n", 
+                  pstate, pstate->pentry, pstate->state_type, pstate->seqid,
                   pstate->prev, pstate->next ) ;
 } /* display_state_id_val */
 
@@ -236,74 +236,36 @@ int nfs4_Init_state_id( nfs_state_id_parameter_t  param )
 
 /**
  *
- * nfs4_BuildStateId_Other_Raw
- *
- * This routine fills in the pcontext field in the compound data.
- * pentry is supposed to be locked when this function is called.
- *
- * @param fileid   [IN]   file's id
- * @param id       [IN]   open/owner's pair id
- * @param other    [OUT]  the stateid.other object (a char[12] string)
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs_BuildStateId_Other_Raw( uint64_t fileid, u_int16_t id, char * other ) 
-{
-  u_int16_t    srvboot_digest = 0 ;
-  uint64_t     fileid_digest  = 0 ;
-  u_int16_t    counter_digest = 0 ;
-#ifdef _DEBUG_STATES
-  unsigned int i              = 0 ;
-#endif
-  
-  if( other == 0 )
-    return 0 ;
-
-  srvboot_digest = (u_int16_t)(ServerBootTime & 0x0000FFFF ) ;  ;
-  fileid_digest  = fileid ;
-  counter_digest = id ;
-
-  /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
-  memcpy( (char *)other,     &srvboot_digest, 2 ) ;
-  memcpy( (char *)(other+2), &fileid_digest,  8 ) ;
-  memcpy( (char *)(other+10), &counter_digest, 2 ) ;
-
-#ifdef _DEBUG_STATES
-   printf( "         ----- BuildStateId_Other_Raw %x|%llx|%x : ", srvboot_digest, fileid_digest, counter_digest  ) ;
-   for( i = 0 ; i < 12 ; i++ )
-     printf( "%02x", (unsigned char)other[i] ) ;
-   printf( "\n" ) ;
-#endif
-
-
-  return 1 ;
-} /* nfs_BuildStateId_Other_Raw */
-
-/**
- *
  * nfs4_BuildStateId_Other
  *
  * This routine fills in the pcontext field in the compound data.
  * pentry is supposed to be locked when this function is called.
  *
- * @param pentry   [INOUT] related pentry (should be a REGULAR FILE)
- * @param pcontext [IN]    FSAL's operation context
- * @param other    [OUT]   the stateid.other object (a char[12] string)
+ * @param pentry      [INOUT] related pentry (should be a REGULAR FILE)
+ * @param pcontext    [IN]    FSAL's operation context
+ * @param popen_owner [IN]    the NFSV4.x open_owner for whom this stateid is built
+ * @param other       [OUT]   the stateid.other object (a char[12] string)
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_BuildStateId_Other( cache_entry_t * pentry, fsal_op_context_t * pcontext, char * other )
+
+int nfs4_BuildStateId_Other( cache_entry_t            * pentry, 
+			     fsal_op_context_t        * pcontext, 
+			     cache_inode_open_owner_t * popen_owner,
+			     char                     * other )
 {
-  
-  u_int16_t counter        = 0 ;
-  uint64_t  fileid_digest  = 0 ;
+  uint64_t   fileid_digest     = 0 ;
+  u_int16_t  srvboot_digest    = 0 ;
+  uint32_t   open_owner_digest = 0 ;
 
   if( pcontext == NULL )
    return 0 ;
 
   if( pentry == NULL )
+   return 0 ;
+
+  if( popen_owner == NULL )
    return 0 ;
 
   if( pentry->internal_md.type != REGULAR_FILE ) 
@@ -312,19 +274,32 @@ int nfs4_BuildStateId_Other( cache_entry_t * pentry, fsal_op_context_t * pcontex
   if( other == NULL ) 
    return 0 ;
 
-  /* Get 3x32 bits digest: the server boot time, the fileid and a monotonic counter */  
+#ifdef _DEBUG_STATES 
+  printf( "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s\n", 
+	  pentry, popen_owner->owner_len, popen_owner->owner_val ) ; 
+#endif
+
+  /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */  
   if( FSAL_IS_ERROR( FSAL_DigestHandle( pcontext->export_context,
                                         FSAL_DIGEST_FILEID3,
                                         &(pentry->object.file.handle),
                                         (caddr_t)&fileid_digest ) ) )
         return 0 ;
-  
-  counter = pentry->object.file.state_current_counter  ;
 
-  if( !nfs_BuildStateId_Other_Raw( fileid_digest, counter, other ) )
-    return 0 ;
+  srvboot_digest = (u_int16_t)(ServerBootTime & 0x0000FFFF ) ;  ;
+  open_owner_digest = popen_owner->counter ;
 
-  return 1;
+#ifdef _DEBUG_STATES 
+  printf( "----  nfs4_BuildStateId_Other : pentry=%p fileid=%llu open_owner_digest=%u\n", 
+	  pentry, fileid_digest, open_owner_digest ) ;
+#endif
+
+  /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
+  memcpy( (char *)other,     &srvboot_digest, 2 ) ;
+  memcpy( (char *)(other+2), &fileid_digest,  8 ) ;
+  memcpy( (char *)(other+10), &open_owner_digest, 2 ) ;
+
+  return 1 ;
 } /* nfs4_BuildStateId_Other */
 
 /**
@@ -362,7 +337,7 @@ int nfs4_State_Set( char other[12], cache_inode_state_t * pstate_data )
   buffval.pdata = (caddr_t)pstate_data ;
   buffval.len = sizeof( cache_inode_state_t ) ;
 
-  if( HashTable_Test_And_Set( ht_state_id, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) != HASHTABLE_SUCCESS )
+  if( HashTable_Test_And_Set( ht_state_id, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_OVERWRITE ) != HASHTABLE_SUCCESS )
     return 0 ;
 
   return 1 ;
@@ -600,13 +575,6 @@ int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry, client
      if( nfs_client_id_get( state.powner->clientid, &nfs_clientid ) != CLIENT_ID_SUCCESS )
        return NFS4ERR_BAD_STATEID ; /* Refers to a non-existing client... */
    }
-
-
-  /* Check for state availability */
-  memcpy( (char *)&counter_digest, (char *)(state.stateid_other + 10), 2 ) ;
-
-  if( counter_digest < pentry->object.file.state_head_counter ) 
-     return NFS4ERR_BAD_STATEID ; /* Old state id ? */
 
   /* Check if stateid was made from this server instance */
   memcpy( (char *)&time_digest, pstate->other, 2 ) ;

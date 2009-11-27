@@ -135,6 +135,9 @@ extern nfs_parameter_t nfs_param ;
 
 hash_table_t * ht_open_owner ;
 
+uint32_t open_owner_counter = 0 ;
+pthread_mutex_t open_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER ;
+
 int display_open_owner_key( hash_buffer_t * pbuff, char * str )
 {
   char strtmp[MAXNAMLEN*2] ;
@@ -299,6 +302,10 @@ int nfs_open_owner_Set( cache_inode_open_owner_name_t *pname, cache_inode_open_o
   buffval.pdata = (caddr_t)powner ;
   buffval.len = sizeof( cache_inode_open_owner_t ) ;
 
+  P( open_owner_counter_lock ) ;
+  open_owner_counter += 1 ;
+  powner->counter = open_owner_counter ;
+  V( open_owner_counter_lock ) ;
 
   if( HashTable_Test_And_Set( ht_open_owner, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) != HASHTABLE_SUCCESS )
      return 0 ;
