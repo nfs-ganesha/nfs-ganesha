@@ -280,4 +280,6 @@
 	  on top of NFSv4.1 (problems remains with NFSv4.0)
 	- Bug Fix: NFSv4 rsize/wsize had always value 1024 that killed
 	  performances.
+	- Bug Fix : in nfsv4, the same open_owner opening a previously opened
+	  fileid did not get the same stateid.
 

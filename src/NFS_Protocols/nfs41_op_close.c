@@ -74,13 +74,11 @@
  */
 
 /**
- * \file    nfs4_op_close.c
+ * \file    nfs41_op_close.c
  * \author  $Author: deniel $
- * \date    $Date: 2005/11/28 17:02:50 $
- * \version $Revision: 1.8 $
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
- * nfs4_op_close.c : Routines used for managing the NFS4 COMPOUND functions.
+ * nfs41_op_close.c : Routines used for managing the NFS4 COMPOUND functions.
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -127,7 +125,7 @@
 
 /**
  *
- * nfs4_op_close: Implemtation of NFS4_OP_CLOSE
+ * nfs41_op_close: Implemtation of NFS4_OP_CLOSE
  * 
  * Implemtation of NFS4_OP_CLOSE. Implementation is partial for now, so it always returns NFS4_OK.  
  *
@@ -142,7 +140,7 @@
 #define arg_CLOSE4 op->nfs_argop4_u.opclose
 #define res_CLOSE4 resp->nfs_resop4_u.opclose
 
-int nfs4_op_close(  struct nfs_argop4 * op ,   
+int nfs41_op_close(  struct nfs_argop4 * op ,   
                     compound_data_t   * data,
                     struct nfs_resop4 * resp)
 {
@@ -197,13 +195,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
         return res_CLOSE4.status ;
     }
 
-  /* Does the stateid match ? */
-  if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry, 0LL ) )  != NFS4_OK )
-    {
-	res_CLOSE4.status = rc ;
-	return res_CLOSE4.status ;
-    }
-
   /* Get the related state */
   if( cache_inode_get_state( arg_CLOSE4.open_stateid.other,
                              &pstate_found,
@@ -233,17 +224,6 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid +1 ;
 
-  /* File is closed, release the corresponding state */
-  if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
-                                    data->pclient, 
-                                    &cache_status ) != CACHE_INODE_SUCCESS ) 
-    {
-	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
-	return res_CLOSE4.status ;
-    }
-
-  memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
-
   /* Close the file in FSAL through the cache inode */
   P_w( &data->current_entry->lock ) ;
   if( cache_inode_close( data->current_entry,
@@ -257,14 +237,26 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
     }
   V_w( &data->current_entry->lock ) ;
 
+  /* File is closed, release the corresponding state */
+  if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
+                                    data->pclient, 
+                                    &cache_status ) != CACHE_INODE_SUCCESS ) 
+    {
+	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
+	return res_CLOSE4.status ;
+    }
+
+  memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
+
+  
   res_CLOSE4.status = NFS4_OK ;
   
   return NFS4_OK ;
-} /* nfs4_op_close */
+} /* nfs41_op_close */
 
 
 /**
- * nfs4_op_close_Free: frees what was allocared to handle nfs4_op_close.
+ * nfs41_op_close_Free: frees what was allocared to handle nfs4_op_close.
  * 
  * Frees what was allocared to handle nfs4_op_close.
  *
@@ -273,9 +265,9 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_close_Free( CLOSE4res * resp )
+void nfs41_op_close_Free( CLOSE4res * resp )
 {
   /* Nothing to be done */
   return ;
-} /* nfs4_op_close_Free */
+} /* nfs41_op_close_Free */
 
