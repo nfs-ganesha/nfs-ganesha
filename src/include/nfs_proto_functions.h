@@ -678,6 +678,10 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP argu
                            compound_data_t * data,          /* [IN] current data for the compound request */
                            struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
 
+int nfs41_op_close(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
+                    compound_data_t * data,          /* [IN] current data for the compound request */
+                    struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
+
 int nfs41_op_create_session(  struct nfs_argop4 * op ,         /* [IN] NFS4 OP arguments */
                               compound_data_t * data,          /* [IN] current data for the compound request */
                               struct nfs_resop4 * resp) ;      /* [OUT] NFS4 OP results */
@@ -977,6 +981,7 @@ void nfs4_op_write_Free( WRITE4res * resp ) ;
 
 #ifdef _USE_NFS4_1
 void nfs41_op_exchange_id_Free( EXCHANGE_ID4res * resp ) ;
+void nfs41_op_close_Free( CLOSE4res * resp ) ;
 void nfs41_op_create_session_Free( CREATE_SESSION4res * resp ) ;
 void nfs41_op_destroy_session_Free( DESTROY_SESSION4res * resp ) ;
 void nfs41_op_lock_Free( LOCK4res * resp ) ;

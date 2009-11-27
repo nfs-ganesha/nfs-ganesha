@@ -374,8 +374,8 @@ typedef struct cache_entry__
         fsal_attrib_list_t            attributes            ;        /**< The FSAL Attributes                                  */
         void                        * pentry_content        ;        /**< Entry in file content cache (NULL if not cached)     */
         cache_inode_opened_file_t     open_fd               ;        /**< Cached fsal_file_t for optimized access              */
-        u_int16_t                     state_head_counter    ;        /**< Counter used for the head of the state chain         */
-        u_int16_t                     state_current_counter ;        /**< Current counter for the state chain                  */
+        void *                        pstate_head           ;        /**< Pointer used for the head of the state chain         */
+        void *                        pstate_tail           ;        /**< Current pointer for the state chain                  */
         cache_inode_unstable_data_t   unstable_data         ;        /**< Unstable data, for use with WRITE/COMMIT             */
       }                            file ;     /**< file related filed     */
 
@@ -461,6 +461,7 @@ typedef struct cache_inode_open_owner__
   unsigned int                      confirmed ;
   unsigned int                      seqid ;
   pthread_mutex_t                   lock ;
+  uint32_t                          counter ; /** < Counter is used to build unique stateids */
   struct cache_inode_open_owner__ * related_owner ;
   struct cache_inode_open_owner__ * next ;
 } cache_inode_open_owner_t ;
@@ -476,7 +477,6 @@ typedef struct cache_inode_state__
      cache_inode_deleg_t deleg ;
    } state_data ;
    u_int32_t                       seqid             ;   /**< The NFSv4 Sequence id                      */
-   u_int32_t                       my_id             ;   /**< The id for the owner pair                  */
    char                            stateid_other[12] ;   /**< "Other" part of state id, used as hash key */
    cache_inode_open_owner_t      * powner            ;   /**< Open Owner related to this state           */
    struct cache_inode_state__    * next              ;   /**< Next entry in the state list               */
@@ -1100,11 +1100,6 @@ cache_inode_status_t cache_inode_state_iterate( cache_entry_t           * pentry
                                                 cache_inode_client_t    * pclient,
                                                 fsal_op_context_t       * pcontext,
                                                 cache_inode_status_t    * pstatus ) ;
-
-cache_inode_status_t cache_inode_state_del_all( cache_entry_t         * pentry,
-                                                cache_inode_client_t  * pclient,
-                                                fsal_op_context_t     * pcontext,
-                                                cache_inode_status_t  * pstatus ) ;
 
 cache_inode_status_t cache_inode_del_state_by_key( char                         other[12], 
                                                    cache_inode_client_t       * pclient,

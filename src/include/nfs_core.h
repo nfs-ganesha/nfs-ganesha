@@ -717,8 +717,10 @@ int uidgidmap_remove( unsigned int    key ) ;
 
 void idmap_get_stats(  idmap_type_t maptype , hash_stat_t * phstat, hash_stat_t * phstat_reverse );
 
-int nfs4_BuildStateId_Other( cache_entry_t * pentry, fsal_op_context_t * pcontext, char * other ) ;
-int nfs_BuildStateId_Other_Raw( u_int64_t fileid, u_int16_t id, char * other ) ;
+int nfs4_BuildStateId_Other( cache_entry_t            * pentry, 
+			     fsal_op_context_t        * pcontext,
+			     cache_inode_open_owner_t * popen_owner,
+			     char                     * other ) ;
 int nfs4_Check_Stateid( struct stateid4 * pstate, cache_entry_t * pentry, clientid4 clientid ) ;
 int nfs4_is_lease_expired( cache_entry_t * pentry ) ;
 int nfs4_Init_state_id( nfs_state_id_parameter_t  param )  ;

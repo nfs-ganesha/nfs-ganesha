@@ -197,7 +197,7 @@ cache_inode_status_t cache_inode_open( cache_entry_t              * pentry,
      pentry->object.file.open_fd.fileno    = (int)FSAL_FILENO( &(pentry->object.file.open_fd.fd) ) ; 
      pentry->object.file.open_fd.openflags = openflags ;
 
-#ifdef _DEBUG_CACHE_INODE
+#ifndef _DEBUG_CACHE_INODE
      printf("cache_inode_open: pentry %p: lastop=0, fileno = %d\n", pentry,pentry->object.file.open_fd.fileno );
 #endif
    }
@@ -425,8 +425,10 @@ cache_inode_status_t cache_inode_close( cache_entry_t         * pentry,
       ( time( NULL) - pentry->object.file.open_fd.last_op > pclient->retention ) || 
       ( pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread) ) )
    {
-#ifdef _DEBUG_CACHE_INODE
-     printf("cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n", pentry,pentry->object.file.open_fd.fileno,  time(NULL) - pentry->object.file.open_fd.last_op );
+#ifndef _DEBUG_CACHE_INODE
+     printf( "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n", 
+	     pentry,pentry->object.file.open_fd.fileno, 
+	     (int)(time(NULL) - pentry->object.file.open_fd.last_op) );
 #endif
 
 #ifdef _USE_MFSL

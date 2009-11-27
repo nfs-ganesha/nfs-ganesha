@@ -191,8 +191,6 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
   cache_inode_state_t           * piter_state   = NULL ;
   cache_inode_state_t           * piter_saved   = NULL ;
   cache_inode_open_owner_t      * powner   = powner_input ;
-  u_int64_t                       fileid_digest = 0 ;
-  u_int16_t                       new_counter   = 0 ;
   char                            other_head[12] ;
   bool_t                          conflict_found = FALSE ;
 #ifdef _DEBUG_STATES
@@ -238,43 +236,18 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       return *pstatus ;
     }
 
-#ifdef _DEBUG_STATES
-  printf( "         ----- Entering cache_inode_add_state: head_counter=%u current_counter=%u\n",
-          pentry->object.file.state_head_counter, pentry->object.file.state_current_counter  ) ;
-#endif
-
-  if( pentry->object.file.state_current_counter == 0xFFFF )
-     new_counter = 1 ;
-  else
-     new_counter = pentry->object.file.state_current_counter + 1 ;
-
-  /* Here, we need to know the file id */
-  if( FSAL_IS_ERROR( FSAL_DigestHandle( pcontext->export_context,
-                                        FSAL_DIGEST_FILEID3,
-                                        &(pentry->object.file.handle),
-                                        (caddr_t)&fileid_digest ) ) )
-     {
-         DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (B)", pentry ) ;
-         *pstatus = CACHE_INODE_STATE_ERROR ;
-
-         /* stat */
-         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-
-         V_w( &pentry->lock ) ;
-
-         return *pstatus ;
-     }
-
-
   /* If there already a state or not ? */
-  if( pentry->object.file.state_head_counter == 0 )
+  if( pentry->object.file.pstate_head == NULL )
    {
       /* The file has no state for now, accept this new state */
       pnew_state->next = NULL ;
       pnew_state->prev = NULL ;
 
       /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-      if( !nfs_BuildStateId_Other_Raw( fileid_digest, new_counter, pnew_state->stateid_other ) )
+      if( !nfs4_BuildStateId_Other( pentry,
+                                    pcontext, 
+                                    powner_input,
+                                    pnew_state->stateid_other ) )
        {
          DisplayLogJd( pclient->log_outputs, "Can't create a new state id for the pentry %p (A)", pentry ) ;
          *pstatus = CACHE_INODE_STATE_ERROR ;
@@ -295,43 +268,12 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
       pnew_state->powner = powner ;
 
      /* Set the head state id */
-     pentry->object.file.state_current_counter = new_counter ;
-     pentry->object.file.state_head_counter = pentry->object.file.state_current_counter ;
-     pnew_state->my_id = pentry->object.file.state_current_counter ;
-
+     pentry->object.file.pstate_head = (void *)pnew_state ;
    }
   else
    {
-      /* Build the 'other' for head's state */
-      if( !nfs_BuildStateId_Other_Raw( fileid_digest, pentry->object.file.state_head_counter, other_head ) )
-       {
-          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (C)", pentry ) ;
-          *pstatus = CACHE_INODE_STATE_ERROR ;
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-
-          V_w( &pentry->lock ) ;
-
-          return *pstatus ;
-       }
-
-     /* Get the state from the hash */
-     if( !nfs4_State_Get_Pointer( other_head, &phead_state ) )
-      {
-          DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (D)", pentry ) ;
-          *pstatus = CACHE_INODE_STATE_ERROR ;
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1 ;
-
-          V_w( &pentry->lock ) ;
-
-          return *pstatus ;
-      }
- 
     /* Brwose the state's list */
-    for( piter_state = phead_state ; piter_state != NULL ; piter_saved =  piter_state, piter_state = piter_state->next )
+    for( piter_state = pentry->object.file.pstate_head ; piter_state != NULL ; piter_saved =  piter_state, piter_state = piter_state->next )
      {
         if( cache_inode_state_conflict( piter_state, state_type, pstate_data ) )
          {
@@ -361,7 +303,7 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
 
 
     /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-    if( !nfs_BuildStateId_Other_Raw( fileid_digest, new_counter, pnew_state->stateid_other ) )
+    if( !nfs4_BuildStateId_Other( pentry, pcontext, powner_input, pnew_state->stateid_other ) )
      {
        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (E)", pentry ) ;
        *pstatus = CACHE_INODE_STATE_ERROR ;
@@ -382,14 +324,8 @@ cache_inode_status_t cache_inode_add_state( cache_entry_t              * pentry,
     pnew_state->powner = powner ;
 
     /* Set the head state id */
-    pentry->object.file.state_current_counter = new_counter ;
-    pnew_state->my_id = pentry->object.file.state_current_counter ;
+    pentry->object.file.pstate_tail = (void *)pnew_state ;
    } /* else */
-
-#ifdef _DEBUG_STATES 
-  printf( "         ----- Exiting cache_inode_add_state: head_counter=%u current_counter=%u pnew_state=%p type=%u\n",
-          pentry->object.file.state_head_counter, pentry->object.file.state_current_counter, pnew_state, state_type  ) ;
-#endif
 
   /* Add the state to the related hashtable */
   if( !nfs4_State_Set( pnew_state->stateid_other, pnew_state ) )
@@ -556,18 +492,18 @@ cache_inode_status_t cache_inode_del_state_by_key( char                         
   P_w( &pentry->lock ) ;
 
   /* Set the head counter */
-  if( pstate->my_id == pentry->object.file.state_head_counter )
+  if( pstate == pentry->object.file.pstate_head )
    {
      /* This is the first state managed */ 
      if( pstate->next == NULL )
       {
         /* I am the only remaining state, set the head counter to 0 in the pentry */
-        pentry->object.file.state_head_counter    = 0 ;
+        pentry->object.file.pstate_head = NULL ;
       }
      else
       {
         /* The state that is next to me become the new head */
-        pentry->object.file.state_head_counter = pstate->next->my_id ;
+        pentry->object.file.pstate_head = (void *)pstate->next ;
       }
    }
 
@@ -597,7 +533,6 @@ cache_inode_status_t cache_inode_del_state_by_key( char                         
         /* reset the pstate field to avoid later mistakes */
         memset( (char *)pstate->stateid_other, 0, 12 ) ;
         pstate->state_type                  = CACHE_INODE_STATE_NONE ;
-        pstate->my_id                       = 0 ;
         pstate->next                        = NULL ;
         pstate->prev                        = NULL ;
         pstate->pentry                      = NULL ;
@@ -672,18 +607,18 @@ cache_inode_status_t cache_inode_del_state( cache_inode_state_t        * pstate,
   P_w( &pentry->lock ) ;
 
   /* Set the head counter */
-  if( pstate->my_id == pentry->object.file.state_head_counter )
+  if( pstate == pentry->object.file.pstate_head )
    {
      /* This is the first state managed */ 
      if( pstate->next == NULL )
       {
         /* I am the only remaining state, set the head counter to 0 in the pentry */
-        pentry->object.file.state_head_counter    = 0 ;
+        pentry->object.file.pstate_head = NULL ;
       }
      else
       {
         /* The state that is next to me become the new head */
-        pentry->object.file.state_head_counter = pstate->next->my_id ;
+        pentry->object.file.pstate_head = (void *)pstate->next ;
       }
    }
 
@@ -710,7 +645,6 @@ cache_inode_status_t cache_inode_del_state( cache_inode_state_t        * pstate,
   /* reset the pstate field to avoid later mistakes */
   memset( (char *)pstate->stateid_other, 0, 12 ) ;
   pstate->state_type                  = CACHE_INODE_STATE_NONE ;
-  pstate->my_id                       = 0 ;
   pstate->next                        = NULL ;
   pstate->prev                        = NULL ;
   pstate->pentry                      = NULL ;
@@ -723,260 +657,11 @@ cache_inode_status_t cache_inode_del_state( cache_inode_state_t        * pstate,
 
   *pstatus = CACHE_INODE_SUCCESS ;
  
- V_w( &pentry->lock ) ;
+  V_w( &pentry->lock ) ;
 
  return *pstatus ;
 } /* cache_inode_del_state */
 
-/**
- *
- * cache_inode_get_state: gets a state from the hash's state
- *
- * Gets a state from the hash's state. If a state owned by that lockowner was found in a previous call,
- * starts looking at this entry
- *
- * @param other           [IN]    stateid.other used as hash key
- * @param powner          [IN]    the owner that is used as key to locate a state
- * @param ppstate         [OUT]   pointer to a pointer of state that will point to the result
- * @param previous_pstate [IN]    a pointer to be used to start search. Should be NULL at first call
- * @param pclient         [INOUT] related cache inode client
- * @param pcontext        [IN]    related FSAL operation context
- * @pstatus               [OUT]   status for the operation
- *
- * @return the same as *pstatus
- *
- */
-cache_inode_status_t cache_inode_find_state_by_owner( cache_entry_t           * pentry, 
-                                                      open_owner4             * powner, 
-                                                      cache_inode_state_t   * * ppstate,
-                                                      cache_inode_state_t     * previous_pstate,
-                                                      cache_inode_client_t    * pclient,
-                                                      fsal_op_context_t       * pcontext,
-                                                      cache_inode_status_t    * pstatus )
-{
-  u_int64_t             fileid_digest = 0 ;
-  char                  other_head[12] ;
-  cache_inode_state_t * piter_state       = NULL ;
-  cache_inode_state_t * piter_state_start = NULL ;
-  cache_inode_state_t   head_state  ;
-  bool_t                found = FALSE ;
-
-  if( pstatus == NULL ) 
-   return CACHE_INODE_INVALID_ARGUMENT ;
-
-  if( pentry == NULL || powner == NULL || ppstate == NULL || 
-      pclient == NULL || pcontext == NULL )
-   {
-     *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-     return *pstatus ;
-   }
- 
-  /* Here, we need to know the file id */
-  if( FSAL_IS_ERROR( FSAL_DigestHandle( pcontext->export_context,
-                                       FSAL_DIGEST_FILEID3,
-                                       &(pentry->object.file.handle),
-                                       (caddr_t)&fileid_digest ) ) )
-    {
-        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (F)", pentry ) ;
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        return *pstatus ;
-    }
-
-  P_r( &pentry->lock ) ;
-
-  /* The file already have at least one state, browse all of them, starting with the first state */
-  /* Build the 'other' for head's state */
-  if( !nfs_BuildStateId_Other_Raw( fileid_digest, pentry->object.file.state_head_counter, other_head ) )
-   {
-      *pstatus = CACHE_INODE_STATE_ERROR ;
-
-      V_r( &pentry->lock ) ;
-
-      return *pstatus ;
-   }
-  
-  /* if this is the first call, used the data stored in pentry to get the state's chain head */ 
-  if( previous_pstate == NULL )
-   {
-     /* Get the state from the hash */
-     if( !nfs4_State_Get( other_head, &head_state ) )
-      {
-        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (G)", pentry ) ;
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        V_r( &pentry->lock ) ;
-
-        return *pstatus ;
-      }
-
-     piter_state = &head_state ;
-   }
-  else
-   {
-     /* Sanity check: make sure that this state is related to this pentry */
-     if( previous_pstate->pentry != pentry )
-      {
-        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Bad previous pstate: related to pentry %p, not to %p", 
-                           previous_pstate->pentry, pentry ) ;
-
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        V_r( &pentry->lock ) ;
-
-        return *pstatus ;
-      }
-
-     piter_state = previous_pstate ; 
-   }
-  
-  /* Search loop */
-  for( piter_state = piter_state_start ; piter_state != NULL ; piter_state = piter_state->next )
-   {
-      if( piter_state->powner->clientid == powner->clientid )
-       {
-          /* Client ids match, check the owner */
-          if( piter_state->powner->owner_len == powner->owner.owner_len )
-           if( !memcmp( piter_state->powner->owner_val, powner->owner.owner_val, powner->owner.owner_len ) )
-            {
-                found = TRUE ;
-                break ;
-            } 
-       }
-   } /* for... */
-  
-
-  if( found == FALSE )
-    *pstatus = CACHE_INODE_NOT_FOUND ;
-  else
-    *pstatus = CACHE_INODE_SUCCESS ;
-
-  *ppstate = piter_state ;
-  
-   V_r( &pentry->lock ) ; 
-
-  return *pstatus ;
-} /* cache_inode_find_state_by_owner */
-
-
-/**
- *  
- * cache_inode_state_del_all: deletes all states associated with a pentry (e.g. when closing a file)
- *
- * @param pentry   [IN]    the pentry to be operated on
- * @param pclient  [INOUT] related cacjhe inode client
- * @param pcontext [IN]    related FSAL operation context
- * @param pstatus  [OUT]   returned status
- *
- * @return the same as *pstatus
- *
- */  
-cache_inode_status_t cache_inode_state_del_all( cache_entry_t         * pentry,
-                                                cache_inode_client_t  * pclient,
-                                                fsal_op_context_t     * pcontext,
-                                                cache_inode_status_t  * pstatus )
-{
-  u_int64_t             fileid_digest = 0 ;
-  cache_inode_state_t * piter_state   = NULL ;
-  cache_inode_state_t * pnext_state   = NULL ;
-  char                  other_head[12] ;
-
-  if( pstatus == NULL )
-    return CACHE_INODE_INVALID_ARGUMENT ;
-
-  if( pentry == NULL || pclient == NULL || pcontext == NULL )
-   {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-      return *pstatus ;
-   }
- 
-  /* Here, we need to know the file id */
-  if( FSAL_IS_ERROR( FSAL_DigestHandle( pcontext->export_context,
-                                       FSAL_DIGEST_FILEID3,
-                                       &(pentry->object.file.handle),
-                                       (caddr_t)&fileid_digest ) ) )
-    {
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        return *pstatus ;
-    }
-
-  P_w( &pentry->lock ) ;
-
-  /* Build the 'other' related to the head of the state chain to start iterating */  
-  if( !nfs_BuildStateId_Other_Raw( fileid_digest, pentry->object.file.state_head_counter, other_head ) )
-   {
-      *pstatus = CACHE_INODE_STATE_ERROR ;
-
-       V_w( &pentry->lock ) ;
-
-       return *pstatus ;
-   }
-
-  /* Get the head state from the hash */
-  if( !nfs4_State_Get_Pointer( other_head, &piter_state ) )
-    {
-      *pstatus = CACHE_INODE_STATE_ERROR ;
-
-      V_w( &pentry->lock ) ;
-
-      return *pstatus ;
-    }
-
-#ifdef _DEBUG_STATES
-  nfs_State_PrintAll(  ) ;
-#endif
-
-  /* Release all the states within the chain step by step */
-  do
-   {
-    pnext_state = piter_state->next ;
-
-    /* Remove the entry from the HashTable */
-     if( !nfs4_State_Del( piter_state->stateid_other ) )
-      {
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        V_w( &pentry->lock ) ;
-
-        return *pstatus ;
-      }
-
-
-    /* reset the pstate field to avoid later mistakes */
-    memset( (char *)piter_state->stateid_other, 0, 12 ) ;
-    piter_state->state_type                  = CACHE_INODE_STATE_NONE ;
-    piter_state->my_id                       = 0 ;
-    piter_state->next                        = NULL ;
-    piter_state->prev                        = NULL ;
-    piter_state->pentry                      = NULL ;
-
-    RELEASE_PREALLOC( piter_state,
-                      pclient->pool_state_v4,
-                      next ) ; 
-
-    /* Go on to the next one */
-    piter_state = pnext_state ;
-     
-#ifdef _DEBUG_STATES
-    nfs_State_PrintAll( ) ;
-#endif
-   } while( piter_state != NULL ) ;
-
-#ifdef _DEBUG_STATES
-  nfs_State_PrintAll( ) ;
-#endif
-  /* No more state associated with this pentry */
-  pentry->object.file.state_head_counter    = 0 ;
-  pentry->object.file.state_current_counter  = 0 ;
-
-  V_w( &pentry->lock ) ;
-
-  /* Function is not implemented know */
-  *pstatus = CACHE_INODE_SUCCESS ;
- 
-  return *pstatus ;
-} /* cache_inode_state_del_all */
 
 /**
  *
@@ -1001,9 +686,9 @@ cache_inode_status_t cache_inode_state_iterate( cache_entry_t           * pentry
                                                 fsal_op_context_t       * pcontext,
                                                 cache_inode_status_t    * pstatus )
 {
-  u_int64_t             fileid_digest = 0 ;
   cache_inode_state_t * piter_state   = NULL ;
   cache_inode_state_t * phead_state   = NULL ;
+  uint64_t              fileid_digest = 0 ;
   char                  other_head[12] ;
 
   if( pstatus == NULL ) 
@@ -1034,28 +719,7 @@ cache_inode_status_t cache_inode_state_iterate( cache_entry_t           * pentry
   if( previous_pstate == NULL )
    {
      /* The file already have at least one state, browse all of them, starting with the first state */
-     /* Build the 'other' for head's state */
-     if( !nfs_BuildStateId_Other_Raw( fileid_digest, pentry->object.file.state_head_counter, other_head ) )
-      {
-         *pstatus = CACHE_INODE_STATE_ERROR ;
-
-         V_r( &pentry->lock ) ;
-
-         return *pstatus ;
-      }
-
-     /* Get the state from the hash */
-     if( !nfs4_State_Get_Pointer( other_head, &phead_state ) )
-      {
-        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't create a new state id for the pentry %p (G)", pentry ) ;
-        *pstatus = CACHE_INODE_STATE_ERROR ;
-
-        V_r( &pentry->lock ) ;
-
-        return *pstatus ;
-      }
-
-     piter_state = phead_state ;
+     piter_state = pentry->object.file.pstate_head ;
    }
   else
    {
