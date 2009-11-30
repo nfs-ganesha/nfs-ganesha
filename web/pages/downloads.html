@@ -5,6 +5,17 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.60</a><br>
+	</li>
+	<ul>
+	<li>The uid/gid mapping functions did a bad use of their related idmapper_cache functions</li>
+	<li>Bug Fix : with kernel newer than 2.6.29, Connectathon's test6 failed</li>
+	<li>Lock supports is available and apparently healthy with NFSv4.1</li>
+	<li>Bug Fix: NFSv4 rsize/wsize had always value 1024 that killed performances</li>
+	<li>Bug Fix : in nfsv4, the same open_owner opening a previously opened  fileid did not get the same stateid.</li>
+	<li>Bug Fix : most of the time, files opened/created via NFSv4 were never closed</li>
+	</ul>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.59</a><br>
 	</li>
 	<ul>
