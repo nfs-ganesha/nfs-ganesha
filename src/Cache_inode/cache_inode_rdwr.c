@@ -378,7 +378,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
           pentry->object.file.attributes.asked_attributes =  pclient->attrmask ;
 
           /* Open the file if needed */
-          if( pentry->object.file.open_fd.fileno == -1 ) 
+          if( pentry->object.file.open_fd.fileno == 0 ) 
             {
               if( cache_inode_open( pentry, 
 	      		           pclient, 
@@ -454,7 +454,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
               else
                 DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "cache_inode_rdwr: fsal_status.major = %d", fsal_status.major ) ;
 
-             if ( (fsal_status.major != ERR_FSAL_NOT_OPENED) && (pentry->object.file.open_fd.fileno != -1) )
+             if ( (fsal_status.major != ERR_FSAL_NOT_OPENED) && (pentry->object.file.open_fd.fileno != 0) )
              {
 #ifdef _DEBUG_CACHE_INODE
                 printf("cache_inode_rdwr: CLOSING pentry %p: fd=%d\n", pentry, pentry->object.file.open_fd.fileno);
@@ -478,7 +478,7 @@ cache_inode_status_t cache_inode_rdwr( cache_entry_t              * pentry,
              }
 
              pentry->object.file.open_fd.last_op = 0 ;
-             pentry->object.file.open_fd.fileno = -1 ;
+             pentry->object.file.open_fd.fileno  = 0 ;
            
              V_w( &pentry->lock ) ;
           

@@ -267,7 +267,7 @@ typedef struct cache_inode_client_parameter__
 typedef struct cache_inode_opened_file__
 {
 	fsal_file_t             fd ;
-	int                     fileno ;
+	unsigned int            fileno ;
 	fsal_openflags_t        openflags ;
 	time_t                  last_op ;
 } cache_inode_opened_file_t ;
