@@ -269,7 +269,7 @@
 	  variable TMP_INSTALL_DIR
 	- Add optional use of nfsidmap library 
 
-0.99.60 - 
+0.99.60 - Mon 30 Nov 2009
 	- The uid/gid mapping functions did a bad use of their related
 	  idmapper_cache functions (the cache was not used in several cases)
 	- Bug Fix : with kernel newer than 2.6.29, Connectathon's test6 failed
@@ -282,4 +282,6 @@
 	  performances.
 	- Bug Fix : in nfsv4, the same open_owner opening a previously opened
 	  fileid did not get the same stateid.
+	- Bug Fix : most of the time, files opened/created via NFSv4 were
+	  never closed
 

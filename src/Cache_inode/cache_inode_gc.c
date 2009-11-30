@@ -708,7 +708,7 @@ int cache_inode_gc_fd_func( LRU_entry_t * plru_entry, void * addparam )
   /* check if a file descriptor is opened on the file for a long time */
 
   if ( (pentry->internal_md.type == REGULAR_FILE)
-        && ( pentry->object.file.open_fd.fileno != -1 )
+        && ( pentry->object.file.open_fd.fileno != 0 )
         && (  time( NULL) - pentry->object.file.open_fd.last_op > pgcparam->pclient->retention ) )
   {
         P_w( &pentry->lock );
