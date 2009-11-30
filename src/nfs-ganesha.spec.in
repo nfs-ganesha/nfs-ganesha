@@ -236,16 +236,13 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
-* Mon Nov 30  2009
+* Mon Nov 30  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.60-1
 - The uid/gid mapping functions did a bad use of their related idmapper_cache functions
 - Bug Fix : with kernel newer than 2.6.29, Connectathon's test6 failed
 - Lock supports is available and apparently healthy with NFSv4.1
 - Bug Fix: NFSv4 rsize/wsize had always value 1024 that killed performances
 - Bug Fix : in nfsv4, the same open_owner opening a previously opened  fileid did not get the same stateid.
 - Bug Fix : most of the time, files opened/created via NFSv4 were never closed
-
-* Mon Nov  9  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.60-1
-- Lock supports goes successfully through BULL's locktest when used on top of NFSv4.1
 
 * Fri Sep 14  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.58-1
 - Early implementation of NFSv4.1 added 
