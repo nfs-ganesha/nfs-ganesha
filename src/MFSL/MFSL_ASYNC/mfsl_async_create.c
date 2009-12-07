@@ -128,7 +128,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              &popasyncdesc->op_args.create.precreate_name,
                              &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
                              &popasyncdesc->op_args.create.filename,
-                             popasyncdesc->fsal_op_context,
+                             &popasyncdesc->fsal_op_context,
                              &attrsrc,
                              &attrdest )  ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
@@ -141,7 +141,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
   /* Lookup to get the right attributes for the object */
   fsal_status = FSAL_lookup( &(popasyncdesc->op_args.create.pmfsl_obj_dirdest->handle),
 			     &popasyncdesc->op_args.create.filename,
- 			     popasyncdesc->fsal_op_context,
+ 			     &popasyncdesc->fsal_op_context,
 			     &handle,
                              &popasyncdesc->op_res.create.attr );
 
@@ -160,7 +160,7 @@ fsal_status_t  MFSL_create_async_op( mfsl_async_op_desc_t  * popasyncdesc )
      chown_attr.owner = popasyncdesc->op_args.create.owner ; 
      chown_attr.group = popasyncdesc->op_args.create.group ;
  
-     fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.create.attr ) ;
+     fsal_status = FSAL_setattrs( &handle, &popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.create.attr ) ;
    }
   
   V( popasyncdesc->op_args.create.pmfsl_obj_dirdest->lock ) ;
@@ -302,7 +302,7 @@ fsal_status_t MFSL_create(  mfsl_object_t         * parent_directory_handle, /* 
 
   pasyncopdesc->op_func = MFSL_create_async_op ;
   //pasyncopdesc->fsal_op_context = p_context ;
-  pasyncopdesc->fsal_op_context = &synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
+  pasyncopdesc->fsal_op_context = synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
 
   fsal_status = MFSL_async_post( pasyncopdesc ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 

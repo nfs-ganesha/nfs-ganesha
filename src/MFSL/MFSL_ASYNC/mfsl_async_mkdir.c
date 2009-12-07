@@ -126,7 +126,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              &popasyncdesc->op_args.mkdir.precreate_name,
                              &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
                              &popasyncdesc->op_args.mkdir.dirname,
-                             popasyncdesc->fsal_op_context,
+                             &popasyncdesc->fsal_op_context,
                              &attrsrc,
                              &attrdest )  ;
 
@@ -140,7 +140,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
   /* Lookup to get the right attributes for the object */
   fsal_status = FSAL_lookup( &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
 			     &popasyncdesc->op_args.mkdir.dirname,
- 			     popasyncdesc->fsal_op_context,
+ 			     &popasyncdesc->fsal_op_context,
 			     &handle,
                              &popasyncdesc->op_res.mkdir.attr );
 
@@ -157,7 +157,7 @@ fsal_status_t  MFSL_mkdir_async_op( mfsl_async_op_desc_t  * popasyncdesc )
      chown_attr.owner = popasyncdesc->op_args.mkdir.owner ; 
      chown_attr.group = popasyncdesc->op_args.mkdir.group ;
  
-     fsal_status = FSAL_setattrs( &handle, popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.mkdir.attr ) ;
+     fsal_status = FSAL_setattrs( &handle, &popasyncdesc->fsal_op_context, &chown_attr,  &popasyncdesc->op_res.mkdir.attr ) ;
    }
   return fsal_status ; 
 } /* MFSL_mkdir_async_op */
@@ -291,7 +291,7 @@ fsal_status_t MFSL_mkdir(  mfsl_object_t         * parent_directory_handle, /* I
 
   pasyncopdesc->op_func = MFSL_mkdir_async_op ;
   //pasyncopdesc->fsal_op_context = p_context ;
-  pasyncopdesc->fsal_op_context = &synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
+  pasyncopdesc->fsal_op_context = synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 

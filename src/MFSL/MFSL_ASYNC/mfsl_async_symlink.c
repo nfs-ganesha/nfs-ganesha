@@ -130,7 +130,7 @@ fsal_status_t  MFSL_symlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
                              &popasyncdesc->op_args.symlink.precreate_name,
                              &(popasyncdesc->op_args.symlink.pmobject_dirdest->handle),
                              &popasyncdesc->op_args.symlink.linkname,
-                             popasyncdesc->fsal_op_context,
+                             &popasyncdesc->fsal_op_context,
                              &attrsrc,
                              &attrdest )  ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
@@ -286,7 +286,7 @@ fsal_status_t MFSL_symlink(
 
   pasyncopdesc->op_func = MFSL_symlink_async_op ;
   //pasyncopdesc->fsal_op_context = p_context ;
-  pasyncopdesc->fsal_op_context = &synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
+  pasyncopdesc->fsal_op_context = synclet_data[pasyncopdesc->related_synclet_index].root_fsal_context ;
 
   fsal_status = MFSL_async_post( pasyncopdesc ) ;
   if( FSAL_IS_ERROR( fsal_status ) ) 
