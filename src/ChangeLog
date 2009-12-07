@@ -285,3 +285,6 @@
 	- Bug Fix : most of the time, files opened/created via NFSv4 were
 	  never closed
 
+0.99.61 - 
+	- A patch from Eric Sesterhenn about memleaks has been integrated.
+

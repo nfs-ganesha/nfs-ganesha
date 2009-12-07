@@ -117,7 +117,7 @@ fsal_status_t  MFSL_setattr_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   P( popasyncdesc->op_args.setattr.pmobject->lock ) ;
   fsal_status = FSAL_setattrs( &(popasyncdesc->op_args.setattr.pmobject->handle),
-                               popasyncdesc->fsal_op_context,
+                               &popasyncdesc->fsal_op_context,
                                &popasyncdesc->op_args.setattr.attr,
                                &popasyncdesc->op_res.setattr.attr ) ;
   V( popasyncdesc->op_args.setattr.pmobject->lock ) ;
@@ -241,7 +241,7 @@ fsal_status_t MFSL_setattrs(
   pasyncopdesc->op_res.setattr.attr      = *attrib_set ;
 
   pasyncopdesc->op_func = MFSL_setattr_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = *p_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 

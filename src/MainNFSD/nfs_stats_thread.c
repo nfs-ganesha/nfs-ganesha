@@ -164,6 +164,7 @@ void * stats_thread( void * addr )
     {
       DisplayLog( "NFS STATS : Could not get inode for %s, no stats will be made...", 
 		  nfs_param.core_param.stats_file_path ) ;
+      fclose( stats_file ) ;
       return NULL ;
     }
   

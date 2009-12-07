@@ -118,7 +118,7 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
   P( popasyncdesc->op_args.remove.pmobject->lock ) ;
   fsal_status = FSAL_unlink( &(popasyncdesc->op_args.remove.pmobject->handle),
 			     &popasyncdesc->op_args.remove.name,
-                             popasyncdesc->fsal_op_context,
+                             &popasyncdesc->fsal_op_context,
                              &popasyncdesc->op_res.remove.attr ) ;
   V( popasyncdesc->op_args.remove.pmobject->lock ) ;
 
@@ -234,7 +234,7 @@ fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN 
   pasyncopdesc->op_res.remove.attr      = *dir_attributes ;
 
   pasyncopdesc->op_func = MFSL_unlink_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = *p_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 

@@ -556,7 +556,10 @@ void nfs_ip_stats_dump( hash_table_t   ** ht_ip_stats,
              if( nfs_ip_stats_get( ht_ip_stats[j], 
                                    ipaddr, 
                                    &pnfs_ip_stats[j] ) != IP_STATS_SUCCESS )
-		return ;
+             {
+                fclose( flushipstat ) ;
+        	return ;
+             }
              ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call ;
 
 	     ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2 ;
@@ -615,5 +618,7 @@ void nfs_ip_stats_dump( hash_table_t   ** ht_ip_stats,
 	 /* Check next client */
          RBT_INCREMENT(it);
        }
+
+       fclose( flushipstat ) ;
     }
 } /* nfs_ip_stats_dump */

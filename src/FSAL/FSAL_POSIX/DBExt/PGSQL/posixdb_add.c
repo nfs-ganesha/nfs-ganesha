@@ -134,7 +134,7 @@ fsal_posixdb_status_t fsal_posixdb_add( fsal_posixdb_conn       * p_conn, /* IN 
    
     p_object_handle->ts = (int) time(NULL);
     p_object_handle->info = *p_object_info;
-    snprintf(handlets_str, MAX_HANDLEIDSTR_SIZE, "%i", p_object_handle->ts);
+    snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_object_handle->ts);
     snprintf(nlink_str, MAX_NLINKSTR_SIZE, "%i", p_object_info->nlink);
     snprintf(ctime_str, MAX_CTIMESTR_SIZE, "%i", (int) p_object_info->ctime);
     snprintf(ftype_str, MAX_CTIMESTR_SIZE, "%i", (int) p_object_info->ftype);

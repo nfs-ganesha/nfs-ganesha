@@ -128,7 +128,7 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 			     &popasyncdesc->op_args.rename.name_src,
 			     &(popasyncdesc->op_args.rename.pmobject_dirdest->handle),
 			     &popasyncdesc->op_args.rename.name_dest,
-                             popasyncdesc->fsal_op_context,
+                             &popasyncdesc->fsal_op_context,
 			     &popasyncdesc->op_res.rename.attrsrc,
 			     &popasyncdesc->op_res.rename.attrdest )  ;
 
@@ -296,7 +296,7 @@ fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN *
   pasyncopdesc->op_res.rename.attrdest          = *tgt_dir_attributes ;
 
   pasyncopdesc->op_func = MFSL_rename_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = *p_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 
