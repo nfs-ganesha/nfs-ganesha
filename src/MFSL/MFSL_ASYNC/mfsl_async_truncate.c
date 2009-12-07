@@ -117,7 +117,7 @@ fsal_status_t  MFSL_truncate_async_op( mfsl_async_op_desc_t  * popasyncdesc )
 
   P( popasyncdesc->op_args.truncate.pmobject->lock ) ;
   fsal_status = FSAL_truncate( &(popasyncdesc->op_args.truncate.pmobject->handle),
-                               popasyncdesc->fsal_op_context,
+                               &popasyncdesc->fsal_op_context,
                                popasyncdesc->op_args.truncate.size,
 			       NULL, /* deprecated parameter */
                                &popasyncdesc->op_res.truncate.attr ) ;
@@ -236,7 +236,7 @@ fsal_status_t MFSL_truncate(
   pasyncopdesc->op_res.truncate.attr      = *object_attributes ;
 
   pasyncopdesc->op_func = MFSL_truncate_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = *p_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 

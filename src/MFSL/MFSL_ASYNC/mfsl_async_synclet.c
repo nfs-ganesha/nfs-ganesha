@@ -399,6 +399,9 @@ void * mfsl_async_synclet_thread( void * Arg )
     if( !found ) 
      {
         DisplayLogLevel( NIV_MAJOR, "Error : I have been awaken when no pending async operation is available" ) ;
+        printf( "synclet_data[index].op_lru->nb_entry=%u  synclet_data[index].op_lru->nb_invalid=%u\n", 
+		synclet_data[index].op_lru->nb_entry, synclet_data[index].op_lru->nb_invalid ) ;
+
         continue ; /* return to main loop */
      }
 

@@ -321,9 +321,9 @@ int util_shell( int argc ,         /* IN : number of args in argv */
   
   for ( i = 1; i <argc ; i++ )
   {
-    strncat( command_line, argv[i], 1024 );
+    strncat( command_line, argv[i], strlen( command_line ) - 1024 - 1 );
     if ( i != argc - 1 )
-      strncat( command_line, " ", 1024 );
+      strncat( command_line, " ", strlen( command_line ) - 1024 - 1 );
   }
   
   /* launch the command */

@@ -153,7 +153,10 @@ int do_new(  LRU_list_t * plru, int key )
   sprintf( tmpkey, "%d", key ) ;
   
   if( ( pentry = LRU_new_entry( plru, &status ) ) == NULL )
+  {
+    free( tmpkey ) ;
     return status ;
+  }
   
   pentry->buffdata.len   = strlen( tmpkey ) ;
   pentry->buffdata.pdata = tmpkey ;

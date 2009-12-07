@@ -456,6 +456,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 		}
 		if ((gd = calloc(sizeof(*gd), 1)) == NULL) {
 			fprintf(stderr, "svcauth_gss: out_of_memory\n");
+			free(auth);
 			return (AUTH_FAILED);
 		}
 		auth->svc_ah_ops = &Svc_auth_gss_ops;

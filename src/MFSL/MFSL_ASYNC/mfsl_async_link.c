@@ -128,7 +128,7 @@ fsal_status_t  MFSL_link_async_op( mfsl_async_op_desc_t  * popasyncdesc )
   fsal_status = FSAL_link( &popasyncdesc->op_args.link.pmobject_src->handle,
 			   &popasyncdesc->op_args.link.pmobject_dirdest->handle,
 			   &popasyncdesc->op_args.link.name_link,
-                           popasyncdesc->fsal_op_context,
+                           &popasyncdesc->fsal_op_context,
                            &popasyncdesc->op_res.link.attr ) ;
 
   if( popasyncdesc->op_args.link.pmobject_src != popasyncdesc->op_args.link.pmobject_dirdest )
@@ -284,7 +284,7 @@ fsal_status_t MFSL_link(  mfsl_object_t         * target_handle,     /* IN */
   pasyncopdesc->op_res.link.attr              = *tgt_attributes ; 
 
   pasyncopdesc->op_func = MFSL_link_async_op ;
-  pasyncopdesc->fsal_op_context = p_context ;
+  pasyncopdesc->fsal_op_context = *p_context ;
 
   pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
 

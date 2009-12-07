@@ -312,7 +312,7 @@ typedef struct mfsl_async_op_desc__
   mfsl_async_op_res_t             op_res ;
   mfsl_object_t                 * op_mobject ;
   fsal_status_t                   (*op_func)( struct mfsl_async_op_desc__ *) ;
-  fsal_op_context_t             * fsal_op_context ;
+  fsal_op_context_t               fsal_op_context ;
   caddr_t                         ptr_mfsl_context ;
   unsigned int                    related_synclet_index ;
   struct  mfsl_async_op_desc__  * next_alloc ;
