@@ -287,4 +287,7 @@
 
 0.99.61 - 
 	- A patch from Eric Sesterhenn about memleaks has been integrated.
+	- Bug Fix : now check value of csa_flags for OP4_CREATE_SESSION
+	- Bug Fix : OP4_LOOKUPP should return NFS4ERR_SYMLINK instead of
+	  NFS4ERR_NOTDIR when cfh is related to a symbolic link.
 

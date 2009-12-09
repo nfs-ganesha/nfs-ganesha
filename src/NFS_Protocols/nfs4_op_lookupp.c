@@ -283,7 +283,13 @@ int nfs4_op_lookupp(  struct nfs_argop4 * op ,
    /* If the part of the code is reached, then something wrong occured in the lookup process, status is not HPSS_E_NOERROR 
    * and contains the code for the error */
   
-  res_LOOKUPP4.status = nfs4_Errno( cache_status ) ;
+
+  /* If NFS4ERR_SYMLINK should be returned for a symlink instead of ENOTDIR */
+  if( ( cache_status == CACHE_INODE_NOT_A_DIRECTORY ) && 
+       ( dir_pentry->internal_md.type == SYMBOLIC_LINK ) )
+     res_LOOKUPP4.status = NFS4ERR_SYMLINK ;
+  else
+     res_LOOKUPP4.status = nfs4_Errno( cache_status ) ;
 
   return res_LOOKUPP4.status;
 } /* nfs4_op_lookupp */
