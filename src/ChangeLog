@@ -290,4 +290,5 @@
 	- Bug Fix : now check value of csa_flags for OP4_CREATE_SESSION
 	- Bug Fix : OP4_LOOKUPP should return NFS4ERR_SYMLINK instead of
 	  NFS4ERR_NOTDIR when cfh is related to a symbolic link.
+	- Bug Fix : error NFS4ERR_NOT_ONLY_OP managed for OP4_EXCHANGE_ID
 
