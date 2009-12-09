@@ -142,6 +142,19 @@ extern time_t ServerBootTime ;
  *
  */
 
+static  uint32_t all_eia_flags = EXCHGID4_FLAG_SUPP_MOVED_REFER    |
+				 EXCHGID4_FLAG_SUPP_MOVED_MIGR     |
+				 EXCHGID4_FLAG_BIND_PRINC_STATEID  |
+				 EXCHGID4_FLAG_USE_NON_PNFS        |
+				 EXCHGID4_FLAG_USE_PNFS_MDS        |
+				 EXCHGID4_FLAG_USE_PNFS_DS         |
+				 EXCHGID4_FLAG_MASK_PNFS           |
+				 EXCHGID4_FLAG_UPD_CONFIRMED_REC_A |
+				 EXCHGID4_FLAG_CONFIRMED_R ;       
+
+
+
+
 int nfs41_op_exchange_id(  struct nfs_argop4 * op ,    
                            compound_data_t   * data,
                            struct nfs_resop4 * resp)
@@ -178,6 +191,13 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
 	return res_EXCHANGE_ID4.eir_status  ;
     }
   DisplayLogLevel( NIV_DEBUG, "EXCHANGE_ID computed clientid4=%llx for name='%s'", clientid, str_client ) ;
+
+  /* Check flags value (test EID4) */
+  if( arg_EXCHANGE_ID4.eia_flags  & all_eia_flags != arg_EXCHANGE_ID4.eia_flags )
+    {
+	res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL ;
+	return res_EXCHANGE_ID4.eir_status  ;
+    }
 
   /* Does this id already exists ? */
   if( nfs_client_id_get( clientid, &nfs_clientid ) == CLIENT_ID_SUCCESS )
