@@ -394,6 +394,21 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
     printf( "%s ", optabvers[parg->arg_compound4.minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].name ) ;
   printf( "\n" ) ;
 #endif
+
+  /* Manage error NFS4ERR_NOT_ONLY_OP */
+  if( COMPOUND4_ARRAY.argarray_len > 1 )
+   { 
+      /* If not prepended ny OP4_SEQUENCE, OP4_EXCHANGE_ID should be the only request in the compound
+       * see 18.35.3. and test EID8 for details */   
+      if( optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val == NFS4_OP_EXCHANGE_ID ) 
+       {
+	  status = NFS4ERR_NOT_ONLY_OP ;
+          pres->res_compound4.resarray.resarray_val[0].nfs_resop4_u.opexchange_id.eir_status = status ;
+          pres->res_compound4.status = status ;
+
+	  return NFS_REQ_OK ;
+       }  
+   }
  
   pres->res_compound4.resarray.resarray_len = COMPOUND4_ARRAY.argarray_len  ; 
   for( i = 0 ; i <  COMPOUND4_ARRAY.argarray_len ; i++ )
