@@ -213,6 +213,13 @@ int nfs41_op_create_session(  struct nfs_argop4 * op ,
        return res_CREATE_SESSION4.csr_status ;
    }
 
+  /* Check flags value (test CSESS15) */
+  if( arg_CREATE_SESSION4.csa_flags > CREATE_SESSION4_FLAG_CONN_RDMA )
+   {
+       res_CREATE_SESSION4.csr_status = NFS4ERR_INVAL ;
+       return res_CREATE_SESSION4.csr_status ;
+   }
+
   memset( (char *)pnfs41_session, 0, sizeof( nfs41_session_t ) ) ;
   pnfs41_session->clientid = clientid ;
   pnfs41_session->sequence = 1 ;
