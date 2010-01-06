@@ -291,4 +291,7 @@
 	- Bug Fix : OP4_LOOKUPP should return NFS4ERR_SYMLINK instead of
 	  NFS4ERR_NOTDIR when cfh is related to a symbolic link.
 	- Bug Fix : error NFS4ERR_NOT_ONLY_OP managed for OP4_EXCHANGE_ID
-
+	- Bug Fix : OP4_LOOKUPP should return NFS4ERR_NOENT when called from
+	  the rootfh
+	- Bug Fix : management of NFS4ERR_NOT_ONLY_OP introduced a bug when
+	  compiling without NFSv4.1 support. This is now fixed.
