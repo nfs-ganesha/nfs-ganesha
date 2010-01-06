@@ -1700,6 +1700,14 @@ int nfs4_op_lookupp_pseudo(  struct nfs_argop4 * op ,
       return res_LOOKUPP4.status ;
     }
 
+  /* lookupp on the root on the pseudofs should return NFS4ERR_NOENT (RFC3530, page 166) */
+  if( !memcmp( &psfsentry, data->pseudofs->reverse_tab[0], sizeof( psfsentry ) ) )
+    {
+      res_LOOKUPP4.status = NFS4ERR_NOENT ;
+      return res_LOOKUPP4.status ;
+    }
+
+
   /* A matching entry was found */
   if( !nfs4_PseudoToFhandle( &(data->currentFH), psfsentry.parent ) ) 
     {
