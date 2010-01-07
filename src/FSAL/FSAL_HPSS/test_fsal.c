@@ -212,7 +212,7 @@ int main(int argc, char ** argv){
   
   /* 1 - fs specific info */
   
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   
   init_param.fs_specific_info.behaviors.PrincipalName = FSAL_INIT_FORCE_VALUE ;
   strcpy(init_param.fs_specific_info.hpss_config.PrincipalName,"hpss_nfs");
@@ -220,7 +220,7 @@ int main(int argc, char ** argv){
   init_param.fs_specific_info.behaviors.KeytabPath = FSAL_INIT_FORCE_VALUE ;
   strcpy(init_param.fs_specific_info.hpss_config.KeytabPath,"/krb5/hpssserver.keytab");
 
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
   init_param.fs_specific_info.behaviors.AuthnMech = FSAL_INIT_FORCE_VALUE ;
   init_param.fs_specific_info.hpss_config.AuthnMech = hpss_authn_mech_krb5 ;
   

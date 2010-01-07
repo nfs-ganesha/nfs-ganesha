@@ -11,7 +11,7 @@
  
 #include  "fsal.h"
 
-#if defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#if HPSS_MAJOR_VERSION >= 6
 #include <hpss_mech.h>
 #include <hpss_String.h>
 #endif

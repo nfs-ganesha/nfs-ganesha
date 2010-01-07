@@ -339,7 +339,7 @@ fsal_status_t FSAL_GetClientContext(
   for ( i = 0 ; i < ng; i++ )
     p_thr_context->credential.hpss_usercred.AltGroups[i] = alt_groups[i];
 
-#if defined( _DEBUG_FSAL ) && defined( _USE_HPSS_51 )
+#if defined( _DEBUG_FSAL ) && (HPSS_MAJOR_VERSION == 5)
   
    /* traces: prints p_credential structure */
   
@@ -353,7 +353,7 @@ fsal_status_t FSAL_GetClientContext(
      DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
         p_thr_context->credential.hpss_usercred.AltGroups[i] );
 
-#elif defined( _DEBUG_FSAL ) && ( defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 ) )
+#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
 
       /* traces: prints p_credential structure */
   
@@ -366,6 +366,21 @@ fsal_status_t FSAL_GetClientContext(
    for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
      DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
         p_thr_context->credential.hpss_usercred.AltGroups[i] );       
+
+#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
+
+      /* traces: prints p_credential structure */
+  
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential modified:");
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
+      p_thr_context->credential.hpss_usercred.Uid, p_thr_context->credential.hpss_usercred.Gid);
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tName = %s",
+      p_thr_context->credential.hpss_usercred.Name);
+   
+   for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
+     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
+        p_thr_context->credential.hpss_usercred.AltGroups[i] );       
+
 #endif
     
   Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext );

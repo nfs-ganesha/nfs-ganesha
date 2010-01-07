@@ -21,6 +21,7 @@
 #include "fsal_common.h"
 #include "HPSSclapiExt/hpssclapiext.h"
 
+#include <hpss_errno.h>
 
 
 /**
