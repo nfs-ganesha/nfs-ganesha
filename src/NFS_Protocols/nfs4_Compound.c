@@ -395,6 +395,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
   printf( "\n" ) ;
 #endif
 
+#ifdef _USE_NFS4_1
   /* Manage error NFS4ERR_NOT_ONLY_OP */
   if( COMPOUND4_ARRAY.argarray_len > 1 )
    { 
@@ -409,7 +410,9 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 	  return NFS_REQ_OK ;
        }  
    }
+#endif 
  
+
   pres->res_compound4.resarray.resarray_len = COMPOUND4_ARRAY.argarray_len  ; 
   for( i = 0 ; i <  COMPOUND4_ARRAY.argarray_len ; i++ )
     {
