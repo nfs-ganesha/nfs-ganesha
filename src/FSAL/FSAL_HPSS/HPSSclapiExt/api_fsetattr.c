@@ -12,6 +12,9 @@
 
 #define BFS_SET_MAX (32)   
 
+/* these functions are working in HPSS 7.x */
+#if (HPSS_MAJOR_VERSION < 7)
+
 /*
  * Local function definition
  */
@@ -69,6 +72,7 @@ hpss_fileattr_t     *AttrOut);      /* OUT - attributes after change */
  * Notes:
  *
  *-------------------------------------------------------------------------*/
+
 
 int
 HPSSFSAL_FileSetAttrHandle(
@@ -150,6 +154,7 @@ hpss_fileattr_t     *AttrOut)   /* OUT - attributes after change */
 }
 
 
+
 /*============================================================================
  *
  * Function:    Common_FileSetAttributes
@@ -213,9 +218,9 @@ hpss_fileattrbits_t *SelFlagsOut,   /* OUT - attributes fields set */
 hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 {
    unsigned32           call_type;           /* whether to call dmg or ns */
-#ifdef _USE_HPSS_51      
+#if  (HPSS_MAJOR_VERSION == 5)
    volatile long	error = 0;        /* return error */
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622)
+#else
    signed32 	    error = 0;        /* return error */
 #endif
    static char          function_name[] = "Common_FileSetAttributes";
@@ -323,6 +328,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
    (void)memset(&select_flags,0,sizeof(select_flags));
    (void)memset(&parent_flags,0,sizeof(parent_flags));
 
+#if HPSS_MAJOR_VERSION < 7
    select_flags = API_AddRegisterValues(cast64m(0), 
 					CORE_ATTR_TYPE,
 					CORE_ATTR_FILESET_ID,
@@ -347,6 +353,24 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 					CORE_ATTR_DM_HANDLE_LENGTH,
 					CORE_ATTR_COS_ID,
 					-1);
+#else
+   select_flags = API_AddRegisterValues(cast64m(0),
+                                        CORE_ATTR_TYPE,
+                                        CORE_ATTR_UID,
+                                        CORE_ATTR_GID,
+                                        CORE_ATTR_ACCOUNT,
+                                        CORE_ATTR_REALM_ID,
+                                        CORE_ATTR_COS_ID,
+                                        CORE_ATTR_USER_PERMS,
+                                        CORE_ATTR_GROUP_PERMS,
+                                        CORE_ATTR_OTHER_PERMS,
+                                        CORE_ATTR_MODE_PERMS,
+                                        -1);
+
+   parent_flags = API_AddRegisterValues(cast64m(0),
+                                        CORE_ATTR_COS_ID,
+                                        -1);
+#endif
      
    /*
     * Zero the output structures
@@ -372,8 +396,12 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 			    &attr,
 			    NULL,
 			    &attr_parent,
+#if HPSS_MAJOR_VERSION < 7
 			    &ta,
 			    path_object,
+#else
+                            NULL,
+#endif
 			    NULL);
      
    if(error != 0)
@@ -426,15 +454,16 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 	 return(error);
       }
         
+#if ( HPSS_MAJOR_VERSION < 7 )
       /*
        *  Determine whether to call the dmg or ns based on whether the
        *  parent directory is dmap managed.
        */
         
-#ifdef _USE_HPSS_51      
+#if ( HPSS_MAJOR_VERSION == 5 )
       call_type = API_DetermineCall(attr_parent.FilesetType,
 				    (long *) &error);
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622)
+#elif ( HPSS_MAJOR_VERSION == 6 )
       call_type = API_DetermineCall(attr_parent.FilesetType, &error);
 #endif
         
@@ -657,6 +686,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 			   function_name);
 #endif
       } /* end "if call_type == DMG" */
+#endif /* end of version < 7 */
    
       if (error == 0)
       {
@@ -739,7 +769,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 		   * attributes and the user's current session account.
 		   */
          
-#ifdef _USE_HPSS_51                    
+#if HPSS_MAJOR_VERSION == 5
 		  error = av_cli_ValidateChown(ls_map.SiteId,
 					       RequestID,
 					       attr.CellId,
@@ -751,7 +781,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 					       attr.GID,
 					       cur_acct_code,
 					       &acct_code);
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622) 
+#elif (HPSS_MAJOR_VERSION == 6)||(HPSS_MAJOR_VERSION == 7)
 		  error = av_cli_ValidateChown(ls_map.SiteId,
 					       RequestID,
 					       attr.RealmId,
@@ -809,7 +839,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 		* Validate that the account code can be changed.
 		*/
 
-#ifdef _USE_HPSS_51                    
+#if HPSS_MAJOR_VERSION == 5
 	       error = av_cli_ValidateChacct(ls_map.SiteId,
 					     RequestID,
 					     Ucred->DCECellId,
@@ -820,7 +850,7 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
 					     attr.Account,
 					     AttrIn->Attrs.Account,
 					     &acct_code);
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622 )             
+#elif (HPSS_MAJOR_VERSION == 6)||(HPSS_MAJOR_VERSION == 7)
 	       error = av_cli_ValidateChacct(ls_map.SiteId,
 					     RequestID,
 					     Ucred->RealmId,
@@ -887,3 +917,5 @@ hpss_fileattr_t     *AttrOut)       /* OUT - attributes after change */
    return(error);
 
 }
+
+#endif /* hpss 7+ */

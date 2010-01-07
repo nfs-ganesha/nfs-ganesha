@@ -16,7 +16,7 @@
 TYPE_TOKEN_HPSS	null_ticket;
 
 
-
+#if HPSS_MAJOR_VERSION < 7
 
 static int
 HPSSFSAL_Common_Symlink(
@@ -32,9 +32,9 @@ hpss_Attrs_t            *AttrsOut)
 {
    static char		function_name[] = "HPSSFSAL_Common_Symlink";
    
-#ifdef _USE_HPSS_51      
+#if HPSS_MAJOR_VERSION == 5
    volatile long	error = 0;        /* return error */
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622)
+#elif HPSS_MAJOR_VERSION >= 6
    signed32 	error = 0;        /* return error */
 #endif
    
@@ -132,6 +132,7 @@ hpss_Attrs_t            *AttrsOut)
 
    if(error == 0)
    {
+
       /*
        * Call this function to determine which interface
        * to call (DMAP Gateway or the Core Server) depending
@@ -139,9 +140,9 @@ hpss_Attrs_t            *AttrsOut)
        * the library this is, what type of DMAP file set
        * this is (sync or backup).
        */
-#ifdef _USE_HPSS_51        
+#if HPSS_MAJOR_VERSION == 5
       call_type = API_DetermineCall(parent_attrs.FilesetType, (long *)&error);
-#elif defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622)
+#elif HPSS_MAJOR_VERSION == 6
       call_type = API_DetermineCall(parent_attrs.FilesetType, &error);
 #endif        
         
@@ -196,6 +197,7 @@ hpss_Attrs_t            *AttrsOut)
 			      "%s: can't make symlink, error=%d\n,",
 			      function_name,error);
 	 }
+
       }
    
       /*
@@ -262,6 +264,182 @@ hpss_Attrs_t            *AttrsOut)
    free(file);
    return(error);
 }
+#else /* from v7 */
+
+static int
+HPSSFSAL_Common_Symlink(
+apithrdstate_t		*ThreadContext,
+hpss_reqid_t            RequestID,
+ns_ObjHandle_t		*ObjHandle,
+sec_cred_t		*Ucred,
+char			*Path,
+api_cwd_stack_t         *CwdStack,
+char			*Contents,
+ns_ObjHandle_t          *HandleOut,
+hpss_Attrs_t            *AttrsOut)
+{
+   static char		function_name[] = "Common_Symlink";
+   signed32             error = 0;             /* return error */
+   ns_ObjHandle_t       parent_handle;         /* parent object handle */
+   char                 *file;                 /* name of the new object */
+   char                 *parentpath;           /* name of existing parent */
+   hpss_AttrBits_t      attr_bits;             /* parent attributes bits*/
+   hpss_Attrs_t         attrs;                 /* parent attributes */
+   ns_ObjHandle_t       *hndl_ptr = ObjHandle; /* parent handle pointer */
+   ns_ObjHandle_t	new_handle;            /* new object handle */
+   ns_ObjHandle_t	ret_handle;            /* returned new object handle */
+   u_signed64		new_attr_bits;         /* object attribute bits */
+   hpss_Attrs_t   	new_attrs;             /* new object handle */
+
+
+   /*
+    * Allocate memory for object name and parent name
+    */
+
+   file = (char *)malloc(HPSS_MAX_FILE_NAME);
+   if ( file == NULL )
+      return(-ENOMEM);
+
+   parentpath = (char *)malloc(HPSS_MAX_PATH_NAME);
+   if ( parentpath == NULL )
+   {
+      free(file);
+      return(-ENOMEM);
+   }
+
+   /*
+    * Divide the object component from the rest of the path
+    */
+
+   if((error = API_DivideFilePath(Path, parentpath, file)) != 0)
+   {
+      free(file);
+      free(parentpath);
+      return(error);
+   }
+
+
+   if(API_PATH_NEEDS_TRAVERSAL(parentpath))
+   {
+      /*
+       * If there is a path provided then, then lookup
+       * the parent handle
+       */
+
+      attr_bits = API_AddRegisterValues(cast64m(0),
+                                        CORE_ATTR_TYPE,
+                                        -1);
+
+      memset(&parent_handle,0,sizeof(parent_handle));
+      memset(&attrs,'\0',sizeof(attrs));
+
+      /*
+       * Traverse the path to the parent and get it's handle.
+       */
+     
+      error =  API_TraversePath(ThreadContext,
+			        RequestID,
+			        Ucred,
+			        ObjHandle,
+			        parentpath,
+			        CwdStack,
+			        API_CHASE_ALL,
+			        0,
+			        0,
+			        attr_bits,
+			        cast64m(0),
+			        API_NULL_CWD_STACK,
+			        &parent_handle,
+			        &attrs,
+                                (ns_ObjHandle *)NULL,
+                                (hpss_Attrs_t *)NULL,
+			        NULL,
+			        NULL);
+
+      if(error == 0)
+      {
+         if ( attrs.Type != NS_OBJECT_TYPE_DIRECTORY )
+            error = -ENOTDIR;
+         else 
+         {
+            hndl_ptr = &parent_handle;
+         }
+      }
+   }
+   else if(API_PATH_IS_ROOT(parentpath)) 
+   {
+      /* If needed, use the root handle */
+      error = API_InitRootHandle(ThreadContext,RequestID,&hndl_ptr);
+   }
+
+   if (error == 0)
+   {
+      error = API_core_MkSymLink(ThreadContext,
+				 RequestID,
+				 Ucred,
+				 hndl_ptr,
+				 file,
+				 Contents,
+				 &new_handle);
+      
+      if(error != 0)
+      {
+         API_DEBUG_FPRINTF(DebugFile, &RequestID,
+			   "%s: can't make symlink, error=%d\n,",
+			   function_name,error);
+      }
+   }
+        
+        
+   /*
+    * If requested, return the vattr for the newly created link
+    */
+        
+   if ( error == 0 && AttrsOut != (hpss_Attrs_t *)NULL )
+   {
+      new_attr_bits = API_VAttrAttrBits;
+      (void)memset(&ret_handle,0,sizeof(ret_handle));
+      (void)memset(&new_attrs,0,sizeof(new_attrs));
+        
+      error = API_TraversePath(ThreadContext,
+			       RequestID,
+			       Ucred,
+			       &new_handle,
+			       NULL,
+			       API_NULL_CWD_STACK,
+			       API_CHASE_NONE,
+			       0,
+			       0,
+			       new_attr_bits,
+			       cast64m(0),
+			       API_NULL_CWD_STACK,
+			       &ret_handle,
+			       &new_attrs,
+			       NULL,
+			       NULL,
+			       NULL,
+			       NULL);
+   
+      if(error != 0)
+      {
+         API_DEBUG_FPRINTF(DebugFile, &RequestID,
+			   "%s: Could not get attributes.\n",
+			   function_name);
+      }
+      else
+      {
+	 *AttrsOut = new_attrs;
+	 *HandleOut = ret_handle;
+      }
+   }
+
+   free(file);
+   free(parentpath);
+
+   return(error);
+}
+
+#endif
 
 
 

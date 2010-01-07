@@ -228,14 +228,14 @@ ns_DirEntry_t              *DirentPtr)
    long                    error = 0;
    char                    function_name[] = "HPSSFSAL_Common_ReadAttrs";
    unsigned32              i;
-#ifdef _USE_HPSS_622
+#if HPSS_LEVEL >= 622
    unsigned32		   entry_cnt;
 #endif
    ns_DirEntry_t           *outptr;
    hpss_reqid_t            rqstid;
    u_signed64              select_flags;
 
-#ifdef _USE_HPSS_622
+#if HPSS_LEVEL >= 622
    /* figure out how many entries will fit in the clients buffer */
    entry_cnt = BufferSize / sizeof(ns_DirEntry_t);
 #endif
@@ -254,8 +254,10 @@ ns_DirEntry_t              *DirentPtr)
 
       select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
       select_flags = API_RemoveRegisterValues(select_flags,
+#if HPSS_MAJOR_VERSION < 7
 					      CORE_ATTR_DM_DATA_STATE_FLAGS,
 					      CORE_ATTR_DONT_PURGE,
+#endif
 					      CORE_ATTR_REGISTER_BITMAP,
 					      CORE_ATTR_OPEN_COUNT,
 					      CORE_ATTR_READ_COUNT,
@@ -322,7 +324,7 @@ ns_DirEntry_t              *DirentPtr)
       cnt = 0;
 
 
-#ifdef _USE_HPSS_622
+#if HPSS_LEVEL >= 622
       for ( i = 0; i < direntbuf.DirEntry.DirEntry_len && i < entry_cnt; ++i )
 #else
       for ( i = 0; i < direntbuf.DirEntry.DirEntry_len; ++i )
@@ -366,7 +368,9 @@ ns_DirEntry_t              *DirentPtr)
                                      &attrs,
 				     NULL,
                                      NULL,
+#if HPSS_MAJOR_VERSION < 7
                                      NULL,
+#endif
                                      NULL,
                                      NULL);
 

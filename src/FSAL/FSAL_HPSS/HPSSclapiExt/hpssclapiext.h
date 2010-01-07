@@ -10,22 +10,31 @@
 
 #include <hpss_types.h>
 #include <hpss_api.h>
+#include <hpss_version.h>
 
 #ifndef _HPSSCLAPIEXT_H
 #define _HPSSCLAPIEXT_H
 
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
 
 #define TYPE_CRED_HPSS  hsec_UserCred_t
 #define TYPE_TOKEN_HPSS  gss_token_t
 #define TYPE_UUID_HPSS  uuid_t
 
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622)
+#elif HPSS_MAJOR_VERSION == 6
 
 #define TYPE_CRED_HPSS  sec_cred_t
 #define TYPE_TOKEN_HPSS  hpss_authz_token_t
 #define TYPE_UUID_HPSS  hpss_uuid_t
 
+#elif HPSS_MAJOR_VERSION == 7
+
+#define TYPE_CRED_HPSS  sec_cred_t
+typedef void * TYPE_TOKEN_HPSS; 
+#define TYPE_UUID_HPSS  hpss_uuid_t
+
+#else
+   #error "Unexpected HPSS VERSION"
 #endif
 
 
@@ -59,6 +68,7 @@ TYPE_TOKEN_HPSS *AuthzTicket,   /* OUT - returned authorization */
 hpss_Attrs_t    *AttrsOut);     /* OUT - returned attributes */
 
 
+#if (HPSS_MAJOR_VERSION < 7)
 int
 HPSSFSAL_FileSetAttrHandle(
 ns_ObjHandle_t      *ObjHandle, /* IN  - parent object handle */
@@ -67,6 +77,9 @@ TYPE_CRED_HPSS     *Ucred,     /* IN  - user credentials */
 hpss_fileattrbits_t SelFlags,   /* IN - attributes fields to set */
 hpss_fileattr_t     *AttrIn,    /* IN  - input attributes */
 hpss_fileattr_t     *AttrOut);  /* OUT - attributes after change */
+#else
+#define HPSSFSAL_FileSetAttrHandle hpss_FileSetAttributesHandle
+#endif
 
 
 int
@@ -108,7 +121,7 @@ unsigned32              *End,           /* OUT - hit end of directory */
 u_signed64              *OffsetOut,     /* OUT - resulting directory position */
 ns_DirEntry_t           *DirentPtr);    /* OUT - directory entry information */
 
-#ifndef _USE_HPSS_622
+#if (HPSS_LEVEL < 622)
 int
 HPSSFSAL_FileGetXAttributesHandle(
 ns_ObjHandle_t  *ObjHandle,     /* IN - object handle */

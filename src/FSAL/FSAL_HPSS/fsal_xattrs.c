@@ -145,7 +145,7 @@ int get_file_slevel( fsal_handle_t     * p_objecthandle,  /* IN */
   
   TakeTokenFSCall();
   
-#ifndef _USE_HPSS_622
+#if HPSS_MAJOR_VERSION < 6
   rc = HPSSFSAL_FileGetXAttributesHandle(
         &(p_objecthandle->ns_handle),
         API_GET_STATS_FOR_ALL_LEVELS, 0,
