@@ -13,6 +13,8 @@
 #include "fsal_common.h"
 #include "fsal_internal.h"
 
+#include <hpss_errno.h>
+
 #define STRCMP strcasecmp
 
 /**

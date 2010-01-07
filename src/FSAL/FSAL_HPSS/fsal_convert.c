@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <errno.h>
 
+#include <hpss_errno.h>
+
 
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
@@ -183,18 +185,25 @@ int hpss2fsal_error(int hpss_errorcode){
 
     default:
       
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
         
       /* hsec error code regarding security (-3000...)*/
       if ( ( hpss_errorcode <= -3000 ) && ( hpss_errorcode > -4000 ))
         return ERR_FSAL_SEC;
     
-#elif  defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION == 6
     
       /* hsec error code regarding security (-11000...)*/
       if ( ( hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED )
           && ( hpss_errorcode >= HPSS_SEC_LDAP_ERROR ) )
         return ERR_FSAL_SEC;      
+#elif HPSS_MAJOR_VERSION == 7
+    
+      /* hsec error code regarding security (-11000...)*/
+      if ( ( hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED )
+          && ( hpss_errorcode >= HPSS_SEC_LDAP_RETRY ) )
+        return ERR_FSAL_SEC;      
+
 #endif
       
       /* other unexpected errors */    
@@ -555,9 +564,13 @@ fsal_accessmode_t hpss2fsal_mode(
  */
 void fsal2hpss_mode( 
     fsal_accessmode_t fsal_mode,
+#if HPSS_MAJOR_VERSION < 7
     unsigned32 * uid_bit,
     unsigned32 * gid_bit,
     unsigned32 * sticky_bit,
+#else
+    unsigned32 * mode_perms,
+#endif
     unsigned32 * user_perms,
     unsigned32 * group_perms,
     unsigned32 * other_perms
@@ -565,18 +578,28 @@ void fsal2hpss_mode(
   
   /* init outputs */
   
+#if HPSS_MAJOR_VERSION < 7
   *uid_bit = 0;
   *gid_bit = 0;
   *sticky_bit = 0;
+#else
+  *mode_perms = 0;
+#endif
   *user_perms = 0;
   *group_perms = 0;
   *other_perms = 0;
   
   /* special bits */
   
+#if HPSS_MAJOR_VERSION < 7
   if ( fsal_mode & FSAL_MODE_SUID )  *uid_bit = 1;
   if ( fsal_mode & FSAL_MODE_SGID )  *gid_bit = 1;
   if ( fsal_mode & FSAL_MODE_SVTX )  *sticky_bit = 1;
+#else
+  if ( fsal_mode & FSAL_MODE_SUID )  (*mode_perms) |= NS_PERMS_RD;
+  if ( fsal_mode & FSAL_MODE_SGID )  (*mode_perms) |= NS_PERMS_WR;
+  if ( fsal_mode & FSAL_MODE_SVTX )  (*mode_perms) |= NS_PERMS_XS;
+#endif
   
   /* user perms */
   
@@ -705,12 +728,18 @@ fsal_status_t hpss2fsal_attributes(  ns_ObjHandle_t * p_hpss_handle_in,
                   hpss_GetObjId( p_hpss_handle_in );
   }
     
-  if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
-      FSAL_ATTR_MODE)){
+  if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
+  {
         p_fsalattr_out->mode = hpss2fsal_mode(
+#if HPSS_MAJOR_VERSION < 7
             p_hpss_attr_in->SetUIDBit,
             p_hpss_attr_in->SetGIDBit,
             p_hpss_attr_in->SetStickyBit,
+#else
+            p_hpss_attr_in->ModePerms & NS_PERMS_RD,
+            p_hpss_attr_in->ModePerms & NS_PERMS_WR,
+            p_hpss_attr_in->ModePerms & NS_PERMS_XS,
+#endif
             p_hpss_attr_in->UserPerms,
             p_hpss_attr_in->GroupPerms,
             p_hpss_attr_in->OtherPerms
@@ -1001,16 +1030,24 @@ fsal_status_t fsal2hpss_attribset(  fsal_handle_t  * p_fsal_handle,
                                CORE_ATTR_USER_PERMS,
                                CORE_ATTR_GROUP_PERMS,
                                CORE_ATTR_OTHER_PERMS,
+#if HPSS_MAJOR_VERSION < 7
                                CORE_ATTR_SET_GID,
                                CORE_ATTR_SET_UID,
                                CORE_ATTR_SET_STICKY,
+#else
+                               CORE_ATTR_MODE_PERMS,
+#endif
                                -1);
     
     /* convert mode and set output structure. */
     fsal2hpss_mode( p_attrib_set->mode, 
+#if HPSS_MAJOR_VERSION < 7
             &(p_hpss_attrs->SetUIDBit),
             &(p_hpss_attrs->SetGIDBit),
             &(p_hpss_attrs->SetStickyBit),
+#else
+            &(p_hpss_attrs->ModePerms),
+#endif
             &(p_hpss_attrs->UserPerms),
             &(p_hpss_attrs->GroupPerms),
             &(p_hpss_attrs->OtherPerms)

@@ -19,7 +19,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
               
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
   /* for struct statfs */
 # include <sys/types.h>
 #endif
@@ -88,9 +88,9 @@ fsal_status_t  FSAL_dynamic_fsinfo(
     fsal_dynamicfsinfo_t *   dynamicinfo         /* OUT */
 ){
 
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
   struct statfs hpss_statfs;
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION >= 6
   hpss_statfs_t hpss_statfs;
 #endif
   
