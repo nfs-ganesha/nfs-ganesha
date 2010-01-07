@@ -162,7 +162,7 @@ typedef struct fsal_handle__ {
   
 /** FSAL security context */
 
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
 
 typedef struct {
   
@@ -172,7 +172,7 @@ typedef struct {
 } fsal_cred_t;
 
 
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
 typedef struct {
   
@@ -201,10 +201,10 @@ typedef struct {
       
 } fsal_op_context_t;
 
-#ifdef _USE_HPSS_51
+#if (HPSS_MAJOR_VERSION == 5)
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.hpss_usercred.SecPwent.Uid )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.hpss_usercred.SecPwent.Gid )
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.hpss_usercred.Uid )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.hpss_usercred.Gid )
 #endif
@@ -219,30 +219,34 @@ typedef struct fsal_dir__ {
 
 /** FSAL file descriptor */
 
-#ifdef _USE_HPSS_51
+#if (HPSS_MAJOR_VERSION == 5)
 
 typedef struct fsal_file__ {
     int              filedes;   /* file descriptor. */
     gss_token_t      fileauthz; /* data access credential. */
 } fsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
-
-#elif defined ( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6)
 
 typedef struct fsal_file__ {
     int                 filedes;   /* file descriptor. */
     hpss_authz_token_t  fileauthz; /* data access credential. */
 } fsal_file_t;
 
-#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
+#elif (HPSS_MAJOR_VERSION == 7)
+
+typedef struct fsal_file__ {
+    int                 filedes;   /* file descriptor. */
+} fsal_file_t;
 
 #endif
+
+#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->filedes )
     
 
 /** HPSS specific init info */
 
-#ifdef _USE_HPSS_51
+#if (HPSS_MAJOR_VERSION == 5)
 
 typedef struct fs_specific_initinfo__{
 
@@ -269,7 +273,7 @@ typedef struct fs_specific_initinfo__{
     
 } fs_specific_initinfo_t;
 
-#elif defined ( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
 typedef struct fs_specific_initinfo__{
 

@@ -20,7 +20,7 @@
 #include "fsal_common.h"
 #include "HPSSclapiExt/hpssclapiext.h"
 
-#if defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622 )
+#if HPSS_MAJOR_VERSION >= 6
 #include <hpss_Getenv.h>
 
 static hpss_authn_mech_t  FSAL_auth_mech;
@@ -36,7 +36,7 @@ static int HPSSFSAL_SecInit( fs_specific_initinfo_t * hpss_init_info ){
 
   int rc;
 
-#ifdef _USE_HPSS_51    
+#if HPSS_MAJOR_VERSION == 5
   /** @todo : hpss_SetLoginContext : is it a good way of proceeding ? */
     
   rc = hpss_SetLoginContext( FSAL_PrincipalName, FSAL_KeytabPath );
@@ -46,7 +46,7 @@ static int HPSSFSAL_SecInit( fs_specific_initinfo_t * hpss_init_info ){
   DisplayLogJdLevel( fsal_log, NIV_DEBUG, "FSAL SEC INIT: Keytab is set to '%s'",
     FSAL_KeytabPath );
   
-#elif defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622 ) 
+#elif HPSS_MAJOR_VERSION >= 6
   hpss_rpc_auth_type_t auth_type;
   
   rc = hpss_GetAuthType( FSAL_auth_mech, &auth_type );
@@ -141,7 +141,7 @@ static int HPSSFSAL_Init( fs_specific_initinfo_t * hpss_init_info ){
     return rc;
   
 
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
     
   /* Then analyze user's init info. */
   
@@ -152,7 +152,7 @@ static int HPSSFSAL_Init( fs_specific_initinfo_t * hpss_init_info ){
   strcpy(FSAL_PrincipalName, hpss_config.PrincipalName );
   strcpy(FSAL_KeytabPath, hpss_config.KeytabPath );
     
-#elif defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION >= 6
   
 #define API_DEBUG_ERROR    (1)
 #define API_DEBUG_REQUEST  (2)
@@ -273,7 +273,7 @@ fsal_status_t  FSAL_Init(
     DisplayLog("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
   }
 
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
   
   if ( init_info->fs_specific_info.behaviors.KeytabPath == FSAL_INIT_FS_DEFAULT )
   {
@@ -289,7 +289,7 @@ fsal_status_t  FSAL_Init(
     DisplayLog("FSAL INIT: ***          Set %s::PrincipalName into config file to use another principal", CONF_LABEL_FS_SPECIFIC);
   }
   
-#elif defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION >= 6
   
   if ( init_info->fs_specific_info.behaviors.AuthnMech == FSAL_INIT_FS_DEFAULT )
   {
