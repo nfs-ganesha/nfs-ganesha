@@ -1419,6 +1419,7 @@ int                     LoopCount)      /* IN  - Recursion Counter */
                                     HintsPri,
                                     HintsOut,
                                     AttrsOut,
+                                    HandleOut,
                                     ++LoopCount);
                
 
