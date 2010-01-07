@@ -90,13 +90,14 @@
 /*
  * FS relative includes
  */
+#include <hpss_version.h>
 
-#if defined(_USE_HPSS_51)
+#if HPSS_MAJOR_VERSION == 5
 
 #include <u_signed64.h> /* for cast64 function */
 #include <hpss_api.h>
 
-#elif defined (_USE_HPSS_62) || defined ( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
 #include <u_signed64.h> /* for cast64 function */
 #include <hpss_api.h>

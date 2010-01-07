@@ -311,7 +311,7 @@ AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" ) 
 
 # HPSS version switch 
-AC_ARG_WITH( [hpss-version], AS_HELP_STRING([--with-hpss-version=5.1|6.2|6.2.2 (default=6.2.2)],[specify HPSS version] ),
+AC_ARG_WITH( [hpss-version], AS_HELP_STRING([--with-hpss-version=5.1|6.2|6.2.2|7.1|7.3 (default=6.2.2)],[specify HPSS version] ),
 		HPSS="$withval", HPSS="6.2.2" )
 
 # Database switch (for POSIX FSAL)
@@ -350,6 +350,7 @@ FS_ALL_LIST="PROXY SNMP FUSE POSIX"
 
 case $FSAL in
 	HPSS)
+		AC_DEFINE([_USE_HPSS], 1, [GANESHA is compiled with HPSS FSAL])
 		FSAL_CFLAGS="-I/opt/hpss/include"
 		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
@@ -358,17 +359,7 @@ case $FSAL in
 
 		case "$HPSS" in
 			"5.1")
-				AC_DEFINE([_USE_HPSS_51], 1, [Using HPSS version 5.1])
 				FSAL_LDFLAGS="$FSAL_LDFLAGS -L/opt/dcelocal/lib -ldce -ldcepthreads"
-				;;
-			"6.2")
-				AC_DEFINE([_USE_HPSS_62], 1, [Using HPSS version 6.2])
-                                ;;
-			"6.2.2")
-				AC_DEFINE([_USE_HPSS_622], 1, [Using HPSS version 6.2.2])
-                                ;;
-			*)
-				AC_MSG_ERROR([Never heard about this HPSS release ! ($HPSS)])
 				;;
 		esac 
 		;;

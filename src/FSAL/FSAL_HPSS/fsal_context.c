@@ -208,7 +208,7 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
   /* sets the credential time */
   p_thr_context->credential.last_update = time( NULL );
   
-#if defined( _DEBUG_FSAL ) && defined ( _USE_HPSS_51 )
+#if defined( _DEBUG_FSAL ) && (HPSS_MAJOR_VERSION == 5)
   
    /* traces: prints p_credential structure */
   
@@ -222,7 +222,7 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
      DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
         p_thr_context->credential.hpss_usercred.AltGroups[i] );
 
-#elif defined( _DEBUG_FSAL ) && ( defined ( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 ) )
+#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
 
    /* traces: prints p_credential structure */
   
@@ -235,6 +235,21 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
    for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
      DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
         p_thr_context->credential.hpss_usercred.AltGroups[i] );
+
+#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
+
+   /* traces: prints p_credential structure */
+  
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential created:");
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
+      p_thr_context->credential.hpss_usercred.Uid, p_thr_context->credential.hpss_usercred.Gid);
+   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tName = %s",
+      p_thr_context->credential.hpss_usercred.Name);
+   
+   for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
+     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
+        p_thr_context->credential.hpss_usercred.AltGroups[i] );
+
        
 #endif  
      
@@ -298,14 +313,14 @@ fsal_status_t FSAL_GetClientContext(
     
   /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
   
-#if defined( _USE_HPSS_51 )
+#if HPSS_MAJOR_VERSION == 5
   strcpy( p_thr_context->credential.hpss_usercred.SecPWent.Name, "NFS.User" );
   p_thr_context->credential.hpss_usercred.SecLabel = 0;	/* Symbol? */
   p_thr_context->credential.hpss_usercred.CurAccount = ACCT_REC_DEFAULT;
   p_thr_context->credential.hpss_usercred.DefAccount = ACCT_REC_DEFAULT;
   p_thr_context->credential.hpss_usercred.SecPWent.Uid = uid ;
   p_thr_context->credential.hpss_usercred.SecPWent.Gid = gid ;
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif  (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
   strcpy( p_thr_context->credential.hpss_usercred.Name, "NFS.User" );
   p_thr_context->credential.hpss_usercred.CurAccount = ACCT_REC_DEFAULT;
   p_thr_context->credential.hpss_usercred.DefAccount = ACCT_REC_DEFAULT;
