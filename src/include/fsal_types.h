@@ -246,7 +246,7 @@ typedef enum fsal_nodetype__
 
 #include "FSAL/FSAL_GHOST_FS/fsal_types.h"
 
-#elif defined(_USE_HPSS_51) || defined(_USE_HPSS_62) || defined(_USE_HPSS_622)
+#elif defined(_USE_HPSS)
 
 #include "FSAL/FSAL_HPSS/fsal_types.h"
 
@@ -779,7 +779,7 @@ typedef struct fsal_buffdesc__ {
 #define FSAL_DIGEST_SIZE_FILEID3 (sizeof(fsal_u64_t))
 #define FSAL_DIGEST_SIZE_FILEID4 (sizeof(fsal_u64_t))
 
-#if defined(_USE_HPSS_51) || defined(_USE_HPSS_62) || defined(_USE_HPSS_622) || defined(_USE_POSIX)
+#if defined(_USE_HPSS) || defined(_USE_POSIX)
   /* In HPSS, the file handle contains object type. */
 #define FSAL_DIGEST_SIZE_NODETYPE (sizeof(fsal_nodetype_t))
   
@@ -800,7 +800,7 @@ typedef enum fsal_digesttype_t {
   FSAL_DIGEST_FILEID3,    
   FSAL_DIGEST_FILEID4
   
-#if defined(_USE_HPSS_51) || defined(_USE_HPSS_62) || defined(_USE_HPSS_622) || defined(_USE_POSIX)
+#if defined(_USE_HPSS) || defined(_USE_POSIX)
   /* In HPSS, the object type can be
    * extracted from the handle.
    */
