@@ -110,6 +110,43 @@ static int HPSSFSAL_Common_Open_Bitfile(
     );        /* IN - file table index */
 
 
+#if HPSS_LEVEL >= 730
+static int 
+HPSSFSAL_Common_Open_File(
+apithrdstate_t          *ThreadContext, /* IN - thread context */
+hpss_reqid_t            RequestID,      /* IN - request id */
+ns_ObjHandle_t          *ParentHandle,  /* IN - parent object handle */
+unsigned32     		FilesetCOS,     /* IN - file set COS */
+char                    *Path,          /* IN - Path to file to be opened */
+sec_cred_t              *Ucred,         /* IN - user credentials */
+acct_rec_t              *ParentAcct,    /* IN - parent account code */
+int                     Oflag,          /* IN - open flags */
+mode_t                  Mode,           /* IN - create mode */
+hpss_cos_hints_t        *HintsIn,       /* IN - Desired class of service */
+hpss_cos_priorities_t   *HintsPri,      /* IN - Priorities of hint struct */
+hpss_cos_hints_t        *HintsOut,      /* OUT - Granted class of service */
+hpss_Attrs_t            *AttrsOut,      /* OUT - returned attributes */
+ns_ObjHandle_t          *HandleOut );
+
+static int 
+HPSSFSAL_Common_Create_File(
+apithrdstate_t          *ThreadContext, /* IN - thread context */
+hpss_reqid_t            RequestID,      /* IN - request id */
+ns_ObjHandle_t          *ParentHandle,  /* IN - parent object handle */
+char                    *Path,          /* IN - Path to file to be opened */
+sec_cred_t              *Ucred,         /* IN - user credentials */
+acct_rec_t              *ParentAcct,    /* IN - parent account code */
+mode_t                  Mode,           /* IN - create mode */
+hpss_cos_hints_t        *HintsIn,       /* IN - Desired class of service */
+hpss_cos_priorities_t   *HintsPri,      /* IN - Priorities of hint struct */
+hpss_cos_hints_t        *HintsOut,      /* OUT - Granted class of service */
+hpss_Attrs_t            *AttrsOut,      /* OUT - returned attributes */
+ns_ObjHandle_t          *HandleOut );
+
+#endif
+
+
+
 
 /*============================================================================
  *
@@ -421,7 +458,7 @@ HPSSFSAL_CreateHandle
     *  processing.
     */
 
-   error = Common_Create(threadcontext,
+   error = HPSSFSAL_Common_Create(threadcontext,
                          rqstid,
                          ObjHandle,
                          Path,
@@ -431,7 +468,8 @@ HPSSFSAL_CreateHandle
                          HintsIn,
                          HintsPri,
                          HintsOut,
-                         AttrsOut);
+                         AttrsOut,
+			 HandleOut);
 
    if (error != 0)
    {
@@ -1186,7 +1224,8 @@ ns_ObjHandle_t          *HandleOut)     /* OUT - returned handle */
                                HintsIn,
                                HintsPri,
                                HintsOut,
-                               AttrsOut);
+                               AttrsOut,
+			       HandleOut);
    }
 
 
@@ -1329,7 +1368,8 @@ int                     LoopCount)      /* IN  - Recursion Counter */
                                HintsIn,
                                HintsPri,
                                HintsOut,
-                               AttrsOut);
+                               AttrsOut,
+			       HandleOut);
       if(error == HPSS_EISDIR)
       {
         /*
@@ -1994,7 +2034,7 @@ hpss_cos_hints_t        *HintsOut,      /* OUT - actual hint values used */
 hpss_Attrs_t		*AttrsOut,	/* OUT - returned attributes */
 ns_ObjHandle_t		*HandleOut)	/* OUT - returned handle */
 {
-   static char            function_name[] = "Common_Create";
+   static char            function_name[] = "HPSSFSAL_Common_Create";
    volatile long          error = 0;              /* return error */
    char                   *file;                  /* file name to create */
    char                   *parentpath;            /* path to file */
@@ -2090,7 +2130,7 @@ ns_ObjHandle_t		*HandleOut)	/* OUT - returned handle */
 
    if(error == 0) 
    {
-      error = Common_Create_File(ThreadContext,
+      error = HPSSFSAL_Common_Create_File(ThreadContext,
                                  RequestID,
                                  hndl_ptr,
                                  file,
@@ -2100,7 +2140,8 @@ ns_ObjHandle_t		*HandleOut)	/* OUT - returned handle */
                                  HintsIn,
                                  HintsPri,
                                  HintsOut,
-                                 AttrsOut);
+                                 AttrsOut,
+				 HandleOut);
    }
 
 
@@ -2646,3 +2687,538 @@ int                     Fildes         /* IN - file table index */
 }
 
 
+#if HPSS_LEVEL == 730
+static int 
+HPSSFSAL_Common_Open_File(
+apithrdstate_t          *ThreadContext, /* IN - thread context */
+hpss_reqid_t            RequestID,      /* IN - request id */
+ns_ObjHandle_t          *ParentHandle,  /* IN - parent object handle */
+unsigned32     		FilesetCOS,     /* IN - file set COS */
+char                    *Path,          /* IN - Path to file to be opened */
+sec_cred_t              *Ucred,         /* IN - user credentials */
+acct_rec_t              *ParentAcct,    /* IN - parent account code */
+int                     Oflag,          /* IN - open flags */
+mode_t                  Mode,           /* IN - create mode */
+hpss_cos_hints_t        *HintsIn,       /* IN - Desired class of service */
+hpss_cos_priorities_t   *HintsPri,      /* IN - Priorities of hint struct */
+hpss_cos_hints_t        *HintsOut,      /* OUT - Granted class of service */
+hpss_Attrs_t            *AttrsOut,      /* OUT - returned attributes */
+ns_ObjHandle_t          *HandleOut )
+{
+   static char            function_name[] = "Common_Open_File";
+   volatile long          error = 0;        /* return error */
+   filetable_t            *ftptr;           /* file table pointer */
+   int                    fildes;           /* File descriptor */
+   int                    checkflag;        /* check for valid file access */
+   unsigned32             oflags;           /* open flags */
+   hpss_object_handle_t   bfhandle;         /* new open bitfile handle */
+   ns_ObjHandle_t         objhandle;        /* new bitfile object handle  */
+   hpss_AttrBits_t        new_attr_bits;    /* new bitfile attr bits */
+   hpss_Attrs_t           new_attrs;        /* new bitfile attributes */
+   openfiletable_t        *open_ftptr;      /* open file table entry */
+   open_bf_desc_t         *open_bfdesc_ptr; /* open bitfile descriptor */
+   hpss_cos_md_t          cosinfo;          /* returned cos info */
+   hpss_sclass_md_t       sclassinfo;       /* returned storage class info */
+   hpss_AttrBits_t        ret_attr_bits;    /* return attr bits */
+   hpss_Attrs_t           ret_attrs;        /* return attributes */
+   acct_rec_t             pacct;            /* parent account */
+
+
+   API_ENTER(function_name);
+
+
+   /*
+    *  Verify that the Oflag is valid.
+    */
+
+   checkflag = Oflag & O_ACCMODE;
+   if((checkflag != O_RDONLY) 
+      &&
+      (checkflag != O_RDWR)
+      &&
+      (checkflag != O_WRONLY))
+   {
+      return(-EINVAL);
+   }
+
+   /*
+    * Translate the Oflag into BFS open flags.
+    */
+
+   if ((Oflag & O_ACCMODE) == O_RDONLY)
+   {
+      oflags = BFS_OPEN_READ;
+   }
+   else if ((Oflag & O_ACCMODE) == O_WRONLY)
+   {
+      oflags = BFS_OPEN_WRITE;
+   }
+   else
+   {
+      oflags = BFS_OPEN_READ | BFS_OPEN_WRITE;
+   }
+        
+   if(Oflag & O_APPEND) oflags |= BFS_OPEN_APPEND;
+   if(Oflag & O_TRUNC)  oflags |= BFS_OPEN_TRUNCATE;
+   if(Oflag & O_NONBLOCK)  oflags |= BFS_OPEN_NO_STAGE;
+   if(Oflag & O_CREAT)  oflags |= BFS_OPEN_CREAT;
+   if(Oflag & O_EXCL)  oflags |= BFS_OPEN_EXCL;
+
+
+   /*
+    *  Check that we do not have too many descriptors already open.
+    */
+
+   ftptr = ThreadContext->FileTable;
+
+   API_LockMutex(&ftptr->Mutex);
+
+   if(ftptr->NumOpenDesc >= _HPSS_OPEN_MAX)
+   {
+      error = -EMFILE;
+   }
+
+   if(error == 0)
+   {
+      /*
+       *  Allocate a slot for the file to be opened.
+       */
+
+      for(fildes = 0;fildes < _HPSS_OPEN_MAX;fildes++)
+      {
+         if(ftptr->OpenDesc[fildes].Type == NO_OPEN_HANDLE) break;
+      }
+      if(fildes >= _HPSS_OPEN_MAX)
+      {
+         API_DEBUG_FPRINTF(DebugFile,&RequestID,
+                           "%s: Inconsistent descriptor table\n",
+                           function_name);
+         kill(getpid(), SIGABRT);
+      }
+      ftptr->OpenDesc[fildes].Type = BFS_OPEN_HANDLE;
+      ftptr->OpenDesc[fildes].Flags |= ENTRY_BUSY;
+      ftptr->TotalOpens++;
+      ftptr->NumOpenDesc++;
+      ftptr->OpenDesc[fildes].descunion_u.OpenBF.DataDesc = -1;
+      open_ftptr = &ftptr->OpenDesc[fildes];
+      open_bfdesc_ptr = &open_ftptr->descunion_u.OpenBF;
+   }
+
+   API_UnlockMutex(&ftptr->Mutex);
+        
+   if(error != 0)
+   {
+      return(error);
+   }
+
+
+   /* Initialize input to the open */
+
+   memset(&new_attrs,'\0',sizeof(new_attrs));
+   new_attr_bits = ret_attr_bits = cast64m(0);
+
+
+   /*
+    * Are we trying to create this file?
+    */
+
+   if(oflags & BFS_OPEN_CREAT) 
+   {
+      acct_rec_t     cur_acct_code;    /* current site account code */
+      acct_rec_t     new_acct_code;    /* validated account code */
+      hpss_uuid_t    site_id;          /* site */
+
+
+      /*
+       *  Do account validation.
+       */
+
+      if((error = API_DetermineAcct(Ucred,
+                                    ThreadContext,
+                                    ParentHandle->CoreServerUUID,
+                                    RequestID,
+                                    &site_id,
+                                    &cur_acct_code)) != 0)
+      {
+         API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't"
+                           " get the account code from the given"
+                           " information: error= %d\n",
+                           function_name, error);
+      }
+      else 
+      {
+         if(ParentAcct == NULL) 
+         { 
+            ParentAcct = &pacct;
+            if((error = API_GetAcctForParent(ThreadContext,
+                                             RequestID,
+                                             ParentHandle, 
+                                             &pacct)) != 0)  
+            {
+               API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't"
+                                 " get the account id for the given"
+                                 " parent handle: error= %d\n",
+                                 function_name, error);
+            }
+         }
+         
+         if(error == 0) 
+         {
+            if((error = av_cli_ValidateCreate(site_id,
+                                              RequestID,
+                                              Ucred->RealmId,
+                                              Ucred->Uid,
+                                              Ucred->Gid,
+                                              cur_acct_code,
+                                              *ParentAcct,
+                                              &new_acct_code)) != 0)
+            {
+               API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't validate"
+                                 " the account code: error= %d\n",
+                                 function_name, error);
+               error = -EPERM;
+            }
+            else 
+            {
+               /*
+                * Everything went okay, setup the attributes for the new file
+                */
+               API_ConvertPosixModeToMode(Mode & ~ThreadContext->Umask,&new_attrs);
+               Ucred->CurAccount = new_attrs.Account = new_acct_code;
+
+               new_attr_bits = API_AddRegisterValues(cast64m(0),
+                                                     CORE_ATTR_USER_PERMS,
+                                                     CORE_ATTR_GROUP_PERMS,
+                                                     CORE_ATTR_OTHER_PERMS,
+                                                     CORE_ATTR_MODE_PERMS,
+                                                     CORE_ATTR_ACCOUNT,
+                                                     -1);
+
+            }
+         }
+      }
+   }
+
+
+   /*
+    * If everything went okay, open/create the file
+    */
+
+   if(error == 0) 
+   {
+      memset(&objhandle,'\0',sizeof(objhandle));
+      memset(&bfhandle,'\0',sizeof(bfhandle));
+      memset(&cosinfo,'\0',sizeof(cosinfo));
+      memset(&sclassinfo,'\0',sizeof(sclassinfo));
+      if(AttrsOut != NULL) 
+      {
+         memset(&ret_attrs,'\0',sizeof(ret_attrs));
+         ret_attr_bits = API_VAttrAttrBits;
+      }
+
+      error = API_core_OpenFile(ThreadContext,
+                                RequestID,
+                                Ucred,
+                                ParentHandle,
+                                Path,
+                                oflags,
+                                new_attr_bits,
+                                &new_attrs,
+                                HintsIn,
+                                HintsPri,
+                                ret_attr_bits,
+                                &ret_attrs,
+                                &cosinfo,
+                                &sclassinfo,
+                                &bfhandle,
+                                &objhandle);
+   }
+
+   if(error == 0) 
+   {
+      int          lstndesc;
+      data_addr_t  lstnaddr;
+
+      /*
+       *  Get a socket and put out a listen for data transfers.
+       */
+
+      error = API_OpenListenDesc(API_TRANSFER_TCP,&lstndesc, &lstnaddr);
+      if(error != HPSS_E_NOERROR)
+      {
+         API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                           "Could not get listen socket."
+                           " errno =%d\n",-error);
+
+         API_LogMsg(function_name,RequestID,CS_DEBUG,
+                    COMMUNICATION_ERROR,WARNING,
+                    API_OPEN_LISTEN_DESC_ERROR,error);
+      }
+      else 
+      {
+
+         /*
+          *  We found an open table descriptor
+          *  Fill in the descriptor with the open file state.
+          */
+
+         open_ftptr->Type = BFS_OPEN_HANDLE;
+         open_bfdesc_ptr->FilesetCOS = FilesetCOS;
+         open_ftptr->ObjectHandle = objhandle;
+         open_bfdesc_ptr->BFHandle = bfhandle;
+         open_bfdesc_ptr->Offset = cast64m(0);
+         open_bfdesc_ptr->OpenFlag = Oflag;
+         open_bfdesc_ptr->DataConnPtr = NULL;
+         open_bfdesc_ptr->CoreServerUUID = objhandle.CoreServerUUID;
+         open_bfdesc_ptr->Updates = 0;
+         open_bfdesc_ptr->Mutex = pthread_mutex_initializer;
+         open_bfdesc_ptr->Cond = pthread_cond_initializer;
+         open_bfdesc_ptr->ListenDesc = lstndesc;
+         open_bfdesc_ptr->ListenAddr_u = lstnaddr;
+
+         API_OpenThrdCntlDesc(open_bfdesc_ptr);
+
+         /*
+          * Mark the file table entry as not busy.
+          */
+
+         API_LockMutex(&ftptr->Mutex);
+         open_ftptr->Flags = 0;
+         API_UnlockMutex(&ftptr->Mutex);
+
+         /*
+          *  The file now exists, go ahead and convert
+          *  the returned name server attributes.
+          */
+
+         if(AttrsOut != NULL)
+            *AttrsOut = ret_attrs;
+
+	 if(HandleOut != NULL)
+	    *HandleOut = objhandle;
+
+         if(HintsOut != NULL) 
+         {
+            HintsOut->COSId = cosinfo.COSId;
+            strncpy((char *)HintsOut->COSName,
+                    (char *)cosinfo.COSName,
+                     HPSS_MAX_COS_NAME);
+            HintsOut->Flags = cosinfo.Flags;
+            HintsOut->OptimumAccessSize = cast64m(cosinfo.OptimumAccessSize);
+            HintsOut->MinFileSize = cosinfo.MinFileSize;
+            HintsOut->MaxFileSize = cosinfo.MaxFileSize;
+            HintsOut->AccessFrequency = cosinfo.AccessFrequency;
+            HintsOut->TransferRate = cosinfo.TransferRate;
+            HintsOut->AvgLatency = cosinfo.AvgLatency;
+            HintsOut->WriteOps = cosinfo.WriteOps;
+            HintsOut->ReadOps = cosinfo.ReadOps;
+            HintsOut->StageCode = cosinfo.StageCode;
+            HintsOut->StripeWidth = sclassinfo.StripeWidth;
+            HintsOut->StripeLength = sclassinfo.StripeLength;
+         }
+      }
+   }
+
+   if(error != 0)
+   {
+      /*
+       *  We had an open problem. Free up the allocated slot.
+       */
+
+      API_LockMutex(&ftptr->Mutex);
+
+      open_ftptr->Type = NO_OPEN_HANDLE;
+      open_ftptr->Flags = 0;
+      ftptr->TotalOpens--;
+      ftptr->NumOpenDesc--;
+
+      API_UnlockMutex(&ftptr->Mutex);
+
+      return(error);
+   }
+
+   return(fildes);
+}
+
+
+static int 
+HPSSFSAL_Common_Create_File(
+apithrdstate_t          *ThreadContext, /* IN - thread context */
+hpss_reqid_t            RequestID,      /* IN - request id */
+ns_ObjHandle_t          *ParentHandle,  /* IN - parent object handle */
+char                    *Path,          /* IN - Path to file to be opened */
+sec_cred_t              *Ucred,         /* IN - user credentials */
+acct_rec_t              *ParentAcct,    /* IN - parent account code */
+mode_t                  Mode,           /* IN - create mode */
+hpss_cos_hints_t        *HintsIn,       /* IN - Desired class of service */
+hpss_cos_priorities_t   *HintsPri,      /* IN - Priorities of hint struct */
+hpss_cos_hints_t        *HintsOut,      /* OUT - Granted class of service */
+hpss_Attrs_t            *AttrsOut,      /* OUT - returned attributes */
+ns_ObjHandle_t          *HandleOut )
+{
+   static char            function_name[] = "Common_Create_File";
+   long                   error;            /* return error */
+   ns_ObjHandle_t         obj_handle;       /* object handle */
+   hpss_AttrBits_t        select_flags;     /* retrieve object attr bits */
+   hpss_AttrBits_t        update_flags;     /* updated object attr bits */
+   hpss_Attrs_t           new_attr;         /* object attributes */
+   hpss_Attrs_t           attr_out;         /* returned object attributes */
+   hpss_cos_md_t          cos_info;         /* returned COS information */
+   hpss_sclass_md_t       sclass_info;      /* returned level 0 sclass info */
+   acct_rec_t             cur_acct_code;    /* current site account code */
+   acct_rec_t             new_acct_code;    /* validated account code */
+   hpss_uuid_t            site_id;          /* site */
+   acct_rec_t             pacct;            /* parent account */
+
+
+
+   /*
+    *  Do account validation.
+    */
+
+   error = API_DetermineAcct(Ucred,
+                             ThreadContext,
+                             ParentHandle->CoreServerUUID,
+                             RequestID,
+                             &site_id,
+                             &cur_acct_code);
+   if (error != 0)
+   {
+      API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't"
+                        " get the account code from the given"
+                        " information: error= %d\n",
+                        function_name, error);
+      return(error);
+   }
+
+
+   /*
+    * Try to get an account for the specified pareht handle 
+    */
+   if(ParentAcct == NULL) 
+   {
+      ParentAcct = &pacct;
+      if((error = API_GetAcctForParent(ThreadContext,
+                                       RequestID,
+                                       ParentHandle,
+                                       &pacct)) != 0) 
+      {
+          API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't"
+                            " get the account id for the given"
+                            " parent handle: error= %d\n",
+                            function_name, error);
+          return(error);
+      }
+   }
+
+   error = av_cli_ValidateCreate(site_id,
+                                 RequestID,
+                                 Ucred->RealmId,
+                                 Ucred->Uid,
+                                 Ucred->Gid,
+                                 cur_acct_code,
+                                 *ParentAcct,
+                                 &new_acct_code);
+   if (error != 0)
+   {
+      API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't validate"
+                        " the account code: error= %d\n",
+                        function_name, error);
+      return(-EPERM);
+   }
+
+   Ucred->CurAccount = new_acct_code;
+
+
+   /*
+    *  Create the file in HPSS.
+    */
+
+   memset(&new_attr,0,sizeof(new_attr));
+   memset(&attr_out,0,sizeof(attr_out));
+   memset(&obj_handle,0,sizeof(obj_handle));
+
+   memset(&cos_info,0,sizeof(cos_info));
+   memset(&sclass_info,0,sizeof(sclass_info));
+   memset(&obj_handle,0,sizeof(obj_handle));
+
+
+   /*
+    * Setup the input attributes.
+    */
+
+   API_ConvertPosixModeToMode(Mode & ~ThreadContext->Umask,&new_attr);
+   new_attr.Account = new_acct_code;
+   update_flags = API_AddRegisterValues(cast64m(0),
+                                        CORE_ATTR_USER_PERMS,
+                                        CORE_ATTR_GROUP_PERMS,
+                                        CORE_ATTR_OTHER_PERMS,
+                                        CORE_ATTR_MODE_PERMS,
+                                        CORE_ATTR_ACCOUNT,
+                                        -1);
+
+
+   /*
+    *  Only request returned attributes if we have somewhere to
+    *  put them.
+    */
+
+   if (AttrsOut != (hpss_Attrs_t *)NULL)
+      select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
+   else
+      select_flags = cast64m(0);
+
+   error = API_core_CreateFile(ThreadContext,
+                               RequestID,
+                               Ucred,
+                               ParentHandle,
+                               Path,
+                               HintsIn,
+                               HintsPri,
+			       update_flags,
+			       &new_attr,
+			       select_flags,
+			       &attr_out,
+			       &obj_handle,
+			       &cos_info,
+			       &sclass_info);
+
+   if ( error == 0 && HintsOut != NULL )
+   {
+      /*
+       *  The file now exists, go ahead and convert
+       *  the returned hints, if requested.
+       */
+
+     HintsOut->COSId = cos_info.COSId;
+     strncpy((char *)HintsOut->COSName,
+             (char *)cos_info.COSName,
+             HPSS_MAX_COS_NAME);
+     HintsOut->OptimumAccessSize = cast64m(cos_info.OptimumAccessSize);
+     HintsOut->MinFileSize = cos_info.MinFileSize;
+     HintsOut->MaxFileSize = cos_info.MaxFileSize;
+     HintsOut->AccessFrequency = cos_info.AccessFrequency;
+     HintsOut->TransferRate = cos_info.TransferRate;
+     HintsOut->AvgLatency = cos_info.AvgLatency;
+     HintsOut->WriteOps = cos_info.WriteOps;
+     HintsOut->ReadOps = cos_info.ReadOps;
+     HintsOut->StageCode = cos_info.StageCode;
+     HintsOut->StripeWidth = sclass_info.StripeWidth;
+     HintsOut->StripeLength = sclass_info.StripeLength;
+   }
+
+   if ( error == 0 ) 
+   {
+      /*
+       *  The file now exists
+       */
+      if ( AttrsOut != NULL )
+      	      *AttrsOut = attr_out;
+      if ( HandleOut != NULL )
+	      *HandleOut = obj_handle;
+   }
+
+   return(error);
+}
+
+#endif
