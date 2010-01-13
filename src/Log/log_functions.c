@@ -1156,7 +1156,7 @@ int DisplayErrorJdLine( log_t jd, int num_family, int num_error, int status, int
 #define LONG_LG 2 
 #define LONG_LONG_LG 3 
 
-#define MAX_STR_TOK 1024
+#define MAX_STR_TOK LOG_MAX_STRLEN
 
 
 int log_vsnprintf( char * out, size_t taille, char * format, va_list arguments )

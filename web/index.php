@@ -139,10 +139,10 @@
                   <tr> <td><a href="http://nfs-ganesha.git.sourceforge.net/" target="_blank" class="quicklinks">NFS-GANESHA GitWeb (hosted by SourceForge)</a></td> </tr>
                   <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-announce" target="_blank" class="quicklinks">NFS-GANESHA's announcement mailing-list</a></td> </tr>
                   <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-devel" target="_blank" class="quicklinks">NFS-GANESHA's development mailing-list</a></td> </tr>
+                  <tr> <td><a href="https://lists.sourceforge.net/lists/listinfo/nfs-ganesha-support" target="_blank" class="quicklinks">NFS-GANESHA's support mailing-list</a></td> </tr>
                   <tr> <td><a href="http://www.cecill.info/index.en.html" target="_blank" class="quicklinks">CeCILL license</a></td> </tr>
                   <tr> <td><a href="http://www.cea.fr" target="_blank" class="quicklinks">CEA web site</a></td> </tr>
-		  <tr> <td><a href="http://www.usenix.org/fast09/going">  <img src="http://www.usenix.org/events/fast09/art/fast09_going.jpg" border="0" width="162" height="64" alt="I'm going to FAST '09">  </a></td></tr>
-
+		  <tr> <td><a href="http://www.usenix.org/fast10/going">  <img src="http://www.usenix.org/events/fast10/art/fast10_going.jpg" border="0" width="169" height="77" alt="I'm going to FAST '10">  </a> </td></tr>
                 </table></td>
               </tr>
             </table></td>
