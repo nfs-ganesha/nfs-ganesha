@@ -110,7 +110,7 @@ static int HPSSFSAL_Common_Open_Bitfile(
     );        /* IN - file table index */
 
 
-#if HPSS_LEVEL >= 730
+#if HPSS_LEVEL >= 711
 static int 
 HPSSFSAL_Common_Open_File(
 apithrdstate_t          *ThreadContext, /* IN - thread context */
@@ -1070,7 +1070,7 @@ HPSSFSAL_Common_Open
    return(fildes);
 }
 
-#elif HPSS_LEVEL == 710
+#elif (HPSS_LEVEL == 710) || (HPSS_LEVEL == 711)
 static int
 HPSSFSAL_Common_Open(
 apithrdstate_t          *ThreadContext, /* IN - thread context */
@@ -2687,7 +2687,7 @@ int                     Fildes         /* IN - file table index */
 }
 
 
-#if HPSS_LEVEL == 730
+#if HPSS_LEVEL >= 711
 static int 
 HPSSFSAL_Common_Open_File(
 apithrdstate_t          *ThreadContext, /* IN - thread context */
