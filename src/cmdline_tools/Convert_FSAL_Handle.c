@@ -93,7 +93,7 @@
 #include "stuff_alloc.h"
 #include "fsal.h"
 
-#ifdef _USE_HPSS_62
+#ifdef _USE_HPSS
 #include "../FSAL/FSAL_HPSS/HPSSclapiExt/hpssclapiext.h"
 #endif
 
@@ -110,7 +110,7 @@ int main( int argc, char * argv[] )
  char                      exec_name[MAXPATHLEN] ;
  char                    * tempo_exec_name       = NULL ;
  
-#ifdef _USE_HPSS_62
+#ifdef _USE_HPSS
  char                      buffer[CMD_BUFFER_SIZE] ; 
  fsal_handle_t             fsal_handle;
  char                      str[2*CMD_BUFFER_SIZE] ;
@@ -158,7 +158,7 @@ int main( int argc, char * argv[] )
         exit(1);
   }
 
-#ifdef _USE_HPSS_62 
+#ifdef _USE_HPSS
   sscanHandle(&fsal_handle,argv[optind]);
    
   snprintmem( (caddr_t)str, 2*CMD_BUFFER_SIZE, (caddr_t)&fsal_handle.ns_handle, sizeof( ns_ObjHandle_t) )  ;

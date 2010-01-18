@@ -186,10 +186,12 @@ TYPE_CRED_HPSS       *Ucred,
 ns_ObjHandle_t        *RetObjHandle,
 hpss_Attrs_t          *RetAttrs)
 {
+#if HPSS_MAJOR_VERSION < 7
     call_type_t       call_type;
-#ifdef _USE_HPSS_51      
+#endif
+#if HPSS_MAJOR_VERSION == 5
    volatile long	error = 0;        /* return error */
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622 )
+#else
    signed32 	error = 0;        /* return error */
 #endif
     static char       function_name[] = "HPSSFSAL_Common_Mkdir";
@@ -265,11 +267,13 @@ hpss_Attrs_t          *RetAttrs)
     
     select_flags = API_AddRegisterValues(cast64m(0),
 					 CORE_ATTR_ACCOUNT,
+#if HPSS_MAJOR_VERSION < 7
 					 CORE_ATTR_FILESET_ID,
 					 CORE_ATTR_FILESET_TYPE,
 					 CORE_ATTR_GATEWAY_UUID,
 					 CORE_ATTR_DM_HANDLE,
 					 CORE_ATTR_DM_HANDLE_LENGTH,
+#endif
 					 -1);
     
     error = API_TraversePath(ThreadContext,
@@ -286,7 +290,9 @@ hpss_Attrs_t          *RetAttrs)
 			     API_NULL_CWD_STACK,
 			     &objhandle_parent,
 			     &attr_parent,
+#if HPSS_MAJOR_VERSION < 7
 			     NULL,
+#endif
 			     NULL,
 			     NULL,
 			     NULL,
@@ -338,7 +344,7 @@ hpss_Attrs_t          *RetAttrs)
 	  /*
 	   * Validate the account.
 	   */
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
 	  error = av_cli_ValidateCreate(siteId,
 					rqstid,
 					Ucred->DCECellId,
@@ -347,7 +353,7 @@ hpss_Attrs_t          *RetAttrs)
 					temp_acct_code,
 					attr_parent.Account,
 					&new_acct_code);
-#elif defined (_USE_HPSS_62) || defined( _USE_HPSS_622 )
+#elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 	  error = av_cli_ValidateCreate(siteId,
 					rqstid,
 					Ucred->RealmId,
@@ -372,23 +378,25 @@ hpss_Attrs_t          *RetAttrs)
     if (error == 0)
     {
 
+#if HPSS_MAJOR_VERSION < 7
+
        /*
 	* Do we call the dmap gateway or the name server?
 	*/
     
-#ifdef _USE_HPSS_51
+#if HPSS_MAJOR_VERSION == 5
        call_type = API_DetermineCall(attr_parent.FilesetType,
 				     (long *) &error);
-#elif defined( _USE_HPSS_62 ) || defined( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION == 6
        call_type = API_DetermineCall(attr_parent.FilesetType, &error);
-#endif       
+#endif
            
        switch(call_type) 
        {
     
 	  case API_CALL_DMG:
 
-#if defined ( API_DMAP_SUPPORT ) && !defined (API_DMAP_GATEWAY )
+#if defined ( API_DMAP_SUPPORT ) && !defined ( API_DMAP_GATEWAY )
 	     /*
                  * Call the dmap gateway to create the file.  This will
                  * have the side effect that the dmap will call us to
@@ -481,6 +489,8 @@ hpss_Attrs_t          *RetAttrs)
     
 	  case API_CALL_HPSS:
 
+#endif /* HPSS < 7 */
+
 	     /*
       	         * Set up the parameters for the new directory.
 	         */
@@ -550,6 +560,8 @@ hpss_Attrs_t          *RetAttrs)
 			   SOFTWARE_ERROR,NONE,
 			   API_REQUEST_ERROR, error);
 	     }
+
+#if HPSS_MAJOR_VERSION < 7
 	     break;
     
             default:
@@ -559,6 +571,7 @@ hpss_Attrs_t          *RetAttrs)
 				 function_name);
                break;
             } /* end switch */
+#endif
          
     } /* end (if error == 0) */
 

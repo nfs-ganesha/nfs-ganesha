@@ -19,6 +19,8 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
+#include <hpss_errno.h>
+
 
 /**
  * FSAL_access :
@@ -84,8 +86,11 @@ fsal_status_t FSAL_access(
                   &(object_handle->ns_handle), /* IN - parent object handle */
                   NULL,                /* IN - path of file to check access rights */
                   hpss_test_mode,      /* IN - Type of access to be checked */
-                  &p_context->credential.hpss_usercred, /* IN - user credentials */
-                  NULL                 /* OUT - authorization ticket */ );
+                  &p_context->credential.hpss_usercred /* IN - user credentials */
+        #if HPSS_MAJOR_VERSION < 7
+                , NULL                 /* OUT - authorization ticket */
+        #endif
+ );
   
   ReleaseTokenFSCall();
   

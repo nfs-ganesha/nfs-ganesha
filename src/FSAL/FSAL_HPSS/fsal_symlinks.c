@@ -21,6 +21,7 @@
 #include <string.h>
 #include "HPSSclapiExt/hpssclapiext.h"
 
+#include <hpss_errno.h>
 
 
 /**
