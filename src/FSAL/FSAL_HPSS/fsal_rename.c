@@ -20,6 +20,7 @@
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
+#include <hpss_errno.h>
 
 
 /**

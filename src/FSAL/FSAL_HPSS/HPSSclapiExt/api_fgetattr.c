@@ -250,10 +250,12 @@ hpss_fileattr_t   *AttrOut,       /* OUT - attributes after query */
 hpss_xfileattr_t  *XAttrOut)      /* OUT - xattributes after query */
 {
    static char          function_name[] = "HPSSFSAL_Common_FileGetAttributes";
-#ifdef _USE_HPSS_51      
+#if (HPSS_MAJOR_VERSION == 5) || (HPSS_MAJOR_VERSION == 7)
    volatile long	error = 0;        /* return error */
-#elif defined( _USE_HPSS_62) || defined( _USE_HPSS_622)
+#elif (HPSS_MAJOR_VERSION == 6)
    signed32 	error = 0;        /* return error */
+#else
+   #error "Unexpected HPSS VERSION MAJOR"
 #endif
    hpss_AttrBits_t      select_flags;     /* attribute select bits */
    hpss_AttrBits_t      parent_flags;     /* attribute select bits */
@@ -297,7 +299,7 @@ hpss_xfileattr_t  *XAttrOut)      /* OUT - xattributes after query */
       {
 	 return(-EINVAL);
       }
-#ifdef _USE_HPSS_622
+#if ( HPSS_LEVEL >= 622 )
       if  ((Flags & API_GET_XATTRS_NO_BLOCK) != 0)
          xattr_options |= CORE_GETATTRS_NO_BLOCK;
 #endif
@@ -330,7 +332,9 @@ hpss_xfileattr_t  *XAttrOut)      /* OUT - xattributes after query */
 			    &AttrOut->Attrs,
 			    NULL,
 			    NULL,
+#if ( HPSS_MAJOR_VERSION < 7 )
 			    &ta,
+#endif
 			    NULL,
 			    xattr_ptr);
 
@@ -399,7 +403,7 @@ hpss_xfileattr_t  *XAttrOut)      /* OUT - xattributes after query */
  *-------------------------------------------------------------------------*/
 
 /* This function is provided from HPSS 6.2.2 */
-#ifndef _USE_HPSS_622
+#if ( HPSS_LEVEL < 622 )
 int
 HPSSFSAL_FileGetXAttributesHandle(
 ns_ObjHandle_t  *ObjHandle,     /* IN - object handle */
@@ -451,7 +455,11 @@ hpss_xfileattr_t *AttrOut)      /* OUT - attributes after query */
    error = HPSSFSAL_Common_FileGetAttributes(threadcontext,
                                     ObjHandle,
                                     NULL,
+#if ( HPSS_MAJOR_VERSION < 7 )
                                     threadcontext->CwdStackPtr,
+#else
+				    API_NULL_CWD_STACK,
+#endif
                                     rqstid,
                                     Flags,
                                     API_CHASE_ALL,
@@ -460,6 +468,19 @@ hpss_xfileattr_t *AttrOut)      /* OUT - attributes after query */
                                     NULL,
                                     &file_attrs,
                                     AttrOut);
+   error = Common_FileGetAttributes(threadcontext,
+                                    ObjHandle,
+                                    Path,
+                                    API_NULL_CWD_STACK,
+                                    rqstid,
+                                    Flags,
+                                    API_CHASE_ALL,
+                                    StorageLevel,
+                                    ucred_ptr,
+                                    &file_attrs,
+                                    AttrOut);
+
+
 
    if ( error != 0 )
       xdr_free((xdrproc_t)xdr_bf_sc_attrib_t, (void *)AttrOut->SCAttrib);

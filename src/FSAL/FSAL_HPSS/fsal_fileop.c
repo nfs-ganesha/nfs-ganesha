@@ -18,6 +18,7 @@
 #include "fsal_convert.h"
 #include "HPSSclapiExt/hpssclapiext.h"
 
+#include <hpss_errno.h>
 
 
 /**
@@ -188,7 +189,9 @@ fsal_status_t FSAL_open(
   /* fills output struct */
   
   file_descriptor->filedes = rc;
+#if HPSS_MAJOR_VERSION < 7
   file_descriptor->fileauthz = hpss_authz;
+#endif
 
     
   /* set output attributes if asked */

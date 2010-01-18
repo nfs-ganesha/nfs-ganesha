@@ -149,10 +149,10 @@ fsal_status_t FSAL_test_access(
   
   /* test root access */
   
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   if ( p_context->credential.hpss_usercred.SecPWent.Uid == 0 )
     Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
   if ( p_context->credential.hpss_usercred.Uid == 0 )
     Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
 #endif
@@ -167,17 +167,17 @@ fsal_status_t FSAL_test_access(
     
   /* Test if file belongs to user. */
  
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   if ( p_context->credential.hpss_usercred.SecPWent.Uid == object_attributes->owner )
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
   if ( p_context->credential.hpss_usercred.Uid == object_attributes->owner )
 #endif
   {
     
-#if defined( _DEBUG_FSAL ) && defined( _USE_HPSS_51 )
+#if defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 5 )
    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "File belongs to user %d",
        p_context->credential.hpss_usercred.SecPWent.Uid );
-#elif defined( _DEBUG_FSAL ) && ( defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 ) )
+#elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION >= 6 )
    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "File belongs to user %d",
        p_context->credential.hpss_usercred.Uid );
 #endif
@@ -203,7 +203,7 @@ fsal_status_t FSAL_test_access(
   
   /* Test if the file belongs to user's group. */
 
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   is_grp = ( p_context->credential.hpss_usercred.SecPWent.Gid == object_attributes->group );
   
 # ifdef _DEBUG_FSAL
@@ -213,7 +213,7 @@ fsal_status_t FSAL_test_access(
 # endif
   
 
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION >= 6
   is_grp = ( p_context->credential.hpss_usercred.Gid == object_attributes->group );
     
 # ifdef _DEBUG_FSAL
@@ -324,18 +324,18 @@ fsal_status_t FSAL_setattr_access(
     Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_setattr_access );
 
   /* Root has full power... */
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   if ( p_context->credential.hpss_usercred.SecPWent.Uid == 0 )
     Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_setattr_access );
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
   if ( p_context->credential.hpss_usercred.Uid == 0 )
     Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_setattr_access );
 #endif
 
   /* Check for owner access */
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   if ( p_context->credential.hpss_usercred.SecPWent.Uid == pobject_attributes->owner )
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
   if ( p_context->credential.hpss_usercred.Uid == pobject_attributes->owner )
 #endif
     {

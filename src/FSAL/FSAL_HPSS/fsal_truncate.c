@@ -19,7 +19,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-
+#include <hpss_errno.h>
 
 
 /**
