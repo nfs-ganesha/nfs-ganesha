@@ -20,6 +20,8 @@
 #include "fsal_convert.h"
 #include "HPSSclapiExt/hpssclapiext.h"
 
+#include <hpss_errno.h>
+
 /**
  * FSAL_getattrs:
  * Get attributes for the object specified by its filehandle.

@@ -16,6 +16,8 @@
 #include "HPSSclapiExt/hpssclapiext.h"
 #include "hpss_uuid.h"
 
+#include <hpss_errno.h>
+
 /* generic definitions for extended attributes */
 
 #define XATTR_FOR_FILE     0x00000001
@@ -145,12 +147,12 @@ int get_file_slevel( fsal_handle_t     * p_objecthandle,  /* IN */
   
   TakeTokenFSCall();
   
-#ifndef _USE_HPSS_622
+#if HPSS_LEVEL < 622
   rc = HPSSFSAL_FileGetXAttributesHandle(
         &(p_objecthandle->ns_handle),
         API_GET_STATS_FOR_ALL_LEVELS, 0,
         &hpss_xattr);
-#else
+#elif HPSS_LEVEL == 622
   rc = hpss_FileGetXAttributesHandle(
 		&(p_objecthandle->ns_handle),
 		NULL,
@@ -158,6 +160,13 @@ int get_file_slevel( fsal_handle_t     * p_objecthandle,  /* IN */
 		API_GET_STATS_FOR_ALL_LEVELS, 0,
 		NULL,
 		&hpss_xattr);	
+#elif HPSS_MAJOR_VERSION >= 7
+  rc = hpss_FileGetXAttributesHandle(
+                &(p_objecthandle->ns_handle),
+                NULL,
+                &(p_context->credential.hpss_usercred),
+                API_GET_STATS_FOR_ALL_LEVELS, 0,
+                &hpss_xattr);
 #endif
   
   ReleaseTokenFSCall();

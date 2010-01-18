@@ -56,9 +56,13 @@ fsal_accessmode_t hpss2fsal_mode(
 /** converts HPSS access mode to FSAL mode */
 void fsal2hpss_mode( 
     fsal_accessmode_t fsal_mode,
+#if HPSS_MAJOR_VERSION < 7
     unsigned32 * uid_bit,
     unsigned32 * gid_bit,
     unsigned32 * sticky_bit,
+#else
+    unsigned32 * mode_perms,
+#endif
     unsigned32 * user_perms,
     unsigned32 * group_perms,
     unsigned32 * other_perms

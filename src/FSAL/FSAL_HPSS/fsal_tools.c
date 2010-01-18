@@ -25,21 +25,18 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-#ifdef _USE_HPSS_51
+#if HPSS_VERSION_MAJOR == 5
 #define TYPE_UUIDT  uuid_t
-#elif defined( _USE_HPSS_62) || defined ( _USE_HPSS_622 )
+#else
 #define TYPE_UUIDT  hpss_uuid_t
 #endif
 
+#define INTMACRO_TO_STR(_x) _DEREF(_x)
+#define _DEREF(_x) #_x
+
 char * FSAL_GetFSName()
 {
-#ifdef _USE_HPSS_51
-        return "HPSS 5.1";
-#elif defined( _USE_HPSS_62) || defined ( _USE_HPSS_622 )
-        return "HPSS 6.2";
-#else
-        return "HPSS";
-#endif
+        return "HPSS " INTMACRO_TO_STR( HPSS_MAJOR_VERSION ) "." INTMACRO_TO_STR( HPSS_MINOR_VERSION ) "." INTMACRO_TO_STR( HPSS_PATCH_LEVEL );
 }
 
 
@@ -584,12 +581,12 @@ fsal_status_t  FSAL_SetDefault_FS_specific_parameter(
   
   /* set default values for all parameters of fs_specific_info */
   
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
   
   FSAL_SET_INIT_DEFAULT( out_parameter->fs_specific_info, PrincipalName);
   FSAL_SET_INIT_DEFAULT( out_parameter->fs_specific_info, KeytabPath);
   
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#elif HPSS_MAJOR_VERSION >= 6
   
   FSAL_SET_INIT_DEFAULT( out_parameter->fs_specific_info, AuthnMech);
   FSAL_SET_INIT_DEFAULT( out_parameter->fs_specific_info, NumRetries);
@@ -1003,7 +1000,7 @@ fsal_status_t  FSAL_load_FS_specific_parameter_from_conf(
       ReturnCode( ERR_FSAL_SERVERFAULT, err );
     }
     
-#ifdef _USE_HPSS_51  
+#if HPSS_MAJOR_VERSION == 5
     /* does the variable exists ? */
     if ( !STRCMP( key_name, "PrincipalName" ) )
       {
@@ -1023,7 +1020,7 @@ fsal_status_t  FSAL_load_FS_specific_parameter_from_conf(
             key_value );
             
       }    
-#elif defined( _USE_HPSS_62 ) || defined ( _USE_HPSS_622 )
+#else
     /* does the variable exists ? */
     if ( !STRCMP( key_name, "PrincipalName" ) )
       {        
