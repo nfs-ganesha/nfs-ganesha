@@ -7,6 +7,7 @@ Thanks to:
 	- People from maling-list nfsv4@linux-nfs.org (with special attention to J. Bruce Fields 
 	  and Trond Myklebust) for their help understanding the complex logic within NFSv4
 	- Eric Sesterhenn <eric.sesterhenn@lsexperts.de> who provided a nice patch fixing memleaks.
+	- Erik Levinson <erik@caneris.com> who did lots of work to make libnfsidmap work with gssrpc in nfs-ganesha
 
    Students that came to make an intership with us and worked on the project
 	- Mickael Guerin who wrote the first release of the FSAL_POSIX
