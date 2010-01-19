@@ -626,3 +626,26 @@ fsal_status_t FSAL_GetXAttrValueByName( fsal_handle_t * p_objecthandle, /* IN */
     Return( ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue );
 
 }
+
+fsal_status_t FSAL_SetXAttrValue(
+    fsal_handle_t     * p_objecthandle,  /* IN */
+    const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
+    caddr_t             buffer_addr,     /* IN */
+    size_t              buffer_size,     /* IN */
+    int                 create           /* IN */
+)
+{
+	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
+}
+
+fsal_status_t FSAL_SetXAttrValueById(
+    fsal_handle_t     * p_objecthandle,  /* IN */
+    unsigned int        xattr_id,        /* IN */
+    fsal_op_context_t * p_context,       /* IN */
+    caddr_t             buffer_addr,     /* IN */
+    size_t              buffer_size      /* IN */
+)
+{
+	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
+}
