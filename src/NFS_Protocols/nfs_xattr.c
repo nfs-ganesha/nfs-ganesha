@@ -204,8 +204,14 @@ int nfs3_FSALattr_To_XattrDir( exportlist_t       * pexport,    /* In: the relat
     return 0 ;
 
   Fattr->type = NF3DIR ; /** Xattr directory is indeed a directory */
-   
-  Fattr->mode           = 0555 ; /* r-xr-xr-x (cannot create or remove xattrs)*/
+
+  /* r-xr-xr-x (cannot create or remove xattrs, except if HAVE_XATTR_CREATE is defined)*/
+#ifdef HAVE_XATTR_CREATE
+  Fattr->mode           = 0755 ;
+#else
+  Fattr->mode           = 0555 ;
+#endif
+
   Fattr->nlink          = 2 ; /* like a directory */
   Fattr->uid            = FSAL_attr->owner ;
   Fattr->gid            = FSAL_attr->group ;
@@ -949,6 +955,70 @@ int nfs3_Readdir_Xattr( nfs_arg_t               * parg,
  * @return always NFS_REQ_OK 
  *
  */
+int nfs3_Create_Xattr( nfs_arg_t         * parg,    
+                exportlist_t      * pexport, 
+                fsal_op_context_t       * pcontext,   
+                cache_inode_client_t    * pclient,
+                hash_table_t      * ht,
+                struct svc_req    * preq,    
+                nfs_res_t         * pres )
+{
+    cache_entry_t         * parent_pentry = NULL ;
+    fsal_attrib_list_t      parent_attr          ;
+    cache_inode_status_t    cache_status = CACHE_INODE_SUCCESS;
+    fsal_handle_t         * pfsal_handle = NULL ;
+    fsal_name_t             attr_name = FSAL_NAME_INITIALIZER;
+    fsal_status_t           fsal_status;
+    int rc;
+    char empty_buff[16] = "";
+
+    if (preq->rq_vers == NFS_V3)
+    {
+      /* to avoid setting it on each error case */
+      pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
+      pres->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
+    }
+
+    if( ( parent_pentry = nfs_FhandleToCache( preq->rq_vers, 
+                                            NULL,
+                                            &(parg->arg_create3.where.dir),
+                                            NULL, 
+                                            &(pres->res_dirop2.status),
+                                            NULL,
+                                            NULL,
+                                            &parent_attr, 
+                                            pcontext, 
+                                            pclient, 
+                                            ht, 
+                                            &rc ) ) == NULL )
+    {
+      /* Stale NFS FH ? */
+      return rc ;
+    }
+
+    /* Get the associated FSAL Handle */
+    pfsal_handle = cache_inode_get_fsal_handle( parent_pentry, &cache_status ) ;
+
+    /* convert attr name to FSAL name */
+    FSAL_str2name( parg->arg_create3.where.name, FSAL_MAX_NAME_LEN, &attr_name ); 
+
+    fsal_status = FSAL_SetXAttrValue( pfsal_handle,
+                                      &attr_name,
+                                      pcontext,
+                                      empty_buff,
+                                      16,
+                                      TRUE );
+
+    if( FSAL_IS_ERROR( fsal_status ) )
+    {
+        pres->res_create3.status = nfs3_Errno( cache_inode_error_convert(fsal_status) ) ;
+        return NFS_REQ_OK ;
+    }
+
+    /* @todo to be continued */
+    return NFS_REQ_OK ;
+ 
+}
 
 int nfs3_Write_Xattr( nfs_arg_t               * parg,    
                       exportlist_t            * pexport, 
@@ -967,6 +1037,7 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
   fsal_size_t               size = 0 ;
   fsal_size_t               written_size;
   fsal_off_t                offset = 0;
+  fsal_status_t             fsal_status ;
   caddr_t                   data = NULL;
   enum stable_how           stable;     /* NFS V3 storage stability, see RFC1813 page 50 */
   cache_inode_file_type_t   filetype      ;
@@ -995,7 +1066,6 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
       return rc ;
     }
 
-
   /* Turn the nfs FH into something readable */
   pfile_handle = (file_handle_v3_t *)(parg->arg_write3.file.data.data_val) ;
 
@@ -1023,14 +1093,20 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
 
   offset = parg->arg_write3.offset;
 
-  /* Get the xattr related to this xattr_id */
-  if( ( data = (char *)Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL )
-   {
-      return NFS_REQ_DROP ;
-   }
-   memset( data, 0, XATTR_BUFFERSIZE );
+  if ( offset > 0 )
+  {
+       pres->res_write3.status = NFS3ERR_INVAL;
+       return NFS_REQ_OK;
+  }
+
+  fsal_status = FSAL_SetXAttrValueById( pfsal_handle,
+                                        xattr_id,
+                                        pcontext,
+                                        parg->arg_write3.data.data_val,
+                                        parg->arg_write3.data.data_len );
 
    /** @todo to be continued */
+
    return NFS_REQ_OK ;
 } /* nfs3_Write_Xattr */
 

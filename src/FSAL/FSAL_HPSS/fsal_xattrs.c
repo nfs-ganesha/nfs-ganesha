@@ -600,6 +600,11 @@ static int fsal_xattr_name_2_uda( const char * src, char * out )
 	{
 		*curr = '/';
 	}
+
+	/* UDA path must start with '/hpss/' */
+	if ( strncmp( out, "/hpss/", 6 ) != 0 )
+		return ERR_FSAL_INVAL;
+
 	return 0;
 }
  
@@ -650,16 +655,12 @@ fsal_status_t FSAL_ListXAttrs(
   
   if ( FSAL_IS_ERROR( st ) ) Return( st.major, st.minor, INDEX_FSAL_ListXAttrs );
    
-  printf("Cookie = %u\n", cookie );
-
   for ( index = cookie, out_index = 0 ;
         index < XATTR_COUNT && out_index < xattrs_tabsize ;
         index ++ )
   {
     if ( do_match_type( xattr_list[index].flags, p_objecthandle->obj_type ) )
     {
-
-      printf("index = %u, out_index = %u\n", index, out_index );
 
       /* fills an xattr entry */
       xattrs_tab[out_index].xattr_id = index;
@@ -685,8 +686,6 @@ fsal_status_t FSAL_ListXAttrs(
 
   *end_of_list = (index == XATTR_COUNT);
 
-  printf("index = %u, end of list = %u\n", index, *end_of_list );
-
 #if HPSS_LEVEL >= 730
   {
 	  /* get list of UDAs for this entry */
@@ -711,8 +710,6 @@ fsal_status_t FSAL_ListXAttrs(
 
 			/* the id is XATTR_COUNT + index of HPSS UDA */
 			index = XATTR_COUNT + i;
-
-  		        printf("UDA #%u, index = %u\n", i, index );
 
 			/* continue while index < cookie */
 			if ( index < cookie )
@@ -747,7 +744,7 @@ fsal_status_t FSAL_ListXAttrs(
 				xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR ;
 			}
 			/* we know the size here (+2 for \n\0) */
-			else
+			else if ( attr_list.Pair[i].Value != NULL )
 				xattrs_tab[out_index].attributes.filesize = strlen( attr_list.Pair[i].Value ) + 2;
 
 			/* next output slot */
@@ -828,7 +825,12 @@ fsal_status_t FSAL_GetXAttrValueById(
 	/* this xattr does not exist anymore */
 	Return( ERR_FSAL_STALE, 0, INDEX_FSAL_GetXAttrValue );
 
-    snprintf( (char*)buffer_addr, buffer_size, "%s\n", attr_list.Pair[xattr_id - XATTR_COUNT].Value );
+    if ( (attr_list.Pair[xattr_id - XATTR_COUNT].Value != NULL)
+	&& (attr_list.Pair[xattr_id - XATTR_COUNT].Value[0] != '\0') )
+	snprintf( (char*)buffer_addr, buffer_size, "%s\n", attr_list.Pair[xattr_id - XATTR_COUNT].Value );
+    else
+	strcpy( (char*)buffer_addr, "" );
+
     *p_output_size = strlen((char*)buffer_addr)+1;
 
     Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue ); 
@@ -907,37 +909,44 @@ fsal_status_t FSAL_GetXAttrIdByName(
     hpss_userattr_list_t attr_list;
     unsigned int i;
     int rc;
-    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
+    char attrpath[FSAL_MAX_NAME_LEN];
 
-    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "looking for xattr '%s' in UDAs", xattr_name->name );
-
-    /* get list of UDAs for this entry, and return the good index */
-
-    TakeTokenFSCall();
-    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
-  				      NULL,
-				      &(p_context->credential.hpss_usercred),
-				      &attr_list,
-				      XML_ATTR );
-    ReleaseTokenFSCall();
-
-    if (rc == 0)
+    /* convert FSAL xattr name to HPSS attr path.
+     * returns error if it is not a UDA name.
+     */
+    if ( fsal_xattr_name_2_uda( xattr_name->name, attrpath ) == 0 )
     {
-	/* convert FSAL xattr name to HPSS attr path */
-        char attrpath[FSAL_MAX_NAME_LEN];
-	fsal_xattr_name_2_uda( xattr_name->name, attrpath );
 
-    	for ( i = 0; i < attr_list.len; i++ )
-	{
-		if ( !strcmp( attr_list.Pair[i].Key, attrpath ) )
+	    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
+
+	    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "looking for xattr '%s' in UDAs", xattr_name->name );
+
+	    /* get list of UDAs for this entry, and return the good index */
+
+	    TakeTokenFSCall();
+	    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
+					      NULL,
+					      &(p_context->credential.hpss_usercred),
+					      &attr_list,
+					      XML_ATTR );
+	    ReleaseTokenFSCall();
+
+	    if (rc == 0)
+	    {
+
+		for ( i = 0; i < attr_list.len; i++ )
 		{
-			/* xattr index is XATTR_COUNT + UDA index */
-			index = XATTR_COUNT + i;
-			found = TRUE;
-			break;
+			if ( !strcmp( attr_list.Pair[i].Key, attrpath ) )
+			{
+				/* xattr index is XATTR_COUNT + UDA index */
+				index = XATTR_COUNT + i;
+				found = TRUE;
+				break;
+			}
 		}
-	}
-    }
+	    }
+
+      } /* enf if valid UDA name */
 
   } /* end if not found */
 #endif
@@ -1006,3 +1015,132 @@ fsal_status_t FSAL_GetXAttrValueByName(
   
 }
 
+
+static void chomp_attr_value( char * str, size_t size )
+{
+    int len;
+
+    if ( str == NULL )
+	return;
+
+    /* security: set last char to '\0' */
+    str[size-1] = '\0';
+
+    len = strlen(str);
+    if ( (len > 0) && (str[len-1] == '\n') )
+	str[len-1] = '\0';
+}
+
+fsal_status_t FSAL_SetXAttrValue(
+    fsal_handle_t     * p_objecthandle,  /* IN */
+    const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
+    caddr_t             buffer_addr,     /* IN */
+    size_t              buffer_size,     /* IN */
+    int                 create           /* IN */
+)
+{
+#if HPSS_LEVEL >= 730
+    int rc;
+    char attrpath[FSAL_MAX_NAME_LEN];
+    hpss_userattr_list_t inAttr;
+
+    /* check that UDA name is valid */
+    if ( fsal_xattr_name_2_uda( xattr_name->name, attrpath ) != 0 )
+	Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_SetXAttrValue);
+
+    /* remove '\n" */
+    chomp_attr_value((char*) buffer_addr, buffer_size);
+
+    /* Set the UDA value */
+
+    inAttr.len = 1;
+    /* must use malloc()  here, because hpss clapi may free() it */
+    inAttr.Pair = malloc(inAttr.len * sizeof(hpss_userattr_t));
+    inAttr.Pair[0].Key = attrpath;
+    inAttr.Pair[0].Value = (char*) buffer_addr;
+
+    TakeTokenFSCall();
+    rc = hpss_UserAttrSetAttrHandle(
+			&(p_objecthandle->ns_handle),
+			NULL,
+			&(p_context->credential.hpss_usercred),
+			&inAttr,
+			NULL );
+    ReleaseTokenFSCall();
+
+    free(inAttr.Pair);
+
+    Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
+
+#else
+    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
+#endif
+}
+
+fsal_status_t FSAL_SetXAttrValueById(
+    fsal_handle_t     * p_objecthandle,  /* IN */
+    unsigned int        xattr_id,        /* IN */
+    fsal_op_context_t * p_context,       /* IN */
+    caddr_t             buffer_addr,     /* IN */
+    size_t              buffer_size      /* IN */
+)
+{
+#if HPSS_LEVEL >= 730
+    hpss_userattr_list_t attr_list;
+    hpss_userattr_list_t inAttr;
+    unsigned int i;
+    int rc;
+
+    if ( attr_is_read_only( xattr_id ) )
+	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
+    else if ( xattr_id < XATTR_COUNT )
+	/* this is not a UDA (setattr not supported) */
+	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
+
+    /* remove '\n" */
+    chomp_attr_value((char*) buffer_addr, buffer_size);
+
+    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
+
+    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "Getting name of UDA #%u", xattr_id-XATTR_COUNT );
+
+    TakeTokenFSCall();
+    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
+  				      NULL,
+				      &(p_context->credential.hpss_usercred),
+				      &attr_list,
+				      XML_ATTR );
+    ReleaseTokenFSCall();
+
+    if (rc != 0)
+	Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
+    else if ( xattr_id - XATTR_COUNT >= attr_list.len )
+	/* this xattr does not exist anymore */
+	Return( ERR_FSAL_STALE, 0, INDEX_FSAL_SetXAttrValue );
+
+    /* set the UDA by its name */
+
+    inAttr.len = 1;
+    /* must use malloc()  here, because hpss clapi may free() it */
+    inAttr.Pair = malloc(inAttr.len * sizeof(hpss_userattr_t));
+    inAttr.Pair[0].Key = attr_list.Pair[xattr_id - XATTR_COUNT].Key;
+    inAttr.Pair[0].Value = (char*) buffer_addr;
+
+    TakeTokenFSCall();
+    rc = hpss_UserAttrSetAttrHandle(
+			&(p_objecthandle->ns_handle),
+			NULL,
+			&(p_context->credential.hpss_usercred),
+			&inAttr,
+			NULL );
+    ReleaseTokenFSCall();
+
+    free(inAttr.Pair);
+
+    Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
+
+#else
+    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
+#endif
+}
