@@ -526,6 +526,7 @@ int nfs3_Lookup_Xattr( nfs_arg_t               * parg,
      /* Try to get a FSAL_XAttr of that name */
      fsal_status = FSAL_GetXAttrIdByName( pfsal_handle,
   				          &name,
+                                          pcontext,
 				          &xattr_id ) ;
      if( FSAL_IS_ERROR( fsal_status ) )
       {
