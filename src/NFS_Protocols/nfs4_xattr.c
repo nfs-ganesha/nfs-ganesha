@@ -1227,6 +1227,7 @@ int nfs4_op_lookup_xattr(  struct nfs_argop4 * op ,
   /* Try to get a FSAL_XAttr of that name */
   fsal_status = FSAL_GetXAttrIdByName( pfsal_handle,
 				       &name,
+                                       data->pcontext,
 				       &xattr_id ) ;
   if( FSAL_IS_ERROR( fsal_status ) )
    {

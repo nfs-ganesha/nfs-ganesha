@@ -781,6 +781,7 @@ fsal_status_t FSAL_ListXAttrs(
 fsal_status_t FSAL_GetXAttrIdByName(
     fsal_handle_t     * p_objecthandle,  /* IN */
     const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
     unsigned int      * pxattr_id        /* OUT */
 );
 
@@ -837,6 +838,7 @@ fsal_status_t FSAL_GetXAttrValueById(
 fsal_status_t FSAL_SetXAttrValue(
     fsal_handle_t     * p_objecthandle,  /* IN */
     const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
     caddr_t             buffer_addr,     /* IN */
     size_t              buffer_size,     /* IN */
     int                 create           /* IN */
