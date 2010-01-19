@@ -174,15 +174,22 @@ int nfs_Create( nfs_arg_t         * parg,
   cache_inode_status_t    cache_status_lookup  ;
   cache_inode_file_type_t parent_filetype      ;
   fsal_handle_t         * pfsal_handle         ;
+
+    if( ( preq->rq_vers == NFS_V3 ) &&
+      ( nfs3_Is_Fh_Xattr( &(parg->arg_create3.where.dir) ) ) ) 
+    {
+        DisplayLogLevel( NIV_DEBUG, "Trying to create new xattr \"%s\"", parg->arg_create3.where.name );
+        return nfs3_Create_Xattr( parg, pexport, pcontext, pclient, ht, preq, pres );
+    }
   
-	if (preq->rq_vers == NFS_V3)
+    if (preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
       pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
       pres->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
       ppre_attr = NULL;
     }
-  
+
   if( ( parent_pentry = nfs_FhandleToCache( preq->rq_vers, 
                                             &(parg->arg_create2.where.dir),
                                             &(parg->arg_create3.where.dir),
@@ -199,9 +206,9 @@ int nfs_Create( nfs_arg_t         * parg,
       /* Stale NFS FH ? */
       return rc ;
     }
-  
-	/* get directory attributes before action (for V3 reply) */
-  ppre_attr = &parent_attr;
+
+    /* get directory attributes before action (for V3 reply) */
+    ppre_attr = &parent_attr;
   
   /* Extract the filetype */
   parent_filetype = cache_inode_fsal_type_convert( parent_attr.type ) ;
