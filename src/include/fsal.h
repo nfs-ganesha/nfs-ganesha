@@ -781,6 +781,7 @@ fsal_status_t FSAL_ListXAttrs(
 fsal_status_t FSAL_GetXAttrIdByName(
     fsal_handle_t     * p_objecthandle,  /* IN */
     const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
     unsigned int      * pxattr_id        /* OUT */
 );
 
@@ -837,10 +838,27 @@ fsal_status_t FSAL_GetXAttrValueById(
 fsal_status_t FSAL_SetXAttrValue(
     fsal_handle_t     * p_objecthandle,  /* IN */
     const fsal_name_t * xattr_name,      /* IN */
+    fsal_op_context_t * p_context,       /* IN */
     caddr_t             buffer_addr,     /* IN */
     size_t              buffer_size,     /* IN */
     int                 create           /* IN */
 );
+
+/**
+ * Set the value of an extended attribute by its Id.
+ *
+ * \param p_objecthandle Handle of the object you want to set attribute for.
+ * \param xattr_id index of the attribute to be written.
+ * \param p_context pointer to the current security context.
+ * \param buffer_addr address of the buffer where the xattr value is stored.
+ * \param buffer_size size of the buffer where the xattr value is stored.
+ */
+fsal_status_t FSAL_SetXAttrValueById(
+    fsal_handle_t     * p_objecthandle,  /* IN */
+    unsigned int        xattr_id,        /* IN */
+    fsal_op_context_t * p_context,       /* IN */
+    caddr_t             buffer_addr,     /* IN */
+    size_t              buffer_size );   /* IN */
 
 
 /**
