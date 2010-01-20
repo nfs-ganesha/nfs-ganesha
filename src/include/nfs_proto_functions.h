@@ -1106,6 +1106,15 @@ int nfs3_Read_Xattr( nfs_arg_t               * parg,
                      struct svc_req          * preq,    
                      nfs_res_t               * pres ) ; 
 
+int nfs3_Create_Xattr( nfs_arg_t         * parg,
+	               exportlist_t      * pexport,
+                	fsal_op_context_t       * pcontext,
+                	cache_inode_client_t    * pclient,
+                	hash_table_t      * ht,
+                	struct svc_req    * preq,
+                	nfs_res_t         * pres );
+
+
 int nfs3_Write_Xattr( nfs_arg_t               * parg,    
                       exportlist_t            * pexport, 
                       fsal_op_context_t       * pcontext,   
