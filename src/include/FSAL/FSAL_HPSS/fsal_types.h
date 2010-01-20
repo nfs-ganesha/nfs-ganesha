@@ -319,6 +319,10 @@ typedef u_signed64 fsal_cookie_t;
 
 typedef void * fsal_lockdesc_t;  /**< not implemented in hpss */
 
+#if HPSS_LEVEL >= 730
+#define HAVE_XATTR_CREATE 1
+#endif
+
 
 #endif /* _FSAL_TYPES_SPECIFIC_H */
 
