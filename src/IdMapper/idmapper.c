@@ -147,7 +147,7 @@ int nfsidmap_set_conf()
   if( !nfsidmap_conf_read )
      {
 
-    nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger);
+        /* nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger); */
 
         if (nfs4_init_name_mapping( _PATH_IDMAPDCONF ))
           return 0 ;  
