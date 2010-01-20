@@ -98,6 +98,7 @@
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
 #endif
+
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
@@ -115,6 +116,7 @@ extern nfs_parameter_t nfs_param ;
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
 #define NFS4_MAX_DOMAIN_LEN 512
+#define NFSIDMAP_VERBOSITY 99
 
 typedef void (*nfs4_idmap_log_function_t)(const char *, ...);
 
@@ -131,10 +133,22 @@ void nfs4_set_debug(int dbg_level, nfs4_idmap_log_function_t dbg_logfunc);
 char idmap_domain[NFS4_MAX_DOMAIN_LEN];
 static int nfsidmap_conf_read = FALSE ;
 
+void nfsidmap_logger(const char* str, ...){
+    va_list arg;
+    va_start(arg,str);
+    printf("nfsidmap_logger: ");
+    vprintf(str,arg);
+    va_end(arg);
+}
+
+
 int nfsidmap_set_conf()
 {
   if( !nfsidmap_conf_read )
      {
+
+    nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger);
+
         if (nfs4_init_name_mapping( _PATH_IDMAPDCONF ))
           return 0 ;  
  
@@ -161,6 +175,7 @@ int nfsidmap_set_conf()
  */
 int uid2name( char * name, uid_t * puid )
 {
+  char fqname[MAXNAMLEN];
 #ifdef _USE_NFSIDMAP
   if( !nfsidmap_set_conf() )
       return 0 ;
@@ -176,8 +191,15 @@ int uid2name( char * name, uid_t * puid )
 
       if(  nfs4_uid_to_name( *puid, idmap_domain, name, MAXNAMLEN ) ) 
    	return 0 ;
-
-     if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
+ 
+      strncpy(fqname,name,MAXNAMLEN);
+      if(strchr(name,'@') == NULL)
+       {
+         sprintf( fqname, "%s@%s", name, idmap_domain ) ;
+         strncpy( name, fqname, MAXNAMLEN );
+       }
+  
+     if( uidmap_add( fqname, *puid ) != ID_MAPPER_SUCCESS )
        return 0 ;
     }
   return 1 ;
@@ -227,6 +249,9 @@ int name2uid( char * name, uid_t * puid )
   struct passwd * ppasswd ;
   char buff[MAXPATHLEN] ;
   uid_t           uid ;
+  gid_t                  gss_gid;
+  uid_t                  gss_uid;
+  char fqname[MAXNAMLEN];
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
@@ -247,27 +272,35 @@ int name2uid( char * name, uid_t * puid )
 #ifdef _USE_NFSIDMAP
     if( !nfsidmap_set_conf() )
      return 0 ;
+  
+    /* obtain fully qualified name */
+    strncpy(fqname,name,MAXNAMLEN-1);
+    if(strchr(name,'@') == NULL)
+       sprintf( fqname, "%s@%s", name, idmap_domain ) ;
 
-    if( nfs4_name_to_uid( name, puid ) )
+    if( nfs4_name_to_uid( fqname, puid ) )
 	return 0 ;
-    
-    if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
+
+    if( uidmap_add( fqname, *puid ) != ID_MAPPER_SUCCESS )
 	return 0 ;
 
 
 #ifdef _USE_GSSRPC
-	if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
-	  return 0 ; 
-#endif
-	if( uidmap_add( name, passwd.pw_uid ) != ID_MAPPER_SUCCESS )
-	  return 0 ;
+    /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
+     * XXX: currently uses unqualified name as per libnfsidmap comments */
+    if(nfs4_gss_princ_to_ids("krb5",name,&gss_uid,&gss_gid))
+       return 0 ;
+    if( uidgidmap_add( gss_uid, gss_gid ) != ID_MAPPER_SUCCESS )
+      return 0 ;
+#endif /* _USE_GSSRPC */
+  
+#else /* _USE_NFSIDMAP */
 
-#else
 #ifdef _SOLARIS
     if( getpwnam_r( name, &passwd, buff, MAXPATHLEN ) != 0 )
 #else
     if( getpwnam_r( name, &passwd, buff, MAXPATHLEN, &ppasswd ) != 0 )
-#endif
+#endif /* _SOLARIS */
       {
         *puid = -1 ;
         return 0 ;
@@ -278,12 +311,12 @@ int name2uid( char * name, uid_t * puid )
 #ifdef _USE_GSSRPC
 	if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
 	  return 0 ; 
-#endif
+#endif /* _USE_GSSRPC */
 	if( uidmap_add( name, passwd.pw_uid ) != ID_MAPPER_SUCCESS )
 	  return 0 ;
 
       }
-#endif 
+#endif /* _USE_NFSIDMAP */
     }
 
   return 1 ;

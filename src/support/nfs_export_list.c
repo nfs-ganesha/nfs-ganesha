@@ -199,19 +199,27 @@ struct svc_rpc_gss_data {
 
 const char * Rpc_gss_svc_name[] = { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY", "RPCSEC_GSS_SVC_PRIVACY" } ;
 
-
-static void split_credname( char * credname, char * username, char * domainname )
+#ifdef _USE_GSSRPC
+/* Cred Name is "name@DOMAIN" */
+static void split_credname( gss_buffer_desc credname, char * username, char * domainname )
 {
-   char * piter = NULL ;
-   int    pos   = 0 ;
+   char* ptr = NULL;
+   int pos = 0;
+   if(credname.value == NULL) return;
 
-   /* Cred Name is "name@DOMAIN" */
-   for( piter = credname ; *piter != '@' && *piter != '\0' ; pos++, piter++) ;
-
-   strncpy( username, credname, pos ) ;
-   username[pos] = '\0' ;
-   strcpy( domainname, piter+1 ) ;
+   ptr = (char*)credname.value;
+   for ( pos = 0; pos < credname.length; pos++) {
+       if(ptr[pos] == '@' && pos+1 < credname.length) {
+           strncpy(username,ptr,pos);
+           username[pos] = '\0';
+           strncpy(domainname,ptr+pos+1,credname.length-pos-1);
+           domainname[credname.length-pos-1] = '\0';
+           break;
+       }
+   }
 }
+#endif
+
 
 #ifdef _HAVE_GSSAPI
 /**
@@ -344,7 +352,7 @@ int nfs_build_fsal_context( struct svc_req            * ptr_req,
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:
 #ifndef _DEBUG_DISPATCH
-      DisplayLogLevel( NIV_FULL_DEBUG, "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX", rpcxid ) ;
+      DisplayLogLevel( NIV_FULL_DEBUG, "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS", rpcxid ) ;
 #endif
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
@@ -375,7 +383,7 @@ int nfs_build_fsal_context( struct svc_req            * ptr_req,
       /* Je fais le menage derriere moi */
       (void)gss_release_buffer( &min_stat, &oidbuff ) ;
 
-      split_credname( (char *)gd->cname.value, username, domainname ) ;
+      split_credname( gd->cname, username, domainname ) ;
     
 #ifdef _DEBUG_RPCSEC_GSS 
       printf( "----> User=%s Domain=%s\n", username, domainname ) ; 
