@@ -14,6 +14,11 @@
 #ifdef _USE_GSSRPC
 #include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
+#include <gssrpc/xdr.h>
+#define xdr_uint32_t  xdr_u_int32
+#define AUTH_SYS        1
+bool_t xdr_uint64_t (XDR *__xdrs, uint64_t *__up) ;
+bool_t xdr_int64_t (XDR *__xdrs, uint64_t *__up) ;
 #else
 #include <rpc/types.h>
 #include <rpc/rpc.h>
