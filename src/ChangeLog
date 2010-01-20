@@ -297,3 +297,8 @@
 	  compiling without NFSv4.1 support. This is now fixed.
 	- Changed bad #define in Log/log_functions.c (former situation could
 	  lead to possible buffer overflow) 
+	- A patch by Erik Levinson about the use of libnfsidmap with gssrpc
+	  has been integrated
+	- Bug Fix : it was impossible to compile with both support for gssrpc 
+	  and support for NFSv4.1 (mismatch in nfsv41.h and xdr_nfsv41.c)
+

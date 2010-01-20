@@ -34,7 +34,8 @@ extern "C" {
 
 #ifdef _USE_GSSRPC
 /* #include <gssrpc/auth_sys.h> */
-#include <gssrpc/unix.h>
+/* #include <gssrpc/unix.h> */
+#include <gssrpc/auth_unix.h> 
 #else
 /* #include <rpc/auth_sys.h> */
 #include <rpc/auth_unix.h>
@@ -1748,12 +1749,14 @@ struct SECINFO4args {
 };
 typedef struct SECINFO4args SECINFO4args;
 
+#ifndef GSSRPC_AUTH_GSS_H
 enum rpc_gss_svc_t {
 	RPC_GSS_SVC_NONE = 1,
 	RPC_GSS_SVC_INTEGRITY = 2,
 	RPC_GSS_SVC_PRIVACY = 3,
 };
 typedef enum rpc_gss_svc_t rpc_gss_svc_t;
+#endif
 
 struct rpcsec_gss_info {
 	sec_oid4 oid;
