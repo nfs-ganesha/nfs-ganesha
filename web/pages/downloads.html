@@ -5,6 +5,20 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.61</a><br>
+	</li>
+	<ul>
+	<li>A patch from Eric Sesterhenn about memleaks has been integrated.</li>
+        <li>Bug Fix : now check value of csa_flags for OP4_CREATE_SESSION</li>
+  	<li>Bug Fix : OP4_LOOKUPP should return NFS4ERR_SYMLINK instead of NFS4ERR_NOTDIR when cfh is related to a symbolic link.</li>
+  	<li>Bug Fix : error NFS4ERR_NOT_ONLY_OP managed for OP4_EXCHANGE_ID</li>
+  	<li>Bug Fix : OP4_LOOKUPP should return NFS4ERR_NOENT when called from the rootfh</li>
+  	<li>Bug Fix : management of NFS4ERR_NOT_ONLY_OP introduced a bug when compiling without NFSv4.1 support. This is now fixed.</li>
+  	<li>Changed bad #define in Log/log_functions.c (former situation could lead to possible buffer overflow</li>
+  	<li>A patch by Erik Levinson about the use of libnfsidmap with gssrpc has been integrated</li>
+  	<li>Bug Fix : it was impossible to compile with both support for gssrpc and support for NFSv4.1 (mismatch in nfsv41.h and xdr_nfsv41.c)</li>
+	</ul>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.60</a><br>
 	</li>
 	<ul>

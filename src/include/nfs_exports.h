@@ -122,6 +122,7 @@
  */
 #define EXPORT_KEY_SIZE 8
 #define ANON_UID      -2 
+#define ANON_GID      -2 
 
 #define EXPORT_LINESIZE 1024
 #define INPUT_SIZE      1024 

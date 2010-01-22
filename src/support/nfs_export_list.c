@@ -421,7 +421,11 @@ int nfs_build_fsal_context( struct svc_req            * ptr_req,
  
   /* Do we have root access ? */
   if( ( caller_uid == 0 ) && !( pexport_client->options & EXPORT_OPTION_ROOT) )
-    caller_uid = -2 ;
+   {
+    /* caller_uid = ANON_UID ; */
+    caller_uid = pexport->anonymous_uid ;
+    caller_gid = ANON_GID ;
+   }
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext( pcontext,

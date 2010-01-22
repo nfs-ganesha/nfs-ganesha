@@ -236,6 +236,17 @@ rm -rf $RPM_BUILD_ROOT
 %postun fuselike -p /sbin/ldconfig
 
 %changelog
+* Fri Jan 22  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.61-1
+- A patch from Eric Sesterhenn about memleaks has been integrated.
+- Bug Fix : now check value of csa_flags for OP4_CREATE_SESSION
+- Bug Fix : OP4_LOOKUPP should return NFS4ERR_SYMLINK instead of NFS4ERR_NOTDIR when cfh is related to a symbolic link.
+- Bug Fix : error NFS4ERR_NOT_ONLY_OP managed for OP4_EXCHANGE_ID
+- Bug Fix : OP4_LOOKUPP should return NFS4ERR_NOENT when called from the rootfh
+- Bug Fix : management of NFS4ERR_NOT_ONLY_OP introduced a bug when compiling without NFSv4.1 support. This is now fixed.
+- Changed bad #define in Log/log_functions.c (former situation could lead to possible buffer overflow)
+- A patch by Erik Levinson about the use of libnfsidmap with gssrpc has been integrated
+- Bug Fix : it was impossible to compile with both support for gssrpc and support for NFSv4.1 (mismatch in nfsv41.h and xdr_nfsv41.c)
+
 * Mon Nov 30  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.60-1
 - The uid/gid mapping functions did a bad use of their related idmapper_cache functions
 - Bug Fix : with kernel newer than 2.6.29, Connectathon's test6 failed
