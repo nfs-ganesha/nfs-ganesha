@@ -692,7 +692,7 @@ static int BuildExportEntry( config_item_t block,
   p_entry->status              = EXPORTLIST_OK ;
   p_entry->clients.num_clients = 0 ;
   p_entry->access_type         = ACCESSTYPE_RW ;  
-  p_entry->anonymous_uid       = (uid_t)-2;
+  p_entry->anonymous_uid       = (uid_t)ANON_UID;
   p_entry->MaxOffsetWrite      = (fsal_off_t)0 ;
   p_entry->MaxOffsetRead       = (fsal_off_t)0 ;
   p_entry->MaxCacheSize        = (fsal_off_t)0 ;
@@ -1869,7 +1869,7 @@ exportlist_t * BuildDefaultExport()
   p_entry->status              = EXPORTLIST_OK ;
   p_entry->clients.num_clients = 0 ;
   p_entry->access_type         = ACCESSTYPE_RW ;  
-  p_entry->anonymous_uid       = (uid_t)-2;
+  p_entry->anonymous_uid       = (uid_t)ANON_UID;
   p_entry->MaxOffsetWrite      = (fsal_off_t)0 ;
   p_entry->MaxOffsetRead       = (fsal_off_t)0 ;
   p_entry->MaxCacheSize        = (fsal_off_t)0 ;
