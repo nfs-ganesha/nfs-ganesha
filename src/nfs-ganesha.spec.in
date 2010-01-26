@@ -96,7 +96,7 @@ and namespaces. This package contains the development headers for FUSE-like
 %package hpss
 Summary: The NFS-GANESHA server compiled as a NFS gateway to HPSS.
 Group: Applications/System
-Rpquires: %{name}-common = %{version}-%{release}
+Requires: %{name}-common = %{version}-%{release}
 
 %description hpss
 NFS-GANESHA is a NFS Server running in user space with a large cache.
