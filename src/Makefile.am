@@ -73,6 +73,11 @@ remove_hpss_bzip2: dist-bzip2
 	tar cjf $(distdir).tar.bz2 $(distdir)
 	rm -fr $(distdir)
 
+if USE_PGSQL
+RPMARGS= --with postgresql
+else
+RPMARGS= --without postgresql
+endif
 
 if USE_FSAL_HPSS
 rpm: nfs-ganesha.spec dist 
@@ -83,10 +88,10 @@ srpm: nfs-ganesha.spec dist
 
 else  
 rpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+	rpmbuild $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
 

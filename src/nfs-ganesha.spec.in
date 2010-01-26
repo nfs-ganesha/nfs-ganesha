@@ -4,8 +4,13 @@ Release: 1%{?dist}
 Summary: NFS Server running in user space with large cache 
 License: CeCILL-C
 Group: Applications/System
+%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 BuildRequires:  postgresql-devel >= 7.1
 BuildRequires:  postgresql-libs >= 7.1
+%else
+BuildRequires:  mysql-devel >= 5.0
+BuildRequires:  mysql-libs >= 5.0
+%endif
 BuildRequires:  net-snmp-libs >= 5.1
 BuildRequires:  net-snmp-devel >= 5.1
 #BuildRequires:  lm_sensors-devel >= 2.8
@@ -46,7 +51,11 @@ and namespaces. This package provides support for NFS-GANESHA as a PROXY.
 %package posix
 Summary: The NFS-GANESHA server compiled for using the POSIX interface 
 Group: Applications/System
+%if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 Requires: postgresql >= 7.1  postgresql-server >= 7.1
+%else
+Requires: mysql >= 5.0  mysql-server >= 5.0
+%endif
 Requires: %{name}-common = %{version}-%{release}
 
 %description posix
