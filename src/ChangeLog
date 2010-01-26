@@ -304,3 +304,7 @@
 
 0.99.62 - 
 	- Security fix : badly managed caller_gid in nfs_exports.c
+	- Fixed a typo in nfs-ganesha.spec.in
+	- RPM packaging : fixed bad dependences for db engine to be used with
+	  FSAL_POSIX (postgresql was always referenced, even when compiled with
+	  mysql)
