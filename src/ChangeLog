@@ -308,3 +308,7 @@
 	- RPM packaging : fixed bad dependences for db engine to be used with
 	  FSAL_POSIX (postgresql was always referenced, even when compiled with
 	  mysql)
+	- Debian Packaging : fixed same dep problems as above with rpm files
+	- Bug Fix : in idmapper.c, functions utf82uid and utf82gid were badly
+  	  managing parameters passed to name2uid/name2gid when compiled with the
+	  support of libnfsidmap
