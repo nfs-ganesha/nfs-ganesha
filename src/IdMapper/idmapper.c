@@ -617,6 +617,8 @@ int utf82uid( utf8string * utf8str, uid_t * Uid )
 #ifndef _USE_NFSIDMAP
   /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
   nfs4_stringid_split( buff, uidname, domainname ) ;
+#else
+  strncpy( uidname, buff, MAXNAMLEN ) ;
 #endif
   
   name2uid( uidname, Uid ) ;
@@ -654,6 +656,8 @@ int utf82gid( utf8string * utf8str, gid_t * Gid )
 #ifndef _USE_NFSIDMAP
   /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */
   nfs4_stringid_split( buff, gidname, domainname ) ;
+#else
+  strncpy( gidname, buff, MAXNAMLEN ) ;
 #endif
 
   name2gid( gidname, Gid ) ;

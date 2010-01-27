@@ -417,6 +417,9 @@ case $FSAL in
 			DBEXT_LIB_PATH=`$PG_CONFIG --libdir`
 			DBEXT_FLAGS="-I$DBEXT_INC_PATH"
 
+			DEBIAN_DB_DEP="postgresql"
+			DEBIAN_DB_VERSION="7.1"
+
 			case "$MYOS" in
 				"LINUX")
 					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lcrypt -lpq"
@@ -452,6 +455,9 @@ case $FSAL in
 
 			DBEXT_LDADD=`$MYSQL_CONFIG --libs_r`
 			DBEXT_FLAGS=`$MYSQL_CONFIG --include`
+
+			DEBIAN_DB_DEP="mysql"
+			DEBIAN_DB_VERSION="5.0"
 
 			AC_DEFINE([_USE_MYSQL], 1, [Using MySQL database])
 			;;
@@ -526,6 +532,8 @@ AC_SUBST(FS_NAME)
 AC_SUBST(FS_ALL_LIST)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
+AC_SUBST(DEBIAN_DB_DEP)
+AC_SUBST(DEBIAN_DB_VERSION)
 
 # for exporting to spec file
 AC_SUBST(ac_configure_args)
@@ -597,6 +605,7 @@ AC_CONFIG_FILES([include/Makefile
 		 check/layers/Makefile
 		 check/layers/maketest.conf
 		 debian/Makefile
+		 debian/control
                  Makefile
                  libganeshaNFS.pc
                  nfs-ganesha.spec])
