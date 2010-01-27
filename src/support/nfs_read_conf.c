@@ -789,6 +789,42 @@ int nfs_read_session_id_conf( config_file_t                in_config,
 
   return  0 ;
 } /* nfs_session_id_conf */
+
+int nfs_read_pnfs_conf( config_file_t       in_config,
+                        pnfs_parameter_t *  pparam )
+{
+  int     var_max ;
+  int     var_index ;
+  int     err ;
+  char *  key_name ;
+  char *  key_value ;
+  config_item_t   block;
+
+  /* Is the config tree initialized ? */
+  if( in_config == NULL || pparam == NULL )
+    return -1 ;
+
+  /* Get the config BLOCK */
+  if( ( block = config_FindItemByName( in_config, CONF_LABEL_PNFS ) ) == NULL )
+    {
+      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_VERSION4 ) ; */
+      return 1 ;
+    }
+  else if ( config_ItemType(block) != CONFIG_ITEM_BLOCK )
+    {
+      /* Expected to be a block*/
+      return 1;
+    }
+
+  var_max = config_GetNbItems( block );
+  
+  for( var_index = 0 ; var_index < var_max ; var_index++ )
+    {
+    }
+
+ return 0 ;
+} /* nfs_read_pnfs_conf */
+
 #endif
 
 /**
@@ -1054,7 +1090,6 @@ int nfs_read_krb5_conf( config_file_t            in_config,
  * @return 0 if ok, -1 if failed,1 is stanza is not there
  *
  */
-
 int nfs_read_version4_conf( config_file_t                in_config,
                             nfs_version4_parameter_t *   pparam )
 {
@@ -1134,6 +1169,8 @@ int nfs_read_version4_conf( config_file_t                in_config,
 
   return 0 ;
 } /* nfs_read_version4_conf */
+
+
 
 /**
  *
