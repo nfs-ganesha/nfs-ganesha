@@ -458,6 +458,9 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->session_id_param.hash_param.compare_key      = compare_session_id ; 
   p_nfs_param->session_id_param.hash_param.key_to_str       = display_session_id_key ;
   p_nfs_param->session_id_param.hash_param.val_to_str       = display_session_id_val ;
+
+  /* pNFS parameters */
+  p_nfs_param->pnfs_param.nothing = 0 ;
 #endif
 
   /* NFSv4 Open Owner hash */
@@ -816,6 +819,22 @@ int nfs_set_param_from_conf( nfs_parameter_t * p_nfs_param,
         DisplayLog("NFS STARTUP: No session id configuration found in config file, using default" ) ;
       else
         DisplayLogLevel( NIV_DEBUG,"NFS STARTUP: session id configuration read from config file" ) ;
+    }
+
+  /* Worker paramters: pNFS specific config */
+  if( ( rc = nfs_read_pnfs_conf( config_struct, &p_nfs_param->pnfs_param ) ) < 0 )
+    {
+      DisplayLog("NFS STARTUP: Error while parsing pNFS configuration" );
+
+      return -1;
+    }
+  else
+     {
+      /* No such stanza in configuration file */
+      if( rc == 1 )
+        DisplayLog("NFS STARTUP: No pNFS configuration found in config file, using default" ) ;
+      else
+        DisplayLogLevel( NIV_DEBUG,"NFS STARTUP: pNFS configuration read from config file" ) ;
     }
 
 #endif
