@@ -117,7 +117,7 @@
 
 typedef struct pnfs_parameter__
 {
-  uint32_t                 nothing ;
+  bool_t        use_pnfs ;
 } pnfs_parameter_t ;
 
 #endif /* _PNFS_H */

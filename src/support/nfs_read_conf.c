@@ -743,7 +743,7 @@ int nfs_read_session_id_conf( config_file_t                in_config,
   /* Get the config BLOCK */
   if( ( block = config_FindItemByName( in_config, CONF_LABEL_SESSION_ID ) ) == NULL )
     {
-      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_STATE_ID ) ; */
+      fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_STATE_ID ) ;
       return 1 ;
     }
 
@@ -807,7 +807,7 @@ int nfs_read_pnfs_conf( config_file_t       in_config,
   /* Get the config BLOCK */
   if( ( block = config_FindItemByName( in_config, CONF_LABEL_PNFS ) ) == NULL )
     {
-      /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_VERSION4 ) ; */
+      fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_PNFS ) ; 
       return 1 ;
     }
   else if ( config_ItemType(block) != CONFIG_ITEM_BLOCK )
@@ -820,6 +820,25 @@ int nfs_read_pnfs_conf( config_file_t       in_config,
   
   for( var_index = 0 ; var_index < var_max ; var_index++ )
     {
+      config_item_t item;
+    
+      item = config_GetItemByIndex( block, var_index );
+      
+      /* Get key's name */
+      if( ( err = config_GetKeyValue( item,
+                                      &key_name,
+                                      &key_value ) ) != 0 )
+        {
+          fprintf(stderr, "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_PNFS ) ;
+          return  -1 ;
+        }
+
+      if( !strcasecmp( key_name, "Use_pNFS" ) )
+        {
+          pparam->use_pnfs =  StrToBoolean( key_value ) ;
+        }
+
     }
 
  return 0 ;
