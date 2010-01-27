@@ -128,6 +128,7 @@
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
+#include "pnfs.h"
 #endif 
 
 /* Maximum thread count */
@@ -175,6 +176,7 @@
 #define CONF_LABEL_NFS_DUPREQ       "NFS_DupReq_Hash"
 #define CONF_LABEL_NFS_IP_NAME      "NFS_IP_Name"
 #define CONF_LABEL_NFS_KRB5         "NFS_KRB5"
+#define CONF_LABEL_PNFS             "pNFS"
 #define CONF_LABEL_NFS_VERSION4     "NFSv4"
 #define CONF_LABEL_CLIENT_ID        "NFSv4_ClientId_Cache"
 #define CONF_LABEL_STATE_ID         "NFSv4_StateId_Cache"
@@ -395,6 +397,7 @@ typedef struct nfs_param__
   nfs_state_id_parameter_t          state_id_param ;
 #ifdef _USE_NFS4_1
   nfs_session_id_parameter_t        session_id_param ;
+  pnfs_parameter_t                  pnfs_param ;
 #endif
   nfs_open_owner_parameter_t        open_owner_param ;
   nfs_cache_layers_parameter_t      cache_layers_param ;
@@ -554,6 +557,8 @@ int nfs_read_state_id_conf( config_file_t               in_config,
 #ifdef _USE_NFS4_1
 int nfs_read_session_id_conf( config_file_t                in_config,
                               nfs_session_id_parameter_t * pparam ) ;
+int nfs_read_pnfs_conf( config_file_t      in_config,
+                        pnfs_parameter_t * pparam ) ;
 #endif
 
 int nfs_export_create_root_entry( exportlist_t *  pexportlist, hash_table_t * ht ) ;
