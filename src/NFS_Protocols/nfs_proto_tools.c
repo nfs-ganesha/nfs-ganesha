@@ -570,6 +570,10 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
   fattr4_quota_used         quota_used ;
   fattr4_time_modify_set    __attribute__(( __unused__ )) time_modify_set ;
   fattr4_time_access_set    __attribute__(( __unused__ )) time_access_set ; 
+#ifdef _USE_NFS4_1
+  fattr4_fs_layout_types    layout_types ;
+  layouttype4               layouts[1] ;
+#endif
 
   u_int    tmp_int ;
   char     tmp_buff[1024] ;
@@ -585,9 +589,14 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
   char     __attribute__(( __unused__ )) funcname[] = "nfs4_FSALattr_To_Fattr" ;
 
   unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID] ;
+#ifdef _USE_NFS4_1
+  uint32_t attrmasklist[FATTR4_FS_CHARSET_CAP] ; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+  uint32_t attrvalslist[FATTR4_FS_CHARSET_CAP] ; /* List cannot be longer than FATTR4_FS_CHARSET_CAP */
+#else
   uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID] ; /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-  uint32_t attrmasklen = 0 ;
   uint32_t attrvalslist[FATTR4_MOUNTED_ON_FILEID] ; /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+#endif
+  uint32_t attrmasklen = 0 ;
   char attrvalsBuffer[ ATTRVALS_BUFFLEN] ;
   
   uint_t i      = 0 ;
@@ -606,8 +615,13 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
 
   /* basic init */
   memset( attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN ) ;
+#ifdef _USE_NFS4_1
+  memset( (uint32_t *)attrmasklist, 0, FATTR4_FS_CHARSET_CAP * sizeof( uint32_t ) ) ;
+  memset( (uint32_t *)attrvalslist, 0, FATTR4_FS_CHARSET_CAP * sizeof( uint32_t ) ) ;
+#else
   memset( (uint32_t *)attrmasklist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof( uint32_t ) ) ;
   memset( (uint32_t *)attrvalslist, 0, FATTR4_MOUNTED_ON_FILEID * sizeof( uint32_t ) ) ;
+#endif
   
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list( Bitmap, &attrmasklen, attrmasklist ) ;
@@ -622,7 +636,11 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
     {
       attribute_to_set = attrmasklist[i] ;
 
+#ifdef _USE_NFS4_1
+      if( attrmasklist[i] > FATTR4_FS_CHARSET_CAP )
+#else
       if( attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID )
+#endif
         {
           /* Erroneous value... skip */
           continue ;
@@ -1500,7 +1518,20 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
           op_attr_success = 1 ; 
           break ;
-          
+         
+        case FATTR4_FS_LAYOUT_TYPE :
+          layout_types.fattr4_fs_layout_types_len =  htonl( 1 ) ;
+          memcpy( (char *)(attrvalsBuffer + LastOffset),  &layout_types.fattr4_fs_layout_types_len, sizeof( u_int ) ) ; 
+          LastOffset +=  sizeof( u_int ) ;
+
+          layout_types.fattr4_fs_layout_types_val = layouts ;
+          layouts[0] = htonl( LAYOUT4_NFSV4_1_FILES ) ;
+          memcpy( (char *)(attrvalsBuffer + LastOffset), layout_types.fattr4_fs_layout_types_val, sizeof( layouttype4 ) ) ; 
+          LastOffset +=  sizeof( layouttype4 ) ;
+
+          op_attr_success = 1 ; 
+	  break ;
+
         default:
 #ifdef _DEBUG_NFS_V4
           printf( " unsupported value for attributes bitmap = %u\n", attribute_to_set ) ;
@@ -2364,7 +2395,11 @@ int nfs4_Fattr_Check_Access( fattr4 * Fattr,
 
     for( i = 0 ; i < attrmasklen ; i++ )
       {
+#ifdef _USE_NFS4_1
+        if( attrmasklist[i] > FATTR4_FS_CHARSET_CAP )
+#else
 	if( attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID )
+#endif
 	  {
 	     /* Erroneous value... skip */
 	     continue ;
@@ -2454,11 +2489,13 @@ int nfs4_Fattr_Supported( fattr4 * Fattr )
     for( i = 0 ; i < attrmasklen ; i++ )
       {
 
+#ifndef _USE_NFS4_1
 	if( attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID )
           {
              /* Erroneous value... skip */
              continue ;
           }
+#endif
 
 #ifdef _DEBUG_NFS_V4
 	printf( "nfs4_Fattr_Supported  ==============> %s supported flag=%u\n", 
@@ -2501,11 +2538,13 @@ int nfs4_Fattr_Supported_Bitmap( bitmap4 * pbitmap )
     for( i = 0 ; i < attrmasklen ; i++ )
       {
 
+#ifndef _USE_NFS4_1
         if( attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID )
           {
              /* Erroneous value... skip */
              continue ;
           }
+#endif
 
 #ifdef _DEBUG_NFS_V4
         printf( "nfs4_Fattr_Supported  ==============> %s supported flag=%u\n",
@@ -2754,7 +2793,11 @@ int nfs4_Fattr_To_FSAL_attr( fsal_attrib_list_t * pFSAL_attr,
     {
       attribute_to_set = attrmasklist[i] ;
 
+#ifdef _USE_NFS4_1
+      if( attrmasklist[i] > FATTR4_FS_CHARSET_CAP )
+#else
       if( attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID )
+#endif
         {
           /* Erroneous value... skip */
           continue ;

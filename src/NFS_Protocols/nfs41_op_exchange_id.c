@@ -124,8 +124,8 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime ;
-
+extern time_t          ServerBootTime ;
+extern nfs_parameter_t nfs_param ;
 /**
  *
  * nfs41_op_exchange_id:  The NFS4_OP_EXCHANGE_ID operation.
@@ -303,7 +303,16 @@ int nfs41_op_exchange_id(  struct nfs_argop4 * op ,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid = clientid ; 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid = nfs_clientid.create_session_sequence ;
   /* No pNFS for the moment (this will come later), but referrals are supported */
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags = EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER ;
+  if( nfs_param.pnfs_param.use_pnfs == TRUE )
+    {
+      res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =  EXCHGID4_FLAG_USE_PNFS_MDS    | 
+				 				EXCHGID4_FLAG_USE_PNFS_DS      |
+							        EXCHGID4_FLAG_SUPP_MOVED_REFER ;
+    }
+  else
+    {
+      res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags = EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER ;
+    }
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE ;
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_len = strlen( nfs_clientid.server_owner ) ;

@@ -460,7 +460,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->session_id_param.hash_param.val_to_str       = display_session_id_val ;
 
   /* pNFS parameters */
-  p_nfs_param->pnfs_param.nothing = 0 ;
+  p_nfs_param->pnfs_param.use_pnfs = FALSE ;
 #endif
 
   /* NFSv4 Open Owner hash */
