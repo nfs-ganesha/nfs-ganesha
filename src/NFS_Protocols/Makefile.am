@@ -101,6 +101,7 @@ libnfsproto_la_SOURCES = mnt_Null.c                       \
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_close.c            \
+                          nfs41_op_getdevicelist.c    \
                           nfs41_op_create_session.c   \
                           nfs41_op_destroy_session.c  \
                           nfs41_op_open.c             \
@@ -116,6 +117,7 @@ endif
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
+test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
 new: clean all
 
 doc:
