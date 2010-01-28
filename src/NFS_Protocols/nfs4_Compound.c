@@ -236,7 +236,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_DESTROY_SESSION",      NFS4_OP_DESTROY_SESSION,      nfs41_op_destroy_session    },  
     {"OP_FREE_STATEID",         NFS4_OP_FREE_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_GET_DIR_DELEGATION",   NFS4_OP_GET_DIR_DELEGATION,   nfs4_op_illegal             },  /* tbd */
-    {"OP_GETDEVICEINFO",        NFS4_OP_GETDEVICEINFO,        nfs4_op_illegal             },  /* tbd */
+    {"OP_GETDEVICEINFO",        NFS4_OP_GETDEVICEINFO,        nfs41_op_getdeviceinfo      },  
     {"OP_GETDEVICELIST",        NFS4_OP_GETDEVICELIST,        nfs41_op_getdevicelist      },  
     {"OP_LAYOUTCOMMIT",         NFS4_OP_LAYOUTCOMMIT,         nfs4_op_illegal             },  /* tbd */
     {"OP_LAYOUTGET",            NFS4_OP_LAYOUTGET,            nfs4_op_illegal             },  /* tbd */
@@ -389,7 +389,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
   DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "NFS V4 COMPOUND: There are %d operations", COMPOUND4_ARRAY.argarray_len ) ;
 #endif
 
-#ifdef _DEBUG_NFS_V4                   
+#ifndef _DEBUG_NFS_V4                   
   for( i = 0 ; i < COMPOUND4_ARRAY.argarray_len ; i++ )
     printf( "%s ", optabvers[parg->arg_compound4.minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].name ) ;
   printf( "\n" ) ;
@@ -433,7 +433,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
 	     break ; /* stop loop */
           }
         }
-      }
+      } /* if( parg->arg_compound4.minorversion == 1 ) */
 
 
       if( ( COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER  && parg->arg_compound4.minorversion == 0 ) ||
@@ -446,7 +446,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
         opindex = optab4index[POS_ILLEGAL] ; /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
           
       
-#ifdef _DEBUG_NFS_V4                   
+#ifndef _DEBUG_NFS_V4                   
       DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
                        i, 
                        optabvers[parg->arg_compound4.minorversion][opindex].val,
@@ -528,7 +528,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
    }
 #endif
 
-#ifdef _DEBUG_NFS_V4
+#ifndef _DEBUG_NFS_V4
   DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d  last status = %d",
                    status, pres->res_compound4.status,
                    i,  pres->res_compound4.resarray.resarray_val[i-1].nfs_resop4_u.opaccess.status );
@@ -725,13 +725,19 @@ void nfs4_Compound_Free( nfs_res_t * pres)
 	  nfs41_op_sequence_Free( &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opsequence ) ) ;
           break ;
 
+        case NFS4_OP_GETDEVICEINFO: 
+	  nfs41_op_getdeviceinfo_Free( &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opgetdeviceinfo ) ) ;
+          break ;
+
+        case NFS4_OP_GETDEVICELIST:
+	  nfs41_op_getdevicelist_Free( &(pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opgetdevicelist ) ) ;
+          break ;
+
         case NFS4_OP_BACKCHANNEL_CTL: 
         case NFS4_OP_BIND_CONN_TO_SESSION: 
         case NFS4_OP_DESTROY_SESSION:
         case NFS4_OP_FREE_STATEID:
         case NFS4_OP_GET_DIR_DELEGATION:
-        case NFS4_OP_GETDEVICEINFO: 
-        case NFS4_OP_GETDEVICELIST:
         case NFS4_OP_LAYOUTCOMMIT:
         case NFS4_OP_LAYOUTGET: 
         case NFS4_OP_LAYOUTRETURN: 
