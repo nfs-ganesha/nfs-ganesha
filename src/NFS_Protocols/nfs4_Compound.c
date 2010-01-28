@@ -237,7 +237,7 @@ static const nfs4_op_desc_t optab4v1[] =
     {"OP_FREE_STATEID",         NFS4_OP_FREE_STATEID,         nfs4_op_illegal             },  /* tbd */
     {"OP_GET_DIR_DELEGATION",   NFS4_OP_GET_DIR_DELEGATION,   nfs4_op_illegal             },  /* tbd */
     {"OP_GETDEVICEINFO",        NFS4_OP_GETDEVICEINFO,        nfs4_op_illegal             },  /* tbd */
-    {"OP_GETDEVICELIST",        NFS4_OP_GETDEVICELIST,        nfs4_op_illegal             },  /* tbd */
+    {"OP_GETDEVICELIST",        NFS4_OP_GETDEVICELIST,        nfs41_op_getdevicelist      },  
     {"OP_LAYOUTCOMMIT",         NFS4_OP_LAYOUTCOMMIT,         nfs4_op_illegal             },  /* tbd */
     {"OP_LAYOUTGET",            NFS4_OP_LAYOUTGET,            nfs4_op_illegal             },  /* tbd */
     {"OP_LAYOUTRETURN",         NFS4_OP_LAYOUTRETURN,         nfs4_op_illegal             },  /* tbd */

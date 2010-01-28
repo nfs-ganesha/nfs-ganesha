@@ -1518,7 +1518,8 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
           LastOffset += fattr4tab[attribute_to_set].size_fattr4 ;
           op_attr_success = 1 ; 
           break ;
-         
+        
+#ifdef _USE_NFS4_1 
         case FATTR4_FS_LAYOUT_TYPE :
           layout_types.fattr4_fs_layout_types_len =  htonl( 1 ) ;
           memcpy( (char *)(attrvalsBuffer + LastOffset),  &layout_types.fattr4_fs_layout_types_len, sizeof( u_int ) ) ; 
@@ -1531,6 +1532,7 @@ int nfs4_FSALattr_To_Fattr( exportlist_t       * pexport,
 
           op_attr_success = 1 ; 
 	  break ;
+#endif
 
         default:
 #ifdef _DEBUG_NFS_V4
