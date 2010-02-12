@@ -314,3 +314,5 @@
 	  support of libnfsidmap
 	- pNFS implementation : now support attribute FATTR4_FS_LAYOUT_TYPE 
 	- Fixed a bug in a Makefile.am that prevent target 'check' to compile
+	- RPM packaging : when compiling rpm files, only those related to the 
+	  FSAL chose at ./configure time are build

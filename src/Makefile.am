@@ -74,24 +74,45 @@ remove_hpss_bzip2: dist-bzip2
 	rm -fr $(distdir)
 
 if USE_PGSQL
-RPMARGS= --with postgresql
+RPM_DB_ARGS= --with postgresql
 else
-RPMARGS= --without postgresql
+RPM_DB_ARGS= --without postgresql
 endif
 
 if USE_FSAL_HPSS
+RPMARGS= --with hpss
+endif
+
+if USE_FSAL_POSIX
+RPMARGS= --with posix
+endif
+
+if USE_FSAL_SNMP
+RPMARGS= --with snmp
+endif
+
+if USE_FSAL_PROXY
+RPMARGS= --with proxy
+endif
+
+if USE_FSAL_FUSE
+RPMARGS= --with fuse
+endif
+
+
+if USE_FSAL_HPSS
 rpm: nfs-ganesha.spec dist 
-	rpmbuild --with hpss $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec dist
-	rpmbuild --with hpss $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+	rpmbuild $(RPMARG) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 else  
 rpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
+	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -tb $(distdir).tar.gz
 
 srpm: nfs-ganesha.spec remove_hpss 
-	rpmbuild $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
+	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
 
@@ -118,4 +139,6 @@ allinst:
 	mkdir -p $(DESTDIR)/$(bindir) $(DESTDIR)/$(libdir) $(DESTDIR)/$(includedir)
 	install -m 755 $(SRCDIR)/$(bindir)/* $(DESTDIR)/$(bindir)
 	cp -prl  $(SRCDIR)/$(libdir)/* $(DESTDIR)/$(libdir)
+if USE_FSAL_FUSE
 	install -m 644 $(SRCDIR)/$(includedir)/* $(DESTDIR)/$(includedir)
+endif
