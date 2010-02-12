@@ -37,6 +37,7 @@ It comes with various backend modules to support different file systems
 and namespaces. This package contains the common files for all variants.
 
 
+%if %{?_with_proxy:1}%{!?_with_proxy:0}
 %package proxy
 Summary: The NFS-GANESHA server compiled as a PROXY 
 Group: Applications/System
@@ -46,8 +47,10 @@ Requires: %{name}-common = %{version}-%{release}
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package provides support for NFS-GANESHA as a PROXY.
+%endif
 
 
+%if %{?_with_posix:1}%{!?_with_posix:0}
 %package posix
 Summary: The NFS-GANESHA server compiled for using the POSIX interface 
 Group: Applications/System
@@ -63,8 +66,10 @@ NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package provides support for GANESHA using the POSIX
 interface.
+%endif
 
 
+%if %{?_with_snmp:1}%{!?_with_snmp:0}
 %package snmp
 Summary: The NFS-GANESHA server compiled as a NFS gateway to SNMP. 
 Group: Applications/System
@@ -77,8 +82,10 @@ NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package provides a NFS gateway to SNMP, making it 
 possible to browse SNMP exported information in a procfs-like way.
+%endif
 
 
+%if %{?_with_fuse:1}%{!?_with_fuse:0}
 %package fuselike 
 Summary: The ganeshaNFS library for FUSE-like bindings
 Group: Applications/System
@@ -100,6 +107,7 @@ Requires: %{name}-fuselike = %{version}-%{release}
 NFS-GANESHA is a NFS Server running in user space with a large cache.
 It comes with various backend modules to support different file systems
 and namespaces. This package contains the development headers for FUSE-like
+%endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 %package hpss
@@ -121,14 +129,12 @@ and namespaces. This package provides support for NFS-GANESHA used with HPSS.
 rm -rf %tmp_install_dir
 mkdir -p %tmp_install_dir
 
-for fsal in  @FS_ALL_LIST@ ; do                                            
-  %configure @ac_configure_args@ --with-fsal=$fsal 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
+%configure @ac_configure_args@ 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
 
-  # try 1 recovery when there is a // make error, then use simple make at 2nd error 
-  make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
-  make install DESTDIR=%tmp_install_dir
-  make clean 
-done
+# try 1 recovery when there is a // make error, then use simple make at 2nd error 
+make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
+make install DESTDIR=%tmp_install_dir
+make clean 
 
 
 %install
@@ -144,19 +150,24 @@ make allinst SRCDIR=%tmp_install_dir DESTDIR=$RPM_BUILD_ROOT
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
 install -m 644 config_samples/hpss.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
+%if %{?_with_posix:1}%{!?_with_posix:0}
+install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
 install -m 644 config_samples/posix.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
-install -m 755 nfs-ganesha.posix.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.posix
+%endif
+%if %{?_with_proxy:1}%{!?_with_proxy:0}
 install -m 755 nfs-ganesha.proxy.init                          $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.proxy
+install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
+%if %{?_with_snmp:1}%{!?_with_snmp:0}
 install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
+install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+%endif
+install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
+install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
 
 mkdir -p  $RPM_BUILD_ROOT%{_datadir}/%{name}
 install -m 644 ganesha.vim     $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -190,14 +201,17 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/vim/*/autoload/*
 
 
+%if %{?_with_proxy:1}%{!?_with_proxy:0}
 %files proxy
 %defattr(-,root,root,-)
 %{_bindir}/proxy.ganesha.*
 %{_bindir}/proxy.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.proxy
 %config %{_sysconfdir}/ganesha/proxy.ganesha*
+%endif
 
 
+%if %{?_with_posix:1}%{!?_with_posix:0}
 %files posix 
 %defattr(-,root,root,-)
 %{_bindir}/posix.ganesha.*
@@ -207,15 +221,19 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql 
 %config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha* 
+%endif
 
 
+%if %{?_with_snmp:1}%{!?_with_snmp:0}
 %files snmp
 %defattr(-,root,root,-)
 %{_bindir}/snmp.ganesha.*
 %{_bindir}/snmp.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha.snmp
 %config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
+%endif
 
+%if %{?_with_fuse:1}%{!?_with_fuse:0}
 %files fuselike 
 %defattr(-,root,root,-)
 %{_libdir}/libganeshaNFS.la
@@ -230,6 +248,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libganeshaNFS.a
 %{_libdir}/libganeshaNFS.so
 %{_includedir}/ganesha_fuse_wrap.h
+%endif
 
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
@@ -240,9 +259,16 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
+%if %{?_with_fuse:1}%{!?_with_fuse:0}
 %post fuselike -p /sbin/ldconfig
 
 %postun fuselike -p /sbin/ldconfig
+%else
+%post 
+
+%postun
+
+%endif
 
 %changelog
 * Fri Jan 22  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.61-1

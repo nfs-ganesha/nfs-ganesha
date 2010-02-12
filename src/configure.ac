@@ -345,8 +345,6 @@ AC_DEFINE([_NO_MOUNT_LIST], 1, [Don't use MOUNT PROTOCOL's client list])
 # HOOK: we escape the '$' sign in FSAL_LIB, so that '$(top_builddir)' is kept uninterpreted until compilation time
 
 # POSIX must be the last of the list (extraneous installed file in posixdb)
-#FS_ALL_LIST="PROXY SNMP FUSE POSIX LUSTRE"
-FS_ALL_LIST="PROXY SNMP FUSE POSIX"
 
 case $FSAL in
 	HPSS)
@@ -355,7 +353,6 @@ case $FSAL in
 		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
                	FS_NAME="hpss"
-		FS_ALL_LIST="HPSS PROXY SNMP FUSE POSIX"
 
 		case "$HPSS" in
 			"5.1")
@@ -402,7 +399,6 @@ case $FSAL in
                 FSAL_LDFLAGS="-llustreapi"
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
-		FS_ALL_LIST="LUSTRE PROXY SNMP FUSE POSIX"
 		;;
 
 	POSIX)
@@ -529,7 +525,6 @@ AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(MFSL_LIB)
 AC_SUBST(FS_NAME)
-AC_SUBST(FS_ALL_LIST)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
 AC_SUBST(DEBIAN_DB_DEP)
