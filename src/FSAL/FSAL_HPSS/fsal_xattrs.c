@@ -654,7 +654,7 @@ fsal_status_t FSAL_ListXAttrs(
   st = FSAL_getattrs( p_objecthandle, p_context, &file_attrs );
   
   if ( FSAL_IS_ERROR( st ) ) Return( st.major, st.minor, INDEX_FSAL_ListXAttrs );
-   
+
   for ( index = cookie, out_index = 0 ;
         index < XATTR_COUNT && out_index < xattrs_tabsize ;
         index ++ )
@@ -664,7 +664,8 @@ fsal_status_t FSAL_ListXAttrs(
 
       /* fills an xattr entry */
       xattrs_tab[out_index].xattr_id = index;
-      FSAL_str2name( xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN, &xattrs_tab[out_index].xattr_name );
+      FSAL_str2name( xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN,
+		    &xattrs_tab[out_index].xattr_name );
       xattrs_tab[out_index].xattr_cookie = index + 1;
       
       /* set asked attributes (all supported) */
@@ -734,18 +735,22 @@ fsal_status_t FSAL_ListXAttrs(
       			/* set asked attributes (all supported) */
 		        xattrs_tab[out_index].attributes.asked_attributes = global_fs_info.supported_attrs;
 
-			rc = file_attributes_to_xattr_attrs( &file_attrs, &xattrs_tab[out_index].attributes, index );
-
+			rc = file_attributes_to_xattr_attrs( &file_attrs,
+							     &xattrs_tab[out_index].attributes,
+						             index );
 			if ( rc != 0 )
 			{
 				/* set error flag */
     	  			DisplayLogJdLevel( fsal_log, NIV_DEBUG,
-					"Error %d getting attributes for xattr \'%s\'", rc, xattrs_tab[out_index].xattr_name );
-				xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR ;
+					"Error %d getting attributes for xattr \'%s\'", rc,
+					xattrs_tab[out_index].xattr_name );
+				xattrs_tab[out_index].attributes.asked_attributes
+					= FSAL_ATTR_RDATTR_ERR ;
 			}
 			/* we know the size here (+2 for \n\0) */
 			else if ( attr_list.Pair[i].Value != NULL )
-				xattrs_tab[out_index].attributes.filesize = strlen( attr_list.Pair[i].Value ) + 2;
+				xattrs_tab[out_index].attributes.filesize
+					= strlen( attr_list.Pair[i].Value ) + 2;
 
 			/* next output slot */
 			out_index++;
@@ -753,10 +758,11 @@ fsal_status_t FSAL_ListXAttrs(
 		/* not end of list if there is more UDAs */
 		if ( i < attr_list.len )
 			*end_of_list = FALSE;
-
-  		printf("end of list = %u\n", *end_of_list );
+		else
+			*end_of_list = TRUE;
 	  }
   }
+
 #endif
   
   *p_nb_returned = out_index;
@@ -827,7 +833,8 @@ fsal_status_t FSAL_GetXAttrValueById(
 
     if ( (attr_list.Pair[xattr_id - XATTR_COUNT].Value != NULL)
 	&& (attr_list.Pair[xattr_id - XATTR_COUNT].Value[0] != '\0') )
-	snprintf( (char*)buffer_addr, buffer_size, "%s\n", attr_list.Pair[xattr_id - XATTR_COUNT].Value );
+	snprintf( (char*)buffer_addr, buffer_size, "%s\n",
+		   attr_list.Pair[xattr_id - XATTR_COUNT].Value );
     else
 	strcpy( (char*)buffer_addr, "" );
 

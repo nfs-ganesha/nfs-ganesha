@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:expandtab:shiftwidth=4:tabstop=4:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -750,7 +750,7 @@ int nfs3_Readdir_Xattr( nfs_arg_t               * parg,
   /* Used FSAL extended attributes functions */
   fsal_status = FSAL_ListXAttrs( pfsal_handle,
 				 xattr_cookie,
-                                 pcontext, 
+                 pcontext, 
 				 xattrs_tab, 
 				 asked_num_entries,
 				 &nb_xattrs_read,
@@ -848,7 +848,7 @@ int nfs3_Readdir_Xattr( nfs_arg_t               * parg,
                 strcpy( RES_READDIR_REPLY.entries[delta].name, ".." ) ;
                 RES_READDIR_REPLY.entries[delta].cookie = 2 ;
 
-              RES_READDIR_REPLY.entries[0].nextentry = &(RES_READDIR_REPLY.entries[delta]) ;
+                RES_READDIR_REPLY.entries[0].nextentry = &(RES_READDIR_REPLY.entries[delta]) ;
 
               if( num_entries > delta + 1  ) /* not 0 ??? */
                 RES_READDIR_REPLY.entries[delta].nextentry = &(RES_READDIR_REPLY.entries[delta+1]) ;
@@ -890,11 +890,7 @@ int nfs3_Readdir_Xattr( nfs_arg_t               * parg,
                                 FSAL_MAX_NAME_LEN ) ;
               RES_READDIR_REPLY.entries[i].name = entry_name_array[i];
 
-              if( begin_cookie == 0 )
-                RES_READDIR_REPLY.entries[i].cookie = xattr_cookie+1+i;
-              else
-                RES_READDIR_REPLY.entries[i].cookie = xattr_cookie+3+i;
-              
+              RES_READDIR_REPLY.entries[i].cookie = xattrs_tab[i-delta].xattr_cookie + 2;
 
               RES_READDIR_REPLY.entries[i].nextentry = NULL;
               if (i != 0)
@@ -964,13 +960,19 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
                 nfs_res_t         * pres )
 {
     cache_entry_t         * parent_pentry = NULL ;
-    fsal_attrib_list_t      parent_attr          ;
+    fsal_attrib_list_t      pre_attr             ;
+    fsal_attrib_list_t      post_attr            ;
     cache_inode_status_t    cache_status = CACHE_INODE_SUCCESS;
     fsal_handle_t         * pfsal_handle = NULL ;
     fsal_name_t             attr_name = FSAL_NAME_INITIALIZER;
     fsal_status_t           fsal_status;
+    file_handle_v3_t      * p_handle_out;
+    unsigned int            attr_id;
+    struct timeval          tv;
     int rc;
     char empty_buff[16] = "";
+    /* alias to clear code */
+    CREATE3resok * resok = &pres->res_create3.CREATE3res_u.resok;
 
     if (preq->rq_vers == NFS_V3)
     {
@@ -986,14 +988,14 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
                                             &(pres->res_dirop2.status),
                                             NULL,
                                             NULL,
-                                            &parent_attr, 
+                                            &pre_attr,
                                             pcontext, 
                                             pclient, 
                                             ht, 
                                             &rc ) ) == NULL )
     {
-      /* Stale NFS FH ? */
-      return rc ;
+        /* Stale NFS FH ? */
+        return rc ;
     }
 
     /* Get the associated FSAL Handle */
@@ -1002,11 +1004,12 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
     /* convert attr name to FSAL name */
     FSAL_str2name( parg->arg_create3.where.name, FSAL_MAX_NAME_LEN, &attr_name ); 
 
+    /* set empty attr */
     fsal_status = FSAL_SetXAttrValue( pfsal_handle,
                                       &attr_name,
                                       pcontext,
                                       empty_buff,
-                                      16,
+                                      sizeof(empty_buff),
                                       TRUE );
 
     if( FSAL_IS_ERROR( fsal_status ) )
@@ -1015,10 +1018,84 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
         return NFS_REQ_OK ;
     }
 
-    /* @todo to be continued */
+    /* get attr id */
+    fsal_status = FSAL_GetXAttrIdByName( pfsal_handle,
+                                         &attr_name,
+                                         pcontext,
+                                         &attr_id );
+    if( FSAL_IS_ERROR( fsal_status ) )
+    {
+        pres->res_create3.status = nfs3_Errno( cache_inode_error_convert(fsal_status) ) ;
+        return NFS_REQ_OK ;
+    }
+
+    /* Build file handle */
+
+    if( ( resok->obj.post_op_fh3_u.handle.data.data_val
+            = Mem_Alloc( NFS3_FHSIZE ) ) == NULL )
+    {
+        pres->res_create3.status  = NFS3ERR_IO ;
+        return NFS_REQ_OK ;
+    }
+
+    /* Set Post Op Fh3 structure */
+    if( nfs3_FSALToFhandle( &resok->obj.post_op_fh3_u.handle,
+                            pfsal_handle,
+                            pexport ) == 0 )
+    {
+        Mem_Free( (char *)(resok->obj.post_op_fh3_u.handle.data.data_val) ) ;
+        pres->res_create3.status = NFS3ERR_BADHANDLE ;
+        return NFS_REQ_OK ;
+    }
+
+    /* Turn the nfs FH into something readable */
+    p_handle_out = (file_handle_v3_t *)(resok->obj.post_op_fh3_u.handle.data.data_val);
+
+    /* xattr_pos = 0 ==> the FH is the one of the actual FS object
+     * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
+     */
+    p_handle_out->xattr_pos = attr_id + 2;
+
+    resok->obj.handle_follows = TRUE;
+    resok->obj.post_op_fh3_u.handle.data.data_len
+            = sizeof( file_handle_v3_t );
+
+    /* We assume that creating xattr did not change related entry attrs.
+     * Just update times for ghost directory.
+     */
+    post_attr = pre_attr;
+
+    gettimeofday(&tv, NULL);
+
+    post_attr.atime.seconds = tv.tv_sec;
+    post_attr.atime.nseconds = 1000*tv.tv_usec;
+
+    post_attr.mtime.seconds = tv.tv_sec;
+    post_attr.mtime.nseconds = 1000*tv.tv_usec;
+
+    post_attr.ctime.seconds = tv.tv_sec;
+    post_attr.ctime.nseconds = 1000*tv.tv_usec;
+
+    /* Set Post Op directory attrs */
+    nfs_SetPostOpXAttrDir( pcontext, pexport, &post_attr,
+                           &resok->obj_attributes );
+
+    /*
+    * Build Weak Cache Coherency
+    * data 
+    */
+    nfs_SetWccData( pcontext, pexport,
+                  parent_pentry, 
+                  &pre_attr, 
+                  &post_attr,
+                  &(resok->dir_wcc));
+                    
+    pres->res_create3.status = NFS3_OK;
+
     return NFS_REQ_OK ;
- 
 }
+
+extern writeverf3        NFS3_write_verifier ; /* NFS V3 write verifier      */
 
 int nfs3_Write_Xattr( nfs_arg_t               * parg,    
                       exportlist_t            * pexport, 
@@ -1030,6 +1107,7 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
 {
   cache_entry_t           * pentry ;
   fsal_attrib_list_t        attr ;
+  fsal_attrib_list_t        attr_attrs ;
   int                       rc ;
   cache_inode_status_t      cache_status = CACHE_INODE_SUCCESS;
   cache_content_status_t    content_status ;
@@ -1105,9 +1183,36 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
                                         parg->arg_write3.data.data_val,
                                         parg->arg_write3.data.data_len );
 
-   /** @todo to be continued */
+    /* @TODO deal with error cases */
 
-   return NFS_REQ_OK ;
+    fsal_status = FSAL_GetXAttrAttrs( pfsal_handle, pcontext, xattr_id, &attr_attrs ); 
+
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+            pres->res_write3.status = nfs3_Errno( cache_inode_error_convert(fsal_status) ) ;
+            return NFS_REQ_OK ;
+     }
+
+
+    /* Build Weak Cache Coherency data */
+    nfs_SetWccData( pcontext,
+                    pexport,
+                    pentry, 
+                    NULL, /* no preattrs */
+                    &attr_attrs,
+                    &(pres->res_write3.WRITE3res_u.resok.file_wcc) );
+              
+    /* Set the written size */
+    pres->res_write3.WRITE3res_u.resok.count = parg->arg_write3.data.data_len;
+    pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC; 
+
+    /* Set the write verifier */
+    memcpy(pres->res_write3.WRITE3res_u.resok.verf, NFS3_write_verifier,
+         sizeof(writeverf3));
+              
+    pres->res_write3.status = NFS3_OK;
+
+    return NFS_REQ_OK ;
 } /* nfs3_Write_Xattr */
 
 /**
@@ -1596,11 +1701,8 @@ int nfs3_Readdirplus_Xattr( nfs_arg_t               * parg,
                               FSAL_MAX_NAME_LEN ) ;
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
 
-              if( begin_cookie == 0 )
-                RES_READDIRPLUS_REPLY.entries[i].cookie = xattr_cookie+1+i;
-              else
-                RES_READDIRPLUS_REPLY.entries[i].cookie = xattr_cookie+3+i;
-              
+              RES_READDIRPLUS_REPLY.entries[i].cookie = xattrs_tab[i-delta].xattr_cookie + 2;
+
               RES_READDIRPLUS_REPLY.entries[i].name_attributes.attributes_follow = FALSE;
               RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = FALSE;
 
