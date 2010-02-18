@@ -389,7 +389,7 @@ int nfs4_Compound( nfs_arg_t               * parg     /* IN     */,
   DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "NFS V4 COMPOUND: There are %d operations", COMPOUND4_ARRAY.argarray_len ) ;
 #endif
 
-#ifndef _DEBUG_NFS_V4                   
+#ifdef _DEBUG_NFS_V4                   
   for( i = 0 ; i < COMPOUND4_ARRAY.argarray_len ; i++ )
     printf( "%s ", optabvers[parg->arg_compound4.minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].name ) ;
   printf( "\n" ) ;
