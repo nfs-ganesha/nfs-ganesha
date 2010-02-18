@@ -962,6 +962,7 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
     cache_entry_t         * parent_pentry = NULL ;
     fsal_attrib_list_t      pre_attr             ;
     fsal_attrib_list_t      post_attr            ;
+    fsal_attrib_list_t      attr_attrs           ;
     cache_inode_status_t    cache_status = CACHE_INODE_SUCCESS;
     fsal_handle_t         * pfsal_handle = NULL ;
     fsal_name_t             attr_name = FSAL_NAME_INITIALIZER;
@@ -1029,6 +1030,14 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
         return NFS_REQ_OK ;
     }
 
+    fsal_status = FSAL_GetXAttrAttrs( pfsal_handle, pcontext, attr_id, &attr_attrs ); 
+
+    if( FSAL_IS_ERROR( fsal_status ) )
+    {
+        pres->res_create3.status = nfs3_Errno( cache_inode_error_convert(fsal_status) ) ;
+        return NFS_REQ_OK ;
+    }
+
     /* Build file handle */
 
     if( ( resok->obj.post_op_fh3_u.handle.data.data_val
@@ -1060,12 +1069,25 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
     resok->obj.post_op_fh3_u.handle.data.data_len
             = sizeof( file_handle_v3_t );
 
+    gettimeofday(&tv, NULL);
+
+    attr_attrs.atime.seconds = tv.tv_sec;
+    attr_attrs.atime.nseconds = 1000*tv.tv_usec;
+
+    attr_attrs.mtime.seconds = tv.tv_sec;
+    attr_attrs.mtime.nseconds = 1000*tv.tv_usec;
+
+    attr_attrs.ctime.seconds = tv.tv_sec;
+    attr_attrs.ctime.nseconds = 1000*tv.tv_usec;
+
+    /* Set Post Op attrs */
+    nfs_SetPostOpXAttrFile( pcontext, pexport, &attr_attrs,
+                           &resok->obj_attributes );
+
     /* We assume that creating xattr did not change related entry attrs.
      * Just update times for ghost directory.
      */
     post_attr = pre_attr;
-
-    gettimeofday(&tv, NULL);
 
     post_attr.atime.seconds = tv.tv_sec;
     post_attr.atime.nseconds = 1000*tv.tv_usec;
@@ -1075,10 +1097,6 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
 
     post_attr.ctime.seconds = tv.tv_sec;
     post_attr.ctime.nseconds = 1000*tv.tv_usec;
-
-    /* Set Post Op directory attrs */
-    nfs_SetPostOpXAttrDir( pcontext, pexport, &post_attr,
-                           &resok->obj_attributes );
 
     /*
     * Build Weak Cache Coherency
