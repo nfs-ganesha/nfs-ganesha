@@ -222,6 +222,7 @@
 #include "cmd_tools.h"
 
 nfs_parameter_t      nfs_param ;
+writeverf3 NFS3_write_verifier;
 
 /* Function used for debugging */
 #ifdef _DEBUG_NFS_SHELL
@@ -326,9 +327,14 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT ;
 
 static void init_keys( void )
 {
+  time_t ServerBootTime = time(NULL);
+
   if( pthread_key_create( &thread_key, NULL ) == -1 )
     printf( "Error %d creating pthread key for thread %p : %s\n",
         errno,(caddr_t)pthread_self(),strerror(errno) ) ;
+
+  memset(NFS3_write_verifier, 0, sizeof(writeverf3));
+  memcpy(NFS3_write_verifier, &ServerBootTime, sizeof(time_t));
   
   return ;
 } /* init_keys */
