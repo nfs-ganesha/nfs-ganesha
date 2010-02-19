@@ -14,9 +14,10 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "HPSSclapiExt/hpssclapiext.h"
-#include "hpss_uuid.h"
 
+#include <hpss_uuid.h>
 #include <hpss_errno.h>
+#include <hpss_xml.h>
 
 /* generic definitions for extended attributes */
 
@@ -1038,6 +1039,7 @@ fsal_status_t FSAL_GetXAttrValueByName(
     	attr.Pair[0].Value = attrval;
 
 	rc = hpss_UserAttrGetAttrHandle( &(p_objecthandle->ns_handle),
+				         NULL, &(p_context->credential.hpss_usercred),
 					 &attr, UDA_API_VALUE );
 	if (rc)
 	{
