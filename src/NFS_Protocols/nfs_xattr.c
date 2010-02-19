@@ -123,6 +123,36 @@
 #include "cache_content.h"
 
 
+static void nfs_set_times_current( fattr3 * attrs )
+{
+    time_t now = time(NULL);
+
+    attrs->atime.seconds = now;
+    attrs->atime.nseconds = 0;
+
+    attrs->mtime.seconds = now;
+    attrs->mtime.nseconds = 0;
+
+    attrs->ctime.seconds = now;
+    attrs->ctime.nseconds = 0;
+}
+
+static void fsal_set_times_current( fsal_attrib_list_t * attrs )
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    attrs->atime.seconds = tv.tv_sec;
+    attrs->atime.nseconds = 1000*tv.tv_usec;
+
+    attrs->mtime.seconds = tv.tv_sec;
+    attrs->mtime.nseconds = 1000*tv.tv_usec;
+
+    attrs->ctime.seconds = tv.tv_sec;
+    attrs->ctime.nseconds = 1000*tv.tv_usec;
+}
+
+
 /**
  *
  * nfs_Is_XattrD_Name: returns true is the string given as input is the name of an xattr object.
@@ -226,12 +256,8 @@ int nfs3_FSALattr_To_XattrDir( exportlist_t       * pexport,    /* In: the relat
 
   Fattr->fileid         = 0xFFFFFFFF & ~(FSAL_attr->fileid) ;
 
-  Fattr->atime.seconds  = FSAL_attr->atime.seconds ;
-  Fattr->atime.nseconds = 0 ;
-  Fattr->mtime.seconds  = FSAL_attr->mtime.seconds ;
-  Fattr->mtime.nseconds = 0 ;
-  Fattr->ctime.seconds  = FSAL_attr->ctime.seconds ;
-  Fattr->ctime.nseconds = 0 ;
+  /* set current time, to force the client refreshing its xattr dir */
+  nfs_set_times_current( Fattr );
 
   return 1 ;
 } /* nfs3_FSALattr_To_XattrDir */
@@ -1030,6 +1056,7 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
         return NFS_REQ_OK ;
     }
 
+    attr_attrs.asked_attributes = pclient->attrmask;
     fsal_status = FSAL_GetXAttrAttrs( pfsal_handle, pcontext, attr_id, &attr_attrs ); 
 
     if( FSAL_IS_ERROR( fsal_status ) )
@@ -1069,16 +1096,8 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
     resok->obj.post_op_fh3_u.handle.data.data_len
             = sizeof( file_handle_v3_t );
 
-    gettimeofday(&tv, NULL);
-
-    attr_attrs.atime.seconds = tv.tv_sec;
-    attr_attrs.atime.nseconds = 1000*tv.tv_usec;
-
-    attr_attrs.mtime.seconds = tv.tv_sec;
-    attr_attrs.mtime.nseconds = 1000*tv.tv_usec;
-
-    attr_attrs.ctime.seconds = tv.tv_sec;
-    attr_attrs.ctime.nseconds = 1000*tv.tv_usec;
+    /* set current time (the file is new) */
+    fsal_set_times_current( &attr_attrs );
 
     /* Set Post Op attrs */
     nfs_SetPostOpXAttrFile( pcontext, pexport, &attr_attrs,
@@ -1089,14 +1108,8 @@ int nfs3_Create_Xattr( nfs_arg_t         * parg,
      */
     post_attr = pre_attr;
 
-    post_attr.atime.seconds = tv.tv_sec;
-    post_attr.atime.nseconds = 1000*tv.tv_usec;
-
-    post_attr.mtime.seconds = tv.tv_sec;
-    post_attr.mtime.nseconds = 1000*tv.tv_usec;
-
-    post_attr.ctime.seconds = tv.tv_sec;
-    post_attr.ctime.nseconds = 1000*tv.tv_usec;
+    /* set current time, to force the client refreshing its xattr dir */
+    fsal_set_times_current( &post_attr );
 
     /*
     * Build Weak Cache Coherency
@@ -1203,6 +1216,7 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
 
     /* @TODO deal with error cases */
 
+    attr_attrs.asked_attributes = pclient->attrmask;
     fsal_status = FSAL_GetXAttrAttrs( pfsal_handle, pcontext, xattr_id, &attr_attrs ); 
 
     if( FSAL_IS_ERROR( fsal_status ) )

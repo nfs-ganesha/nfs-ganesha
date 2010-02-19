@@ -57,7 +57,9 @@ int FSAL_handlecmp( fsal_handle_t * handle1, fsal_handle_t * handle2, fsal_statu
         return -1;
     }
 
-    return ( handle1->seq != handle2->seq ) || ( handle1->oid != handle2->oid ) || ( handle1->ver != handle2->ver );
+    return ( handle1->fid.f_seq != handle2->fid.f_seq )
+             || ( handle1->fid.f_oid != handle2->fid.f_oid )
+             || ( handle1->fid.f_ver != handle2->fid.f_ver );
 
 }
 
@@ -83,7 +85,8 @@ unsigned int FSAL_Handle_to_HashIndex( fsal_handle_t * p_handle,
    unsigned long long lval;
 
    /* polynom of prime numbers */
-   lval = 3 * cookie * alphabet_len + 1873*p_handle->seq + 3511*p_handle->oid + 2999 * p_handle->ver  + 10267;
+   lval = 3 * cookie * alphabet_len + 1873*p_handle->fid.f_seq
+          + 3511*p_handle->fid.f_oid + 2999 * p_handle->fid.f_ver  + 10267;
 
    return lval % index_size;
 }
@@ -106,7 +109,8 @@ unsigned int FSAL_Handle_to_RBTIndex( fsal_handle_t * p_handle, unsigned int coo
     unsigned long long lval;
 
    /* polynom of prime numbers */
-    lval = 2239 * cookie + 3559*p_handle->seq + 5*p_handle->oid + 1409 * p_handle->ver  + 20011;
+    lval = 2239 * cookie + 3559*p_handle->fid.f_seq + 5*p_handle->fid.f_oid
+           + 1409 * p_handle->fid.f_ver  + 20011;
 
     return high32m(lval) ^ low32m(lval);
 }
