@@ -366,7 +366,7 @@ int nfs_Write( nfs_arg_t              * parg,
 	 * We should take care not to exceed FSINFO wtmax
 	 * field for the size 
 	 */
-      if(  ( pexport->options & EXPORT_OPTION_MAXWRITE == EXPORT_OPTION_MAXWRITE ) &&
+      if(  ( ( pexport->options & EXPORT_OPTION_MAXWRITE ) == EXPORT_OPTION_MAXWRITE ) &&
            size > pexport->MaxWrite )
         {
           /*
