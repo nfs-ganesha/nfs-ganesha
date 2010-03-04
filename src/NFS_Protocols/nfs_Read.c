@@ -329,7 +329,7 @@ int nfs_Read( nfs_arg_t             * parg,
      * We should not exceed the FSINFO rtmax field for
      * the size 
      */
-    if(  ( pexport->options & EXPORT_OPTION_MAXREAD == EXPORT_OPTION_MAXREAD ) &&
+    if( ( ( pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD ) &&
            size > pexport->MaxRead )
 			{
 				/*
