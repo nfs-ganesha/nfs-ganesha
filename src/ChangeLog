@@ -316,3 +316,5 @@
 	- Fixed a bug in a Makefile.am that prevent target 'check' to compile
 	- RPM packaging : when compiling rpm files, only those related to the 
 	  FSAL chose at ./configure time are build
+	- fixed two typos and one potential memleaks (thanks to IBM guys how
+	  located this in the code)

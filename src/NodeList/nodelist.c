@@ -921,6 +921,7 @@ int nodelist_nodelist_get_compacted_string(nodelist_nodelist_t* nodelist,char** 
       
       nodes_nb=nodelist_nodelist_non_recursive_nodes_quantity(nlist);
       if(nodes_nb==0){
+	free( output_string ) ;
 	return fstatus;
       }
       else if(nodes_nb==1)
