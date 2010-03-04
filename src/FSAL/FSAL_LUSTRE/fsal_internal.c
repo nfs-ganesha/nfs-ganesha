@@ -532,7 +532,7 @@ fsal_status_t  fsal_internal_Handle2FidPath( fsal_op_context_t * p_context,   /*
    curr += FIDDIRLEN+2;
 
    /* add fid string */
-   curr += sprintf( curr, SFID, p_handle->seq, p_handle->oid, p_handle->ver );
+   curr += sprintf( curr, DFID_NOBRACE, PFID(&p_handle->fid) );
 
    p_fsalpath->len = ( curr - p_fsalpath->path  );
 
@@ -566,16 +566,14 @@ fsal_status_t  fsal_internal_Path2Handle( fsal_op_context_t * p_context,        
    rc = llapi_path2fid(p_fsalpath->path, &fid );
 
 #ifdef _DEBUG_FSAL
-    DisplayLogLevel( NIV_FULL_DEBUG, "llapi_path2fid(%s)=%d, seq=%llx, oid=%x, ver=%x", p_fsalpath->path, rc,
-        fid.f_seq, fid.f_oid, fid.f_ver );
+    DisplayLogLevel( NIV_FULL_DEBUG, "llapi_path2fid(%s): status=%d, fid="DFID_NOBRACE,
+                     p_fsalpath->path, rc, PFID(&fid) );
 #endif
 
    if (rc)
        ReturnCode( posix2fsal_error( -rc ), -rc );
 
-   p_handle->seq = fid.f_seq;
-   p_handle->oid = fid.f_oid;
-   p_handle->ver = fid.f_ver;
+   p_handle->fid = fid;
 
    /* retrieve inode */
    rc = lstat( p_fsalpath->path, &ino ); 

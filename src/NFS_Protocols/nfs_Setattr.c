@@ -173,9 +173,9 @@ int nfs_Setattr( nfs_arg_t               * parg    ,
 		pres->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.attributes_follow = FALSE;
 		ppre_attr = NULL;
 	}
-  
-	/* Convert file handle into a vnode */
-  if( ( pentry = nfs_FhandleToCache( preq->rq_vers, 
+
+   /* Convert file handle into a vnode */
+   if( ( pentry = nfs_FhandleToCache( preq->rq_vers, 
                                      &(parg->arg_setattr2.file),
                                      &(parg->arg_setattr3.object),
                                      NULL, 
@@ -191,6 +191,21 @@ int nfs_Setattr( nfs_arg_t               * parg    ,
       /* Stale NFS FH ? */
       return rc ;
     }
+
+   if( ( preq->rq_vers == NFS_V3 ) &&
+       ( nfs3_Is_Fh_Xattr( &(parg->arg_setattr3.object) ) ) ) 
+   {
+        /* do nothing */
+         nfs_SetWccData( pcontext, pexport,
+                  pentry, 
+                  &pre_attr, 
+                  &pre_attr,
+                  &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc) );
+          
+          pres->res_setattr3.status = NFS3_OK;
+          return NFS_REQ_OK; 
+   }
+  
 
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &pre_attr ;
