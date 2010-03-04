@@ -98,8 +98,8 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 
+#define LPX64 "%#llx"
 #include <asm/types.h>
-
 #include <lustre/liblustreapi.h>
 
 /*
@@ -146,9 +146,7 @@ static const fsal_name_t FSAL_DOT_DOT = {"..",2};
 
 
 typedef struct {
-	unsigned long long seq;
-        unsigned int 	   oid;
-	unsigned int 	   ver;
+	lustre_fid	fid;
 	/* used for FSAL_DIGEST_FILEID */
 	unsigned long long inode;
 } fsal_handle_t;  /**< FS object handle */
