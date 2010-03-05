@@ -1,3 +1,21 @@
+nfs-ganesha (0.99.62-1) stable; urgency=low
+
+  * Security fix : badly managed caller_gid in nfs_exports.c
+  * Fixed a typo in nfs-ganesha.spec.in
+  * RPM packaging : fixed bad dependences for db engine to be used with
+    FSAL_POSIX
+  * Debian Packaging : fixed same dep problems as above with rpm files
+  * Bug Fix : in idmapper.c, functions utf82uid and utf82gid were badly managing
+  parameters when used with libnfsidmap
+  * pNFS implementation : now support attribute FATTR4_FS_LAYOUT_TYPE
+  * Fixed a bug in a Makefile.am that prevent target 'check' to compile
+  * RPM packaging : when compiling rpm files, only those related to the FSAL
+    chosen at ./configure time are build
+  * fixed two typos and one potential memleaks (thanks to IBM guys how located
+    this in the code)
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri,  5 Jan 2010 13:14:00 -0600
+
 nfs-ganesha (0.99.61-1) stable; urgency=low
 
   * A patch from Eric Sesterhenn about memleaks has been integrated.
