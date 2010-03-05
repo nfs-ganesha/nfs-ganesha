@@ -302,7 +302,7 @@
 	- Bug Fix : it was impossible to compile with both support for gssrpc 
 	  and support for NFSv4.1 (mismatch in nfsv41.h and xdr_nfsv41.c)
 
-0.99.62 - 
+0.99.62 - Fri  5 Mar 2010
 	- Security fix : badly managed caller_gid in nfs_exports.c
 	- Fixed a typo in nfs-ganesha.spec.in
 	- RPM packaging : fixed bad dependences for db engine to be used with
