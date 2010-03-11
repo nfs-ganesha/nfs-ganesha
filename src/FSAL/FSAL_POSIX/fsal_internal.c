@@ -137,6 +137,7 @@ void fsal_increment_nbcall( int function_index , fsal_status_t  status )
       if( bythread_stat == NULL )
       {
         DisplayErrorJd( fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno );
+        return ;
       }
       
       /* inits the struct */
@@ -200,13 +201,15 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* we allocate stats if this is the first time */
   if( bythread_stat == NULL ){
       int i;
-           
-      if( (
-            bythread_stat =
-            (fsal_statistics_t *)Mem_Alloc( sizeof(fsal_statistics_t ))
-           ) == NULL )
+   
+      bythread_stat =
+            (fsal_statistics_t *)Mem_Alloc( sizeof(fsal_statistics_t ) ) ;
+
+      if( bythread_stat == NULL )
+       {
         DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno );
-      
+        return ;
+       }
       /* inits the struct */
       for (i=0;i<FSAL_NB_FUNC;i++){
          bythread_stat->func_stats.nb_call[i]=0;
