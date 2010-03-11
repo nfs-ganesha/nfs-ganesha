@@ -5,7 +5,21 @@
 <p>
 <ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.61</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.62">NFS-GANESHA v 0.99.62</a><br>
+	<ul>
+	<li>Security fix : badly managed caller_gid in nfs_exports.c</li>
+	<li>Fixed a typo in nfs-ganesha.spec.in</li>
+	<li>RPM packaging : fixed bad dependences for db engine to be used with FSAL_POSIX</li>
+	<li>Debian Packaging : fixed same dep problems as above with rpm files</li>
+	<li>Bug Fix : in idmapper.c, functions utf82uid and utf82gid were badly managing parameters when used with libnfsidmap</li>
+	<li>pNFS implementation : now support attribute FATTR4_FS_LAYOUT_TYPE</li>
+	<li>Fixed a bug in a Makefile.am that prevent target 'check' to compile</li>
+	<li>RPM packaging : when compiling rpm files, only those related to the FSAL chosen at ./configure time are build</li>
+	<li>fixed two typos and one potential memleaks (thanks to IBM guys how located this in the code)</li>
+	</ul>
+	</li>
+	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.61">NFS-GANESHA v 0.99.61</a><br>
 	</li>
 	<ul>
 	<li>A patch from Eric Sesterhenn about memleaks has been integrated.</li>
@@ -19,7 +33,7 @@
   	<li>Bug Fix : it was impossible to compile with both support for gssrpc and support for NFSv4.1 (mismatch in nfsv41.h and xdr_nfsv41.c)</li>
 	</ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.60</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.60">NFS-GANESHA v 0.99.60</a><br>
 	</li>
 	<ul>
 	<li>The uid/gid mapping functions did a bad use of their related idmapper_cache functions</li>
@@ -30,7 +44,7 @@
 	<li>Bug Fix : most of the time, files opened/created via NFSv4 were never closed</li>
 	</ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.59</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.59">NFS-GANESHA v 0.99.59</a><br>
 	</li>
 	<ul>
 	<li>Implementation of SEQUENCE's DRC</li>
@@ -47,13 +61,13 @@
 	<li>Add optional use of nfsidmap library</li>
 	</ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.58</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.58">NFS-GANESHA v 0.99.58</a><br>
 	</li>
 	<ul>
 	<li>Early implementation of NFSv4.1 session</li>
 	</ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.57</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.57">NFS-GANESHA v 0.99.57</a><br>
 	</li>
 	<ul>
 	<li> Add NFSv3 commit/write logic</li>
@@ -66,7 +80,7 @@
         <li>no seqid checking when making read/write</li>
 	</ul>
 	<li>
-        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/">NFS-GANESHA v 0.99.56</a><br>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.56">NFS-GANESHA v 0.99.56</a><br>
 	</li>
 	<ul>
         <li> Change 2 log messages in MFSL_ASYNC</li>

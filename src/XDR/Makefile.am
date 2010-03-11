@@ -10,6 +10,9 @@ libnfs_mnt_xdr_la_SOURCES = xdr_mount.c           \
                             ../include/nfs_core.h \
                             ../include/extended_types.h
 
+if USE_NLM
+libnfs_mnt_xdr_la_SOURCES += nlm4_xdr.c
+endif
 
 if USE_NFS4_1
 libnfs_mnt_xdr_la_SOURCES +=  xdr_nfsv41.c            \

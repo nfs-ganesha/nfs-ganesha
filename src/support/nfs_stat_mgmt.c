@@ -210,6 +210,22 @@ void nfs_stat_update( nfs_stat_type_t        type,
           break ;
         }
     }
+  else if( preq->rq_prog == nfs_param.core_param.nlm_program )
+    {
+      switch( preq->rq_vers )
+        {
+        case NLM4_VERS:
+          pitem = &pstat_req->stat_req_nlm4[preq->rq_proc] ;
+          pstat_req->nb_nlm4_req += 1 ;
+          break ;
+        default:
+          /* Bad vers ? */
+          DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s", __FILE__, __LINE__ ) ;
+          return ;
+          break ;
+        }
+    }
+
   else
     {
       /* Bad program ? */

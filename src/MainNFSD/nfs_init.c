@@ -109,6 +109,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
+#include "nlm4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "err_cache_inode.h"
@@ -259,6 +260,10 @@ int nfs_print_param_config( nfs_parameter_t * p_nfs_param )
   return 0 ;
 } /* nfs_print_param_config */
 
+#ifdef _USE_NLM
+extern void nlm_init_locklist(void);
+#endif
+
 /**
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
@@ -275,6 +280,7 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
   p_nfs_param->core_param.mnt_port              = 0 ;
   p_nfs_param->core_param.nfs_program           = NFS_PROGRAM ;
   p_nfs_param->core_param.mnt_program           = MOUNTPROG ;
+  p_nfs_param->core_param.nlm_program           = NLMPROG ;
   p_nfs_param->core_param.drop_io_errors        = TRUE ;
   p_nfs_param->core_param.drop_inval_errors     = FALSE ;
   p_nfs_param->core_param.core_dump_size        = 0 ;
@@ -563,7 +569,11 @@ int nfs_set_param_default( nfs_parameter_t * p_nfs_param )
     p_nfs_param->extern_param.snmp_adm.export_cache_inode_calls_detail  = FALSE;
     p_nfs_param->extern_param.snmp_adm.export_fsal_calls_detail         = FALSE;
 #endif
-  
+
+#ifdef _USE_NLM
+    nlm_init_locklist();
+#endif
+
   return 0 ; 
 } /* nfs_set_param_default */
 

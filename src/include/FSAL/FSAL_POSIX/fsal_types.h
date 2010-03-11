@@ -222,8 +222,10 @@ typedef struct fsal_cookie__ {
 
 static fsal_cookie_t __attribute__(( __unused__ ))  FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef void * fsal_lockdesc_t;  /**< not implemented in ghostfs */
-
+typedef struct fsal_lockdesc__
+{
+	struct flock flock;
+} fsal_lockdesc_t;
 
 /* Directory stream descriptor. */
 
@@ -253,7 +255,7 @@ typedef struct fsal_file__{
   int              ro; /* read only file ? */
 } fsal_file_t;
 
-#define FSAL_FILENO( filefd )  ( (int)filefd )
+#define FSAL_FILENO(p_fsal_file)  ((p_fsal_file)->filefd )
 
 #endif /* _FSAL_POSIX_USE_STREAM */
 

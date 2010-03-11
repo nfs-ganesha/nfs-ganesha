@@ -713,10 +713,9 @@ fsal_status_t  FSAL_terminate();
  ******************************************************/
 
 fsal_status_t  FSAL_lock(
-    fsal_handle_t           * objecthandle,         /* IN */
-    fsal_op_context_t       * p_context,            /* IN */
-    fsal_lockparam_t        * lock_info,            /* IN */
-    fsal_lockdesc_t         * lock_descriptor       /* OUT */
+	fsal_file_t *obj_handle,	/* IN */
+	fsal_lockdesc_t *ldesc,		/*IN/OUT */
+	fsal_boolean_t callback			/* IN */
 );
 
 fsal_status_t  FSAL_changelock(
@@ -724,9 +723,16 @@ fsal_status_t  FSAL_changelock(
     fsal_lockparam_t        * lock_info             /* IN */
 );
 
-fsal_status_t  FSAL_unlock(
-    fsal_lockdesc_t * lock_descriptor         /* IN/OUT */
-);
+fsal_status_t FSAL_unlock(
+	fsal_file_t *obj_handle,	/* IN */
+	fsal_lockdesc_t *ldesc		/*IN/OUT */
+) ;
+
+
+fsal_status_t FSAL_getlock(
+	fsal_file_t *obj_handle,	/* IN */
+	fsal_lockdesc_t *ldesc		/*IN/OUT */
+) ;
 
 
 /******************************************************

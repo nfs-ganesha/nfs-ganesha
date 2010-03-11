@@ -91,6 +91,7 @@
 #include "nfs23.h"
 #include "mount.h"
 #include "nfs4.h"
+#include "nlm4.h"
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -162,7 +163,12 @@ typedef union nfs_arg__
   
   /* mnt protocol arguments */
   dirpath         arg_mnt;
-  
+
+  /* nlm protocl arguments */
+  nlm4_testargs	  arg_nlm4_test;
+  nlm4_lockargs	  arg_nlm4_lock;
+  nlm4_cancargs	  arg_nlm4_cancel;
+  nlm4_unlockargs arg_nlm4_unlock;
 } nfs_arg_t;
 
 
@@ -203,7 +209,11 @@ typedef union nfs_res__
   exports         res_mntexport ;
   mountres3       res_mnt3 ;
   mountlist       res_dump ;
-  
+
+  /* nlm4 returned values */
+  nlm4_testres	 res_nlm4test;
+  nlm4_res	 res_nlm4;
+
   char padding[1024] ;
 } nfs_res_t;
 
@@ -296,6 +306,55 @@ int mnt_Export(  nfs_arg_t            * parg    /* IN  */,
  * -- End of MNT protocol functions. --
  */
 
+/**
+ * @defgroup NLMprocs    NLM protocol functions.
+ *
+ * @{
+ */
+
+int nlm_Null(  nfs_arg_t            * parg    /* IN  */,
+               exportlist_t         * pexport /* IN  */,
+               fsal_op_context_t          * pcontext   /* IN  */,
+               cache_inode_client_t * pclient /* IN  */,
+               hash_table_t         * ht      /* INOUT */,
+               struct svc_req       * preq    /* IN  */,
+               nfs_res_t            * pres    /* OUT */ ) ;
+
+int nlm4_Test( nfs_arg_t            * parg    /* IN     */,
+              exportlist_t         * pexport /* IN     */,
+              fsal_op_context_t    * pcontext   /* IN     */,
+              cache_inode_client_t * pclient /* INOUT  */,
+              hash_table_t         * ht      /* INOUT  */,
+              struct svc_req       * preq    /* IN     */,
+	      nfs_res_t            * pres    /* OUT    */ );
+
+int nlm4_Lock( nfs_arg_t            * parg    /* IN     */,
+              exportlist_t         * pexport /* IN     */,
+              fsal_op_context_t    * pcontext   /* IN     */,
+              cache_inode_client_t * pclient /* INOUT  */,
+              hash_table_t         * ht      /* INOUT  */,
+              struct svc_req       * preq    /* IN     */,
+	      nfs_res_t            * pres    /* OUT    */ );
+
+int nlm4_Cancel( nfs_arg_t            * parg    /* IN     */,
+              exportlist_t         * pexport /* IN     */,
+              fsal_op_context_t    * pcontext   /* IN     */,
+              cache_inode_client_t * pclient /* INOUT  */,
+              hash_table_t         * ht      /* INOUT  */,
+              struct svc_req       * preq    /* IN     */,
+	      nfs_res_t            * pres    /* OUT    */ );
+
+int nlm4_Unlock( nfs_arg_t            * parg    /* IN     */,
+              exportlist_t         * pexport /* IN     */,
+              fsal_op_context_t    * pcontext   /* IN     */,
+              cache_inode_client_t * pclient /* INOUT  */,
+              hash_table_t         * ht      /* INOUT  */,
+              struct svc_req       * preq    /* IN     */,
+	      nfs_res_t            * pres    /* OUT    */ );
+
+/* @}
+ * -- End of NLM protocol functions. --
+ */
 
 /**
  * @defgroup NFSprocs    NFS protocols functions.
@@ -916,6 +975,12 @@ void mnt_Export_Free( nfs_res_t * pres ) ;
 void mnt_Null_Free( nfs_res_t * pres ) ;
 void mnt_Umnt_Free( nfs_res_t * pres ) ;
 void mnt_UmntAll_Free( nfs_res_t * pres ) ;
+
+void nlm_Null_Free( nfs_res_t * pres ) ;
+void nlm4_Test_Free( nfs_res_t * pres );
+void nlm4_Lock_Free( nfs_res_t * pres );
+void nlm4_Cancel_Free( nfs_res_t * pres );
+void nlm4_Unlock_Free( nfs_res_t * pres );
 
 void nfs_Null_Free( nfs_res_t * resp ) ;
 void nfs_Getattr_Free( nfs_res_t * resp ) ;

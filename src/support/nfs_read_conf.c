@@ -364,6 +364,10 @@ int nfs_read_core_conf( config_file_t          in_config,
         {
           pparam->mnt_program = atoi( key_value ) ;
         }
+      else if( !strcasecmp( key_name, "NLM_Program" ) )
+        {
+          pparam->nlm_program = atoi( key_value ) ;
+        }
       else if( !strcasecmp( key_name, "Core_Dump_Size" ) ) 
         {
           pparam->core_dump_size = atol( key_value ) ;
