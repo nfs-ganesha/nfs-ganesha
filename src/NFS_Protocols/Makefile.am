@@ -6,8 +6,8 @@ noinst_LTLIBRARIES            = libnfsproto.la
 
 check_PROGRAMS                = test_mnt_proto
 
-libnfsproto_la_SOURCES = mnt_Null.c                       \
-                         mnt_Export.c                     \
+libnfsproto_la_SOURCES = mnt_Export.c			  \
+                         mnt_Null.c                       \
                          mnt_Mnt.c                        \
                          mnt_Dump.c                       \
                          mnt_Umnt.c                       \
@@ -97,6 +97,16 @@ libnfsproto_la_SOURCES = mnt_Null.c                       \
                          ../include/nfs_creds.h           \
                          ../include/nfs_tools.h           \
                          ../include/nfs_file_handle.h
+
+if USE_NLM
+libnfsproto_la_SOURCES += nlm_Unlock.c	  \
+                          nlm_Cancel.c	  \
+                          nlm_Lock.c	  \
+                          nlm_Test.c	  \
+                          nlm_Null.c			  
+endif
+
+
 
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \

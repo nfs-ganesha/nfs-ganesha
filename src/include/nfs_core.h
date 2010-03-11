@@ -261,10 +261,14 @@ typedef struct nfs_svc_data__
   int socket_nfs_tcp ;
   int socket_mnt_udp ;
   int socket_mnt_tcp ;
+  int socket_nlm_udp ;
+  int socket_nlm_tcp ;
   SVCXPRT * xprt_nfs_udp ;
   SVCXPRT * xprt_nfs_tcp ;
   SVCXPRT * xprt_mnt_udp ;
   SVCXPRT * xprt_mnt_tcp ;
+  SVCXPRT * xprt_nlm_udp ;
+  SVCXPRT * xprt_nlm_tcp ;
 } nfs_svc_data_t ;
 
 typedef struct nfs_worker_param__
@@ -301,8 +305,10 @@ typedef struct nfs_core_param__
 {
   unsigned short          nfs_port ;
   unsigned short          mnt_port ;
+  unsigned short	  nlm_port;
   unsigned int            nfs_program ;
   unsigned int            mnt_program ;
+  unsigned int            nlm_program ;
   unsigned int            nb_worker ;
   unsigned int            nb_max_concurrent_gc ;
   long                    core_dump_size ;
@@ -445,6 +451,7 @@ typedef struct nfs_request_data__
   SVCXPRT                   * tcp_xprt ;
   SVCXPRT                   * nfs_udp_xprt ;
   SVCXPRT                   * mnt_udp_xprt ;
+  SVCXPRT                   * nlm_udp_xprt ;
   SVCXPRT                   * xprt ;
   struct svc_req              req ;
   struct rpc_msg              msg ;
