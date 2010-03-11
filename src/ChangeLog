@@ -318,3 +318,8 @@
 	  FSAL chose at ./configure time are build
 	- fixed two typos and one potential memleaks (thanks to IBM guys how
 	  located this in the code)
+
+0.99.63 - 
+	- A patch from Sean Dague (japh@us.ibm.com) fixes a memleak in FSAL_POSIX
+	- A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements
+          the NLMv4 protocol (NFS lock managemment for NFSv3)
