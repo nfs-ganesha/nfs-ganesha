@@ -68,10 +68,11 @@
 
 #include <rpc/rpc.h>
 #include <Rpc_com_tirpc.h>
-#include <getpeereid.h>
 #include "stuff_alloc.h"
 #include "RW_Lock.h"
 #include <pthread.h>
+
+int getpeereid(int s, uid_t *euid, gid_t *egid);
 
 pthread_mutex_t   mutex_cond_xprt[FD_SETSIZE] ;
 pthread_cond_t    condvar_xprt[FD_SETSIZE] ;

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [0.99.62], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [0.99.63], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -179,6 +179,14 @@ if test "$enable_gssrpc" == "yes"; then
         AC_CHECK_LIB([gssapi], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
         AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 fi
+
+# NLMv4 
+GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
+
+if test "$enable_nlm" == "yes"; then
+	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
+fi
+AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -603,5 +611,6 @@ AC_CONFIG_FILES([include/Makefile
 		 debian/control
                  Makefile
                  libganeshaNFS.pc
-                 nfs-ganesha.spec])
+                 nfs-ganesha.spec
+		 list/Makefile])
 AC_OUTPUT

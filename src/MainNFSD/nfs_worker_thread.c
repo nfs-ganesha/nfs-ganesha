@@ -119,6 +119,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
+#include "nlm4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
 #include "cache_content.h"
@@ -240,6 +241,88 @@ const nfs_function_desc_t mnt3_func_desc[] =
   {mnt_UmntAll, mnt_UmntAll_Free, (xdrproc_t)xdr_void,     (xdrproc_t)xdr_void,      "mnt_UmntAll", NOTHING_SPECIAL },
   {mnt_Export , mnt_Export_Free,  (xdrproc_t)xdr_void,     (xdrproc_t)xdr_exports,   "mnt_Export",  NOTHING_SPECIAL }
 };
+
+#define nlm4_Unsupported nlm_Null
+#define nlm4_Unsupported_Free nlm_Null_Free
+
+#ifdef _USE_NLM
+const nfs_function_desc_t nlm4_func_desc[] =
+{
+ [NLMPROC4_NULL] =  {
+   nlm_Null,         nlm_Null_Free,          (xdrproc_t)xdr_void,            (xdrproc_t)xdr_void,        "nlm_Null",         NOTHING_SPECIAL },
+ [NLMPROC4_TEST] =  {
+   nlm4_Test,        nlm4_Test_Free,         (xdrproc_t)xdr_nlm4_testargs,   (xdrproc_t)xdr_nlm4_testres,"nlm4_Test",        NEEDS_CRED },
+ [NLMPROC4_LOCK] = {
+   nlm4_Lock,        nlm4_Lock_Free,         (xdrproc_t)xdr_nlm4_lockargs,   (xdrproc_t)xdr_nlm4_res,    "nlm4_Lock",        NEEDS_CRED },
+ [NLMPROC4_CANCEL] = {
+   nlm4_Cancel,      nlm4_Cancel_Free,       (xdrproc_t)xdr_nlm4_cancargs,   (xdrproc_t)xdr_nlm4_res,    "nlm4_Cancel",      NEEDS_CRED },
+ [NLMPROC4_UNLOCK] = {
+   nlm4_Unlock,      nlm4_Unlock_Free,       (xdrproc_t)xdr_nlm4_unlockargs, (xdrproc_t)xdr_nlm4_res,    "nlm4_Unlock",      NEEDS_CRED },
+ [NLMPROC4_GRANTED] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,  (xdrproc_t)xdr_void,            (xdrproc_t)xdr_void,        "nlm4_Granted",     NOTHING_SPECIAL },
+ [NLMPROC4_TEST_MSG] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,  (xdrproc_t)xdr_void,            (xdrproc_t)xdr_void,        "nlm4_Test_msg",    NOTHING_SPECIAL },
+ [NLMPROC4_LOCK_MSG] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,  (xdrproc_t)xdr_void,            (xdrproc_t)xdr_void,        "nlm4_Lock_msg",    NOTHING_SPECIAL },
+ [NLMPROC4_CANCEL_MSG] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Cancel_msg",  NOTHING_SPECIAL },
+ [NLMPROC4_UNLOCK_MSG] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Unlock_msg",  NOTHING_SPECIAL },
+ [NLMPROC4_GRANTED_MSG] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Granted_msg", NOTHING_SPECIAL },
+ [NLMPROC4_TEST_RES] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Test_res",    NOTHING_SPECIAL },
+ [NLMPROC4_LOCK_RES] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Lock_res",    NOTHING_SPECIAL },
+ [NLMPROC4_CANCEL_RES] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Cancel_res",  NOTHING_SPECIAL },
+ [NLMPROC4_UNLOCK_RES] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Unlock_res",  NOTHING_SPECIAL },
+ [NLMPROC4_GRANTED_RES] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free, (xdrproc_t)xdr_void,             (xdrproc_t)xdr_void,        "nlm4_Granted_res", NOTHING_SPECIAL },
+/* gap fill */
+ [16] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Granted_res", NOTHING_SPECIAL
+  },
+ [17] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Granted_res", NOTHING_SPECIAL
+  },
+ [18] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Granted_res", NOTHING_SPECIAL
+  },
+ [19] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Granted_res", NOTHING_SPECIAL
+  },
+ [NLMPROC4_SHARE] {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Share", NOTHING_SPECIAL
+  },
+ [NLMPROC4_UNSHARE] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Unshare", NOTHING_SPECIAL
+  },
+ [NLMPROC4_NM_LOCK] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Nm_lock", NOTHING_SPECIAL
+  },
+ [NLMPROC4_FREE_ALL] = {
+   nlm4_Unsupported, nlm4_Unsupported_Free,
+   (xdrproc_t)xdr_void, (xdrproc_t)xdr_void,
+   "nlm4_Free_all", NOTHING_SPECIAL
+  },
+};
+#endif
 
 /**
  * nfs_rpc_execute: main rpc dispatcher routine
@@ -366,6 +449,33 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
           
         } /* switch( ptr_req->vers ) */
     }
+#ifdef _USE_NLM
+  else if( ptr_req->rq_prog == nfs_param.core_param.nlm_program )
+    {
+
+      switch( ptr_req->rq_vers )
+        {
+        case NLM4_VERS:
+	  if( ptr_req->rq_proc > NLMPROC4_FREE_ALL ) {
+	        DisplayLog( "NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc) ;
+		printf("Unhandled NLM request: Program %d, Version %d, Function %d\n",
+                   ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc ) ;
+
+		svcerr_decode( ptr_svc ) ;
+		return ;
+	 }
+	 funcdesc = nlm4_func_desc[ptr_req->rq_proc] ;
+	 break ;
+
+        default:
+          /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
+          DisplayLog( "NFS DISPATCHER: NLM Protocol version %d unknown", ptr_req->rq_vers ) ;
+          svcerr_decode( ptr_svc ) ;
+          return ;
+          break ;
+        } /* switch( ptr_req->vers ) */
+    }
+#endif /* _USE_NLM */
   else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */ 
@@ -550,6 +660,13 @@ static void nfs_rpc_execute( nfs_request_data_t * preqnfs,
       /* Always use the whole export list for mount protocol */
       pexport = nfs_param.pexportlist ;
     } /* switch( ptr_req->rq_prog ) */
+#ifdef _USE_NLM
+  else if( ptr_req->rq_prog == nfs_param.core_param.nlm_program )
+    {
+      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
+      pexport = nfs_param.pexportlist ;
+    }
+#endif /* _USE_NLM */
 
   /* Do not call a MAKES_WRITE function on a read-only export entry */
   if( ( funcdesc.dispatch_behaviour & MAKES_WRITE ) 
@@ -1047,8 +1164,30 @@ void * worker_thread( void * IndexArg )
                             {
                               if( preq->rq_prog != nfs_param.core_param.mnt_program )
                                 {
-                                  DisplayLogLevel( NIV_FULL_DEBUG, "/!\\ | Invalid Program number #%d",  preq->rq_prog ) ;
-                                  svcerr_noprog( xprt ); /* This is no NFS or MOUNT program, exit... */
+#ifdef _USE_NLM
+                                  if( preq->rq_prog != nfs_param.core_param.nlm_program )
+				  {
+                                    DisplayLogLevel( NIV_FULL_DEBUG, "/!\\ | Invalid Program number #%d",  preq->rq_prog ) ;
+                                    svcerr_noprog( xprt ); /* This is no NFS, MOUNT, NLM program, exit... */
+				  }
+				  else
+				  {
+                                  /* Call is with NLMPROG */
+                                  if( preq->rq_vers != NLM4_VERS )
+                                    {
+                                      DisplayLogLevel( NIV_FULL_DEBUG, "/!\\ | Invalid NLM Version #%d", preq->rq_vers ) ;
+                                      svcerr_progvers( xprt,  NLM4_VERS, NLM4_VERS); /* Bad NLM version */
+                                    }
+                                  else
+                                    {
+                                      /* Actual work starts here */
+                                      nfs_rpc_execute( pnfsreq, pmydata ) ;
+                                    }
+				  }
+#else
+                                 DisplayLogLevel( NIV_FULL_DEBUG, "/!\\ | Invalid Program number #%d",  preq->rq_prog ) ;
+                                 svcerr_noprog( xprt ); /* This is no NFS, MOUNT program, exit... */
+#endif /* _USE_NLM */
                                 }
                               else
                                 {
