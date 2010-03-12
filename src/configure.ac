@@ -611,6 +611,5 @@ AC_CONFIG_FILES([include/Makefile
 		 debian/control
                  Makefile
                  libganeshaNFS.pc
-                 nfs-ganesha.spec
-		 list/Makefile])
+                 nfs-ganesha.spec])
 AC_OUTPUT
