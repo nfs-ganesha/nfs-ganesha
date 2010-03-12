@@ -56,6 +56,10 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  Rpc_com_tirpc.h                 \
                  solaris_port.h
 
+if USE_NLM
+noinst_HEADERS += nlm4.h nlm_util.h list.h 
+endif
+
 if USE_FSAL_FUSE
 include_HEADERS = ganesha_fuse_wrap.h
 endif
