@@ -546,6 +546,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                             candidate_type = CACHE_INODE_STATE_SHARE ;
                             candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                             candidate_data.share.share_access = arg_OPEN4.share_access ;
+                            candidate_data.share.lockheld     = 0 ;
 
                             if( cache_inode_add_state( pentry_lookup, 
                                                        candidate_type,
@@ -1087,6 +1088,7 @@ int nfs4_op_open(  struct nfs_argop4 * op ,
                    candidate_type = CACHE_INODE_STATE_SHARE ;
                    candidate_data.share.share_deny   = arg_OPEN4.share_deny ;
                    candidate_data.share.share_access = arg_OPEN4.share_access ;
+                   candidate_data.share.lockheld     = 0 ;
 
                    if( cache_inode_add_state( pentry_newfile, 
                                               candidate_type,
