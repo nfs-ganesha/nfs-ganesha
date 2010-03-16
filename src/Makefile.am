@@ -116,6 +116,9 @@ srpm: nfs-ganesha.spec remove_hpss
 
 endif
 
+indent:
+	find . -name '*.[ch]' \! -path './rpm/BUILD/*' -exec indent -linux -bl -i2 -l90 -lc 90 \{\} \\;
+
 EXTRA_DIST=nfs-ganesha.spec           \
            COMPILING_HOWTO.txt        \
            Licence_CeCILL-French.txt  \
