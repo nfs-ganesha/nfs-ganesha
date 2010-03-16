@@ -38,44 +38,45 @@
 #include "list.h"
 
 struct myteststruct {
-	int value;
-	struct glist_head glist;
+  int value;
+  struct glist_head glist;
 };
 
 struct glist_head mytestglist;
 
 static void print_glist(struct glist_head *head)
 {
-	struct myteststruct *entry;
-	struct glist_head *glist;
+  struct myteststruct *entry;
+  struct glist_head *glist;
 
-	glist_for_each(glist, head) {
-		entry = glist_entry(glist, struct myteststruct, glist);
-		printf("The value is %d\n", entry->value);
-	}
+  glist_for_each(glist, head)
+  {
+    entry = glist_entry(glist, struct myteststruct, glist);
+    printf("The value is %d\n", entry->value);
+  }
 }
 
 int main(int argc, char *argv[])
 {
-	struct myteststruct node1;
-	struct myteststruct node2;
-	struct myteststruct node3;
-	struct myteststruct node4;
-	init_glist(&mytestglist);
-	node1.value = 10;
-	node2.value = 11;
-	node3.value = 12;
-	glist_add(&mytestglist, &node1.glist);
-	glist_add(&mytestglist, &node2.glist);
-	glist_add(&mytestglist, &node3.glist);
+  struct myteststruct node1;
+  struct myteststruct node2;
+  struct myteststruct node3;
+  struct myteststruct node4;
+  init_glist(&mytestglist);
+  node1.value = 10;
+  node2.value = 11;
+  node3.value = 12;
+  glist_add(&mytestglist, &node1.glist);
+  glist_add(&mytestglist, &node2.glist);
+  glist_add(&mytestglist, &node3.glist);
 
-	print_glist(&mytestglist);
-	printf("Now test tail add\n");
-	node4.value = 13;
-	glist_add_tail(&mytestglist, &node4.glist);
-	print_glist(&mytestglist);
-	printf("Delete test\n");
-	glist_del(&node2.glist);
-	print_glist(&mytestglist);
-	return 0;
+  print_glist(&mytestglist);
+  printf("Now test tail add\n");
+  node4.value = 13;
+  glist_add_tail(&mytestglist, &node4.glist);
+  print_glist(&mytestglist);
+  printf("Delete test\n");
+  glist_del(&node2.glist);
+  print_glist(&mytestglist);
+  return 0;
 }

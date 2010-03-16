@@ -21,7 +21,6 @@
 #include "namespace.h"
 #include <string.h>
 
-
 /**
  * FSAL_lookup :
  * Looks up for an object into a directory.
@@ -57,224 +56,225 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookup (
-    fsal_handle_t         * parent_directory_handle,       /* IN */
-    fsal_name_t           * p_filename,                    /* IN */
-    fsal_op_context_t     * p_context,                     /* IN */
-    fsal_handle_t         * object_handle,                 /* OUT */
-    fsal_attrib_list_t    * object_attributes              /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
+			  fsal_name_t * p_filename,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_handle_t * object_handle,	/* OUT */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  fsal_status_t   status;
-  struct stat     stbuff;
-          
+  fsal_status_t status;
+  struct stat stbuff;
+
   /* sanity checks
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
    */
-  if (!object_handle || !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookup);
- 
-  /* no getattr => no lookup !! */ 
-  if ( !p_fs_ops->getattr )
-        Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_lookup);
-  
-  
+  if (!object_handle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+
+  /* no getattr => no lookup !! */
+  if (!p_fs_ops->getattr)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lookup);
+
   /* set current FS context */
-  fsal_set_thread_context( p_context );
-    
-  
+  fsal_set_thread_context(p_context);
+
   /* retrieves root handle */
-  
+
   if (!parent_directory_handle)
-  {
-#ifdef _DEBUG_FSAL
-    printf("lookup: root handle\n");
-#endif
-    
-    /* check that p_filename is NULL,
-     * else, parent_directory_handle should not
-     * be NULL.
-     */
-    if ( p_filename != NULL )
-      Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookup);
-    
-    /* get root handle */        
-    TakeTokenFSCall();
-    rc = p_fs_ops->getattr("/",&stbuff);    
-    ReleaseTokenFSCall();
-    
-    /* error getting root ?! => EIO */
-    if ( rc ) Return( ERR_FSAL_IO ,rc , INDEX_FSAL_lookup );
-
-    if ( stbuff.st_ino == 0 )
-    {
-		/* filesystem does not provide inodes ! */
-		DisplayLogJdLevel(fsal_log, NIV_DEBUG,"WARNING in lookup: filesystem does not provide inode numbers");
-		/* root will have inode nbr 1 */
-		stbuff.st_ino = 1;
-    } 
-
-    /* fill root handle */
-    object_handle->inode = stbuff.st_ino;
-    object_handle->device = stbuff.st_dev;
-    
-    rc = NamespaceGetGen( stbuff.st_ino, stbuff.st_dev, &object_handle->validator );
-
-    /* root not in namespace ?! => EIO */
-    if ( rc ) Return( ERR_FSAL_IO ,rc , INDEX_FSAL_lookup );
-                
-    /* set root attributes, if asked */
-    
-    if (object_attributes)
-    {
-        fsal_status_t status = posix2fsal_attributes( &stbuff, object_attributes );
-
-        if ( FSAL_IS_ERROR( status ) )
-        {
-            FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-            FSAL_SET_MASK( object_attributes->asked_attributes,
-                FSAL_ATTR_RDATTR_ERR );
-        }        
-    }    
-    
-  }
-  else /* this is a real lookup(parent, name)  */
-  {
-    char parent_path[FSAL_MAX_PATH_LEN];
-    char child_path[FSAL_MAX_PATH_LEN];
-        
-    /* the filename should not be null */
-    if ( p_filename == NULL )
-      Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookup);
-
-    /* get directory path */    
-    rc = NamespacePath( parent_directory_handle->inode,
-                        parent_directory_handle->device,
-                        parent_directory_handle->validator,
-                        parent_path );
-    if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_lookup);
-
-#ifdef _DEBUG_FSAL
-    printf("lookup: parent path='%s'\n", parent_path );
-#endif
-        
-    /* TODO: check the parent type */
-    
-    /* case of '.' and '..' */
-    
-    if ( !strcmp( p_filename->name, "." ) )
-    {    
-#ifdef _DEBUG_FSAL
-    printf("lookup on '.'\n" );
-#endif
-        strcpy( child_path, parent_path );
-    }
-    else if ( !strcmp( p_filename->name, ".." ) )
     {
 #ifdef _DEBUG_FSAL
-    printf("lookup on '..'\n" );
+      printf("lookup: root handle\n");
 #endif
-        /* removing last '/<name>' if path != '/' */
-        if ( !strcmp( parent_path, "/" ) )
-        {
-            strcpy( child_path, parent_path );
-        }
-        else
-        {
-            char * p_char ;
 
-            strcpy( child_path, parent_path );
-            p_char = strrchr( child_path, '/' );
-            
-            /* if path is '/<name>', don't remove the first '/' */
-            if ( p_char == child_path )
-                *(p_char+1) = '\0';
-            else if ( p_char )
-                *p_char = '\0';            
-        }
-    }   
-    else
-    {
-#ifdef _DEBUG_FSAL
-    printf("lookup on '%s/%s'\n", parent_path, p_filename->name );
-#endif        
-        FSAL_internal_append_path( child_path, parent_path, p_filename->name );
-    }   
-    
-    TakeTokenFSCall();
-    rc = p_fs_ops->getattr( child_path, &stbuff );
-    ReleaseTokenFSCall();
+      /* check that p_filename is NULL,
+       * else, parent_directory_handle should not
+       * be NULL.
+       */
+      if (p_filename != NULL)
+	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
-#ifdef _DEBUG_FSAL
-    printf("%s: gettattr status=%d\n", child_path, rc);
-#endif
-    
-    if ( rc ) Return( fuse2fsal_error(rc,FALSE), rc, INDEX_FSAL_lookup);
+      /* get root handle */
+      TakeTokenFSCall();
+      rc = p_fs_ops->getattr("/", &stbuff);
+      ReleaseTokenFSCall();
 
-    /* no '.' nor '..' in namespace */
-    if ( strcmp( p_filename->name, "." )
-        && strcmp( p_filename->name, ".." ) )
-    {
-	if ( stbuff.st_ino == 0 )
+      /* error getting root ?! => EIO */
+      if (rc)
+	Return(ERR_FSAL_IO, rc, INDEX_FSAL_lookup);
+
+      if (stbuff.st_ino == 0)
 	{
-		/* filesystem does not provide inodes ! */
-		DisplayLogJdLevel(fsal_log, NIV_DEBUG,"WARNING in lookup: filesystem does not provide inode numbers !!!");
-		
-		if ( !parent_directory_handle || !p_filename || !p_filename->name )
-		{
-			DisplayLogJdLevel(fsal_log, NIV_CRIT, "CRITICAL: Segfault avoided !!!!! %p %p %p", parent_directory_handle, p_filename, p_filename ? p_filename->name: NULL );
-		}
-		else
-		{
-			/* create a fake handle for child = hash of its parent and its name */
-			stbuff.st_ino = hash_peer( parent_directory_handle->inode, p_filename->name ); 
-			DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "handle for %u, %s = %u\n", (int)parent_directory_handle->inode, p_filename->name, (int)stbuff.st_ino );
-		}
+	  /* filesystem does not provide inodes ! */
+	  DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+			    "WARNING in lookup: filesystem does not provide inode numbers");
+	  /* root will have inode nbr 1 */
+	  stbuff.st_ino = 1;
 	}
-        
-        object_handle->validator = stbuff.st_ctime;
-        
-        /* add handle to namespace */
-        NamespaceAdd( parent_directory_handle->inode,
-                parent_directory_handle->device,
-                parent_directory_handle->validator,
-                p_filename->name,
-                stbuff.st_ino, stbuff.st_dev, &object_handle->validator );
-    }
-    else
-    {
-        rc = NamespaceGetGen(  stbuff.st_ino,  stbuff.st_dev, &object_handle->validator );
-	DisplayLogJdLevel(fsal_log, NIV_EVENT, ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d\n", (int)stbuff.st_ino, (int)stbuff.st_dev, (int)object_handle->validator );
-        if ( rc ) Return( fuse2fsal_error(rc,TRUE), rc, INDEX_FSAL_lookup);
-    }
-           
-    /* output handle */
-    object_handle->inode = stbuff.st_ino;
-    object_handle->device = stbuff.st_dev;
-    
-    if (object_attributes)
-    {
-        fsal_status_t status = posix2fsal_attributes( &stbuff, object_attributes );
 
-        if ( FSAL_IS_ERROR( status ) )
-        {
-            FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-            FSAL_SET_MASK( object_attributes->asked_attributes,
-                FSAL_ATTR_RDATTR_ERR );
-        }
+      /* fill root handle */
+      object_handle->inode = stbuff.st_ino;
+      object_handle->device = stbuff.st_dev;
+
+      rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+
+      /* root not in namespace ?! => EIO */
+      if (rc)
+	Return(ERR_FSAL_IO, rc, INDEX_FSAL_lookup);
+
+      /* set root attributes, if asked */
+
+      if (object_attributes)
+	{
+	  fsal_status_t status = posix2fsal_attributes(&stbuff, object_attributes);
+
+	  if (FSAL_IS_ERROR(status))
+	    {
+	      FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	      FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	    }
+	}
+
+    } else			/* this is a real lookup(parent, name)  */
+    {
+      char parent_path[FSAL_MAX_PATH_LEN];
+      char child_path[FSAL_MAX_PATH_LEN];
+
+      /* the filename should not be null */
+      if (p_filename == NULL)
+	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+
+      /* get directory path */
+      rc = NamespacePath(parent_directory_handle->inode,
+			 parent_directory_handle->device,
+			 parent_directory_handle->validator, parent_path);
+      if (rc)
+	Return(ERR_FSAL_STALE, rc, INDEX_FSAL_lookup);
+
+#ifdef _DEBUG_FSAL
+      printf("lookup: parent path='%s'\n", parent_path);
+#endif
+
+      /* TODO: check the parent type */
+
+      /* case of '.' and '..' */
+
+      if (!strcmp(p_filename->name, "."))
+	{
+#ifdef _DEBUG_FSAL
+	  printf("lookup on '.'\n");
+#endif
+	  strcpy(child_path, parent_path);
+      } else if (!strcmp(p_filename->name, ".."))
+	{
+#ifdef _DEBUG_FSAL
+	  printf("lookup on '..'\n");
+#endif
+	  /* removing last '/<name>' if path != '/' */
+	  if (!strcmp(parent_path, "/"))
+	    {
+	      strcpy(child_path, parent_path);
+	    } else
+	    {
+	      char *p_char;
+
+	      strcpy(child_path, parent_path);
+	      p_char = strrchr(child_path, '/');
+
+	      /* if path is '/<name>', don't remove the first '/' */
+	      if (p_char == child_path)
+		*(p_char + 1) = '\0';
+	      else if (p_char)
+		*p_char = '\0';
+	    }
+	} else
+	{
+#ifdef _DEBUG_FSAL
+	  printf("lookup on '%s/%s'\n", parent_path, p_filename->name);
+#endif
+	  FSAL_internal_append_path(child_path, parent_path, p_filename->name);
+	}
+
+      TakeTokenFSCall();
+      rc = p_fs_ops->getattr(child_path, &stbuff);
+      ReleaseTokenFSCall();
+
+#ifdef _DEBUG_FSAL
+      printf("%s: gettattr status=%d\n", child_path, rc);
+#endif
+
+      if (rc)
+	Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_lookup);
+
+      /* no '.' nor '..' in namespace */
+      if (strcmp(p_filename->name, ".") && strcmp(p_filename->name, ".."))
+	{
+	  if (stbuff.st_ino == 0)
+	    {
+	      /* filesystem does not provide inodes ! */
+	      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+				"WARNING in lookup: filesystem does not provide inode numbers !!!");
+
+	      if (!parent_directory_handle || !p_filename || !p_filename->name)
+		{
+		  DisplayLogJdLevel(fsal_log, NIV_CRIT,
+				    "CRITICAL: Segfault avoided !!!!! %p %p %p",
+				    parent_directory_handle, p_filename,
+				    p_filename ? p_filename->name : NULL);
+		} else
+		{
+		  /* create a fake handle for child = hash of its parent and its name */
+		  stbuff.st_ino =
+		      hash_peer(parent_directory_handle->inode, p_filename->name);
+		  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "handle for %u, %s = %u\n",
+				    (int)parent_directory_handle->inode, p_filename->name,
+				    (int)stbuff.st_ino);
+		}
+	    }
+
+	  object_handle->validator = stbuff.st_ctime;
+
+	  /* add handle to namespace */
+	  NamespaceAdd(parent_directory_handle->inode,
+		       parent_directory_handle->device,
+		       parent_directory_handle->validator,
+		       p_filename->name,
+		       stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+	} else
+	{
+	  rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
+	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
+			    ". or .. is stale ??? ino=%d, dev=%d\n, validator=%d\n",
+			    (int)stbuff.st_ino, (int)stbuff.st_dev,
+			    (int)object_handle->validator);
+	  if (rc)
+	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_lookup);
+	}
+
+      /* output handle */
+      object_handle->inode = stbuff.st_ino;
+      object_handle->device = stbuff.st_dev;
+
+      if (object_attributes)
+	{
+	  fsal_status_t status = posix2fsal_attributes(&stbuff, object_attributes);
+
+	  if (FSAL_IS_ERROR(status))
+	    {
+	      FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	      FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	    }
+	}
+
     }
-   
-  }
-  
+
   /* lookup complete ! */
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_lookup );
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookup);
 
 }
-
-
-
 
 /**
  * FSAL_lookupJunction :
@@ -303,19 +303,17 @@ fsal_status_t FSAL_lookup (
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction (
-    fsal_handle_t         * p_junction_handle,   /* IN */
-    fsal_op_context_t     * p_context,           /* IN */
-    fsal_handle_t         * p_fsoot_handle,      /* OUT */
-    fsal_attrib_list_t    * p_fsroot_attributes  /* [ IN/OUT ] */
-)
+fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_handle_t * p_fsoot_handle,	/* OUT */
+				  fsal_attrib_list_t * p_fsroot_attributes	/* [ IN/OUT ] */
+    )
 {
-  
-  /* Not supported for FUSE FSAL */
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_lookupJunction);
-  
-}
 
+  /* Not supported for FUSE FSAL */
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lookupJunction);
+
+}
 
 /**
  * FSAL_lookupPath :
@@ -350,113 +348,113 @@ fsal_status_t FSAL_lookupJunction (
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
- 
-fsal_status_t FSAL_lookupPath (
-    fsal_path_t           * p_path,            /* IN */
-    fsal_op_context_t     * p_context,         /* IN */
-    fsal_handle_t         * object_handle,     /* OUT */
-    fsal_attrib_list_t    * object_attributes  /* [ IN/OUT ] */
-){
 
-  fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
-  char * ptr_str;
+fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
+			      fsal_op_context_t * p_context,	/* IN */
+			      fsal_handle_t * object_handle,	/* OUT */
+			      fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
+  fsal_name_t obj_name = FSAL_NAME_INITIALIZER;	/* empty string */
+  char *ptr_str;
   fsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE; /* is it the last lookup ? */
-  
-  
+  int b_is_last = FALSE;	/* is it the last lookup ? */
+
   /* sanity checks
    * note : object_attributes is optionnal.
    */
-  
+
   if (!object_handle || !p_context || !p_path)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookupPath);
-  
-  /* test whether the path begins with a slash*/
-  
-  if ( p_path->path[0] != '/' )
-    Return(ERR_FSAL_INVAL,0,INDEX_FSAL_lookupPath);   
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookupPath);
+
+  /* test whether the path begins with a slash */
+
+  if (p_path->path[0] != '/')
+    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupPath);
+
   /* the pointer now points on the next name in the path,
    * skipping slashes.
    */
-  
+
   ptr_str = p_path->path + 1;
-  while (ptr_str[0] == '/') ptr_str++;
-  
+  while (ptr_str[0] == '/')
+    ptr_str++;
+
   /* is the next name empty ? */
-  
-  if (ptr_str[0] == '\0')  b_is_last = TRUE;
-     
-  
+
+  if (ptr_str[0] == '\0')
+    b_is_last = TRUE;
+
   /* retrieves root directory */
-  
-  status = FSAL_lookup (  NULL,     /* looking up for root */
-                          NULL, /* empty string to get root handle */
-                          p_context,     /* user's credentials */
-                          &out_hdl, /* output root handle */
-                          /* retrieves attributes if this is the last lookup :*/
-                          ( b_is_last ? object_attributes : NULL ));
-  
-  if (  FSAL_IS_ERROR( status ))
-    Return( status.major, status.minor,INDEX_FSAL_lookupPath );
-     
+
+  status = FSAL_lookup(NULL,	/* looking up for root */
+		       NULL,	/* empty string to get root handle */
+		       p_context,	/* user's credentials */
+		       &out_hdl,	/* output root handle */
+		       /* retrieves attributes if this is the last lookup : */
+		       (b_is_last ? object_attributes : NULL));
+
+  if (FSAL_IS_ERROR(status))
+    Return(status.major, status.minor, INDEX_FSAL_lookupPath);
+
   /* exits if this was the last lookup */
-  
-  if  ( b_is_last )
-  {
-    (*object_handle) = out_hdl;
-    Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_lookupPath );
-  }
-  
-  
-  /* proceed a step by step lookup */
-  
-  while( ptr_str[0] )
-  {
-   
-    fsal_handle_t  in_hdl;
-    char * dest_ptr;
 
-    /* preparing lookup */
-    
-    in_hdl = out_hdl;
-
-    /* compute next name */
-    obj_name.len = 0;
-    dest_ptr = obj_name.name;
-    while ( ptr_str[0]!='\0' && ptr_str[0]!='/')
+  if (b_is_last)
     {
-      dest_ptr[0] = ptr_str[0];
-      dest_ptr ++ ;
-      ptr_str  ++ ;
-      obj_name.len ++;
+      (*object_handle) = out_hdl;
+      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
     }
-    /* final null char */
-    dest_ptr[0] = '\0';
 
-    /* skip multiple slashes */
-    while (ptr_str[0] == '/') ptr_str++;
+  /* proceed a step by step lookup */
 
-    /* is the next name empty ? */
-    if (ptr_str[0] == '\0')
-      b_is_last = TRUE;
-    
-    /*call to FSAL_lookup */      
-    status = FSAL_lookup (  &in_hdl,  /* parent directory handle */
-                            &obj_name, /* object name */
-                            p_context,     /* user's credentials */
-                            &out_hdl, /* output root handle */
-                            /* retrieves attributes if this is the last lookup :*/
-                            ( b_is_last ? object_attributes : NULL ));
-    
-    if (  FSAL_IS_ERROR( status ) )
-      Return( status.major, status.minor,INDEX_FSAL_lookupPath );
+  while (ptr_str[0])
+    {
 
-    /* ptr_str is ok, we are ready for next loop */
-  }
-  
- (*object_handle) = out_hdl;  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_lookupPath );  
+      fsal_handle_t in_hdl;
+      char *dest_ptr;
+
+      /* preparing lookup */
+
+      in_hdl = out_hdl;
+
+      /* compute next name */
+      obj_name.len = 0;
+      dest_ptr = obj_name.name;
+      while (ptr_str[0] != '\0' && ptr_str[0] != '/')
+	{
+	  dest_ptr[0] = ptr_str[0];
+	  dest_ptr++;
+	  ptr_str++;
+	  obj_name.len++;
+	}
+      /* final null char */
+      dest_ptr[0] = '\0';
+
+      /* skip multiple slashes */
+      while (ptr_str[0] == '/')
+	ptr_str++;
+
+      /* is the next name empty ? */
+      if (ptr_str[0] == '\0')
+	b_is_last = TRUE;
+
+      /*call to FSAL_lookup */
+      status = FSAL_lookup(&in_hdl,	/* parent directory handle */
+			   &obj_name,	/* object name */
+			   p_context,	/* user's credentials */
+			   &out_hdl,	/* output root handle */
+			   /* retrieves attributes if this is the last lookup : */
+			   (b_is_last ? object_attributes : NULL));
+
+      if (FSAL_IS_ERROR(status))
+	Return(status.major, status.minor, INDEX_FSAL_lookupPath);
+
+      /* ptr_str is ok, we are ready for next loop */
+    }
+
+  (*object_handle) = out_hdl;
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
 
 }

@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -125,7 +125,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-
 /**
  *
  * nfs4_op_commit: Implemtation of NFS4_OP_COMMIT
@@ -140,89 +139,87 @@
  * 
  */
 
-extern verifier4            NFS4_write_verifier ; /* NFS V4 write verifier */
+extern verifier4 NFS4_write_verifier;	/* NFS V4 write verifier */
 
 #define arg_COMMIT4 op->nfs_argop4_u.opcommit
 #define res_COMMIT4 resp->nfs_resop4_u.opcommit
 
-int nfs4_op_commit(  struct nfs_argop4 * op ,   
-                     compound_data_t   * data,
-                     struct nfs_resop4 * resp)
+int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_commit" ;
-  
-  fsal_attrib_list_t    attr ;
-  cache_inode_status_t  cache_status ;
- 
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_commit";
+
+  fsal_attrib_list_t attr;
+  cache_inode_status_t cache_status;
+
   /* for the moment, read/write are not done asynchronously, no commit is necessary */
-  resp->resop = NFS4_OP_COMMIT ;
-  res_COMMIT4.status =  NFS4_OK ;
+  resp->resop = NFS4_OP_COMMIT;
+  res_COMMIT4.status = NFS4_OK;
 
 #ifdef _DEBUG_NFS_V4
-  printf( "      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n", arg_COMMIT4.offset, arg_COMMIT4.count ) ;
+  printf("      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n",
+	 arg_COMMIT4.offset, arg_COMMIT4.count);
 #endif
 
   /* If there is no FH */
-  if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
-      res_COMMIT4.status = NFS4ERR_NOFILEHANDLE ;
-      return res_COMMIT4.status ;
+      res_COMMIT4.status = NFS4ERR_NOFILEHANDLE;
+      return res_COMMIT4.status;
     }
 
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->currentFH ) ) )
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
-      res_COMMIT4.status = NFS4ERR_BADHANDLE ;
-      return res_COMMIT4.status ;
+      res_COMMIT4.status = NFS4ERR_BADHANDLE;
+      return res_COMMIT4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
-      res_COMMIT4.status = NFS4ERR_FHEXPIRED ;
-      return res_COMMIT4.status ;
+      res_COMMIT4.status = NFS4ERR_FHEXPIRED;
+      return res_COMMIT4.status;
     }
 
   /* Commit is done only on a file */
-  if( data->current_filetype != REGULAR_FILE )
+  if (data->current_filetype != REGULAR_FILE)
     {
-	/* Type of the entry is not correct */
-        switch( data->current_filetype )
-	  {
-	     case DIR_BEGINNING:
-             case DIR_CONTINUE:
-		res_COMMIT4.status = NFS4ERR_ISDIR ;
-		break ;
-	     default:
-		res_COMMIT4.status = NFS4ERR_INVAL ;
-                break ;
-	  }
-	
-	/* Exit with an error */
-	return res_COMMIT4.status ;
+      /* Type of the entry is not correct */
+      switch (data->current_filetype)
+	{
+	case DIR_BEGINNING:
+	case DIR_CONTINUE:
+	  res_COMMIT4.status = NFS4ERR_ISDIR;
+	  break;
+	default:
+	  res_COMMIT4.status = NFS4ERR_INVAL;
+	  break;
+	}
+
+      /* Exit with an error */
+      return res_COMMIT4.status;
     }
 
-  if( cache_inode_commit( data->current_entry,
-			  arg_COMMIT4.offset,
-			  arg_COMMIT4.count,
-                          &attr,
-		       	  data->ht, 
-                          data->pclient, 
-                          data->pcontext, 
-                          &cache_status ) != CACHE_INODE_SUCCESS )
+  if (cache_inode_commit(data->current_entry,
+			 arg_COMMIT4.offset,
+			 arg_COMMIT4.count,
+			 &attr,
+			 data->ht,
+			 data->pclient,
+			 data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
-      res_COMMIT4.status = NFS4ERR_INVAL ;
-      return res_COMMIT4.status ;
+      res_COMMIT4.status = NFS4ERR_INVAL;
+      return res_COMMIT4.status;
     }
 
-  memcpy( res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier , NFS4_VERIFIER_SIZE ) ;
-  
+  memcpy(res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier,
+	 NFS4_VERIFIER_SIZE);
+
   /* If you reach this point, then an error occured */
-  res_COMMIT4.status = NFS4_OK ;
+  res_COMMIT4.status = NFS4_OK;
   return res_COMMIT4.status;
-} /* nfs4_op_commit */
+}				/* nfs4_op_commit */
 
-    
 /**
  * nfs4_op_commit_Free: frees what was allocared to handle nfs4_op_commit.
  * 
@@ -233,8 +230,8 @@ int nfs4_op_commit(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_commit_Free( COMMIT4res * resp )
+void nfs4_op_commit_Free(COMMIT4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_commit_Free */
+  return;
+}				/* nfs4_op_commit_Free */

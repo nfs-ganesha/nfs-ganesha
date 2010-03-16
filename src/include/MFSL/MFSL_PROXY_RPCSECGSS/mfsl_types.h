@@ -96,25 +96,23 @@
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <dirent.h> /* for MAXNAMLEN */
+#include <dirent.h>		/* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
 
-typedef struct mfsl_parameter__{
-  
-  int i ; 
-} mfsl_parameter_t ;
+typedef struct mfsl_parameter__ {
 
-typedef struct mfsl_context__{
+  int i;
+} mfsl_parameter_t;
 
-  int i ;
-} mfsl_context_t ;
+typedef struct mfsl_context__ {
 
-typedef struct mfsl_object__{
-  int nothing ;
-} mfsl_object_specific_data_t ;
+  int i;
+} mfsl_context_t;
 
+typedef struct mfsl_object__ {
+  int nothing;
+} mfsl_object_specific_data_t;
 
-#endif /* _MFSL_PROXY_RPCSECGSS_TYPES_H */
-
+#endif				/* _MFSL_PROXY_RPCSECGSS_TYPES_H */

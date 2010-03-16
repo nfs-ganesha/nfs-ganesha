@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -138,45 +138,40 @@
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
  *
- */ 
+ */
 
 #define arg_RENEW4 op->nfs_argop4_u.oprenew
 #define res_RENEW4 resp->nfs_resop4_u.oprenew
 
-extern nfs_parameter_t nfs_param ;
+extern nfs_parameter_t nfs_param;
 
-int nfs4_op_renew(  struct nfs_argop4 * op ,   
-                    compound_data_t   * data,
-                    struct nfs_resop4 * resp)
+int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char               __attribute__(( __unused__ )) funcname[] = "nfs4_op_renew" ;
-  nfs_client_id_t    nfs_clientid ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_renew";
+  nfs_client_id_t nfs_clientid;
 
-  
   /* Lock are not supported */
-  memset( resp, 0, sizeof( struct nfs_resop4 ) ) ;
-  resp->resop = NFS4_OP_RENEW ;
+  memset(resp, 0, sizeof(struct nfs_resop4));
+  resp->resop = NFS4_OP_RENEW;
 
-  /* Tell the admin what I am doing... */ 
-  DisplayLogLevel( NIV_DEBUG, "RENEW Client id = %llx", arg_RENEW4.clientid ) ;
+  /* Tell the admin what I am doing... */
+  DisplayLogLevel(NIV_DEBUG, "RENEW Client id = %llx", arg_RENEW4.clientid);
 
-  /* Is this an existing client id ? */ 
-  if( nfs_client_id_get( arg_RENEW4.clientid, &nfs_clientid ) == CLIENT_ID_SUCCESS )
+  /* Is this an existing client id ? */
+  if (nfs_client_id_get(arg_RENEW4.clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
- 	nfs_clientid.last_renew = time( NULL ) ;
-   	res_RENEW4.status =  NFS4_OK ; /* Regular exit */
-    }
-  else
+      nfs_clientid.last_renew = time(NULL);
+      res_RENEW4.status = NFS4_OK;	/* Regular exit */
+    } else
     {
-	/* Unknown client id */
-	res_RENEW4.status = NFS4ERR_STALE_CLIENTID ;
+      /* Unknown client id */
+      res_RENEW4.status = NFS4ERR_STALE_CLIENTID;
     }
-  
+
   /* If you reach this point, then an error occured */
   return res_RENEW4.status;
-} /* nfs4_op_renew */
+}				/* nfs4_op_renew */
 
-    
 /**
  * nfs4_op_renew_Free: frees what was allocared to handle nfs4_op_renew.
  * 
@@ -187,8 +182,8 @@ int nfs4_op_renew(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_renew_Free( RENEW4res * resp )
+void nfs4_op_renew_Free(RENEW4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_renew_Free */
+  return;
+}				/* nfs4_op_renew_Free */

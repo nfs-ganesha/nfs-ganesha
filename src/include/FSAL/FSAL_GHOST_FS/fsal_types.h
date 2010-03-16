@@ -110,79 +110,71 @@
 /** object name.  */
 
 typedef struct fsal_name__ {
-  char     	name[FSAL_MAX_NAME_LEN];
-  unsigned int  len;
+  char name[FSAL_MAX_NAME_LEN];
+  unsigned int len;
 } fsal_name_t;
-
 
 /** object path.  */
 
 typedef struct fsal_path__ {
-  char     	path[FSAL_MAX_PATH_LEN];
-  unsigned int  len;
+  char path[FSAL_MAX_PATH_LEN];
+  unsigned int len;
 } fsal_path_t;
-
 
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
-static fsal_name_t FSAL_DOT = {".",1};
-static fsal_name_t FSAL_DOT_DOT = {"..",2};
+static fsal_name_t FSAL_DOT = { ".", 1 };
+static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
-
-typedef GHOSTFS_handle_t   fsal_handle_t;  /**< FS object handle.            */
-
+typedef GHOSTFS_handle_t fsal_handle_t;	   /**< FS object handle.            */
 
 /** Authentification context.    */
 
-typedef  struct fsal_cred__ {
-  GHOSTFS_user_t    user;
-  GHOSTFS_group_t  group;
+typedef struct fsal_cred__ {
+  GHOSTFS_user_t user;
+  GHOSTFS_group_t group;
 } fsal_cred_t;
-
 
 /** fs specific init info */
 
-typedef struct ghostfs_dir_def__
-{
+typedef struct ghostfs_dir_def__ {
   char path[FSAL_MAX_PATH_LEN];
   fsal_accessmode_t dir_mode;
-  fsal_uid_t        dir_owner;
-  fsal_gid_t        dir_group;
-    
-  struct ghostfs_dir_def__ * next;
-  
+  fsal_uid_t dir_owner;
+  fsal_gid_t dir_group;
+
+  struct ghostfs_dir_def__ *next;
+
 } ghostfs_dir_def_t;
 
+typedef struct fs_specific_initinfo__ {
+  fsal_accessmode_t root_mode;	/* the mode of fs root */
+  fsal_uid_t root_owner;	/* the owner of fs root */
+  fsal_gid_t root_group;	/* the group of fs root */
+  int dot_dot_root_eq_root;	/* indicates if fs root contains a '..' entry pointing on itself */
+  int root_access;		/* indicates if root can access everything */
 
-typedef struct fs_specific_initinfo__{    
-  fsal_accessmode_t  root_mode; /* the mode of fs root */
-  fsal_uid_t         root_owner;/* the owner of fs root */
-  fsal_gid_t         root_group;/* the group of fs root */
-  int                dot_dot_root_eq_root; /* indicates if fs root contains a '..' entry pointing on itself */
-  int                root_access; /* indicates if root can access everything */
-  
-  ghostfs_dir_def_t * dir_list;
-  
+  ghostfs_dir_def_t *dir_list;
+
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
 
 typedef struct fsal_cookie__ {
-  GHOSTFS_cookie_t   cookie;
+  GHOSTFS_cookie_t cookie;
 } fsal_cookie_t;
 
-static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING
-    = { (GHOSTFS_cookie_t) NULL };
+static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { (GHOSTFS_cookie_t) NULL };
 
-typedef void * fsal_lockdesc_t;  /**< not implemented in ghostfs */
-typedef void * fsal_export_context_t;  
+typedef void *fsal_lockdesc_t;	 /**< not implemented in ghostfs */
+typedef void *fsal_export_context_t;
 
 typedef struct {
-  
-  fsal_cred_t               credential;
-  fsal_export_context_t *   export_context;
-      
+
+  fsal_cred_t credential;
+  fsal_export_context_t *export_context;
+
 } fsal_op_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)
@@ -191,16 +183,14 @@ typedef struct {
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__{  
-  dir_descriptor_t  dir_descriptor; /* GHOSTFS dirdescriptor */
-  fsal_op_context_t context;       /* credential for readdir operations */
+typedef struct fsal_dir__ {
+  dir_descriptor_t dir_descriptor;	/* GHOSTFS dirdescriptor */
+  fsal_op_context_t context;	/* credential for readdir operations */
 } fsal_dir_t;
-    
-typedef void * fsal_file_t;     /**< not implemented in ghostfs */
 
+typedef void *fsal_file_t;	/**< not implemented in ghostfs */
 
 /* no fd in ghostfs for the moment */
 #define FSAL_FILENO( p_fsal_file )  ( 1 )
 
-#endif /* _FSAL_TYPES_SPECIFIC_H */
-
+#endif				/* _FSAL_TYPES_SPECIFIC_H */

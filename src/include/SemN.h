@@ -21,24 +21,22 @@
  *  Synchronization features
  */
 
-
 typedef struct semaphore {
 
-    pthread_mutex_t   mutex;
-    pthread_cond_t    cond;
-    int               count;
-        
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+  int count;
+
 } semaphore_t;
 
 /** Initializes a semaphore. */
-int semaphore_init(semaphore_t * sem,int value);
+int semaphore_init(semaphore_t * sem, int value);
 /** Destroys a semaphore. */
 int semaphore_destroy(semaphore_t * sem);
-        
+
 /** Takes a token. */
 int semaphore_P(semaphore_t * sem);
 /** Give back a token. */
 int semaphore_V(semaphore_t * sem);
-
 
 #endif

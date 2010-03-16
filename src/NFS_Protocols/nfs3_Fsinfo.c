@@ -92,7 +92,6 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -124,8 +123,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 
-
-
 /**
  * nfs3_Fsinfo: Implements NFSPROC3_FSINFO
  *
@@ -143,94 +140,84 @@
  *
  */
 
-int nfs3_Fsinfo( nfs_arg_t               * parg,    
-                 exportlist_t            * pexport, 
-                 fsal_op_context_t             * pcontext,   
-                 cache_inode_client_t    * pclient,
-                 hash_table_t            * ht,
-                 struct svc_req          * preq,    
-                 nfs_res_t               * pres )
+int nfs3_Fsinfo(nfs_arg_t * parg,
+		exportlist_t * pexport,
+		fsal_op_context_t * pcontext,
+		cache_inode_client_t * pclient,
+		hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
-	static char   __attribute__(( __unused__ ))     funcName[] = "nfs3_Fsinfo";
+  static char __attribute__ ((__unused__)) funcName[] = "nfs3_Fsinfo";
 
-  cache_inode_status_t      cache_status ;
-  cache_entry_t           * pentry = NULL ;
-  cache_inode_fsal_data_t   fsal_data ;
-  fsal_attrib_list_t        attr ;
-  
+  cache_inode_status_t cache_status;
+  cache_entry_t *pentry = NULL;
+  cache_inode_fsal_data_t fsal_data;
+  fsal_attrib_list_t attr;
+
   /* to avoid setting it on each error case */
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if( nfs3_FhandleToFSAL( &(parg->arg_fsinfo3.fsroot), &fsal_data.handle, pcontext ) == 0 )
-	return NFS_REQ_DROP;
+  if (nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.handle, pcontext) == 0)
+    return NFS_REQ_DROP;
 
   /* Set the cookie */
-  fsal_data.cookie = DIR_START ;
+  fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if( ( pentry = cache_inode_get( &fsal_data, 
-                                  &attr, 
-                                  ht, 
-                                  pclient, 
-                                  pcontext, 
-                                  &cache_status ) ) == NULL )
+  if ((pentry = cache_inode_get(&fsal_data,
+				&attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
-      pres->res_fsinfo3.status = NFS3ERR_STALE ;
-      return NFS_REQ_OK ;
+      pres->res_fsinfo3.status = NFS3ERR_STALE;
+      return NFS_REQ_OK;
     }
-  
-  
-	/*
-	 * New fields were added to nfs_config_t to handle this value. We use
-	 * them 
-	 */
+
+  /*
+   * New fields were added to nfs_config_t to handle this value. We use
+   * them 
+   */
 
 #define FSINFO_FIELD pres->res_fsinfo3.FSINFO3res_u.resok
-	FSINFO_FIELD.rtmax  = pexport->MaxRead;
-	FSINFO_FIELD.rtpref = pexport->PrefRead;
+  FSINFO_FIELD.rtmax = pexport->MaxRead;
+  FSINFO_FIELD.rtpref = pexport->PrefRead;
 
-	/* This field is generally unused, it will be removed in V4 */
-	FSINFO_FIELD.rtmult = DEV_BSIZE;
+  /* This field is generally unused, it will be removed in V4 */
+  FSINFO_FIELD.rtmult = DEV_BSIZE;
 
-	FSINFO_FIELD.wtmax  = pexport->MaxWrite;
-	FSINFO_FIELD.wtpref = pexport->PrefWrite;
+  FSINFO_FIELD.wtmax = pexport->MaxWrite;
+  FSINFO_FIELD.wtpref = pexport->PrefWrite;
 
-	/* This field is generally unused, it will be removed in V4 */
-	FSINFO_FIELD.wtmult = DEV_BSIZE;
+  /* This field is generally unused, it will be removed in V4 */
+  FSINFO_FIELD.wtmult = DEV_BSIZE;
 
-	FSINFO_FIELD.dtpref = pexport->PrefReaddir ;
+  FSINFO_FIELD.dtpref = pexport->PrefReaddir;
 
-	FSINFO_FIELD.maxfilesize = FSINFO_MAX_FILESIZE;
-	FSINFO_FIELD.time_delta.seconds = 1;
-	FSINFO_FIELD.time_delta.nseconds = 0;
+  FSINFO_FIELD.maxfilesize = FSINFO_MAX_FILESIZE;
+  FSINFO_FIELD.time_delta.seconds = 1;
+  FSINFO_FIELD.time_delta.nseconds = 0;
 
 #ifdef _DEBUG_NFSPROTO
-	printf("rtmax = %d | rtpref = %d | trmult = %d\n",
-	       FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
-	printf("wtmax = %d | wtpref = %d | wrmult = %d\n",
-	       FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
-	printf("dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref, FSINFO_FIELD.maxfilesize);
+  printf("rtmax = %d | rtpref = %d | trmult = %d\n",
+	 FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
+  printf("wtmax = %d | wtpref = %d | wrmult = %d\n",
+	 FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
+  printf("dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref,
+	 FSINFO_FIELD.maxfilesize);
 #endif
 
+  /*
+   * Allow all kinds of operations to be performed on the server
+   * through NFS v3 
+   */
+  FSINFO_FIELD.properties = FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
 
-	/*
-	 * Allow all kinds of operations to be performed on the server
-	 * through NFS v3 
-	 */
-	FSINFO_FIELD.properties = FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
+  nfs_SetPostOpAttr(pcontext, pexport,
+		    pentry,
+		    &attr, &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
+  pres->res_fsinfo3.status = NFS3_OK;
 
-	nfs_SetPostOpAttr( pcontext, pexport,
-                     pentry, 
-                     &attr,
-                     &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
-	pres->res_fsinfo3.status = NFS3_OK;
-
-
-	return NFS_REQ_OK ;
-} /* nfs3_Fsinfo */
-
+  return NFS_REQ_OK;
+}				/* nfs3_Fsinfo */
 
 /**
  * nfs3_Fsinfo_Free: Frees the result structure allocated for nfs3_Fsinfo.
@@ -240,8 +227,8 @@ int nfs3_Fsinfo( nfs_arg_t               * parg,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nfs3_Fsinfo_Free( nfs_res_t * pres )
+void nfs3_Fsinfo_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* nfs3_Fsinfo_Free */
+  return;
+}				/* nfs3_Fsinfo_Free */

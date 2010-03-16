@@ -21,7 +21,6 @@
 #include "namespace.h"
 #include "fsal_common.h"
 
-
 /**
  * FSAL_unlink:
  * Remove a filesystem object .
@@ -50,108 +49,105 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
- 
-fsal_status_t FSAL_unlink(
-    fsal_handle_t           * parentdir_handle,     /* IN */
-    fsal_name_t             * p_object_name,        /* IN */
-    fsal_op_context_t       * p_context,            /* IN */
-    fsal_attrib_list_t      * parentdir_attributes  /* [IN/OUT ] */
-){
-  
-   int rc;
-   fsal_status_t st;
-   fsal_handle_t obj_handle;
-   char parent_path[FSAL_MAX_PATH_LEN];
-   char child_path[FSAL_MAX_PATH_LEN];
-   struct stat     stbuff;
-  
-   /* sanity checks.
-    * note : parentdir_attributes are optional.
-    *        parentdir_handle is mandatory,
-    *        because, we do not allow to delete FS root !
-    */
-   if ( !parentdir_handle || !p_context || !p_object_name)
-        Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_unlink);
- 
-   /* set current FS context */
-   fsal_set_thread_context( p_context );
-  
-   /* get parent directory path */
-   
-   rc = NamespacePath( parentdir_handle->inode,
-                       parentdir_handle->device,
-                       parentdir_handle->validator,
-                       parent_path );
-   if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_unlink );
-   
-   /* We have to know what type of entry it is,
-    * to switch between "unlink" and "rmdir".
-    *
-    * To do this, do a getattr.
-    */
-   FSAL_internal_append_path( child_path, parent_path, p_object_name->name ); 
-   
-   TakeTokenFSCall();   
-   rc = p_fs_ops->getattr( child_path, &stbuff );   
-   ReleaseTokenFSCall();
 
-   if ( rc ) Return( fuse2fsal_error(rc,FALSE), rc , INDEX_FSAL_unlink );
+fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,	/* IN */
+			  fsal_name_t * p_object_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_attrib_list_t * parentdir_attributes	/* [IN/OUT ] */
+    )
+{
 
-   /* check type */
-   
-   if ( posix2fsal_type( stbuff.st_mode ) == FSAL_TYPE_DIR )
-   {
-       /* proceed rmdir call */
-       
-       /* operation not provided by filesystem */
-       if ( !p_fs_ops->rmdir )
-            Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_unlink);
-       
-       TakeTokenFSCall();   
-       rc = p_fs_ops->rmdir( child_path ); 
-       ReleaseTokenFSCall();       
-       
-   }
-   else
-   {
-       /* proceed unlink call */
-       
-       /* operation not provided by filesystem */
-       if ( !p_fs_ops->unlink )
-            Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_unlink);
-       
-       TakeTokenFSCall();   
-       rc = p_fs_ops->unlink( child_path ); 
-       ReleaseTokenFSCall();       
-       
-   }
-   
-   if ( rc == 0 || rc == -ENOENT )   
-   {
-       /* remove the entry from namespace */
-       NamespaceRemove( parentdir_handle->inode, parentdir_handle->device,
-                        parentdir_handle->validator,
-                        p_object_name->name );
-   }
+  int rc;
+  fsal_status_t st;
+  fsal_handle_t obj_handle;
+  char parent_path[FSAL_MAX_PATH_LEN];
+  char child_path[FSAL_MAX_PATH_LEN];
+  struct stat stbuff;
 
-   if ( rc ) Return( fuse2fsal_error(rc,FALSE), rc , INDEX_FSAL_unlink );
-       
-   if (parentdir_attributes)
-   {
-     st = FSAL_getattrs( parentdir_handle, p_context , parentdir_attributes );
+  /* sanity checks.
+   * note : parentdir_attributes are optional.
+   *        parentdir_handle is mandatory,
+   *        because, we do not allow to delete FS root !
+   */
+  if (!parentdir_handle || !p_context || !p_object_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
-     /* On error, we set a flag in the returned attributes */
+  /* set current FS context */
+  fsal_set_thread_context(p_context);
 
-     if ( FSAL_IS_ERROR( st ) )
-     {
-       FSAL_CLEAR_MASK( parentdir_attributes->asked_attributes );
-       FSAL_SET_MASK( parentdir_attributes->asked_attributes,
-           FSAL_ATTR_RDATTR_ERR );
-     }
-   }
-  
+  /* get parent directory path */
+
+  rc = NamespacePath(parentdir_handle->inode,
+		     parentdir_handle->device, parentdir_handle->validator, parent_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_unlink);
+
+  /* We have to know what type of entry it is,
+   * to switch between "unlink" and "rmdir".
+   *
+   * To do this, do a getattr.
+   */
+  FSAL_internal_append_path(child_path, parent_path, p_object_name->name);
+
+  TakeTokenFSCall();
+  rc = p_fs_ops->getattr(child_path, &stbuff);
+  ReleaseTokenFSCall();
+
+  if (rc)
+    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
+
+  /* check type */
+
+  if (posix2fsal_type(stbuff.st_mode) == FSAL_TYPE_DIR)
+    {
+      /* proceed rmdir call */
+
+      /* operation not provided by filesystem */
+      if (!p_fs_ops->rmdir)
+	Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
+
+      TakeTokenFSCall();
+      rc = p_fs_ops->rmdir(child_path);
+      ReleaseTokenFSCall();
+
+    } else
+    {
+      /* proceed unlink call */
+
+      /* operation not provided by filesystem */
+      if (!p_fs_ops->unlink)
+	Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlink);
+
+      TakeTokenFSCall();
+      rc = p_fs_ops->unlink(child_path);
+      ReleaseTokenFSCall();
+
+    }
+
+  if (rc == 0 || rc == -ENOENT)
+    {
+      /* remove the entry from namespace */
+      NamespaceRemove(parentdir_handle->inode, parentdir_handle->device,
+		      parentdir_handle->validator, p_object_name->name);
+    }
+
+  if (rc)
+    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_unlink);
+
+  if (parentdir_attributes)
+    {
+      st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
+
+      /* On error, we set a flag in the returned attributes */
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
+	  FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+    }
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_unlink);
-  
-}
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink);
 
+}

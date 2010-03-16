@@ -100,18 +100,22 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 
-typedef enum cache_content_caching_type__ { CACHE_CONTENT_NO_POLICY    = 0 ,
-                                            CACHE_CONTENT_NOT_CACHED   = 1 ,
-                                            CACHE_CONTENT_FULLY_CACHED = 2 } cache_content_caching_type_t ;
+typedef enum cache_content_caching_type__ { CACHE_CONTENT_NO_POLICY = 0,
+  CACHE_CONTENT_NOT_CACHED = 1,
+  CACHE_CONTENT_FULLY_CACHED = 2
+} cache_content_caching_type_t;
 
 typedef struct cache_content_policy_data__ {
-        unsigned int UseMaxCacheSize ;
-	uint64_t     MaxCacheSize ;
-} cache_content_policy_data_t ; 
+  unsigned int UseMaxCacheSize;
+  uint64_t MaxCacheSize;
+} cache_content_policy_data_t;
 
-cache_content_caching_type_t cache_content_cache_behaviour( cache_entry_t               * pentry_inode,
-                                                            cache_content_policy_data_t * ppolicy_data,
-                                                            cache_content_client_t      * pclient,
-                                                            cache_content_status_t      * pstatus ) ;
- 
-#endif /* _CACHE_CONTENT_POLICY_H */
+cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentry_inode,
+							   cache_content_policy_data_t *
+							   ppolicy_data,
+							   cache_content_client_t *
+							   pclient,
+							   cache_content_status_t *
+							   pstatus);
+
+#endif				/* _CACHE_CONTENT_POLICY_H */

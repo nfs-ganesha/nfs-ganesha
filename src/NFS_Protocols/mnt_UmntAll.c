@@ -90,12 +90,11 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -136,26 +135,27 @@
  *
  */
 
-int mnt_UmntAll( nfs_arg_t         * parg    /* IN     */,
-              exportlist_t         * pexport /* IN     */,
-              fsal_op_context_t          * pcontext   /* IN     */,
-              cache_inode_client_t * pclient /* INOUT  */,
-              hash_table_t         * ht      /* INOUT  */, 
-              struct svc_req       * preq    /* IN     */,
-              nfs_res_t            * pres    /* OUT    */ ) 
+int mnt_UmntAll(nfs_arg_t * parg /* IN     */ ,
+		exportlist_t * pexport /* IN     */ ,
+		fsal_op_context_t * pcontext /* IN     */ ,
+		cache_inode_client_t * pclient /* INOUT  */ ,
+		hash_table_t * ht /* INOUT  */ ,
+		struct svc_req *preq /* IN     */ ,
+		nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "REQUEST PROCESSING: Calling mnt_UmntAll" ) ;
-  
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+		    "REQUEST PROCESSING: Calling mnt_UmntAll");
+
   /* Just empty the Mount list, take void as argument and returns void */
-  if( !nfs_Purge_MountList( ) )
+  if (!nfs_Purge_MountList())
     {
       /* Purge mount list failed */
-      DisplayLogJd( pclient->log_outputs, "UMOUNT ALL: Error when emptying the mount list" ) ;
+      DisplayLogJd(pclient->log_outputs,
+		   "UMOUNT ALL: Error when emptying the mount list");
     }
-  
-	return NFS_REQ_OK ;
-} /* mnt_UmntAll */
 
+  return NFS_REQ_OK;
+}				/* mnt_UmntAll */
 
 /**
  * mnt_UmntAll_Free: Frees the result structure allocated for mnt_UmntAll.
@@ -165,8 +165,8 @@ int mnt_UmntAll( nfs_arg_t         * parg    /* IN     */,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_UmntAll_Free( nfs_res_t * pres )
+void mnt_UmntAll_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* mnt_UmntAll_Free */ 
+  return;
+}				/* mnt_UmntAll_Free */

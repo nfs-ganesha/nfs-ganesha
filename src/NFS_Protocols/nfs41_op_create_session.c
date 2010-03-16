@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +124,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime ;
+extern time_t ServerBootTime;
 
 /**
  *
@@ -142,126 +142,124 @@ extern time_t ServerBootTime ;
  *
  */
 
-int nfs41_op_create_session(  struct nfs_argop4 * op ,    
-                              compound_data_t * data,
-                              struct nfs_resop4 * resp)
+int nfs41_op_create_session(struct nfs_argop4 *op,
+			    compound_data_t * data, struct nfs_resop4 *resp)
 {
-  nfs_client_id_t     * pnfs_clientid ;
-  nfs41_session_t     * pnfs41_session = NULL ;
-  clientid4             clientid = 0 ;
-  nfs_worker_data_t   * pworker = NULL ;
+  nfs_client_id_t *pnfs_clientid;
+  nfs41_session_t *pnfs41_session = NULL;
+  clientid4 clientid = 0;
+  nfs_worker_data_t *pworker = NULL;
 
-  pworker = (nfs_worker_data_t *)data->pclient->pworker ;
-
+  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
 #define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
 #define res_CREATE_SESSION4 resp->nfs_resop4_u.opcreate_session
 
-  resp->resop = NFS4_OP_CREATE_SESSION ;
-  res_CREATE_SESSION4.csr_status = NFS4_OK ;
-  clientid =  arg_CREATE_SESSION4.csa_clientid ;
+  resp->resop = NFS4_OP_CREATE_SESSION;
+  res_CREATE_SESSION4.csr_status = NFS4_OK;
+  clientid = arg_CREATE_SESSION4.csa_clientid;
 
-  DisplayLogLevel( NIV_DEBUG, "CREATE_SESSION clientid = %llx", clientid ) ;
+  DisplayLogLevel(NIV_DEBUG, "CREATE_SESSION clientid = %llx", clientid);
 
-  
   /* Does this id already exists ? */
-  if( nfs_client_id_Get_Pointer( clientid , &pnfs_clientid ) != CLIENT_ID_SUCCESS )
+  if (nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
     {
-       /* The client id does not exist: stale client id */
-       res_CREATE_SESSION4.csr_status = NFS4ERR_STALE_CLIENTID ;
-       return res_CREATE_SESSION4.csr_status ;
+      /* The client id does not exist: stale client id */
+      res_CREATE_SESSION4.csr_status = NFS4ERR_STALE_CLIENTID;
+      return res_CREATE_SESSION4.csr_status;
     }
 
-  data->use_drc = FALSE ;
+  data->use_drc = FALSE;
 
-  if( data->oppos == 0 )
-   {
+  if (data->oppos == 0)
+    {
       /* Special case : the request is used without use of OP_SEQUENCE */
-      if( ( arg_CREATE_SESSION4.csa_sequence +1 == pnfs_clientid->create_session_sequence ) &&
-	  ( pnfs_clientid->create_session_slot.cache_used == TRUE ) )
-       {
-	  data->use_drc = TRUE ;
-          data->pcached_res = pnfs_clientid->create_session_slot.cached_result ;
+      if ((arg_CREATE_SESSION4.csa_sequence + 1 == pnfs_clientid->create_session_sequence)
+	  && (pnfs_clientid->create_session_slot.cache_used == TRUE))
+	{
+	  data->use_drc = TRUE;
+	  data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
 
-          res_CREATE_SESSION4.csr_status = NFS4_OK ;
-          return res_CREATE_SESSION4.csr_status ;
-       }
-      else if( arg_CREATE_SESSION4.csa_sequence != pnfs_clientid->create_session_sequence )
-       {
-          res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED ;
-          return res_CREATE_SESSION4.csr_status ;
-       }
+	  res_CREATE_SESSION4.csr_status = NFS4_OK;
+	  return res_CREATE_SESSION4.csr_status;
+      }
+	else if (arg_CREATE_SESSION4.csa_sequence !=
+		   pnfs_clientid->create_session_sequence)
+	{
+	  res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED;
+	  return res_CREATE_SESSION4.csr_status;
+	}
 
-   }
+    }
 
-  pnfs_clientid->confirmed = CONFIRMED_CLIENT_ID ;
-  pnfs_clientid->cb_program = arg_CREATE_SESSION4.csa_cb_program ;
+  pnfs_clientid->confirmed = CONFIRMED_CLIENT_ID;
+  pnfs_clientid->cb_program = arg_CREATE_SESSION4.csa_cb_program;
 
-  pnfs_clientid->create_session_sequence += 1 ;
+  pnfs_clientid->create_session_sequence += 1;
   /** @todo: BUGAZOMEU Gerer les parametres de secu */
 
   /* Record session related information at the right place */
-  GET_PREALLOC( pnfs41_session,
-                data->pclient->pool_session,
-                data->pclient->nb_pre_state_v4,
-		nfs41_session_t,
- 		next_alloc ) ;
+  GET_PREALLOC(pnfs41_session,
+	       data->pclient->pool_session,
+	       data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
 
-  if( pnfs41_session == NULL )
-   {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ;
-       return res_CREATE_SESSION4.csr_status ;
-   }
-
-  /* Check flags value (test CSESS15) */
-  if( arg_CREATE_SESSION4.csa_flags > CREATE_SESSION4_FLAG_CONN_RDMA )
-   {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_INVAL ;
-       return res_CREATE_SESSION4.csr_status ;
-   }
-
-  memset( (char *)pnfs41_session, 0, sizeof( nfs41_session_t ) ) ;
-  pnfs41_session->clientid = clientid ;
-  pnfs41_session->sequence = 1 ;
-  pnfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN ;
-  pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs ;
-  pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs ;
-
-  /* Set ca_maxrequests */
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS ;
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS ;
-
-  if( nfs41_Build_sessionid( &clientid, pnfs41_session->session_id ) != 1 )
+  if (pnfs41_session == NULL)
     {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ;
-       return res_CREATE_SESSION4.csr_status ;
+      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
+      return res_CREATE_SESSION4.csr_status;
     }
 
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence = 1 ;
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN ;
+  /* Check flags value (test CSESS15) */
+  if (arg_CREATE_SESSION4.csa_flags > CREATE_SESSION4_FLAG_CONN_RDMA)
+    {
+      res_CREATE_SESSION4.csr_status = NFS4ERR_INVAL;
+      return res_CREATE_SESSION4.csr_status;
+    }
+
+  memset((char *)pnfs41_session, 0, sizeof(nfs41_session_t));
+  pnfs41_session->clientid = clientid;
+  pnfs41_session->sequence = 1;
+  pnfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
+  pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
+  pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
+
+  /* Set ca_maxrequests */
+  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+
+  if (nfs41_Build_sessionid(&clientid, pnfs41_session->session_id) != 1)
+    {
+      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
+      return res_CREATE_SESSION4.csr_status;
+    }
+
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence = 1;
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags =
+      CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 
   /* return the input for wantinf of something better (will change in later versions) */
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs = pnfs41_session->fore_channel_attrs ;
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs = pnfs41_session->back_channel_attrs ;
- 
-  memcpy( res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid, pnfs41_session->session_id, NFS4_SESSIONID_SIZE ) ;
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs =
+      pnfs41_session->fore_channel_attrs;
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs =
+      pnfs41_session->back_channel_attrs;
+
+  memcpy(res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid,
+	 pnfs41_session->session_id, NFS4_SESSIONID_SIZE);
 
   /* Create Session replay cache */
-  data->pcached_res = pnfs_clientid->create_session_slot.cached_result ;
-  pnfs_clientid->create_session_slot.cache_used = TRUE ;
+  data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
+  pnfs_clientid->create_session_slot.cache_used = TRUE;
 
-  if( !nfs41_Session_Set(  pnfs41_session->session_id, pnfs41_session ) )
+  if (!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
     {
-       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT ; /* Maybe a more precise status would be better */
-       return res_CREATE_SESSION4.csr_status ;
+      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;	/* Maybe a more precise status would be better */
+      return res_CREATE_SESSION4.csr_status;
     }
 
   /* Successful exit */
-  res_CREATE_SESSION4.csr_status = NFS4_OK ;
-  return res_CREATE_SESSION4.csr_status ;
-} /* nfs41_op_create_session */
-
-
+  res_CREATE_SESSION4.csr_status = NFS4_OK;
+  return res_CREATE_SESSION4.csr_status;
+}				/* nfs41_op_create_session */
 
 /**
  * nfs41_op_create_session_Free: frees what was allocared to handle nfs41_op_create_session.
@@ -272,9 +270,9 @@ int nfs41_op_create_session(  struct nfs_argop4 * op ,
  *
  * @return nothing (void function )
  * 
- */ 
-void nfs41_op_create_session_Free( CREATE_SESSION4res * resp )
+ */
+void nfs41_op_create_session_Free(CREATE_SESSION4res * resp)
 {
   /* To be completed */
-  return ;
-} /* nfs41_op_create_session_Free */
+  return;
+}				/* nfs41_op_create_session_Free */

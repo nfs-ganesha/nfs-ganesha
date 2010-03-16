@@ -94,7 +94,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,11 +124,9 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 
-
 #define arg_GETATTR4 op->nfs_argop4_u.opgetattr
 #define res_GETATTR4 resp->nfs_resop4_u.opgetattr
-#define res_FATTR4  res_GETATTR4.GETATTR4res_u.resok4.obj_attributes 
- 
+#define res_FATTR4  res_GETATTR4.GETATTR4res_u.resok4.obj_attributes
 
 /**
  *
@@ -143,103 +141,100 @@
  * @return NFS4_OK 
  * 
  */
-int nfs4_op_getattr(  struct nfs_argop4 * op ,   
-                      compound_data_t   * data,
-                      struct nfs_resop4 * resp)
+int nfs4_op_getattr(struct nfs_argop4 *op,
+		    compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t   attr ;
-  cache_inode_status_t cache_status ;
-  
-  char __attribute__(( __unused__ )) funcname[] = "nfs4_op_getattr" ;
+  fsal_attrib_list_t attr;
+  cache_inode_status_t cache_status;
+
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
 
   /* This is a NFS4_OP_GETTAR */
-  resp->resop = NFS4_OP_GETATTR ;
+  resp->resop = NFS4_OP_GETATTR;
 
   /* If there is no FH */
-  if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
-      res_GETATTR4.status = NFS4ERR_NOFILEHANDLE ;
-      return NFS4ERR_NOFILEHANDLE ;
+      res_GETATTR4.status = NFS4ERR_NOFILEHANDLE;
+      return NFS4ERR_NOFILEHANDLE;
     }
-  
+
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->currentFH ) ) )
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
-      res_GETATTR4.status = NFS4ERR_BADHANDLE ;
-      return NFS4ERR_BADHANDLE ;
+      res_GETATTR4.status = NFS4ERR_BADHANDLE;
+      return NFS4ERR_BADHANDLE;
     }
-  
+
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
-      res_GETATTR4.status = NFS4ERR_FHEXPIRED ;
-      return NFS4ERR_FHEXPIRED ;
+      res_GETATTR4.status = NFS4ERR_FHEXPIRED;
+      return NFS4ERR_FHEXPIRED;
     }
 
   /* Pseudo Fs management */
-  if( nfs4_Is_Fh_Pseudo( &(data->currentFH) ) )
-    return nfs4_op_getattr_pseudo( op, data, resp ) ;
+  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
+    return nfs4_op_getattr_pseudo(op, data, resp);
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
-  if( nfs4_Is_Fh_Xattr( &(data->currentFH ) ) ) 
-    return nfs4_op_getattr_xattr( op, data, resp ) ;
+  if (nfs4_Is_Fh_Xattr(&(data->currentFH)))
+    return nfs4_op_getattr_xattr(op, data, resp);
 
 #ifdef _DEBUG_NFS_V4
-  printf( "CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ", data->currentFH.nfs_fh4_len) ;
-  for( cpt = 0 ; cpt < data->currentFH.nfs_fh4_len ; cpt ++ )
-    printf( "%02X", data->currentFH.nfs_fh4_val[cpt] );
-  printf( " } \n" ) ;
+  printf("CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ",
+	 data->currentFH.nfs_fh4_len);
+  for (cpt = 0; cpt < data->currentFH.nfs_fh4_len; cpt++)
+    printf("%02X", data->currentFH.nfs_fh4_val[cpt]);
+  printf(" } \n");
 #endif
 
   /* Sanity check: if no attributes are wanted, nothing is to be done.
    * In this case NFS4_OK is to be returned */
-  if( arg_GETATTR4.attr_request.bitmap4_len == 0 )
+  if (arg_GETATTR4.attr_request.bitmap4_len == 0)
     {
-      res_GETATTR4.status = NFS4_OK ;
-      return res_GETATTR4.status ;
+      res_GETATTR4.status = NFS4_OK;
+      return res_GETATTR4.status;
     }
 
   /* Get only attributes that are allowed to be read */
-  if( !nfs4_Fattr_Check_Access_Bitmap( &arg_GETATTR4.attr_request, FATTR4_ATTR_READ ) )
+  if (!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4.attr_request, FATTR4_ATTR_READ))
     {
-      res_GETATTR4.status = NFS4ERR_INVAL ;
-      return res_GETATTR4.status ;
+      res_GETATTR4.status = NFS4ERR_INVAL;
+      return res_GETATTR4.status;
     }
 
   /* Ask only for supported attributes */
-  if( !nfs4_Fattr_Supported_Bitmap( &arg_GETATTR4.attr_request ) )
+  if (!nfs4_Fattr_Supported_Bitmap(&arg_GETATTR4.attr_request))
     {
-       res_GETATTR4.status = NFS4ERR_ATTRNOTSUPP ;
-       return res_GETATTR4.status ;
+      res_GETATTR4.status = NFS4ERR_ATTRNOTSUPP;
+      return res_GETATTR4.status;
     }
-  
+
   /*
    * Get attributes.
    */
-  if( cache_inode_getattr( data->current_entry, 
-                           &attr, 
-                           data->ht,
-                           data->pclient, 
-                           data->pcontext, 
-                           &cache_status ) == CACHE_INODE_SUCCESS )
+  if (cache_inode_getattr(data->current_entry,
+			  &attr,
+			  data->ht,
+			  data->pclient,
+			  data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
-      if( nfs4_FSALattr_To_Fattr( data->pexport,
-                                  &attr,
-                                  &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes), 
-                                  data, 
-                                  &(data->currentFH),
-                                  &(arg_GETATTR4.attr_request) ) != 0 )
-        res_GETATTR4.status = NFS4ERR_SERVERFAULT ;
-      else
-        res_GETATTR4.status = NFS4_OK ;
-      
-      return res_GETATTR4.status ;
-    }
-  res_GETATTR4.status = nfs4_Errno( cache_status ) ;
-  
-  return res_GETATTR4.status ;
-} /* nfs4_op_getattr */
+      if (nfs4_FSALattr_To_Fattr(data->pexport,
+				 &attr,
+				 &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
+				 data,
+				 &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+	res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+	else
+	res_GETATTR4.status = NFS4_OK;
 
+      return res_GETATTR4.status;
+    }
+  res_GETATTR4.status = nfs4_Errno(cache_status);
+
+  return res_GETATTR4.status;
+}				/* nfs4_op_getattr */
 
 /**
  * nfs4_op_getattr_Free: frees what was allocared to handle nfs4_op_getattr.
@@ -251,15 +246,16 @@ int nfs4_op_getattr(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_getattr_Free( GETATTR4res * resp )
-{ 
-  if( resp->status == NFS4_OK )
+void nfs4_op_getattr_Free(GETATTR4res * resp)
+{
+  if (resp->status == NFS4_OK)
     {
-      if( resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val != NULL ) 
-        Mem_Free( (char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val ) ; 
+      if (resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val != NULL)
+	Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val);
 
-      if( resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val != NULL ) 
-       Mem_Free( (char *)resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val ) ; 
+      if (resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val != NULL)
+	Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.
+		 attr_vals.attrlist4_val);
     }
-  return ;
-} /* nfs4_op_getattr_Free */
+  return;
+}				/* nfs4_op_getattr_Free */

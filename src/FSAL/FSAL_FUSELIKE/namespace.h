@@ -13,7 +13,7 @@
  *          it was seen in the filesystem.
  *      out: the effective generation number that was given.
  */
-int NamespaceInit( ino_t root_inode, dev_t root_dev, unsigned int * p_root_gen );
+int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen);
 
 /* Add a child entry
  * p_new_gen in/out:
@@ -24,23 +24,22 @@ int NamespaceInit( ino_t root_inode, dev_t root_dev, unsigned int * p_root_gen )
  * \return ESTALE if directoy gen number is not correct
  *         
  */
-int NamespaceAdd( ino_t   parent_ino, dev_t parent_dev, unsigned int gen,
-                  char    * name,
-                  ino_t   entry_ino, dev_t entry_dev, unsigned int * p_new_gen );
+int NamespaceAdd(ino_t parent_ino, dev_t parent_dev, unsigned int gen,
+		 char *name, ino_t entry_ino, dev_t entry_dev, unsigned int *p_new_gen);
 
 /* Remove a child entry
  * \return ENOENT if directoy inode is unknown
  * \return ESTALE if directoy gen number is not correct
  */
-int NamespaceRemove( ino_t parent_ino, dev_t parent_dev, unsigned int gen,
-                     char         * name );
+int NamespaceRemove(ino_t parent_ino, dev_t parent_dev, unsigned int gen, char *name);
 
 /* Move an entry in the namespace
  * \return ENOENT if directoy inode is unknown
  * \return ESTALE if directoy gen number is not correct
  */
-int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen, char * name_src,
-                    ino_t parent_entry_tgt, dev_t tgt_dev, unsigned int tgtgen, char * name_tgt );
+int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
+		    char *name_src, ino_t parent_entry_tgt, dev_t tgt_dev,
+		    unsigned int tgtgen, char *name_tgt);
 
 /**
  * Get a possible full path for an entry.
@@ -51,11 +50,11 @@ int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen, 
  * \return ENOENT if inode is unknown
  * \return ESTALE if gen number is not correct
  */
-int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char * path);
+int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path);
 
 /**
  * retrieves the current generation number for a inode
  */
-int NamespaceGetGen(ino_t inode, dev_t dev, unsigned int * p_gen );
+int NamespaceGetGen(ino_t inode, dev_t dev, unsigned int *p_gen);
 
 #endif

@@ -81,22 +81,20 @@
  *
  *
  */
- 
+
 #ifndef _ERR_MFSL_H
 #define _ERR_MFSL_H
 
 #include <log_functions.h>
 
-static family_error_t __attribute__(( __unused__ ))  tab_errstatus_MFSL[] =
+static family_error_t __attribute__ ((__unused__)) tab_errstatus_MFSL[] =
 {
-  
+
 #define ERR_MFSL_NO_ERROR 0
-  {ERR_MFSL_NO_ERROR, "ERR_MFSL_NO_ERROR", "No error"},
-
-  {ERR_NULL, "ERR_NULL", "" }
+  {
+  ERR_MFSL_NO_ERROR, "ERR_MFSL_NO_ERROR", "No error"},
+  {
+  ERR_NULL, "ERR_NULL", ""}
 };
-
-
-
 
 #endif /*_ERR_MFSL_H*/

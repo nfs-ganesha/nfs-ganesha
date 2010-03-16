@@ -90,60 +90,51 @@
 /* setting this variable to TRUE causes datacache
  * to be flushed by garbage collector.
  */
-extern unsigned int force_flush_by_signal ;
+extern unsigned int force_flush_by_signal;
 
-
-typedef struct __nfs_start_info
-{
-    int                                 flush_datacache_mode;
-    int                                 dump_default_config;
-    unsigned int                        nb_flush_threads;
-    cache_content_flush_behaviour_t     flush_behaviour;
-    int                                 lw_mark_trigger ;
+typedef struct __nfs_start_info {
+  int flush_datacache_mode;
+  int dump_default_config;
+  unsigned int nb_flush_threads;
+  cache_content_flush_behaviour_t flush_behaviour;
+  int lw_mark_trigger;
 } nfs_start_info_t;
 
 /**
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-int nfs_prereq_init( char * program_name,
-                     char * host_name,
-                     int    debug_level,
-                     char * log_path  );
+int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
 
 /**
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
  */
-int nfs_set_param_default( nfs_parameter_t * p_nfs_param );
+int nfs_set_param_default(nfs_parameter_t * p_nfs_param);
 
 /**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
- */ 
-int nfs_set_param_from_conf( nfs_parameter_t * p_nfs_param,
-                             nfs_start_info_t * p_start_info,
-                             char * config_file );
+ */
+int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
+			    nfs_start_info_t * p_start_info, char *config_file);
 
 /**
  * nfs_check_param_consistency:
  * Checks parameters concistency (limits, ...)
- */ 
-int nfs_check_param_consistency( nfs_parameter_t * p_nfs_param );
+ */
+int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param);
 
 /**
  * nfs_start:
  * start NFS service
- */ 
-int nfs_start( nfs_parameter_t * p_nfs_param,
-               nfs_start_info_t * p_start_info );
-
+ */
+int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
 
 /**
  * nfs_stop:
  * stop NFS service and exit
- */ 
+ */
 void nfs_stop();
-
 
 #endif

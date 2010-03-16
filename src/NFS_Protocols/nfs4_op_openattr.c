@@ -97,7 +97,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -125,7 +125,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
 /**
  *
  * nfs4_op_openattr: Implemtation of NFS4_OP_OPENATTR
@@ -142,21 +141,19 @@
 #define arg_OPENATTR4 op->nfs_argop4_u.opopenattr
 #define res_OPENATTR4 resp->nfs_resop4_u.opopenattr
 
-int nfs4_op_openattr(  struct nfs_argop4 * op ,   
-                       compound_data_t   * data,
-                       struct nfs_resop4 * resp)
+int nfs4_op_openattr(struct nfs_argop4 *op,
+		     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_openattr" ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_openattr";
 
-  resp->resop = NFS4_OP_OPENATTR ;
-  res_OPENATTR4.status =  NFS4_OK ;
- 
-  res_OPENATTR4.status =  nfs4_fh_to_xattrfh( &(data->currentFH), &(data->currentFH ) ) ;
+  resp->resop = NFS4_OP_OPENATTR;
+  res_OPENATTR4.status = NFS4_OK;
+
+  res_OPENATTR4.status = nfs4_fh_to_xattrfh(&(data->currentFH), &(data->currentFH));
 
   return res_OPENATTR4.status;
-} /* nfs4_op_openattr */
+}				/* nfs4_op_openattr */
 
-    
 /**
  * nfs4_op_openattr_Free: frees what was allocared to handle nfs4_op_openattr.
  * 
@@ -167,8 +164,8 @@ int nfs4_op_openattr(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_openattr_Free( OPENATTR4res * resp )
+void nfs4_op_openattr_Free(OPENATTR4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_openattr_Free */
+  return;
+}				/* nfs4_op_openattr_Free */

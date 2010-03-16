@@ -72,88 +72,69 @@
 typedef caddr_t config_file_t;
 typedef caddr_t config_item_t;
 
-typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR} config_item_type;
+typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
 
 /* config_ParseFile:
  * Reads the content of a configuration file and
  * stores it in a memory structure.
  * \return NULL on error.
- */   
-config_file_t config_ParseFile(  char * file_path );
-
+ */
+config_file_t config_ParseFile(char *file_path);
 
 /* If config_ParseFile returns a NULL pointer,
  * config_GetErrorMsg returns a detailled message
  * to indicate the reason for this error.
  */
-char * config_GetErrorMsg();
+char *config_GetErrorMsg();
 
 /**
  * config_Print:
  * Print the content of the syntax tree
  * to a file.
  */
-void config_Print( FILE * output, config_file_t config );
-
+void config_Print(FILE * output, config_file_t config);
 
 /* Free the memory structure that store the configuration. */
-void config_Free( config_file_t config );
-
+void config_Free(config_file_t config);
 
 /* Indicates how many main blocks are defined into the config file.
  * \return A positive value if no error.
  *         Else return a negative error code.
  */
-int config_GetNbBlocks( config_file_t config );
-
+int config_GetNbBlocks(config_file_t config);
 
 /* retrieves a given block from the config file, from its index */
-config_item_t config_GetBlockByIndex( config_file_t config , unsigned int block_no );
-
+config_item_t config_GetBlockByIndex(config_file_t config, unsigned int block_no);
 
 /* Return the name of a block */
-char * config_GetBlockName( config_item_t block );
-
+char *config_GetBlockName(config_item_t block);
 
 /* Indicates how many items are defines in a block */
-int config_GetNbItems( config_item_t block );
-
+int config_GetNbItems(config_item_t block);
 
 /* Retrieves an item from a given block and the subitem index. */
-config_item_t config_GetItemByIndex( config_item_t block, unsigned int item_no );
+config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no);
 
 /* indicates which type of item it is */
-config_item_type    config_ItemType( config_item_t item );
+config_item_type config_ItemType(config_item_t item);
 
 /* Retrieves a key-value peer from a CONFIG_ITEM_VAR */
-int config_GetKeyValue(
-                        config_item_t item,
-                        char ** var_name,
-                        char ** var_value
-                       );
-
+int config_GetKeyValue(config_item_t item, char **var_name, char **var_value);
 
 /* Returns a block or variable with the specified name. This name can be "BLOCK::SUBBLOCK::SUBBLOCK" */
-config_item_t config_FindItemByName( config_file_t config,
-                                     const char *  name );
+config_item_t config_FindItemByName(config_file_t config, const char *name);
 
 /* Directly returns the value of the key with the specified name.
  * This name can be "BLOCK::SUBBLOCK::SUBBLOCK::VARNAME"
  */
-char * config_FindKeyValueByName( config_file_t config,
-                                  const char * key_name );
-
+char *config_FindKeyValueByName(config_file_t config, const char *key_name);
 
 /* Returns a block or variable with the specified name from the given block" */
-config_item_t config_GetItemByName( config_item_t block,
-                                    const char *  name );
+config_item_t config_GetItemByName(config_item_t block, const char *name);
 
 /* Directly returns the value of the key with the specified name
  * relative to the given block.
  */
-char * config_GetKeyValueByName( config_item_t block,
-                                 const char * key_name );
-
-
+char *config_GetKeyValueByName(config_item_t block, const char *key_name);
 
 #endif

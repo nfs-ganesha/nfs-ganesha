@@ -117,24 +117,22 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>  /* for having isalnum */
-#include <stdlib.h> /* for having atoi */
-#include <dirent.h> /* for having MAXNAMLEN */
+#include <ctype.h>		/* for having isalnum */
+#include <stdlib.h>		/* for having atoi */
+#include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #ifdef _USE_GSSRPC
@@ -150,7 +148,7 @@
 #endif
 #include "log_functions.h"
 #include "stuff_alloc.h"
-#include "nfs_core.h" 
+#include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
@@ -174,108 +172,107 @@ mountlist MNT_List_tail = NULL;
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs_Add_MountList_Entry( char * hostname, char * dirpath )
+int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 {
-#ifndef _NO_MOUNT_LIST  
-  mountlist pnew_mnt_list_entry ;
+#ifndef _NO_MOUNT_LIST
+  mountlist pnew_mnt_list_entry;
 #endif
 
   /* Sanity check */
-  if( hostname == NULL || dirpath == NULL )
-    return 0 ;
+  if (hostname == NULL || dirpath == NULL)
+    return 0;
 
-#ifndef _NO_MOUNT_LIST  
-    
+#ifndef _NO_MOUNT_LIST
+
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "struct mountbody" ) ;
-#endif 
+  BuddySetDebugLabel("struct mountbody");
+#endif
   /* Allocate the new entry */
-  if( ( pnew_mnt_list_entry = (mountlist)Mem_Alloc( sizeof( struct mountbody ) ) ) == NULL )
-    return 0 ;
+  if ((pnew_mnt_list_entry = (mountlist) Mem_Alloc(sizeof(struct mountbody))) == NULL)
+    return 0;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
-#endif 
-  
-  memset( pnew_mnt_list_entry , 0,  sizeof( struct mountbody ) );
+  BuddySetDebugLabel("N/A");
+#endif
+
+  memset(pnew_mnt_list_entry, 0, sizeof(struct mountbody));
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "ml_hostname" ) ;
-#endif 
-  if( (  pnew_mnt_list_entry->ml_hostname = (char *)Mem_Alloc( MAXHOSTNAMELEN ) ) == NULL )
+  BuddySetDebugLabel("ml_hostname");
+#endif
+  if ((pnew_mnt_list_entry->ml_hostname = (char *)Mem_Alloc(MAXHOSTNAMELEN)) == NULL)
     {
-      Mem_Free( pnew_mnt_list_entry ) ;
-      return 0 ;
+      Mem_Free(pnew_mnt_list_entry);
+      return 0;
     }
-  memset( pnew_mnt_list_entry->ml_hostname , 0,  MAXHOSTNAMELEN );
-  
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel( "ml_directory" ) ;
-#endif 
-  if( (  pnew_mnt_list_entry->ml_directory = (char *)Mem_Alloc( MAXPATHLEN ) ) == NULL )
-    {
-      Mem_Free( pnew_mnt_list_entry->ml_hostname ) ;
-      Mem_Free( pnew_mnt_list_entry ) ;
-      return 0 ;
-    }
-  memset( pnew_mnt_list_entry->ml_directory , 0,  MAXPATHLEN );    
-    
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
-#endif 
+  memset(pnew_mnt_list_entry->ml_hostname, 0, MAXHOSTNAMELEN);
 
+#ifdef _DEBUG_MEMLEAKS
+  /* For debugging memory leaks */
+  BuddySetDebugLabel("ml_directory");
+#endif
+  if ((pnew_mnt_list_entry->ml_directory = (char *)Mem_Alloc(MAXPATHLEN)) == NULL)
+    {
+      Mem_Free(pnew_mnt_list_entry->ml_hostname);
+      Mem_Free(pnew_mnt_list_entry);
+      return 0;
+    }
+  memset(pnew_mnt_list_entry->ml_directory, 0, MAXPATHLEN);
+
+#ifdef _DEBUG_MEMLEAKS
+  /* For debugging memory leaks */
+  BuddySetDebugLabel("N/A");
+#endif
 
   /* Copy the data */
-  strncpy( pnew_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN ) ;
-  strncpy( pnew_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) ;
-  
+  strncpy(pnew_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN);
+  strncpy(pnew_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN);
+
   /* initialize next pointer */
   pnew_mnt_list_entry->ml_next = NULL;
-      
+
   /* This should occur only for the first mount */
-  if( MNT_List_head == NULL )
+  if (MNT_List_head == NULL)
     {
-      MNT_List_head = pnew_mnt_list_entry ;
+      MNT_List_head = pnew_mnt_list_entry;
     }
-  
-  
+
   /* Append to the tail of the list */
-  if( MNT_List_tail == NULL )
-    MNT_List_tail = pnew_mnt_list_entry ;
-  else
+  if (MNT_List_tail == NULL)
+    MNT_List_tail = pnew_mnt_list_entry;
+    else
     {
-      MNT_List_tail->ml_next = pnew_mnt_list_entry ;
-      MNT_List_tail =  pnew_mnt_list_entry ;
+      MNT_List_tail->ml_next = pnew_mnt_list_entry;
+      MNT_List_tail = pnew_mnt_list_entry;
     }
-  
-  
+
 #ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList() ;
+  nfs_Print_MountList();
 #endif
 
 #ifdef _DETECT_MEMCORRUPT
-  if (!BuddyCheck( MNT_List_head ) || !BuddyCheck( MNT_List_tail ))
-  {
-    fprintf( stderr, "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
-        MNT_List_head, MNT_List_tail );
-  }
-  if (!BuddyCheck( pnew_mnt_list_entry->ml_hostname ) || !BuddyCheck( pnew_mnt_list_entry->ml_directory ))
-  {
-    fprintf( stderr, "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
-        pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory );
-  }
-#endif  
-    
-#endif  
-  
-  return 1;
-} /* nfs_Add_MountList_Entry */
+  if (!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
+    {
+      fprintf(stderr,
+	      "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
+	      MNT_List_head, MNT_List_tail);
+    }
+  if (!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
+      || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
+    {
+      fprintf(stderr,
+	      "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
+	      pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
+    }
+#endif
 
+#endif
+
+  return 1;
+}				/* nfs_Add_MountList_Entry */
 
 /**
  *
@@ -289,75 +286,73 @@ int nfs_Add_MountList_Entry( char * hostname, char * dirpath )
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs_Remove_MountList_Entry( char * hostname, char * dirpath )
+int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 {
-#ifndef _NO_MOUNT_LIST  
-   mountlist piter_mnt_list_entry ;
-   mountlist piter_mnt_list_entry_prev ;
-   int found = 0 ;
+#ifndef _NO_MOUNT_LIST
+  mountlist piter_mnt_list_entry;
+  mountlist piter_mnt_list_entry_prev;
+  int found = 0;
 #endif
-   
-   if( hostname == NULL ) 
-     return 0 ;
-   
-#ifndef _NO_MOUNT_LIST  
-   
-   piter_mnt_list_entry_prev = NULL;   
-   
-   for( piter_mnt_list_entry = MNT_List_head;  
-        piter_mnt_list_entry != NULL ;
-        piter_mnt_list_entry = piter_mnt_list_entry->ml_next )
-     {
-       
+
+  if (hostname == NULL)
+    return 0;
+
+#ifndef _NO_MOUNT_LIST
+
+  piter_mnt_list_entry_prev = NULL;
+
+  for (piter_mnt_list_entry = MNT_List_head;
+       piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
+    {
+
 #    ifdef _DETECT_MEMCORRUPT
-      if (!BuddyCheck( piter_mnt_list_entry )
-          || !BuddyCheck( piter_mnt_list_entry->ml_hostname )
-          || !BuddyCheck( piter_mnt_list_entry->ml_directory ))
-      {
-        fprintf( stderr, "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
-            piter_mnt_list_entry, MNT_List_head, MNT_List_tail );
-      }       
-#    endif  
-       
-       /* BUGAZOMEU: pas de verif sur le path */
-       if( !strncmp( piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN )
-           /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
-         {
-           found = 1 ;
-           break ;
-         }
-         
-       piter_mnt_list_entry_prev = piter_mnt_list_entry ;
-       
-     }
+      if (!BuddyCheck(piter_mnt_list_entry)
+	  || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
+	  || !BuddyCheck(piter_mnt_list_entry->ml_directory))
+	{
+	  fprintf(stderr,
+		  "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
+		  piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
+	}
+#    endif
 
-   if( found )
-     {
-       /* remove head item ? */
-       if ( piter_mnt_list_entry_prev == NULL )
-         MNT_List_head =  MNT_List_head->ml_next ;         
-       else
-         piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next ;
-       
-       /* remove tail item ? */
-       if ( MNT_List_tail == piter_mnt_list_entry )
-         MNT_List_tail = piter_mnt_list_entry_prev ;
-         
-       Mem_Free( piter_mnt_list_entry->ml_hostname ) ;
-       Mem_Free( piter_mnt_list_entry->ml_directory ) ;
-       Mem_Free( piter_mnt_list_entry ) ;
-       
-     }
+      /* BUGAZOMEU: pas de verif sur le path */
+      if (!strncmp(piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN)
+	  /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
+	{
+	  found = 1;
+	  break;
+	}
 
+      piter_mnt_list_entry_prev = piter_mnt_list_entry;
+
+    }
+
+  if (found)
+    {
+      /* remove head item ? */
+      if (piter_mnt_list_entry_prev == NULL)
+	MNT_List_head = MNT_List_head->ml_next;
+	else
+	piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next;
+
+      /* remove tail item ? */
+      if (MNT_List_tail == piter_mnt_list_entry)
+	MNT_List_tail = piter_mnt_list_entry_prev;
+
+      Mem_Free(piter_mnt_list_entry->ml_hostname);
+      Mem_Free(piter_mnt_list_entry->ml_directory);
+      Mem_Free(piter_mnt_list_entry);
+
+    }
 #ifdef _DEBUG_NFSPROTO
-   nfs_Print_MountList() ;
+  nfs_Print_MountList();
 #endif
 
 #endif
-   
+
   return 1;
-} /* nfs_Remove_MountList_Entry */
-
+}				/* nfs_Remove_MountList_Entry */
 
 /**
  *
@@ -370,36 +365,35 @@ int nfs_Remove_MountList_Entry( char * hostname, char * dirpath )
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs_Purge_MountList( void )
+int nfs_Purge_MountList(void)
 {
-   mountlist piter_mnt_list_entry, piter_mnt_list_entry_next  ;
-   
-   piter_mnt_list_entry      = MNT_List_head ;
-   piter_mnt_list_entry_next = MNT_List_head ;
+  mountlist piter_mnt_list_entry, piter_mnt_list_entry_next;
 
-#ifndef _NO_MOUNT_LIST   
-      
-   while( piter_mnt_list_entry_next != NULL )
-   {
-     piter_mnt_list_entry_next = piter_mnt_list_entry->ml_next ;
-     Mem_Free( piter_mnt_list_entry->ml_hostname ) ;
-     Mem_Free( piter_mnt_list_entry->ml_directory ) ;
-     Mem_Free( piter_mnt_list_entry ) ;
-     piter_mnt_list_entry = piter_mnt_list_entry_next ;
-   }
-   
-   MNT_List_head = NULL ;
-   MNT_List_tail = NULL ;
-   
+  piter_mnt_list_entry = MNT_List_head;
+  piter_mnt_list_entry_next = MNT_List_head;
+
+#ifndef _NO_MOUNT_LIST
+
+  while (piter_mnt_list_entry_next != NULL)
+    {
+      piter_mnt_list_entry_next = piter_mnt_list_entry->ml_next;
+      Mem_Free(piter_mnt_list_entry->ml_hostname);
+      Mem_Free(piter_mnt_list_entry->ml_directory);
+      Mem_Free(piter_mnt_list_entry);
+      piter_mnt_list_entry = piter_mnt_list_entry_next;
+    }
+
+  MNT_List_head = NULL;
+  MNT_List_tail = NULL;
+
 #ifdef _DEBUG_NFSPROTO
-   nfs_Print_MountList() ;
+  nfs_Print_MountList();
 #endif
-   
-#endif
-     
-  return 1;
-} /* nfs_Purge_MountList */
 
+#endif
+
+  return 1;
+}				/* nfs_Purge_MountList */
 
 /**
  *
@@ -412,18 +406,17 @@ int nfs_Purge_MountList( void )
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs_Init_MountList( void )
+int nfs_Init_MountList(void)
 {
-  MNT_List_head = NULL ;
-  MNT_List_tail = NULL ;
+  MNT_List_head = NULL;
+  MNT_List_tail = NULL;
 
 #ifdef _DEBUG_NFSPROTO
-  nfs_Print_MountList() ;
+  nfs_Print_MountList();
 #endif
 
   return 1;
-} /* nfs_Init_MountList */
-
+}				/* nfs_Init_MountList */
 
 /**
  *
@@ -436,14 +429,14 @@ int nfs_Init_MountList( void )
  * @return the mount list (NULL if mount list is empty)
  *
  */
-mountlist nfs_Get_MountList( void )
+mountlist nfs_Get_MountList(void)
 {
-#ifdef _DEBUG_NFSPROTO 
-  nfs_Print_MountList() ;
+#ifdef _DEBUG_NFSPROTO
+  nfs_Print_MountList();
 #endif
 
-  return MNT_List_head ;
-} /* nfs_Get_MountList */
+  return MNT_List_head;
+}				/* nfs_Get_MountList */
 
 /**
  *
@@ -456,18 +449,17 @@ mountlist nfs_Get_MountList( void )
  * @return nothing (void function)
  *
  */
-void nfs_Print_MountList( void )
+void nfs_Print_MountList(void)
 {
-  mountlist piter_mnt_list_entry = NULL ;
-  
-  if( MNT_List_head == NULL )
-    DisplayLog( "Mount List Entry is empty" ) ;
-  
-  for( piter_mnt_list_entry = MNT_List_head;  
-        piter_mnt_list_entry != NULL ;
-        piter_mnt_list_entry = piter_mnt_list_entry->ml_next )
-    DisplayLog( "Mount List Entry : ml_hostname=%s   ml_directory=%s", 
-            piter_mnt_list_entry->ml_hostname, piter_mnt_list_entry->ml_directory ) ;
-  
-    return  ;
-} /* nfs_Print_MountList */
+  mountlist piter_mnt_list_entry = NULL;
+
+  if (MNT_List_head == NULL)
+    DisplayLog("Mount List Entry is empty");
+
+  for (piter_mnt_list_entry = MNT_List_head;
+       piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
+    DisplayLog("Mount List Entry : ml_hostname=%s   ml_directory=%s",
+	       piter_mnt_list_entry->ml_hostname, piter_mnt_list_entry->ml_directory);
+
+  return;
+}				/* nfs_Print_MountList */

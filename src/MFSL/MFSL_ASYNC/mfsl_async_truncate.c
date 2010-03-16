@@ -97,7 +97,7 @@
 
 #ifndef _USE_SWIG
 
-extern mfsl_parameter_t  mfsl_param ;
+extern mfsl_parameter_t mfsl_param;
 
 /**
  *
@@ -109,22 +109,20 @@ extern mfsl_parameter_t  mfsl_param ;
  *
  * @return the status of the performed FSAL_truncate.
  */
-fsal_status_t  MFSL_truncate_async_op( mfsl_async_op_desc_t  * popasyncdesc )
+fsal_status_t MFSL_truncate_async_op(mfsl_async_op_desc_t * popasyncdesc)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_truncate for async op %p", popasyncdesc ) ;
+  DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_truncate for async op %p",
+		  popasyncdesc);
 
-  P( popasyncdesc->op_args.truncate.pmobject->lock ) ;
-  fsal_status = FSAL_truncate( &(popasyncdesc->op_args.truncate.pmobject->handle),
-                               &popasyncdesc->fsal_op_context,
-                               popasyncdesc->op_args.truncate.size,
-			       NULL, /* deprecated parameter */
-                               &popasyncdesc->op_res.truncate.attr ) ;
-  V( popasyncdesc->op_args.truncate.pmobject->lock ) ;
+  P(popasyncdesc->op_args.truncate.pmobject->lock);
+  fsal_status = FSAL_truncate(&(popasyncdesc->op_args.truncate.pmobject->handle), &popasyncdesc->fsal_op_context, popasyncdesc->op_args.truncate.size, NULL,	/* deprecated parameter */
+			      &popasyncdesc->op_res.truncate.attr);
+  V(popasyncdesc->op_args.truncate.pmobject->lock);
 
-  return fsal_status ; 
-} /* MFSL_truncate_async_op */
+  return fsal_status;
+}				/* MFSL_truncate_async_op */
 
 /**
  *
@@ -140,20 +138,20 @@ fsal_status_t  MFSL_truncate_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_truncate_check_perms( mfsl_object_t                * filehandle,
-                                          mfsl_object_specific_data_t  * pspecdata,
-					  fsal_op_context_t            * p_context,
-    					  mfsl_context_t               * p_mfsl_context )
+fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
+					 mfsl_object_specific_data_t * pspecdata,
+					 fsal_op_context_t * p_context,
+					 mfsl_context_t * p_mfsl_context)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status = FSAL_test_access( p_context, FSAL_W_OK, &pspecdata->async_attr ) ;
+  fsal_status = FSAL_test_access(p_context, FSAL_W_OK, &pspecdata->async_attr);
 
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-   return fsal_status ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_truncate_check_perms */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_truncate_check_perms */
 
 /**
  *
@@ -171,97 +169,89 @@ fsal_status_t MFSAL_truncate_check_perms( mfsl_object_t                * filehan
  *
  * @return the same as FSAL_truncate
  */
-fsal_status_t MFSL_truncate(
-    mfsl_object_t         * filehandle,        /* IN */
-    fsal_op_context_t     * p_context,         /* IN */
-    mfsl_context_t        * p_mfsl_context,    /* IN */
-    fsal_size_t             length,
-    fsal_file_t           * file_descriptor,   /* INOUT */
-    fsal_attrib_list_t    * object_attributes  /* [ IN/OUT ] */
-)
+fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    mfsl_context_t * p_mfsl_context,	/* IN */
+			    fsal_size_t length, fsal_file_t * file_descriptor,	/* INOUT */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
 {
-  fsal_status_t fsal_status ;
-  mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
-  mfsl_object_specific_data_t * pasyncdata   = NULL ;
+  fsal_status_t fsal_status;
+  mfsl_async_op_desc_t *pasyncopdesc = NULL;
+  mfsl_object_specific_data_t *pasyncdata = NULL;
 
-  P( p_mfsl_context->lock ) ;
+  P(p_mfsl_context->lock);
 
-  GET_PREALLOC( pasyncopdesc,
-                p_mfsl_context->pool_async_op,
-                mfsl_param.nb_pre_async_op_desc,
-                mfsl_async_op_desc_t,
-                next_alloc ) ;
+  GET_PREALLOC(pasyncopdesc,
+	       p_mfsl_context->pool_async_op,
+	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
-  V( p_mfsl_context->lock ) ;
+  V(p_mfsl_context->lock);
 
-  if( pasyncopdesc == NULL )
-    MFSL_return( ERR_FSAL_INVAL, 0 ) ;
-    
-  if( gettimeofday( &pasyncopdesc->op_time, NULL ) != 0 )
-   {
+  if (pasyncopdesc == NULL)
+    MFSL_return(ERR_FSAL_INVAL, 0);
+
+  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+    {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog( "MFSL_truncate: cannot get time of day... exiting" ) ;
-      exit( 1 ) ;
-   }
+      DisplayLog("MFSL_truncate: cannot get time of day... exiting");
+      exit(1);
+    }
 
   /* Is the object asynchronous ? */
-  if( !mfsl_async_get_specdata( filehandle, &pasyncdata ) )
-   {
-	/* Not yet asynchronous object */
-        P( p_mfsl_context->lock ) ;
+  if (!mfsl_async_get_specdata(filehandle, &pasyncdata))
+    {
+      /* Not yet asynchronous object */
+      P(p_mfsl_context->lock);
 
-  	GET_PREALLOC( pasyncdata,
-        	      p_mfsl_context->pool_spec_data,
-                      mfsl_param.nb_pre_async_op_desc,
-               	      mfsl_object_specific_data_t,
-               	      next_alloc ) ;
+      GET_PREALLOC(pasyncdata,
+		   p_mfsl_context->pool_spec_data,
+		   mfsl_param.nb_pre_async_op_desc,
+		   mfsl_object_specific_data_t, next_alloc);
 
-  	V( p_mfsl_context->lock ) ;
+      V(p_mfsl_context->lock);
 
-	/* In this case use object_attributes parameter to initiate asynchronous object */
-	pasyncdata->async_attr = *object_attributes ;
-   }
+      /* In this case use object_attributes parameter to initiate asynchronous object */
+      pasyncdata->async_attr = *object_attributes;
+    }
 
-  fsal_status = MFSAL_truncate_check_perms( filehandle, pasyncdata, p_context, p_mfsl_context ) ;
+  fsal_status =
+      MFSAL_truncate_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context);
 
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return fsal_status ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
-  
-  pasyncopdesc->op_type                   = MFSL_ASYNC_OP_TRUNCATE ;
-  pasyncopdesc->op_mobject                = filehandle ;
-  pasyncopdesc->op_args.truncate.pmobject = filehandle ;
-  pasyncopdesc->op_args.truncate.size     = length ;
-  pasyncopdesc->op_res.truncate.attr      = *object_attributes ;
+  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+		    pasyncopdesc);
 
-  pasyncopdesc->op_func = MFSL_truncate_async_op ;
-  pasyncopdesc->fsal_op_context = *p_context ;
+  pasyncopdesc->op_type = MFSL_ASYNC_OP_TRUNCATE;
+  pasyncopdesc->op_mobject = filehandle;
+  pasyncopdesc->op_args.truncate.pmobject = filehandle;
+  pasyncopdesc->op_args.truncate.size = length;
+  pasyncopdesc->op_res.truncate.attr = *object_attributes;
 
-  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+  pasyncopdesc->op_func = MFSL_truncate_async_op;
+  pasyncopdesc->fsal_op_context = *p_context;
 
-  fsal_status = MFSL_async_post( pasyncopdesc ) ;
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+  pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
 
- 
+  fsal_status = MFSL_async_post(pasyncopdesc);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
+
   /* Update the associated times for this object */
-  pasyncdata->async_attr = *object_attributes ;
-  pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
-  pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
-  filehandle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+  pasyncdata->async_attr = *object_attributes;
+  pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
+  pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
+  filehandle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
   /* Set output attributes */
-  *object_attributes = pasyncdata->async_attr ;
+  *object_attributes = pasyncdata->async_attr;
 
-  if( !mfsl_async_set_specdata( filehandle, pasyncdata ) )
-    MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+  if (!mfsl_async_set_specdata(filehandle, pasyncdata))
+    MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_truncate */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_truncate */
 
-
-
-#endif /* ! _USE_SWIG */
-
-
+#endif				/* ! _USE_SWIG */

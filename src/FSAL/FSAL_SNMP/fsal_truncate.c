@@ -19,8 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-
-
 /**
  * FSAL_truncate:
  * Modify the data length of a regular file.
@@ -48,51 +46,49 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(
-    fsal_handle_t         * filehandle,         /* IN */
-    fsal_op_context_t     * p_context,          /* IN */
-    fsal_size_t             length,             /* IN */
-    fsal_file_t           * file_descriptor,    /* Unused in this FSAL */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_size_t length,	/* IN */
+			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-      
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !filehandle || !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_truncate);
-    
+  if (!filehandle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
+
   /* >> check object type if it's stored into the filehandle << */
-  
-  if ( filehandle->object_type_reminder != FSAL_NODETYPE_LEAF )
-  {
-    Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_truncate);
-  }
-  
-  /* we ignore this call */ 
-  
-  /* Optionnaly retrieve post op attributes
-   */
-  if( object_attributes )
-  {
-    
-    fsal_status_t st;
-        
-    st = FSAL_getattrs( filehandle, p_context, object_attributes );
-    
-    if ( FSAL_IS_ERROR( st ) )
+
+  if (filehandle->object_type_reminder != FSAL_NODETYPE_LEAF)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
 
-  }
-  
-  
+  /* we ignore this call */
+
+  /* Optionnaly retrieve post op attributes
+   */
+  if (object_attributes)
+    {
+
+      fsal_status_t st;
+
+      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
+    }
+
   /* No error occured */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_truncate);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
+
 }

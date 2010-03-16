@@ -21,7 +21,6 @@
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
           FSAL_ATTR_CHGTIME  )
 
-
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
 
@@ -31,35 +30,32 @@
 extern fsal_staticfsinfo_t global_fs_info;
 
 /* log descriptor */
-extern log_t   fsal_log;
+extern log_t fsal_log;
 
 #endif
 
 /**
  *  This function initializes shared variables of the FSAL.
  */
-fsal_status_t  fsal_internal_init_global( fsal_init_info_t * fsal_info,
-                                          fs_common_initinfo_t * fs_common_info,
-                                          fs_specific_initinfo_t * fs_specific_info );
+fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
+					fs_common_initinfo_t * fs_common_info,
+					fs_specific_initinfo_t * fs_specific_info);
 
 /**
  *  Increments the number of calls for a function.
  */
-void           fsal_increment_nbcall( int function_index, fsal_status_t status );
+void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 /**
  * Retrieves current thread statistics.
  */
-void           fsal_internal_getstats( fsal_statistics_t * output_stats );
-
+void fsal_internal_getstats(fsal_statistics_t * output_stats);
 
 /**
  *  Used to limit the number of simultaneous calls to Filesystem.
  */
-void           TakeTokenFSCall(  );
-void           ReleaseTokenFSCall(  );
-
-
+void TakeTokenFSCall();
+void ReleaseTokenFSCall();
 
 /**
  * Return :
@@ -93,33 +89,32 @@ void           ReleaseTokenFSCall(  );
                return (_struct_status_);                     \
               } while(0)
 
-
 /**
  * Append a fsal_name to an fsal_path to have the full path of a file from its name and its parent path
  */
-fsal_status_t  fsal_internal_appendNameToPath( fsal_path_t * p_path, const fsal_name_t * p_name );
+fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
+					     const fsal_name_t * p_name);
 
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t  fsal_internal_Handle2FidPath( fsal_op_context_t * p_context,     /* IN */
-                                             fsal_handle_t * p_handle,  /* IN */
-                                             fsal_path_t * p_fsalpath /* OUT */  );
+fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,	/* IN */
+					   fsal_handle_t * p_handle,	/* IN */
+					   fsal_path_t * p_fsalpath /* OUT */ );
 
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t  fsal_internal_Path2Handle( fsal_op_context_t * p_context,        /* IN */
-                                          fsal_path_t * p_fsalpath,     /* IN */
-                                          fsal_handle_t * p_handle /* OUT */  );
-
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
+					fsal_path_t * p_fsalpath,	/* IN */
+					fsal_handle_t * p_handle /* OUT */ );
 
 /**
  *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
  *
  */
-fsal_status_t  fsal_internal_testAccess( fsal_op_context_t * p_context, /* IN */
-                                         fsal_accessflags_t access_type,        /* IN */
-                                         struct stat *p_buffstat,       /* IN, optional */
-                                         fsal_attrib_list_t *
-                                         p_object_attributes /* IN, optional */  );
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
+				       fsal_accessflags_t access_type,	/* IN */
+				       struct stat *p_buffstat,	/* IN, optional */
+				       fsal_attrib_list_t *
+				       p_object_attributes /* IN, optional */ );

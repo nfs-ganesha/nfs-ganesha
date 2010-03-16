@@ -169,8 +169,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
 
   if (rc)
     DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
-		      "HashTable_Del error %d in cache_inode_clean_internal",
-		      rc);
+		      "HashTable_Del error %d in cache_inode_clean_internal", rc);
 
   if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
     {
@@ -250,8 +249,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 					   hash_table_t * ht,
 					   cache_inode_client_t * pclient,
 					   fsal_op_context_t * pcontext,
-					   cache_inode_status_t * pstatus,
-					   int use_mutex)
+					   cache_inode_status_t * pstatus, int use_mutex)
 {
   fsal_status_t fsal_status;
   cache_entry_t *parent_entry;
@@ -279,8 +277,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 					       &remove_attr,
 					       ht,
 					       pclient,
-					       pcontext,
-					       &status, FALSE)) == NULL)
+					       pcontext, &status, FALSE)) == NULL)
     {
       *pstatus = status;
 
@@ -355,8 +352,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
       if (use_mutex)
 	P_r(&pentry->object.dir_cont.pdir_begin->lock);
 
-      fsal_handle_parent =
-	  pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      fsal_handle_parent = pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
 
       if (use_mutex)
 	V_r(&pentry->object.dir_cont.pdir_begin->lock);
@@ -373,8 +369,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 				&to_remove_entry->mobject,
 				pcontext, &pclient->mfsl_context, &after_attr);
 #else
-      fsal_status = FSAL_unlink(&fsal_handle_parent,
-				pnode_name, pcontext, &after_attr);
+      fsal_status = FSAL_unlink(&fsal_handle_parent, pnode_name, pcontext, &after_attr);
 #endif
 
       /* Set the 'after' attr */
@@ -388,8 +383,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 	      cache_inode_status_t kill_status;
 
 	      DisplayLog
-		  ("cache_inode_remove: Stale FSAL FH detected for pentry %p",
-		   pentry);
+		  ("cache_inode_remove: Stale FSAL FH detected for pentry %p", pentry);
 
 	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
 		  CACHE_INODE_SUCCESS)
@@ -434,8 +428,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
       if (use_mutex)
 	P_r(&pentry->object.dir_cont.pdir_begin->lock);
 
-      pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes =
-	  after_attr;
+      pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes = after_attr;
 
       if (use_mutex)
 	V_r(&pentry->object.dir_cont.pdir_begin->lock);
@@ -451,20 +444,16 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 	    {
 	    case SYMBOLIC_LINK:
 	      to_remove_entry->object.symlink.attributes.numlinks -= 1;
-	      to_remove_entry->object.symlink.attributes.ctime.seconds =
-		  time(NULL);
+	      to_remove_entry->object.symlink.attributes.ctime.seconds = time(NULL);
 	      to_remove_entry->object.symlink.attributes.ctime.nseconds = 0;
-	      to_remove_numlinks =
-		  to_remove_entry->object.symlink.attributes.numlinks;
+	      to_remove_numlinks = to_remove_entry->object.symlink.attributes.numlinks;
 	      break;
 
 	    case REGULAR_FILE:
 	      to_remove_entry->object.file.attributes.numlinks -= 1;
-	      to_remove_entry->object.file.attributes.ctime.seconds =
-		  time(NULL);
+	      to_remove_entry->object.file.attributes.ctime.seconds = time(NULL);
 	      to_remove_entry->object.file.attributes.ctime.nseconds = 0;
-	      to_remove_numlinks =
-		  to_remove_entry->object.file.attributes.numlinks;
+	      to_remove_numlinks = to_remove_entry->object.file.attributes.numlinks;
 	      break;
 
 	    case CHARACTER_FILE:
@@ -472,8 +461,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 	    case SOCKET_FILE:
 	    case FIFO_FILE:
 	      to_remove_entry->object.special_obj.attributes.numlinks -= 1;
-	      to_remove_entry->object.special_obj.attributes.ctime.seconds =
-		  time(NULL);
+	      to_remove_entry->object.special_obj.attributes.ctime.seconds = time(NULL);
 	      to_remove_entry->object.special_obj.attributes.ctime.nseconds = 0;
 	      to_remove_numlinks =
 		  to_remove_entry->object.special_obj.attributes.numlinks;
@@ -507,8 +495,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 	    {
 	      /* Something is to be deleted, release the cache data entry */
 	      if (cache_content_release_entry
-		  ((cache_content_entry_t *) to_remove_entry->object.file.
-		   pentry_content,
+		  ((cache_content_entry_t *) to_remove_entry->object.file.pentry_content,
 		   (cache_content_client_t *) pclient->pcontent_client,
 		   &cache_content_status) != CACHE_CONTENT_SUCCESS)
 		{
@@ -538,8 +525,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,	       /**< P
 		}
 
 	      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
-				"cache_inode_clean_internal ERROR %d",
-				*pstatus);
+				"cache_inode_clean_internal ERROR %d", *pstatus);
 	      return *pstatus;
 	    }
 
@@ -622,8 +608,7 @@ cache_inode_status_t cache_inode_remove_no_mutex(cache_entry_t * pentry,	     /*
 						 cache_inode_status_t * pstatus)
 {
   return cache_inode_remove_sw(pentry,
-			       pnode_name,
-			       pattr, ht, pclient, pcontext, pstatus, FALSE);
+			       pnode_name, pattr, ht, pclient, pcontext, pstatus, FALSE);
 }				/* cache_inode_remove_no_mutex */
 
 /**
@@ -653,6 +638,5 @@ cache_inode_status_t cache_inode_remove(cache_entry_t * pentry,		    /**< Parent
 					cache_inode_status_t * pstatus)
 {
   return cache_inode_remove_sw(pentry,
-			       pnode_name,
-			       pattr, ht, pclient, pcontext, pstatus, TRUE);
+			       pnode_name, pattr, ht, pclient, pcontext, pstatus, TRUE);
 }				/* cache_inode_remove_no_mutex */

@@ -100,69 +100,62 @@
  * @{
  */
 
-typedef struct hashparameter__ * p_hash_parameter_t;
-     
-typedef struct hashparameter__
-{
-  unsigned int index_size ;                                   /**< Number of rbtree managed, this MUST be a prime number. */
-  unsigned int alphabet_length ;                              /**< Number of characters used to write the buffer (polynomial approach). */
-  unsigned int nb_node_prealloc ;                             /**< Number of node to allocated when new nodes are necessary. */
-  unsigned long (*hash_func_key)( p_hash_parameter_t, hash_buffer_t * )  ;  /**< Hashing function, returns an integer from 0 to index_size - 1 . */
-  unsigned long (*hash_func_rbt)( p_hash_parameter_t, hash_buffer_t * )  ;  /**< Rbt value calculator (for rbt management). */
-  int (*compare_key)( hash_buffer_t *, hash_buffer_t * ) ;                      /**< Function used to compare two keys together. */
-  int (*key_to_str)( hash_buffer_t *, char *) ;                                 /**< Function used to convert a key to a string. */
-  int (*val_to_str)( hash_buffer_t *, char *) ;                                 /**< Function used to convert a value to a string. */
-} hash_parameter_t ;
+typedef struct hashparameter__ *p_hash_parameter_t;
 
-typedef unsigned long (*hash_function_t)( hash_parameter_t *, hash_buffer_t * )  ;  
-typedef long (*hash_buff_comparator_t)( hash_buffer_t *, hash_buffer_t * ) ;
-typedef long  (*hash_key_display_convert_func_t)( hash_buffer_t *, char * ) ;
-typedef long  (*hash_val_display_convert_func_t)( hash_buffer_t *, char * ) ;
+typedef struct hashparameter__ {
+  unsigned int index_size;				      /**< Number of rbtree managed, this MUST be a prime number. */
+  unsigned int alphabet_length;				      /**< Number of characters used to write the buffer (polynomial approach). */
+  unsigned int nb_node_prealloc;			      /**< Number of node to allocated when new nodes are necessary. */
+  unsigned long (*hash_func_key) (p_hash_parameter_t, hash_buffer_t *);	    /**< Hashing function, returns an integer from 0 to index_size - 1 . */
+  unsigned long (*hash_func_rbt) (p_hash_parameter_t, hash_buffer_t *);	    /**< Rbt value calculator (for rbt management). */
+  int (*compare_key) (hash_buffer_t *, hash_buffer_t *);			/**< Function used to compare two keys together. */
+  int (*key_to_str) (hash_buffer_t *, char *);					/**< Function used to convert a key to a string. */
+  int (*val_to_str) (hash_buffer_t *, char *);					/**< Function used to convert a value to a string. */
+} hash_parameter_t;
 
-typedef struct hashstat_op__
-{
-  unsigned int nb_set  ; /**< Number of 'set' operations,  */
-  unsigned int nb_test ; /**< Number of 'test' operations, */
-  unsigned int nb_get  ; /**< Number of 'get' operations,  */
-  unsigned int nb_del  ; /**< Number of 'del' operations,  */
-} hash_stat_op_t ;
+typedef unsigned long (*hash_function_t) (hash_parameter_t *, hash_buffer_t *);
+typedef long (*hash_buff_comparator_t) (hash_buffer_t *, hash_buffer_t *);
+typedef long (*hash_key_display_convert_func_t) (hash_buffer_t *, char *);
+typedef long (*hash_val_display_convert_func_t) (hash_buffer_t *, char *);
 
+typedef struct hashstat_op__ {
+  unsigned int nb_set;	 /**< Number of 'set' operations,  */
+  unsigned int nb_test;	 /**< Number of 'test' operations, */
+  unsigned int nb_get;	 /**< Number of 'get' operations,  */
+  unsigned int nb_del;	 /**< Number of 'del' operations,  */
+} hash_stat_op_t;
 
-typedef struct hashstat_dynamic__
-{
-  unsigned int   nb_entries ;/**< Number of entries managed in the HashTable. */
-  hash_stat_op_t ok ;        /**< Statistics of the operation that completed successfully. */
-  hash_stat_op_t err ;       /**< Statistics of the operation that failed. */
-  hash_stat_op_t notfound ;  /**< Statistics of the operation that returned HASHTABLE_ERROR_NO_SUCH_KEY */
-} hash_stat_dynamic_t ;
+typedef struct hashstat_dynamic__ {
+  unsigned int nb_entries;   /**< Number of entries managed in the HashTable. */
+  hash_stat_op_t ok;	     /**< Statistics of the operation that completed successfully. */
+  hash_stat_op_t err;	     /**< Statistics of the operation that failed. */
+  hash_stat_op_t notfound;   /**< Statistics of the operation that returned HASHTABLE_ERROR_NO_SUCH_KEY */
+} hash_stat_dynamic_t;
 
-typedef struct hashstat_computed__
-{
-  unsigned int min_rbt_num_node ;     /**< Minimum size (in number of node) of the rbt used. */
-  unsigned int max_rbt_num_node ;     /**< Maximum size (in number of node) of the rbt used. */
-  unsigned int average_rbt_num_node ; /**< Average size (in number of node) of the rbt used. */
-} hash_stat_computed_t ;
+typedef struct hashstat_computed__ {
+  unsigned int min_rbt_num_node;      /**< Minimum size (in number of node) of the rbt used. */
+  unsigned int max_rbt_num_node;      /**< Maximum size (in number of node) of the rbt used. */
+  unsigned int average_rbt_num_node;  /**< Average size (in number of node) of the rbt used. */
+} hash_stat_computed_t;
 
-typedef struct hashstat__
-{
-  hash_stat_dynamic_t  dynamic ;  /**< Dynamic statistics (computed on the fly). */
-  hash_stat_computed_t computed ; /**< Statistics computed when HashTable_GetStats is called. */
-} hash_stat_t ;
+typedef struct hashstat__ {
+  hash_stat_dynamic_t dynamic;	  /**< Dynamic statistics (computed on the fly). */
+  hash_stat_computed_t computed;  /**< Statistics computed when HashTable_GetStats is called. */
+} hash_stat_t;
 
-typedef struct hashtable__
-{
-  hash_parameter_t      parameter ;     /**< Definition parameter for the HashTable */
-  hash_stat_dynamic_t * stat_dynamic ;  /**< Dynamic statistics for the HashTable. */
-  struct rbt_head     * array_rbt ;     /**< Array of reb-black tree (of size parameter.index_size) */
-  rw_lock_t           * array_lock ;    /**< Array of rw-locks for MT-safe management */
-  struct rbt_node    ** node_prealloc ; /**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
-  hash_data_t        ** pdata_prealloc; /**< Pre-allocated pdata buffers  ready to use for new entries */
-} hash_table_t ;
+typedef struct hashtable__ {
+  hash_parameter_t parameter;		/**< Definition parameter for the HashTable */
+  hash_stat_dynamic_t *stat_dynamic;	/**< Dynamic statistics for the HashTable. */
+  struct rbt_head *array_rbt;		/**< Array of reb-black tree (of size parameter.index_size) */
+  rw_lock_t *array_lock;		/**< Array of rw-locks for MT-safe management */
+  struct rbt_node **node_prealloc;	/**< Pre-allocated nodes, ready to use for new entries (array of size parameter.nb_node_prealloc) */
+  hash_data_t **pdata_prealloc;		/**< Pre-allocated pdata buffers  ready to use for new entries */
+} hash_table_t;
 
-typedef enum hashtable_set_how__ { HASHTABLE_SET_HOW_TEST_ONLY        = 1, 
-                                   HASHTABLE_SET_HOW_SET_OVERWRITE    = 2,
-                                   HASHTABLE_SET_HOW_SET_NO_OVERWRITE = 3 } hashtable_set_how_t ;
- 
+typedef enum hashtable_set_how__ { HASHTABLE_SET_HOW_TEST_ONLY = 1,
+  HASHTABLE_SET_HOW_SET_OVERWRITE = 2,
+  HASHTABLE_SET_HOW_SET_NO_OVERWRITE = 3
+} hashtable_set_how_t;
 
 /* @} */
 
@@ -171,23 +164,22 @@ typedef enum hashtable_set_how__ { HASHTABLE_SET_HOW_TEST_ONLY        = 1,
 
 /* Possible errors */
 #define HASHTABLE_SUCCESS                  0
-#define HASHTABLE_UNKNOWN_HASH_TYPE        1 
+#define HASHTABLE_UNKNOWN_HASH_TYPE        1
 #define HASHTABLE_INSERT_MALLOC_ERROR      2
 #define HASHTABLE_ERROR_NO_SUCH_KEY        3
 #define HASHTABLE_ERROR_KEY_ALREADY_EXISTS 4
 #define HASHTABLE_ERROR_INVALID_ARGUMENT   5
 
-unsigned long double_hash_func( hash_parameter_t * hc, hash_buffer_t * buffclef ) ;
-hash_table_t * HashTable_Init( hash_parameter_t hc ) ;
-int HashTable_Test_And_Set( hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval, hashtable_set_how_t how ) ;
-int HashTable_Get( hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval ) ;
-int HashTable_Del(  hash_table_t * ht, hash_buffer_t  * buffkey,
-                    hash_buffer_t * p_usedbuffkey,
-                    hash_buffer_t * p_usedbuffdata );
+unsigned long double_hash_func(hash_parameter_t * hc, hash_buffer_t * buffclef);
+hash_table_t *HashTable_Init(hash_parameter_t hc);
+int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
+			   hash_buffer_t * buffval, hashtable_set_how_t how);
+int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval);
+int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
+		  hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata);
 #define HashTable_Set( ht, buffkey, buffval ) HashTable_Test_And_Set( ht, buffkey, buffval, HASHTABLE_SET_HOW_SET_OVERWRITE )
-void HashTable_GetStats( hash_table_t * ht, hash_stat_t * hstat ) ;
-void HashTable_Print( hash_table_t * ht ) ;
-unsigned int HashTable_GetSize( hash_table_t * ht );
+void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat);
+void HashTable_Print(hash_table_t * ht);
+unsigned int HashTable_GetSize(hash_table_t * ht);
 
-
-#endif /* _HASHTABLE_H */
+#endif				/* _HASHTABLE_H */

@@ -87,10 +87,9 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "stuff_alloc.h"
 #include "LRU_List.h"
@@ -121,23 +120,23 @@
  * @return 0 if operation failed, -1 if failed. 
  *
  */
-int cache_content_init( cache_content_client_parameter_t param, cache_content_status_t *pstatus )
+int cache_content_init(cache_content_client_parameter_t param,
+		       cache_content_status_t * pstatus)
 {
   /* Try to create the cache directory */
-  if( mkdir( param.cache_dir, 0750 ) != 0 && errno != EEXIST )
+  if (mkdir(param.cache_dir, 0750) != 0 && errno != EEXIST)
     {
       /* Cannot create the directory for caching data */
-      fprintf( stderr, "Can't create cache dir = %s, error = ( %d, %s )\n", 
-               param.cache_dir, errno, strerror( errno ) ) ;
+      fprintf(stderr, "Can't create cache dir = %s, error = ( %d, %s )\n",
+	      param.cache_dir, errno, strerror(errno));
 
-      *pstatus = CACHE_CONTENT_INVALID_ARGUMENT ;
-      return -1 ;
+      *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
+      return -1;
     }
-  
 
   /* Successfull exit */
-  return 0 ;
-} /* cache_content_init */
+  return 0;
+}				/* cache_content_init */
 
 /**
  *
@@ -149,19 +148,20 @@ int cache_content_init( cache_content_client_parameter_t param, cache_content_st
  * @return 0 if ok, -1 otherwise. Errno will be set with the error's value.
  *
  */
-int cache_content_init_dir( cache_content_client_parameter_t param, unsigned short export_id )
+int cache_content_init_dir(cache_content_client_parameter_t param,
+			   unsigned short export_id)
 {
-  char path_to_dir[MAXPATHLEN] ;
-  
-  snprintf( path_to_dir, MAXPATHLEN, "%s/export_id=%d", param.cache_dir, 0 ) ;
-  
-  if( mkdir( path_to_dir, 0750 ) != 0 && errno != EEXIST )
+  char path_to_dir[MAXPATHLEN];
+
+  snprintf(path_to_dir, MAXPATHLEN, "%s/export_id=%d", param.cache_dir, 0);
+
+  if (mkdir(path_to_dir, 0750) != 0 && errno != EEXIST)
     {
-      return -1 ;
+      return -1;
     }
 
-  return 0 ;
-} /* cache_content_init_dir */
+  return 0;
+}				/* cache_content_init_dir */
 
 /**
  *
@@ -175,42 +175,41 @@ int cache_content_init_dir( cache_content_client_parameter_t param, unsigned sho
  * @return 0 if operation failed, -1 if failed.
  *
  */
-int cache_content_client_init( cache_content_client_t           * pclient,
-                               cache_content_client_parameter_t   param )
+int cache_content_client_init(cache_content_client_t * pclient,
+			      cache_content_client_parameter_t param)
 {
-  LRU_status_t lru_status ;
+  LRU_status_t lru_status;
 
-  pclient->log_outputs         = param.log_outputs ;
-  pclient->nb_prealloc         = param.nb_prealloc_entry ;
-  pclient->flush_force_fsal    = param.flush_force_fsal ;
-  pclient->max_fd_per_thread   = param.max_fd_per_thread ;
-  pclient->retention           = param.retention ;
-  pclient->use_cache           = param.use_cache ;
-  strncpy( pclient->cache_dir, param.cache_dir, MAXPATHLEN ) ;
+  pclient->log_outputs = param.log_outputs;
+  pclient->nb_prealloc = param.nb_prealloc_entry;
+  pclient->flush_force_fsal = param.flush_force_fsal;
+  pclient->max_fd_per_thread = param.max_fd_per_thread;
+  pclient->retention = param.retention;
+  pclient->use_cache = param.use_cache;
+  strncpy(pclient->cache_dir, param.cache_dir, MAXPATHLEN);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_content_entry_t" ) ;
+  BuddySetDebugLabel("cache_content_entry_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_entry,
-                  pclient->nb_prealloc,
-                  cache_content_entry_t,
-                  next_alloc ) ;
+  STUFF_PREALLOC(pclient->pool_entry,
+		 pclient->nb_prealloc, cache_content_entry_t, next_alloc);
 
 # ifdef _DEBUG_MEMLEAKS
-    /* For debugging memory leaks */
-    BuddySetDebugLabel( "N/A" ) ;
+  /* For debugging memory leaks */
+  BuddySetDebugLabel("N/A");
 # endif
 
-  if( pclient->pool_entry == NULL )
+  if (pclient->pool_entry == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init data_cache client entry pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init data_cache client entry pool");
+      return 1;
     }
 #endif
 
   /* Successfull exit */
-  return 0 ;
-} /* cache_content_init */
+  return 0;
+}				/* cache_content_init */

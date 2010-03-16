@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -126,261 +126,270 @@
  * @return CACHE_INODE_ENTRY_EXISTS entry of that name already exists in destination.
  *
  */
-cache_inode_status_t cache_inode_link( cache_entry_t        * pentry_src, 
-                                       cache_entry_t        * pentry_dir_dest, 
-                                       fsal_name_t          * plink_name,     
-                                       fsal_attrib_list_t   * pattr, 
-                                       hash_table_t         * ht,
-                                       cache_inode_client_t * pclient, 
-                                       fsal_op_context_t    * pcontext, 
-                                       cache_inode_status_t * pstatus )
+cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
+				      cache_entry_t * pentry_dir_dest,
+				      fsal_name_t * plink_name,
+				      fsal_attrib_list_t * pattr,
+				      hash_table_t * ht,
+				      cache_inode_client_t * pclient,
+				      fsal_op_context_t * pcontext,
+				      cache_inode_status_t * pstatus)
 {
-  fsal_status_t           fsal_status ;
-  fsal_handle_t           handle_src ;
-  fsal_handle_t           handle_dest ;
-  fsal_attrib_list_t      link_attributes ;
+  fsal_status_t fsal_status;
+  fsal_handle_t handle_src;
+  fsal_handle_t handle_dest;
+  fsal_attrib_list_t link_attributes;
 #ifdef _USE_MFSL
-  fsal_attrib_list_t      dirdest_attributes ;
+  fsal_attrib_list_t dirdest_attributes;
 #endif
-  cache_inode_status_t    status ;
-  cache_entry_t *         pentry_lookup = NULL ;
-  fsal_attrib_list_t      lookup_attributes ;
- 
-  fsal_size_t             save_size ;
-  fsal_size_t             save_spaceused ;
-  fsal_time_t             save_mtime ;
-   
+  cache_inode_status_t status;
+  cache_entry_t *pentry_lookup = NULL;
+  fsal_attrib_list_t lookup_attributes;
+
+  fsal_size_t save_size;
+  fsal_size_t save_spaceused;
+  fsal_time_t save_mtime;
+
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
+  *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_LINK] += 1 ;
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_LINK] += 1;
 
   /* Is the destination a directory ? */
-  if( pentry_dir_dest->internal_md.type != DIR_BEGINNING &&
-      pentry_dir_dest->internal_md.type != DIR_CONTINUE )
+  if (pentry_dir_dest->internal_md.type != DIR_BEGINNING &&
+      pentry_dir_dest->internal_md.type != DIR_CONTINUE)
     {
       /* Bad type .... */
-      *pstatus = CACHE_INODE_BAD_TYPE ;
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1 ;
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
 
-      return *pstatus ;
+      return *pstatus;
     }
-  
+
   /* Check if an entry of the same name doesn't exist in the destination directory */
-  if( ( pentry_lookup = cache_inode_lookup( pentry_dir_dest, 
-                                            plink_name, 
-                                            &lookup_attributes,
-                                            ht, 
-                                            pclient, 
-                                            pcontext, 
-                                            pstatus ) ) != NULL )
+  if ((pentry_lookup = cache_inode_lookup(pentry_dir_dest,
+					  plink_name,
+					  &lookup_attributes,
+					  ht, pclient, pcontext, pstatus)) != NULL)
     {
       /* There exists such an entry... */
-      *pstatus = CACHE_INODE_ENTRY_EXISTS ;
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1 ;
+      *pstatus = CACHE_INODE_ENTRY_EXISTS;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
 
-      return *pstatus ;
+      return *pstatus;
     }
 
   /* The pentry to be hardlinked can't be a DIR_BEGINNING or a DIR_CONTINUE */
-  if( pentry_src->internal_md.type == DIR_BEGINNING ||
-      pentry_src->internal_md.type == DIR_CONTINUE )
+  if (pentry_src->internal_md.type == DIR_BEGINNING ||
+      pentry_src->internal_md.type == DIR_CONTINUE)
     {
       /* Bad type .... */
-      *pstatus = CACHE_INODE_BAD_TYPE ;
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1 ;
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
 
-      return *pstatus ;
+      return *pstatus;
     }
-         
+
   /* At this point, we know that the entry does not exist in destination directory, we know that the 
    * destination is actually a directory and that the source is no directory */
-                                   
+
   /* Lock the source */
-  P_w( &pentry_src->lock ) ;
- 
+  P_w(&pentry_src->lock);
+
   /* Lock the target dir */
-  P_w( &pentry_dir_dest->lock ) ;
-  
+  P_w(&pentry_dir_dest->lock);
+
   /* Get the handles */
-  switch( pentry_src->internal_md.type )
+  switch (pentry_src->internal_md.type)
     {
     case REGULAR_FILE:
-      handle_src =  pentry_src->object.file.handle ;
-      break ;
-            
+      handle_src = pentry_src->object.file.handle;
+      break;
+
     case SYMBOLIC_LINK:
-      handle_src =  pentry_src->object.symlink.handle ;
-      break ;
-      
+      handle_src = pentry_src->object.symlink.handle;
+      break;
+
     case DIR_BEGINNING:
-      handle_src =  pentry_src->object.dir_begin.handle ;
-      break ;
-      
+      handle_src = pentry_src->object.dir_begin.handle;
+      break;
+
     case DIR_CONTINUE:
-       /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
+      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r( &pentry_src->object.dir_cont.pdir_begin->lock ) ;
-      handle_src =  pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle ;
-      V_r( &pentry_src->object.dir_cont.pdir_begin->lock ) ;
-      break ;
-      
+      P_r(&pentry_src->object.dir_cont.pdir_begin->lock);
+      handle_src = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      V_r(&pentry_src->object.dir_cont.pdir_begin->lock);
+      break;
+
     case CHARACTER_FILE:
     case BLOCK_FILE:
     case SOCKET_FILE:
     case FIFO_FILE:
-      handle_src =  pentry_src->object.special_obj.handle ;
-      break ;
+      handle_src = pentry_src->object.special_obj.handle;
+      break;
 
     default:
-       DisplayLogJdLevel( pclient->log_outputs, NIV_CRIT, "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s", 
-                         pentry_src->internal_md.type, __LINE__, __FILE__ ) ;
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1 ;
-       return *pstatus ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+			"WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+			pentry_src->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
+      return *pstatus;
     }
 
-  switch( pentry_dir_dest->internal_md.type )
+  switch (pentry_dir_dest->internal_md.type)
     {
     case DIR_BEGINNING:
-      handle_dest = pentry_dir_dest->object.dir_begin.handle ;
-      break ;
+      handle_dest = pentry_dir_dest->object.dir_begin.handle;
+      break;
 
-      case DIR_CONTINUE:
-       /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
+    case DIR_CONTINUE:
+      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r( &pentry_dir_dest->object.dir_cont.pdir_begin->lock ) ;
-      handle_dest =  pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle ;
-      V_r( &pentry_dir_dest->object.dir_cont.pdir_begin->lock ) ;
-      break ;
+      P_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
+      handle_dest = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      V_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
+      break;
     }
- 
+
   /* If object is a data cached regular file, keeps it mtime and size, STEP 1 */
-  if( ( pentry_src->internal_md.type == REGULAR_FILE )  &&  ( pentry_src->object.file.pentry_content != NULL ) )
-   {
-     save_mtime     = pentry_src->object.file.attributes.mtime ;
-     save_size      = pentry_src->object.file.attributes.filesize ;
-     save_spaceused = pentry_src->object.file.attributes.spaceused ;
-   }
- 
+  if ((pentry_src->internal_md.type == REGULAR_FILE)
+      && (pentry_src->object.file.pentry_content != NULL))
+    {
+      save_mtime = pentry_src->object.file.attributes.mtime;
+      save_size = pentry_src->object.file.attributes.filesize;
+      save_spaceused = pentry_src->object.file.attributes.spaceused;
+    }
+
   /* Do the link at FSAL level */
   link_attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-  cache_inode_get_attributes( pentry_src, &link_attributes ) ;
-  cache_inode_get_attributes( pentry_dir_dest, &dirdest_attributes ) ;
-  fsal_status = MFSL_link( &pentry_src->mobject, &pentry_dir_dest->mobject, plink_name, pcontext, &pclient->mfsl_context, &link_attributes, &dirdest_attributes ) ;
+  cache_inode_get_attributes(pentry_src, &link_attributes);
+  cache_inode_get_attributes(pentry_dir_dest, &dirdest_attributes);
+  fsal_status =
+      MFSL_link(&pentry_src->mobject, &pentry_dir_dest->mobject, plink_name, pcontext,
+		&pclient->mfsl_context, &link_attributes, &dirdest_attributes);
 #else
-  fsal_status = FSAL_link( &handle_src, &handle_dest, plink_name, pcontext, &link_attributes ) ;
+  fsal_status =
+      FSAL_link(&handle_src, &handle_dest, plink_name, pcontext, &link_attributes);
 #endif
-  if( FSAL_IS_ERROR( fsal_status ) ) 
+  if (FSAL_IS_ERROR(fsal_status))
     {
-      *pstatus = cache_inode_error_convert( fsal_status ) ; 
-      V_w( &pentry_dir_dest->lock ) ;
-      V_w( &pentry_src->lock ) ;
+      *pstatus = cache_inode_error_convert(fsal_status);
+      V_w(&pentry_dir_dest->lock);
+      V_w(&pentry_src->lock);
 
-      if( fsal_status.major == ERR_FSAL_STALE )
+      if (fsal_status.major == ERR_FSAL_STALE)
 	{
-	   cache_inode_status_t kill_status ;
-	   fsal_status_t        getattr_status ;
+	  cache_inode_status_t kill_status;
+	  fsal_status_t getattr_status;
 
-	   DisplayLog( "cache_inode_link: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p", 
-			pentry_src, pentry_dir_dest ) ;
+	  DisplayLog
+	      ("cache_inode_link: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+	       pentry_src, pentry_dir_dest);
 
-	   /* Use FSAL_getattrs to find which entry is staled */
-	   getattr_status = FSAL_getattrs(  &handle_src, pcontext, &link_attributes ) ;
-           if( getattr_status.major == ERR_FSAL_ACCESS )
-            {
-               DisplayLog( "cache_inode_link: Stale FSAL File Handle detected for pentry = %p", pentry_src ) ;
+	  /* Use FSAL_getattrs to find which entry is staled */
+	  getattr_status = FSAL_getattrs(&handle_src, pcontext, &link_attributes);
+	  if (getattr_status.major == ERR_FSAL_ACCESS)
+	    {
+	      DisplayLog
+		  ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+		   pentry_src);
 
-                if( cache_inode_kill_entry( pentry_src, ht, pclient, &kill_status ) != CACHE_INODE_SUCCESS )
-                    DisplayLog( "cache_inode_link: Could not kill entry %p, status = %u", pentry_src, kill_status ) ;
-            }		
+	      if (cache_inode_kill_entry(pentry_src, ht, pclient, &kill_status) !=
+		  CACHE_INODE_SUCCESS)
+		DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
+			   pentry_src, kill_status);
+	    }
 
-	   getattr_status = FSAL_getattrs(  &handle_dest, pcontext, &link_attributes ) ;
-           if( getattr_status.major == ERR_FSAL_ACCESS )
-            {
-               DisplayLog( "cache_inode_link: Stale FSAL File Handle detected for pentry = %p", pentry_dir_dest ) ;
+	  getattr_status = FSAL_getattrs(&handle_dest, pcontext, &link_attributes);
+	  if (getattr_status.major == ERR_FSAL_ACCESS)
+	    {
+	      DisplayLog
+		  ("cache_inode_link: Stale FSAL File Handle detected for pentry = %p",
+		   pentry_dir_dest);
 
-                if( cache_inode_kill_entry( pentry_dir_dest, ht, pclient, &kill_status ) != CACHE_INODE_SUCCESS )
-                    DisplayLog( "cache_inode_link: Could not kill entry %p, status = %u", pentry_dir_dest, kill_status ) ;
-            }		
+	      if (cache_inode_kill_entry(pentry_dir_dest, ht, pclient, &kill_status) !=
+		  CACHE_INODE_SUCCESS)
+		DisplayLog("cache_inode_link: Could not kill entry %p, status = %u",
+			   pentry_dir_dest, kill_status);
+	    }
 
 	}
-      *pstatus = CACHE_INODE_FSAL_ESTALE ;
+      *pstatus = CACHE_INODE_FSAL_ESTALE;
 
-      return *pstatus ;
+      return *pstatus;
     }
- 
-  /* If object is a data cached regular file, keeps it mtime and size, STEP 2 */
-  if( ( pentry_src->internal_md.type == REGULAR_FILE )  &&  ( pentry_src->object.file.pentry_content != NULL ) )
-   {
-     link_attributes.mtime     =  save_mtime     ; 
-     link_attributes.filesize  =  save_size      ; 
-     link_attributes.spaceused =  save_spaceused ;
-   }
 
- 
+  /* If object is a data cached regular file, keeps it mtime and size, STEP 2 */
+  if ((pentry_src->internal_md.type == REGULAR_FILE)
+      && (pentry_src->object.file.pentry_content != NULL))
+    {
+      link_attributes.mtime = save_mtime;
+      link_attributes.filesize = save_size;
+      link_attributes.spaceused = save_spaceused;
+    }
+
   /* Update cached attributes */
-  switch( pentry_src->internal_md.type )
+  switch (pentry_src->internal_md.type)
     {
     case REGULAR_FILE:
-      pentry_src->object.file.attributes = link_attributes ;
-      break ;
-      
+      pentry_src->object.file.attributes = link_attributes;
+      break;
+
     case SYMBOLIC_LINK:
-      pentry_src->object.symlink.attributes = link_attributes ;
-      break ;
-      
+      pentry_src->object.symlink.attributes = link_attributes;
+      break;
+
     case CHARACTER_FILE:
     case BLOCK_FILE:
     case SOCKET_FILE:
     case FIFO_FILE:
-      pentry_src->object.special_obj.attributes = link_attributes ;
-      break ;
-      
-      
+      pentry_src->object.special_obj.attributes = link_attributes;
+      break;
+
     default:
-      DisplayLogJdLevel( pclient->log_outputs, NIV_CRIT, "WARNING: Major type incoherency line %d in file %s", 
-                         __LINE__, __FILE__ ) ;
-      break ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+			"WARNING: Major type incoherency line %d in file %s", __LINE__,
+			__FILE__);
+      break;
     }
-  
+
   /* Add the new entry in the destination directory */
-  if( cache_inode_add_cached_dirent( pentry_dir_dest, 
-                                     plink_name, 
-                                     pentry_src,
-                                     NULL, 
-                                     ht, 
-                                     pclient, 
-                                     pcontext,
-                                     &status ) != CACHE_INODE_SUCCESS )
+  if (cache_inode_add_cached_dirent(pentry_dir_dest,
+				    plink_name,
+				    pentry_src,
+				    NULL,
+				    ht,
+				    pclient, pcontext, &status) != CACHE_INODE_SUCCESS)
     {
-      V_w( &pentry_dir_dest->lock ) ;
-      V_w( &pentry_src->lock ) ;
-      return *pstatus ;
+      V_w(&pentry_dir_dest->lock);
+      V_w(&pentry_src->lock);
+      return *pstatus;
     }
 
   /* Regular exit */
 
   /* return the attributes */
-  *pattr = link_attributes ;
-  
+  *pattr = link_attributes;
+
   /* Validate the entries */
-  *pstatus = cache_inode_valid( pentry_src, CACHE_INODE_OP_SET, pclient ) ;  
-  
+  *pstatus = cache_inode_valid(pentry_src, CACHE_INODE_OP_SET, pclient);
+
   /* Release the target dir */
-  V_w( &pentry_dir_dest->lock ) ;
+  V_w(&pentry_dir_dest->lock);
 
   /* Release the source */
-  V_w( &pentry_src->lock ) ;
+  V_w(&pentry_src->lock);
 
   /* stats */
-  if( *pstatus != CACHE_INODE_SUCCESS )
-    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LINK] += 1 ;
-  else
-    pclient->stat.func_stats.nb_success[CACHE_INODE_LINK] += 1 ;
+  if (*pstatus != CACHE_INODE_SUCCESS)
+    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LINK] += 1;
+    else
+    pclient->stat.func_stats.nb_success[CACHE_INODE_LINK] += 1;
 
-  return *pstatus ; 
+  return *pstatus;
 }

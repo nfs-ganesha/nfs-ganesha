@@ -102,51 +102,49 @@
 
 #ifdef _SOLARIS
 #ifndef _USE_SNMP
-typedef unsigned long   u_long ;
+typedef unsigned long u_long;
 #endif
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "HashData.h"
 #include "HashTable.h"
-#include "nfs_core.h" 
+#include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
 #include "nfs_tools.h"
 
-typedef struct dupreq_entry__
-{
-  long                    xid ;
-  nfs_res_t               res_nfs ;
-  u_long                  rq_prog ;        /* service program number        */
-  u_long                  rq_vers ;        /* service protocol version      */
-  u_long                  rq_proc ; 
-  time_t                  timestamp ;
-  struct dupreq_entry__ * next_alloc ;
-} dupreq_entry_t ;
+typedef struct dupreq_entry__ {
+  long xid;
+  nfs_res_t res_nfs;
+  u_long rq_prog;		/* service program number        */
+  u_long rq_vers;		/* service protocol version      */
+  u_long rq_proc;
+  time_t timestamp;
+  struct dupreq_entry__ *next_alloc;
+} dupreq_entry_t;
 
+unsigned int get_rpc_xid(struct svc_req *reqp);
 
-unsigned int get_rpc_xid(struct svc_req * reqp) ;
+int compare_xid(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int print_entry_dupreq(LRU_data_t data, char *str);
+int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
+int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam);
 
-int compare_xid(  hash_buffer_t * buff1, hash_buffer_t * buff2 )  ;
-int print_entry_dupreq( LRU_data_t data, char *str )  ;
-int clean_entry_dupreq(  LRU_entry_t * pentry, void * addparam )  ;
-int nfs_dupreq_gc_function( LRU_entry_t * pentry, void * addparam ) ;
+nfs_res_t nfs_dupreq_get(long xid, int *pstatus);
 
-nfs_res_t nfs_dupreq_get( long xid, int * pstatus );
+int nfs_dupreq_add(long xid,
+		   struct svc_req *ptr_req,
+		   nfs_res_t * p_res_nfs,
+		   LRU_list_t * lru_dupreq, dupreq_entry_t ** dupreq_pool);
 
-int nfs_dupreq_add( long              xid, 
-		    struct svc_req  * ptr_req, 
-                    nfs_res_t       * p_res_nfs,
-                    LRU_list_t      * lru_dupreq,
-                    dupreq_entry_t ** dupreq_pool ) ;
+unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
+				     hash_buffer_t * buffclef);
+unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+void nfs_dupreq_get_stats(hash_stat_t * phstat);
 
-unsigned long dupreq_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef )  ;
-unsigned long dupreq_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
-void nfs_dupreq_get_stats(  hash_stat_t * phstat ) ;
-
-#define DUPREQ_SUCCESS             0 
+#define DUPREQ_SUCCESS             0
 #define DUPREQ_INSERT_MALLOC_ERROR 1
 #define DUPREQ_NOT_FOUND           2
 
-#endif /* _NFS_DUPREQ_H */
+#endif				/* _NFS_DUPREQ_H */

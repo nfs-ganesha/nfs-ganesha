@@ -37,48 +37,48 @@
 #include <stddef.h>
 
 struct glist_head {
-	struct glist_head *next;
-	struct glist_head *prev;
+  struct glist_head *next;
+  struct glist_head *prev;
 };
 
 /*FIXME!!! grand hack due to mysql conflict name glist*/
 
 static inline void init_glist(struct glist_head *head)
 {
-	head->next = head;
-	head->prev = head;
+  head->next = head;
+  head->prev = head;
 }
 
 /* Add the new element between left and right */
 static inline void __glist_add(struct glist_head *left, struct glist_head *right,
-			struct glist_head *new)
+			       struct glist_head *new)
 {
-	new->prev   = left;
-	new->next   = right;
-	left->next  = new;
-	right->prev = new;
+  new->prev = left;
+  new->next = right;
+  left->next = new;
+  right->prev = new;
 }
 
 static inline void glist_add_tail(struct glist_head *head, struct glist_head *new)
 {
 
-	__glist_add(head->prev, head, new);
+  __glist_add(head->prev, head, new);
 }
 
 /* add after the specified entry*/
 static inline void glist_add(struct glist_head *head, struct glist_head *new)
 {
-	__glist_add(head, head->next, new);
+  __glist_add(head, head->next, new);
 }
 
 static inline void glist_del(struct glist_head *node)
 {
-	struct glist_head *left = node->prev;
-	struct glist_head *right = node->next;
-	left->next = right;
-	right->prev = left;
-	node->next = NULL;
-	node->prev = NULL;
+  struct glist_head *left = node->prev;
+  struct glist_head *right = node->next;
+  left->next = right;
+  right->prev = left;
+  node->next = NULL;
+  node->prev = NULL;
 }
 
 #define glist_for_each(node, head) \

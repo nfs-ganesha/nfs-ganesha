@@ -102,7 +102,7 @@
 #include <time.h>
 #include <pthread.h>
 
-extern fsal_handle_t       pre_created_dir_handle ; /**< The handle for the precreated object directory */
+extern fsal_handle_t pre_created_dir_handle;	    /**< The handle for the precreated object directory */
 
 /**
  *
@@ -116,61 +116,58 @@ extern fsal_handle_t       pre_created_dir_handle ; /**< The handle for the prec
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-fsal_status_t cache_inode_async_create( cache_inode_async_op_desc_t * popasyncdesc )
+fsal_status_t cache_inode_async_create(cache_inode_async_op_desc_t * popasyncdesc)
 {
-  fsal_status_t       fsal_status ;
-  fsal_name_t         fileidname ;
-  char                fileidstr[MAXNAMLEN] ;
-  fsal_attrib_list_t  attr_src ;
-  fsal_attrib_list_t  attr_dest ;
+  fsal_status_t fsal_status;
+  fsal_name_t fileidname;
+  char fileidstr[MAXNAMLEN];
+  fsal_attrib_list_t attr_src;
+  fsal_attrib_list_t attr_dest;
 
-  attr_src.asked_attributes  = FSAL_ATTRS_POSIX ;
-  attr_dest.asked_attributes = FSAL_ATTRS_POSIX ;
+  attr_src.asked_attributes = FSAL_ATTRS_POSIX;
+  attr_dest.asked_attributes = FSAL_ATTRS_POSIX;
 
   /* Step 1: Put the pre-created object (already inserted in the datacache) at the right place */
-  
+
   /* Build the originated name */
-  switch( popasyncdesc->op_args.create.object_type )
-   {
-      case FSAL_TYPE_DIR:
-        snprintf( fileidstr, MAXNAMLEN, "dir.export=%llu.fileid=%llu", 
-                  FSAL_EXPORT_CONTEXT_SPECIFIC ( popasyncdesc->fsal_op_context.export_context ), 
-                  popasyncdesc->op_args.create.fileid ); 
-        break ;
+  switch (popasyncdesc->op_args.create.object_type)
+    {
+    case FSAL_TYPE_DIR:
+      snprintf(fileidstr, MAXNAMLEN, "dir.export=%llu.fileid=%llu",
+	       FSAL_EXPORT_CONTEXT_SPECIFIC(popasyncdesc->fsal_op_context.export_context),
+	       popasyncdesc->op_args.create.fileid);
+      break;
 
-      case FSAL_TYPE_FILE:
-        snprintf( fileidstr, MAXNAMLEN, "file.export=%llu.fileid=%llu",
-                  FSAL_EXPORT_CONTEXT_SPECIFIC ( popasyncdesc->fsal_op_context.export_context ), 
-                  popasyncdesc->op_args.create.fileid ); 
-        break ;
+    case FSAL_TYPE_FILE:
+      snprintf(fileidstr, MAXNAMLEN, "file.export=%llu.fileid=%llu",
+	       FSAL_EXPORT_CONTEXT_SPECIFIC(popasyncdesc->fsal_op_context.export_context),
+	       popasyncdesc->op_args.create.fileid);
+      break;
 
-      default:
-        fsal_status.major = ERR_FSAL_INVAL ;
-        fsal_status.minor = EINVAL ;
-        return fsal_status ;
-        break ; /* useless but wanted by some compilers */
-   } /* switch( popasyncdesc->op_args.create.object_type ) */
+    default:
+      fsal_status.major = ERR_FSAL_INVAL;
+      fsal_status.minor = EINVAL;
+      return fsal_status;
+      break;			/* useless but wanted by some compilers */
+    }				/* switch( popasyncdesc->op_args.create.object_type ) */
 
-  fsal_status = FSAL_str2name( fileidstr, MAXNAMLEN,  &fileidname ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-    return fsal_status ;
+  fsal_status = FSAL_str2name(fileidstr, MAXNAMLEN, &fileidname);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /* Rename the object to place it at the correct place */
-  fsal_status = FSAL_rename( popasyncdesc->op_args.create.pfsal_handle_dir_pre,
-                             &fileidname,
-                             popasyncdesc->op_args.create.pfsal_handle_dir,
-                             &popasyncdesc->op_args.create.name,
-                             &popasyncdesc->fsal_op_context,
-                             &attr_src, 
-                             &attr_dest ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-    return fsal_status ;
+  fsal_status = FSAL_rename(popasyncdesc->op_args.create.pfsal_handle_dir_pre,
+			    &fileidname,
+			    popasyncdesc->op_args.create.pfsal_handle_dir,
+			    &popasyncdesc->op_args.create.name,
+			    &popasyncdesc->fsal_op_context, &attr_src, &attr_dest);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /* Step 2: Put the right attributes (owner, group, mode) */
 
-
-  return fsal_status ;
-} /* cache_inode_aync_create */
+  return fsal_status;
+}				/* cache_inode_aync_create */
 
 /**
  *
@@ -195,341 +192,317 @@ fsal_status_t cache_inode_async_create( cache_inode_async_op_desc_t * popasyncde
  *
  */
 
-cache_entry_t * cache_inode_create( cache_entry_t            * pentry_parent, 
-                                    fsal_name_t              * pname, 
-                                    cache_inode_file_type_t    type,
-                                    fsal_accessmode_t          mode,
-                                    cache_inode_create_arg_t * pcreate_arg,
-                                    fsal_attrib_list_t       * pattr, 
-                                    hash_table_t             * ht,  
-                                    cache_inode_client_t     * pclient, 
-                                    fsal_op_context_t        * pcontext, 
-                                    cache_inode_status_t     * pstatus )
+cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
+				  fsal_name_t * pname,
+				  cache_inode_file_type_t type,
+				  fsal_accessmode_t mode,
+				  cache_inode_create_arg_t * pcreate_arg,
+				  fsal_attrib_list_t * pattr,
+				  hash_table_t * ht,
+				  cache_inode_client_t * pclient,
+				  fsal_op_context_t * pcontext,
+				  cache_inode_status_t * pstatus)
 {
-  cache_entry_t                * pentry = NULL ;
-  fsal_status_t                  fsal_status ;
-  fsal_handle_t                  object_handle ;
-  fsal_attrib_list_t             parent_attributes ;
-  fsal_attrib_list_t             object_attributes ;
-  fsal_handle_t                  dir_handle ;
-  fsal_handle_t                * pdir_handle = NULL ;
-  cache_inode_fsal_data_t        fsal_data ;
-  cache_inode_status_t           status ;
-  cache_inode_async_op_desc_t  * pasyncopdesc = NULL ;
-
+  cache_entry_t *pentry = NULL;
+  fsal_status_t fsal_status;
+  fsal_handle_t object_handle;
+  fsal_attrib_list_t parent_attributes;
+  fsal_attrib_list_t object_attributes;
+  fsal_handle_t dir_handle;
+  fsal_handle_t *pdir_handle = NULL;
+  cache_inode_fsal_data_t fsal_data;
+  cache_inode_status_t status;
+  cache_inode_async_op_desc_t *pasyncopdesc = NULL;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
-  
+  *pstatus = CACHE_INODE_SUCCESS;
+
   /* stats */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_CREATE] += 1 ;
-  
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_CREATE] += 1;
+
   /* Check if the required type is correct, with this function, we manage file, dir and symlink */
-  if( type != REGULAR_FILE && type != DIR_BEGINNING && type != SYMBOLIC_LINK
+  if (type != REGULAR_FILE && type != DIR_BEGINNING && type != SYMBOLIC_LINK
       && type != SOCKET_FILE && type != FIFO_FILE && type != CHARACTER_FILE
-      && type != BLOCK_FILE )
+      && type != BLOCK_FILE)
     {
-      *pstatus = CACHE_INODE_BAD_TYPE ;
+      *pstatus = CACHE_INODE_BAD_TYPE;
 
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
-      
-      return NULL ;
-    }
-  
-  /* Check if an entry of the same name exists */
-  if( ( pentry = cache_inode_lookup( pentry_parent, 
-                                     pname,
-                                     &parent_attributes, 
-                                     ht, 
-                                     pclient, 
-                                     pcontext, 
-                                     pstatus ) ) != NULL )
-    {
-      *pstatus = CACHE_INODE_ENTRY_EXISTS ;
-      
-      if( pentry->internal_md.type != type )
-        {
-          /* Incompatible types, returns NULL */
-          
-          /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-          return NULL ;
-        }
-      else
-        {
-          /* stats */
-          pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1 ;
-      
-          /* redondant creation, returned the previously created entry */
-          return pentry ;
-        }
+      return NULL;
+    }
+
+  /* Check if an entry of the same name exists */
+  if ((pentry = cache_inode_lookup(pentry_parent,
+				   pname,
+				   &parent_attributes,
+				   ht, pclient, pcontext, pstatus)) != NULL)
+    {
+      *pstatus = CACHE_INODE_ENTRY_EXISTS;
+
+      if (pentry->internal_md.type != type)
+	{
+	  /* Incompatible types, returns NULL */
+
+	  /* stats */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+	  return NULL;
+	} else
+	{
+	  /* stats */
+	  pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
+
+	  /* redondant creation, returned the previously created entry */
+	  return pentry;
+	}
     }
 
   /* At this point, the entry was not found, this means that is doesn't exist is FSAL, we can create it */
 
-
-   switch( type )
-     {
-     case REGULAR_FILE:
-     case DIR_BEGINNING:
-     case DIR_CONTINUE:
-       break ;
-
-     case SYMBOLIC_LINK:
-     case SOCKET_FILE:
-     case FIFO_FILE:
-     case BLOCK_FILE:
-     case CHARACTER_FILE:
-       *pstatus = CACHE_INODE_NOT_SUPPORTED ;
-
-       /* stats */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
-
-       return NULL ;
-       break ;
-
-     default:
-       /* we should never go there */
-       *pstatus = CACHE_INODE_INCONSISTENT_ENTRY ;
-
-       /* stats */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
-
-       return NULL ;
-       break ;
-     }
-   
-
-  /* Get the lock for the parent*/
-   P( pentry_parent->lock ) ;
-
-   if( pentry_parent->internal_md.type == DIR_BEGINNING )
+  switch (type)
     {
-      dir_handle  = pentry_parent->object.dir_begin.handle ;
-      pdir_handle = &pentry_parent->object.dir_begin.handle ;
+    case REGULAR_FILE:
+    case DIR_BEGINNING:
+    case DIR_CONTINUE:
+      break;
+
+    case SYMBOLIC_LINK:
+    case SOCKET_FILE:
+    case FIFO_FILE:
+    case BLOCK_FILE:
+    case CHARACTER_FILE:
+      *pstatus = CACHE_INODE_NOT_SUPPORTED;
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+      return NULL;
+      break;
+
+    default:
+      /* we should never go there */
+      *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+      return NULL;
+      break;
     }
 
-   if( pentry_parent->internal_md.type == DIR_CONTINUE )
-     {
-       P( pentry_parent->object.dir_cont.pdir_begin->lock ) ;
-       dir_handle  = pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle ;
-       pdir_handle = &pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle ;
-       V( pentry_parent->object.dir_cont.pdir_begin->lock ) ;
-     }
-  
-   /* Post an asynchronous operation */
-  P( pclient->pool_lock ) ;
-  GET_PREALLOC( pasyncopdesc,
-                pclient->pool_async_op,
-                pclient->nb_pre_async_op_desc,
-                cache_inode_async_op_desc_t,
-                next_alloc ) ;
-  V( pclient->pool_lock ) ;
+  /* Get the lock for the parent */
+  P(pentry_parent->lock);
 
-  if( pasyncopdesc == NULL )
-   {
+  if (pentry_parent->internal_md.type == DIR_BEGINNING)
+    {
+      dir_handle = pentry_parent->object.dir_begin.handle;
+      pdir_handle = &pentry_parent->object.dir_begin.handle;
+    }
+
+  if (pentry_parent->internal_md.type == DIR_CONTINUE)
+    {
+      P(pentry_parent->object.dir_cont.pdir_begin->lock);
+      dir_handle = pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      pdir_handle = &pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      V(pentry_parent->object.dir_cont.pdir_begin->lock);
+    }
+
+  /* Post an asynchronous operation */
+  P(pclient->pool_lock);
+  GET_PREALLOC(pasyncopdesc,
+	       pclient->pool_async_op,
+	       pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
+  V(pclient->pool_lock);
+
+  if (pasyncopdesc == NULL)
+    {
       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-      *pstatus = CACHE_INODE_MALLOC_ERROR ;
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
 
-      V( pentry_parent->lock ) ;
+      V(pentry_parent->lock);
 
-      return NULL ;
-   }
+      return NULL;
+    }
 
-   pasyncopdesc->op_type = CACHE_INODE_ASYNC_OP_CREATE ; 
-   pasyncopdesc->op_args.create.pfsal_handle_dir_pre = &pre_created_dir_handle ;
-   pasyncopdesc->op_args.create.pfsal_handle_obj_pre = cache_inode_async_get_preallocated( pclient, 
-                                                                                           type,
-                                                                                           &pasyncopdesc->op_args.create.fileid,
-                                                                                           pcontext->export_context,
-                                                                                           pstatus ) ;
-   if( pasyncopdesc->op_args.create.pfsal_handle_obj_pre  == NULL )
-     {
+  pasyncopdesc->op_type = CACHE_INODE_ASYNC_OP_CREATE;
+  pasyncopdesc->op_args.create.pfsal_handle_dir_pre = &pre_created_dir_handle;
+  pasyncopdesc->op_args.create.pfsal_handle_obj_pre =
+      cache_inode_async_get_preallocated(pclient, type,
+					 &pasyncopdesc->op_args.create.fileid,
+					 pcontext->export_context, pstatus);
+  if (pasyncopdesc->op_args.create.pfsal_handle_obj_pre == NULL)
+    {
       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-      *pstatus = CACHE_INODE_MALLOC_ERROR ;
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
 
-      V( pentry_parent->lock ) ;
+      V(pentry_parent->lock);
 
-      return NULL ;
-     }
-   else
-     object_handle = *(pasyncopdesc->op_args.create.pfsal_handle_obj_pre) ;
+      return NULL;
+    } else
+    object_handle = *(pasyncopdesc->op_args.create.pfsal_handle_obj_pre);
 
-   pasyncopdesc->op_args.create.pfsal_handle_dir = pdir_handle ;
+  pasyncopdesc->op_args.create.pfsal_handle_dir = pdir_handle;
 
-   if( type == REGULAR_FILE )
-     pasyncopdesc->op_args.create.object_type  = FSAL_TYPE_FILE ;
-   else
-     pasyncopdesc->op_args.create.object_type  = FSAL_TYPE_DIR ;
-      
-   pasyncopdesc->op_args.create.name             = *pname ;
-   pasyncopdesc->op_args.create.mode             = mode ;
-   pasyncopdesc->op_res.create.attr.asked_attributes = FSAL_ATTRS_POSIX ;
-   pasyncopdesc->op_func = cache_inode_async_create ;
-
-   pasyncopdesc->fsal_op_context = *pcontext ;
-   pasyncopdesc->fsal_export_context = *(pcontext->export_context) ;
-   pasyncopdesc->fsal_op_context.export_context = &pasyncopdesc->fsal_export_context ;
-
-   pasyncopdesc->ht              = ht ;
-   pasyncopdesc->origine_pool    = pclient->pool_async_op ;
-   pasyncopdesc->ppool_lock      = &pclient->pool_lock ;
-
-   if( gettimeofday( &pasyncopdesc->op_time, NULL ) != 0 )
-    {
-       /* Could'not get time of day... Stopping, this may need a major failure */
-       DisplayLog( "cache_inode_create: cannot get time of day... exiting" ) ;
-       exit( 1 ) ;
-    }
-
-   /* Affect the operation to a synclet */
-   if( cache_inode_post_async_op( pasyncopdesc,
-                                  pentry_parent,
-                                  pstatus ) != CACHE_INODE_SUCCESS )
-    {
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
-
-       DisplayLog( "WARNING !!! cache_inode_create could not post async op...." ) ;
-
-       *pstatus = CACHE_INODE_ASYNC_POST_ERROR ;
-
-      V( pentry_parent->lock ) ;
-
-       return NULL ;
-    }
-
-    object_attributes.asked_attributes = FSAL_ATTRS_POSIX ;
-  
-    object_attributes.supported_attributes = FSAL_ATTRS_POSIX ;
-    if( type == REGULAR_FILE )
-     {
-       object_attributes.type     = FSAL_TYPE_FILE ;
-       object_attributes.numlinks = 1 ;
-     }
+  if (type == REGULAR_FILE)
+    pasyncopdesc->op_args.create.object_type = FSAL_TYPE_FILE;
     else
-     {
-       /* This is a directory */
-       object_attributes.type     = FSAL_TYPE_DIR ;
-       object_attributes.numlinks = 2 ; /* . and .. */
-     }
-    object_attributes.filesize       = 0 ; /* A new object, either a file or a directory, is empty */
-    object_attributes.spaceused      = 0 ; /* A new object, either a file or a directory, is empty */
-    object_attributes.fsid           = parent_attributes.fsid ;
-    object_attributes.fileid         = pasyncopdesc->op_args.create.fileid ; 
-    object_attributes.mode           = mode ;
-    object_attributes.owner          = 0 ; /* For wanting of a better solution */
-    object_attributes.group          = 0 ; /* For wanting of a better solution */
-    object_attributes.atime.seconds  = pasyncopdesc->op_time.tv_sec ;
-    object_attributes.atime.seconds  = pasyncopdesc->op_time.tv_sec ;
-    object_attributes.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
-    object_attributes.ctime.nseconds = pasyncopdesc->op_time.tv_usec ;
-    object_attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec ;
-    object_attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec ;
+    pasyncopdesc->op_args.create.object_type = FSAL_TYPE_DIR;
 
+  pasyncopdesc->op_args.create.name = *pname;
+  pasyncopdesc->op_args.create.mode = mode;
+  pasyncopdesc->op_res.create.attr.asked_attributes = FSAL_ATTRS_POSIX;
+  pasyncopdesc->op_func = cache_inode_async_create;
 
-    fsal_data.handle = object_handle ;
-    fsal_data.cookie = DIR_START ;
+  pasyncopdesc->fsal_op_context = *pcontext;
+  pasyncopdesc->fsal_export_context = *(pcontext->export_context);
+  pasyncopdesc->fsal_op_context.export_context = &pasyncopdesc->fsal_export_context;
 
-    /* This call will return NULL if failed */
-    if( ( pentry = cache_inode_new_entry( &fsal_data, 
-                                          &object_attributes,
-                                          type, 
-                                          pcreate_arg,
-                                          NULL, 
-                                          ht, 
-                                          pclient, 
-                                          pcontext, 
-		                          TRUE, /* This is a creation and not a population */
-                                          pstatus ) ) == NULL )
-      {
-        *pstatus = CACHE_INODE_INSERT_ERROR ;
-        V( pentry_parent->lock ) ;
-        
-        /* stats */
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
+  pasyncopdesc->ht = ht;
+  pasyncopdesc->origine_pool = pclient->pool_async_op;
+  pasyncopdesc->ppool_lock = &pclient->pool_lock;
 
-        return NULL ;
-      }
+  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+    {
+      /* Could'not get time of day... Stopping, this may need a major failure */
+      DisplayLog("cache_inode_create: cannot get time of day... exiting");
+      exit(1);
+    }
 
-       
-    /* Add this entry to the directory */
-    if( cache_inode_add_cached_dirent( pentry_parent,
-                                       pname, 
-                                       pentry, 
-                                       NULL,
-                                       ht,
-                                       pclient,
-                                       pcontext,
-                                       pstatus ) != CACHE_INODE_SUCCESS ) 
-      {
-        V( pentry_parent->lock ) ;
+  /* Affect the operation to a synclet */
+  if (cache_inode_post_async_op(pasyncopdesc,
+				pentry_parent, pstatus) != CACHE_INODE_SUCCESS)
+    {
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
-        /* stats */
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1 ;
+      DisplayLog("WARNING !!! cache_inode_create could not post async op....");
 
-        return NULL ;
-      }  
+      *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
+      V(pentry_parent->lock);
+
+      return NULL;
+    }
+
+  object_attributes.asked_attributes = FSAL_ATTRS_POSIX;
+
+  object_attributes.supported_attributes = FSAL_ATTRS_POSIX;
+  if (type == REGULAR_FILE)
+    {
+      object_attributes.type = FSAL_TYPE_FILE;
+      object_attributes.numlinks = 1;
+    } else
+    {
+      /* This is a directory */
+      object_attributes.type = FSAL_TYPE_DIR;
+      object_attributes.numlinks = 2;	/* . and .. */
+    }
+  object_attributes.filesize = 0;	/* A new object, either a file or a directory, is empty */
+  object_attributes.spaceused = 0;	/* A new object, either a file or a directory, is empty */
+  object_attributes.fsid = parent_attributes.fsid;
+  object_attributes.fileid = pasyncopdesc->op_args.create.fileid;
+  object_attributes.mode = mode;
+  object_attributes.owner = 0;	/* For wanting of a better solution */
+  object_attributes.group = 0;	/* For wanting of a better solution */
+  object_attributes.atime.seconds = pasyncopdesc->op_time.tv_sec;
+  object_attributes.atime.seconds = pasyncopdesc->op_time.tv_sec;
+  object_attributes.ctime.seconds = pasyncopdesc->op_time.tv_sec;
+  object_attributes.ctime.nseconds = pasyncopdesc->op_time.tv_usec;
+  object_attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec;
+  object_attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec;
+
+  fsal_data.handle = object_handle;
+  fsal_data.cookie = DIR_START;
+
+  /* This call will return NULL if failed */
+  if ((pentry = cache_inode_new_entry(&fsal_data, &object_attributes, type, pcreate_arg, NULL, ht, pclient, pcontext, TRUE,	/* This is a creation and not a population */
+				      pstatus)) == NULL)
+    {
+      *pstatus = CACHE_INODE_INSERT_ERROR;
+      V(pentry_parent->lock);
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+      return NULL;
+    }
+
+  /* Add this entry to the directory */
+  if (cache_inode_add_cached_dirent(pentry_parent,
+				    pname,
+				    pentry,
+				    NULL,
+				    ht,
+				    pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+    {
+      V(pentry_parent->lock);
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+      return NULL;
+    }
 
   /* Update the parent cached attributes */
-  if( pentry_parent->internal_md.type == DIR_BEGINNING )
+  if (pentry_parent->internal_md.type == DIR_BEGINNING)
     {
-      pentry_parent->object.dir_begin.attributes.mtime.seconds  = pasyncopdesc->op_time.tv_sec ;
-      pentry_parent->object.dir_begin.attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec ;
-      pentry_parent->object.dir_begin.attributes.ctime = pentry_parent->object.dir_begin.attributes.mtime ;
-      
+      pentry_parent->object.dir_begin.attributes.mtime.seconds =
+	  pasyncopdesc->op_time.tv_sec;
+      pentry_parent->object.dir_begin.attributes.mtime.nseconds =
+	  pasyncopdesc->op_time.tv_usec;
+      pentry_parent->object.dir_begin.attributes.ctime =
+	  pentry_parent->object.dir_begin.attributes.mtime;
+
       /* if the created object is a directory, it contains a link
        * to its parent : '..'. Thus the numlink attr must be increased.
        */
-      if ( type == DIR_BEGINNING )
-      {
-        pentry_parent->object.dir_begin.attributes.numlinks ++;
-      }
-      
-    }
-  else
+      if (type == DIR_BEGINNING)
+	{
+	  pentry_parent->object.dir_begin.attributes.numlinks++;
+	}
+
+    } else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.seconds  = time( NULL ) ;
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.seconds  = 0 ;
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime = 
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime ;
-      
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+	  mtime.seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+	  mtime.seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
+	  pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
+
       /* if the created object is a directory, it contains a link
        * to its parent : '..'. Thus the numlink attr must be increased.
        */
-      if ( type == DIR_BEGINNING )
-      {
-        pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.numlinks ++;
-      }
+      if (type == DIR_BEGINNING)
+	{
+	  pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
+	      attributes.numlinks++;
+	}
 
     }
-   
-   
-   /* Get the attributes in return */
-   *pattr = object_attributes ;
 
-   /* valid the parent */
-   *pstatus = cache_inode_valid( pentry_parent, CACHE_INODE_OP_SET, pclient ) ;  
-   
-   /* release the lock for the parent*/
-   V( pentry_parent->lock ) ;
+  /* Get the attributes in return */
+  *pattr = object_attributes;
 
-   /* stat */
-   if( *pstatus != CACHE_INODE_SUCCESS )
-     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_CREATE] += 1 ;
-   else
-     pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1 ;
- 
-  return pentry ;
-} /* cache_inode_create */
+  /* valid the parent */
+  *pstatus = cache_inode_valid(pentry_parent, CACHE_INODE_OP_SET, pclient);
 
+  /* release the lock for the parent */
+  V(pentry_parent->lock);
 
+  /* stat */
+  if (*pstatus != CACHE_INODE_SUCCESS)
+    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_CREATE] += 1;
+    else
+    pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
+
+  return pentry;
+}				/* cache_inode_create */

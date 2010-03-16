@@ -91,7 +91,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -112,10 +112,6 @@
 
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
-
-
-
-
 
 /**
  * FSAL_test_access :
@@ -149,112 +145,104 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_test_access(
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * object_attributes   /* IN */
-)
+fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
+			       fsal_accessflags_t access_type,	/* IN */
+			       fsal_attrib_list_t * object_attributes	/* IN */
+    )
 {
   fsal_accessflags_t missing_access;
   int is_grp;
-  
+
   /* sanity checks. */
-  
+
   if (!object_attributes || !p_context)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_test_access);
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_test_access);
+
   /* If the FSAL_F_OK flag is set, returns ERR INVAL */
-  
-  if ( access_type & FSAL_F_OK )
-    Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_test_access);
-  
-  
+
+  if (access_type & FSAL_F_OK)
+    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_test_access);
+
   /* ----- here is a code sample for this function ---- */
-  
+
   /* test root access */
-  
-  if ( p_context->user_credential.user == 0 )
-    Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
-  
-  
-  /* unsatisfied permissions */  
-  
+
+  if (p_context->user_credential.user == 0)
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+
+  /* unsatisfied permissions */
+
   missing_access = access_type;
 
-  
   /* Test if file belongs to user. */
- 
-  if ( p_context->user_credential.user == object_attributes->owner )
-  {
-    
-    if ( object_attributes->mode & FSAL_MODE_RUSR )
-      missing_access &= ~FSAL_R_OK ;
 
-    if ( object_attributes->mode & FSAL_MODE_WUSR )
-      missing_access &= ~FSAL_W_OK ;
-    
-    if ( object_attributes->mode & FSAL_MODE_XUSR )
-      missing_access &= ~FSAL_X_OK ;
-    
-    
-    if ( missing_access == 0 )
-      Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
-    else
-      Return(ERR_FSAL_ACCESS ,0 , INDEX_FSAL_test_access );
-         
-  }
-      
-  
+  if (p_context->user_credential.user == object_attributes->owner)
+    {
+
+      if (object_attributes->mode & FSAL_MODE_RUSR)
+	missing_access &= ~FSAL_R_OK;
+
+      if (object_attributes->mode & FSAL_MODE_WUSR)
+	missing_access &= ~FSAL_W_OK;
+
+      if (object_attributes->mode & FSAL_MODE_XUSR)
+	missing_access &= ~FSAL_X_OK;
+
+      if (missing_access == 0)
+	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+	else
+	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+
+    }
+
   /* Test if the file belongs to user's group. */
 
-  is_grp = (p_context->user_credential.group == object_attributes->group );
-  
-  if ( !is_grp )
-  {
-    /* >> Test here if file belongs to user's alt groups << */  
-  }
+  is_grp = (p_context->user_credential.group == object_attributes->group);
+
+  if (!is_grp)
+    {
+      /* >> Test here if file belongs to user's alt groups << */
+    }
 
   /* finally apply group rights */
-  
-  if ( is_grp )
-  {
-    if ( object_attributes->mode & FSAL_MODE_RGRP )
-      missing_access &= ~FSAL_R_OK ;
 
-    if ( object_attributes->mode & FSAL_MODE_WGRP )
-      missing_access &= ~FSAL_W_OK ;
+  if (is_grp)
+    {
+      if (object_attributes->mode & FSAL_MODE_RGRP)
+	missing_access &= ~FSAL_R_OK;
 
-    if ( object_attributes->mode & FSAL_MODE_XGRP )
-      missing_access &= ~FSAL_X_OK ;
-    
-    if ( missing_access == 0 )
-      Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
-    else
-      Return(ERR_FSAL_ACCESS ,0 , INDEX_FSAL_test_access );
-    
-  }
-  
-  /* test other perms */  
-      
-  if ( object_attributes->mode & FSAL_MODE_ROTH )
-    missing_access &= ~FSAL_R_OK ;
+      if (object_attributes->mode & FSAL_MODE_WGRP)
+	missing_access &= ~FSAL_W_OK;
 
-  if ( object_attributes->mode & FSAL_MODE_WOTH )
-    missing_access &= ~FSAL_W_OK ;
+      if (object_attributes->mode & FSAL_MODE_XGRP)
+	missing_access &= ~FSAL_X_OK;
 
-  if ( object_attributes->mode & FSAL_MODE_XOTH )
-    missing_access &= ~FSAL_X_OK ;
-     
-    
+      if (missing_access == 0)
+	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+	else
+	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+
+    }
+
+  /* test other perms */
+
+  if (object_attributes->mode & FSAL_MODE_ROTH)
+    missing_access &= ~FSAL_R_OK;
+
+  if (object_attributes->mode & FSAL_MODE_WOTH)
+    missing_access &= ~FSAL_W_OK;
+
+  if (object_attributes->mode & FSAL_MODE_XOTH)
+    missing_access &= ~FSAL_X_OK;
+
   /** @todo: ACLs. */
-  
-  if ( missing_access == 0 )
-    Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_test_access );
-  else
-    Return(ERR_FSAL_ACCESS ,0 , INDEX_FSAL_test_access );
-  
-}
 
+  if (missing_access == 0)
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+    else
+    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+
+}
 
 /**
  * FSAL_test_setattr_access :
@@ -280,38 +268,36 @@ fsal_status_t FSAL_test_access(
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_setattr_access(
-    fsal_op_context_t          * p_context,              /* IN */
-    fsal_attrib_list_t         * pcandidate_attributes,  /* IN */
-    fsal_attrib_list_t         * pobject_attributes      /* IN */
-)
+fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,	/* IN */
+				  fsal_attrib_list_t * pcandidate_attributes,	/* IN */
+				  fsal_attrib_list_t * pobject_attributes	/* IN */
+    )
 {
-  fsal_status_t  fsal_status ;
-  int            same_owner = FALSE ;
-  int            root_access = FALSE ;
+  fsal_status_t fsal_status;
+  int same_owner = FALSE;
+  int root_access = FALSE;
 
   /* sanity check */
-  if ( p_context == NULL || pcandidate_attributes == NULL ||  pobject_attributes == NULL )
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_setattr_access );
+  if (p_context == NULL || pcandidate_attributes == NULL || pobject_attributes == NULL)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattr_access);
 
   /* Root has full power... */
-  if ( p_context->user_credential.user == 0 )
-    Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_setattr_access );
+  if (p_context->user_credential.user == 0)
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattr_access);
 
   /* Check for owner access */
-  if ( p_context->user_credential.user == pobject_attributes->owner )
+  if (p_context->user_credential.user == pobject_attributes->owner)
     {
-        same_owner = TRUE ;
+      same_owner = TRUE;
     }
 
-  if( !same_owner )
-    Return(ERR_FSAL_ACCESS ,0 , INDEX_FSAL_setattr_access );
-
+  if (!same_owner)
+    Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_setattr_access);
 
   /* If this point is reached, then access is granted */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattr_access );
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattr_access);
 
-} /* FSAL_test_setattr_access */
+}				/* FSAL_test_setattr_access */
 
 /**
  * FSAL_rename_access :
@@ -330,24 +316,23 @@ fsal_status_t FSAL_setattr_access(
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_rename_access(
-        fsal_op_context_t  * pcontext,             /* IN */
-        fsal_attrib_list_t * pattrsrc,             /* IN */
-        fsal_attrib_list_t * pattrdest )           /* IN */
+fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,	/* IN */
+				 fsal_attrib_list_t * pattrsrc,	/* IN */
+				 fsal_attrib_list_t * pattrdest)	/* IN */
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status =  FSAL_test_access( pcontext, FSAL_W_OK, pattrsrc ) ;
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    Return( fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access ) ;
+  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrsrc);
+  if (FSAL_IS_ERROR(fsal_status))
+    Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
-  fsal_status =  FSAL_test_access( pcontext, FSAL_W_OK, pattrdest ) ;
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    Return( fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access ) ;
+  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattrdest);
+  if (FSAL_IS_ERROR(fsal_status))
+    Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_rename_access);
 
- /* If this point is reached, then access is granted */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename_access );
-} /* FSAL_rename_access */
+  /* If this point is reached, then access is granted */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename_access);
+}				/* FSAL_rename_access */
 
 /**
  * FSAL_create_access :
@@ -363,20 +348,18 @@ fsal_status_t FSAL_rename_access(
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_create_access(
-        fsal_op_context_t  * pcontext,             /* IN */
-        fsal_attrib_list_t * pattr )           /* IN */
+fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,	/* IN */
+				 fsal_attrib_list_t * pattr)	/* IN */
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status =  FSAL_test_access( pcontext, FSAL_W_OK, pattr ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-    Return( fsal_status.major, fsal_status.minor, INDEX_FSAL_create_access ) ;
+  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  if (FSAL_IS_ERROR(fsal_status))
+    Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create_access);
 
- /* If this point is reached, then access is granted */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create_access );
-} /* FSAL_create_access */
-
+  /* If this point is reached, then access is granted */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create_access);
+}				/* FSAL_create_access */
 
 /**
  * FSAL_unlink_access :
@@ -392,20 +375,19 @@ fsal_status_t FSAL_create_access(
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_unlink_access(
-        fsal_op_context_t  * pcontext,             /* IN */
-        fsal_attrib_list_t * pattr )           /* IN */
+fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,	/* IN */
+				 fsal_attrib_list_t * pattr)	/* IN */
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status =  FSAL_test_access( pcontext, FSAL_W_OK, pattr ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-    Return( fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access ) ;
+  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  if (FSAL_IS_ERROR(fsal_status))
+    Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
- /* If this point is reached, then access is granted */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink_access );
+  /* If this point is reached, then access is granted */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink_access);
 
-} /* FSAL_unlink_access */
+}				/* FSAL_unlink_access */
 
 /**
  * FSAL_link_access :
@@ -422,22 +404,18 @@ fsal_status_t FSAL_unlink_access(
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_link_access(
-        fsal_op_context_t  * pcontext,             /* IN */
-        fsal_attrib_list_t * pattr )           /* IN */
+fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,	/* IN */
+			       fsal_attrib_list_t * pattr)	/* IN */
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status =  FSAL_test_access( pcontext, FSAL_W_OK, pattr ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-    Return( fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access ) ;
+  fsal_status = FSAL_test_access(pcontext, FSAL_W_OK, pattr);
+  if (FSAL_IS_ERROR(fsal_status))
+    Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_unlink_access);
 
- /* If this point is reached, then access is granted */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link_access );
-} /* FSAL_link_access */
-
-
-
+  /* If this point is reached, then access is granted */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link_access);
+}				/* FSAL_link_access */
 
 /**
  * FSAL_merge_attrs: merge to attributes structure.
@@ -454,50 +432,49 @@ fsal_status_t FSAL_link_access(
  *        - ERR_FSAL_INVAL        Invalid argument(s)
  */
 
-fsal_status_t FSAL_merge_attrs( fsal_attrib_list_t * pinit_attr, 
-                                fsal_attrib_list_t * pnew_attr, 
-                                fsal_attrib_list_t * presult_attr ) 
+fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
+			       fsal_attrib_list_t * pnew_attr,
+			       fsal_attrib_list_t * presult_attr)
 {
-  if( pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL )
-      Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs );
+  if (pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
+    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);
 
   /* The basis for the result attr is the fist argument */
-  *presult_attr = *pinit_attr ;
+  *presult_attr = *pinit_attr;
 
   /* Now deal with the attributes to be merged in this set of attributes */
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_MODE ) )
-     presult_attr->mode = pnew_attr->mode ;
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MODE))
+    presult_attr->mode = pnew_attr->mode;
 
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_OWNER ) ) 
-      presult_attr->owner = pnew_attr->owner ;
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_OWNER))
+    presult_attr->owner = pnew_attr->owner;
 
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_GROUP ) ) 
-      presult_attr->group = pnew_attr->group ;
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_GROUP))
+    presult_attr->group = pnew_attr->group;
 
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_SIZE) )
-      presult_attr->filesize = pnew_attr->filesize ;
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SIZE))
+    presult_attr->filesize = pnew_attr->filesize;
 
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED ) )
-      presult_attr->spaceused = pnew_attr->spaceused ; 
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_SPACEUSED))
+    presult_attr->spaceused = pnew_attr->spaceused;
 
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_ATIME ) )
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_ATIME))
     {
-        presult_attr->atime.seconds  = pnew_attr->atime.seconds ;
-        presult_attr->atime.nseconds = pnew_attr->atime.nseconds ;
+      presult_attr->atime.seconds = pnew_attr->atime.seconds;
+      presult_attr->atime.nseconds = pnew_attr->atime.nseconds;
     }
-  
-  if( FSAL_TEST_MASK( pnew_attr->asked_attributes, FSAL_ATTR_MTIME ) )
+
+  if (FSAL_TEST_MASK(pnew_attr->asked_attributes, FSAL_ATTR_MTIME))
     {
-        presult_attr->mtime.seconds  = pnew_attr->mtime.seconds ;
-        presult_attr->mtime.nseconds = pnew_attr->mtime.nseconds ;
+      presult_attr->mtime.seconds = pnew_attr->mtime.seconds;
+      presult_attr->mtime.nseconds = pnew_attr->mtime.nseconds;
     }
 
   /* Do not forget the ctime */
-  FSAL_SET_MASK( presult_attr->asked_attributes, FSAL_ATTR_CTIME ) ;
-  presult_attr->ctime.seconds  = pnew_attr->ctime.seconds ;
-  presult_attr->ctime.nseconds = pnew_attr->ctime.nseconds ;
+  FSAL_SET_MASK(presult_attr->asked_attributes, FSAL_ATTR_CTIME);
+  presult_attr->ctime.seconds = pnew_attr->ctime.seconds;
+  presult_attr->ctime.nseconds = pnew_attr->ctime.nseconds;
 
   /* Regular exit */
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_merge_attrs );
-} /* FSAL_merge_attrs */
-
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_merge_attrs);
+}				/* FSAL_merge_attrs */

@@ -82,7 +82,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -123,83 +123,86 @@
  *
  */
 
-int nlm4_Test( nfs_arg_t            * parg    /* IN     */,
-              exportlist_t         * pexport /* IN     */,
-              fsal_op_context_t    * pcontext   /* IN     */,
-              cache_inode_client_t * pclient /* INOUT  */,
-              hash_table_t         * ht      /* INOUT  */,
-              struct svc_req       * preq    /* IN     */,
-              nfs_res_t            * pres    /* OUT    */ )
+int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
+	      exportlist_t * pexport /* IN     */ ,
+	      fsal_op_context_t * pcontext /* IN     */ ,
+	      cache_inode_client_t * pclient /* INOUT  */ ,
+	      hash_table_t * ht /* INOUT  */ ,
+	      struct svc_req *preq /* IN     */ ,
+	      nfs_res_t * pres /* OUT    */ )
 {
-	fsal_file_t *fd;
-	fsal_status_t retval;
-	nlm4_testargs *arg;
-	cache_entry_t *pentry;
-	fsal_attrib_list_t attr;
-	fsal_lockdesc_t *lock_desc;
-	cache_inode_status_t cache_status;
-	cache_inode_fsal_data_t fsal_data;
+  fsal_file_t *fd;
+  fsal_status_t retval;
+  nlm4_testargs *arg;
+  cache_entry_t *pentry;
+  fsal_attrib_list_t attr;
+  fsal_lockdesc_t *lock_desc;
+  cache_inode_status_t cache_status;
+  cache_inode_fsal_data_t fsal_data;
 
-	DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG,
-			"REQUEST PROCESSING: Calling nlm_Test" ) ;
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+		    "REQUEST PROCESSING: Calling nlm_Test");
 
-	/* Convert file handle into a cache entry */
+  /* Convert file handle into a cache entry */
 
-	/* FIXME!!
-	 * NFS helper functions are really confusing. So code
-	 * it here.
-	 */
-	/* FIXME!! right now we look at only nfs3 handles */
-	arg = &parg->arg_nlm4_test;
-	if (!nfs3_FhandleToFSAL((nfs_fh3 *)&(arg->alock.fh),
-				&fsal_data.handle,
-				pcontext)) {
-		/* handle is not valid */
-		pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
-		/*
-		 * Should we do a REQ_OK so that the client get
-		 * a response ? FIXME!!
-		 */
-		return NFS_REQ_DROP;
-	}
-	/* Now get the cached inode attributes */
-	fsal_data.cookie = DIR_START;
-	if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-					pclient,
-					pcontext,
-					&cache_status)) == NULL) {
-		/* handle is not valid */
-		pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
-		return NFS_REQ_OK;
-	}
-	fd = &pentry->object.file.open_fd.fd;
-	lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-	if (!lock_desc) {
-		pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
-		/* FIXME!!
-		 * should we update the attribute values here now that
-		 * now that we are able to find the inode
-		 */
-		return NFS_REQ_OK;
-	}
+  /* FIXME!!
+   * NFS helper functions are really confusing. So code
+   * it here.
+   */
+  /* FIXME!! right now we look at only nfs3 handles */
+  arg = &parg->arg_nlm4_test;
+  if (!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+    {
+      /* handle is not valid */
+      pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
+      /*
+       * Should we do a REQ_OK so that the client get
+       * a response ? FIXME!!
+       */
+      return NFS_REQ_DROP;
+    }
+  /* Now get the cached inode attributes */
+  fsal_data.cookie = DIR_START;
+  if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
+				pclient, pcontext, &cache_status)) == NULL)
+    {
+      /* handle is not valid */
+      pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
+      return NFS_REQ_OK;
+    }
+  fd = &pentry->object.file.open_fd.fd;
+  lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
+  if (!lock_desc)
+    {
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
+      /* FIXME!!
+       * should we update the attribute values here now that
+       * now that we are able to find the inode
+       */
+      return NFS_REQ_OK;
+    }
 
-	retval = FSAL_getlock(fd, lock_desc);
-	if (!FSAL_IS_ERROR(retval)) {
-		if (lock_desc->flock.l_type = F_UNLCK) {
-			/* we can place the lock */
-			pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
-			goto complete;
-		} else {
-			pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
-			fsal_lockdesc_to_nlm_holder(lock_desc,
-						&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder);
-			goto complete;
-		}
+  retval = FSAL_getlock(fd, lock_desc);
+  if (!FSAL_IS_ERROR(retval))
+    {
+      if (lock_desc->flock.l_type = F_UNLCK)
+	{
+	  /* we can place the lock */
+	  pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
+	  goto complete;
+	} else
+	{
+	  pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
+	  fsal_lockdesc_to_nlm_holder(lock_desc,
+				      &pres->res_nlm4test.test_stat.
+				      nlm4_testrply_u.holder);
+	  goto complete;
 	}
-	pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
-complete:
-	Mem_Free(lock_desc);
-	return NFS_REQ_OK;
+    }
+  pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
+ complete:
+  Mem_Free(lock_desc);
+  return NFS_REQ_OK;
 }
 
 /**
@@ -210,7 +213,7 @@ complete:
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Test_Free( nfs_res_t * pres )
+void nlm4_Test_Free(nfs_res_t * pres)
 {
-  return ;
+  return;
 }

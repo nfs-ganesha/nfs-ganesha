@@ -21,8 +21,6 @@
 #include "fsal_common.h"
 #include "namespace.h"
 
-
-
 /**
  * FSAL_rename:
  * Change name and/or parent dir of a filesystem object.
@@ -63,127 +61,126 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
- 
-fsal_status_t FSAL_rename(
-    fsal_handle_t         * old_parentdir_handle,      /* IN */
-    fsal_name_t           * p_old_name,                /* IN */
-    fsal_handle_t         * new_parentdir_handle,      /* IN */
-    fsal_name_t           * p_new_name,                /* IN */
-    fsal_op_context_t     * p_context,                 /* IN */
-    fsal_attrib_list_t    * src_dir_attributes,        /* [ IN/OUT ] */
-    fsal_attrib_list_t    * tgt_dir_attributes         /* [ IN/OUT ] */
-){
-  
+
+fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle,	/* IN */
+			  fsal_name_t * p_old_name,	/* IN */
+			  fsal_handle_t * new_parentdir_handle,	/* IN */
+			  fsal_name_t * p_new_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_attrib_list_t * src_dir_attributes,	/* [ IN/OUT ] */
+			  fsal_attrib_list_t * tgt_dir_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc = 0;
   char src_dir_path[FSAL_MAX_PATH_LEN];
   char tgt_dir_path[FSAL_MAX_PATH_LEN];
   char src_obj_path[FSAL_MAX_PATH_LEN];
   char tgt_obj_path[FSAL_MAX_PATH_LEN];
-  
+
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
    */
-  if ( !old_parentdir_handle ||
-       !new_parentdir_handle ||
-       !p_old_name ||
-       !p_new_name ||
-       !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
+  if (!old_parentdir_handle ||
+      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
-  if ( !p_fs_ops->rename )
-      Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_rename);
-  
-  
+  if (!p_fs_ops->rename)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_rename);
+
   /* get full path for parent source handle */
-  rc = NamespacePath( old_parentdir_handle->inode, old_parentdir_handle->device, old_parentdir_handle->validator, src_dir_path );
-  if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
+  rc = NamespacePath(old_parentdir_handle->inode, old_parentdir_handle->device,
+		     old_parentdir_handle->validator, src_dir_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
 
   /* get full path for parent target handle */
-  rc = NamespacePath( new_parentdir_handle->inode, new_parentdir_handle->device, new_parentdir_handle->validator, tgt_dir_path );
-  if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
+  rc = NamespacePath(new_parentdir_handle->inode, new_parentdir_handle->device,
+		     new_parentdir_handle->validator, tgt_dir_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_rename);
 
   /* build full path for source entry */
-  FSAL_internal_append_path( src_obj_path, src_dir_path, p_old_name->name );
+  FSAL_internal_append_path(src_obj_path, src_dir_path, p_old_name->name);
 
   /* build full path for target entry */
-  FSAL_internal_append_path( tgt_obj_path, tgt_dir_path, p_new_name->name );
-  
+  FSAL_internal_append_path(tgt_obj_path, tgt_dir_path, p_new_name->name);
+
   /* set context for the next operation, so it can be retrieved by FS thread */
-  fsal_set_thread_context( p_context );
-    
-  
+  fsal_set_thread_context(p_context);
+
   TakeTokenFSCall();
-  
+
   rc = p_fs_ops->rename(src_obj_path, tgt_obj_path);
-    
+
   ReleaseTokenFSCall();
-  
+
   /* Regarding FALSE parameter of function fuse2fsal_error:
    * here, if error is ENOENT, we don't know weither the father handle is STALE
    * or if the source entry does not exist.
    * We choose returning ENOENT since the parent exists in the namespace,
    * so it it more likely to exist than the children.
    */
-  if ( rc ) Return( fuse2fsal_error(rc,FALSE), rc, INDEX_FSAL_rename);
-  
+  if (rc)
+    Return(fuse2fsal_error(rc, FALSE), rc, INDEX_FSAL_rename);
+
   /* If operation succeeded, impact the namespace */
-  NamespaceRename( old_parentdir_handle->inode, old_parentdir_handle->device, old_parentdir_handle->validator, p_old_name->name,
-                   new_parentdir_handle->inode, new_parentdir_handle->device, new_parentdir_handle->validator, p_new_name->name );
-  
-    
+  NamespaceRename(old_parentdir_handle->inode, old_parentdir_handle->device,
+		  old_parentdir_handle->validator, p_old_name->name,
+		  new_parentdir_handle->inode, new_parentdir_handle->device,
+		  new_parentdir_handle->validator, p_new_name->name);
+
   /* Last parent post op attributes if asked */
-  
-  if( src_dir_attributes )
-  {    
-    fsal_status_t st;
-        
-    st = FSAL_getattrs( old_parentdir_handle, p_context, src_dir_attributes );
-    
-    if ( FSAL_IS_ERROR( st ) )
+
+  if (src_dir_attributes)
     {
-      FSAL_CLEAR_MASK( src_dir_attributes->asked_attributes );
-      FSAL_SET_MASK( src_dir_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+      fsal_status_t st;
+
+      st = FSAL_getattrs(old_parentdir_handle, p_context, src_dir_attributes);
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(src_dir_attributes->asked_attributes);
+	  FSAL_SET_MASK(src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
 
-  }
-  
   /* New parent post op attributes if asked */
-  
-  if( tgt_dir_attributes )
-  {    
-    fsal_status_t st;
-    
-    /* optimization when src=tgt : */
-    
-    if (  ! FSAL_handlecmp( old_parentdir_handle, new_parentdir_handle, &st )
-          && src_dir_attributes ){
-      
-      /* If source dir = target dir, we just copy the attributes.
-       * to avoid doing another getattr.
-       */
 
-      (*tgt_dir_attributes)=(*src_dir_attributes);
-      
-    }
-    else
+  if (tgt_dir_attributes)
     {
-      
-      /* get attributes */
-      st = FSAL_getattrs( new_parentdir_handle, p_context, tgt_dir_attributes );
-          
-      if ( FSAL_IS_ERROR( st ) )
-      {
-        FSAL_CLEAR_MASK( tgt_dir_attributes->asked_attributes );
-        FSAL_SET_MASK( tgt_dir_attributes->asked_attributes,
-            FSAL_ATTR_RDATTR_ERR );
-      }
-      
+      fsal_status_t st;
+
+      /* optimization when src=tgt : */
+
+      if (!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
+	  && src_dir_attributes)
+	{
+
+	  /* If source dir = target dir, we just copy the attributes.
+	   * to avoid doing another getattr.
+	   */
+
+	  (*tgt_dir_attributes) = (*src_dir_attributes);
+
+	} else
+	{
+
+	  /* get attributes */
+	  st = FSAL_getattrs(new_parentdir_handle, p_context, tgt_dir_attributes);
+
+	  if (FSAL_IS_ERROR(st))
+	    {
+	      FSAL_CLEAR_MASK(tgt_dir_attributes->asked_attributes);
+	      FSAL_SET_MASK(tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	    }
+
+	}
+
     }
-        
-  }
-    
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_rename);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename);
+
 }

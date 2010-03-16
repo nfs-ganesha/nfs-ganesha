@@ -34,33 +34,32 @@
 #include <pthread.h>
 /* My habit with mutex */
 #ifndef DEBUG
-#define P( mutex ) pthread_mutex_lock( &mutex ) 
-#define V( mutex )  pthread_mutex_unlock( &mutex ) 
+#define P( mutex ) pthread_mutex_lock( &mutex )
+#define V( mutex )  pthread_mutex_unlock( &mutex )
 #else
 #define P( mutex ){ int rc ; if( ( rc = pthread_mutex_lock( &mutex ) ) != 0 ) printf( "  --> Erreur P: %d %d\n", rc, errno ) ;}
 #define V( mutex ){ int rc ; if( ( rc = pthread_mutex_unlock( &mutex ) ) != 0 ) printf( "  --> Erreur V: %d %d\n", rc, errno ) ;}
 #endif
 
 /* Type representing the lock itself */
-typedef struct _RW_LOCK
-{
-  unsigned int nbr_active ;
-  unsigned int nbr_waiting ;
-  unsigned int nbw_active ; 
-  unsigned int nbw_waiting ;
-  pthread_mutex_t mutexProtect ;
-  pthread_cond_t condWrite ;
-  pthread_cond_t condRead ;
-  pthread_mutex_t mcond ;
-} rw_lock_t ; 
+typedef struct _RW_LOCK {
+  unsigned int nbr_active;
+  unsigned int nbr_waiting;
+  unsigned int nbw_active;
+  unsigned int nbw_waiting;
+  pthread_mutex_t mutexProtect;
+  pthread_cond_t condWrite;
+  pthread_cond_t condRead;
+  pthread_mutex_t mcond;
+} rw_lock_t;
 
-int rw_lock_init( rw_lock_t * plock ) ;
-int rw_lock_destroy( rw_lock_t * plock ) ;
-int P_w( rw_lock_t * plock ) ;
-int V_w( rw_lock_t * plock ) ;
-int P_r( rw_lock_t * plock ) ;
-int V_r( rw_lock_t * plock ) ;
-int rw_lock_downgrade( rw_lock_t * plock ) ;
-int rw_lock_upgrade( rw_lock_t * plock ) ;
+int rw_lock_init(rw_lock_t * plock);
+int rw_lock_destroy(rw_lock_t * plock);
+int P_w(rw_lock_t * plock);
+int V_w(rw_lock_t * plock);
+int P_r(rw_lock_t * plock);
+int V_r(rw_lock_t * plock);
+int rw_lock_downgrade(rw_lock_t * plock);
+int rw_lock_upgrade(rw_lock_t * plock);
 
-#endif /* _RW_LOCK */
+#endif				/* _RW_LOCK */

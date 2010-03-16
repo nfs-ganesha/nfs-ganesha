@@ -52,8 +52,7 @@
  *
  *
  */
- 
- 
+
 #ifndef _CMD_TOOLS_H
 #define _CMD_TOOLS_H
 
@@ -72,7 +71,6 @@
 #include "fsal.h"
 #include <time.h>
 
-
 #ifdef _SOLARIS
 #ifndef offsetof
 #define offsetof(type, member) ( (int) & ((type*)0) -> member )
@@ -80,7 +78,7 @@
 #endif
 
 /* thread-safe and PORTABLE version of localtime... */
-struct tm * Localtime_r( const time_t * p_time, struct tm * p_tm );
+struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm);
 
 /** 
  * my_atoi:
@@ -91,9 +89,7 @@ struct tm * Localtime_r( const time_t * p_time, struct tm * p_tm );
  * \return A negative value on error.
  *         Else, the converted integer.
  */
-int my_atoi(char * str);
-
-
+int my_atoi(char *str);
 
 /** 
  * atomode:
@@ -104,15 +100,12 @@ int my_atoi(char * str);
  * \return A negative value on error.
  *         Else, the access mode integer.
  */
-int atomode(char * str);
+int atomode(char *str);
 
+int ato64(char *str, unsigned long long *out64);
 
-int ato64(char * str, unsigned long long * out64);
-
-
-time_t atotime(char * str);
-char * time2str(time_t time_in,char * str_out);
-
+time_t atotime(char *str);
+char *time2str(time_t time_in, char *str_out);
 
 /**
  * split_path:
@@ -123,8 +116,7 @@ char * time2str(time_t time_in,char * str_out);
  * \param p_path (out char **)
  * \param p_file (out char **)
  */
-void split_path(char * in_path, char ** p_path, char ** p_file);
-
+void split_path(char *in_path, char **p_path, char **p_file);
 
 /**
  * clean_path:
@@ -136,8 +128,7 @@ void split_path(char * in_path, char ** p_path, char ** p_file);
  * \param len (in int)       The max path length.
  * \return Nothing.
  */
-void clean_path(char * str,int len);
-
+void clean_path(char *str, int len);
 
 /**
  * concat:
@@ -149,8 +140,7 @@ void clean_path(char * str,int len);
  * \param max_len (in int)       The max str1 length.
  * \return NULL on error, the destination string, else.
  */
-char * concat( char * str1, char * str2, size_t max_len );
-
+char *concat(char *str1, char *str2, size_t max_len);
 
 /**
  * print_fsal_status:
@@ -161,9 +151,7 @@ char * concat( char * str1, char * str2, size_t max_len );
  *
  * \return Nothing.
  */
-void print_fsal_status(FILE * output,fsal_status_t status);
-
-
+void print_fsal_status(FILE * output, fsal_status_t status);
 
 /**
  * print_fsal_attrib_mask:
@@ -173,7 +161,7 @@ void print_fsal_status(FILE * output,fsal_status_t status);
  * \param output (in FILE *) The output where the mask is to be printed.
  * \return Nothing.
  */
-void print_fsal_attrib_mask(fsal_attrib_mask_t mask,FILE * output);
+void print_fsal_attrib_mask(fsal_attrib_mask_t mask, FILE * output);
 
 /**
  * strtype:
@@ -182,8 +170,7 @@ void print_fsal_attrib_mask(fsal_attrib_mask_t mask,FILE * output);
  * \param type (in fsal_nodetype_t) The type to be printed.
  * \return The name (char *) for this FSAL object type.
  */
-char * strtype(fsal_nodetype_t type);
-
+char *strtype(fsal_nodetype_t type);
 
 /**
  * print_fsal_attributes:
@@ -193,9 +180,7 @@ char * strtype(fsal_nodetype_t type);
  * \param output (in FILE *) The file where the attributes are to be printed.
  * \return Nothing.
  */
-void print_fsal_attributes( fsal_attrib_list_t attrs,FILE * output);
-
-
+void print_fsal_attributes(fsal_attrib_list_t attrs, FILE * output);
 
 /**
  * print_item_line:
@@ -209,66 +194,66 @@ void print_fsal_attributes( fsal_attrib_list_t attrs,FILE * output);
  *        this contains the link target.
  * \return Nothing. 
  */
-void print_item_line( FILE * out,fsal_attrib_list_t * attrib, char * name , char * target);
-
+void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *target);
 
 /*
  * Thoses structures are used to handle FSAL attributes.
  */
 
 /** Type of attributes */
-typedef enum shell_attr_type__ {  
-  
-  ATTR_NONE = 0, /* this special value is used
-            to indicate the end of the attribute list */
-      
-  ATTR_32, /* 32 bits attribute */
-  ATTR_64, /* 64 bits attribute */
-  ATTR_OCTAL, /* octal number attribute */
-  ATTR_TIME   /* YYYYMMDDhhmmss attribute */
-      
-} shell_attr_type_t;
+typedef enum shell_attr_type__ {
 
+  ATTR_NONE = 0,		/* this special value is used
+				   to indicate the end of the attribute list */
+
+  ATTR_32,			/* 32 bits attribute */
+  ATTR_64,			/* 64 bits attribute */
+  ATTR_OCTAL,			/* octal number attribute */
+  ATTR_TIME			/* YYYYMMDDhhmmss attribute */
+} shell_attr_type_t;
 
 /** Attribute definition structure. */
 typedef struct shell_attribute__ {
-  
-  char *                attr_name ; /* name of the attribute. */
-  shell_attr_type_t     attr_type ; /* type of the attribute. */  
-  fsal_attrib_mask_t    attr_mask ; /* fsal mask constant */
-  unsigned long int     attr_offset;/* fsal field offset */
-  
-} shell_attribute_t ; 
 
+  char *attr_name;		/* name of the attribute. */
+  shell_attr_type_t attr_type;	/* type of the attribute. */
+  fsal_attrib_mask_t attr_mask;	/* fsal mask constant */
+  unsigned long int attr_offset;	/* fsal field offset */
+
+} shell_attribute_t;
 
 /**
  * This structure contains FSAL settable attributes.
  */
-static shell_attribute_t  __attribute__(( __unused__ )) shell_attr_list[] = {  
-  {"SIZE" , ATTR_64,     FSAL_ATTR_SIZE,  offsetof( fsal_attrib_list_t, filesize )},
-  {"MODE" , ATTR_OCTAL,  FSAL_ATTR_MODE,  offsetof( fsal_attrib_list_t, mode )},
-  {"OWNER", ATTR_32,     FSAL_ATTR_OWNER, offsetof( fsal_attrib_list_t, owner )},
-  {"GROUP", ATTR_32,     FSAL_ATTR_GROUP, offsetof( fsal_attrib_list_t, group )},
-  {"ATIME", ATTR_TIME,   FSAL_ATTR_ATIME, offsetof( fsal_attrib_list_t, atime )},
-  {"CTIME", ATTR_TIME,   FSAL_ATTR_CTIME, offsetof( fsal_attrib_list_t, ctime )},
-  {"MTIME", ATTR_TIME,   FSAL_ATTR_MTIME, offsetof( fsal_attrib_list_t, mtime )},
-      
-  /* end of the list */
-  {NULL, ATTR_NONE, 0, 0}
-  
-};
+static shell_attribute_t __attribute__ ((__unused__)) shell_attr_list[] =
+{
+  {
+  "SIZE", ATTR_64, FSAL_ATTR_SIZE, offsetof(fsal_attrib_list_t, filesize)},
+  {
+  "MODE", ATTR_OCTAL, FSAL_ATTR_MODE, offsetof(fsal_attrib_list_t, mode)},
+  {
+  "OWNER", ATTR_32, FSAL_ATTR_OWNER, offsetof(fsal_attrib_list_t, owner)},
+  {
+  "GROUP", ATTR_32, FSAL_ATTR_GROUP, offsetof(fsal_attrib_list_t, group)},
+  {
+  "ATIME", ATTR_TIME, FSAL_ATTR_ATIME, offsetof(fsal_attrib_list_t, atime)},
+  {
+  "CTIME", ATTR_TIME, FSAL_ATTR_CTIME, offsetof(fsal_attrib_list_t, ctime)},
+  {
+  "MTIME", ATTR_TIME, FSAL_ATTR_MTIME, offsetof(fsal_attrib_list_t, mtime)},
+      /* end of the list */
+  {
+  NULL, ATTR_NONE, 0, 0}
 
+};
 
 /**
  * this function converts peers (attr_name=attr_value,attr_name=attr_value,...)
  * to a fsal_attrib_list_t to be used in the FSAL_setattr call).
  * \return 0 if no error occured,
  *         a non null value else.
- */ 
-int MkFSALSetAttrStruct( char * attribute_list, fsal_attrib_list_t * fsal_set_attr_struct );
-
-
-
+ */
+int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr_struct);
 
 /* Time diffing function */
 struct timeval time_diff(struct timeval time_from, struct timeval time_to);
@@ -276,8 +261,6 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to);
 /* Timeval printing function */
 #define print_timeval(out,_tv_) fprintf(out,"%ld.%.6ld s\n",_tv_.tv_sec,_tv_.tv_usec)
 
-
-int getugroups( int maxcount, gid_t * grouplist, char * username, gid_t gid );
-
+int getugroups(int maxcount, gid_t * grouplist, char *username, gid_t gid);
 
 #endif

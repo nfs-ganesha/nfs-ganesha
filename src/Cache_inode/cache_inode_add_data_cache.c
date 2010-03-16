@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -106,75 +106,69 @@
 #include <time.h>
 #include <pthread.h>
 
-
-cache_inode_status_t  cache_inode_add_data_cache( cache_entry_t           * pentry,
-                                                  hash_table_t            * ht,
-                                                  cache_inode_client_t    * pclient,
-                                                  fsal_op_context_t       * pcontext, 
-                                                  cache_inode_status_t    * pstatus)
+cache_inode_status_t cache_inode_add_data_cache(cache_entry_t * pentry,
+						hash_table_t * ht,
+						cache_inode_client_t * pclient,
+						fsal_op_context_t * pcontext,
+						cache_inode_status_t * pstatus)
 {
-  cache_content_status_t   cache_content_status ;
-  cache_content_entry_t  * pentry_content = NULL ;
-  
+  cache_content_status_t cache_content_status;
+  cache_content_entry_t *pentry_content = NULL;
+
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
-  
+  *pstatus = CACHE_INODE_SUCCESS;
+
   /* stats */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_ADD_DATA_CACHE] += 1 ;
-  
-  P_w( &pentry->lock ) ;
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_ADD_DATA_CACHE] += 1;
+
+  P_w(&pentry->lock);
   /* Operate only on a regular file */
-  if( pentry->internal_md.type != REGULAR_FILE )
+  if (pentry->internal_md.type != REGULAR_FILE)
     {
-      *pstatus = CACHE_INODE_BAD_TYPE ;
-      V_w( &pentry->lock ) ;
-      
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      V_w(&pentry->lock);
+
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1 ;
-      
-      return *pstatus ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1;
+
+      return *pstatus;
     }
 
-  if( pentry->object.file.pentry_content != NULL )
+  if (pentry->object.file.pentry_content != NULL)
     {
       /* The object is already cached */
-      *pstatus = CACHE_INODE_CACHE_CONTENT_EXISTS ;
-      V_w( &pentry->lock ) ;
-      
+      *pstatus = CACHE_INODE_CACHE_CONTENT_EXISTS;
+      V_w(&pentry->lock);
+
       /* stats */
-      pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ADD_DATA_CACHE] += 1 ;
-      
-      return *pstatus ;
+      pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ADD_DATA_CACHE] += 1;
+
+      return *pstatus;
     }
- 
-  if( ( pentry_content = cache_content_new_entry( pentry, 
-                                                  NULL,
-                                                  (cache_content_client_t *)pclient->pcontent_client, 
-						  ADD_ENTRY, 
-						  pcontext,
-                                                  &cache_content_status ) ) == NULL )
+
+  if ((pentry_content = cache_content_new_entry(pentry,
+						NULL,
+						(cache_content_client_t *)
+						pclient->pcontent_client, ADD_ENTRY,
+						pcontext, &cache_content_status)) == NULL)
     {
-      *pstatus = cache_content_error_convert( cache_content_status ) ;
-      V_w( &pentry->lock ) ;
-      
+      *pstatus = cache_content_error_convert(cache_content_status);
+      V_w(&pentry->lock);
+
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1 ;
-      
-      return *pstatus ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1;
+
+      return *pstatus;
     }
 
   /* Attached the entry to the cache inode */
-  pentry->object.file.pentry_content = pentry_content ;
-  
-  V_w( &pentry->lock ) ;
-  *pstatus = CACHE_INODE_SUCCESS ;
+  pentry->object.file.pentry_content = pentry_content;
+
+  V_w(&pentry->lock);
+  *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1 ;
-  return *pstatus ;
-} /* cache_inode_add_data_cache */
- 
-                                  
-                                  
-
+  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_DATA_CACHE] += 1;
+  return *pstatus;
+}				/* cache_inode_add_data_cache */

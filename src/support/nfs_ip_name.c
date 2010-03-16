@@ -87,7 +87,6 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
@@ -106,11 +105,9 @@
 #include <arpa/inet.h>
 
 /* Hashtable used to cache the hostname, accessed by their IP addess */
-hash_table_t            * ht_ip_name ; 
-extern nfs_parameter_t    nfs_param ;
-unsigned int              expiration_time ;
-
-
+hash_table_t *ht_ip_name;
+extern nfs_parameter_t nfs_param;
+unsigned int expiration_time;
 
 /**
  *
@@ -127,11 +124,11 @@ unsigned int              expiration_time ;
  * @see HashTable_Init
  *
  */
-unsigned long int ip_name_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
+					  hash_buffer_t * buffclef)
 {
-  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size ;
-} /*  ip_name_value_hash_func */
-
+  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size;
+}				/*  ip_name_value_hash_func */
 
 /**
  *
@@ -149,11 +146,12 @@ unsigned long int ip_name_value_hash_func( hash_parameter_t * p_hparam, hash_buf
  * @see HashTable_Init
  *
  */
-unsigned long int ip_name_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long int ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
+					hash_buffer_t * buffclef)
 {
   /* We use the Xid as the rbt value */
-  return (unsigned long int)(buffclef->pdata) ;
-} /* ip_name_rbt_hash_func */
+  return (unsigned long int)(buffclef->pdata);
+}				/* ip_name_rbt_hash_func */
 
 /**
  *
@@ -168,13 +166,12 @@ unsigned long int ip_name_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffe
  * @return 0 if keys are identifical, 1 if they are different. 
  *
  */
-int compare_ip_name(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
+int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned long int xid1 = (unsigned long int)(buff1->pdata) ;
-  unsigned long int xid2 = (unsigned long int)(buff2->pdata) ;
-  return (xid1 == xid2)?0:1 ;
-} /* compare_xid */
-
+  unsigned long int xid1 = (unsigned long int)(buff1->pdata);
+  unsigned long int xid2 = (unsigned long int)(buff2->pdata);
+  return (xid1 == xid2) ? 0 : 1;
+}				/* compare_xid */
 
 /**
  *
@@ -189,31 +186,26 @@ int compare_ip_name(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
  * @return number of character written.
  *
  */
-int display_ip_name( hash_buffer_t * pbuff, char * str ) 
+int display_ip_name(hash_buffer_t * pbuff, char *str)
 {
-  unsigned long int ip_name  = ntohl( (unsigned long int)(pbuff->pdata) ) ;
-  
-  return sprintf( str, "%x : %u.%u.%u.%u", 
-                  (unsigned int)ip_name, 
-                  ( (unsigned int)ip_name & 0xFF000000 ) >> 24, 
-                  ( (unsigned int)ip_name & 0x00FF0000 ) >> 16,
-                  ( (unsigned int)ip_name & 0x0000FF00 ) >> 8, 
-                  ( (unsigned int)ip_name & 0x000000FF ) ) ;
-} /* display_ip_name */
+  unsigned long int ip_name = ntohl((unsigned long int)(pbuff->pdata));
 
-int display_ip_value( hash_buffer_t * pbuff, char * str )
+  return sprintf(str, "%x : %u.%u.%u.%u",
+		 (unsigned int)ip_name,
+		 ((unsigned int)ip_name & 0xFF000000) >> 24,
+		 ((unsigned int)ip_name & 0x00FF0000) >> 16,
+		 ((unsigned int)ip_name & 0x0000FF00) >> 8,
+		 ((unsigned int)ip_name & 0x000000FF));
+}				/* display_ip_name */
+
+int display_ip_value(hash_buffer_t * pbuff, char *str)
 {
-  nfs_ip_name_t  * pnfs_ip_name ;
+  nfs_ip_name_t *pnfs_ip_name;
 
-  pnfs_ip_name = (nfs_ip_name_t *)(pbuff->pdata) ;
+  pnfs_ip_name = (nfs_ip_name_t *) (pbuff->pdata);
 
-
-  return sprintf( str, "%s", pnfs_ip_name->hostname ) ;
-} /* display_ip_name */
-
-
-
-
+  return sprintf(str, "%s", pnfs_ip_name->hostname);
+}				/* display_ip_name */
 
 /**
  *
@@ -230,62 +222,58 @@ int display_ip_value( hash_buffer_t * pbuff, char * str )
  *
  */
 
-int nfs_ip_name_add( unsigned        int ipaddr,
-                     char          * hostname  )
+int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
 {
-  hash_buffer_t       buffkey  ;
-  hash_buffer_t       buffdata ;
-  nfs_ip_name_t     * pnfs_ip_name  = NULL ;
-  struct hostent    * hp ;
-  unsigned long int   local_ipaddr = ipaddr ;
-  int                 length = sizeof( local_ipaddr ) ;
-  
-#ifdef _DEBUG_MEMLEAKS
-  /* For debugging memory leaks */
-  BuddySetDebugLabel( "nfs_ip_name_t" ) ;
-#endif
-
-  pnfs_ip_name = (nfs_ip_name_t *)Mem_Alloc( sizeof( nfs_ip_name_t ) ) ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffdata;
+  nfs_ip_name_t *pnfs_ip_name = NULL;
+  struct hostent *hp;
+  unsigned long int local_ipaddr = ipaddr;
+  int length = sizeof(local_ipaddr);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
+  BuddySetDebugLabel("nfs_ip_name_t");
 #endif
 
+  pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t));
 
-  if( pnfs_ip_name == NULL ) 
-    return IP_NAME_INSERT_MALLOC_ERROR ;
-  
+#ifdef _DEBUG_MEMLEAKS
+  /* For debugging memory leaks */
+  BuddySetDebugLabel("N/A");
+#endif
+
+  if (pnfs_ip_name == NULL)
+    return IP_NAME_INSERT_MALLOC_ERROR;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t)local_ipaddr ; 
-  buffkey.len = 0 ;
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
 
   /* Ask for the name to be cached */
-  if( ( hp = gethostbyaddr( (char *)&local_ipaddr, length, AF_INET ) ) == NULL )
+  if ((hp = gethostbyaddr((char *)&local_ipaddr, length, AF_INET)) == NULL)
     {
-      Mem_Free( (void *)pnfs_ip_name ) ;
-      return IP_NAME_NETDB_ERROR ;
+      Mem_Free((void *)pnfs_ip_name);
+      return IP_NAME_NETDB_ERROR;
     }
-  
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pnfs_ip_name->ipaddr = ipaddr ;
-  strncpy( pnfs_ip_name->hostname, hp->h_name, MAXHOSTNAMELEN ) ;
-  pnfs_ip_name->timestamp = time( NULL ) ;
-  
-  buffdata.pdata = (caddr_t)pnfs_ip_name ;
-  buffdata.len = sizeof( nfs_ip_name_t ) ;
-  
-  if( HashTable_Set( ht_ip_name, &buffkey, &buffdata ) != HASHTABLE_SUCCESS )
-    return IP_NAME_INSERT_MALLOC_ERROR ;
-  
+  pnfs_ip_name->ipaddr = ipaddr;
+  strncpy(pnfs_ip_name->hostname, hp->h_name, MAXHOSTNAMELEN);
+  pnfs_ip_name->timestamp = time(NULL);
+
+  buffdata.pdata = (caddr_t) pnfs_ip_name;
+  buffdata.len = sizeof(nfs_ip_name_t);
+
+  if (HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+    return IP_NAME_INSERT_MALLOC_ERROR;
+
   /* Copy the value for the caller */
-  strncpy( hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN ) ;
-  
-  
-  return IP_NAME_SUCCESS ; 
-} /* nfs_ip_name_add */
+  strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
+
+  return IP_NAME_SUCCESS;
+}				/* nfs_ip_name_add */
 
 /**
  *
@@ -299,32 +287,29 @@ int nfs_ip_name_add( unsigned        int ipaddr,
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int  nfs_ip_name_get( unsigned int ipaddr, char * hostname )
+int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
 {
-  hash_buffer_t        buffkey ;
-  hash_buffer_t        buffval ;
-  int                  status ;
-  nfs_ip_name_t      * pnfs_ip_name ;
-  unsigned long int    local_ipaddr = ipaddr ;
-  
-  buffkey.pdata = (caddr_t)local_ipaddr ;
-  buffkey.len = 0 ;
-  
-  if( HashTable_Get( ht_ip_name, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  int status;
+  nfs_ip_name_t *pnfs_ip_name;
+  unsigned long int local_ipaddr = ipaddr;
+
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
+
+  if (HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      pnfs_ip_name = (nfs_ip_name_t *)buffval.pdata ;
-      strncpy( hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN ) ;
+      pnfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
+      strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
 
-      status = IP_NAME_SUCCESS ;
-    }
-  else
+      status = IP_NAME_SUCCESS;
+    } else
     {
-      status = IP_NAME_NOT_FOUND ;
+      status = IP_NAME_NOT_FOUND;
     }
-  return status ;
-} /* nfs_ip_name_get */
-
-
+  return status;
+}				/* nfs_ip_name_get */
 
 /**
  *
@@ -337,30 +322,27 @@ int  nfs_ip_name_get( unsigned int ipaddr, char * hostname )
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_remove( int ipaddr )
+int nfs_ip_name_remove(int ipaddr)
 {
-  hash_buffer_t        buffkey , old_value ;
-  int                  status = IP_NAME_SUCCESS;
-  nfs_ip_name_t      * pnfs_ip_name  = NULL ;
-  unsigned long int    local_ipaddr = ipaddr ;
+  hash_buffer_t buffkey, old_value;
+  int status = IP_NAME_SUCCESS;
+  nfs_ip_name_t *pnfs_ip_name = NULL;
+  unsigned long int local_ipaddr = ipaddr;
 
-  buffkey.pdata = (caddr_t)local_ipaddr ; 
-  buffkey.len = 0 ;
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
 
-   if( HashTable_Del( ht_ip_name, &buffkey, NULL, &old_value ) == HASHTABLE_SUCCESS )
+  if (HashTable_Del(ht_ip_name, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
-      pnfs_ip_name = (nfs_ip_name_t *)old_value.pdata ;
-      Mem_Free( (void *)pnfs_ip_name ) ;
-    }
-  else
+      pnfs_ip_name = (nfs_ip_name_t *) old_value.pdata;
+      Mem_Free((void *)pnfs_ip_name);
+    } else
     {
-      status = IP_NAME_NOT_FOUND ;
+      status = IP_NAME_NOT_FOUND;
     }
 
-   return status ;
-} /* nfs_ip_name_remove */
-
-
+  return status;
+}				/* nfs_ip_name_remove */
 
 /**
  *
@@ -373,110 +355,102 @@ int nfs_ip_name_remove( int ipaddr )
  * @return 0 if successful, -1 otherwise
  *
  */
-int nfs_Init_ip_name( nfs_ip_name_parameter_t  param ) 
-{ 
-  if( ( ht_ip_name = HashTable_Init( param.hash_param  ) ) == NULL )
+int nfs_Init_ip_name(nfs_ip_name_parameter_t param)
+{
+  if ((ht_ip_name = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog( "NFS IP_NAME: Cannot init IP/name cache" ) ;
-      return -1 ;
+      DisplayLog("NFS IP_NAME: Cannot init IP/name cache");
+      return -1;
     }
 
   /* Set the expiration time */
-  expiration_time = param.expiration_time ;
+  expiration_time = param.expiration_time;
 
   return IP_NAME_SUCCESS;
-} /* nfs_Init_ip_name */
+}				/* nfs_Init_ip_name */
 
-
-int nfs_ip_name_populate( char * path  )
+int nfs_ip_name_populate(char *path)
 {
-  config_file_t       config_file ;
-  config_item_t       block;
-  int                 var_max ;
-  int                 var_index ;
-  int                 err ;
-  char              * key_name ;
-  char              * key_value ;
-  char                label[MAXNAMLEN] ;
-  unsigned int        ipaddr ;
-  unsigned long int   long_ipaddr ;
-  nfs_ip_name_t     * pnfs_ip_name ; 
-  hash_buffer_t       buffkey ;
-  hash_buffer_t       buffdata ;
+  config_file_t config_file;
+  config_item_t block;
+  int var_max;
+  int var_index;
+  int err;
+  char *key_name;
+  char *key_value;
+  char label[MAXNAMLEN];
+  unsigned int ipaddr;
+  unsigned long int long_ipaddr;
+  nfs_ip_name_t *pnfs_ip_name;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffdata;
 
+  config_file = config_ParseFile(path);
 
-
-  config_file = config_ParseFile( path );
-
-  if( !config_file )
-   {
-     DisplayLog( "Can't open file %s", path ) ;
-
-     return IP_NAME_NOT_FOUND ;
-   }
-
-   /* Get the config BLOCK */
-  if( ( block = config_FindItemByName( config_file, CONF_LABEL_IP_NAME_HOSTS ) ) == NULL )
+  if (!config_file)
     {
-      DisplayLog( "Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path ) ;
-      return IP_NAME_NOT_FOUND ;
-    }
-  else if ( config_ItemType(block) != CONFIG_ITEM_BLOCK )
-    {
-      /* Expected to be a block*/
+      DisplayLog("Can't open file %s", path);
+
       return IP_NAME_NOT_FOUND;
     }
 
-  var_max = config_GetNbItems( block );
+  /* Get the config BLOCK */
+  if ((block = config_FindItemByName(config_file, CONF_LABEL_IP_NAME_HOSTS)) == NULL)
+    {
+      DisplayLog("Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path);
+      return IP_NAME_NOT_FOUND;
+  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    {
+      /* Expected to be a block */
+      return IP_NAME_NOT_FOUND;
+    }
 
-  for( var_index = 0 ; var_index < var_max ; var_index++ )
+  var_max = config_GetNbItems(block);
+
+  for (var_index = 0; var_index < var_max; var_index++)
     {
       config_item_t item;
-    
-      item = config_GetItemByIndex( block, var_index );
-      
+
+      item = config_GetItemByIndex(block, var_index);
+
       /* Get key's name */
-      if( ( err = config_GetKeyValue( item,
-                                      &key_name,
-                                      &key_value ) ) != 0 )
-        {
-          fprintf(stderr, "Error reading key[%d] from section \"%s\" of configuration file.\n",
-                  var_index, label ) ;
-          return ID_MAPPER_NOT_FOUND ;
-        }
+      if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
+	{
+	  fprintf(stderr,
+		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+		  var_index, label);
+	  return ID_MAPPER_NOT_FOUND;
+	}
 
-      ipaddr = inet_addr( key_value ) ;
-      long_ipaddr = ipaddr ;
-
+      ipaddr = inet_addr(key_value);
+      long_ipaddr = ipaddr;
 
       /* Entry to be cached */
-      if( ( pnfs_ip_name = (nfs_ip_name_t *)Mem_Alloc( sizeof( nfs_ip_name_t ) ) ) == NULL )
-          return ID_MAPPER_INSERT_MALLOC_ERROR ;
+      if ((pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t))) == NULL)
+	return ID_MAPPER_INSERT_MALLOC_ERROR;
 
       /* I build the data with the request pointer that should be in state 'IN USE' */
-      pnfs_ip_name->ipaddr = ipaddr ;
-      strncpy( pnfs_ip_name->hostname, key_name, MAXHOSTNAMELEN ) ;
-      pnfs_ip_name->timestamp = time( NULL ) ;
+      pnfs_ip_name->ipaddr = ipaddr;
+      strncpy(pnfs_ip_name->hostname, key_name, MAXHOSTNAMELEN);
+      pnfs_ip_name->timestamp = time(NULL);
 
-      buffdata.pdata = (caddr_t)pnfs_ip_name ;
-      buffdata.len = sizeof( nfs_ip_name_t ) ;
+      buffdata.pdata = (caddr_t) pnfs_ip_name;
+      buffdata.len = sizeof(nfs_ip_name_t);
 
       /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
        * this also means that buffkey->len will be 0 */
-      buffkey.pdata = (caddr_t)long_ipaddr ;
+      buffkey.pdata = (caddr_t) long_ipaddr;
 
-      buffkey.len = 0 ;
+      buffkey.len = 0;
 
-
-      if( HashTable_Set( ht_ip_name, &buffkey, &buffdata ) != HASHTABLE_SUCCESS )
-    	return IP_NAME_INSERT_MALLOC_ERROR ;
+      if (HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+	return IP_NAME_INSERT_MALLOC_ERROR;
 
     }
 
-  /* HashTable_Print( ht_ip_name ) ;*/
-  return IP_NAME_SUCCESS ;
-} /* nfs_ip_name_populate */
-
+  /* HashTable_Print( ht_ip_name ) ; */
+  return IP_NAME_SUCCESS;
+}				/* nfs_ip_name_populate */
 
 /**
  *
@@ -491,8 +465,7 @@ int nfs_ip_name_populate( char * path  )
  * @see HashTable_GetStats
  *
  */
-void nfs_ip_name_get_stats(  hash_stat_t * phstat )
+void nfs_ip_name_get_stats(hash_stat_t * phstat)
 {
-  HashTable_GetStats( ht_ip_name, phstat ) ;
-} /* nfs_ip_name_get_stats */
-
+  HashTable_GetStats(ht_ip_name, phstat);
+}				/* nfs_ip_name_get_stats */

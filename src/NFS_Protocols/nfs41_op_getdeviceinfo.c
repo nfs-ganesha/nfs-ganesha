@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -140,23 +140,19 @@
  *
  */
 
-
-int nfs41_op_getdeviceinfo(  struct nfs_argop4 * op ,    
-                            compound_data_t   * data,
-                            struct nfs_resop4 * resp)
+int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
+			   compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__(( __unused__ )) funcname[] = "nfs4_op_getdeviceinfo" ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
 
 #define arg_GETDEVICEINFO4  op->nfs_argop4_u.opgetdeviceinfo
 #define res_GETDEVICEINFO4  resp->nfs_resop4_u.opgetdeviceinfo
 
-  resp->resop = NFS4_OP_GETDEVICEINFO ;
-  res_GETDEVICEINFO4.gdir_status = NFS4_OK ; 
+  resp->resop = NFS4_OP_GETDEVICEINFO;
+  res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 
-  return res_GETDEVICEINFO4.gdir_status ;
-} /* nfs41_op_exchange_id */
-
-
+  return res_GETDEVICEINFO4.gdir_status;
+}				/* nfs41_op_exchange_id */
 
 /**
  * nfs4_op_getdeviceinfo_Free: frees what was allocared to handle nfs4_op_getdeviceinfo.
@@ -167,8 +163,8 @@ int nfs41_op_getdeviceinfo(  struct nfs_argop4 * op ,
  *
  * @return nothing (void function )
  * 
- */ 
-void nfs41_op_getdeviceinfo_Free( GETDEVICEINFO4res * resp )
+ */
+void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
-  return ;
-} /* nfs41_op_exchange_id_Free */
+  return;
+}				/* nfs41_op_exchange_id_Free */

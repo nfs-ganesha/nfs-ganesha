@@ -101,7 +101,6 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
@@ -118,9 +117,7 @@
 #include <string.h>
 
 /* Hashtable used to cache stats, accessed by their IP addess */
-extern nfs_parameter_t    nfs_param ;
-
-
+extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -137,11 +134,11 @@ extern nfs_parameter_t    nfs_param ;
  * @see HashTable_Init
  *
  */
-unsigned long int ip_stats_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
+					   hash_buffer_t * buffclef)
 {
-  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size ;
-} /*  ip_stats_value_hash_func */
-
+  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size;
+}				/*  ip_stats_value_hash_func */
 
 /**
  *
@@ -159,11 +156,12 @@ unsigned long int ip_stats_value_hash_func( hash_parameter_t * p_hparam, hash_bu
  * @see HashTable_Init
  *
  */
-unsigned long int ip_stats_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
+					 hash_buffer_t * buffclef)
 {
   /* We use the Xid as the rbt value */
-  return (unsigned long int)(buffclef->pdata) ;
-} /* ip_stats_rbt_hash_func */
+  return (unsigned long int)(buffclef->pdata);
+}				/* ip_stats_rbt_hash_func */
 
 /**
  *
@@ -178,13 +176,12 @@ unsigned long int ip_stats_rbt_hash_func( hash_parameter_t * p_hparam, hash_buff
  * @return 0 if keys are identifical, 1 if they are different. 
  *
  */
-int compare_ip_stats(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
+int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned long int xid1 = (unsigned long int)(buff1->pdata) ;
-  unsigned long int xid2 = (unsigned long int)(buff2->pdata) ;
-  return (xid1 == xid2)?0:1 ;
-} /* compare_xid */
-
+  unsigned long int xid1 = (unsigned long int)(buff1->pdata);
+  unsigned long int xid2 = (unsigned long int)(buff2->pdata);
+  return (xid1 == xid2) ? 0 : 1;
+}				/* compare_xid */
 
 /**
  *
@@ -199,18 +196,17 @@ int compare_ip_stats(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
  * @return number of character written.
  *
  */
-int display_ip_stats( hash_buffer_t * pbuff, char * str ) 
+int display_ip_stats(hash_buffer_t * pbuff, char *str)
 {
-  unsigned long int ip_stats  = (unsigned long int)(pbuff->pdata) ;
-  
-  return sprintf( str, "%x : %u.%u.%u.%u", 
-                  (unsigned int)ip_stats, 
-                  ( (unsigned int)ip_stats & 0xFF000000 ) >> 24, 
-                  ( (unsigned int)ip_stats & 0x00FF0000 ) >> 16,
-                  ( (unsigned int)ip_stats & 0x0000FF00 ) >> 8,
-                  ( (unsigned int)ip_stats & 0x000000FF ) ) ;
-} /* display_ip_stats */
+  unsigned long int ip_stats = (unsigned long int)(pbuff->pdata);
 
+  return sprintf(str, "%x : %u.%u.%u.%u",
+		 (unsigned int)ip_stats,
+		 ((unsigned int)ip_stats & 0xFF000000) >> 24,
+		 ((unsigned int)ip_stats & 0x00FF0000) >> 16,
+		 ((unsigned int)ip_stats & 0x0000FF00) >> 8,
+		 ((unsigned int)ip_stats & 0x000000FF));
+}				/* display_ip_stats */
 
 /**
  *
@@ -227,67 +223,62 @@ int display_ip_stats( hash_buffer_t * pbuff, char * str )
  *
  */
 
-int nfs_ip_stats_add(  hash_table_t   * ht_ip_stats,
-                       unsigned         int ipaddr,
-                       nfs_ip_stats_t * nfs_ip_stats_pool )
-
+int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
+		     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
 {
-  hash_buffer_t       buffkey  ;
-  hash_buffer_t       buffdata ;
-  nfs_ip_stats_t     * pnfs_ip_stats  = NULL ;
-  unsigned long int    local_ipaddr = ipaddr ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffdata;
+  nfs_ip_stats_t *pnfs_ip_stats = NULL;
+  unsigned long int local_ipaddr = ipaddr;
 
-  /* Do nothing if configuration disables IP_Stats */ 
-  if( nfs_param.core_param.dump_stats_per_client == 0 ) 
-	return IP_STATS_SUCCESS ;
+  /* Do nothing if configuration disables IP_Stats */
+  if (nfs_param.core_param.dump_stats_per_client == 0)
+    return IP_STATS_SUCCESS;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "nfs_ip_stats_t" ) ;
+  BuddySetDebugLabel("nfs_ip_stats_t");
 #endif
 
   /* Entry to be cached */
-  GET_PREALLOC( pnfs_ip_stats, 
-                nfs_ip_stats_pool, 
-                nfs_param.worker_param.nb_ip_stats_prealloc, 
-                nfs_ip_stats_t, 
-                next_alloc ) ;
+  GET_PREALLOC(pnfs_ip_stats,
+	       nfs_ip_stats_pool,
+	       nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
+  BuddySetDebugLabel("N/A");
 #endif
 
-  if( pnfs_ip_stats == NULL ) 
-    return IP_STATS_INSERT_MALLOC_ERROR ;
-  
+  if (pnfs_ip_stats == NULL)
+    return IP_STATS_INSERT_MALLOC_ERROR;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t)local_ipaddr ; 
-  buffkey.len = 0 ;
-
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pnfs_ip_stats->nb_call     = 0 ;
-  pnfs_ip_stats->nb_req_nfs2 = 0 ;
-  pnfs_ip_stats->nb_req_nfs3 = 0 ;
-  pnfs_ip_stats->nb_req_nfs4 = 0 ;
-  pnfs_ip_stats->nb_req_mnt1 = 0 ;
-  pnfs_ip_stats->nb_req_mnt3 = 0 ;
+  pnfs_ip_stats->nb_call = 0;
+  pnfs_ip_stats->nb_req_nfs2 = 0;
+  pnfs_ip_stats->nb_req_nfs3 = 0;
+  pnfs_ip_stats->nb_req_nfs4 = 0;
+  pnfs_ip_stats->nb_req_mnt1 = 0;
+  pnfs_ip_stats->nb_req_mnt3 = 0;
 
-  memset( pnfs_ip_stats->req_mnt1, 0, MNT_V1_NB_COMMAND*sizeof( int ) ) ;
-  memset( pnfs_ip_stats->req_mnt3, 0, MNT_V3_NB_COMMAND*sizeof( int ) ) ;
-  memset( pnfs_ip_stats->req_nfs2, 0, NFS_V2_NB_COMMAND*sizeof( int ) ) ;
-  memset( pnfs_ip_stats->req_nfs3, 0, NFS_V3_NB_COMMAND*sizeof( int ) ) ;
+  memset(pnfs_ip_stats->req_mnt1, 0, MNT_V1_NB_COMMAND * sizeof(int));
+  memset(pnfs_ip_stats->req_mnt3, 0, MNT_V3_NB_COMMAND * sizeof(int));
+  memset(pnfs_ip_stats->req_nfs2, 0, NFS_V2_NB_COMMAND * sizeof(int));
+  memset(pnfs_ip_stats->req_nfs3, 0, NFS_V3_NB_COMMAND * sizeof(int));
 
-  buffdata.pdata = (caddr_t)pnfs_ip_stats ;
-  buffdata.len = sizeof( nfs_ip_stats_t ) ;
-  
-  if( HashTable_Set( ht_ip_stats, &buffkey, &buffdata ) != HASHTABLE_SUCCESS )
-    return IP_STATS_INSERT_MALLOC_ERROR ;
-  
-  return IP_STATS_SUCCESS ; 
-} /* nfs_ip_stats_add */
+  buffdata.pdata = (caddr_t) pnfs_ip_stats;
+  buffdata.len = sizeof(nfs_ip_stats_t);
+
+  if (HashTable_Set(ht_ip_stats, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+    return IP_STATS_INSERT_MALLOC_ERROR;
+
+  return IP_STATS_SUCCESS;
+}				/* nfs_ip_stats_add */
 
 /**
  *
@@ -300,73 +291,70 @@ int nfs_ip_stats_add(  hash_table_t   * ht_ip_stats,
  * @return the computed number of call for this ipaddr. Negative value is a failure
  *
  */
-int  nfs_ip_stats_incr( hash_table_t   * ht_ip_stats, 
-                        unsigned int     ipaddr, 
-                        unsigned int     nfs_prog,
-                        unsigned int     mnt_prog,
-                        struct svc_req * ptr_req )
+int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
+		      unsigned int ipaddr,
+		      unsigned int nfs_prog,
+		      unsigned int mnt_prog, struct svc_req *ptr_req)
 {
-  hash_buffer_t         buffkey ;
-  hash_buffer_t         buffval ;
-  int                   status ;
-  unsigned long int     local_ipaddr = ipaddr ; 
-  nfs_ip_stats_t      * pnfs_ip_stats ;
-  
-  buffkey.pdata = (caddr_t)local_ipaddr ;
-  buffkey.len = 0 ;
-  
-  /* Do nothing if configuration disables IP_Stats */ 
-  if( nfs_param.core_param.dump_stats_per_client == 0 ) 
-	return IP_STATS_SUCCESS ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  int status;
+  unsigned long int local_ipaddr = ipaddr;
+  nfs_ip_stats_t *pnfs_ip_stats;
 
-  if( HashTable_Get( ht_ip_stats, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
+
+  /* Do nothing if configuration disables IP_Stats */
+  if (nfs_param.core_param.dump_stats_per_client == 0)
+    return IP_STATS_SUCCESS;
+
+  if (HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      pnfs_ip_stats = (nfs_ip_stats_t *)buffval.pdata ;
-      pnfs_ip_stats->nb_call += 1 ;
+      pnfs_ip_stats = (nfs_ip_stats_t *) buffval.pdata;
+      pnfs_ip_stats->nb_call += 1;
 
-      status = IP_STATS_SUCCESS ;
+      status = IP_STATS_SUCCESS;
 
-      if( ptr_req->rq_prog == nfs_prog )
-        {
-          switch( ptr_req->rq_vers )
-            {
-            case NFS_V2:
-              pnfs_ip_stats->nb_req_nfs2 +=1 ;
-              pnfs_ip_stats->req_nfs2[ptr_req->rq_proc] += 1 ;
-              break ;
-              
-             case NFS_V3:
-              pnfs_ip_stats->nb_req_nfs3 +=1 ;
-              pnfs_ip_stats->req_nfs3[ptr_req->rq_proc] += 1 ;
-              break ;
-              
-            case NFS_V4:
-              pnfs_ip_stats->nb_req_nfs4 += 1 ;
-              break ;
-            }
-        }
-      else if(  ptr_req->rq_prog == mnt_prog )
-        {
-           switch( ptr_req->rq_vers )
-            {
-            case MOUNT_V1:
-              pnfs_ip_stats->nb_req_mnt1 +=1 ;
-              pnfs_ip_stats->req_mnt1[ptr_req->rq_proc] += 1 ;
-              break ;
-              
-            case MOUNT_V3:
-              pnfs_ip_stats->nb_req_mnt3 +=1 ;
-              pnfs_ip_stats->req_mnt3[ptr_req->rq_proc] += 1 ;
-              break ;
-            }
-        }
-    }
-  else
+      if (ptr_req->rq_prog == nfs_prog)
+	{
+	  switch (ptr_req->rq_vers)
+	    {
+	    case NFS_V2:
+	      pnfs_ip_stats->nb_req_nfs2 += 1;
+	      pnfs_ip_stats->req_nfs2[ptr_req->rq_proc] += 1;
+	      break;
+
+	    case NFS_V3:
+	      pnfs_ip_stats->nb_req_nfs3 += 1;
+	      pnfs_ip_stats->req_nfs3[ptr_req->rq_proc] += 1;
+	      break;
+
+	    case NFS_V4:
+	      pnfs_ip_stats->nb_req_nfs4 += 1;
+	      break;
+	    }
+      } else if (ptr_req->rq_prog == mnt_prog)
+	{
+	  switch (ptr_req->rq_vers)
+	    {
+	    case MOUNT_V1:
+	      pnfs_ip_stats->nb_req_mnt1 += 1;
+	      pnfs_ip_stats->req_mnt1[ptr_req->rq_proc] += 1;
+	      break;
+
+	    case MOUNT_V3:
+	      pnfs_ip_stats->nb_req_mnt3 += 1;
+	      pnfs_ip_stats->req_mnt3[ptr_req->rq_proc] += 1;
+	      break;
+	    }
+	}
+    } else
     {
-      status = IP_STATS_NOT_FOUND ;
+      status = IP_STATS_NOT_FOUND;
     }
-  return status ;
-} /* nfs_ip_stats_incr */
+  return status;
+}				/* nfs_ip_stats_incr */
 
 /**
  *
@@ -379,36 +367,32 @@ int  nfs_ip_stats_incr( hash_table_t   * ht_ip_stats,
  * @return the computed number of call for this ipaddr. Negative value is a failure
  *
  */
-int  nfs_ip_stats_get( hash_table_t     * ht_ip_stats, 
-                       unsigned int       ipaddr, 
-                       nfs_ip_stats_t  ** pnfs_ip_stats )
+int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
+		     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
 {
-  hash_buffer_t        buffkey ;
-  hash_buffer_t        buffval ;
-  unsigned long int    local_ipaddr = ipaddr ;
-  int                  status ;
-  
-  buffkey.pdata = (caddr_t)local_ipaddr ;
-  buffkey.len = 0 ;
-  
-  /* Do nothing if configuration disables IP_Stats */ 
-  if( nfs_param.core_param.dump_stats_per_client == 0 ) 
-	return IP_STATS_SUCCESS ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  unsigned long int local_ipaddr = ipaddr;
+  int status;
 
-  if( HashTable_Get( ht_ip_stats, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+  buffkey.pdata = (caddr_t) local_ipaddr;
+  buffkey.len = 0;
+
+  /* Do nothing if configuration disables IP_Stats */
+  if (nfs_param.core_param.dump_stats_per_client == 0)
+    return IP_STATS_SUCCESS;
+
+  if (HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      *pnfs_ip_stats = (nfs_ip_stats_t *)buffval.pdata ;
+      *pnfs_ip_stats = (nfs_ip_stats_t *) buffval.pdata;
 
-      status =  IP_STATS_SUCCESS ;
-    }
-  else
+      status = IP_STATS_SUCCESS;
+    } else
     {
-      status = IP_STATS_NOT_FOUND ;
+      status = IP_STATS_NOT_FOUND;
     }
-  return status ;
-} /* nfs_ip_stats_get */
-
-
+  return status;
+}				/* nfs_ip_stats_get */
 
 /**
  *
@@ -422,38 +406,34 @@ int  nfs_ip_stats_get( hash_table_t     * ht_ip_stats,
  * @return the result previously set if *pstatus == IP_STATS_SUCCESS
  *
  */
-int nfs_ip_stats_remove( hash_table_t   * ht_ip_stats, 
-                         int              ipaddr, 
-                         nfs_ip_stats_t * nfs_ip_stats_pool )
+int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
+			int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
 {
-  hash_buffer_t        buffkey , old_value ;
-  int                  status = IP_STATS_SUCCESS;
-  nfs_ip_stats_t     * pnfs_ip_stats  = NULL ;
-  unsigned long int   long_ipaddr ; 
- 
-  long_ipaddr = (unsigned long int)ipaddr ;
+  hash_buffer_t buffkey, old_value;
+  int status = IP_STATS_SUCCESS;
+  nfs_ip_stats_t *pnfs_ip_stats = NULL;
+  unsigned long int long_ipaddr;
 
-  buffkey.pdata = (caddr_t)long_ipaddr ; 
-  buffkey.len = 0 ;
+  long_ipaddr = (unsigned long int)ipaddr;
 
-  /* Do nothing if configuration disables IP_Stats */ 
-  if( nfs_param.core_param.dump_stats_per_client == 0 ) 
-	return IP_STATS_SUCCESS ;
+  buffkey.pdata = (caddr_t) long_ipaddr;
+  buffkey.len = 0;
 
-   if( HashTable_Del( ht_ip_stats, &buffkey, NULL, &old_value ) == HASHTABLE_SUCCESS )
+  /* Do nothing if configuration disables IP_Stats */
+  if (nfs_param.core_param.dump_stats_per_client == 0)
+    return IP_STATS_SUCCESS;
+
+  if (HashTable_Del(ht_ip_stats, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
-      pnfs_ip_stats = (nfs_ip_stats_t *)old_value.pdata ;
-      RELEASE_PREALLOC( pnfs_ip_stats, nfs_ip_stats_pool, next_alloc ) ;
-    }
-  else
+      pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
+      RELEASE_PREALLOC(pnfs_ip_stats, nfs_ip_stats_pool, next_alloc);
+    } else
     {
-      status = IP_STATS_NOT_FOUND ;
+      status = IP_STATS_NOT_FOUND;
     }
 
-   return status ;
-} /* nfs_ip_stats_remove */
-
-
+  return status;
+}				/* nfs_ip_stats_remove */
 
 /**
  *
@@ -466,19 +446,18 @@ int nfs_ip_stats_remove( hash_table_t   * ht_ip_stats,
  * @return 0 if successful, -1 otherwise
  *
  */
-hash_table_t * nfs_Init_ip_stats( nfs_ip_stats_parameter_t  param ) 
-{ 
-  hash_table_t * ht_ip_stats ;
-  
-  if( ( ht_ip_stats = HashTable_Init( param.hash_param  ) ) == NULL )
+hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
+{
+  hash_table_t *ht_ip_stats;
+
+  if ((ht_ip_stats = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog( "NFS IP_STATS: Cannot init IP stats cache" ) ;
-      return NULL ;
+      DisplayLog("NFS IP_STATS: Cannot init IP stats cache");
+      return NULL;
     }
 
-  return  ht_ip_stats ;
-} /* nfs_Init_ip_stats */
-
+  return ht_ip_stats;
+}				/* nfs_Init_ip_stats */
 
 /**
  *
@@ -490,135 +469,134 @@ hash_table_t * nfs_Init_ip_stats( nfs_ip_stats_parameter_t  param )
  * @return nothing (void function).
  *
  */
-void nfs_ip_stats_dump( hash_table_t   ** ht_ip_stats,
-		        unsigned int      nb_worker, 
-			char            * path_stat)
+void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
+		       unsigned int nb_worker, char *path_stat)
 {
-  struct rbt_node    * it;
-  struct rbt_head    * tete_rbt ;
-  hash_data_t        * pdata = NULL ;
-  unsigned int         i = 0 ;
-  unsigned int         j = 0 ;
-  unsigned int         k = 0 ;
-  nfs_ip_stats_t     * pnfs_ip_stats[NB_MAX_WORKER_THREAD] ;
-  nfs_ip_stats_t       ip_stats_aggreg ;
-  char                 ifpathdump[MAXPATHLEN] ;
-  unsigned long int    ipaddr ; 
-  time_t               current_time ;
-  struct tm            current_time_struct ;
-  char                 strdate[1024] ;
-  FILE               * flushipstat = NULL ; 
+  struct rbt_node *it;
+  struct rbt_head *tete_rbt;
+  hash_data_t *pdata = NULL;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
+  nfs_ip_stats_t *pnfs_ip_stats[NB_MAX_WORKER_THREAD];
+  nfs_ip_stats_t ip_stats_aggreg;
+  char ifpathdump[MAXPATHLEN];
+  unsigned long int ipaddr;
+  time_t current_time;
+  struct tm current_time_struct;
+  char strdate[1024];
+  FILE *flushipstat = NULL;
 
-  /* Do nothing if configuration disables IP_Stats */ 
-  if( nfs_param.core_param.dump_stats_per_client == 0 ) 
-	return  ;
+  /* Do nothing if configuration disables IP_Stats */
+  if (nfs_param.core_param.dump_stats_per_client == 0)
+    return;
 
   /* Compute the current time */
-  current_time = time( NULL ) ;
-  memcpy( &current_time_struct, localtime( &current_time ), sizeof( current_time_struct ) ) ;
-  snprintf( strdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
-            (unsigned int)current_time,
-            current_time_struct.tm_mday,
-            current_time_struct.tm_mon+1,
-            1900 + current_time_struct.tm_year,
-            current_time_struct.tm_hour,
-            current_time_struct.tm_min,
-            current_time_struct.tm_sec ) ;
+  current_time = time(NULL);
+  memcpy(&current_time_struct, localtime(&current_time), sizeof(current_time_struct));
+  snprintf(strdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
+	   (unsigned int)current_time,
+	   current_time_struct.tm_mday,
+	   current_time_struct.tm_mon + 1,
+	   1900 + current_time_struct.tm_year,
+	   current_time_struct.tm_hour,
+	   current_time_struct.tm_min, current_time_struct.tm_sec);
 
   /* All clients are supposed to have call at least one time worker #0 
    * we loop on every client in the HashTable */
-  for( i = 0 ; i < ht_ip_stats[0]->parameter.index_size ; i++ )
-   {
-      tete_rbt = &((ht_ip_stats[0]->array_rbt)[i]) ;
-      RBT_LOOP( tete_rbt, it )
-        {
-          pdata = (hash_data_t *)it->rbt_opaq ;
+  for (i = 0; i < ht_ip_stats[0]->parameter.index_size; i++)
+    {
+      tete_rbt = &((ht_ip_stats[0]->array_rbt)[i]);
+      RBT_LOOP(tete_rbt, it)
+      {
+	pdata = (hash_data_t *) it->rbt_opaq;
 
-          ipaddr =  (unsigned long int)pdata->buffkey.pdata ;
+	ipaddr = (unsigned long int)pdata->buffkey.pdata;
 
-          snprintf( ifpathdump, 
-		    MAXPATHLEN, 
-		    "%s/stats_nfs-0x%x=%u.%u.%u.%u", 
-		    path_stat, 
-	            ntohl( ipaddr ),
-                    ( ntohl( ipaddr ) & 0xFF000000 ) >> 24,
-                    ( ntohl( ipaddr ) & 0x00FF0000 ) >> 16,
-                    ( ntohl( ipaddr ) & 0x0000FF00 ) >> 8,
-                    ( ntohl( ipaddr ) & 0x000000FF ) ) ;
+	snprintf(ifpathdump,
+		 MAXPATHLEN,
+		 "%s/stats_nfs-0x%x=%u.%u.%u.%u",
+		 path_stat,
+		 ntohl(ipaddr),
+		 (ntohl(ipaddr) & 0xFF000000) >> 24,
+		 (ntohl(ipaddr) & 0x00FF0000) >> 16,
+		 (ntohl(ipaddr) & 0x0000FF00) >> 8, (ntohl(ipaddr) & 0x000000FF));
 
-	 if( ( flushipstat = fopen( ifpathdump, "a" ) ) == NULL )
-	   return ;
+	if ((flushipstat = fopen(ifpathdump, "a")) == NULL)
+	  return;
 
-	 /* Collect stats for each worker and aggregate them*/
-         memset( &ip_stats_aggreg, 0, sizeof( ip_stats_aggreg ) ) ;
-         for( j = 0 ; j < nb_worker ; j++ )  
-	   {
-             if( nfs_ip_stats_get( ht_ip_stats[j], 
-                                   ipaddr, 
-                                   &pnfs_ip_stats[j] ) != IP_STATS_SUCCESS )
-             {
-                fclose( flushipstat ) ;
-        	return ;
-             }
-             ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call ;
+	/* Collect stats for each worker and aggregate them */
+	memset(&ip_stats_aggreg, 0, sizeof(ip_stats_aggreg));
+	for (j = 0; j < nb_worker; j++)
+	  {
+	    if (nfs_ip_stats_get(ht_ip_stats[j],
+				 ipaddr, &pnfs_ip_stats[j]) != IP_STATS_SUCCESS)
+	      {
+		fclose(flushipstat);
+		return;
+	      }
+	    ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call;
 
-	     ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2 ;
-	     ip_stats_aggreg.nb_req_nfs3 += (pnfs_ip_stats[j])->nb_req_nfs3 ;
-	     ip_stats_aggreg.nb_req_nfs4 += (pnfs_ip_stats[j])->nb_req_nfs4 ;
-             ip_stats_aggreg.nb_req_mnt1 += (pnfs_ip_stats[j])->nb_req_mnt1 ;
-             ip_stats_aggreg.nb_req_mnt3 += (pnfs_ip_stats[j])->nb_req_mnt3  ;
+	    ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2;
+	    ip_stats_aggreg.nb_req_nfs3 += (pnfs_ip_stats[j])->nb_req_nfs3;
+	    ip_stats_aggreg.nb_req_nfs4 += (pnfs_ip_stats[j])->nb_req_nfs4;
+	    ip_stats_aggreg.nb_req_mnt1 += (pnfs_ip_stats[j])->nb_req_mnt1;
+	    ip_stats_aggreg.nb_req_mnt3 += (pnfs_ip_stats[j])->nb_req_mnt3;
 
-	     for( k = 0 ; k < MNT_V1_NB_COMMAND ; k++ ) 
-		ip_stats_aggreg.req_mnt1[k] += (pnfs_ip_stats[j])->req_mnt1[k] ;
+	    for (k = 0; k < MNT_V1_NB_COMMAND; k++)
+	      ip_stats_aggreg.req_mnt1[k] += (pnfs_ip_stats[j])->req_mnt1[k];
 
-	     for( k = 0 ; k < MNT_V3_NB_COMMAND ; k++ )
-		ip_stats_aggreg.req_mnt3[k] += (pnfs_ip_stats[j])->req_mnt3[k] ;
+	    for (k = 0; k < MNT_V3_NB_COMMAND; k++)
+	      ip_stats_aggreg.req_mnt3[k] += (pnfs_ip_stats[j])->req_mnt3[k];
 
-	      for( k = 0 ; k < NFS_V2_NB_COMMAND ; k++ )
-		ip_stats_aggreg.req_nfs2[k] += (pnfs_ip_stats[j])->req_nfs2[k] ;
+	    for (k = 0; k < NFS_V2_NB_COMMAND; k++)
+	      ip_stats_aggreg.req_nfs2[k] += (pnfs_ip_stats[j])->req_nfs2[k];
 
-	      for( k = 0 ; k < NFS_V3_NB_COMMAND ; k++ )
-		ip_stats_aggreg.req_nfs3[k] += (pnfs_ip_stats[j])->req_nfs3[k] ;
-	   }
+	    for (k = 0; k < NFS_V3_NB_COMMAND; k++)
+	      ip_stats_aggreg.req_nfs3[k] += (pnfs_ip_stats[j])->req_nfs3[k];
+	  }
 
- 	  /* Write stats to file */
-          fprintf( flushipstat, "NFS/MOUNT STATISTICS,%s;%u|%u,%u,%u,%u,%u\n",
-		   strdate,
-		   ip_stats_aggreg.nb_call,
-                   ip_stats_aggreg.nb_req_mnt1,
-                   ip_stats_aggreg.nb_req_mnt3,
-                   ip_stats_aggreg.nb_req_nfs2,
-                   ip_stats_aggreg.nb_req_nfs3,
-                   ip_stats_aggreg.nb_req_nfs4 ) ;
-                   
-	 fprintf( flushipstat, "MNT V1 REQUEST,%s;%u|", strdate, ip_stats_aggreg.nb_req_mnt1 ) ;
-      	 for( k = 0 ; k < MNT_V1_NB_COMMAND-1 ; k++ )
-	   fprintf( flushipstat, "%u," , ip_stats_aggreg.req_mnt1[k] ) ;
-	 fprintf( flushipstat, "%u\n" , ip_stats_aggreg.req_mnt1[MNT_V1_NB_COMMAND-1] );
-                   
-	 fprintf( flushipstat, "MNT V3 REQUEST,%s;%u|", strdate, ip_stats_aggreg.nb_req_mnt3 ) ;
-      	 for( k = 0 ; k < MNT_V3_NB_COMMAND-1 ; k++ )
-	   fprintf( flushipstat, "%u," , ip_stats_aggreg.req_mnt3[k] );
-	 fprintf( flushipstat, "%u\n" , ip_stats_aggreg.req_mnt3[MNT_V3_NB_COMMAND-1] );
-          
-	 fprintf( flushipstat, "NFS V2 REQUEST,%s;%u|", strdate, ip_stats_aggreg.nb_req_nfs2 ) ;
-      	 for( k = 0 ; k < NFS_V2_NB_COMMAND-1 ; k++ )
-	   fprintf( flushipstat, "%u," , ip_stats_aggreg.req_nfs2[k] ) ;
-	 fprintf( flushipstat, "%u\n" , ip_stats_aggreg.req_nfs2[NFS_V2_NB_COMMAND-1] );
-                  
-	 fprintf( flushipstat, "NFS V3 REQUEST,%s;%u|", strdate, ip_stats_aggreg.nb_req_nfs3 ) ;
-      	 for( k = 0 ; k < NFS_V3_NB_COMMAND-1 ; k++ )
-	   fprintf( flushipstat, "%u," , ip_stats_aggreg.req_nfs3[k] ) ;
-	 fprintf( flushipstat, "%u\n" , ip_stats_aggreg.req_nfs3[NFS_V3_NB_COMMAND-1] );
+	/* Write stats to file */
+	fprintf(flushipstat, "NFS/MOUNT STATISTICS,%s;%u|%u,%u,%u,%u,%u\n",
+		strdate,
+		ip_stats_aggreg.nb_call,
+		ip_stats_aggreg.nb_req_mnt1,
+		ip_stats_aggreg.nb_req_mnt3,
+		ip_stats_aggreg.nb_req_nfs2,
+		ip_stats_aggreg.nb_req_nfs3, ip_stats_aggreg.nb_req_nfs4);
 
-	 fprintf( flushipstat, "END, ----- NO MORE STATS FOR THIS PASS ----\n" ) ;
+	fprintf(flushipstat, "MNT V1 REQUEST,%s;%u|", strdate,
+		ip_stats_aggreg.nb_req_mnt1);
+	for (k = 0; k < MNT_V1_NB_COMMAND - 1; k++)
+	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt1[k]);
+	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt1[MNT_V1_NB_COMMAND - 1]);
 
-	 fflush( flushipstat ) ;
+	fprintf(flushipstat, "MNT V3 REQUEST,%s;%u|", strdate,
+		ip_stats_aggreg.nb_req_mnt3);
+	for (k = 0; k < MNT_V3_NB_COMMAND - 1; k++)
+	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt3[k]);
+	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt3[MNT_V3_NB_COMMAND - 1]);
 
-	 /* Check next client */
-         RBT_INCREMENT(it);
-       }
+	fprintf(flushipstat, "NFS V2 REQUEST,%s;%u|", strdate,
+		ip_stats_aggreg.nb_req_nfs2);
+	for (k = 0; k < NFS_V2_NB_COMMAND - 1; k++)
+	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs2[k]);
+	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs2[NFS_V2_NB_COMMAND - 1]);
 
-       fclose( flushipstat ) ;
+	fprintf(flushipstat, "NFS V3 REQUEST,%s;%u|", strdate,
+		ip_stats_aggreg.nb_req_nfs3);
+	for (k = 0; k < NFS_V3_NB_COMMAND - 1; k++)
+	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs3[k]);
+	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs3[NFS_V3_NB_COMMAND - 1]);
+
+	fprintf(flushipstat, "END, ----- NO MORE STATS FOR THIS PASS ----\n");
+
+	fflush(flushipstat);
+
+	/* Check next client */
+	RBT_INCREMENT(it);
+      }
+
+      fclose(flushipstat);
     }
-} /* nfs_ip_stats_dump */
+}				/* nfs_ip_stats_dump */

@@ -110,7 +110,6 @@
 #include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -119,85 +118,84 @@
 #include "LRU_List.h"
 
 #define PREALLOC 10000
-#define MAXTEST 10    
+#define MAXTEST 10
 #define KEPT_ENTRY 5
 
-int print_entry( LRU_data_t data, char *str )
+int print_entry(LRU_data_t data, char *str)
 {
-  return snprintf( str, LRU_DISPLAY_STRLEN, "%s", (char *)data.pdata ) ;
-} /* print_entry */
+  return snprintf(str, LRU_DISPLAY_STRLEN, "%s", (char *)data.pdata);
+}				/* print_entry */
 
-int clean_entry(  LRU_entry_t * pentry, void * addparam )
+int clean_entry(LRU_entry_t * pentry, void *addparam)
 {
-  return 0 ;
-} /* cleanentry */
+  return 0;
+}				/* cleanentry */
 
-int main( int argc, char * argv[] )
+int main(int argc, char *argv[])
 {
-  LRU_list_t * plru ;
-  LRU_parameter_t param ;
-  LRU_entry_t * entry      = NULL ;
-  LRU_entry_t * kept_entry = NULL ;
-  LRU_status_t status = 0 ;
-  int i = 0 ;
-  char strtab[MAXTEST][10] ;
-  
-  param.nb_entry_prealloc =  PREALLOC ;
-  param.entry_to_str = print_entry ;
-  param.clean_entry = clean_entry ;
-  
-  BuddyInit( NULL ) ;
-  
-  if( ( plru = LRU_Init( param, &status ) ) == NULL )
+  LRU_list_t *plru;
+  LRU_parameter_t param;
+  LRU_entry_t *entry = NULL;
+  LRU_entry_t *kept_entry = NULL;
+  LRU_status_t status = 0;
+  int i = 0;
+  char strtab[MAXTEST][10];
+
+  param.nb_entry_prealloc = PREALLOC;
+  param.entry_to_str = print_entry;
+  param.clean_entry = clean_entry;
+
+  BuddyInit(NULL);
+
+  if ((plru = LRU_Init(param, &status)) == NULL)
     {
-       printf( "Test ECHOUE : Mauvaise init\n" ) ;
-       exit( 1 ) ;
-    }  
+      printf("Test ECHOUE : Mauvaise init\n");
+      exit(1);
+    }
 
-  for( i = 0 ; i < MAXTEST ; i++ )
+  for (i = 0; i < MAXTEST; i++)
     {
 #ifdef _DEBUG_LRU
-      printf( "Ajout de l'entree %d\n", i ) ;
+      printf("Ajout de l'entree %d\n", i);
 #endif
-      sprintf( strtab[i], "%d", i  ) ;
-      if( ( entry = LRU_new_entry( plru, &status ) ) == NULL )
-        {
+      sprintf(strtab[i], "%d", i);
+      if ((entry = LRU_new_entry(plru, &status)) == NULL)
+	{
 
-          printf( "Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status ) ;
-          exit( 1 ) ;
-        }
-      
-      entry->buffdata.pdata = strtab[i] ;
-      entry->buffdata.len =  strlen( strtab[i] ) ;
-      
-      if( i == KEPT_ENTRY ) kept_entry = entry ;
+	  printf("Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status);
+	  exit(1);
+	}
+
+      entry->buffdata.pdata = strtab[i];
+      entry->buffdata.len = strlen(strtab[i]);
+
+      if (i == KEPT_ENTRY)
+	kept_entry = entry;
     }
-  
+
   /* printing the table */
 #ifdef _DEBUG_LRU
-  LRU_Print(  plru ) ;
+  LRU_Print(plru);
 #endif
 
-  LRU_invalidate( plru, kept_entry ) ;
+  LRU_invalidate(plru, kept_entry);
 
 #ifdef _DEBUG_LRU
-  LRU_Print(  plru ) ;
+  LRU_Print(plru);
 #endif
-  
 
-  if( LRU_gc_invalid( plru, NULL ) != LRU_LIST_SUCCESS )
+  if (LRU_gc_invalid(plru, NULL) != LRU_LIST_SUCCESS)
     {
-       printf( "Test ECHOUE : Mauvais gc\n" ) ;
-       exit( 1 ) ;
-    }  
-
+      printf("Test ECHOUE : Mauvais gc\n");
+      exit(1);
+    }
 #ifdef _DEBUG_LRU
-  LRU_Print(  plru ) ;
+  LRU_Print(plru);
 #endif
-  
-   /* Tous les tests sont ok */
-  printf( "\n-----------------------------------------\n" ) ;
-  printf( "Test reussi : tous les tests sont passes avec succes\n" ) ;
 
-  exit( 0 ) ;
-} /* main */
+  /* Tous les tests sont ok */
+  printf("\n-----------------------------------------\n");
+  printf("Test reussi : tous les tests sont passes avec succes\n");
+
+  exit(0);
+}				/* main */

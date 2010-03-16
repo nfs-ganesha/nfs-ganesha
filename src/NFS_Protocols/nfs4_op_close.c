@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +124,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-
 /**
  *
  * nfs4_op_close: Implemtation of NFS4_OP_CLOSE
@@ -142,126 +141,121 @@
 #define arg_CLOSE4 op->nfs_argop4_u.opclose
 #define res_CLOSE4 resp->nfs_resop4_u.opclose
 
-int nfs4_op_close(  struct nfs_argop4 * op ,   
-                    compound_data_t   * data,
-                    struct nfs_resop4 * resp)
+int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int                    rc = 0 ;
-  char                   __attribute__(( __unused__ )) funcname[] = "nfs4_op_close" ;
-  cache_inode_state_t  * pstate_found = NULL ; 
+  int rc = 0;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
+  cache_inode_state_t *pstate_found = NULL;
 
-  cache_inode_status_t   cache_status ;
-  
-  memset( &res_CLOSE4, 0, sizeof( res_CLOSE4 ) ) ;
-  resp->resop = NFS4_OP_CLOSE ;
- 
-   /* If the filehandle is Empty */
-  if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
+  cache_inode_status_t cache_status;
+
+  memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
+  resp->resop = NFS4_OP_CLOSE;
+
+  /* If the filehandle is Empty */
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
-      res_CLOSE4.status = NFS4ERR_NOFILEHANDLE ;
-      return res_CLOSE4.status ;
+      res_CLOSE4.status = NFS4ERR_NOFILEHANDLE;
+      return res_CLOSE4.status;
     }
 
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->currentFH ) ) )
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
-      res_CLOSE4.status = NFS4ERR_BADHANDLE ;
-      return res_CLOSE4.status ;
+      res_CLOSE4.status = NFS4ERR_BADHANDLE;
+      return res_CLOSE4.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
-      res_CLOSE4.status = NFS4ERR_FHEXPIRED ;
-      return res_CLOSE4.status ;
+      res_CLOSE4.status = NFS4ERR_FHEXPIRED;
+      return res_CLOSE4.status;
     }
 
-  if( data->current_entry == NULL )
-   {
-      res_CLOSE4.status = NFS4ERR_SERVERFAULT ;
-      return res_CLOSE4.status ;
-   }
+  if (data->current_entry == NULL)
+    {
+      res_CLOSE4.status = NFS4ERR_SERVERFAULT;
+      return res_CLOSE4.status;
+    }
 
   /* Should not operate on directories */
-  if( data->current_entry->internal_md.type == DIR_BEGINNING ||
-      data->current_entry->internal_md.type == DIR_CONTINUE )
+  if (data->current_entry->internal_md.type == DIR_BEGINNING ||
+      data->current_entry->internal_md.type == DIR_CONTINUE)
     {
-       res_CLOSE4.status = NFS4ERR_ISDIR ;
-       return res_CLOSE4.status ;
+      res_CLOSE4.status = NFS4ERR_ISDIR;
+      return res_CLOSE4.status;
     }
 
   /* Object should be a file */
-  if( data->current_entry->internal_md.type != REGULAR_FILE )
+  if (data->current_entry->internal_md.type != REGULAR_FILE)
     {
-        res_CLOSE4.status = NFS4ERR_INVAL ;
-        return res_CLOSE4.status ;
+      res_CLOSE4.status = NFS4ERR_INVAL;
+      return res_CLOSE4.status;
     }
 
   /* Does the stateid match ? */
-  if( ( rc = nfs4_Check_Stateid( &arg_CLOSE4.open_stateid, data->current_entry, 0LL ) )  != NFS4_OK )
+  if ((rc =
+       nfs4_Check_Stateid(&arg_CLOSE4.open_stateid, data->current_entry, 0LL)) != NFS4_OK)
     {
-	res_CLOSE4.status = rc ;
-	return res_CLOSE4.status ;
+      res_CLOSE4.status = rc;
+      return res_CLOSE4.status;
     }
 
   /* Get the related state */
-  if( cache_inode_get_state( arg_CLOSE4.open_stateid.other,
-                             &pstate_found,
-                             data->pclient,
-                             &cache_status ) != CACHE_INODE_SUCCESS )
+  if (cache_inode_get_state(arg_CLOSE4.open_stateid.other,
+			    &pstate_found,
+			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
-       if( cache_status == CACHE_INODE_NOT_FOUND )
-          res_CLOSE4.status = NFS4ERR_BAD_STATEID ;
-       else
-          res_CLOSE4.status = NFS4ERR_INVAL  ;
-           
-       return res_CLOSE4.status ;
+      if (cache_status == CACHE_INODE_NOT_FOUND)
+	res_CLOSE4.status = NFS4ERR_BAD_STATEID;
+	else
+	res_CLOSE4.status = NFS4ERR_INVAL;
+
+      return res_CLOSE4.status;
     }
 
   /* Check is held locks remain */
-  if(  pstate_found->state_data.share.lockheld > 0 )
-   {
-      res_CLOSE4.status = NFS4ERR_LOCKS_HELD ;
-      return res_CLOSE4.status ;
-   }
+  if (pstate_found->state_data.share.lockheld > 0)
+    {
+      res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
+      return res_CLOSE4.status;
+    }
 
   /* Update the seqid for the open_owner */
-  P( pstate_found->powner->lock ) ;
-  pstate_found->powner->seqid += 1 ;
-  V( pstate_found->powner->lock ) ;
+  P(pstate_found->powner->lock);
+  pstate_found->powner->seqid += 1;
+  V(pstate_found->powner->lock);
 
   /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid +1 ;
+  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1;
 
   /* File is closed, release the corresponding state */
-  if( cache_inode_del_state_by_key( arg_CLOSE4.open_stateid.other,
-                                    data->pclient, 
-                                    &cache_status ) != CACHE_INODE_SUCCESS ) 
+  if (cache_inode_del_state_by_key(arg_CLOSE4.open_stateid.other,
+				   data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
-	res_CLOSE4.status = nfs4_Errno( cache_status ) ;
-	return res_CLOSE4.status ;
+      res_CLOSE4.status = nfs4_Errno(cache_status);
+      return res_CLOSE4.status;
     }
 
-  memcpy( res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other , 12 ) ;  ;
+  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, 12);;
 
   /* Close the file in FSAL through the cache inode */
-  P_w( &data->current_entry->lock ) ;
-  if( cache_inode_close( data->current_entry,
-                         data->pclient,
-                         &cache_status ) != CACHE_INODE_SUCCESS )
+  P_w(&data->current_entry->lock);
+  if (cache_inode_close(data->current_entry,
+			data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
-       V_w( &data->current_entry->lock ) ;
+      V_w(&data->current_entry->lock);
 
-       res_CLOSE4.status = nfs4_Errno( cache_status ) ;
-       return res_CLOSE4.status ;
+      res_CLOSE4.status = nfs4_Errno(cache_status);
+      return res_CLOSE4.status;
     }
-  V_w( &data->current_entry->lock ) ;
+  V_w(&data->current_entry->lock);
 
-  res_CLOSE4.status = NFS4_OK ;
-  
-  return NFS4_OK ;
-} /* nfs4_op_close */
+  res_CLOSE4.status = NFS4_OK;
 
+  return NFS4_OK;
+}				/* nfs4_op_close */
 
 /**
  * nfs4_op_close_Free: frees what was allocared to handle nfs4_op_close.
@@ -273,9 +267,8 @@ int nfs4_op_close(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_close_Free( CLOSE4res * resp )
+void nfs4_op_close_Free(CLOSE4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_close_Free */
-
+  return;
+}				/* nfs4_op_close_Free */

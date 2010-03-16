@@ -116,28 +116,26 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-#define NFS41_SESSION_PER_CLIENT 3 
-#define NFS41_NB_SLOTS           3 
+#define NFS41_SESSION_PER_CLIENT 3
+#define NFS41_NB_SLOTS           3
 #define NFS41_DRC_SIZE          32768
 
-typedef struct nfs41_session_slot__
-{
-  sequenceid4      sequence ;
-  pthread_mutex_t  lock ;
-  char             cached_result[NFS41_DRC_SIZE] ;
-  unsigned int     cache_used ;
-} nfs41_session_slot_t ;
+typedef struct nfs41_session_slot__ {
+  sequenceid4 sequence;
+  pthread_mutex_t lock;
+  char cached_result[NFS41_DRC_SIZE];
+  unsigned int cache_used;
+} nfs41_session_slot_t;
 
-typedef struct nfs41_session__
-{
-  clientid4                clientid ;
-  uint32_t                 sequence ;
-  uint32_t                 session_flags ;
-  char                     session_id[NFS4_SESSIONID_SIZE] ;
-  channel_attrs4           fore_channel_attrs ;
-  channel_attrs4           back_channel_attrs ;
-  nfs41_session_slot_t     slots[NFS41_NB_SLOTS] ;
-  struct nfs41_session__ * next_alloc ; 
-} nfs41_session_t ;
+typedef struct nfs41_session__ {
+  clientid4 clientid;
+  uint32_t sequence;
+  uint32_t session_flags;
+  char session_id[NFS4_SESSIONID_SIZE];
+  channel_attrs4 fore_channel_attrs;
+  channel_attrs4 back_channel_attrs;
+  nfs41_session_slot_t slots[NFS41_NB_SLOTS];
+  struct nfs41_session__ *next_alloc;
+} nfs41_session_t;
 
-#endif /* _NFS41_SESSION_H */
+#endif				/* _NFS41_SESSION_H */

@@ -18,18 +18,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-const char * fs_specific_opts[] =
-{
-    NULL
+const char *fs_specific_opts[] = {
+  NULL
 };
 
-    
 /**
  * don genereux du gnu
  * permet de tourner meme sur cray ...
  */
-static int Getsubopt (char **optionp, const char *const *tokens, char **valuep)
+static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
 {
   char *endp, *vstart;
   int cnt;
@@ -38,29 +35,29 @@ static int Getsubopt (char **optionp, const char *const *tokens, char **valuep)
     return -1;
 
   /* Find end of next token.  */
-  endp = strchr (*optionp, ',');
+  endp = strchr(*optionp, ',');
   if (endp == NULL)
-    endp = strchr (*optionp, '\0');
+    endp = strchr(*optionp, '\0');
 
   /* Find start of value.  */
-  vstart = memchr (*optionp, '=', endp - *optionp);
+  vstart = memchr(*optionp, '=', endp - *optionp);
   if (vstart == NULL)
     vstart = endp;
 
   /* Try to match the characters between *OPTIONP and VSTART against
      one of the TOKENS.  */
   for (cnt = 0; tokens[cnt] != NULL; ++cnt)
-    if (memcmp (*optionp, tokens[cnt], vstart - *optionp) == 0
-        && tokens[cnt][vstart - *optionp] == '\0')
+    if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
+	&& tokens[cnt][vstart - *optionp] == '\0')
       {
-        /* We found the current option in TOKENS.  */
-        *valuep = vstart != endp ? vstart + 1 : NULL;
+	/* We found the current option in TOKENS.  */
+	*valuep = vstart != endp ? vstart + 1 : NULL;
 
-        if (*endp != '\0')
-          *endp++ = '\0';
-        *optionp = endp;
+	if (*endp != '\0')
+	  *endp++ = '\0';
+	*optionp = endp;
 
-        return cnt;
+	return cnt;
       }
 
   /* The current suboption does not match any option.  */
@@ -73,7 +70,6 @@ static int Getsubopt (char **optionp, const char *const *tokens, char **valuep)
   return -1;
 }
 
-
 /**
  * @defgroup FSALCredFunctions Credential handling functions.
  *
@@ -81,62 +77,62 @@ static int Getsubopt (char **optionp, const char *const *tokens, char **valuep)
  * 
  * @{
  */
-          
+
 /**
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(
-        fsal_export_context_t   * p_export_context,    /* OUT */
-        fsal_path_t             * p_export_path,       /* IN */
-        char                    * fs_specific_options  /* IN */
-      )
+fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	/* OUT */
+				      fsal_path_t * p_export_path,	/* IN */
+				      char *fs_specific_options	/* IN */
+    )
 {
-  Return( ERR_FSAL_NO_ERROR , 0 , INDEX_FSAL_BuildExportContext );
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
-     
-
-fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
+fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
-  
-  fsal_posixdb_status_t      st;
-  
+
+  fsal_posixdb_status_t st;
+
   /* sanity check */
-  if (!p_thr_context ) Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_InitClientContext );
+  if (!p_thr_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
   p_thr_context->export_context = NULL;
- 
-  st = fsal_posixdb_connect( &global_posixdb_params , &(p_thr_context->p_conn));
-  if ( FSAL_POSIXDB_IS_ERROR( st ) ) {
-    DisplayLogLevel( NIV_CRIT, "CRITICAL ERROR: Worker could not connect to database !!!" ) ;
-    Return( ERR_FSAL_SERVERFAULT ,0 , INDEX_FSAL_InitClientContext );
-  } else {
-    DisplayLog( "Worker successfuly connected to database" ) ;
-  }
-  
+
+  st = fsal_posixdb_connect(&global_posixdb_params, &(p_thr_context->p_conn));
+  if (FSAL_POSIXDB_IS_ERROR(st))
+    {
+      DisplayLogLevel(NIV_CRIT,
+		      "CRITICAL ERROR: Worker could not connect to database !!!");
+      Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_InitClientContext);
+    } else
+    {
+      DisplayLog("Worker successfuly connected to database");
+    }
+
   /* sets the credential time */
 /*  p_thr_context->credential.last_update = time( NULL );*/
-  
-   /* traces: prints p_credential structure */
-  
+
+  /* traces: prints p_credential structure */
+
   /*
-   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential created:");
-   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-      p_thr_context->credential.hpss_usercred.SecPWent.Uid, p_thr_context->credential.hpss_usercred.SecPWent.Gid);
-   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-      p_thr_context->credential.hpss_usercred.SecPWent.Name);
-   
-   for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
+     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential created:");
+     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
+     p_thr_context->credential.hpss_usercred.SecPWent.Uid, p_thr_context->credential.hpss_usercred.SecPWent.Gid);
+     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tName = %s",
+     p_thr_context->credential.hpss_usercred.SecPWent.Name);
+
+     for ( i=0; i< p_thr_context->credential.hpss_usercred.NumGroups; i++ )
      DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-        p_thr_context->credential.hpss_usercred.AltGroups[i] );
-*/
-  Return( ERR_FSAL_NO_ERROR , 0, INDEX_FSAL_InitClientContext );
-  
+     p_thr_context->credential.hpss_usercred.AltGroups[i] );
+   */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+
 }
 
- 
  /**
  * FSAL_GetUserCred :
  * Get a user credential from its uid.
@@ -160,58 +156,54 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(
-        fsal_op_context_t       * p_thr_context,      /* IN/OUT  */
-        fsal_export_context_t   * p_export_context,   /* IN */    
-        fsal_uid_t              uid,                  /* IN */
-        fsal_gid_t              gid,                  /* IN */
-        fsal_gid_t              * alt_groups,         /* IN */
-        fsal_count_t            nb_alt_groups         /* IN */
-      )
+fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT  */
+				    fsal_export_context_t * p_export_context,	/* IN */
+				    fsal_uid_t uid,	/* IN */
+				    fsal_gid_t gid,	/* IN */
+				    fsal_gid_t * alt_groups,	/* IN */
+				    fsal_count_t nb_alt_groups	/* IN */
+    )
 {
-  
+
   fsal_count_t ng = nb_alt_groups;
   unsigned int i;
-  
+
   /* sanity check */
-  if (!p_thr_context || !p_export_context )
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_GetClientContext );
-  
+  if (!p_thr_context || !p_export_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
+
   /* set the export specific context */
   p_thr_context->export_context = p_export_context;
-  
-    
+
   /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
-  p_thr_context->credential.user = uid ;
-  p_thr_context->credential.group = gid ;
+  p_thr_context->credential.user = uid;
+  p_thr_context->credential.group = gid;
 
-  
-  if ( ng > FSAL_NGROUPS_MAX )
-    ng = FSAL_NGROUPS_MAX ;
-  if ( ( ng > 0 ) && ( alt_groups == NULL ) )
-    Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext );
-  
+  if (ng > FSAL_NGROUPS_MAX)
+    ng = FSAL_NGROUPS_MAX;
+  if ((ng > 0) && (alt_groups == NULL))
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
+
   p_thr_context->credential.nbgroups = ng;
-  
-  for ( i = 0 ; i < ng; i++ )
-    p_thr_context->credential.alt_groups[i] = alt_groups[i];
-#if defined( _DEBUG_FSAL ) 
-  
-   /* traces: prints p_credential structure */
- 
-   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "credential modified:");
-   DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-      p_thr_context->credential.user, p_thr_context->credential.group);
-   
-   for ( i=0; i< p_thr_context->credential.nbgroups; i++ )
-     DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-        p_thr_context->credential.alt_groups[i] );
-   
-#endif
-    
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext );
-  
-}
 
+  for (i = 0; i < ng; i++)
+    p_thr_context->credential.alt_groups[i] = alt_groups[i];
+#if defined( _DEBUG_FSAL )
+
+  /* traces: prints p_credential structure */
+
+  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
+  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
+		    p_thr_context->credential.user, p_thr_context->credential.group);
+
+  for (i = 0; i < p_thr_context->credential.nbgroups; i++)
+    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
+		      p_thr_context->credential.alt_groups[i]);
+
+#endif
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
+
+}
 
 /* @} */

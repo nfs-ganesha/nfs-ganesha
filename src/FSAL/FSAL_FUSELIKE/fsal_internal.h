@@ -8,7 +8,7 @@
  *          defined in fsal_internal.c.
  * 
  */
- 
+
 #include  "fsal.h"
 
 /* the following variables must not be defined in fsal_internal.c */
@@ -17,49 +17,46 @@
 /* static filesystem info.
  * read access only.
  */
-extern fsal_staticfsinfo_t   global_fs_info;
+extern fsal_staticfsinfo_t global_fs_info;
 
 /* log descriptor */
-extern log_t   fsal_log;
+extern log_t fsal_log;
 
 /* filesystem operations */
-extern struct ganefuse_operations * p_fs_ops;
+extern struct ganefuse_operations *p_fs_ops;
 
 /* filesystem opaque data */
-extern void * fs_user_data;
-extern void * fs_private_data;
+extern void *fs_user_data;
+extern void *fs_private_data;
 
 #endif
 
-struct ganefuse
-{
-    /* unused for now */
-    void * reserved;
+struct ganefuse {
+  /* unused for now */
+  void *reserved;
 };
-
 
 /**
  *  This function initializes shared variables of the FSAL.
  */
-fsal_status_t fsal_internal_init_global( fsal_init_info_t    *    fsal_info ,
-                                         fs_common_initinfo_t  *  fs_common_info );
+fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
+					fs_common_initinfo_t * fs_common_info);
 
 /**
  *  Increments the number of calls for a function.
  */
-void fsal_increment_nbcall( int function_index , fsal_status_t  status );
+void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 /**
  * Retrieves current thread statistics.
  */
 void fsal_internal_getstats(fsal_statistics_t * output_stats);
 
-
 /**
  *  Used to limit the number of simultaneous calls to Filesystem.
  */
-void  TakeTokenFSCall();
-void  ReleaseTokenFSCall();
+void TakeTokenFSCall();
+void ReleaseTokenFSCall();
 
 /**
  * fsal_do_log:
@@ -68,8 +65,7 @@ void  ReleaseTokenFSCall();
  * (in the other cases, return codes are only logged
  * in the NIV_FULL_DEBUG logging lovel).
  */
-fsal_boolean_t  fsal_do_log( fsal_status_t  status );
-
+fsal_boolean_t fsal_do_log(fsal_status_t status);
 
 /**
  * This function sets the current context for a filesystem operation,
@@ -77,21 +73,19 @@ fsal_boolean_t  fsal_do_log( fsal_status_t  status );
  * The structure pointed by p_ctx must stay allocated and kept unchanged
  * during the FS call. 
  */
-int fsal_set_thread_context( fsal_op_context_t * p_ctx );
+int fsal_set_thread_context(fsal_op_context_t * p_ctx);
 
 /**
  * This function retrieves the last context associated to a thread.
  */
-fsal_op_context_t * fsal_get_thread_context();
-
-
+fsal_op_context_t *fsal_get_thread_context();
 
 /**
  * Return :
  * Macro for returning from functions
  * with trace and function call increment.
  */
- 
+
 #define Return( _code_, _minor_ , _f_ ) do {                          \
                                                                       \
                char _str_[256];                                       \
@@ -113,9 +107,7 @@ fsal_op_context_t * fsal_get_thread_context();
                return (_struct_status_);                              \
                                                                       \
               } while(0)
- 
- 
- 
+
 /**
  *  ReturnCode :
  *  Macro for returning a fsal_status_t without trace nor stats increment.
@@ -127,19 +119,17 @@ fsal_op_context_t * fsal_get_thread_context();
                return (_struct_status_);                     \
               } while(0)
 
- 
 /* used for generating inode numbers for FS which don't have some */
-static inline unsigned long hash_peer( ino_t parent_inode, char * name )
+static inline unsigned long hash_peer(ino_t parent_inode, char *name)
 {
-    unsigned int i;
-    unsigned long hash;
-    char * curr;
+  unsigned int i;
+  unsigned long hash;
+  char *curr;
 
-    hash = 1;
+  hash = 1;
 
-    for (curr = name; *curr != '\0'; curr++)
-        hash = ((hash<<5) - hash + (unsigned long)(*curr));
+  for (curr = name; *curr != '\0'; curr++)
+    hash = ((hash << 5) - hash + (unsigned long)(*curr));
 
-    return ( hash ^ (unsigned long)parent_inode );
+  return (hash ^ (unsigned long)parent_inode);
 }
-

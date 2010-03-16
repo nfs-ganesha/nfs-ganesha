@@ -17,19 +17,20 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-void FSAL_get_stats(
-    fsal_statistics_t   * stats,    /* OUT */
-    fsal_boolean_t      reset       /* IN */
-){
-  
-  /* for logging */  
-  SetFuncID( INDEX_FSAL_get_stats );
-  
+void FSAL_get_stats(fsal_statistics_t * stats,	/* OUT */
+		    fsal_boolean_t reset	/* IN */
+    )
+{
+
+  /* for logging */
+  SetFuncID(INDEX_FSAL_get_stats);
+
   /* sanity check. */
-  if ( !stats ) return;
-  
+  if (!stats)
+    return;
+
   /* returns stats for this thread. */
   fsal_internal_getstats(stats);
-  
-  return;  
+
+  return;
 }

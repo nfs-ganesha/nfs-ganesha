@@ -120,67 +120,73 @@
 #include "SemN.h"
 #include <stdio.h>
 
-
 #define MODULE "SemN"
 
-int semaphore_init(semaphore_t * sem,int value){
+int semaphore_init(semaphore_t * sem, int value)
+{
 
-    int retval;
-    
-    if (!sem) return EINVAL;
-    
-    if (retval = pthread_mutex_init(&sem->mutex,NULL)) return retval;
-    
-    if (retval = pthread_cond_init(&sem->cond,NULL)) return retval;
+  int retval;
 
-    sem->count=value;
-    
-    return 0;
+  if (!sem)
+    return EINVAL;
+
+  if (retval = pthread_mutex_init(&sem->mutex, NULL))
+    return retval;
+
+  if (retval = pthread_cond_init(&sem->cond, NULL))
+    return retval;
+
+  sem->count = value;
+
+  return 0;
 
 }
 
+int semaphore_destroy(semaphore_t * sem)
+{
 
-int semaphore_destroy(semaphore_t * sem){
-    
-    if (!sem) return EINVAL;
-    
-    pthread_cond_destroy(&sem->cond);
-    pthread_mutex_destroy(&sem->mutex);
-    
-    return 0;
-    
-}
-        
-int semaphore_P(semaphore_t * sem){
+  if (!sem)
+    return EINVAL;
 
-    
-    if (!sem) return EINVAL;
-    
-    /* enters into the critical section */
-    pthread_mutex_lock(&sem->mutex);
-    
-    sem->count--;
-    /* If there are no more tokens : wait */
-    while (sem->count<0) pthread_cond_wait(&sem->cond,&sem->mutex);
-        
-    /* leaves the critical section */
-    pthread_mutex_unlock(&sem->mutex);
-    
+  pthread_cond_destroy(&sem->cond);
+  pthread_mutex_destroy(&sem->mutex);
+
+  return 0;
+
 }
 
-int semaphore_V(semaphore_t * sem){
+int semaphore_P(semaphore_t * sem)
+{
 
-    /* enters into the critical section */
-    pthread_mutex_lock(&sem->mutex);
-    
-    sem->count++;
-    
-    /* If a thread was waiting, gives it a token */
-    if (sem->count<=0) pthread_cond_signal(&sem->cond);
-        
-    /* leaves the critical section */
-    pthread_mutex_unlock(&sem->mutex);
-    
+  if (!sem)
+    return EINVAL;
+
+  /* enters into the critical section */
+  pthread_mutex_lock(&sem->mutex);
+
+  sem->count--;
+  /* If there are no more tokens : wait */
+  while (sem->count < 0)
+    pthread_cond_wait(&sem->cond, &sem->mutex);
+
+  /* leaves the critical section */
+  pthread_mutex_unlock(&sem->mutex);
+
 }
-        
 
+int semaphore_V(semaphore_t * sem)
+{
+
+  /* enters into the critical section */
+  pthread_mutex_lock(&sem->mutex);
+
+  sem->count++;
+
+  /* If a thread was waiting, gives it a token */
+  if (sem->count <= 0)
+    pthread_cond_signal(&sem->cond);
+
+  /* leaves the critical section */
+  pthread_mutex_unlock(&sem->mutex);
+
+}

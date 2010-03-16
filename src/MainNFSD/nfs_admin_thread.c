@@ -89,7 +89,6 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
@@ -97,14 +96,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "nfs_core.h" 
+#include "nfs_core.h"
 
-void * admin_thread( void * IndexArg )
+void *admin_thread(void *IndexArg)
 {
-  unsigned long __attribute__(( __unused__ )) index = (long)IndexArg ;
-  
-  SetNameFunction( "admin_thr" ) ;
+  unsigned long __attribute__ ((__unused__)) index = (long)IndexArg;
 
-  
-  return NULL ;
-} /* admin_thread */
+  SetNameFunction("admin_thr");
+
+  return NULL;
+}				/* admin_thread */

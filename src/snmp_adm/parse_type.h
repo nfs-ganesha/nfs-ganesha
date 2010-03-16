@@ -21,7 +21,6 @@
  */
 int real2str(char *str, double num);
 
-
 /**
  * Convert a string to a number
  * @param pnum pointer on the output number.
@@ -30,9 +29,8 @@ int real2str(char *str, double num);
  */
 int str2real(double *pnum, char *str);
 
-
 int big2str(char *str, int64_t num);
 
-int str2big(int64_t *pnum, char *str);
+int str2big(int64_t * pnum, char *str);
 
-#endif /* __PARSE_DOUBLE__ */
+#endif				/* __PARSE_DOUBLE__ */

@@ -91,19 +91,18 @@
 #include <sys/types.h>
 
 /* Added extended types, often missing */
-typedef long long longlong_t ;
-typedef unsigned long long u_longlong_t ;
+typedef long long longlong_t;
+typedef unsigned long long u_longlong_t;
 
-typedef unsigned int uint_t ;
-typedef unsigned int uint32_t ;
+typedef unsigned int uint_t;
+typedef unsigned int uint32_t;
 
-
-#if __WORDSIZE == 64 
-typedef unsigned long int uint64_t  ;
-typedef long int int64_t ;
+#if __WORDSIZE == 64
+typedef unsigned long int uint64_t;
+typedef long int int64_t;
 #else
-typedef unsigned long long int  uint64_t  ;
-typedef long long int int64_t ;
+typedef unsigned long long int uint64_t;
+typedef long long int int64_t;
 #endif
 
-#endif /* _EXTENDED_TYPES_H */
+#endif				/* _EXTENDED_TYPES_H */

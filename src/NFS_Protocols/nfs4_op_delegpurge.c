@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +124,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
 /**
  * nfs4_op_delegpurge: The NFS4_OP_DELEGPURGE
  * 
@@ -140,21 +139,18 @@
 #define arg_DELEGPURGE4 op->nfs_argop4_u.opdelegpurge
 #define res_DELEGPURGE4 resp->nfs_resop4_u.opdelegpurge
 
-int nfs4_op_delegpurge(  struct nfs_argop4 * op ,   
-                         compound_data_t   * data,
-                         struct nfs_resop4 * resp)
+int nfs4_op_delegpurge(struct nfs_argop4 *op,
+		       compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_delegpurge" ;
-  
-  
-  /* Lock are not supported */
-  resp->resop = NFS4_OP_DELEGPURGE ;
-  res_DELEGPURGE4.status =  NFS4_OK ;
-  
-  return res_DELEGPURGE4.status;
-} /* nfs4_op_delegpurge */
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_delegpurge";
 
-    
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_DELEGPURGE;
+  res_DELEGPURGE4.status = NFS4_OK;
+
+  return res_DELEGPURGE4.status;
+}				/* nfs4_op_delegpurge */
+
 /**
  * nfs4_op_delegpurge_Free: frees what was allocared to handle nfs4_op_delegpurge.
  * 
@@ -165,8 +161,8 @@ int nfs4_op_delegpurge(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_delegpurge_Free( DELEGPURGE4res * resp )
+void nfs4_op_delegpurge_Free(DELEGPURGE4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_delegpurge_Free */
+  return;
+}				/* nfs4_op_delegpurge_Free */

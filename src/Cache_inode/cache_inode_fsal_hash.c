@@ -89,14 +89,14 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "log_functions.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
-#include <unistd.h> /* for using gethostname */
-#include <stdlib.h> /* for using exit */
+#include <unistd.h>		/* for using gethostname */
+#include <stdlib.h>		/* for using exit */
 #include <strings.h>
 #include <sys/types.h>
 
@@ -112,23 +112,26 @@
  * @return the computed hash value.
  *
  */
-unsigned long cache_inode_fsal_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
+					 hash_buffer_t * buffclef)
 {
-  unsigned long h = 0 ;
+  unsigned long h = 0;
 #ifdef _DEBUG_HASHTABLE
   char printbuf[512];
 #endif
-  cache_inode_fsal_data_t * pfsdata = (cache_inode_fsal_data_t *)(buffclef->pdata) ;
+  cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
 
-  h = FSAL_Handle_to_HashIndex( &pfsdata->handle, pfsdata->cookie, p_hparam->alphabet_length, p_hparam->index_size );
-    
+  h = FSAL_Handle_to_HashIndex(&pfsdata->handle, pfsdata->cookie,
+			       p_hparam->alphabet_length, p_hparam->index_size);
+
 #ifdef _DEBUG_HASHTABLE
-  snprintHandle( printbuf, 512, &pfsdata->handle );
-  printf( "hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf, pfsdata->cookie, h ) ;
+  snprintHandle(printbuf, 512, &pfsdata->handle);
+  printf("hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
+	 pfsdata->cookie, h);
 #endif
 
   return h;
-} /* cache_inode_fsal_hash_func */
+}				/* cache_inode_fsal_hash_func */
 
 /**
  *
@@ -142,54 +145,52 @@ unsigned long cache_inode_fsal_hash_func( hash_parameter_t * p_hparam, hash_buff
  * @return the computed rbt value.
  *
  */
-unsigned long cache_inode_fsal_rbt_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
+					hash_buffer_t * buffclef)
 {
   /* A polynomial function too, but reversed, to avoid producing same value as decimal_simple_hash_func */
-  unsigned long h = 0 ;
+  unsigned long h = 0;
 #ifdef _DEBUG_HASHTABLE
   char printbuf[512];
 #endif
 
-  cache_inode_fsal_data_t * pfsdata = (cache_inode_fsal_data_t *)(buffclef->pdata) ;
-    
-  h = FSAL_Handle_to_RBTIndex( &pfsdata->handle, pfsdata->cookie );
+  cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
+
+  h = FSAL_Handle_to_RBTIndex(&pfsdata->handle, pfsdata->cookie);
 
 #ifdef _DEBUG_HASHTABLE
-  snprintHandle( printbuf, 512, &pfsdata->handle );
-  printf( "hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf, pfsdata->cookie, h ) ;
+  snprintHandle(printbuf, 512, &pfsdata->handle);
+  printf("hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
+	 pfsdata->cookie, h);
 #endif
   return h;
-} /* cache_inode_fsal_rbt_func */
+}				/* cache_inode_fsal_rbt_func */
 
-
-
-
-int display_key( hash_buffer_t * pbuff, char * str )
+int display_key(hash_buffer_t * pbuff, char *str)
 {
-  cache_inode_fsal_data_t * pfsdata ;
+  cache_inode_fsal_data_t *pfsdata;
   char buffer[128];
-  
-  pfsdata = (cache_inode_fsal_data_t *)pbuff->pdata ;
-  
-  snprintHandle( buffer, 128, &(pfsdata->handle));
 
-  return snprintf( str, HASHTABLE_DISPLAY_STRLEN, "(Handle=%s, Cookie=%u)", buffer, pfsdata->cookie ) ;
+  pfsdata = (cache_inode_fsal_data_t *) pbuff->pdata;
+
+  snprintHandle(buffer, 128, &(pfsdata->handle));
+
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Handle=%s, Cookie=%u)", buffer,
+		  pfsdata->cookie);
 }
 
-int display_not_implemented( hash_buffer_t * pbuff, char * str )
+int display_not_implemented(hash_buffer_t * pbuff, char *str)
 {
-  
-  return snprintf( str, HASHTABLE_DISPLAY_STRLEN, "Print Not Implemented" ) ;
+
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "Print Not Implemented");
 }
 
-int display_value( hash_buffer_t * pbuff, char * str )
+int display_value(hash_buffer_t * pbuff, char *str)
 {
-  cache_entry_t * pentry ;
+  cache_entry_t *pentry;
 
-  pentry = (cache_entry_t *)pbuff->pdata ;
-  
-  return snprintf( str, HASHTABLE_DISPLAY_STRLEN, "(Type=%d, Address=%p)", pentry->internal_md.type, pentry ) ;
+  pentry = (cache_entry_t *) pbuff->pdata;
+
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Type=%d, Address=%p)",
+		  pentry->internal_md.type, pentry);
 }
-
-
-

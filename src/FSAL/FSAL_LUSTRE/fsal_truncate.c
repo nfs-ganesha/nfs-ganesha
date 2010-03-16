@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-
 /**
  * FSAL_truncate:
  * Modify the data length of a regular file.
@@ -46,63 +45,62 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t FSAL_truncate( fsal_handle_t * p_filehandle,      /* IN */
-                             fsal_op_context_t * p_context,     /* IN */
-                             fsal_size_t length, /* IN */
-                             fsal_file_t * file_descriptor,     /* Unused in this FSAL */
-                             fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
-     )
+fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_size_t length,	/* IN */
+			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
+			    fsal_attrib_list_t * p_object_attributes	/* [ IN/OUT ] */
+    )
 {
 
-    int            rc, errsv;
-    fsal_path_t    fsalpath;
-    fsal_status_t  st;
+  int rc, errsv;
+  fsal_path_t fsalpath;
+  fsal_status_t st;
 
-    /* sanity checks.
-     * note : object_attributes is optional.
-     */
-    if ( !p_filehandle || !p_context )
-        Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate );
+  /* sanity checks.
+   * note : object_attributes is optional.
+   */
+  if (!p_filehandle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-    /* get the path of the file and its handle */
-    st = fsal_internal_Handle2FidPath( p_context, p_filehandle, &fsalpath );
-    if ( FSAL_IS_ERROR( st ) )
-        ReturnStatus( st, INDEX_FSAL_truncate );
+  /* get the path of the file and its handle */
+  st = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
+  if (FSAL_IS_ERROR(st))
+    ReturnStatus(st, INDEX_FSAL_truncate);
 
-    /* Executes the POSIX truncate operation */
+  /* Executes the POSIX truncate operation */
 
-    TakeTokenFSCall(  );
-    rc = truncate( fsalpath.path, length );
-    errsv = errno;
-    ReleaseTokenFSCall(  );
+  TakeTokenFSCall();
+  rc = truncate(fsalpath.path, length);
+  errsv = errno;
+  ReleaseTokenFSCall();
 
-    /* convert return code */
-    if ( rc )
+  /* convert return code */
+  if (rc)
     {
-        if ( errsv == ENOENT )
-            Return( ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate );
-        else
-            Return( posix2fsal_error( errsv ), errsv, INDEX_FSAL_truncate );
+      if (errsv == ENOENT)
+	Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
+	else
+	Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
     }
 
-    /* Optionally retrieve attributes */
-    if ( p_object_attributes )
+  /* Optionally retrieve attributes */
+  if (p_object_attributes)
     {
 
-        fsal_status_t  st;
+      fsal_status_t st;
 
-        st = FSAL_getattrs( p_filehandle, p_context, p_object_attributes );
+      st = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
-        if ( FSAL_IS_ERROR( st ) )
-        {
-            FSAL_CLEAR_MASK( p_object_attributes->asked_attributes );
-            FSAL_SET_MASK( p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR );
-        }
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+	  FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
 
     }
 
-
-    /* No error occurred */
-    Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate );
+  /* No error occurred */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
 
 }

@@ -51,7 +51,7 @@
 #include <rpc/rpc.h>
 #ifdef PORTMAP
 #include <rpc/pmap_clnt.h>
-#endif /* PORTMAP */
+#endif				/* PORTMAP */
 
 #include <Rpc_com_tirpc.h>
 #include "stuff_alloc.h"
@@ -76,8 +76,7 @@ extern rw_lock_t Svc_fd_lock;
  * The dispatch routine takes request structs and runs the
  * apropriate procedure.
  */
-static struct svc_callout
-{
+static struct svc_callout {
   struct svc_callout *sc_next;
   rpcprog_t sc_prog;
   rpcvers_t sc_vers;
@@ -85,76 +84,70 @@ static struct svc_callout
   void (*sc_dispatch) (struct svc_req *, SVCXPRT *);
 } *svc_head;
 
-
-static struct svc_callout *Svc_find (rpcprog_t, rpcvers_t,
-				     struct svc_callout **, char *);
-static void __Xprt_do_unregister (SVCXPRT * xprt, bool_t dolock);
+static struct svc_callout *Svc_find(rpcprog_t, rpcvers_t, struct svc_callout **, char *);
+static void __Xprt_do_unregister(SVCXPRT * xprt, bool_t dolock);
 
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
-void
-Xprt_register (xprt)
-     SVCXPRT *xprt;
+void Xprt_register(xprt)
+SVCXPRT *xprt;
 {
-	int sock;
+  int sock;
 
-	assert (xprt != NULL);
+  assert(xprt != NULL);
 
-	sock = xprt->xp_fd;
+  sock = xprt->xp_fd;
 
-	P_w (&Svc_fd_lock);
-	if (Xports == NULL)
-	{
-		Xports = (SVCXPRT **) Mem_Alloc (FD_SETSIZE * sizeof (SVCXPRT *));
-		if (Xports == NULL)
-			return;
-		memset (Xports, '\0', FD_SETSIZE * sizeof (SVCXPRT *));
-	}
-	if (sock < FD_SETSIZE)
-	{
-		Xports[sock] = xprt;
-		FD_SET (sock, &Svc_fdset);
-		svc_maxfd = max (svc_maxfd, sock);
-	}
-	V_w (&Svc_fd_lock);
+  P_w(&Svc_fd_lock);
+  if (Xports == NULL)
+    {
+      Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
+      if (Xports == NULL)
+	return;
+      memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
+    }
+  if (sock < FD_SETSIZE)
+    {
+      Xports[sock] = xprt;
+      FD_SET(sock, &Svc_fdset);
+      svc_maxfd = max(svc_maxfd, sock);
+    }
+  V_w(&Svc_fd_lock);
 }
 
-void
-Xprt_unregister (SVCXPRT * xprt)
+void Xprt_unregister(SVCXPRT * xprt)
 {
-  __Xprt_do_unregister (xprt, TRUE);
+  __Xprt_do_unregister(xprt, TRUE);
 }
 
-void
-__Xprt_unregister_unlocked (SVCXPRT * xprt)
+void __Xprt_unregister_unlocked(SVCXPRT * xprt)
 {
-  __Xprt_do_unregister (xprt, FALSE);
+  __Xprt_do_unregister(xprt, FALSE);
 }
 
 /*
  * De-activate a transport handle.
  */
-static void
-__Xprt_do_unregister (xprt, dolock)
-     SVCXPRT *xprt;
-     bool_t dolock;
+static void __Xprt_do_unregister(xprt, dolock)
+SVCXPRT *xprt;
+bool_t dolock;
 {
   int sock;
 
-  assert (xprt != NULL);
+  assert(xprt != NULL);
 
   sock = xprt->xp_fd;
 
   if (dolock)
-	  P_w (&Svc_fd_lock);
-  
+    P_w(&Svc_fd_lock);
+
   if ((sock < FD_SETSIZE) && (Xports[sock] == xprt))
     {
       Xports[sock] = NULL;
-      FD_CLR (sock, &Svc_fdset);
+      FD_CLR(sock, &Svc_fdset);
       if (sock >= svc_maxfd)
 	{
 	  for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
@@ -164,9 +157,8 @@ __Xprt_do_unregister (xprt, dolock)
     }
 
   if (dolock)
-	  V_w (&Svc_fd_lock);
+    V_w(&Svc_fd_lock);
 }
-
 
 /* ********************** CALLOUT list related stuff ************* */
 
@@ -176,28 +168,26 @@ __Xprt_do_unregister (xprt, dolock)
  * The dispatch routine will be called when a rpc request for this
  * program number comes in.
  */
-bool_t
-Svc_register (xprt, prog, vers, dispatch, protocol)
-     SVCXPRT *xprt;
-     u_long prog;
-     u_long vers;
-     void (*dispatch) (struct svc_req *, SVCXPRT *);
-     int protocol;
+bool_t Svc_register(xprt, prog, vers, dispatch, protocol)
+SVCXPRT *xprt;
+u_long prog;
+u_long vers;
+void (*dispatch) (struct svc_req *, SVCXPRT *);
+int protocol;
 {
   struct svc_callout *prev;
   struct svc_callout *s;
 
-  assert (xprt != NULL);
-  assert (dispatch != NULL);
+  assert(xprt != NULL);
+  assert(dispatch != NULL);
 
-  if ((s = Svc_find ((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) !=
-      NULL)
+  if ((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) != NULL)
     {
       if (s->sc_dispatch == dispatch)
 	goto pmap_it;		/* he is registering another xptr */
       return (FALSE);
     }
-  s = Mem_Alloc (sizeof (struct svc_callout));
+  s = Mem_Alloc(sizeof(struct svc_callout));
   if (s == NULL)
     {
       return (FALSE);
@@ -207,11 +197,11 @@ Svc_register (xprt, prog, vers, dispatch, protocol)
   s->sc_dispatch = dispatch;
   s->sc_next = svc_head;
   svc_head = s;
-pmap_it:
+ pmap_it:
   /* now register the information with the local binder service */
   if (protocol)
     {
-      return (pmap_set (prog, vers, protocol, xprt->xp_port));
+      return (pmap_set(prog, vers, protocol, xprt->xp_port));
     }
   return (TRUE);
 }
@@ -219,57 +209,51 @@ pmap_it:
 /*
  * Remove a service program from the callout list.
  */
-void
-Svc_unregister (prog, vers)
-     u_long prog;
-     u_long vers;
+void Svc_unregister(prog, vers)
+u_long prog;
+u_long vers;
 {
   struct svc_callout *prev;
   struct svc_callout *s;
 
-  if ((s = Svc_find ((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) ==
-      NULL)
+  if ((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) == NULL)
     return;
   if (prev == NULL)
     {
       svc_head = s->sc_next;
-    }
-  else
+    } else
     {
       prev->sc_next = s->sc_next;
     }
   s->sc_next = NULL;
-  Mem_Free (s);
+  Mem_Free(s);
   /* now unregister the information with the local binder service */
-  (void) pmap_unset (prog, vers);
+  (void)pmap_unset(prog, vers);
 }
-#endif /* PORTMAP */
+#endif				/* PORTMAP */
 
 /*
  * Search the callout list for a program number, return the callout
  * struct.
  */
-static struct svc_callout *
-Svc_find (prog, vers, prev, netid)
-     rpcprog_t prog;
-     rpcvers_t vers;
-     struct svc_callout **prev;
-     char *netid;
+static struct svc_callout *Svc_find(prog, vers, prev, netid)
+rpcprog_t prog;
+rpcvers_t vers;
+struct svc_callout **prev;
+char *netid;
 {
   struct svc_callout *s, *p;
 
-  assert (prev != NULL);
+  assert(prev != NULL);
 
   p = NULL;
   for (s = svc_head; s != NULL; s = s->sc_next)
     {
       if (((s->sc_prog == prog) && (s->sc_vers == vers)) &&
-	  ((netid == NULL) || (s->sc_netid == NULL) ||
-	   (strcmp (netid, s->sc_netid) == 0)))
+	  ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
 	break;
       p = s;
     }
   *prev = p;
   return (s);
 }
-

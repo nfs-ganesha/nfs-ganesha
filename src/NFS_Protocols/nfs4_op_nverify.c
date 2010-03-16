@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -125,7 +125,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-
 /**
  *
  * nfs4_op_nverify: Implemtation of NFS4_OP_NVERIFY
@@ -143,102 +142,97 @@
 #define arg_NVERIFY4 op->nfs_argop4_u.opnverify
 #define res_NVERIFY4 resp->nfs_resop4_u.opnverify
 
-int nfs4_op_nverify(  struct nfs_argop4 * op ,   
-                      compound_data_t   * data,
-                      struct nfs_resop4 * resp)
-{   
-  fsal_attrib_list_t     file_attr ;
-  cache_inode_status_t   cache_status ;
-  fattr4                 file_attr4 ;
-  int                    rc = 0 ;
+int nfs4_op_nverify(struct nfs_argop4 *op,
+		    compound_data_t * data, struct nfs_resop4 *resp)
+{
+  fsal_attrib_list_t file_attr;
+  cache_inode_status_t cache_status;
+  fattr4 file_attr4;
+  int rc = 0;
 
-  char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_nverify" ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_nverify";
 
-  resp->resop = NFS4_OP_NVERIFY ;
-  res_NVERIFY4.status =  NFS4_OK  ;
-  
+  resp->resop = NFS4_OP_NVERIFY;
+  res_NVERIFY4.status = NFS4_OK;
+
   /* If there is no FH */
-  if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
-      res_NVERIFY4.status = NFS4ERR_NOFILEHANDLE ;
-      return NFS4ERR_NOFILEHANDLE ;
+      res_NVERIFY4.status = NFS4ERR_NOFILEHANDLE;
+      return NFS4ERR_NOFILEHANDLE;
     }
-  
+
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->currentFH ) ) )
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
-      res_NVERIFY4.status = NFS4ERR_BADHANDLE ;
-      return NFS4ERR_BADHANDLE ;
+      res_NVERIFY4.status = NFS4ERR_BADHANDLE;
+      return NFS4ERR_BADHANDLE;
     }
-  
+
   /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
-      res_NVERIFY4.status = NFS4ERR_FHEXPIRED ;
-      return NFS4ERR_FHEXPIRED ;
+      res_NVERIFY4.status = NFS4ERR_FHEXPIRED;
+      return NFS4ERR_FHEXPIRED;
     }
-  
+
   /* operation is always permitted on pseudofs */
-  if( nfs4_Is_Fh_Pseudo( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
-      res_NVERIFY4.status = NFS4_OK ;
-      return res_NVERIFY4.status ;
+      res_NVERIFY4.status = NFS4_OK;
+      return res_NVERIFY4.status;
     }
 
   /* Get only attributes that are allowed to be read */
-  if( !nfs4_Fattr_Check_Access( &arg_NVERIFY4.obj_attributes, FATTR4_ATTR_READ ) )
+  if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4.obj_attributes, FATTR4_ATTR_READ))
     {
-      res_NVERIFY4.status = NFS4ERR_INVAL ;
-      return res_NVERIFY4.status ;
+      res_NVERIFY4.status = NFS4ERR_INVAL;
+      return res_NVERIFY4.status;
     }
-  
+
   /* Ask only for supported attributes */
-  if( !nfs4_Fattr_Supported(  &arg_NVERIFY4.obj_attributes ) )
+  if (!nfs4_Fattr_Supported(&arg_NVERIFY4.obj_attributes))
     {
-       res_NVERIFY4.status = NFS4ERR_ATTRNOTSUPP ;
-       return res_NVERIFY4.status ;
+      res_NVERIFY4.status = NFS4ERR_ATTRNOTSUPP;
+      return res_NVERIFY4.status;
     }
 
-  
   /* Get the cache inode attribute */
-  if( ( cache_status = cache_inode_getattr(  data->current_entry,
-                                            &file_attr, 
-                                            data->ht,
-                                            data->pclient,
-                                            data->pcontext,
-                                            &cache_status )) != CACHE_INODE_SUCCESS )
+  if ((cache_status = cache_inode_getattr(data->current_entry,
+					  &file_attr,
+					  data->ht,
+					  data->pclient,
+					  data->pcontext,
+					  &cache_status)) != CACHE_INODE_SUCCESS)
     {
-      res_NVERIFY4.status = NFS4ERR_INVAL ;
-      return res_NVERIFY4.status ;
-    }
- 
-  if( nfs4_FSALattr_To_Fattr( data->pexport,
-                              &file_attr,
-                              &file_attr4,
-                              data,
-                              &(data->currentFH),
-                              &(arg_NVERIFY4.obj_attributes.attrmask) ) != 0 )
-    {
-      res_NVERIFY4.status = NFS4ERR_SERVERFAULT ;
-      return res_NVERIFY4.status ;
+      res_NVERIFY4.status = NFS4ERR_INVAL;
+      return res_NVERIFY4.status;
     }
 
-   if( ( rc = nfs4_Fattr_cmp(  &(arg_NVERIFY4.obj_attributes) , &file_attr4 ) ) == FALSE )
-        res_NVERIFY4.status = NFS4_OK ;
-   else
-     {
-        if( rc == -1 )
-                res_NVERIFY4.status = NFS4ERR_INVAL ;
-        else
-                res_NVERIFY4.status = NFS4ERR_SAME ;
-      }
+  if (nfs4_FSALattr_To_Fattr(data->pexport,
+			     &file_attr,
+			     &file_attr4,
+			     data,
+			     &(data->currentFH),
+			     &(arg_NVERIFY4.obj_attributes.attrmask)) != 0)
+    {
+      res_NVERIFY4.status = NFS4ERR_SERVERFAULT;
+      return res_NVERIFY4.status;
+    }
 
- 
-   return res_NVERIFY4.status;
-} /* nfs4_op_nverify */
+  if ((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes), &file_attr4)) == FALSE)
+    res_NVERIFY4.status = NFS4_OK;
+    else
+    {
+      if (rc == -1)
+	res_NVERIFY4.status = NFS4ERR_INVAL;
+	else
+	res_NVERIFY4.status = NFS4ERR_SAME;
+    }
 
+  return res_NVERIFY4.status;
+}				/* nfs4_op_nverify */
 
-    
 /**
  * nfs4_op_nverify_Free: frees what was allocared to handle nfs4_op_nverify.
  * 
@@ -249,8 +243,8 @@ int nfs4_op_nverify(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_nverify_Free( NVERIFY4res * resp )
+void nfs4_op_nverify_Free(NVERIFY4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_nverify_Free */
+  return;
+}				/* nfs4_op_nverify_Free */

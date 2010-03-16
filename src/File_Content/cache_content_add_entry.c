@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -128,205 +128,202 @@
  * @return CACHE_CONTENT_SUCCESS is successful .
  *
  */
-cache_content_entry_t * cache_content_new_entry( cache_entry_t                 * pentry_inode,
-                                                 cache_content_spec_data_t     * pspecdata,
-                                                 cache_content_client_t        * pclient,
-                                                 cache_content_add_behaviour_t   how,
-						 fsal_op_context_t             * pcontext,
-                                                 cache_content_status_t        * pstatus ) 
+cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
+					       cache_content_spec_data_t * pspecdata,
+					       cache_content_client_t * pclient,
+					       cache_content_add_behaviour_t how,
+					       fsal_op_context_t * pcontext,
+					       cache_content_status_t * pstatus)
 {
-  cache_content_status_t    status ;
-  cache_content_entry_t   * pfc_pentry = NULL ;
-  int                       tmpfd ;
-  
+  cache_content_status_t status;
+  cache_content_entry_t *pfc_pentry = NULL;
+  int tmpfd;
+
   /* Set the return default to CACHE_CONTENT_SUCCESS */
-  *pstatus = CACHE_CONTENT_SUCCESS ;
-  
+  *pstatus = CACHE_CONTENT_SUCCESS;
+
   /* stat */
-  pclient->stat.func_stats.nb_call[CACHE_CONTENT_NEW_ENTRY] += 1 ;
+  pclient->stat.func_stats.nb_call[CACHE_CONTENT_NEW_ENTRY] += 1;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_content_entry_t" ) ;
+  BuddySetDebugLabel("cache_content_entry_t");
 #endif
- 
-  if( pentry_inode == NULL ) 
-    {
-	*pstatus = CACHE_CONTENT_INVALID_ARGUMENT ;
-        
-        /* stat */
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1 ;
 
-	return NULL ;
+  if (pentry_inode == NULL)
+    {
+      *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+      return NULL;
     }
 
-  if( how != RENEW_ENTRY ) 
-   {
-    /* Get the entry from the preallocated pool */
-    GET_PREALLOC( pfc_pentry, 
-                  pclient->pool_entry, 
-                  pclient->nb_prealloc, 
-                  cache_content_entry_t, 
-                  next_alloc ) ;
+  if (how != RENEW_ENTRY)
+    {
+      /* Get the entry from the preallocated pool */
+      GET_PREALLOC(pfc_pentry,
+		   pclient->pool_entry,
+		   pclient->nb_prealloc, cache_content_entry_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
-    /* For debugging memory leaks */
-    BuddySetDebugLabel( "N/A" ) ;
+      /* For debugging memory leaks */
+      BuddySetDebugLabel("N/A");
 #endif
-    
-  
-    if( pfc_pentry == NULL ) 
-       {      
-        *pstatus = CACHE_CONTENT_MALLOC_ERROR ;
-        
-        DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, 
-                           "cache_content_new_entry: can't allocate a new fc_entry from cache pool" ) ;
 
-        /* stat */
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1 ;
-      
-        return NULL ;
-       } 
-    }  /* if( how != RENEW_ENTRY ) */
-   else
+      if (pfc_pentry == NULL)
+	{
+	  *pstatus = CACHE_CONTENT_MALLOC_ERROR;
+
+	  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+			    "cache_content_new_entry: can't allocate a new fc_entry from cache pool");
+
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+	  return NULL;
+	}
+    } /* if( how != RENEW_ENTRY ) */
+    else
     {
-	/* When renewing a file content entry, pentry_content already exists in pentry_inode, just use it */
-	pfc_pentry = (cache_content_entry_t *)(pentry_inode->object.file.pentry_content) ;
+      /* When renewing a file content entry, pentry_content already exists in pentry_inode, just use it */
+      pfc_pentry = (cache_content_entry_t *) (pentry_inode->object.file.pentry_content);
     }
 
   /* Set the path to the local files */
-  if( ( status = cache_content_create_name( pfc_pentry->local_fs_entry.cache_path_index,
-                                            CACHE_CONTENT_INDEX_FILE,
-					    pcontext,
-                                            pentry_inode, 
-                                            pclient ) ) != CACHE_CONTENT_SUCCESS )
+  if ((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_index,
+					  CACHE_CONTENT_INDEX_FILE,
+					  pcontext,
+					  pentry_inode,
+					  pclient)) != CACHE_CONTENT_SUCCESS)
     {
-      RELEASE_PREALLOC( pfc_pentry, pclient->pool_entry, next_alloc ) ;
+      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
-      *pstatus = CACHE_CONTENT_ENTRY_EXISTS ;
-      
-      /* stat */
-      pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1 ;
-
-      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                         "cache_content_new_entry: entry's index pathname could not be created" ) ;
-
-      return NULL ;
-    }
-
-
-  if( ( status = cache_content_create_name( pfc_pentry->local_fs_entry.cache_path_data,
-                                            CACHE_CONTENT_DATA_FILE,
-					    pcontext,
-                                            pentry_inode, 
-                                            pclient ) ) != CACHE_CONTENT_SUCCESS )
-    {
-      RELEASE_PREALLOC( pfc_pentry, pclient->pool_entry, next_alloc ) ;
-
-      *pstatus = CACHE_CONTENT_ENTRY_EXISTS ;
+      *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
 
       /* stat */
-      pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1 ;
-      
-      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                         "cache_content_new_entry: entry's data  pathname could not be created" ) ;
-      
-      return NULL ;
+      pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			"cache_content_new_entry: entry's index pathname could not be created");
+
+      return NULL;
     }
 
-  DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "added file content cache entry: Data=%s Index=%s", 
-		     pfc_pentry->local_fs_entry.cache_path_data, pfc_pentry->local_fs_entry.cache_path_index ) ;
-  
+  if ((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_data,
+					  CACHE_CONTENT_DATA_FILE,
+					  pcontext,
+					  pentry_inode,
+					  pclient)) != CACHE_CONTENT_SUCCESS)
+    {
+      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
+
+      *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_retryable[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			"cache_content_new_entry: entry's data  pathname could not be created");
+
+      return NULL;
+    }
+
+  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+		    "added file content cache entry: Data=%s Index=%s",
+		    pfc_pentry->local_fs_entry.cache_path_data,
+		    pfc_pentry->local_fs_entry.cache_path_index);
+
   /* Set the sync state */
-  pfc_pentry->local_fs_entry.sync_state = JUST_CREATED ;
-  
+  pfc_pentry->local_fs_entry.sync_state = JUST_CREATED;
+
   /* Set the internal_md */
-  pfc_pentry->internal_md.read_time         = 0 ;
-  pfc_pentry->internal_md.mod_time          = 0 ;
-  pfc_pentry->internal_md.refresh_time      = 0 ;
-  pfc_pentry->internal_md.alloc_time        = time( NULL ) ;
-  pfc_pentry->internal_md.last_flush_time   = 0 ;
-  pfc_pentry->internal_md.last_refresh_time = 0 ;
-  pfc_pentry->internal_md.valid_state       = STATE_OK ;
- 
+  pfc_pentry->internal_md.read_time = 0;
+  pfc_pentry->internal_md.mod_time = 0;
+  pfc_pentry->internal_md.refresh_time = 0;
+  pfc_pentry->internal_md.alloc_time = time(NULL);
+  pfc_pentry->internal_md.last_flush_time = 0;
+  pfc_pentry->internal_md.last_refresh_time = 0;
+  pfc_pentry->internal_md.valid_state = STATE_OK;
+
   /* Set the local fd info */
-  pfc_pentry->local_fs_entry.opened_file.local_fd  = -1 ;
-  pfc_pentry->local_fs_entry.opened_file.last_op   =  0 ;
+  pfc_pentry->local_fs_entry.opened_file.local_fd = -1;
+  pfc_pentry->local_fs_entry.opened_file.last_op = 0;
 
   /* Dump the inode entry to the index file */
-  if( cache_inode_dump_content( pfc_pentry->local_fs_entry.cache_path_index, pentry_inode ) != CACHE_INODE_SUCCESS )
+  if (cache_inode_dump_content(pfc_pentry->local_fs_entry.cache_path_index, pentry_inode)
+      != CACHE_INODE_SUCCESS)
     {
 
-      RELEASE_PREALLOC( pfc_pentry, pclient->pool_entry, next_alloc ) ;
-      
-      *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR ;
+      RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
-       DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                          "cache_content_new_entry: entry could not be dumped in file" ) ;
-       
+      *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			"cache_content_new_entry: entry could not be dumped in file");
+
       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1 ;
-      
-      return NULL ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+      return NULL;
     }
 
   /* Create the data file if entry is not recoverd (in this case, it already exists) */
-  if( how == ADD_ENTRY || how == RENEW_ENTRY ) 
-   {
-     if( ( tmpfd = creat( pfc_pentry->local_fs_entry.cache_path_data, 0750 )  ) == -1 )
-       {
-         RELEASE_PREALLOC( pfc_pentry, pclient->pool_entry, next_alloc ) ;
-       
-         *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR ;
-   
-          DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                             "cache_content_new_entry: data cache file could not be created, errno=%d (%s)", 
-                             errno, strerror( errno ) ) ;
-          
-          /* stat */
-         pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1 ;
-         
-         return NULL ;
-       }
-     
-     /* Close the new fd */
-     close( tmpfd ) ;
+  if (how == ADD_ENTRY || how == RENEW_ENTRY)
+    {
+      if ((tmpfd = creat(pfc_pentry->local_fs_entry.cache_path_data, 0750)) == -1)
+	{
+	  RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
-   } /* if( how == ADD_ENTRY || how == RENEW_ENTRY ) */
-  
+	  *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+
+	  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			    "cache_content_new_entry: data cache file could not be created, errno=%d (%s)",
+			    errno, strerror(errno));
+
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
+
+	  return NULL;
+	}
+
+      /* Close the new fd */
+      close(tmpfd);
+
+    }
+
+  /* if( how == ADD_ENTRY || how == RENEW_ENTRY ) */
   /* Cache the data from FSAL if there are some */
-
   /* Add the entry to the related cache inode entry */
-  pentry_inode->object.file.pentry_content = pfc_pentry ;
-  pfc_pentry->pentry_inode = pentry_inode ;
+  pentry_inode->object.file.pentry_content = pfc_pentry;
+  pfc_pentry->pentry_inode = pentry_inode;
 
   /* Data cache is considered as more pertinent as data below in case of crash recovery */
-  if( how != RECOVER_ENTRY ) 
+  if (how != RECOVER_ENTRY)
     {
       /* Get the file content from the FSAL, populate the data cache */
-      if( pclient->flush_force_fsal == 0 )
-	cache_content_refresh( pfc_pentry, pclient, pcontext, DEFAULT_REFRESH, &status ) ;
-      else
-	cache_content_refresh( pfc_pentry, pclient, pcontext, FORCE_FROM_FSAL, &status ) ;
+      if (pclient->flush_force_fsal == 0)
+	cache_content_refresh(pfc_pentry, pclient, pcontext, DEFAULT_REFRESH, &status);
+	else
+	cache_content_refresh(pfc_pentry, pclient, pcontext, FORCE_FROM_FSAL, &status);
 
-      if( status != CACHE_CONTENT_SUCCESS )
-   	{
-     	  RELEASE_PREALLOC( pfc_pentry, pclient->pool_entry, next_alloc ) ;
+      if (status != CACHE_CONTENT_SUCCESS)
+	{
+	  RELEASE_PREALLOC(pfc_pentry, pclient->pool_entry, next_alloc);
 
-          *pstatus = status ;
+	  *pstatus = status;
 
-	  DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT,
-                             "cache_content_new_entry: data cache file could not read from FSAL, status=%u", status ) ;
-                             
+	  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			    "cache_content_new_entry: data cache file could not read from FSAL, status=%u",
+			    status);
 
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1 ;
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
 
-          return NULL ;
-      }
-    } /* if ( how != RECOVER_ENTRY ) */
-
-  return pfc_pentry ;
-} /* cache_content_new_entry */
-
-
+	  return NULL;
+	}
+    }
+  /* if ( how != RECOVER_ENTRY ) */
+  return pfc_pentry;
+}				/* cache_content_new_entry */

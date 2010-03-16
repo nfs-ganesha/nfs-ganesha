@@ -28,7 +28,7 @@
 #define	CHMOD_MASK	(S_IREAD | S_IWRITE)
 #define	CHMOD_NONE	(S_IREAD)
 #define	CHMOD_RW	CHMOD_MASK
-#endif /* DOSorWIN32 */
+#endif				/* DOSorWIN32 */
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN	1024
@@ -47,12 +47,12 @@ extern void error(char *, ...);
 #endif
 
 extern void starttime ARGS_((void));
-extern void endtime ARGS_((struct timeval *tv));
+extern void endtime ARGS_((struct timeval * tv));
 extern long getparm ARGS_((char *parm, long min, char *label));
 extern void dirtree ARGS_((int lev, int files, int dirs, char *fname,
-		    char *dname, int *totfiles, int *totdirs));
+			   char *dname, int *totfiles, int *totdirs));
 extern void rmdirtree ARGS_((int lev, int files, int dirs, char *fname,
-		      char *dname, int *totfiles, int *totdirs, int ignore));
+			     char *dname, int *totfiles, int *totdirs, int ignore));
 extern void testdir ARGS_((char *dir));
 extern int mtestdir ARGS_((char *dir));
 extern void complete ARGS_((void));
@@ -68,4 +68,4 @@ extern int unix_chdir(char *path);
 #define stdin  (&_iob[0])
 #define stdout (&_iob[2])
 #define stderr (&_iob[2])
-#endif /* DOSorWIN32 */
+#endif				/* DOSorWIN32 */

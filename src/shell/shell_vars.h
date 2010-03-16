@@ -23,33 +23,30 @@
 
 #define MAX_VAR_LEN   32
 
-
-
 /** indicates whether a name is authorized for a variable.
  *  A variable name must be in [a-zA-Z0-9._:]*
  */
-int is_authorized_varname(char * str);
+int is_authorized_varname(char *str);
 
 /** returns the value for a variable,
  *  NULL if the variable doesn't exist.
  */
-char * get_var_value(char * varname);
+char *get_var_value(char *varname);
 
 /** set the value for a variable,
  *  and create it if necessary.
  */
-int set_var_value(char * varname, char * var_value);
+int set_var_value(char *varname, char *var_value);
 
 /** free the resources used by a variable.
  */
-int free_var(char * varname);
+int free_var(char *varname);
 
 /**
  * print var list.
  * \param  is_dlen: indicates if it prints the length
  *         of the data they contain.
  */
-void print_varlist( FILE * output, int is_dlen );
-
+void print_varlist(FILE * output, int is_dlen);
 
 #endif

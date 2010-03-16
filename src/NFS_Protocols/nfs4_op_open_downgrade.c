@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -140,68 +140,66 @@
 #define arg_OPEN_DOWNGRADE4 op->nfs_argop4_u.opopen_downgrade
 #define res_OPEN_DOWNGRADE4 resp->nfs_resop4_u.opopen_downgrade
 
-int nfs4_op_open_downgrade(  struct nfs_argop4 * op ,   
-                            compound_data_t   * data,
-                            struct nfs_resop4 * resp)
+int nfs4_op_open_downgrade(struct nfs_argop4 *op,
+			   compound_data_t * data, struct nfs_resop4 *resp)
 {
-    char __attribute__(( __unused__ )) funcname[] = "nfs4_op_open_downgrade" ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
-    cache_inode_state_t      * pstate_found = NULL ;
-    cache_inode_status_t       cache_status ;
- 
-    resp->resop = NFS4_OP_OPEN_DOWNGRADE ;
-    res_OPEN_DOWNGRADE4.status =  NFS4_OK ;
-    
-    
-    /* If there is no FH */
-    if( nfs4_Is_Fh_Empty( &(data->currentFH  ) ) )
-      {
-        res_OPEN_DOWNGRADE4.status = NFS4ERR_NOFILEHANDLE ;
-        return res_OPEN_DOWNGRADE4.status ;
-      }
-  
-    /* If the filehandle is invalid */
-    if( nfs4_Is_Fh_Invalid( &(data->currentFH ) ) )
-      {
-        res_OPEN_DOWNGRADE4.status = NFS4ERR_BADHANDLE ;
-        return res_OPEN_DOWNGRADE4.status ;
-      }
-    
-    /* Tests if the Filehandle is expired (for volatile filehandle) */
-    if( nfs4_Is_Fh_Expired( &(data->currentFH) ) )
-      {
-        res_OPEN_DOWNGRADE4.status = NFS4ERR_FHEXPIRED ;
-        return res_OPEN_DOWNGRADE4.status ;
-      }
+  cache_inode_state_t *pstate_found = NULL;
+  cache_inode_status_t cache_status;
 
-   /* Commit is done only on a file */
-   if( data->current_filetype != REGULAR_FILE )
-     {
-        res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL ;
-        return res_OPEN_DOWNGRADE4.status;
-     }
+  resp->resop = NFS4_OP_OPEN_DOWNGRADE;
+  res_OPEN_DOWNGRADE4.status = NFS4_OK;
 
-   /* Get the state */
-   if( cache_inode_get_state( arg_OPEN_DOWNGRADE4.open_stateid.other,
-                              &pstate_found,
-                              data->pclient,
-                              &cache_status ) != CACHE_INODE_SUCCESS )
+  /* If there is no FH */
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
-       res_OPEN_DOWNGRADE4.status = nfs4_Errno( cache_status ) ;
-       return res_OPEN_DOWNGRADE4.status ;
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_NOFILEHANDLE;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  /* If the filehandle is invalid */
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+    {
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_BADHANDLE;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  /* Tests if the Filehandle is expired (for volatile filehandle) */
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+    {
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_FHEXPIRED;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  /* Commit is done only on a file */
+  if (data->current_filetype != REGULAR_FILE)
+    {
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  /* Get the state */
+  if (cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
+			    &pstate_found,
+			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
+      return res_OPEN_DOWNGRADE4.status;
     }
 
   /* Update the state */
-  pstate_found->seqid += 1 ;
+  pstate_found->seqid += 1;
 
   /* Successful exit */
-  res_OPEN_DOWNGRADE4.status = NFS4_OK ;
-  res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid = pstate_found->seqid ;
-  memcpy( res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other, pstate_found->stateid_other, 12 ) ;
- 
-  return res_OPEN_DOWNGRADE4.status;
-} /* nfs4_op_opendowngrade */
+  res_OPEN_DOWNGRADE4.status = NFS4_OK;
+  res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid =
+      pstate_found->seqid;
+  memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
+	 pstate_found->stateid_other, 12);
 
+  return res_OPEN_DOWNGRADE4.status;
+}				/* nfs4_op_opendowngrade */
 
 /**
  * nfs4_op_open_downgrade_Free: frees what was allocared to handle nfs4_op_open_downgrade.
@@ -213,9 +211,8 @@ int nfs4_op_open_downgrade(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_open_downgrade_Free( OPEN_DOWNGRADE4res * resp )
+void nfs4_op_open_downgrade_Free(OPEN_DOWNGRADE4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_open_downgrade_Free */
-
+  return;
+}				/* nfs4_op_open_downgrade_Free */

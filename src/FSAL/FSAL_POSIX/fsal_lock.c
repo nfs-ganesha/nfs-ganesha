@@ -40,102 +40,99 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-static int do_blocking_lock(fsal_file_t *obj_handle,
-			fsal_lockdesc_t  *ldesc)
+static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-	/*
-	 * Linux client have this grant hack of pooling for
-	 * availablity when we returned NLM4_BLOCKED. It just
-	 * poll with a large timeout. So depend on the hack for
-	 * now. Later we should really do the block lock support
-	 */
-	errno = EAGAIN;
-	return -1;
+  /*
+   * Linux client have this grant hack of pooling for
+   * availablity when we returned NLM4_BLOCKED. It just
+   * poll with a large timeout. So depend on the hack for
+   * now. Later we should really do the block lock support
+   */
+  errno = EAGAIN;
+  return -1;
 }
-
-
 
 /**
  * FSAL_lock:
  */
-fsal_status_t  FSAL_lock(fsal_file_t *obj_handle,
-			fsal_lockdesc_t *ldesc,
-			fsal_boolean_t blocking)
+fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
+			fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
-	int cmd;
-	int retval;
-	int fd =  FSAL_FILENO(obj_handle);
+  int cmd;
+  int retval;
+  int fd = FSAL_FILENO(obj_handle);
 
-	errno = 0;
-	/*
-	 * First try a non blocking lock request. If we fail due to
-	 * lock already being held, and if blocking is set for
-	 * a child and do a waiting lock
-	 */
-	retval = fcntl(fd, F_SETLK, &ldesc->flock);
-	if (retval && ((errno == EACCES) || (errno == EAGAIN))) {
-		if (blocking) {
-			/*
-			 * Conflicting lock present create a child and
-			 * do F_SETLKW if we can block. The lock is already
-			 * added to the blocking list.
-			 */
-			do_blocking_lock(obj_handle, ldesc);
-			/* We need to send NLM4_BLOCKED reply */
-			Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
-		}
-		Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
-
+  errno = 0;
+  /*
+   * First try a non blocking lock request. If we fail due to
+   * lock already being held, and if blocking is set for
+   * a child and do a waiting lock
+   */
+  retval = fcntl(fd, F_SETLK, &ldesc->flock);
+  if (retval && ((errno == EACCES) || (errno == EAGAIN)))
+    {
+      if (blocking)
+	{
+	  /*
+	   * Conflicting lock present create a child and
+	   * do F_SETLKW if we can block. The lock is already
+	   * added to the blocking list.
+	   */
+	  do_blocking_lock(obj_handle, ldesc);
+	  /* We need to send NLM4_BLOCKED reply */
+	  Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
 	}
-	/* granted lock. Now ask NSM to monitor the host */
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock);
-}
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
 
+    }
+  /* granted lock. Now ask NSM to monitor the host */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock);
+}
 
 /**
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t  FSAL_changelock(
-    fsal_lockdesc_t         * lock_descriptor,      /* IN / OUT */
-    fsal_lockparam_t        * lock_info             /* IN */
-){
-  
+fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
+			      fsal_lockparam_t * lock_info	/* IN */
+    )
+{
+
   /* sanity checks. */
-  if ( !lock_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_changelock);
-  
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_changelock);
-    
+  if (!lock_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_changelock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_changelock);
+
 }
 
 /**
  * FSAL_unlock:
  *
  */
-fsal_status_t FSAL_unlock(fsal_file_t *obj_handle, fsal_lockdesc_t *ldesc)
+fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-	int retval;
-	int fd =  FSAL_FILENO(obj_handle);
+  int retval;
+  int fd = FSAL_FILENO(obj_handle);
 
-	errno = 0;
-	ldesc->flock.l_type = F_UNLCK;
-	retval = fcntl(fd, F_SETLK, &ldesc->flock);
-	if (retval)
-		Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlock);
+  errno = 0;
+  ldesc->flock.l_type = F_UNLCK;
+  retval = fcntl(fd, F_SETLK, &ldesc->flock);
+  if (retval)
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_unlock);
 
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t FSAL_getlock(fsal_file_t *obj_handle, fsal_lockdesc_t *ldesc)
+fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
-	int retval;
-	int fd =  FSAL_FILENO(obj_handle);
+  int retval;
+  int fd = FSAL_FILENO(obj_handle);
 
-	errno = 0;
-	retval = fcntl(fd, F_GETLK, &ldesc->flock);
-	if (retval)
-		Return(posix2fsal_error(errno), errno, INDEX_FSAL_getlock);
+  errno = 0;
+  retval = fcntl(fd, F_GETLK, &ldesc->flock);
+  if (retval)
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_getlock);
 
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getlock);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getlock);
 }

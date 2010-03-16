@@ -41,38 +41,34 @@
 
 #include <gssrpc/rpc.h>
 
-bool_t	Svcauth_none_destroy(SVCAUTH *);
-bool_t  Svcauth_none_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t ) ;
+bool_t Svcauth_none_destroy(SVCAUTH *);
+bool_t Svcauth_none_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
 
 struct svc_auth_ops Svc_auth_none_ops = {
-	Svcauth_none_wrap,
-	Svcauth_none_wrap,
-	Svcauth_none_destroy
+  Svcauth_none_wrap,
+  Svcauth_none_wrap,
+  Svcauth_none_destroy
 };
 
 SVCAUTH Svc_auth_none = {
-	&Svc_auth_none_ops,
-	NULL,
+  &Svc_auth_none_ops,
+  NULL,
 };
 
-bool_t
-Svcauth_none_destroy(SVCAUTH *auth)
+bool_t Svcauth_none_destroy(SVCAUTH * auth)
 {
-	return (TRUE);
+  return (TRUE);
 }
 
-bool_t
-Svcauth_none_wrap(SVCAUTH *auth, XDR *xdrs, xdrproc_t xdr_func,
-		  caddr_t xdr_ptr)
+bool_t Svcauth_none_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
-	return ((*xdr_func)(xdrs, xdr_ptr));
+  return ((*xdr_func) (xdrs, xdr_ptr));
 }
 
 enum auth_stat
-Gssrpc__svcauth_none(struct svc_req *rqst, struct rpc_msg *msg,
-		     bool_t *no_dispatch)
+Gssrpc__svcauth_none(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispatch)
 {
-	rqst->rq_xprt->xp_auth = &Svc_auth_none;
-	
-	return (AUTH_OK);
+  rqst->rq_xprt->xp_auth = &Svc_auth_none;
+
+  return (AUTH_OK);
 }
