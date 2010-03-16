@@ -36,23 +36,23 @@
 #include "list.h"
 
 struct nlm_lock {
-	char *caller_name;
-	netobj fh;
-	netobj oh;
-	int32_t svid;
-	uint64_t offset;
-	uint64_t len;
-	int state;
-	int exclusive;
-	struct glist_head lock_list;
+  char *caller_name;
+  netobj fh;
+  netobj oh;
+  int32_t svid;
+  uint64_t offset;
+  uint64_t len;
+  int state;
+  int exclusive;
+  struct glist_head lock_list;
 };
 
 typedef struct nlm_lock nlm_lock_t;
 
 extern fsal_lockdesc_t *nlm_lock_to_fsal_lockdesc(struct nlm4_lock *nlm_lock,
-						bool_t exclusive);
+						  bool_t exclusive);
 extern nlm_lock_t *nlm_add_to_locklist(struct nlm4_lock *nlm_lock, int exclusive);
-extern void nlm_remove_from_locklist(nlm_lock_t *nlmb);
+extern void nlm_remove_from_locklist(nlm_lock_t * nlmb);
 extern void nlm_init_locklist(void);
 extern nlm_lock_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
-				int exclusive, int state);
+				       int exclusive, int state);

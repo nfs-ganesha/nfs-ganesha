@@ -8,7 +8,6 @@
 #include "posixdb_internal.h"
 #include <string.h>
 
-
 /** 
  * @brief Lock the line of the Handle table with inode & devid defined in p_info
  * 
@@ -20,31 +19,32 @@
  * @return ERR_FSAL_POSIXDB_NOERR if no error,
  *         another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate( fsal_posixdb_conn * p_conn,     /* IN */
-                                                        fsal_posixdb_fileinfo_t * p_info /* IN */  )
+fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_conn,	/* IN */
+						       fsal_posixdb_fileinfo_t *
+						       p_info /* IN */ )
 {
-    result_handle_t res;
-    fsal_posixdb_status_t st;
-    char           query[2048];
+  result_handle_t res;
+  fsal_posixdb_status_t st;
+  char query[2048];
 
-    BeginTransaction( p_conn );
+  BeginTransaction(p_conn);
 
-    snprintf( query, 2048, "SELECT handleid, handlets, nlink, ctime, ftype "
-              "FROM Handle WHERE deviceid=%llu AND inode=%llu "
-              "FOR UPDATE", p_info->devid, p_info->inode );
+  snprintf(query, 2048, "SELECT handleid, handlets, nlink, ctime, ftype "
+	   "FROM Handle WHERE deviceid=%llu AND inode=%llu "
+	   "FOR UPDATE", p_info->devid, p_info->inode);
 
-    st = db_exec_sql( p_conn, query, &res );
-    if ( FSAL_POSIXDB_IS_ERROR( st ) )
+  st = db_exec_sql(p_conn, query, &res);
+  if (FSAL_POSIXDB_IS_ERROR(st))
     {
-        RollbackTransaction( p_conn );
-        return st;
+      RollbackTransaction(p_conn);
+      return st;
     }
 
-    mysql_free_result( res );
+  mysql_free_result(res);
 
-    /* Do not end the transaction, because it will be closed by the next call to a posixdb function */
+  /* Do not end the transaction, because it will be closed by the next call to a posixdb function */
 
-    ReturnCode( ERR_FSAL_POSIXDB_NOERR, 0 );
+  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
 /** 
@@ -56,9 +56,9 @@ fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate( fsal_posixdb_conn * p_co
  * @return ERR_FSAL_POSIXDB_NOERR if no error,
  *         another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_cancelHandleLock( fsal_posixdb_conn * p_conn /* IN */  )
+fsal_posixdb_status_t fsal_posixdb_cancelHandleLock(fsal_posixdb_conn * p_conn /* IN */ )
 {
-    RollbackTransaction( p_conn );
+  RollbackTransaction(p_conn);
 
-    ReturnCode( ERR_FSAL_POSIXDB_NOERR, 0 );
+  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }

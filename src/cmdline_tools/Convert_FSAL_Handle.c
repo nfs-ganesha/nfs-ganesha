@@ -101,73 +101,70 @@
 
 #define CONFIG_FILE "/var/hpss/etc/hpss.ganesha.nfsd.conf"
 
-time_t          ServerBootTime ;
+time_t ServerBootTime;
 
-
-int main( int argc, char * argv[] ) 
+int main(int argc, char *argv[])
 {
- int                       c ;
- char                      exec_name[MAXPATHLEN] ;
- char                    * tempo_exec_name       = NULL ;
- 
+  int c;
+  char exec_name[MAXPATHLEN];
+  char *tempo_exec_name = NULL;
+
 #ifdef _USE_HPSS
- char                      buffer[CMD_BUFFER_SIZE] ; 
- fsal_handle_t             fsal_handle;
- char                      str[2*CMD_BUFFER_SIZE] ;
- uint64_t                 objid ;
- ns_ObjHandle_t           hpss_hdl;
- hpss_Attrs_t             hpss_attr;
- char                   * tmp_str_uuid ;
+  char buffer[CMD_BUFFER_SIZE];
+  fsal_handle_t fsal_handle;
+  char str[2 * CMD_BUFFER_SIZE];
+  uint64_t objid;
+  ns_ObjHandle_t hpss_hdl;
+  hpss_Attrs_t hpss_attr;
+  char *tmp_str_uuid;
 #endif
- char                     options[] = "h@" ;
- char                     usage[] = "%s [-h] <FSAL_Handle>\n"
-                                    "   -h               : prints this help\n";
+  char options[] = "h@";
+  char usage[] = "%s [-h] <FSAL_Handle>\n" "   -h               : prints this help\n";
 
- ServerBootTime = time( NULL ) ;
+  ServerBootTime = time(NULL);
 
- /* What is the executable file's name */
- if( ( tempo_exec_name = strrchr( argv[0], '/' ) ) != NULL )
-   strcpy( (char *)exec_name, tempo_exec_name + 1 ) ;
+  /* What is the executable file's name */
+  if ((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
+    strcpy((char *)exec_name, tempo_exec_name + 1);
 
- /* now parsing options with getopt */
- while( ( c = getopt( argc, argv, options ) ) != EOF )
+  /* now parsing options with getopt */
+  while ((c = getopt(argc, argv, options)) != EOF)
     {
-     switch( c ) 
-      {
+      switch (c)
+	{
 	case '@':
-	  printf( "%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__ ) ;
-          exit( 0 ) ;
-	  break ;
-  
+	  printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
+	  exit(0);
+	  break;
+
 	case 'h':
-	   printf( usage, exec_name ) ;
-	   exit( 0 ) ;
-	   break ;
-	  
-    case '?':
-       printf("Unknown option: %c\n", optopt );
-       printf( usage, exec_name ) ;
-       exit(1);
-      }		
+	  printf(usage, exec_name);
+	  exit(0);
+	  break;
+
+	case '?':
+	  printf("Unknown option: %c\n", optopt);
+	  printf(usage, exec_name);
+	  exit(1);
+	}
     }
 
-  if ( optind != argc - 1 )
-  {
-        printf("Missing argument: <FSAL_Handle>\n");
-        printf( usage, exec_name ) ;
-        exit(1);
-  }
-
+  if (optind != argc - 1)
+    {
+      printf("Missing argument: <FSAL_Handle>\n");
+      printf(usage, exec_name);
+      exit(1);
+    }
 #ifdef _USE_HPSS
-  sscanHandle(&fsal_handle,argv[optind]);
-   
-  snprintmem( (caddr_t)str, 2*CMD_BUFFER_SIZE, (caddr_t)&fsal_handle.ns_handle, sizeof( ns_ObjHandle_t) )  ;
-  printf( "NS Handle = %s\n", str ) ;
+  sscanHandle(&fsal_handle, argv[optind]);
 
-  objid = hpss_GetObjId( &(fsal_handle.ns_handle) ) ;
-  printf( "FileId = %llu\n", objid ) ;
-#endif 
-  
+  snprintmem((caddr_t) str, 2 * CMD_BUFFER_SIZE, (caddr_t) & fsal_handle.ns_handle,
+	     sizeof(ns_ObjHandle_t));
+  printf("NS Handle = %s\n", str);
 
- exit( 0 ) ;
+  objid = hpss_GetObjId(&(fsal_handle.ns_handle));
+  printf("FileId = %llu\n", objid);
+#endif
+
+  exit(0);
 }

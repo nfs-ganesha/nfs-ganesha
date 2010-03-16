@@ -21,7 +21,6 @@
 
 #include <hpss_errno.h>
 
-
 /**
  * FSAL_access :
  * Tests whether the user or entity identified by the p_context structure
@@ -56,81 +55,68 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(
-    fsal_handle_t              * object_handle,      /* IN */
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessflags_t access_type,	/* IN */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
 
   int hpss_test_mode = 0;
   int rc;
   fsal_status_t st;
-          
+
   /* sanity checks.
    * note : object_attributes is optionnal in FSAL_getattrs.
    */
   if (!object_handle || !p_context)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_access);
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
+
   /* converts fsal access type to hpss access type */
-  
+
   hpss_test_mode = fsal2hpss_testperm(access_type);
-  
-  
+
   /* call to HPSS access */
-  
+
   TakeTokenFSCall();
-  
-  rc = hpss_AccessHandle(
-                  &(object_handle->ns_handle), /* IN - parent object handle */
-                  NULL,                /* IN - path of file to check access rights */
-                  hpss_test_mode,      /* IN - Type of access to be checked */
-                  &p_context->credential.hpss_usercred /* IN - user credentials */
-        #if HPSS_MAJOR_VERSION < 7
-                , NULL                 /* OUT - authorization ticket */
-        #endif
- );
-  
+
+  rc = hpss_AccessHandle(&(object_handle->ns_handle),	/* IN - parent object handle */
+			 NULL,	/* IN - path of file to check access rights */
+			 hpss_test_mode,	/* IN - Type of access to be checked */
+			 &p_context->credential.hpss_usercred	/* IN - user credentials */
+#if HPSS_MAJOR_VERSION < 7
+			 , NULL	/* OUT - authorization ticket */
+#endif
+      );
+
   ReleaseTokenFSCall();
-  
-  /* convert returned code */  
+
+  /* convert returned code */
   /* The HPSS_ENOENT error actually means that handle is STALE */
-  if ( rc == HPSS_ENOENT )
-    Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_access);
+  if (rc == HPSS_ENOENT)
+    Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_access);
   else if (rc)
-    Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_access);
-  
-  
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_access);
+
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
-  if ( object_attributes ){
-    fsal_status_t status;
-    
-    status = FSAL_getattrs( object_handle, p_context , object_attributes );
-    
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+  if (object_attributes)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+      fsal_status_t status;
+
+      status = FSAL_getattrs(object_handle, p_context, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-    
-  }
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_access );
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_access);
+
 }
-
-
-
-
-
-
-
-
-
-

@@ -115,9 +115,8 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-typedef struct pnfs_parameter__
-{
-  bool_t        use_pnfs ;
-} pnfs_parameter_t ;
+typedef struct pnfs_parameter__ {
+  bool_t use_pnfs;
+} pnfs_parameter_t;
 
-#endif /* _PNFS_H */
+#endif				/* _PNFS_H */

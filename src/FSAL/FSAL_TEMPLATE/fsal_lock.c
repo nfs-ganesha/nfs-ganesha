@@ -18,8 +18,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-
-
 /**
  * FSAL_lock:
  * Lock an entry in the filesystem.
@@ -33,51 +31,49 @@
  * \param lock_descriptor (output):
  *        The returned lock descriptor
  */
-fsal_status_t  FSAL_lock(
-    fsal_handle_t           * objecthandle,           /* IN */
-    fsal_op_context_t       * p_context,              /* IN */
-    fsal_lockparam_t        * lock_info,            /* IN */
-    fsal_lockdesc_t         * lock_descriptor         /* OUT */
-){
+fsal_status_t FSAL_lock(fsal_handle_t * objecthandle,	/* IN */
+			fsal_op_context_t * p_context,	/* IN */
+			fsal_lockparam_t * lock_info,	/* IN */
+			fsal_lockdesc_t * lock_descriptor	/* OUT */
+    )
+{
 
   /* sanity checks. */
-  if ( !objecthandle || !p_context || !lock_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lock);
-  
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_lock);
-}
+  if (!objecthandle || !p_context || !lock_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock);
 
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
+}
 
 /**
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t  FSAL_changelock(
-    fsal_lockdesc_t         * lock_descriptor,         /* IN / OUT */
-    fsal_lockparam_t        * lock_info                /* IN */
-){
-  
-  /* sanity checks. */
-  if ( !lock_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_changelock);
-  
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_changelock);
-    
-}
+fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
+			      fsal_lockparam_t * lock_info	/* IN */
+    )
+{
 
+  /* sanity checks. */
+  if (!lock_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_changelock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_changelock);
+
+}
 
 /**
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t  FSAL_unlock(
-    fsal_lockdesc_t * lock_descriptor         /* IN/OUT */
-){
-  
+fsal_status_t FSAL_unlock(fsal_lockdesc_t * lock_descriptor	/* IN/OUT */
+    )
+{
+
   /* sanity checks. */
-  if ( !lock_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_unlock);
-  
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_unlock);
-    
+  if (!lock_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
+
 }

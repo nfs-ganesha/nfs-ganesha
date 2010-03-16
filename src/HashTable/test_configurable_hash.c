@@ -127,7 +127,6 @@
 #include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -138,7 +137,7 @@
 
 #define LENBUF 256
 #define STRSIZE 10
-#define MAXTEST 10000  /* Plus grand que MAXDESTROY !! */
+#define MAXTEST 10000		/* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 5
 #define MAXGET 3
 #define NB_PREALLOC 10000
@@ -152,208 +151,209 @@
 #define BuddyErrno errno
 #else
 #include "BuddyMalloc.h"
-#define Mem_Alloc( a ) BuddyMalloc( a ) 
-#define Mem_Free( a ) BuddyFree( a ) 
+#define Mem_Alloc( a ) BuddyMalloc( a )
+#define Mem_Free( a ) BuddyFree( a )
 #endif
 
-int compare_string_buffer(  hash_buffer_t * buff1, hash_buffer_t * buff2 ) 
+int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   /* Test if one of teh entries are NULL */
-  if( buff1->pdata == NULL )
-    return ( buff2->pdata == NULL ) ? 0 : 1 ;
-  else
+  if (buff1->pdata == NULL)
+    return (buff2->pdata == NULL) ? 0 : 1;
+    else
     {
-      if( buff2->pdata == NULL )
-        return -1 ; /* left member is the greater one */
-      else
-        return strcmp( buff1->pdata, buff2->pdata ) ;
+      if (buff2->pdata == NULL)
+	return -1;		/* left member is the greater one */
+	else
+	return strcmp(buff1->pdata, buff2->pdata);
     }
   /* This line should never be reached */
 }
 
-int display_buff( hash_buffer_t * pbuff, char * str )
+int display_buff(hash_buffer_t * pbuff, char *str)
 {
-  return snprintf( str, HASHTABLE_DISPLAY_STRLEN, "%s", pbuff->pdata ) ;
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "%s", pbuff->pdata);
 }
 
-unsigned long simple_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
-unsigned long double_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
-unsigned long rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) ;
+unsigned long simple_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+unsigned long double_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+unsigned long rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 
-int do_get( hash_table_t * ht, int key, int * pval )
+int do_get(hash_table_t * ht, int key, int *pval)
 {
-  char tmpkey[STRSIZE] ;
-  int rc = 0 ;
-  hash_buffer_t buffkey ;
-  hash_buffer_t buffval ;
-  
-  sprintf( tmpkey, "%d", key ) ;
-  buffkey.pdata = tmpkey ;
-  buffkey.len = strlen( tmpkey ) ;
- 
-  if( ( rc = HashTable_Get( ht, &buffkey, &buffval ) ) == HASHTABLE_SUCCESS )
-    *pval = atoi ( buffval.pdata ) ;
-  else
-    *pval = -1 ;
-  
+  char tmpkey[STRSIZE];
+  int rc = 0;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
 
-  return rc ;
-} /* get */
+  sprintf(tmpkey, "%d", key);
+  buffkey.pdata = tmpkey;
+  buffkey.len = strlen(tmpkey);
 
-int do_set( hash_table_t * ht, int key, int val )
+  if ((rc = HashTable_Get(ht, &buffkey, &buffval)) == HASHTABLE_SUCCESS)
+    *pval = atoi(buffval.pdata);
+    else
+    *pval = -1;
+
+  return rc;
+}				/* get */
+
+int do_set(hash_table_t * ht, int key, int val)
 {
-  static char * tmpkey = NULL ;
-  static char * tmpval = NULL ;
-  
-  hash_buffer_t buffkey ;
-  hash_buffer_t buffval ;
-  
-  if( ( ( tmpkey = (char *)Mem_Alloc( STRSIZE ) ) == NULL ) || ( ( tmpval = (char *)Mem_Alloc( STRSIZE ) ) == NULL ) )
-    return -1 ;
- 
-  sprintf( tmpkey, "%d", key ) ;
-  buffkey.pdata = tmpkey ;
-  buffkey.len = strlen( tmpkey ) ;
-  
-  sprintf( tmpval, "%d", val ) ;
-  buffval.pdata = tmpval ;
-  buffval.len = strlen( tmpval ) ;
+  static char *tmpkey = NULL;
+  static char *tmpval = NULL;
 
-  return HashTable_Set( ht, &buffkey, &buffval ) ;
-} /* set */
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
 
-int do_new( hash_table_t * ht, int key, int val )
+  if (((tmpkey = (char *)Mem_Alloc(STRSIZE)) == NULL)
+      || ((tmpval = (char *)Mem_Alloc(STRSIZE)) == NULL))
+    return -1;
+
+  sprintf(tmpkey, "%d", key);
+  buffkey.pdata = tmpkey;
+  buffkey.len = strlen(tmpkey);
+
+  sprintf(tmpval, "%d", val);
+  buffval.pdata = tmpval;
+  buffval.len = strlen(tmpval);
+
+  return HashTable_Set(ht, &buffkey, &buffval);
+}				/* set */
+
+int do_new(hash_table_t * ht, int key, int val)
 {
-  char tmpkey[STRSIZE] ;
-  char tmpval[STRSIZE] ;
-  
-  hash_buffer_t buffkey ;
-  hash_buffer_t buffval ;
-  
-  sprintf( tmpkey, "%d", key ) ;
-  buffkey.pdata = tmpkey ;
-  buffkey.len = strlen( tmpkey ) ;
-  
-  sprintf( tmpval, "%d", val ) ;
-  buffval.pdata = tmpval ;
-  buffval.len = strlen( tmpval ) ;
+  char tmpkey[STRSIZE];
+  char tmpval[STRSIZE];
 
-  return HashTable_Test_And_Set( ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) ;
-} /* new */
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
 
-int do_del( hash_table_t * ht, int key )
+  sprintf(tmpkey, "%d", key);
+  buffkey.pdata = tmpkey;
+  buffkey.len = strlen(tmpkey);
+
+  sprintf(tmpval, "%d", val);
+  buffval.pdata = tmpval;
+  buffval.len = strlen(tmpval);
+
+  return HashTable_Test_And_Set(ht, &buffkey, &buffval,
+				HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+}				/* new */
+
+int do_del(hash_table_t * ht, int key)
 {
-  char tmpkey[STRSIZE] ;
-  
-  hash_buffer_t buffkey ;
-  
-  sprintf( tmpkey, "%d", key ) ;
-  buffkey.pdata = tmpkey ;
-  buffkey.len = strlen( tmpkey ) ;
-  
-  return HashTable_Del( ht, &buffkey, NULL, NULL ) ;
-} /* set */
+  char tmpkey[STRSIZE];
 
-int do_test( hash_table_t * ht, int key )
+  hash_buffer_t buffkey;
+
+  sprintf(tmpkey, "%d", key);
+  buffkey.pdata = tmpkey;
+  buffkey.len = strlen(tmpkey);
+
+  return HashTable_Del(ht, &buffkey, NULL, NULL);
+}				/* set */
+
+int do_test(hash_table_t * ht, int key)
 {
-   char tmpkey[STRSIZE] ;
-  
-   hash_buffer_t buffkey ;
-   hash_buffer_t buffval ;
-   
-   sprintf( tmpkey, "%d", key ) ;
-   buffkey.pdata = tmpkey ;
-   buffkey.len = strlen( tmpkey ) ;
+  char tmpkey[STRSIZE];
 
-   return HashTable_Test_And_Set( ht, &buffkey, &buffval, HASHTABLE_SET_HOW_TEST_ONLY ) ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+
+  sprintf(tmpkey, "%d", key);
+  buffkey.pdata = tmpkey;
+  buffkey.len = strlen(tmpkey);
+
+  return HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_TEST_ONLY);
 }
 
-
-int main( int argc, char * argv[] )
+int main(int argc, char *argv[])
 {
-  hash_table_t * ht = NULL  ;
-  hash_parameter_t hparam ;
-  hash_buffer_t buffkey ;
-  hash_buffer_t buffval ;
-  struct Temps debut ;
-  struct Temps fin ;
-  int i = 0 ;
-  char * astrkey = NULL ;
-  char * astrval = NULL ;
-  int hrc = 0 ;
-  int rc = 0 ;
+  hash_table_t *ht = NULL;
+  hash_parameter_t hparam;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  struct Temps debut;
+  struct Temps fin;
+  int i = 0;
+  char *astrkey = NULL;
+  char *astrval = NULL;
+  int hrc = 0;
+  int rc = 0;
   char *p;
   char buf[LENBUF];
-  int ok = 1 ;
-  int key  ;
-  int val ;
-  int readval ;
-  int expected_rc ;
-  char c ;
+  int ok = 1;
+  int key;
+  int val;
+  int readval;
+  int expected_rc;
+  char c;
 
-  BuddyInit( NULL ) ;
-  
-  if( ( astrkey = (char *)Mem_Alloc( MAXTEST * STRSIZE ) ) == NULL )
+  BuddyInit(NULL);
+
+  if ((astrkey = (char *)Mem_Alloc(MAXTEST * STRSIZE)) == NULL)
     {
-      printf( "Test ECHOUE : Pb de Mem_Alloc : keys, BuddyErrno = %d\n", BuddyErrno ) ;
-    }
-  
-   if( ( astrval = (char *)Mem_Alloc( MAXTEST * STRSIZE ) ) == NULL )
-    {
-      printf( "Test ECHOUE : Pb de Mem_Alloc : values, BuddyErrno = %d\n", BuddyErrno ) ;
+      printf("Test ECHOUE : Pb de Mem_Alloc : keys, BuddyErrno = %d\n", BuddyErrno);
     }
 
-  hparam.index_size = PRIME ;
-  hparam.alphabet_length = STRSIZE ;
-  hparam.nb_node_prealloc = NB_PREALLOC ;
-  hparam.hash_func_key = simple_hash_func ;
-  hparam.hash_func_rbt = rbt_hash_func ;
-  hparam.compare_key = compare_string_buffer ;
-  hparam.key_to_str = display_buff ;
-  hparam.val_to_str = display_buff ;
+  if ((astrval = (char *)Mem_Alloc(MAXTEST * STRSIZE)) == NULL)
+    {
+      printf("Test ECHOUE : Pb de Mem_Alloc : values, BuddyErrno = %d\n", BuddyErrno);
+    }
+
+  hparam.index_size = PRIME;
+  hparam.alphabet_length = STRSIZE;
+  hparam.nb_node_prealloc = NB_PREALLOC;
+  hparam.hash_func_key = simple_hash_func;
+  hparam.hash_func_rbt = rbt_hash_func;
+  hparam.compare_key = compare_string_buffer;
+  hparam.key_to_str = display_buff;
+  hparam.val_to_str = display_buff;
 
   /* Init de la table */
-  if( ( ht = HashTable_Init( hparam ) ) == NULL )
+  if ((ht = HashTable_Init(hparam)) == NULL)
     {
-      printf( "Test ECHOUE : Mauvaise init\n" ) ;
-      exit( 1 ) ;
-    }  
-
-  for( i = 0 ; i < MAXTEST ; i++ )
-    {
-      sprintf( (astrkey + STRSIZE*i ), "%d", i ) ;
-      sprintf( (astrval + STRSIZE*i ), "%d", i*10 ) ;
+      printf("Test ECHOUE : Mauvaise init\n");
+      exit(1);
     }
 
-  MesureTemps(&debut, NULL); 
-  for( i = 0 ; i < MAXTEST ; i++ )
+  for (i = 0; i < MAXTEST; i++)
     {
-      buffkey.len  = strlen( astrkey + STRSIZE*i ) ;
-      buffkey.pdata = astrkey + STRSIZE*i ;
-      
-      buffval.len   = strlen( astrval + STRSIZE*i ) ;
-      buffval.pdata = astrval + STRSIZE*i ;
+      sprintf((astrkey + STRSIZE * i), "%d", i);
+      sprintf((astrval + STRSIZE * i), "%d", i * 10);
+    }
 
-      hrc = HashTable_Set( ht, &buffkey, &buffval ) ;
-      if( hrc != HASHTABLE_SUCCESS )
-        {
-          printf( "Test ECHOUE : Insertion d'une nouvelle entree impossible : %d, %d\n", i, hrc ) ;
-          exit( 1 ) ;
-        }
-      
+  MesureTemps(&debut, NULL);
+  for (i = 0; i < MAXTEST; i++)
+    {
+      buffkey.len = strlen(astrkey + STRSIZE * i);
+      buffkey.pdata = astrkey + STRSIZE * i;
+
+      buffval.len = strlen(astrval + STRSIZE * i);
+      buffval.pdata = astrval + STRSIZE * i;
+
+      hrc = HashTable_Set(ht, &buffkey, &buffval);
+      if (hrc != HASHTABLE_SUCCESS)
+	{
+	  printf("Test ECHOUE : Insertion d'une nouvelle entree impossible : %d, %d\n", i,
+		 hrc);
+	  exit(1);
+	}
 #ifdef _FULL_DEBUG
-      printf( "Ajout de (%s,%s) , sortie = %d\n", astrkey + STRSIZE*i, astrval + STRSIZE*i, rc ) ;
+      printf("Ajout de (%s,%s) , sortie = %d\n", astrkey + STRSIZE * i,
+	     astrval + STRSIZE * i, rc);
 #endif
     }
   MesureTemps(&fin, &debut);
-  printf( "Ajout de %d entrees en %s secondes\n", MAXTEST, ConvertiTempsChaine(fin, NULL) ) ;
-  printf( "====================================================\n" ) ;
-  
+  printf("Ajout de %d entrees en %s secondes\n", MAXTEST, ConvertiTempsChaine(fin, NULL));
+  printf("====================================================\n");
+
 #ifdef _FULL_DEBUG
-  HashTable_Print( ht ) ;
-  printf( "====================================================\n" ) ;
+  HashTable_Print(ht);
+  printf("====================================================\n");
 #endif
-  
+
   /*
    *
    * La syntaxe d'un test est 
@@ -371,135 +371,137 @@ int main( int argc, char * argv[] )
    *
    */
 
-  printf( "============ Debut de l'interactif =================\n" ) ;
-  
-  while( ok ) 
+  printf("============ Debut de l'interactif =================\n");
+
+  while (ok)
     {
       /* Code interactif, pompe sur le test rbt de Jacques */
       fputs("> ", stdout);
-       if( ( p = fgets(buf, LENBUF, stdin) ) == NULL ) 
-         {
-           printf("fin des commandes\n");
-           ok = 0;
-           continue;
-         }
-       if( ( p = strchr(buf, '\n') ) != NULL )
-         *p = '\0' ;
+      if ((p = fgets(buf, LENBUF, stdin)) == NULL)
+	{
+	  printf("fin des commandes\n");
+	  ok = 0;
+	  continue;
+	}
+      if ((p = strchr(buf, '\n')) != NULL)
+	*p = '\0';
 
-       rc = sscanf(buf, "%c %d %d %d", &c, &key, &val, &expected_rc) ;
-       if( c == '#' )
-         {
-           /* # indique un commentaire */
-           continue ;
-         }
-       else if( c == ' ' || c == '\t' || rc == -1 )
-         {
-           /* Cas d'une ligne vide */
-           if( rc > 1 )
-             printf( "Erreur de syntaxe : mettre un diese au debut d'un commentaire\n" ) ;
-           
-           continue ;
-         }
-       else
-         {
-           if( rc != 4 )
-             {
-               printf( "Erreur de syntaxe : sscanf retourne %d au lieu de 4\n", rc ) ;
-               continue ;
-             }
-           printf( "---> %c %d %d %d\n", c, key, val, expected_rc ) ;
-         }
-       
-       switch( c ) 
-         {
-         case 's':
-           /* set overwrite */
-           printf( "set  %d %d --> %d ?\n", key, val, expected_rc ) ;
+      rc = sscanf(buf, "%c %d %d %d", &c, &key, &val, &expected_rc);
+      if (c == '#')
+	{
+	  /* # indique un commentaire */
+	  continue;
+      } else if (c == ' ' || c == '\t' || rc == -1)
+	{
+	  /* Cas d'une ligne vide */
+	  if (rc > 1)
+	    printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
-           hrc = do_set( ht, key, val ) ;
+	  continue;
+	} else
+	{
+	  if (rc != 4)
+	    {
+	      printf("Erreur de syntaxe : sscanf retourne %d au lieu de 4\n", rc);
+	      continue;
+	    }
+	  printf("---> %c %d %d %d\n", c, key, val, expected_rc);
+	}
 
-           if( hrc != expected_rc ) 
-             printf( ">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc, expected_rc ) ;
-           else
-             printf( ">>>> OK set  %d %d\n", key, val ) ;
-           break ;
-           
-         case 't':
-           /* test */
-           printf( "test %d %d --> %d ?\n", key, val, expected_rc ) ;
-           
-           hrc = do_test( ht, key ) ;
+      switch (c)
+	{
+	case 's':
+	  /* set overwrite */
+	  printf("set  %d %d --> %d ?\n", key, val, expected_rc);
 
-           if( hrc != expected_rc ) 
-             printf( ">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc ) ;
-           else
-             printf( ">>>> OK test %d \n", key ) ;
-           break ;
-           
-         case 'n':
-           /* set no overwrite */
-           printf( "new  %d %d --> %d ?\n", key, val, expected_rc ) ;
+	  hrc = do_set(ht, key, val);
 
-           hrc = do_new( ht, key, val ) ;
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc,
+		   expected_rc);
+	    else
+	    printf(">>>> OK set  %d %d\n", key, val);
+	  break;
 
-           if( hrc != expected_rc ) 
-             printf( ">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc, expected_rc ) ;
-           else
-             printf( ">>>> OK new  %d %d\n", key, val ) ;
-           break ;
-           
-         case 'g':
-           /* get */
-           printf( "get  %d %d --> %d ?\n", key, val, expected_rc ) ;
+	case 't':
+	  /* test */
+	  printf("test %d %d --> %d ?\n", key, val, expected_rc);
 
-           hrc = do_get( ht, key, &readval ) ;
+	  hrc = do_test(ht, key);
 
-           if( hrc != expected_rc ) 
-             printf( ">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc, expected_rc ) ;
-           else
-             {
-               if( hrc == HASHTABLE_SUCCESS )
-                 {
-                   if( val != readval )
-                     printf( ">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n", key, readval, val ) ;
-                   else
-                     printf( ">>>> OK get  %d %d\n", key, val ) ;
-                 }
-             }
-           break ;
-           
-         case 'd':
-           /* del */
-           printf( "del  %d %d --> %d ?\n", key, val, expected_rc ) ;
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc);
+	    else
+	    printf(">>>> OK test %d \n", key);
+	  break;
 
-           hrc = do_del( ht, key ) ; 
+	case 'n':
+	  /* set no overwrite */
+	  printf("new  %d %d --> %d ?\n", key, val, expected_rc);
 
-           if( hrc != expected_rc ) 
-             printf( ">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc ) ;
-           else
-             printf( ">>>> OK del  %d %d\n", key, val ) ;
-           
-           break ;
+	  hrc = do_new(ht, key, val);
 
-         case 'p':
-           /* Print */
-           HashTable_Print( ht ) ;
-           break ;
-           
-          
-         default:
-           /* syntaxe error */
-           printf( "ordre '%c' non-reconnu\n", c ) ;
-           break ;
-         }
-       
-       fflush( stdin ) ;
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc,
+		   expected_rc);
+	    else
+	    printf(">>>> OK new  %d %d\n", key, val);
+	  break;
+
+	case 'g':
+	  /* get */
+	  printf("get  %d %d --> %d ?\n", key, val, expected_rc);
+
+	  hrc = do_get(ht, key, &readval);
+
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc,
+		   expected_rc);
+	    else
+	    {
+	      if (hrc == HASHTABLE_SUCCESS)
+		{
+		  if (val != readval)
+		    printf
+			(">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n",
+			 key, readval, val);
+		    else
+		    printf(">>>> OK get  %d %d\n", key, val);
+		}
+	    }
+	  break;
+
+	case 'd':
+	  /* del */
+	  printf("del  %d %d --> %d ?\n", key, val, expected_rc);
+
+	  hrc = do_del(ht, key);
+
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc);
+	    else
+	    printf(">>>> OK del  %d %d\n", key, val);
+
+	  break;
+
+	case 'p':
+	  /* Print */
+	  HashTable_Print(ht);
+	  break;
+
+	default:
+	  /* syntaxe error */
+	  printf("ordre '%c' non-reconnu\n", c);
+	  break;
+	}
+
+      fflush(stdin);
     }
-  
-  BuddyDumpMem( stderr ) ;
-  
-  printf( "====================================================\n" ) ;
-  printf( "Test reussi : tous les tests sont passes avec succes\n" ) ;
-  
-  exit( 0 ) ;
+
+  BuddyDumpMem(stderr);
+
+  printf("====================================================\n");
+  printf("Test reussi : tous les tests sont passes avec succes\n");
+
+  exit(0);
 }

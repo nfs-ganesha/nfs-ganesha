@@ -19,7 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-
 /**
  * FSAL_access :
  * Tests whether the user or entity identified by the p_context structure
@@ -54,59 +53,49 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(
-    fsal_handle_t              * object_handle,      /* IN */
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessflags_t access_type,	/* IN */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
 
   fsal_status_t st;
-          
+
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
   if (!object_handle || !p_context)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_access);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
-    
-  /* >> convert your fsal access type to your FS access type << */  
-  
-    
+  /* >> convert your fsal access type to your FS access type << */
+
   TakeTokenFSCall();
-  
-  /* >> call to your FS access call << */    
-    
+
+  /* >> call to your FS access call << */
+
   ReleaseTokenFSCall();
-  
-  /* >> convert the returned code, an return it on error << */  
-  
-  
+
+  /* >> convert the returned code, an return it on error << */
+
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * an error bit is set in the output structure.
    */
-  if ( object_attributes )
-  {
-    fsal_status_t status;
-    
-    status = FSAL_getattrs( object_handle, p_context , object_attributes );
-    
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+  if (object_attributes)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
-    }    
-  }
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_access );
-  
+      fsal_status_t status;
+
+      status = FSAL_getattrs(object_handle, p_context, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+    }
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_access);
+
 }
-
-
-
-
-
-

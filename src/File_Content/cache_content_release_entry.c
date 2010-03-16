@@ -90,8 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
-
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -101,7 +100,6 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "stuff_alloc.h"
-
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -128,50 +126,47 @@
  * @return CACHE_CONTENT_SUCCESS is successful, other values show an error.
  *
  */
-cache_content_status_t cache_content_release_entry( cache_content_entry_t  * pentry,
-                                                    cache_content_client_t * pclient,
-                                                    cache_content_status_t * pstatus ) 
+cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentry,
+						   cache_content_client_t * pclient,
+						   cache_content_status_t * pstatus)
 {
   /* By default, operation status is successful */
-  *pstatus = CACHE_CONTENT_SUCCESS ;
+  *pstatus = CACHE_CONTENT_SUCCESS;
 
   /* stat */
-  pclient->stat.func_stats.nb_call[CACHE_CONTENT_RELEASE_ENTRY] += 1 ;
-
+  pclient->stat.func_stats.nb_call[CACHE_CONTENT_RELEASE_ENTRY] += 1;
 
   /* Remove the link between the Cache Inode entry and the File Content entry */
-  pentry->pentry_inode->object.file.pentry_content = NULL ;
- 
+  pentry->pentry_inode->object.file.pentry_content = NULL;
+
   /* close the associated opened file */
-  if( pentry->local_fs_entry.opened_file.local_fd > 0 ) 
+  if (pentry->local_fs_entry.opened_file.local_fd > 0)
     {
-	close( pentry->local_fs_entry.opened_file.local_fd ) ;
-	pentry->local_fs_entry.opened_file.last_op = 0 ; 
-    } 
+      close(pentry->local_fs_entry.opened_file.local_fd);
+      pentry->local_fs_entry.opened_file.last_op = 0;
+    }
 
   /* Finally puts the entry back to entry pool for future use */
-  RELEASE_PREALLOC( pentry, pclient->pool_entry, next_alloc ) ;
+  RELEASE_PREALLOC(pentry, pclient->pool_entry, next_alloc);
 
   /* Remove the index file */
-  if( unlink( pentry->local_fs_entry.cache_path_index ) != 0 )
+  if (unlink(pentry->local_fs_entry.cache_path_index) != 0)
     {
-      if( errno != ENOENT )
-        DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )", 
-                           pentry->local_fs_entry.cache_path_index, 
-                           errno, strerror( errno ) ) ;
+      if (errno != ENOENT)
+	DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			  "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
+			  pentry->local_fs_entry.cache_path_index,
+			  errno, strerror(errno));
     }
-  
+
   /* Remove the data file */
-  if( unlink( pentry->local_fs_entry.cache_path_data ) != 0 )
+  if (unlink(pentry->local_fs_entry.cache_path_data) != 0)
     {
-      if( errno != ENOENT )
-        DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, 
-                           "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )", 
-                           pentry->local_fs_entry.cache_path_data, 
-                           errno, strerror( errno ) ) ;
+      if (errno != ENOENT)
+	DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			  "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
+			  pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
     }
 
-  return *pstatus ;
-} /* cache_content_release_entry */
-
+  return *pstatus;
+}				/* cache_content_release_entry */

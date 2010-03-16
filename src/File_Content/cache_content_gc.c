@@ -89,7 +89,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "stuff_alloc.h"
 #include "LRU_List.h"
@@ -100,7 +100,6 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,16 +108,15 @@
 #include <errno.h>
 
 #ifdef _LINUX
-#include <sys/vfs.h> /* For statfs */
+#include <sys/vfs.h>		/* For statfs */
 #endif
 
 #ifdef _APPLE
-#include <sys/param.h> /* For Statfs */
+#include <sys/param.h>		/* For Statfs */
 #include <sys/mount.h>
 #endif
 
-cache_content_gc_policy_t cache_content_gc_policy ;
-
+cache_content_gc_policy_t cache_content_gc_policy;
 
 /**
  *
@@ -129,11 +127,10 @@ cache_content_gc_policy_t cache_content_gc_policy ;
  * @return nothing (void function)
  *
  */
-void cache_content_set_gc_policy( cache_content_gc_policy_t policy )
+void cache_content_set_gc_policy(cache_content_gc_policy_t policy)
 {
-  cache_content_gc_policy = policy ;
-} /* cache_content_set_gc_policy */
-
+  cache_content_gc_policy = policy;
+}				/* cache_content_set_gc_policy */
 
 /**
  *
@@ -142,8 +139,7 @@ void cache_content_set_gc_policy( cache_content_gc_policy_t policy )
  * @return the current policy.
  *
  */
-cache_content_gc_policy_t cache_content_get_gc_policy( void )
+cache_content_gc_policy_t cache_content_get_gc_policy(void)
 {
-  return cache_content_gc_policy ;
-} /* cache_content_get_gc_policy */
-
+  return cache_content_gc_policy;
+}				/* cache_content_get_gc_policy */

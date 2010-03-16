@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -106,7 +106,6 @@
 #include <time.h>
 #include <pthread.h>
 
-
 /**
  *
  * cache_inode_init: Init the ressource necessary for the cache inode management.
@@ -119,22 +118,22 @@
  * @return NULL if operation failed, other value is a pointer to the hash table used for the cache.
  *
  */
-hash_table_t * cache_inode_init( cache_inode_parameter_t param, cache_inode_status_t *pstatus )
+hash_table_t *cache_inode_init(cache_inode_parameter_t param,
+			       cache_inode_status_t * pstatus)
 {
-  hash_table_t * ht = NULL ;
+  hash_table_t *ht = NULL;
 
-  ht = HashTable_Init( param.hparam ) ;
+  ht = HashTable_Init(param.hparam);
 
-  if( ht != NULL )
-    *pstatus = CACHE_INODE_SUCCESS ;
-  else
-    *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
+  if (ht != NULL)
+    *pstatus = CACHE_INODE_SUCCESS;
+    else
+    *pstatus = CACHE_INODE_INVALID_ARGUMENT;
 
-  DisplayLog( "Hash Table initiated" ) ;
- 
-  return ht ;
-} /* cache_inode_init */
+  DisplayLog("Hash Table initiated");
 
+  return ht;
+}				/* cache_inode_init */
 
 /**
  *
@@ -149,170 +148,155 @@ hash_table_t * cache_inode_init( cache_inode_parameter_t param, cache_inode_stat
  * @return 0 if successful, 1 if failed. 
  *
  */
-int cache_inode_client_init( cache_inode_client_t * pclient, 
-                             cache_inode_client_parameter_t param, 
-                             int thread_index, 
-			     void * pworker_data )
+int cache_inode_client_init(cache_inode_client_t * pclient,
+			    cache_inode_client_parameter_t param,
+			    int thread_index, void *pworker_data)
 {
-  LRU_status_t lru_status ;
+  LRU_status_t lru_status;
 
-  pclient->log_outputs              = param.log_outputs ;
-  pclient->attrmask                 = param.attrmask ;
-  pclient->nb_prealloc              = param.nb_prealloc_entry ;
-  pclient->nb_pre_dir_data          = param.nb_pre_dir_data ;
-  pclient->nb_pre_parent            = param.nb_pre_parent ;
-  pclient->nb_pre_state_v4          = param.nb_pre_state_v4 ;
-  pclient->grace_period_attr        = param.grace_period_attr ;
-  pclient->grace_period_link        = param.grace_period_link ;
-  pclient->grace_period_dirent      = param.grace_period_dirent ;
-  pclient->use_test_access          = param.use_test_access ;
-  pclient->getattr_dir_invalidation = param.getattr_dir_invalidation ; 
-  pclient->pworker                  = pworker_data ;
-  pclient->use_cache                = param.use_cache ;
-  pclient->retention                = param.retention ;
-  pclient->max_fd_per_thread        = param.max_fd_per_thread ;
+  pclient->log_outputs = param.log_outputs;
+  pclient->attrmask = param.attrmask;
+  pclient->nb_prealloc = param.nb_prealloc_entry;
+  pclient->nb_pre_dir_data = param.nb_pre_dir_data;
+  pclient->nb_pre_parent = param.nb_pre_parent;
+  pclient->nb_pre_state_v4 = param.nb_pre_state_v4;
+  pclient->grace_period_attr = param.grace_period_attr;
+  pclient->grace_period_link = param.grace_period_link;
+  pclient->grace_period_dirent = param.grace_period_dirent;
+  pclient->use_test_access = param.use_test_access;
+  pclient->getattr_dir_invalidation = param.getattr_dir_invalidation;
+  pclient->pworker = pworker_data;
+  pclient->use_cache = param.use_cache;
+  pclient->retention = param.retention;
+  pclient->max_fd_per_thread = param.max_fd_per_thread;
 
   /* introducing desynchronisation for GC */
-  pclient->time_of_last_gc          = time( NULL ) + thread_index * 20 ;
-  pclient->call_since_last_gc       = thread_index * 20;
+  pclient->time_of_last_gc = time(NULL) + thread_index * 20;
+  pclient->call_since_last_gc = thread_index * 20;
 
-  pclient->time_of_last_gc_fd       = time( NULL );
+  pclient->time_of_last_gc_fd = time(NULL);
 
-    
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_entry_t" ) ;
+  BuddySetDebugLabel("cache_entry_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_entry, 
-                  pclient->nb_prealloc, 
-                  cache_entry_t, 
-                  next_alloc ) ;
-  if( pclient->pool_entry == NULL )
+  STUFF_PREALLOC(pclient->pool_entry, pclient->nb_prealloc, cache_entry_t, next_alloc);
+  if (pclient->pool_entry == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client entry pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client entry pool");
+      return 1;
     }
 #endif
-  
+
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_inode_dir_data_t" ) ;
+  BuddySetDebugLabel("cache_inode_dir_data_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_dir_data, 
-                  pclient->nb_pre_dir_data, 
-                  cache_inode_dir_data_t, 
-                  next_alloc ) ;
-  if( pclient->pool_dir_data == NULL )
-    { 
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client dir data pool" ) ;
-      return 1 ;
+  STUFF_PREALLOC(pclient->pool_dir_data,
+		 pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
+  if (pclient->pool_dir_data == NULL)
+    {
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client dir data pool");
+      return 1;
     }
 #endif
-      
+
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_inode_parent_entry_t" ) ;
+  BuddySetDebugLabel("cache_inode_parent_entry_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_parent,
-                  pclient->nb_pre_parent,
-                  cache_inode_parent_entry_t, 
-                  next_alloc ) ;
-  if( pclient->pool_parent == NULL )
-    { 
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client parent link pool" ) ;
-      return 1 ;
+  STUFF_PREALLOC(pclient->pool_parent,
+		 pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
+  if (pclient->pool_parent == NULL)
+    {
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client parent link pool");
+      return 1;
     }
 #endif
- 
+
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_inode_state_t" ) ;
+  BuddySetDebugLabel("cache_inode_state_t");
 #endif
- 
+
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_state_v4,
-                  pclient->nb_pre_state_v4,
-                  cache_inode_state_t,
-                  next ) ;
-  if( pclient->pool_state_v4 == NULL )
+  STUFF_PREALLOC(pclient->pool_state_v4,
+		 pclient->nb_pre_state_v4, cache_inode_state_t, next);
+  if (pclient->pool_state_v4 == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client state v4 pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client state v4 pool");
+      return 1;
     }
 
-  STUFF_PREALLOC( pclient->pool_open_owner,
-                  pclient->nb_pre_state_v4,
-                  cache_inode_open_owner_t,
-                  next ) ;
-  if( pclient->pool_open_owner == NULL )
+  STUFF_PREALLOC(pclient->pool_open_owner,
+		 pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
+  if (pclient->pool_open_owner == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client open owner pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client open owner pool");
+      return 1;
     }
 
-  STUFF_PREALLOC( pclient->pool_open_owner_name,
-                  pclient->nb_pre_state_v4,
-                  cache_inode_open_owner_name_t,
-                  next ) ;
-  if( pclient->pool_open_owner_name == NULL )
+  STUFF_PREALLOC(pclient->pool_open_owner_name,
+		 pclient->nb_pre_state_v4, cache_inode_open_owner_name_t, next);
+  if (pclient->pool_open_owner_name == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client open owner name pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client open owner name pool");
+      return 1;
     }
-
 #ifdef _USE_NFS4_1
-  STUFF_PREALLOC( pclient->pool_session, 
-                  pclient->nb_pre_state_v4,
-                  nfs41_session_t,
-                  next_alloc ) ;
- 
-  if( pclient->pool_session == NULL )
-    {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client session pool" ) ;
-      return 1 ;
-    }
-	
-#endif /* _USE_NFS4_1 */
+  STUFF_PREALLOC(pclient->pool_session,
+		 pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
 
+  if (pclient->pool_session == NULL)
+    {
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client session pool");
+      return 1;
+    }
+#endif				/* _USE_NFS4_1 */
 
 #endif
 
-  
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "cache_inode_fsal_data_t:init" ) ;
+  BuddySetDebugLabel("cache_inode_fsal_data_t:init");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
-  STUFF_PREALLOC( pclient->pool_key, 
-                  pclient->nb_prealloc, 
-                  cache_inode_fsal_data_t, 
-                  next_alloc ) ;
-  
+  STUFF_PREALLOC(pclient->pool_key,
+		 pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
+
 # ifdef _DEBUG_MEMLEAKS
-    /* For debugging memory leaks */
-    BuddySetDebugLabel( "N/A" ) ;
+  /* For debugging memory leaks */
+  BuddySetDebugLabel("N/A");
 # endif
 
-  if( pclient->pool_key == NULL )
+  if (pclient->pool_key == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client key pool" ) ;
-      return 1 ;
+      DisplayLogJd(pclient->log_outputs,
+		   "Error : can't init cache_inode client key pool");
+      return 1;
     }
-#endif  
+#endif
 
-  if( ( pclient->lru_gc = LRU_Init( param.lru_param, &lru_status ) ) == NULL )
+  if ((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
-      DisplayLogJd( pclient->log_outputs, "Error : can't init cache_inode client lru gc" ) ;
-      return 1  ;
+      DisplayLogJd(pclient->log_outputs, "Error : can't init cache_inode client lru gc");
+      return 1;
     }
 
   /* Everything was ok, return 0 */
-  return 0 ;
-} /* cache_inode_client_init */
+  return 0;
+}				/* cache_inode_client_init */

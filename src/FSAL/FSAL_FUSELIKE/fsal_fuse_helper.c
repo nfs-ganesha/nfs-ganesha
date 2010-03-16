@@ -2,7 +2,6 @@
 #include "config.h"
 #endif
 
-
 #include "fsal.h"
 #include "fsal_internal.h"
 
@@ -10,12 +9,12 @@
 
 struct ganefuse_context *ganefuse_get_context(void)
 {
-	fsal_op_context_t 	* p_ctx;
-	
-	p_ctx = fsal_get_thread_context();
+  fsal_op_context_t *p_ctx;
 
-	if ( p_ctx == NULL )
-		return NULL;
+  p_ctx = fsal_get_thread_context();
 
-        return &(p_ctx->ganefuse_context);
+  if (p_ctx == NULL)
+    return NULL;
+
+  return &(p_ctx->ganefuse_context);
 }

@@ -20,8 +20,6 @@
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
-
-
 /**
  * FSAL_create:
  * Create a regular file.
@@ -58,33 +56,27 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_create(
-    fsal_handle_t         * parent_directory_handle, /* IN */
-    fsal_name_t           * p_filename,              /* IN */
-    fsal_op_context_t     * p_context,               /* IN */
-    fsal_accessmode_t       accessmode,              /* IN */
-    fsal_handle_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,	/* IN */
+			  fsal_name_t * p_filename,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessmode_t accessmode,	/* IN */
+			  fsal_handle_t * object_handle,	/* OUT */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !parent_directory_handle || 
-       !p_context ||
-       !object_handle ||
-       !p_filename )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_create);
-  
+  if (!parent_directory_handle || !p_context || !object_handle || !p_filename)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
+
   /* OK */
-  Return(ERR_FSAL_ROFS ,0 , INDEX_FSAL_unlink);
-  
+  Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_unlink);
+
 }
-
-
-
 
 /**
  * FSAL_mkdir:
@@ -123,39 +115,31 @@ fsal_status_t FSAL_create(
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_mkdir(
-    fsal_handle_t         * parent_directory_handle, /* IN */
-    fsal_name_t           * p_dirname,             /* IN */
-    fsal_op_context_t     * p_context,                     /* IN */
-    fsal_accessmode_t     accessmode,          /* IN */
-    fsal_handle_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,	/* IN */
+			 fsal_name_t * p_dirname,	/* IN */
+			 fsal_op_context_t * p_context,	/* IN */
+			 fsal_accessmode_t accessmode,	/* IN */
+			 fsal_handle_t * object_handle,	/* OUT */
+			 fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
 
   int rc;
-  
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !parent_directory_handle || 
-       !p_context ||
-       !object_handle ||
-       !p_dirname)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_mkdir);
-  
+  if (!parent_directory_handle || !p_context || !object_handle || !p_dirname)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-    
   /* >> convert fsal args to your fs args.
    * Don't forget applying FSAL umask :
    * mode = mode & ~global_fs_info.umask << */
-    
+
   /* OK */
-  Return(ERR_FSAL_ROFS ,0 , INDEX_FSAL_unlink);
-  
+  Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_unlink);
+
 }
-
-
-
 
 /**
  * FSAL_link:
@@ -194,37 +178,31 @@ fsal_status_t FSAL_mkdir(
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FSAL_link(
-    fsal_handle_t         * target_handle,        /* IN */
-    fsal_handle_t         * dir_handle,           /* IN */
-    fsal_name_t           * p_link_name,          /* IN */
-    fsal_op_context_t     * p_context,            /* IN */
-    fsal_attrib_list_t    * attributes       /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_link(fsal_handle_t * target_handle,	/* IN */
+			fsal_handle_t * dir_handle,	/* IN */
+			fsal_name_t * p_link_name,	/* IN */
+			fsal_op_context_t * p_context,	/* IN */
+			fsal_attrib_list_t * attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  
+
   /* sanity checks.
    * note : attributes is optional.
    */
-  if ( !target_handle || 
-       !dir_handle || 
-       !p_context || 
-       !p_link_name)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_link);
-  
-  
+  if (!target_handle || !dir_handle || !p_context || !p_link_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
+
   /* Tests if hardlinking is allowed by configuration. */
-  
-  if ( !global_fs_info.link_support )
-      Return( ERR_FSAL_NOTSUPP, 0,INDEX_FSAL_link);
-  
+
+  if (!global_fs_info.link_support)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
+
   /* OK */
-  Return(ERR_FSAL_ROFS ,0 , INDEX_FSAL_link);
-  
+  Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_link);
+
 }
-
-
 
 /**
  * FSAL_mknode:
@@ -233,28 +211,24 @@ fsal_status_t FSAL_link(
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(
-    fsal_handle_t             * parentdir_handle,     /* IN */
-    fsal_name_t               * p_node_name,          /* IN */
-    fsal_op_context_t         * p_context,                     /* IN */
-    fsal_accessmode_t         accessmode,             /* IN */
-    fsal_nodetype_t           nodetype,             /* IN */
-    fsal_dev_t                * dev,                  /* IN */
-    fsal_handle_t             * p_object_handle,      /* OUT (handle to the created node) */    
-    fsal_attrib_list_t        * node_attributes       /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,	/* IN */
+			  fsal_name_t * p_node_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessmode_t accessmode,	/* IN */
+			  fsal_nodetype_t nodetype,	/* IN */
+			  fsal_dev_t * dev,	/* IN */
+			  fsal_handle_t * p_object_handle,	/* OUT (handle to the created node) */
+			  fsal_attrib_list_t * node_attributes	/* [ IN/OUT ] */
+    )
+{
 
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if ( !parentdir_handle || 
-       !p_context ||
-       !nodetype ||
-       !dev ||
-       !p_node_name )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_mknode);
-  
+  if (!parentdir_handle || !p_context || !nodetype || !dev || !p_node_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
+
   /* Not implemented */
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_mknode);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_mknode);
 
 }

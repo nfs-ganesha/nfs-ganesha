@@ -12,14 +12,14 @@
  * Adding our own version of getopt, to avoid portability issues.
  *
  */
- 
+
 #ifndef _LOCAL_GETOPT_H
 #define _LOCAL_GETOPT_H
 
-extern int             Opterr;
-extern int             Optind;
-extern int             Optopt;
-extern char           *Optarg;
+extern int Opterr;
+extern int Optind;
+extern int Optopt;
+extern char *Optarg;
 
 int Getopt(int argc, char *argv[], char *opts);
 

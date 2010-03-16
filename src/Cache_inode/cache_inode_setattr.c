@@ -90,8 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
-
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -106,7 +105,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
- 
+
 /**
  *
  * cache_inode_setattrs: set the attributes for an entry located in the cache by its address. 
@@ -125,62 +124,60 @@
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_inode_status_t cache_inode_setattr( cache_entry_t        * pentry, 
-                                          fsal_attrib_list_t   * pattr, 
-                                          hash_table_t         * ht, /* Unused, kept for protototype's homogeneity */
-                                          cache_inode_client_t * pclient, 
-                                          fsal_op_context_t    * pcontext, 
-                                          cache_inode_status_t * pstatus )
+cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_list_t * pattr, hash_table_t * ht,	/* Unused, kept for protototype's homogeneity */
+					 cache_inode_client_t * pclient,
+					 fsal_op_context_t * pcontext,
+					 cache_inode_status_t * pstatus)
 {
-  fsal_handle_t      * pfsal_handle ;
-  fsal_status_t        fsal_status ;
-  fsal_attrib_list_t * p_object_attributes ;
-  fsal_attrib_list_t   result_attributes ;
-  fsal_attrib_list_t   truncate_attributes ;
-  
+  fsal_handle_t *pfsal_handle;
+  fsal_status_t fsal_status;
+  fsal_attrib_list_t *p_object_attributes;
+  fsal_attrib_list_t result_attributes;
+  fsal_attrib_list_t truncate_attributes;
+
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
+  *pstatus = CACHE_INODE_SUCCESS;
 
   /* stat */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_SETATTR] += 1 ;
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_SETATTR] += 1;
 
   /* Lock the entry */
-  P_w( &pentry->lock ) ;
-  
-  switch( pentry->internal_md.type )
+  P_w(&pentry->lock);
+
+  switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
-      pfsal_handle = &pentry->object.file.handle ;
-      break ;
-      
+      pfsal_handle = &pentry->object.file.handle;
+      break;
+
     case SYMBOLIC_LINK:
-      pfsal_handle  = &pentry->object.symlink.handle ;
-      break ;
-      
+      pfsal_handle = &pentry->object.symlink.handle;
+      break;
+
     case DIR_BEGINNING:
-      pfsal_handle = &pentry->object.dir_begin.handle ;
-      break ;
+      pfsal_handle = &pentry->object.dir_begin.handle;
+      break;
 
     case DIR_CONTINUE:
       /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r( &pentry->object.dir_cont.pdir_begin->lock ) ;
-      pfsal_handle =  &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle ;
-      V_r( &pentry->object.dir_cont.pdir_begin->lock ) ;
-      break ;
-      
+      P_r(&pentry->object.dir_cont.pdir_begin->lock);
+      pfsal_handle = &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
+      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+      break;
+
     case CHARACTER_FILE:
     case BLOCK_FILE:
     case SOCKET_FILE:
     case FIFO_FILE:
-      pfsal_handle = &pentry->object.special_obj.handle ;
-      break ;      
+      pfsal_handle = &pentry->object.special_obj.handle;
+      break;
     }
-  
+
   /* Call FSAL to set the attributes */
-  /* result_attributes.asked_attributes = pattr->asked_attributes ;*/
-    
+  /* result_attributes.asked_attributes = pattr->asked_attributes ; */
+
   /* mod Th.Leibovici on 2006/02/13
    * We ask back all standard attributes, in case they have been modified
    * by another program (pftp, rcpd...)
@@ -189,168 +186,178 @@ cache_inode_status_t cache_inode_setattr( cache_entry_t        * pentry,
   /* end of mod */
 
 #ifdef _USE_MFSL
-  fsal_status = MFSL_setattrs( &pentry->mobject, pcontext, &pclient->mfsl_context, pattr, &result_attributes ) ;
+  fsal_status =
+      MFSL_setattrs(&pentry->mobject, pcontext, &pclient->mfsl_context, pattr,
+		    &result_attributes);
 #else
-  cache_inode_get_attributes( pentry, &result_attributes ) ;
+  cache_inode_get_attributes(pentry, &result_attributes);
 
-  fsal_status = FSAL_setattrs( pfsal_handle, pcontext, pattr, &result_attributes ) ;
+  fsal_status = FSAL_setattrs(pfsal_handle, pcontext, pattr, &result_attributes);
 #endif
-  if( FSAL_IS_ERROR( fsal_status ) ) 
+  if (FSAL_IS_ERROR(fsal_status))
     {
-      *pstatus = cache_inode_error_convert( fsal_status ) ;
-      V_w( &pentry->lock ) ;
-      
+      *pstatus = cache_inode_error_convert(fsal_status);
+      V_w(&pentry->lock);
+
       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1 ;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1;
 
-      if( fsal_status.major == ERR_FSAL_STALE ) 
-        {
-	  cache_inode_status_t kill_status ;
+      if (fsal_status.major == ERR_FSAL_STALE)
+	{
+	  cache_inode_status_t kill_status;
 
-	  DisplayLog( "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p", pentry ) ;
+	  DisplayLog
+	      ("cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+	       pentry);
 
- 	  if( cache_inode_kill_entry( pentry, ht, pclient, &kill_status ) != CACHE_INODE_SUCCESS )
-                    DisplayLog( "cache_inode_setattr: Could not kill entry %p, status = %u", pentry, kill_status ) ;
+	  if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+	      CACHE_INODE_SUCCESS)
+	    DisplayLog("cache_inode_setattr: Could not kill entry %p, status = %u",
+		       pentry, kill_status);
 
-          *pstatus = CACHE_INODE_FSAL_ESTALE ;
-        }
+	  *pstatus = CACHE_INODE_FSAL_ESTALE;
+	}
 
-      return *pstatus ;
+      return *pstatus;
     }
 
-  if( pattr->asked_attributes  & FSAL_ATTR_SIZE ) 
+  if (pattr->asked_attributes & FSAL_ATTR_SIZE)
     {
-        truncate_attributes.asked_attributes = pclient->attrmask;
+      truncate_attributes.asked_attributes = pclient->attrmask;
 
-        fsal_status = FSAL_truncate( pfsal_handle, 
-				     pcontext,
-                                     pattr->filesize, 
-				     NULL, 
-                                     &truncate_attributes ) ;
-	if( FSAL_IS_ERROR( fsal_status ) )
-	  {
-       	      *pstatus = cache_inode_error_convert( fsal_status ) ;
-	      V_w( &pentry->lock ) ;
-      
-              /* stat */
-              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1 ;
+      fsal_status = FSAL_truncate(pfsal_handle,
+				  pcontext, pattr->filesize, NULL, &truncate_attributes);
+      if (FSAL_IS_ERROR(fsal_status))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
+	  V_w(&pentry->lock);
 
-             if( fsal_status.major == ERR_FSAL_STALE ) 
-              {
-	        cache_inode_status_t kill_status ;
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_SETATTR] += 1;
 
-	        DisplayLog( "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p", pentry ) ;
+	  if (fsal_status.major == ERR_FSAL_STALE)
+	    {
+	      cache_inode_status_t kill_status;
 
- 	        if( cache_inode_kill_entry( pentry, ht, pclient, &kill_status ) != CACHE_INODE_SUCCESS )
-                      DisplayLog( "cache_inode_setattr: Could not kill entry %p, status = %u", pentry, kill_status ) ;
+	      DisplayLog
+		  ("cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
+		   pentry);
 
-               *pstatus = CACHE_INODE_FSAL_ESTALE ;
-              }
+	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+		  CACHE_INODE_SUCCESS)
+		DisplayLog("cache_inode_setattr: Could not kill entry %p, status = %u",
+			   pentry, kill_status);
 
-            return *pstatus ;
-          }
+	      *pstatus = CACHE_INODE_FSAL_ESTALE;
+	    }
 
-    } 
+	  return *pstatus;
+	}
+
+    }
 
   /* Keep the new attribute in cache */
-  switch( pentry->internal_md.type )
+  switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
-      p_object_attributes = &(pentry->object.file.attributes) ;
-      break ;
-      
+      p_object_attributes = &(pentry->object.file.attributes);
+      break;
+
     case SYMBOLIC_LINK:
-      p_object_attributes = &(pentry->object.symlink.attributes) ;
-      break ;
-      
+      p_object_attributes = &(pentry->object.symlink.attributes);
+      break;
+
     case DIR_BEGINNING:
-      p_object_attributes = &(pentry->object.dir_begin.attributes) ;
-      break ;
-      
+      p_object_attributes = &(pentry->object.dir_begin.attributes);
+      break;
+
     case DIR_CONTINUE:
       /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r( &pentry->object.dir_cont.pdir_begin->lock ) ;
-      p_object_attributes = &(pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes) ;
-      V_r( &pentry->object.dir_cont.pdir_begin->lock ) ;
-      break ;
-      
+      P_r(&pentry->object.dir_cont.pdir_begin->lock);
+      p_object_attributes =
+	  &(pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes);
+      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+      break;
+
     case CHARACTER_FILE:
     case BLOCK_FILE:
     case SOCKET_FILE:
-    case FIFO_FILE:      
-      p_object_attributes = &(pentry->object.special_obj.attributes) ;
-      break ;      
-      
+    case FIFO_FILE:
+      p_object_attributes = &(pentry->object.special_obj.attributes);
+      break;
+
     }
-  
+
   /* Update the cached attributes */
-  if( ( result_attributes.asked_attributes & FSAL_ATTR_SIZE ) ||
-      ( result_attributes.asked_attributes & FSAL_ATTR_SPACEUSED) )
+  if ((result_attributes.asked_attributes & FSAL_ATTR_SIZE) ||
+      (result_attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
     {
 
-      if( pentry->internal_md.type == REGULAR_FILE )
-      {
-        if( pentry->object.file.pentry_content == NULL )
-        {
-          /* Operation on a non data cached file */
-          p_object_attributes->filesize  = result_attributes.filesize ;
-          p_object_attributes->spaceused = result_attributes.filesize ; /* Unclear hook here. BUGAZOMEU */
-        }
-        else
-        {
-          /* Data cached file */
-          /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
+      if (pentry->internal_md.type == REGULAR_FILE)
+	{
+	  if (pentry->object.file.pentry_content == NULL)
+	    {
+	      /* Operation on a non data cached file */
+	      p_object_attributes->filesize = result_attributes.filesize;
+	      p_object_attributes->spaceused = result_attributes.filesize;	/* Unclear hook here. BUGAZOMEU */
+	    } else
+	    {
+	      /* Data cached file */
+	      /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
 	       * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
-           * with a size of 0 despite the fact that they are not empty */
+	       * with a size of 0 despite the fact that they are not empty */
 #ifdef  _DEBUG_CACHE_INODE
-          DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry" ) ;
+	      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+				"cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
 #endif
-        }
-      }
-      else if ( pattr->asked_attributes & FSAL_ATTR_SIZE )
-        DisplayLog( "WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d", pentry->internal_md.type ) ;
+	    }
+      } else if (pattr->asked_attributes & FSAL_ATTR_SIZE)
+	DisplayLog
+	    ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
+	     pentry->internal_md.type);
     }
-  
-      
-  if( result_attributes.asked_attributes & (FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP) )
-    {
-      if( result_attributes.asked_attributes & FSAL_ATTR_MODE )
-        p_object_attributes->mode = result_attributes.mode ;
-      
-      if( result_attributes.asked_attributes & FSAL_ATTR_OWNER )
-        p_object_attributes->owner = result_attributes.owner ;
-      
-      if( result_attributes.asked_attributes & FSAL_ATTR_GROUP )
-        p_object_attributes->group = result_attributes.group ;
-    }
-  
-  if( result_attributes.asked_attributes & (FSAL_ATTR_ATIME|FSAL_ATTR_CTIME|FSAL_ATTR_MTIME) )
-    {
-      if( result_attributes.asked_attributes & FSAL_ATTR_ATIME )
-        p_object_attributes->atime = result_attributes.atime ;
-      
-      if( result_attributes.asked_attributes & FSAL_ATTR_CTIME )
-        p_object_attributes->ctime = result_attributes.ctime ;
 
-      if( result_attributes.asked_attributes & FSAL_ATTR_MTIME )
-        p_object_attributes->mtime = result_attributes.mtime ;
+  if (result_attributes.asked_attributes &
+      (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+    {
+      if (result_attributes.asked_attributes & FSAL_ATTR_MODE)
+	p_object_attributes->mode = result_attributes.mode;
+
+      if (result_attributes.asked_attributes & FSAL_ATTR_OWNER)
+	p_object_attributes->owner = result_attributes.owner;
+
+      if (result_attributes.asked_attributes & FSAL_ATTR_GROUP)
+	p_object_attributes->group = result_attributes.group;
     }
-  
- /* Return the attributes as set */
-  *pattr = *p_object_attributes ; 
+
+  if (result_attributes.asked_attributes &
+      (FSAL_ATTR_ATIME | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+    {
+      if (result_attributes.asked_attributes & FSAL_ATTR_ATIME)
+	p_object_attributes->atime = result_attributes.atime;
+
+      if (result_attributes.asked_attributes & FSAL_ATTR_CTIME)
+	p_object_attributes->ctime = result_attributes.ctime;
+
+      if (result_attributes.asked_attributes & FSAL_ATTR_MTIME)
+	p_object_attributes->mtime = result_attributes.mtime;
+    }
+
+  /* Return the attributes as set */
+  *pattr = *p_object_attributes;
 
   /* validate the entry */
-  *pstatus = cache_inode_valid( pentry, CACHE_INODE_OP_SET, pclient ) ;  
+  *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
   /* Release the entry */
-  V_w( &pentry->lock ) ;
+  V_w(&pentry->lock);
 
   /* stat */
-   if( *pstatus != CACHE_INODE_SUCCESS )
-     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_SETATTR] += 1 ;
-   else
-     pclient->stat.func_stats.nb_success[CACHE_INODE_SETATTR] += 1 ;
+  if (*pstatus != CACHE_INODE_SUCCESS)
+    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_SETATTR] += 1;
+    else
+    pclient->stat.func_stats.nb_success[CACHE_INODE_SETATTR] += 1;
 
-  return *pstatus ;
-} /* cache_inode_setattr */
+  return *pstatus;
+}				/* cache_inode_setattr */

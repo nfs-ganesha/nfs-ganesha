@@ -97,8 +97,8 @@
 
 #ifndef _USE_SWIG
 
-extern mfsl_parameter_t  mfsl_param ;
-extern fsal_handle_t     dir_handle_precreate ;
+extern mfsl_parameter_t mfsl_param;
+extern fsal_handle_t dir_handle_precreate;
 
 /**
  *
@@ -110,38 +110,39 @@ extern fsal_handle_t     dir_handle_precreate ;
  *
  * @return the status of the performed FSAL_rename.
  */
-fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
+fsal_status_t MFSL_rename_async_op(mfsl_async_op_desc_t * popasyncdesc)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_rename for async op %p", popasyncdesc ) ;
+  DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_rename for async op %p",
+		  popasyncdesc);
 
-  if( popasyncdesc->op_args.rename.pmobject_src != popasyncdesc->op_args.rename.pmobject_dirdest )
-   {
-      P( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
-      P( popasyncdesc->op_args.rename.pmobject_dirdest->lock ) ;
-   }
-  else
-      P( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
+  if (popasyncdesc->op_args.rename.pmobject_src !=
+      popasyncdesc->op_args.rename.pmobject_dirdest)
+    {
+      P(popasyncdesc->op_args.rename.pmobject_src->lock);
+      P(popasyncdesc->op_args.rename.pmobject_dirdest->lock);
+    } else
+    P(popasyncdesc->op_args.rename.pmobject_src->lock);
 
-  fsal_status = FSAL_rename( &(popasyncdesc->op_args.rename.pmobject_src->handle), 
-			     &popasyncdesc->op_args.rename.name_src,
-			     &(popasyncdesc->op_args.rename.pmobject_dirdest->handle),
-			     &popasyncdesc->op_args.rename.name_dest,
-                             &popasyncdesc->fsal_op_context,
-			     &popasyncdesc->op_res.rename.attrsrc,
-			     &popasyncdesc->op_res.rename.attrdest )  ;
+  fsal_status = FSAL_rename(&(popasyncdesc->op_args.rename.pmobject_src->handle),
+			    &popasyncdesc->op_args.rename.name_src,
+			    &(popasyncdesc->op_args.rename.pmobject_dirdest->handle),
+			    &popasyncdesc->op_args.rename.name_dest,
+			    &popasyncdesc->fsal_op_context,
+			    &popasyncdesc->op_res.rename.attrsrc,
+			    &popasyncdesc->op_res.rename.attrdest);
 
-  if( popasyncdesc->op_args.rename.pmobject_src != popasyncdesc->op_args.rename.pmobject_dirdest )
-   {
-      V( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
-      V( popasyncdesc->op_args.rename.pmobject_dirdest->lock ) ;
-   }
-  else
-      V( popasyncdesc->op_args.rename.pmobject_src->lock ) ;
+  if (popasyncdesc->op_args.rename.pmobject_src !=
+      popasyncdesc->op_args.rename.pmobject_dirdest)
+    {
+      V(popasyncdesc->op_args.rename.pmobject_src->lock);
+      V(popasyncdesc->op_args.rename.pmobject_dirdest->lock);
+    } else
+    V(popasyncdesc->op_args.rename.pmobject_src->lock);
 
-  return fsal_status ; 
-} /* MFSL_rename_async_op */
+  return fsal_status;
+}				/* MFSL_rename_async_op */
 
 /**
  *
@@ -160,26 +161,26 @@ fsal_status_t  MFSL_rename_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_rename_check_perms( mfsl_object_t         * old_parentdir_handle, /* IN */
-    			                fsal_name_t           * p_old_name,           /* IN */
-		                        fsal_attrib_list_t    * src_dir_attributes,   /* [ IN/OUT ] */
-   			                mfsl_object_t         * new_parentdir_handle, /* IN */
-    			                fsal_name_t           * p_new_name,           /* IN */
-    		           		fsal_attrib_list_t    * tgt_dir_attributes,   /* [ IN/OUT ] */  
-    			                fsal_op_context_t     * p_context,            /* IN */
-    			                mfsl_context_t        * p_mfsl_context        /* IN */ )
+fsal_status_t MFSAL_rename_check_perms(mfsl_object_t * old_parentdir_handle,	/* IN */
+				       fsal_name_t * p_old_name,	/* IN */
+				       fsal_attrib_list_t * src_dir_attributes,	/* [ IN/OUT ] */
+				       mfsl_object_t * new_parentdir_handle,	/* IN */
+				       fsal_name_t * p_new_name,	/* IN */
+				       fsal_attrib_list_t * tgt_dir_attributes,	/* [ IN/OUT ] */
+				       fsal_op_context_t * p_context,	/* IN */
+				       mfsl_context_t * p_mfsl_context /* IN */ )
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
   /* Check for the attributes first */
-  fsal_status = FSAL_rename_access( p_context, src_dir_attributes, tgt_dir_attributes ); 
- 
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-   return fsal_status ; 
+  fsal_status = FSAL_rename_access(p_context, src_dir_attributes, tgt_dir_attributes);
+
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /** @todo : put some stuff in this function */
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_rename_check_perms */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_rename_check_perms */
 
 /**
  *
@@ -199,136 +200,122 @@ ee @param new_parentdir_handle  [IN]    mfsl object to be operated on (destinati
  *
  * @return the same as FSAL_rename
  */
-fsal_status_t MFSL_rename( mfsl_object_t         * old_parentdir_handle, /* IN */
-    			   fsal_name_t           * p_old_name,           /* IN */
-   			   mfsl_object_t         * new_parentdir_handle, /* IN */
-    			   fsal_name_t           * p_new_name,           /* IN */
-    			   fsal_op_context_t     * p_context,            /* IN */
-    			   mfsl_context_t        * p_mfsl_context,       /* IN */
-		           fsal_attrib_list_t    * src_dir_attributes,   /* [ IN/OUT ] */
-    		           fsal_attrib_list_t    * tgt_dir_attributes    /* [ IN/OUT ] */ )
+fsal_status_t MFSL_rename(mfsl_object_t * old_parentdir_handle,	/* IN */
+			  fsal_name_t * p_old_name,	/* IN */
+			  mfsl_object_t * new_parentdir_handle,	/* IN */
+			  fsal_name_t * p_new_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  mfsl_context_t * p_mfsl_context,	/* IN */
+			  fsal_attrib_list_t * src_dir_attributes,	/* [ IN/OUT ] */
+			  fsal_attrib_list_t * tgt_dir_attributes /* [ IN/OUT ] */ )
 {
-  fsal_status_t fsal_status ;
-  mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
-  mfsl_object_specific_data_t * old_parentdir_pasyncdata   = NULL ;
-  mfsl_object_specific_data_t * new_parentdir_pasyncdata   = NULL ;
+  fsal_status_t fsal_status;
+  mfsl_async_op_desc_t *pasyncopdesc = NULL;
+  mfsl_object_specific_data_t *old_parentdir_pasyncdata = NULL;
+  mfsl_object_specific_data_t *new_parentdir_pasyncdata = NULL;
 
-  P( p_mfsl_context->lock ) ;
+  P(p_mfsl_context->lock);
 
-  GET_PREALLOC( pasyncopdesc,
-                p_mfsl_context->pool_async_op,
-                mfsl_param.nb_pre_async_op_desc,
-                mfsl_async_op_desc_t,
-                next_alloc ) ;
+  GET_PREALLOC(pasyncopdesc,
+	       p_mfsl_context->pool_async_op,
+	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
-  V( p_mfsl_context->lock ) ;
+  V(p_mfsl_context->lock);
 
-  if( pasyncopdesc == NULL )
-    MFSL_return( ERR_FSAL_INVAL, 0 ) ;
-   
-  if( gettimeofday( &pasyncopdesc->op_time, NULL ) != 0 )
-   {
+  if (pasyncopdesc == NULL)
+    MFSL_return(ERR_FSAL_INVAL, 0);
+
+  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+    {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog( "MFSL_link: cannot get time of day... exiting" ) ;
-      exit( 1 ) ;
-   }
+      DisplayLog("MFSL_link: cannot get time of day... exiting");
+      exit(1);
+    }
 
-  if( !mfsl_async_get_specdata( old_parentdir_handle, &old_parentdir_pasyncdata ) )
-   {
-	/* Target is not yet asynchronous */
-	P( p_mfsl_context->lock ) ;
+  if (!mfsl_async_get_specdata(old_parentdir_handle, &old_parentdir_pasyncdata))
+    {
+      /* Target is not yet asynchronous */
+      P(p_mfsl_context->lock);
 
- 	
-  	GET_PREALLOC( old_parentdir_pasyncdata,
-        	      p_mfsl_context->pool_spec_data,
-                      mfsl_param.nb_pre_async_op_desc,
-               	      mfsl_object_specific_data_t,
-               	      next_alloc ) ;
+      GET_PREALLOC(old_parentdir_pasyncdata,
+		   p_mfsl_context->pool_spec_data,
+		   mfsl_param.nb_pre_async_op_desc,
+		   mfsl_object_specific_data_t, next_alloc);
 
-  	V( p_mfsl_context->lock ) ;
+      V(p_mfsl_context->lock);
 
-	/* In this case use object_attributes parameter to initiate asynchronous object */
-	old_parentdir_pasyncdata->async_attr = *src_dir_attributes ;
-   }
- 
-  if( !mfsl_async_get_specdata( new_parentdir_handle, &new_parentdir_pasyncdata ) )
-   {
-	/* Target is not yet asynchronous */
-	P( p_mfsl_context->lock ) ;
+      /* In this case use object_attributes parameter to initiate asynchronous object */
+      old_parentdir_pasyncdata->async_attr = *src_dir_attributes;
+    }
 
- 	
-  	GET_PREALLOC( new_parentdir_pasyncdata,
-        	      p_mfsl_context->pool_spec_data,
-                      mfsl_param.nb_pre_async_op_desc,
-               	      mfsl_object_specific_data_t,
-               	      next_alloc ) ;
+  if (!mfsl_async_get_specdata(new_parentdir_handle, &new_parentdir_pasyncdata))
+    {
+      /* Target is not yet asynchronous */
+      P(p_mfsl_context->lock);
 
-  	V( p_mfsl_context->lock ) ;
+      GET_PREALLOC(new_parentdir_pasyncdata,
+		   p_mfsl_context->pool_spec_data,
+		   mfsl_param.nb_pre_async_op_desc,
+		   mfsl_object_specific_data_t, next_alloc);
 
-	/* In this case use object_attributes parameter to initiate asynchronous object */
-	new_parentdir_pasyncdata->async_attr = *tgt_dir_attributes ;
-   }
- 
- 
-  fsal_status = MFSAL_rename_check_perms( old_parentdir_handle, 
-    			    		  p_old_name,       
-                                          src_dir_attributes,    
-   			    		  new_parentdir_handle, 
-    			    		  p_new_name, 
-					  tgt_dir_attributes,         
-    			    		  p_context,          
-    			    		  p_mfsl_context ) ;
+      V(p_mfsl_context->lock);
 
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return fsal_status ;
+      /* In this case use object_attributes parameter to initiate asynchronous object */
+      new_parentdir_pasyncdata->async_attr = *tgt_dir_attributes;
+    }
 
+  fsal_status = MFSAL_rename_check_perms(old_parentdir_handle,
+					 p_old_name,
+					 src_dir_attributes,
+					 new_parentdir_handle,
+					 p_new_name,
+					 tgt_dir_attributes, p_context, p_mfsl_context);
 
-  DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ;
-  
-  pasyncopdesc->op_type    = MFSL_ASYNC_OP_RENAME ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  pasyncopdesc->op_args.rename.pmobject_src = old_parentdir_handle ;
-  pasyncopdesc->op_args.rename.name_src     = *p_old_name ;
-  pasyncopdesc->op_res.rename.attrsrc       = *src_dir_attributes ;
+  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+		    pasyncopdesc);
 
-  pasyncopdesc->op_args.rename.pmobject_dirdest = new_parentdir_handle ;
-  pasyncopdesc->op_args.rename.name_dest        = *p_new_name ;
-  pasyncopdesc->op_res.rename.attrdest          = *tgt_dir_attributes ;
+  pasyncopdesc->op_type = MFSL_ASYNC_OP_RENAME;
 
-  pasyncopdesc->op_func = MFSL_rename_async_op ;
-  pasyncopdesc->fsal_op_context = *p_context ;
+  pasyncopdesc->op_args.rename.pmobject_src = old_parentdir_handle;
+  pasyncopdesc->op_args.rename.name_src = *p_old_name;
+  pasyncopdesc->op_res.rename.attrsrc = *src_dir_attributes;
 
-  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+  pasyncopdesc->op_args.rename.pmobject_dirdest = new_parentdir_handle;
+  pasyncopdesc->op_args.rename.name_dest = *p_new_name;
+  pasyncopdesc->op_res.rename.attrdest = *tgt_dir_attributes;
 
-  fsal_status = MFSL_async_post( pasyncopdesc ) ;
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+  pasyncopdesc->op_func = MFSL_rename_async_op;
+  pasyncopdesc->fsal_op_context = *p_context;
+
+  pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
+
+  fsal_status = MFSL_async_post(pasyncopdesc);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /* Update the asynchronous metadata */
-  old_parentdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
-  old_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
-  old_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+  old_parentdir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
+  old_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;	/** @todo: there may be a coefficient to be applied here */
+  old_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
-  new_parentdir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
-  new_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
-  new_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+  new_parentdir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
+  new_parentdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;	/** @todo: there may be a coefficient to be applied here */
+  new_parentdir_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
-  if( !mfsl_async_set_specdata( old_parentdir_handle, old_parentdir_pasyncdata ) )
-    MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+  if (!mfsl_async_set_specdata(old_parentdir_handle, old_parentdir_pasyncdata))
+    MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  if( !mfsl_async_set_specdata( new_parentdir_handle, new_parentdir_pasyncdata ) )
-    MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+  if (!mfsl_async_set_specdata(new_parentdir_handle, new_parentdir_pasyncdata))
+    MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  /* Return the correct attributes */ 
-  *src_dir_attributes = old_parentdir_pasyncdata->async_attr ;
-  *tgt_dir_attributes = new_parentdir_pasyncdata->async_attr ;
+  /* Return the correct attributes */
+  *src_dir_attributes = old_parentdir_pasyncdata->async_attr;
+  *tgt_dir_attributes = new_parentdir_pasyncdata->async_attr;
 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_rename */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_rename */
 
-
-
-#endif /* ! _USE_SWIG */
-
-
-
+#endif				/* ! _USE_SWIG */

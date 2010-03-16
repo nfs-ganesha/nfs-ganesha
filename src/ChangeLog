@@ -324,4 +324,6 @@
 	- A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements
           the NLMv4 protocol (NFS lock managemment for NFSv3)
 	- Two small patches from Frank Fitz were applied 
+	- A "indent" target has been add to the src/Makefile.am . The code was fully
+          re-indented with this target (that uses the "indent" utility).
 

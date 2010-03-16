@@ -14,11 +14,11 @@
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
-#else 
+#else
 #include <rpc/rpc.h>
 #endif
 
-#endif /* ifndef _USE_SWIG */
+#endif				/* ifndef _USE_SWIG */
 
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
@@ -30,25 +30,23 @@
 #define MNT_RPC_GSS_INTEGRITY 390004
 #define MNT_RPC_GSS_PRIVACY   390005
 
-
-
 enum mountstat3 {
-	MNT3_OK = 0,
-	MNT3ERR_PERM = 1,
-	MNT3ERR_NOENT = 2,
-	MNT3ERR_IO = 5,
-	MNT3ERR_ACCES = 13,
-	MNT3ERR_NOTDIR = 20,
-	MNT3ERR_INVAL = 22,
-	MNT3ERR_NAMETOOLONG = 63,
-	MNT3ERR_NOTSUPP = 10004,
-	MNT3ERR_SERVERFAULT = 10006
+  MNT3_OK = 0,
+  MNT3ERR_PERM = 1,
+  MNT3ERR_NOENT = 2,
+  MNT3ERR_IO = 5,
+  MNT3ERR_ACCES = 13,
+  MNT3ERR_NOTDIR = 20,
+  MNT3ERR_INVAL = 22,
+  MNT3ERR_NAMETOOLONG = 63,
+  MNT3ERR_NOTSUPP = 10004,
+  MNT3ERR_SERVERFAULT = 10006
 };
 typedef enum mountstat3 mountstat3;
 
 typedef struct {
-	u_int fhandle3_len;
-	char *fhandle3_val;
+  u_int fhandle3_len;
+  char *fhandle3_val;
 } fhandle3;
 
 typedef char *dirpath;
@@ -58,43 +56,43 @@ typedef char *name;
 typedef struct groupnode *groups;
 
 struct groupnode {
-	name gr_name;
-	groups gr_next;
+  name gr_name;
+  groups gr_next;
 };
 typedef struct groupnode groupnode;
 
 typedef struct exportnode *exports;
 
 struct exportnode {
-	dirpath ex_dir;
-	groups ex_groups;
-	exports ex_next;
+  dirpath ex_dir;
+  groups ex_groups;
+  exports ex_next;
 };
 typedef struct exportnode exportnode;
 
 typedef struct mountbody *mountlist;
 
 struct mountbody {
-	name ml_hostname;
-	dirpath ml_directory;
-	mountlist ml_next;
+  name ml_hostname;
+  dirpath ml_directory;
+  mountlist ml_next;
 };
 typedef struct mountbody mountbody;
 
 struct mountres3_ok {
-	fhandle3 fhandle;
-	struct {
-		u_int auth_flavors_len;
-		int *auth_flavors_val;
-	} auth_flavors;
+  fhandle3 fhandle;
+  struct {
+    u_int auth_flavors_len;
+    int *auth_flavors_val;
+  } auth_flavors;
 };
 typedef struct mountres3_ok mountres3_ok;
 
 struct mountres3 {
-	mountstat3 fhs_status;
-	union {
-		mountres3_ok mountinfo;
-	} mountres3_u;
+  mountstat3 fhs_status;
+  union {
+    mountres3_ok mountinfo;
+  } mountres3_u;
 };
 typedef struct mountres3 mountres3;
 
@@ -117,19 +115,19 @@ typedef struct mountres3 mountres3;
 #ifndef _USE_SWIG
 
 /* the xdr functions */
-extern  bool_t xdr_mountstat3(XDR *, mountstat3*);
-extern  bool_t xdr_fhandle3(XDR *, fhandle3*);
-extern  bool_t xdr_dirpath(XDR *, dirpath*);
-extern  bool_t xdr_name(XDR *, name*);
-extern  bool_t xdr_groups(XDR *, groups*);
-extern  bool_t xdr_groupnode(XDR *, groupnode*);
-extern  bool_t xdr_exports(XDR *, exports*);
-extern  bool_t xdr_exportnode(XDR *, exportnode*);
-extern  bool_t xdr_mountlist(XDR *, mountlist*);
-extern  bool_t xdr_mountbody(XDR *, mountbody*);
-extern  bool_t xdr_mountres3_ok(XDR *, mountres3_ok*);
-extern  bool_t xdr_mountres3(XDR *, mountres3*);
+extern bool_t xdr_mountstat3(XDR *, mountstat3 *);
+extern bool_t xdr_fhandle3(XDR *, fhandle3 *);
+extern bool_t xdr_dirpath(XDR *, dirpath *);
+extern bool_t xdr_name(XDR *, name *);
+extern bool_t xdr_groups(XDR *, groups *);
+extern bool_t xdr_groupnode(XDR *, groupnode *);
+extern bool_t xdr_exports(XDR *, exports *);
+extern bool_t xdr_exportnode(XDR *, exportnode *);
+extern bool_t xdr_mountlist(XDR *, mountlist *);
+extern bool_t xdr_mountbody(XDR *, mountbody *);
+extern bool_t xdr_mountres3_ok(XDR *, mountres3_ok *);
+extern bool_t xdr_mountres3(XDR *, mountres3 *);
 
-#endif /* ifndef _USE_SWIG */
+#endif				/* ifndef _USE_SWIG */
 
-#endif /* !_MOUNT_H_RPCGEN */
+#endif				/* !_MOUNT_H_RPCGEN */

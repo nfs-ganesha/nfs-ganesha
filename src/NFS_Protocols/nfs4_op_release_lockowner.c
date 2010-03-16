@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +124,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
 /**
  * nfs4_op_release_lockowner: The NFS4_OP_RELEASE_LOCKOWNER
  * 
@@ -140,21 +139,18 @@
 #define arg_RELEASE_LOCKOWNER4 op->nfs_argop4_u.oplock
 #define res_RELEASE_LOCKOWNER4 resp->nfs_resop4_u.oplock
 
-int nfs4_op_release_lockowner(  struct nfs_argop4 * op ,   
-                                compound_data_t   * data,
-                                struct nfs_resop4 * resp)
+int nfs4_op_release_lockowner(struct nfs_argop4 *op,
+			      compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_lock" ;
-  
-  
-  /* Lock are not supported, but return NFS4_OK and do noting */
-  resp->resop = NFS4_OP_RELEASE_LOCKOWNER ;
-  res_RELEASE_LOCKOWNER4.status = NFS4_OK ;
-  
-  return res_RELEASE_LOCKOWNER4.status;
-} /* nfs4_op_lock */
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
 
-    
+  /* Lock are not supported, but return NFS4_OK and do noting */
+  resp->resop = NFS4_OP_RELEASE_LOCKOWNER;
+  res_RELEASE_LOCKOWNER4.status = NFS4_OK;
+
+  return res_RELEASE_LOCKOWNER4.status;
+}				/* nfs4_op_lock */
+
 /**
  * nfs4_op_release_lockowner_Free: frees what was allocared to handle nfs4_op_release_lockowner.
  * 
@@ -165,8 +161,8 @@ int nfs4_op_release_lockowner(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_release_lockowner_Free( RELEASE_LOCKOWNER4res * resp )
+void nfs4_op_release_lockowner_Free(RELEASE_LOCKOWNER4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_release_lockowner_Free */
+  return;
+}				/* nfs4_op_release_lockowner_Free */

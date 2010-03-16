@@ -29,8 +29,6 @@
 #include <sys/mount.h>
 #endif
 
-
-
 /**
  * FSAL_static_fsinfo:
  * Return static filesystem info such as
@@ -49,25 +47,23 @@
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
- */           
-fsal_status_t  FSAL_static_fsinfo(
-    fsal_handle_t       *   filehandle,       /* IN */
-    fsal_op_context_t   * p_context,          /* IN */
-    fsal_staticfsinfo_t *   staticinfo        /* OUT */
-){
-  /* sanity checks. */  
-  /* for HPSS, handle and credential are not used. */  
-  if ( !staticinfo )
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_static_fsinfo );
-  
+ */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
+				 fsal_op_context_t * p_context,	/* IN */
+				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+    )
+{
+  /* sanity checks. */
+  /* for HPSS, handle and credential are not used. */
+  if (!staticinfo)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
+
   /* returning static info about the filesystem */
   (*staticinfo) = global_fs_info;
-  
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_static_fsinfo);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
+
 }
-
-
 
 /**
  * FSAL_dynamic_fsinfo:
@@ -87,78 +83,73 @@ fsal_status_t  FSAL_static_fsinfo(
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
- */           
-fsal_status_t  FSAL_dynamic_fsinfo(
-    fsal_handle_t        *   filehandle,         /* IN */
-    fsal_op_context_t    *   p_context,          /* IN */
-    fsal_dynamicfsinfo_t *   dynamicinfo         /* OUT */
-){
+ */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+    )
+{
 
-    int rc;
-    struct statvfs stbuff;
-    char object_path[FSAL_MAX_PATH_LEN];
+  int rc;
+  struct statvfs stbuff;
+  char object_path[FSAL_MAX_PATH_LEN];
 
-    /* sanity checks. */
-    if ( !filehandle ||
-       !dynamicinfo ||
-       !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_dynamic_fsinfo);
+  /* sanity checks. */
+  if (!filehandle || !dynamicinfo || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
-    /* get the full path for the object */
-    rc = NamespacePath( filehandle->inode,
-                        filehandle->device,
-                        filehandle->validator,
-                        object_path );
-    if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo );
+  /* get the full path for the object */
+  rc = NamespacePath(filehandle->inode,
+		     filehandle->device, filehandle->validator, object_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo);
 
-    /* set context for the next operation, so it can be retrieved by FS thread */
-    fsal_set_thread_context( p_context );    
-    
-    
-    if ( p_fs_ops->statfs )
+  /* set context for the next operation, so it can be retrieved by FS thread */
+  fsal_set_thread_context(p_context);
+
+  if (p_fs_ops->statfs)
     {
-        TakeTokenFSCall();
-        rc = p_fs_ops->statfs( object_path, &stbuff );
-        ReleaseTokenFSCall();
+      TakeTokenFSCall();
+      rc = p_fs_ops->statfs(object_path, &stbuff);
+      ReleaseTokenFSCall();
 
-        if ( rc ) Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo );
+      if (rc)
+	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo);
 
-        dynamicinfo->total_bytes= stbuff.f_frsize * stbuff.f_blocks;
-        dynamicinfo->free_bytes = stbuff.f_frsize * stbuff.f_bfree;
-        dynamicinfo->avail_bytes= stbuff.f_frsize * stbuff.f_bavail;
+      dynamicinfo->total_bytes = stbuff.f_frsize * stbuff.f_blocks;
+      dynamicinfo->free_bytes = stbuff.f_frsize * stbuff.f_bfree;
+      dynamicinfo->avail_bytes = stbuff.f_frsize * stbuff.f_bavail;
 
-        dynamicinfo->total_files= stbuff.f_files;
-        dynamicinfo->free_files = stbuff.f_ffree;
-        dynamicinfo->avail_files= stbuff.f_favail;
-    }
-    else
-    { 
-        /* return dummy values for beeing compliant with any client behavior */
-        
-        DisplayLogJdLevel( fsal_log, NIV_DEBUG, "FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
-        
-        dynamicinfo->total_bytes= INT_MAX;
-        dynamicinfo->free_bytes = INT_MAX;
-        dynamicinfo->avail_bytes= INT_MAX;
-
-        dynamicinfo->total_files= 1024*1024;
-        dynamicinfo->free_files = 1024*1024;
-        dynamicinfo->avail_files= 1024*1024;        
-    }
-    
-    /* return time precision depending on utime calls implemented */
-    if ( p_fs_ops->utimens )
+      dynamicinfo->total_files = stbuff.f_files;
+      dynamicinfo->free_files = stbuff.f_ffree;
+      dynamicinfo->avail_files = stbuff.f_favail;
+    } else
     {
-        dynamicinfo->time_delta.seconds = 0;
-        dynamicinfo->time_delta.nseconds = 1;
+      /* return dummy values for beeing compliant with any client behavior */
+
+      DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+			"FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
+
+      dynamicinfo->total_bytes = INT_MAX;
+      dynamicinfo->free_bytes = INT_MAX;
+      dynamicinfo->avail_bytes = INT_MAX;
+
+      dynamicinfo->total_files = 1024 * 1024;
+      dynamicinfo->free_files = 1024 * 1024;
+      dynamicinfo->avail_files = 1024 * 1024;
     }
-    else
+
+  /* return time precision depending on utime calls implemented */
+  if (p_fs_ops->utimens)
     {
-        dynamicinfo->time_delta.seconds = 1;
-        dynamicinfo->time_delta.nseconds = 0;
+      dynamicinfo->time_delta.seconds = 0;
+      dynamicinfo->time_delta.nseconds = 1;
+    } else
+    {
+      dynamicinfo->time_delta.seconds = 1;
+      dynamicinfo->time_delta.nseconds = 0;
     }
-    
-    
-    Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_dynamic_fsinfo);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
+
 }

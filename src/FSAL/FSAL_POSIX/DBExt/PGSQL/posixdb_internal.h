@@ -1,16 +1,13 @@
 #ifndef _POSIXDB_INTERNAL_H
 #define _POSIXDB_INTERNAL_H
 
-#define MAX_HANDLEIDSTR_SIZE 21 // (size for "18446744073709551616" + 1 char for '\0')
-#define MAX_DEVICEIDSTR_SIZE 21 // (size for "18446744073709551616" + 1 char for '\0')
-#define MAX_INODESTR_SIZE 21 // (size for "18446744073709551616" + 1 char for '\0')
-#define MAX_HANDLETSSTR_SIZE 11 // (size for "4294967296" + 1 char for '\0')
+#define MAX_HANDLEIDSTR_SIZE 21	// (size for "18446744073709551616" + 1 char for '\0')
+#define MAX_DEVICEIDSTR_SIZE 21	// (size for "18446744073709551616" + 1 char for '\0')
+#define MAX_INODESTR_SIZE 21	// (size for "18446744073709551616" + 1 char for '\0')
+#define MAX_HANDLETSSTR_SIZE 11	// (size for "4294967296" + 1 char for '\0')
 #define MAX_CTIMESTR_SIZE 11
 #define MAX_NLINKSTR_SIZE 11
 #define MAX_FTYPESTR_SIZE 11
-
-
-
 
 #include "fsal_types.h"
 
@@ -32,7 +29,6 @@
                (_struct_status_).minor = (_minor_) ;         \
                return (_struct_status_);                     \
               } while(0)
-
 
 #endif
 
@@ -100,10 +96,10 @@
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *           Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_buildOnePath(  fsal_posixdb_conn* p_conn, /* IN */
-                                                  fsal_handle_t *p_handle, /* IN */
-                                                  fsal_path_t *p_path /* OUT */);                                                  
-                                                  
+fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,	/* IN */
+						fsal_handle_t * p_handle,	/* IN */
+						fsal_path_t * p_path /* OUT */ );
+
 /**
  * fsal_posixdb_recursiveDelete:
  * Delete a handle and all its entries in the Parent table. If the object is a directory, then all its entries will be recursively deleted.
@@ -119,11 +115,11 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(  fsal_posixdb_conn* p_conn, /* 
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *           Another error code else.
  */
-  
-fsal_posixdb_status_t fsal_posixdb_recursiveDelete( fsal_posixdb_conn * p_conn, /* IN */ 
-                                                    char              * handleid_str, /* IN */
-                                                    char              * handlets_str, /* IN */
-                                                    fsal_nodetype_t     ftype); /* IN */
+
+fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,	/* IN */
+						   char *handleid_str,	/* IN */
+						   char *handlets_str,	/* IN */
+						   fsal_nodetype_t ftype);	/* IN */
 
 /**
  * fsal_posixdb_deleteParent:
@@ -147,14 +143,13 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete( fsal_posixdb_conn * p_conn, 
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *           Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_deleteParent(  fsal_posixdb_conn * p_conn, /* IN */
-                                                  char              * handleid_str, /* IN */
-                                                  char              * handlets_str, /* IN */
-                                                  char              * handleidparent_str, /* IN */
-                                                  char              * handletsparent_str, /* IN */
-                                                  char              * filename, /* IN */
-                                                  int                 nlink) /* IN */;
-
+fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,	/* IN */
+						char *handleid_str,	/* IN */
+						char *handlets_str,	/* IN */
+						char *handleidparent_str,	/* IN */
+						char *handletsparent_str,	/* IN */
+						char *filename,	/* IN */
+						int nlink) /* IN */ ;
 
 /**
  * fsal_posixdb_internal_delete:
@@ -162,11 +157,12 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(  fsal_posixdb_conn * p_conn, /*
  *
  * \see fsal_posixdb_delete
  */
-fsal_posixdb_status_t fsal_posixdb_internal_delete( fsal_posixdb_conn * p_conn, /* IN */
-                                                    char              * handleidparent_str, /* IN */
-                                                    char              * handletsparent_str, /* IN */
-                                                    char              * filename, /* IN */
-                                                    fsal_posixdb_fileinfo_t * p_object_info /* IN */); 
+fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,	/* IN */
+						   char *handleidparent_str,	/* IN */
+						   char *handletsparent_str,	/* IN */
+						   char *filename,	/* IN */
+						   fsal_posixdb_fileinfo_t *
+						   p_object_info /* IN */ );
 
 /**
  * fsal_posixdb_initPreparedQueries:
@@ -177,7 +173,7 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete( fsal_posixdb_conn * p_conn, 
  * \return - ERR_FSAL_POSIXDB_NOERR, if no error.
  *           Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_initPreparedQueries( fsal_posixdb_conn *p_conn );
+fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_conn);
 
 /** 
  * @brief Fill a fsal_posixdb_fileinfo_t struct from char* values
@@ -192,13 +188,12 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries( fsal_posixdb_conn *p_con
  * @return ERR_FSAL_POSIXDB_NOERR, if no error
  *         ERR_FSAL_POSIXDB_FAULT if p_info is NULL
  */
-fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues( fsal_posixdb_fileinfo_t *p_info,
-                                                                  char                    *devid_str,
-                                                                  char                    *inode_str,
-                                                                  char                    *nlink_str,
-                                                                  char                    *ctime_str,
-                                                                  char                    *ftype_str);
-                                                                  
+fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fileinfo_t *
+								 p_info, char *devid_str,
+								 char *inode_str,
+								 char *nlink_str,
+								 char *ctime_str,
+								 char *ftype_str);
 
 /* this manages a mini-cache for the last few handles handled
  * it is invalidated as soon has there is a modification in the database
@@ -206,28 +201,25 @@ fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues( fsal_posixdb_f
 
 /* enter an entry in cache path */
 
-void fsal_posixdb_CachePath( fsal_handle_t *p_handle, /* IN */
-                             fsal_path_t *p_path /* IN */);
+void fsal_posixdb_CachePath(fsal_handle_t * p_handle,	/* IN */
+			    fsal_path_t * p_path /* IN */ );
 
 /* invalidate cache in case of a modification */
 
 void fsal_posixdb_InvalidateCache();
-                                                                  
+
 /* get a path from the cache
  * return true if the entry is found,
  * false else.
  */
 
-int fsal_posixdb_GetPathCache( fsal_handle_t *p_handle, /* IN */
-                               fsal_path_t *p_path /* OUT */);
-
+int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle,	/* IN */
+			      fsal_path_t * p_path /* OUT */ );
 
 /* update informations about a handle */
-int fsal_posixdb_UpdateInodeCache( fsal_handle_t *p_handle ); /* IN */
+int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle);	/* IN */
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache( fsal_handle_t *p_handle ); /* IN/OUT */
+int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle);	/* IN/OUT */
 
-
-                                                                  
 #endif

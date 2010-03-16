@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +124,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime ;
+extern time_t ServerBootTime;
 
 /**
  *
@@ -142,26 +142,23 @@ extern time_t ServerBootTime ;
  *
  */
 
-int nfs41_op_destroy_session(  struct nfs_argop4 * op ,    
-                              compound_data_t * data,
-                              struct nfs_resop4 * resp)
+int nfs41_op_destroy_session(struct nfs_argop4 *op,
+			     compound_data_t * data, struct nfs_resop4 *resp)
 {
 
 #define arg_DESTROY_SESSION4 op->nfs_argop4_u.opdestroy_session
 #define res_DESTROY_SESSION4 resp->nfs_resop4_u.opdestroy_session
 
-  resp->resop = NFS4_OP_DESTROY_SESSION ;
-  res_DESTROY_SESSION4.dsr_status = NFS4_OK ;
+  resp->resop = NFS4_OP_DESTROY_SESSION;
+  res_DESTROY_SESSION4.dsr_status = NFS4_OK;
 
-  if( nfs41_Session_Del( arg_DESTROY_SESSION4.dsa_sessionid ) )
-    res_DESTROY_SESSION4.dsr_status = NFS4ERR_BADSESSION ;
-  else
-    res_DESTROY_SESSION4.dsr_status = NFS4_OK ;
+  if (nfs41_Session_Del(arg_DESTROY_SESSION4.dsa_sessionid))
+    res_DESTROY_SESSION4.dsr_status = NFS4ERR_BADSESSION;
+    else
+    res_DESTROY_SESSION4.dsr_status = NFS4_OK;
 
-  return res_DESTROY_SESSION4.dsr_status ;
-} /* nfs41_op_destroy_session */
-
-
+  return res_DESTROY_SESSION4.dsr_status;
+}				/* nfs41_op_destroy_session */
 
 /**
  * nfs41_op_destroy_session_Free: frees what was allocared to handle nfs41_op_destroy_session.
@@ -172,9 +169,9 @@ int nfs41_op_destroy_session(  struct nfs_argop4 * op ,
  *
  * @return nothing (void function )
  * 
- */ 
-void nfs41_op_destroy_session_Free( DESTROY_SESSION4res * resp )
+ */
+void nfs41_op_destroy_session_Free(DESTROY_SESSION4res * resp)
 {
   /* To be completed */
-  return ;
-} /* nfs41_op_destroy_session_Free */
+  return;
+}				/* nfs41_op_destroy_session_Free */

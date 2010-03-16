@@ -94,7 +94,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -123,7 +123,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-
 /**
  *
  * nfs41_op_set_ssv: the NFS4_OP_SET_SSV operation
@@ -139,20 +138,18 @@
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
  *
- */ 
-int nfs41_op_set_ssv(  struct nfs_argop4 * op ,   
-                        compound_data_t   * data,
-                        struct nfs_resop4 * resp)
+ */
+int nfs41_op_set_ssv(struct nfs_argop4 *op,
+		     compound_data_t * data, struct nfs_resop4 *resp)
 {
 #define arg_SET_SSV4  op->nfs_argop4_u.opset_ssv
 #define res_SET_SSV4  resp->nfs_resop4_u.opset_ssv
 
-  resp->resop = NFS4_OP_SET_SSV ;
-  res_SET_SSV4.ssr_status = NFS4_OK ;
+  resp->resop = NFS4_OP_SET_SSV;
+  res_SET_SSV4.ssr_status = NFS4_OK;
 
-  return res_SET_SSV4.ssr_status ; /* I know this is pretty dirty... But this is an early implementation... */
-} /* nfs41_op_set_ssv */
-
+  return res_SET_SSV4.ssr_status;	/* I know this is pretty dirty... But this is an early implementation... */
+}				/* nfs41_op_set_ssv */
 
 /**
  * nfs41_op_set_ssv_Free: frees what was allocared to handle nfs41_op_set_ssv.
@@ -164,8 +161,8 @@ int nfs41_op_set_ssv(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs41_op_set_ssv_Free( SET_SSV4res * resp )
+void nfs41_op_set_ssv_Free(SET_SSV4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_set_ssv_Free */
+  return;
+}				/* nfs4_op_set_ssv_Free */

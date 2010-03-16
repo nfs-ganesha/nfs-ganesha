@@ -113,40 +113,29 @@
  * @param pstatus [OUT] returned status.
  */
 
-cache_entry_t * cache_inode_make_root( cache_inode_fsal_data_t * pfsdata, 
-                                       hash_table_t            * ht,  
-                                       cache_inode_client_t    * pclient, 
-                                       fsal_op_context_t       * pcontext, 
-                                       cache_inode_status_t    * pstatus )
+cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
+				     hash_table_t * ht,
+				     cache_inode_client_t * pclient,
+				     fsal_op_context_t * pcontext,
+				     cache_inode_status_t * pstatus)
 {
-  cache_entry_t * pentry = NULL ;
+  cache_entry_t *pentry = NULL;
 
   /* sanity check */
-  if( pstatus == NULL ) 
-	return NULL ;
- 
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
+  if (pstatus == NULL)
+    return NULL;
 
+  /* Set the return default to CACHE_INODE_SUCCESS */
+  *pstatus = CACHE_INODE_SUCCESS;
 
   /* BUGAZOMEU: gestion de junctions, : peut etre pas correct de faire pointer root sur lui meme */
-  if( ( pentry = cache_inode_new_entry( pfsdata, 
-                                        NULL, 
-                                        DIR_BEGINNING, 
-                                        NULL, 
-                                        NULL,
-                                        ht, 
-                                        pclient,
-                                        pcontext,
-					FALSE, /* This is a population, not a creation */
-                                        pstatus ) ) != NULL )
+  if ((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,	/* This is a population, not a creation */
+				      pstatus)) != NULL)
     {
       /* /!\ root is it own ".." */
-      pentry->parent_list->parent = pentry ; 
+      pentry->parent_list->parent = pentry;
 
     }
-  
-  return pentry ;
-} /* cache_inode_make_root */
 
-                                
+  return pentry;
+}				/* cache_inode_make_root */

@@ -92,17 +92,16 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #ifndef _FREEBSD
 #include <netinet/tcp.h>
-#endif /* _FREEBSD */
+#endif				/* _FREEBSD */
 #include <sys/types.h>
-#include <ctype.h>  /* for having isalnum */
-#include <stdlib.h> /* for having atoi */
-#include <dirent.h> /* for having MAXNAMLEN */
+#include <ctype.h>		/* for having isalnum */
+#include <stdlib.h>		/* for having atoi */
+#include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -111,7 +110,7 @@
 #include <sys/poll.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include <pwd.h>
 
 #include <grp.h>
@@ -127,7 +126,7 @@
 
 #include "log_functions.h"
 #include "stuff_alloc.h"
-#include "nfs_core.h" 
+#include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
@@ -135,48 +134,45 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-struct tcp_conn {  /* kept in xprt->xp_p1 */
-        enum xprt_stat strm_stat;
-        u_long x_id;
-        XDR xdrs;
-        char verf_body[MAX_AUTH_BYTES];
+struct tcp_conn {		/* kept in xprt->xp_p1 */
+  enum xprt_stat strm_stat;
+  u_long x_id;
+  XDR xdrs;
+  char verf_body[MAX_AUTH_BYTES];
 };
 
-
-
-unsigned long decimal_simple_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
+				       hash_buffer_t * buffclef)
 {
-  printf( "ATTENTION: APPEL D'UNE DUMMY FUNCTION\n" ) ;
-  return 0 ;
+  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  return 0;
 }
 
-unsigned long decimal_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
-  printf( "ATTENTION: APPEL D'UNE DUMMY FUNCTION\n" ) ;
-  return 0 ;
+  printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
+  return 0;
 }
 
-int display_cache( hash_buffer_t * pbuff, char * str ) 
+int display_cache(hash_buffer_t * pbuff, char *str)
 {
-  return 0 ;
+  return 0;
 }
 
-int compare_cache(  hash_buffer_t * buff1, hash_buffer_t * buff2 ) 
+int compare_cache(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return 0 ;
+  return 0;
 }
 
-int print_cache( LRU_data_t data, char *str ) 
+int print_cache(LRU_data_t data, char *str)
 {
-  return 0 ;
+  return 0;
 }
 
-int clean_cache(  LRU_entry_t * pentry, void * addparam ) 
+int clean_cache(LRU_entry_t * pentry, void *addparam)
 {
-  return 0 ;
-} /* clean_cache */
-
-
+  return 0;
+}				/* clean_cache */
 
 /**
  * 
@@ -190,10 +186,10 @@ int clean_cache(  LRU_entry_t * pentry, void * addparam )
  * @return the length of the computed string of -1 if failed.
  *
  */
-int lru_inode_entry_to_str( LRU_data_t data, char * str)
+int lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
-  return sprintf( str, "N/A " ) ;
-} /* lru_inode_entry_to_str */
+  return sprintf(str, "N/A ");
+}				/* lru_inode_entry_to_str */
 
 /**
  *
@@ -207,11 +203,10 @@ int lru_inode_entry_to_str( LRU_data_t data, char * str)
  * @return the length of the computed string of -1 if failed.
  *
  */
-int lru_data_entry_to_str( LRU_data_t data, char * str)
+int lru_data_entry_to_str(LRU_data_t data, char *str)
 {
-  return sprintf( str, "addr=%p,len=%llu ", data.pdata, (unsigned long long)data.len ) ;
-} /* lru_data_entry_to_str */
-
+  return sprintf(str, "addr=%p,len=%llu ", data.pdata, (unsigned long long)data.len);
+}				/* lru_data_entry_to_str */
 
 /**
  *
@@ -225,10 +220,10 @@ int lru_data_entry_to_str( LRU_data_t data, char * str)
  * @return 0 if successful, other values show an error.
  *
  */
-int lru_inode_clean_entry( LRU_entry_t * entry, void * adddata)
+int lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 {
-  return 0 ;
-} /* lru_inode_clean_entry */
+  return 0;
+}				/* lru_inode_clean_entry */
 
 /**
  *
@@ -242,30 +237,27 @@ int lru_inode_clean_entry( LRU_entry_t * entry, void * adddata)
  * @return 0 if successful, other values show an error.
  *
  */
-int lru_data_clean_entry( LRU_entry_t * entry, void * adddata)
+int lru_data_clean_entry(LRU_entry_t * entry, void *adddata)
 {
-  return 0 ;
-} /* lru_data_clean_entry */
+  return 0;
+}				/* lru_data_clean_entry */
 
-
-void socket_setoptions(int socketFd )
+void socket_setoptions(int socketFd)
 {
-  unsigned int SbMax = (1<<30) ;  /* 1GB*/
+  unsigned int SbMax = (1 << 30);	/* 1GB */
 
-
-  while (SbMax > 1048576 )
+  while (SbMax > 1048576)
     {
-      if ((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof( SbMax ) ) < 0 ) ||
-          (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof( SbMax ) ) < 0 ) )
-        {
-          SbMax >>= 1; /* SbMax = SbMax/2 */
-          continue;
-        }
+      if ((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof(SbMax)) < 0)
+	  || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
+	      0))
+	{
+	  SbMax >>= 1;		/* SbMax = SbMax/2 */
+	  continue;
+	}
 
       break;
     }
 
   return;
-} /* socket_setoptions_ctrl */
-
-
+}				/* socket_setoptions_ctrl */

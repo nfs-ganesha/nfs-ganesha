@@ -85,23 +85,22 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>  /* for having isalnum */
-#include <stdlib.h> /* for having atoi */
-#include <dirent.h> /* for having MAXNAMLEN */
+#include <ctype.h>		/* for having isalnum */
+#include <stdlib.h>		/* for having atoi */
+#include <dirent.h>		/* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 
@@ -119,7 +118,7 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log_functions.h"
-#include "nfs_core.h" 
+#include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
@@ -129,15 +128,15 @@
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
 
-extern nfs_parameter_t     nfs_param ;
-extern nfs_function_desc_t nfs2_func_desc[] ;
-extern nfs_function_desc_t nfs3_func_desc[] ;
-extern nfs_function_desc_t nfs4_func_desc[] ;
-extern nfs_function_desc_t mnt1_func_desc[] ;
-extern nfs_function_desc_t mnt3_func_desc[] ;
+extern nfs_parameter_t nfs_param;
+extern nfs_function_desc_t nfs2_func_desc[];
+extern nfs_function_desc_t nfs3_func_desc[];
+extern nfs_function_desc_t nfs4_func_desc[];
+extern nfs_function_desc_t mnt1_func_desc[];
+extern nfs_function_desc_t mnt3_func_desc[];
 
 /* Structure used for duplicated request cache */
-hash_table_t * ht_dupreq ;
+hash_table_t *ht_dupreq;
 
 /**
  * 
@@ -155,43 +154,40 @@ hash_table_t * ht_dupreq ;
  *
  */
 
-unsigned int get_rpc_xid(struct svc_req * reqp)
+unsigned int get_rpc_xid(struct svc_req *reqp)
 {
   /* RPC Xid is used for RPC Reply cache. With UDP connection, the xid is in an opaque structure
    * stored in xprt->xp_p2, but with TCP connection, the xid is in another opaque structure stored
    * in xprt->xp_p1. xp_p2 and xp_p1 are mutually exclusive. The opaque structure are well defined in
    * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
    * the structures are defined here */
-  
-  struct udp_private2__
-  {   /* kept in xprt->xp_p2 */
-    int             up_unused;
-    u_long          up_xid;
+
+  struct udp_private2__ {	/* kept in xprt->xp_p2 */
+    int up_unused;
+    u_long up_xid;
   };
-  
-  struct tcp_conn2__
-  {  /* kept in xprt->xp_p1 */
+
+  struct tcp_conn2__ {		/* kept in xprt->xp_p1 */
     enum xprt_stat strm_stat;
     u_long x_id;
     XDR xdrs;
     char verf_body[MAX_AUTH_BYTES];
   };
-  
-  unsigned int  Xid ;
-  
-  /* Map the xp1 and xp2 field to the udp and tcp private structures */
-  struct tcp_conn2__ *ptcpxp =  (struct tcp_conn2__ *)(reqp->rq_xprt->xp_p1) ;
-  struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2) ;
-  
-  /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
-  if( reqp->rq_xprt->xp_p2 != NULL )
-    Xid = pudpxp->up_xid ;  /* UDP XID */
-  else
-    Xid = ptcpxp->x_id ;    /* TCP XID */
-  
-  return Xid ;
-}/* get_rpc_xid */
 
+  unsigned int Xid;
+
+  /* Map the xp1 and xp2 field to the udp and tcp private structures */
+  struct tcp_conn2__ *ptcpxp = (struct tcp_conn2__ *)(reqp->rq_xprt->xp_p1);
+  struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2);
+
+  /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
+  if (reqp->rq_xprt->xp_p2 != NULL)
+    Xid = pudpxp->up_xid;	/* UDP XID */
+    else
+    Xid = ptcpxp->x_id;		/* TCP XID */
+
+  return Xid;
+}				/* get_rpc_xid */
 
 /**
  *
@@ -205,12 +201,11 @@ unsigned int get_rpc_xid(struct svc_req * reqp)
  * @return 0 if ok, other values mean an error.
  *
  */
-int print_entry_dupreq( LRU_data_t data, char *str ) 
+int print_entry_dupreq(LRU_data_t data, char *str)
 {
-  strcpy( str, "" ) ;
-  return 0 ;
+  strcpy(str, "");
+  return 0;
 }
-
 
 /**
  *
@@ -224,87 +219,87 @@ int print_entry_dupreq( LRU_data_t data, char *str )
  * @return 0 if ok, other values mean an error.
  *
  */
-int clean_entry_dupreq(  LRU_entry_t * pentry, void * addparam ) 
+int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 {
-  hash_buffer_t            buffkey ;
-  nfs_function_desc_t      funcdesc ;
-  dupreq_entry_t        ** dupreq_pool = (dupreq_entry_t **)addparam ;
-  dupreq_entry_t        *  pdupreq     = (dupreq_entry_t *)(pentry->buffdata.pdata) ;
+  hash_buffer_t buffkey;
+  nfs_function_desc_t funcdesc;
+  dupreq_entry_t **dupreq_pool = (dupreq_entry_t **) addparam;
+  dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
   int rc;
-  
+
   /* Removing entry in the hash */
-  buffkey.pdata = (caddr_t)pdupreq->xid ;
-  buffkey.len = 0 ;
-  
-#ifdef _DEBUG_DUPREQ  
-  DisplayLog( "NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid ) ;
+  buffkey.pdata = (caddr_t) pdupreq->xid;
+  buffkey.len = 0;
+
+#ifdef _DEBUG_DUPREQ
+  DisplayLog("NFS DUPREQ: Garbage collection on xid=%u", pdupreq->xid);
 #endif
 
-  rc = HashTable_Del( ht_dupreq, &buffkey, NULL, NULL );
+  rc = HashTable_Del(ht_dupreq, &buffkey, NULL, NULL);
 
-  /* if hashtable no such key => dupreq garbaged by another thread */  
-  if ( rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_NO_SUCH_KEY )
-    return 1 ; /* Error while cleaning */
-  else if ( rc == HASHTABLE_ERROR_NO_SUCH_KEY )
-    return 0; /* don't free the dupreq twice */
+  /* if hashtable no such key => dupreq garbaged by another thread */
+  if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_NO_SUCH_KEY)
+    return 1;			/* Error while cleaning */
+  else if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
+    return 0;			/* don't free the dupreq twice */
 
   /* Locate the function descriptor associated with this cached request */
-  if( pdupreq->rq_prog  == nfs_param.core_param.nfs_program )
+  if (pdupreq->rq_prog == nfs_param.core_param.nfs_program)
     {
-      switch( pdupreq->rq_vers )
-        {
-        case NFS_V2:
-          funcdesc = nfs2_func_desc[pdupreq->rq_proc] ;
-          break ;
-          
-        case NFS_V3:
-          funcdesc = nfs3_func_desc[pdupreq->rq_proc] ;
-          break ;
-          
-        case NFS_V4:
-          funcdesc = nfs4_func_desc[pdupreq->rq_proc] ;
-          break ;
-          
-        default:
-          /* We should never go there (this situation is filtered in nfs_rpc_getreq) */ 
-          DisplayLog( "NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc", pdupreq->rq_vers ) ;
-	  funcdesc = nfs2_func_desc[0] ; /* free function for PROC_NULL does nothing */
-          break ;
-        }
+      switch (pdupreq->rq_vers)
+	{
+	case NFS_V2:
+	  funcdesc = nfs2_func_desc[pdupreq->rq_proc];
+	  break;
+
+	case NFS_V3:
+	  funcdesc = nfs3_func_desc[pdupreq->rq_proc];
+	  break;
+
+	case NFS_V4:
+	  funcdesc = nfs4_func_desc[pdupreq->rq_proc];
+	  break;
+
+	default:
+	  /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
+	  DisplayLog("NFS DUPREQ: NFS Protocol version %d unknown in dupreq_gc",
+		     pdupreq->rq_vers);
+	  funcdesc = nfs2_func_desc[0];	/* free function for PROC_NULL does nothing */
+	  break;
+	}
+  } else if (pdupreq->rq_prog == nfs_param.core_param.mnt_program)
+    {
+      switch (pdupreq->rq_vers)
+	{
+	case MOUNT_V1:
+	  funcdesc = mnt1_func_desc[pdupreq->rq_proc];
+	  break;
+
+	case MOUNT_V3:
+	  funcdesc = mnt3_func_desc[pdupreq->rq_proc];
+	  break;
+
+	default:
+	  /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
+	  DisplayLog("NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc",
+		     pdupreq->rq_vers);
+	  break;
+
+	}			/* switch( ptr_req->vers ) */
+    } else
+    {
+      /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
+      DisplayLog("NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog);
     }
-  else if( pdupreq->rq_prog == nfs_param.core_param.mnt_program )
-    {
-      switch( pdupreq->rq_vers )
-        {
-        case MOUNT_V1:
-          funcdesc = mnt1_func_desc[pdupreq->rq_proc] ;
-          break ;
-          
-        case MOUNT_V3:
-          funcdesc = mnt3_func_desc[pdupreq->rq_proc] ;
-          break ;
-          
-        default:
-          /* We should never go there (this situation is filtered in nfs_rpc_getreq) */ 
-          DisplayLog( "NFS DUPREQ: MOUNT Protocol version %d unknown in dupreq_gc", pdupreq->rq_vers ) ;
-          break ;
-          
-        } /* switch( ptr_req->vers ) */
-    }
-  else
-    {
-      /* We should never go there (this situation is filtered in nfs_rpc_getreq) */ 
-      DisplayLog( "NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog ) ;
-    } 
 
   /* Call the free function */
-  funcdesc.free_function( &(pdupreq->res_nfs) ) ;
+  funcdesc.free_function(&(pdupreq->res_nfs));
 
   /* Send the entry back to the pool */
-  RELEASE_PREALLOC( pdupreq, *dupreq_pool, next_alloc ) ;
-    
-  return 0 ;
-} /* clean_entry_dupreq */
+  RELEASE_PREALLOC(pdupreq, *dupreq_pool, next_alloc);
+
+  return 0;
+}				/* clean_entry_dupreq */
 
 /**
  *
@@ -321,10 +316,11 @@ int clean_entry_dupreq(  LRU_entry_t * pentry, void * addparam )
  * @see HashTable_Init
  *
  */
-unsigned long dupreq_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
+				     hash_buffer_t * buffclef)
 {
-  return (unsigned long)(buffclef->pdata) % p_hparam->index_size ;
-} /*  dupreq_value_hash_func */
+  return (unsigned long)(buffclef->pdata) % p_hparam->index_size;
+}				/*  dupreq_value_hash_func */
 
 /**
  *
@@ -342,11 +338,11 @@ unsigned long dupreq_value_hash_func( hash_parameter_t * p_hparam, hash_buffer_t
  * @see HashTable_Init
  *
  */
-unsigned long dupreq_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t * buffclef ) 
+unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   /* We use the Xid as the rbt value */
-  return (unsigned long)(buffclef->pdata) ;
-} /* dupreq_rbt_hash_func */
+  return (unsigned long)(buffclef->pdata);
+}				/* dupreq_rbt_hash_func */
 
 /**
  *
@@ -361,12 +357,12 @@ unsigned long dupreq_rbt_hash_func( hash_parameter_t * p_hparam, hash_buffer_t *
  * @return 0 if keys are identifical, 1 if they are different. 
  *
  */
-int  compare_xid(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
+int compare_xid(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  long xid1 = (long)(buff1->pdata) ;
-  long xid2 = (long)(buff2->pdata) ;
-  return (xid1 == xid2)?0:1 ;
-} /* compare_xid */
+  long xid1 = (long)(buff1->pdata);
+  long xid2 = (long)(buff2->pdata);
+  return (xid1 == xid2) ? 0 : 1;
+}				/* compare_xid */
 
 /**
  *
@@ -381,11 +377,11 @@ int  compare_xid(  hash_buffer_t * buff1, hash_buffer_t * buff2 )
  * @return number of character written.
  *
  */
-int display_xid( hash_buffer_t * pbuff, char * str ) 
+int display_xid(hash_buffer_t * pbuff, char *str)
 {
-  long xid  = (long)(pbuff->pdata) ;
-  
-  return sprintf( str, "%lX", xid ) ;
+  long xid = (long)(pbuff->pdata);
+
+  return sprintf(str, "%lX", xid);
 }
 
 /**
@@ -399,17 +395,16 @@ int display_xid( hash_buffer_t * pbuff, char * str )
  * @return 0 if successful, -1 otherwise
  *
  */
-int nfs_Init_dupreq( nfs_rpc_dupreq_parameter_t param ) 
-{ 
-  if( ( ht_dupreq = HashTable_Init( param.hash_param  ) ) == NULL )
+int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
+{
+  if ((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
     {
-      DisplayLog( "NFS DUPREQ: Cannot init the duplicate request hash table" ) ;
-      return -1 ;
+      DisplayLog("NFS DUPREQ: Cannot init the duplicate request hash table");
+      return -1;
     }
 
   return DUPREQ_SUCCESS;
-} /* nfs_Init_dupreq */
-
+}				/* nfs_Init_dupreq */
 
 /**
  *
@@ -425,67 +420,64 @@ int nfs_Init_dupreq( nfs_rpc_dupreq_parameter_t param )
  *
  */
 
-int nfs_dupreq_add( long              xid, 
-		    struct svc_req  * ptr_req ,
-                    nfs_res_t       * p_res_nfs,
-                    LRU_list_t      * lru_dupreq,
-                    dupreq_entry_t ** p_dupreq_pool )
+int nfs_dupreq_add(long xid,
+		   struct svc_req *ptr_req,
+		   nfs_res_t * p_res_nfs,
+		   LRU_list_t * lru_dupreq, dupreq_entry_t ** p_dupreq_pool)
 {
-  hash_buffer_t    buffkey  ;
-  hash_buffer_t    buffdata ;
-  dupreq_entry_t * pdupreq  = NULL ;
-  LRU_entry_t    * pentry   = NULL ;
-  LRU_status_t     lru_status ;
+  hash_buffer_t buffkey;
+  hash_buffer_t buffdata;
+  dupreq_entry_t *pdupreq = NULL;
+  LRU_entry_t *pentry = NULL;
+  LRU_status_t lru_status;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "dupreq_entry_t" ) ;
+  BuddySetDebugLabel("dupreq_entry_t");
 #endif
 
   /* Entry to be cached */
-  GET_PREALLOC( pdupreq, 
-                (*p_dupreq_pool), 
-                nfs_param.worker_param.nb_dupreq_prealloc, 
-                dupreq_entry_t, 
-                next_alloc ) ;
-  
-  if( pdupreq == NULL ) 
-    return DUPREQ_INSERT_MALLOC_ERROR ;
+  GET_PREALLOC(pdupreq,
+	       (*p_dupreq_pool),
+	       nfs_param.worker_param.nb_dupreq_prealloc, dupreq_entry_t, next_alloc);
+
+  if (pdupreq == NULL)
+    return DUPREQ_INSERT_MALLOC_ERROR;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
+  BuddySetDebugLabel("N/A");
 #endif
-  
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t)xid ; 
-  buffkey.len = 0 ;
-    
-  /* I build the data with the request pointer that should be in state 'IN USE' */
-  pdupreq->xid = xid ;
-  pdupreq->res_nfs = *p_res_nfs ;
-  pdupreq->rq_prog = ptr_req->rq_prog ;
-  pdupreq->rq_vers = ptr_req->rq_vers ;
-  pdupreq->rq_proc = ptr_req->rq_proc ;
-  pdupreq->timestamp = time( NULL ) ;
-  
-  buffdata.pdata = (caddr_t)pdupreq ;
-  buffdata.len = sizeof( dupreq_entry_t ) ;
+  buffkey.pdata = (caddr_t) xid;
+  buffkey.len = 0;
 
-  if( HashTable_Set( ht_dupreq, &buffkey, &buffdata ) != HASHTABLE_SUCCESS )
-      return DUPREQ_INSERT_MALLOC_ERROR ;
-  
+  /* I build the data with the request pointer that should be in state 'IN USE' */
+  pdupreq->xid = xid;
+  pdupreq->res_nfs = *p_res_nfs;
+  pdupreq->rq_prog = ptr_req->rq_prog;
+  pdupreq->rq_vers = ptr_req->rq_vers;
+  pdupreq->rq_proc = ptr_req->rq_proc;
+  pdupreq->timestamp = time(NULL);
+
+  buffdata.pdata = (caddr_t) pdupreq;
+  buffdata.len = sizeof(dupreq_entry_t);
+
+  if (HashTable_Set(ht_dupreq, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
+    return DUPREQ_INSERT_MALLOC_ERROR;
+
   /* Add it to lru list */
-  if( ( pentry = LRU_new_entry( lru_dupreq, &lru_status ) ) == NULL )
-    return DUPREQ_INSERT_MALLOC_ERROR ;
-  
+  if ((pentry = LRU_new_entry(lru_dupreq, &lru_status)) == NULL)
+    return DUPREQ_INSERT_MALLOC_ERROR;
+
   /* I keep track of the xid too */
-  pentry->buffdata.pdata = (caddr_t)pdupreq ;
-  pentry->buffdata.len = sizeof( dupreq_entry_t ) ;
-  
-  return DUPREQ_SUCCESS ; 
-} /* nfs_dupreq_add */
+  pentry->buffdata.pdata = (caddr_t) pdupreq;
+  pentry->buffdata.len = sizeof(dupreq_entry_t);
+
+  return DUPREQ_SUCCESS;
+}				/* nfs_dupreq_add */
 
 /**
  *
@@ -499,32 +491,31 @@ int nfs_dupreq_add( long              xid,
  * @return the result previously set if *pstatus == DUPREQ_SUCCESS
  *
  */
-nfs_res_t nfs_dupreq_get( long xid, int * pstatus )
+nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
 {
-  hash_buffer_t        buffkey ;
-  hash_buffer_t        buffval ;
-  nfs_res_t            res_nfs ;
-  
-  buffkey.pdata = (caddr_t)xid ;
-  buffkey.len = 0 ;
-    
-  if( HashTable_Get( ht_dupreq, &buffkey, &buffval ) == HASHTABLE_SUCCESS )
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  nfs_res_t res_nfs;
+
+  buffkey.pdata = (caddr_t) xid;
+  buffkey.len = 0;
+
+  if (HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
       /* reset timestamp */
-      ((dupreq_entry_t *)buffval.pdata)->timestamp = time( NULL ) ;
+      ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
 
-      pstatus = DUPREQ_SUCCESS ;
-      res_nfs = ((dupreq_entry_t *)buffval.pdata)->res_nfs ;
-#ifdef _DEBUG_DUPREQ    
-      DisplayLog( "NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid ) ;
+      pstatus = DUPREQ_SUCCESS;
+      res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
+#ifdef _DEBUG_DUPREQ
+      DisplayLog("NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
 #endif
-    }
-  else
-     {
-       *pstatus = DUPREQ_NOT_FOUND ;
+    } else
+    {
+      *pstatus = DUPREQ_NOT_FOUND;
     }
   return res_nfs;
-} /* nfs_dupreq_get */
+}				/* nfs_dupreq_get */
 
 /**
  *
@@ -540,19 +531,18 @@ nfs_res_t nfs_dupreq_get( long xid, int * pstatus )
  * @see LRU_gc_invalid
  *
  */
-int nfs_dupreq_gc_function( LRU_entry_t * pentry, void * addparam )
+int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam)
 {
-  dupreq_entry_t * pdupreq = NULL ;
-  
-  pdupreq = (dupreq_entry_t *)(pentry->buffdata.pdata) ;
-  
-  /* Test if entry is expired */
-  if( time( NULL ) -  pdupreq->timestamp > nfs_param.core_param.expiration_dupreq )
-    return LRU_LIST_SET_INVALID ;
-  
-  return LRU_LIST_DO_NOT_SET_INVALID ;
-} /* nfs_dupreq_fc_function */
+  dupreq_entry_t *pdupreq = NULL;
 
+  pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
+
+  /* Test if entry is expired */
+  if (time(NULL) - pdupreq->timestamp > nfs_param.core_param.expiration_dupreq)
+    return LRU_LIST_SET_INVALID;
+
+  return LRU_LIST_DO_NOT_SET_INVALID;
+}				/* nfs_dupreq_fc_function */
 
 /**
  *
@@ -567,7 +557,7 @@ int nfs_dupreq_gc_function( LRU_entry_t * pentry, void * addparam )
  * @see HashTable_GetStats
  *
  */
-void nfs_dupreq_get_stats( hash_stat_t * phstat )
+void nfs_dupreq_get_stats(hash_stat_t * phstat)
 {
-  HashTable_GetStats( ht_dupreq, phstat ) ;
-} /* nfs_dupreq_get_stats */
+  HashTable_GetStats(ht_dupreq, phstat);
+}				/* nfs_dupreq_get_stats */

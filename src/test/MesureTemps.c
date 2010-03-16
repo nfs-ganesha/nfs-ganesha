@@ -95,73 +95,69 @@
 
 void MesureTemps(struct Temps *resultatp, struct Temps *basep)
 {
- struct timeval t;
+  struct timeval t;
 
- gettimeofday(&t, NULL);
- if (basep == NULL)
- {
-  resultatp->secondes = t.tv_sec;
-  resultatp->micro_secondes = t.tv_usec;
- }
- else
- {
-  long tempo;
+  gettimeofday(&t, NULL);
+  if (basep == NULL)
+    {
+      resultatp->secondes = t.tv_sec;
+      resultatp->micro_secondes = t.tv_usec;
+    } else
+    {
+      long tempo;
 
-  resultatp->secondes = t.tv_sec - basep->secondes;
-  if ((tempo = t.tv_usec - basep->micro_secondes) < 0)
-  {
-   resultatp->secondes--;
-   resultatp->micro_secondes = tempo + 1000000;
-  }
-  else
-  {
-   resultatp->micro_secondes = tempo;
-  }
- }
+      resultatp->secondes = t.tv_sec - basep->secondes;
+      if ((tempo = t.tv_usec - basep->micro_secondes) < 0)
+	{
+	  resultatp->secondes--;
+	  resultatp->micro_secondes = tempo + 1000000;
+	} else
+	{
+	  resultatp->micro_secondes = tempo;
+	}
+    }
 }
 
-char *ConvertiTempsChaine(struct Temps temps, char* resultat)
+char *ConvertiTempsChaine(struct Temps temps, char *resultat)
 {
- static char chaine[100];
- char *ptr;
+  static char chaine[100];
+  char *ptr;
 
- if (resultat == NULL)
- {
-  ptr = chaine;
- }
- else
- {
-  ptr = resultat;
- }
- sprintf(ptr, "%u.%.6llu", (unsigned int)temps.secondes, (unsigned long long)temps.micro_secondes);
- return(ptr);
+  if (resultat == NULL)
+    {
+      ptr = chaine;
+    } else
+    {
+      ptr = resultat;
+    }
+  sprintf(ptr, "%u.%.6llu", (unsigned int)temps.secondes,
+	  (unsigned long long)temps.micro_secondes);
+  return (ptr);
 }
 
-struct Temps *ConvertiChaineTemps(char *chaine,  struct Temps *resultatp)
+struct Temps *ConvertiChaineTemps(char *chaine, struct Temps *resultatp)
 {
- static struct Temps temps;
- struct Temps *tp;
- char *ptr;
+  static struct Temps temps;
+  struct Temps *tp;
+  char *ptr;
 
- if (resultatp == NULL)
- {
-  tp = &temps;
- }
- else
- {
-  tp = resultatp;
- }
- ptr = strchr(chaine, '.');
- if (ptr == NULL)
- {
-  tp->secondes = atoi(chaine);
-  tp->micro_secondes = 0;
- }
- else
- {
-  *ptr = '\0';
-  tp->secondes = atoi(chaine);
-  tp->micro_secondes = atoi(ptr+1);
- }
- return(tp);
+  if (resultatp == NULL)
+    {
+      tp = &temps;
+    } else
+    {
+      tp = resultatp;
+    }
+  ptr = strchr(chaine, '.');
+  if (ptr == NULL)
+    {
+      tp->secondes = atoi(chaine);
+      tp->micro_secondes = 0;
+    } else
+    {
+      *ptr = '\0';
+      tp->secondes = atoi(chaine);
+      tp->micro_secondes = atoi(ptr + 1);
+    }
+  return (tp);
 }

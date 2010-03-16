@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,8 +124,8 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-#define arg_PUTFH4 op->nfs_argop4_u.opputfh  
-#define res_PUTFH4 resp->nfs_resop4_u.opputfh 
+#define arg_PUTFH4 op->nfs_argop4_u.opputfh
+#define res_PUTFH4 resp->nfs_resop4_u.opputfh
 
 /**
  *
@@ -144,124 +144,118 @@
  *
  */
 
-int nfs4_op_putfh(  struct nfs_argop4 * op ,   
-                    compound_data_t   * data,
-                    struct nfs_resop4 * resp)
+int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int                rc ;
-  int                error  ;
-  fsal_attrib_list_t attr ;
+  int rc;
+  int error;
+  fsal_attrib_list_t attr;
 #ifdef _DEBUG_NFS_V4
-  char               outstr[1024] ;
+  char outstr[1024];
 #endif
-  char               __attribute__(( __unused__ )) funcname[] = "nfs4_op_putfh" ;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
 
-
-  resp->resop = NFS4_OP_PUTFH ;
-  res_PUTFH4.status = NFS4_OK ;
+  resp->resop = NFS4_OP_PUTFH;
+  res_PUTFH4.status = NFS4_OK;
 
   /* If there is no FH */
-  if( nfs4_Is_Fh_Empty( &(arg_PUTFH4.object) ) )
+  if (nfs4_Is_Fh_Empty(&(arg_PUTFH4.object)))
     {
-      res_PUTFH4.status = NFS4ERR_NOFILEHANDLE ;
-      return res_PUTFH4.status ;
+      res_PUTFH4.status = NFS4ERR_NOFILEHANDLE;
+      return res_PUTFH4.status;
     }
-  
+
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(arg_PUTFH4.object) ) )
+  if (nfs4_Is_Fh_Invalid(&(arg_PUTFH4.object)))
     {
-      res_PUTFH4.status = NFS4ERR_BADHANDLE ;
-      return res_PUTFH4.status ;
+      res_PUTFH4.status = NFS4ERR_BADHANDLE;
+      return res_PUTFH4.status;
     }
-  
+
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(arg_PUTFH4.object) ) )
+  if (nfs4_Is_Fh_Expired(&(arg_PUTFH4.object)))
     {
-      res_PUTFH4.status = NFS4ERR_FHEXPIRED ;
-      return res_PUTFH4.status ;
+      res_PUTFH4.status = NFS4ERR_FHEXPIRED;
+      return res_PUTFH4.status;
     }
-  
+
   /* If no currentFH were set, allocate one */
-  if( data->currentFH.nfs_fh4_len == 0 )
+  if (data->currentFH.nfs_fh4_len == 0)
     {
-      if( ( error = nfs4_AllocateFH( &(data->currentFH) ) ) != NFS4_OK )
-        {
-          res_PUTFH4.status = error ;
-          return res_PUTFH4.status ;
-        }
+      if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
+	{
+	  res_PUTFH4.status = error;
+	  return res_PUTFH4.status;
+	}
     }
 
   /* The same is to be done with mounted_on_FH */
-  if( data->mounted_on_FH.nfs_fh4_len == 0 )
+  if (data->mounted_on_FH.nfs_fh4_len == 0)
     {
-      if( ( error = nfs4_AllocateFH( &(data->mounted_on_FH) ) ) != NFS4_OK )
-        {
-          res_PUTFH4.status = error ;
-          return res_PUTFH4.status ;
-        }
+      if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
+	{
+	  res_PUTFH4.status = error;
+	  return res_PUTFH4.status;
+	}
     }
 
-  
   /* Copy the filehandle from the reply structure */
-  data->currentFH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len ;
-  data->mounted_on_FH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len ;
+  data->currentFH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len;
+  data->mounted_on_FH.nfs_fh4_len = arg_PUTFH4.object.nfs_fh4_len;
 
   /* Put the data in place */
-  memcpy( data->currentFH.nfs_fh4_val,     arg_PUTFH4.object.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_len ) ;
-  memcpy( data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_len ) ;
-
+  memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
+	 arg_PUTFH4.object.nfs_fh4_len);
+  memcpy(data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
+	 arg_PUTFH4.object.nfs_fh4_len);
 
 #ifdef _DEBUG_NFS_V4
-  nfs4_sprint_fhandle( &arg_PUTFH4.object, outstr ) ;
-  DisplayLog( "NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr );
+  nfs4_sprint_fhandle(&arg_PUTFH4.object, outstr);
+  DisplayLog("NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
 #endif
   /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
-  if( nfs4_Is_Fh_Pseudo( &(data->currentFH) ) )
+  if (nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
-      data->current_entry = NULL ;
-      data->current_filetype = DIR_BEGINNING ;
-      data->pexport = NULL ; /* No exportlist is related to pseudo fs */
-    }
-  else
-    { 
+      data->current_entry = NULL;
+      data->current_filetype = DIR_BEGINNING;
+      data->pexport = NULL;	/* No exportlist is related to pseudo fs */
+    } else
+    {
       /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-      if( data->pexport == NULL )
-        {
-          if( ( error = nfs4_SetCompoundExport( data ) ) != NFS4_OK )
-            {
-              res_PUTFH4.status = error ;
-              return res_PUTFH4.status ;
-            }
-        }
-      
+      if (data->pexport == NULL)
+	{
+	  if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+	    {
+	      res_PUTFH4.status = error;
+	      return res_PUTFH4.status;
+	    }
+	}
+
       /* Build the pentry */
-      if( ( data->current_entry = nfs_FhandleToCache( NFS_V4, 
-                                                      NULL, 
-                                                      NULL, 
-                                                      &(data->currentFH),
-                                                      NULL,
-                                                      NULL,
-                                                      &(res_PUTFH4.status),
-                                                      &attr,
-                                                      data->pcontext, 
-                                                      data->pclient,
-                                                      data->ht, 
-                                                      &rc ) ) == NULL )
-      {
-          res_PUTFH4.status = NFS4ERR_BADHANDLE ;
-          return res_PUTFH4.status ;
-        }
+      if ((data->current_entry = nfs_FhandleToCache(NFS_V4,
+						    NULL,
+						    NULL,
+						    &(data->currentFH),
+						    NULL,
+						    NULL,
+						    &(res_PUTFH4.status),
+						    &attr,
+						    data->pcontext,
+						    data->pclient,
+						    data->ht, &rc)) == NULL)
+	{
+	  res_PUTFH4.status = NFS4ERR_BADHANDLE;
+	  return res_PUTFH4.status;
+	}
 
       /* Extract the filetype */
-      data->current_filetype = cache_inode_fsal_type_convert( attr.type ) ; 
-      
+      data->current_filetype = cache_inode_fsal_type_convert(attr.type);
+
     }
-  
+
   /* Trace */
 
-  return NFS4_OK ;
-} /* nfs4_op_putfh */
-
+  return NFS4_OK;
+}				/* nfs4_op_putfh */
 
 /**
  * nfs4_op_create_Free: frees what was allocared to handle nfs4_op_create.
@@ -273,9 +267,8 @@ int nfs4_op_putfh(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_putfh_Free( PUTFH4res * resp )
+void nfs4_op_putfh_Free(PUTFH4res * resp)
 {
   /* Nothing to be freed */
-  return ;
-} /* nfs4_op_create_Free */
-
+  return;
+}				/* nfs4_op_create_Free */

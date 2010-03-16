@@ -21,7 +21,6 @@
 
 #include <hpss_errno.h>
 
-
 /**
  * FSAL_truncate:
  * Modify the data length of a regular file.
@@ -49,72 +48,69 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(
-    fsal_handle_t         * filehandle,         /* IN */
-    fsal_op_context_t     * p_context,          /* IN */
-    fsal_size_t             length,             /* IN */
-    fsal_file_t           * file_descriptor,    /* Unused in this FSAL */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_size_t length,	/* IN */
+			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
   u_signed64 trunc_size;
-      
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !filehandle || !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_truncate);
-    
+  if (!filehandle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
+
   /* convert fsal_size_t to u_signed64 */
-  
-  trunc_size = fsal2hpss_64( length );
-  
+
+  trunc_size = fsal2hpss_64(length);
+
   /* check if it is a file */
-  
-  if ( filehandle->obj_type != FSAL_TYPE_FILE )
-  {
-    Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_truncate);
-  }
-  
-  /* Executes the HPSS truncate operation */
-  
-  TakeTokenFSCall();
-  
-  rc = hpss_TruncateHandle(
-          &(filehandle->ns_handle),  /* IN - handle of file or parent */
-          NULL,                      /* IN (handle addressing) */
-          trunc_size,                /* IN - new file length */
-         &(p_context->credential.hpss_usercred)      /* IN - pointer to user's credentials */
-       );
 
-  ReleaseTokenFSCall();
-  
-  /* The HPSS_ENOENT error actually means that handle is STALE */
-  if ( rc == HPSS_ENOENT )
-    Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_truncate );
-  else if (rc)
-    Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_truncate );
-
-  
-  /* Optionnaly retrieve attributes */
-  if( object_attributes ){
-    
-    fsal_status_t st;
-        
-    st = FSAL_getattrs( filehandle, p_context, object_attributes );
-    
-    if ( FSAL_IS_ERROR( st ) )
+  if (filehandle->obj_type != FSAL_TYPE_FILE)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
     }
 
-  }
-  
-  
+  /* Executes the HPSS truncate operation */
+
+  TakeTokenFSCall();
+
+  rc = hpss_TruncateHandle(&(filehandle->ns_handle),	/* IN - handle of file or parent */
+			   NULL,	/* IN (handle addressing) */
+			   trunc_size,	/* IN - new file length */
+			   &(p_context->credential.hpss_usercred)	/* IN - pointer to user's credentials */
+      );
+
+  ReleaseTokenFSCall();
+
+  /* The HPSS_ENOENT error actually means that handle is STALE */
+  if (rc == HPSS_ENOENT)
+    Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_truncate);
+  else if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_truncate);
+
+  /* Optionnaly retrieve attributes */
+  if (object_attributes)
+    {
+
+      fsal_status_t st;
+
+      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
+    }
+
   /* No error occured */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_truncate);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
+
 }

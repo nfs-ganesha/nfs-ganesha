@@ -18,7 +18,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-
 /**
  * FSAL_get_stats:
  * Retrieve call statistics for current thread.
@@ -30,17 +29,18 @@
  *
  * \return Nothing.
  */
- 
-void FSAL_get_stats(
-    fsal_statistics_t   * stats,    /* OUT */
-    fsal_boolean_t      reset       /* IN */
-){
+
+void FSAL_get_stats(fsal_statistics_t * stats,	/* OUT */
+		    fsal_boolean_t reset	/* IN */
+    )
+{
 
   /* sanity check. */
-  if ( !stats ) return;
-  
+  if (!stats)
+    return;
+
   /* returns stats for this thread. */
   fsal_internal_getstats(stats);
-  
-  return;  
+
+  return;
 }

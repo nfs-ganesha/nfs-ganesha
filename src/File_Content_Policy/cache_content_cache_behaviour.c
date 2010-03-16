@@ -38,7 +38,6 @@
 #include <pthread.h>
 #include <errno.h>
 
-
 /**
  *
  * cache_content_cache_behaviour: chooses if a file is to be cached in data cache or not, basec o the caching policy.
@@ -56,25 +55,27 @@
  *
  */
 
-cache_content_caching_type_t cache_content_cache_behaviour( cache_entry_t               * pentry_inode,
-                                                            cache_content_policy_data_t * ppolicy_data,
-                                                            cache_content_client_t      * pclient,
-                                                            cache_content_status_t      * pstatus ) 
+cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentry_inode,
+							   cache_content_policy_data_t *
+							   ppolicy_data,
+							   cache_content_client_t *
+							   pclient,
+							   cache_content_status_t *
+							   pstatus)
 {
-  *pstatus = CACHE_CONTENT_FULLY_CACHED ;
- 
-  if( pentry_inode->internal_md.type != REGULAR_FILE ) 
-   {
-      *pstatus = CACHE_CONTENT_INVALID_ARGUMENT ;
-      return *pstatus ;
-   }
- 
-  if( ppolicy_data->UseMaxCacheSize ) 
-   {
-     if( pentry_inode->object.file.attributes.filesize > ppolicy_data->MaxCacheSize )
-       *pstatus = CACHE_CONTENT_TOO_LARGE_FOR_CACHE ;
-   }
+  *pstatus = CACHE_CONTENT_FULLY_CACHED;
 
-  return *pstatus ;
-} /* cache_content_cache_behaviour */
+  if (pentry_inode->internal_md.type != REGULAR_FILE)
+    {
+      *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
+      return *pstatus;
+    }
 
+  if (ppolicy_data->UseMaxCacheSize)
+    {
+      if (pentry_inode->object.file.attributes.filesize > ppolicy_data->MaxCacheSize)
+	*pstatus = CACHE_CONTENT_TOO_LARGE_FOR_CACHE;
+    }
+
+  return *pstatus;
+}				/* cache_content_cache_behaviour */

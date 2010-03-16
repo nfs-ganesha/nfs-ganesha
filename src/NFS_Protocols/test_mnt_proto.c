@@ -94,8 +94,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
-#include <sys/socket.h> /* For getsockname */
+#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/socket.h>		/* For getsockname */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,191 +124,203 @@
 #include "nfs_tools.h"
 
 /* prints an export list */
-void print_export_list( exports export_list ){
+void print_export_list(exports export_list)
+{
 
   exports p_expnode = export_list;
-  
-  while( p_expnode ){
-   
-   groups p_group;
-     
-   printf("exportnode.ex_dir = \"%s\"\n",p_expnode->ex_dir);
-   printf("exportnode.ex_groups = {\n");
-   
-   p_group = p_expnode->ex_groups;
-   while(p_group){
-     printf("  \"%s\"\n",p_group->gr_name);
-     p_group = p_group->gr_next;
-   }
-   printf("}\n\n");
-    
-   p_expnode =  p_expnode->ex_next;
-  }
+
+  while (p_expnode)
+    {
+
+      groups p_group;
+
+      printf("exportnode.ex_dir = \"%s\"\n", p_expnode->ex_dir);
+      printf("exportnode.ex_groups = {\n");
+
+      p_group = p_expnode->ex_groups;
+      while (p_group)
+	{
+	  printf("  \"%s\"\n", p_group->gr_name);
+	  p_group = p_group->gr_next;
+	}
+      printf("}\n\n");
+
+      p_expnode = p_expnode->ex_next;
+    }
 
 }
 
 /* Test MNTPROC_NULL */
-int test_mnt_Null(){
+int test_mnt_Null()
+{
 
- int rc;
- 
- rc = mnt_Null( NULL,NULL,NULL,NULL,NULL,NULL,NULL);
- printf("MNTPROC_NULL()=%d\n",rc);
- 
- /* Must return MNT3_OK */
- if (rc == MNT3_OK) {
-   printf("TEST MNT_NULL : OK\n");
-   return 0;
- } else {
-   printf("TEST MNT_NULL : ERROR\n");
-   return rc;
- }
+  int rc;
+
+  rc = mnt_Null(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  printf("MNTPROC_NULL()=%d\n", rc);
+
+  /* Must return MNT3_OK */
+  if (rc == MNT3_OK)
+    {
+      printf("TEST MNT_NULL : OK\n");
+      return 0;
+    } else
+    {
+      printf("TEST MNT_NULL : ERROR\n");
+      return rc;
+    }
 }
 
 # define NB_EXPORT_ENTRIES 5
-int test_mnt_Export(){
-  
-  int rc,i;
+int test_mnt_Export()
+{
+
+  int rc, i;
   int error = 0;
-  struct addrinfo * p_tab;
-  exportlist_t  export_entries[NB_EXPORT_ENTRIES];
-  nfs_res_t     result;
+  struct addrinfo *p_tab;
+  exportlist_t export_entries[NB_EXPORT_ENTRIES];
+  nfs_res_t result;
   int mysock;
   unsigned long size;
   struct sockaddr_in in_addr;
   struct sockaddr_in addr;
 
-  
   /* TEST 1 : using a NULL export_list */
-  
-  rc=mnt_Export(NULL, NULL, NULL, NULL, NULL, NULL, &result);
+
+  rc = mnt_Export(NULL, NULL, NULL, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
-  printf("MNTPROC_EXPORT(NULL)=(%d,%p)\n",rc,result.res_mntexport );
-  
-  if ((rc == MNT3_OK)&&(result.res_mntexport==NULL)){
-    printf("TEST MNT_EXPORT : OK\n\n");
-  } else {
-    printf("TEST MNT_EXPORT : ERROR\n\n");
-    error++;
-  }
-  
-  
+  printf("MNTPROC_EXPORT(NULL)=(%d,%p)\n", rc, result.res_mntexport);
+
+  if ((rc == MNT3_OK) && (result.res_mntexport == NULL))
+    {
+      printf("TEST MNT_EXPORT : OK\n\n");
+    } else
+    {
+      printf("TEST MNT_EXPORT : ERROR\n\n");
+      error++;
+    }
+
   /* TEST 2 : MNT_EXPORT complex */
 
-      
-  if ((mysock = socket(PF_INET,SOCK_STREAM,0))==-1){
-    printf("socket ERROR %d : %s\n",errno,strerror(errno));
-  }
-  
-  in_addr.sin_family      = AF_INET ;
-  in_addr.sin_addr.s_addr = INADDR_ANY ;
-  in_addr.sin_port        = htons(5100)  ;
-  
-  if (bind( mysock, (struct sockaddr *)&in_addr, sizeof( in_addr ) ) == -1 ){
-    printf("bind ERROR %d : %s\n",errno,strerror(errno));
-  }
+  if ((mysock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+    {
+      printf("socket ERROR %d : %s\n", errno, strerror(errno));
+    }
+
+  in_addr.sin_family = AF_INET;
+  in_addr.sin_addr.s_addr = INADDR_ANY;
+  in_addr.sin_port = htons(5100);
+
+  if (bind(mysock, (struct sockaddr *)&in_addr, sizeof(in_addr)) == -1)
+    {
+      printf("bind ERROR %d : %s\n", errno, strerror(errno));
+    }
 
   size = sizeof(struct sockaddr);
-  if (getsockname(mysock,(struct sockaddr *) &addr,(socklen_t *)&size)==-1){
-    printf("getsockname ERROR %d : %s\n",errno,strerror(errno));
-  }
+  if (getsockname(mysock, (struct sockaddr *)&addr, (socklen_t *) & size) == -1)
+    {
+      printf("getsockname ERROR %d : %s\n", errno, strerror(errno));
+    }
   /* we don't use the resource, only its adress. */
   close(mysock);
-    
+
   /* Building an export list */
-  
-  for (i=0;i<NB_EXPORT_ENTRIES;i++){
-    
-    /* pour alleger les notations */
-    exportlist_client_entry_t p_cli[5];
-        
-    /* setting paths */
-    snprintf(export_entries[i].dirname,MAXPATHLEN,"/dirname-%d",i);
-    snprintf(export_entries[i].fsname,MAXPATHLEN,"/fsname-%d",i);
-    snprintf(export_entries[i].pseudopath,MAXPATHLEN,"/pseudopath-%d",i);
-    snprintf(export_entries[i].fullpath,MAXPATHLEN,"/fullpath-%d",i);
-    
-    /* linking to the next element. */
-    if ((i+1)<NB_EXPORT_ENTRIES)
-      export_entries[i].next = &(export_entries[i+1]);
-    else
-      export_entries[i].next = NULL;
-    
-    /* tests several clients list type */
-    switch(i%4){
-      
-      case 0:
-        /* empty list*/
-        export_entries[i].clients.num_clients=0;
-        break;
-        
-      case 1:
-        
-        /* one element list */        
-        export_entries[i].clients.num_clients=1;
-        p_cli[0].type = HOSTIF_CLIENT;
-        p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr ;
-        break;
-        
-      case 2:
-        
-        /* two elements list */
-        export_entries[i].clients.num_clients=2;
-       
-        p_cli[0].type = HOSTIF_CLIENT;
-        p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr ;
-        
-        p_cli[1].type = NETGROUP_CLIENT;
-        strcpy( p_cli[1].client.netgroup.netgroupname,"netgroup");
 
-        break;
-        
-      case 3:
-        /* several elements list */
+  for (i = 0; i < NB_EXPORT_ENTRIES; i++)
+    {
 
-        export_entries[i].clients.num_clients=5;
-        
-        p_cli[0].type = HOSTIF_CLIENT;
-        p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr ;
-        
-        p_cli[1].type = NETGROUP_CLIENT;
-        strcpy( p_cli[1].client.netgroup.netgroupname,"netgroup");
+      /* pour alleger les notations */
+      exportlist_client_entry_t p_cli[5];
 
-        p_cli[2].type = WILDCARDHOST_CLIENT;
-        strcpy(p_cli[2].client.wildcard.wildcard,"wilcard");
-        
-        
-        p_cli[3].type = GSSPRINCIPAL_CLIENT;
-        strcpy(p_cli[3].client.gssprinc.princname, "gssprincipal" );
-        
-        p_cli[4].type = NETWORK_CLIENT;
-        p_cli[4].client.network.netaddr = addr.sin_addr.s_addr ;
-        p_cli[4].client.network.netmask    = 0xFFFFFF00;
-                                        
-        break;
-      default:
-        printf("!!!!!***** TEST ERROR *****!!!!!\n");
-        return -1;
+      /* setting paths */
+      snprintf(export_entries[i].dirname, MAXPATHLEN, "/dirname-%d", i);
+      snprintf(export_entries[i].fsname, MAXPATHLEN, "/fsname-%d", i);
+      snprintf(export_entries[i].pseudopath, MAXPATHLEN, "/pseudopath-%d", i);
+      snprintf(export_entries[i].fullpath, MAXPATHLEN, "/fullpath-%d", i);
+
+      /* linking to the next element. */
+      if ((i + 1) < NB_EXPORT_ENTRIES)
+	export_entries[i].next = &(export_entries[i + 1]);
+	else
+	export_entries[i].next = NULL;
+
+      /* tests several clients list type */
+      switch (i % 4)
+	{
+
+	case 0:
+	  /* empty list */
+	  export_entries[i].clients.num_clients = 0;
+	  break;
+
+	case 1:
+
+	  /* one element list */
+	  export_entries[i].clients.num_clients = 1;
+	  p_cli[0].type = HOSTIF_CLIENT;
+	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+	  break;
+
+	case 2:
+
+	  /* two elements list */
+	  export_entries[i].clients.num_clients = 2;
+
+	  p_cli[0].type = HOSTIF_CLIENT;
+	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+
+	  p_cli[1].type = NETGROUP_CLIENT;
+	  strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
+
+	  break;
+
+	case 3:
+	  /* several elements list */
+
+	  export_entries[i].clients.num_clients = 5;
+
+	  p_cli[0].type = HOSTIF_CLIENT;
+	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+
+	  p_cli[1].type = NETGROUP_CLIENT;
+	  strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
+
+	  p_cli[2].type = WILDCARDHOST_CLIENT;
+	  strcpy(p_cli[2].client.wildcard.wildcard, "wilcard");
+
+	  p_cli[3].type = GSSPRINCIPAL_CLIENT;
+	  strcpy(p_cli[3].client.gssprinc.princname, "gssprincipal");
+
+	  p_cli[4].type = NETWORK_CLIENT;
+	  p_cli[4].client.network.netaddr = addr.sin_addr.s_addr;
+	  p_cli[4].client.network.netmask = 0xFFFFFF00;
+
+	  break;
+	default:
+	  printf("!!!!!***** TEST ERROR *****!!!!!\n");
+	  return -1;
+	}
+
     }
-    
-  }
-    
-  rc=mnt_Export(NULL,export_entries , NULL, NULL, NULL, NULL, &result);
+
+  rc = mnt_Export(NULL, export_entries, NULL, NULL, NULL, NULL, &result);
   /* rc must be OK and result.res_mntexport must be NULL */
-  printf("MNTPROC_EXPORT(entries)=(%d,%p)\n",rc,result.res_mntexport );
-  
-  if ((rc == MNT3_OK)&&(result.res_mntexport!=NULL)){
-    printf("TEST MNT_EXPORT : OK\n\n");
-  } else {
-    printf("TEST MNT_EXPORT : ERROR\n\n");
-    error++;
-  }
+  printf("MNTPROC_EXPORT(entries)=(%d,%p)\n", rc, result.res_mntexport);
+
+  if ((rc == MNT3_OK) && (result.res_mntexport != NULL))
+    {
+      printf("TEST MNT_EXPORT : OK\n\n");
+    } else
+    {
+      printf("TEST MNT_EXPORT : ERROR\n\n");
+      error++;
+    }
 
   /* printing the export_list */
-  print_export_list( result.res_mntexport );
-  
+  print_export_list(result.res_mntexport);
+
   return (error);
-  
+
 }
 
 #define Maketest(func,name) do {                      \
@@ -321,17 +333,18 @@ int test_mnt_Export(){
     printf("\n-------- %s : OK ---------\n",name); \
   } while (0)
 
-int main(int argc, char ** argv){
-    
-    SetNameFileLog( "/dev/tty" ) ;
-    SetNamePgm( "test_mnt_proto" ) ;
-    
+int main(int argc, char **argv)
+{
+
+  SetNameFileLog("/dev/tty");
+  SetNamePgm("test_mnt_proto");
+
 /*    InitDebug( NIV_FULL_DEBUG ) ;*/
-    InitDebug( NIV_DEBUG ) ;
-    
-    Maketest(test_mnt_Null,"test_mnt_Null");
-    Maketest(test_mnt_Export,"test_mnt_Export");
-    
-    exit(0);
-  
+  InitDebug(NIV_DEBUG);
+
+  Maketest(test_mnt_Null, "test_mnt_Null");
+  Maketest(test_mnt_Export, "test_mnt_Export");
+
+  exit(0);
+
 }

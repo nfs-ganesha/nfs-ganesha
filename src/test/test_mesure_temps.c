@@ -96,21 +96,20 @@
 #include <sys/times.h>
 #include "MesureTemps.h"
 
-
 #define DUREE 3
 
-int main(int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
-  struct Temps debut, fin ;
-  
-  printf( "J'attends volontairement %d secondes pour verifier la routine de mesure\n", DUREE ) ;
-  
-  MesureTemps(&debut, NULL); 
-  sleep( DUREE ) ;
+  struct Temps debut, fin;
+
+  printf("J'attends volontairement %d secondes pour verifier la routine de mesure\n",
+	 DUREE);
+
+  MesureTemps(&debut, NULL);
+  sleep(DUREE);
   MesureTemps(&fin, &debut);
-  
-  printf( "duree allocation %s s\n",  ConvertiTempsChaine(fin, NULL) );
-  
+
+  printf("duree allocation %s s\n", ConvertiTempsChaine(fin, NULL));
+
   exit(0);
 }
-

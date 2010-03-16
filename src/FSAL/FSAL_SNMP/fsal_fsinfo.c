@@ -18,7 +18,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-              
+
 /**
  * FSAL_static_fsinfo:
  * Return static filesystem info such as
@@ -37,25 +37,23 @@
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
- */           
-fsal_status_t  FSAL_static_fsinfo(
-    fsal_handle_t       *   filehandle,       /* IN */
-    fsal_op_context_t   * p_context,          /* IN */
-    fsal_staticfsinfo_t *   staticinfo        /* OUT */
-){
-  /* sanity checks. */  
-  /* for HPSS, handle and credential are not used. */  
-  if ( !staticinfo )
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_static_fsinfo );
-  
+ */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
+				 fsal_op_context_t * p_context,	/* IN */
+				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+    )
+{
+  /* sanity checks. */
+  /* for HPSS, handle and credential are not used. */
+  if (!staticinfo)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
+
   /* returning static info about the filesystem */
   (*staticinfo) = global_fs_info;
-  
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_static_fsinfo);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
+
 }
-
-
 
 /**
  * FSAL_dynamic_fsinfo:
@@ -75,28 +73,25 @@ fsal_status_t  FSAL_static_fsinfo(
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
- */           
-fsal_status_t  FSAL_dynamic_fsinfo(
-    fsal_handle_t        *   filehandle,         /* IN */
-    fsal_op_context_t    *   p_context,          /* IN */
-    fsal_dynamicfsinfo_t *   dynamicinfo         /* OUT */
-){
+ */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+    )
+{
 
-    /* sanity checks. */
-  if ( !filehandle ||
-       !dynamicinfo ||
-       !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_dynamic_fsinfo);
-  
-  
+  /* sanity checks. */
+  if (!filehandle || !dynamicinfo || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
+
   TakeTokenFSCall();
-  
+
   /* >> retrieve filesystem usage statistiques << */
-  
+
   ReleaseTokenFSCall();
-    
+
   /* >> interpret returned status << */
-      
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_dynamic_fsinfo);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
+
 }

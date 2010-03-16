@@ -22,7 +22,6 @@
 
 #include <hpss_errno.h>
 
-
 /**
  * FSAL_rename:
  * Change name and/or parent dir of a filesystem object.
@@ -63,112 +62,106 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
- 
-fsal_status_t FSAL_rename(
-    fsal_handle_t         * old_parentdir_handle,      /* IN */
-    fsal_name_t           * p_old_name,                /* IN */
-    fsal_handle_t         * new_parentdir_handle,      /* IN */
-    fsal_name_t           * p_new_name,                /* IN */
-    fsal_op_context_t     * p_context,                 /* IN */
-    fsal_attrib_list_t    * src_dir_attributes,        /* [ IN/OUT ] */
-    fsal_attrib_list_t    * tgt_dir_attributes         /* [ IN/OUT ] */
-){
-  
+
+fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle,	/* IN */
+			  fsal_name_t * p_old_name,	/* IN */
+			  fsal_handle_t * new_parentdir_handle,	/* IN */
+			  fsal_name_t * p_new_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_attrib_list_t * src_dir_attributes,	/* [ IN/OUT ] */
+			  fsal_attrib_list_t * tgt_dir_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  
+
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
    */
-  if ( !old_parentdir_handle ||
-       !new_parentdir_handle ||
-       !p_old_name ||
-       !p_new_name ||
-       !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_rename);
-  
+  if (!old_parentdir_handle ||
+      !new_parentdir_handle || !p_old_name || !p_new_name || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
+
   TakeTokenFSCall();
-  
-  rc = hpss_RenameHandle(
-         &(old_parentdir_handle->ns_handle),
-         p_old_name->name,
-         &(new_parentdir_handle->ns_handle),
-         p_new_name->name,
-         &(p_context->credential.hpss_usercred)
-      );
-  
+
+  rc = hpss_RenameHandle(&(old_parentdir_handle->ns_handle),
+			 p_old_name->name,
+			 &(new_parentdir_handle->ns_handle),
+			 p_new_name->name, &(p_context->credential.hpss_usercred));
+
   ReleaseTokenFSCall();
-  
+
   /* convert the HPSS EEXIST error to the expected error ENOTEMPTY */
-  if ( rc == HPSS_EEXIST )
-    Return( ERR_FSAL_NOTEMPTY, -rc, INDEX_FSAL_rename );
-  
+  if (rc == HPSS_EEXIST)
+    Return(ERR_FSAL_NOTEMPTY, -rc, INDEX_FSAL_rename);
+
   /* the source or the target directory handles may be stale */
-  if ( rc == HPSS_ENOTDIR || rc == HPSS_ENOENT )
-  {
-    if ( HPSSFSAL_IsStaleHandle( &old_parentdir_handle->ns_handle,
-                                 &p_context->credential.hpss_usercred ) ||
-         HPSSFSAL_IsStaleHandle( &new_parentdir_handle->ns_handle,
-                                 &p_context->credential.hpss_usercred ))
+  if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
     {
-      Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_rename );
+      if (HPSSFSAL_IsStaleHandle(&old_parentdir_handle->ns_handle,
+				 &p_context->credential.hpss_usercred) ||
+	  HPSSFSAL_IsStaleHandle(&new_parentdir_handle->ns_handle,
+				 &p_context->credential.hpss_usercred))
+	{
+	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_rename);
+	}
     }
-  }
-    
+
   /* any other error */
-  if (rc) Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_rename );
-  
-  
+  if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_rename);
+
   /* optionnaly get attributes */
-  
-  if( src_dir_attributes ){
-    
-    fsal_status_t st;
-        
-    st = FSAL_getattrs( old_parentdir_handle, p_context, src_dir_attributes );
-    
-    if ( FSAL_IS_ERROR( st ) )
+
+  if (src_dir_attributes)
     {
-      FSAL_CLEAR_MASK( src_dir_attributes->asked_attributes );
-      FSAL_SET_MASK( src_dir_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      fsal_status_t st;
+
+      st = FSAL_getattrs(old_parentdir_handle, p_context, src_dir_attributes);
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(src_dir_attributes->asked_attributes);
+	  FSAL_SET_MASK(src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
 
-  }
-  
-  if( tgt_dir_attributes ){
-    
-    fsal_status_t st;
-    
-    /* optimization: */
-    
-    if (  ! FSAL_handlecmp( old_parentdir_handle, new_parentdir_handle, &st )
-          && src_dir_attributes ){
-      
-      /* If source dir = target dir, we just copy the attributes.
-       * to avoid doing another getattr.
-       */
+  if (tgt_dir_attributes)
+    {
 
-      (*tgt_dir_attributes)=(*src_dir_attributes);
-      
-    } else {
-      
-      /* get attributes */
-      st = FSAL_getattrs( new_parentdir_handle, p_context, tgt_dir_attributes );
-          
-      if ( FSAL_IS_ERROR( st ) )
-      {
-        FSAL_CLEAR_MASK( tgt_dir_attributes->asked_attributes );
-        FSAL_SET_MASK( tgt_dir_attributes->asked_attributes,
-            FSAL_ATTR_RDATTR_ERR );
-      }
+      fsal_status_t st;
 
-      
+      /* optimization: */
+
+      if (!FSAL_handlecmp(old_parentdir_handle, new_parentdir_handle, &st)
+	  && src_dir_attributes)
+	{
+
+	  /* If source dir = target dir, we just copy the attributes.
+	   * to avoid doing another getattr.
+	   */
+
+	  (*tgt_dir_attributes) = (*src_dir_attributes);
+
+	} else
+	{
+
+	  /* get attributes */
+	  st = FSAL_getattrs(new_parentdir_handle, p_context, tgt_dir_attributes);
+
+	  if (FSAL_IS_ERROR(st))
+	    {
+	      FSAL_CLEAR_MASK(tgt_dir_attributes->asked_attributes);
+	      FSAL_SET_MASK(tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	    }
+
+	}
+
     }
-    
-    
-  }
-    
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_rename);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename);
+
 }

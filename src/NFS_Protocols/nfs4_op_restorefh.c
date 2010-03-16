@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -142,70 +142,68 @@
  * @see nfs4_Compound
  *
  */
-int nfs4_op_restorefh(  struct nfs_argop4 * op ,   
-                        compound_data_t   * data,
-                        struct nfs_resop4 * resp)
+int nfs4_op_restorefh(struct nfs_argop4 *op,
+		      compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifdef _DEBUG_NFS_V4  
-  int            i ;
+#ifdef _DEBUG_NFS_V4
+  int i;
 #endif
-  int            error ;
+  int error;
 
-   /* First of all, set the reply to zero to make sure it contains no parasite information */
-  memset( resp, 0, sizeof( struct nfs_resop4 ) ) ;
+  /* First of all, set the reply to zero to make sure it contains no parasite information */
+  memset(resp, 0, sizeof(struct nfs_resop4));
 
-  resp->resop = NFS4_OP_RESTOREFH ;
-  resp->nfs_resop4_u.oprestorefh.status =  NFS4_OK  ;
+  resp->resop = NFS4_OP_RESTOREFH;
+  resp->nfs_resop4_u.oprestorefh.status = NFS4_OK;
 
   /* If there is no currentFH, teh  return an error */
-  if( nfs4_Is_Fh_Empty( &(data->savedFH ) ) )
+  if (nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
       /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530, page 202) */
-      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_RESTOREFH ;
-      return resp->nfs_resop4_u.oprestorefh.status ;
+      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_RESTOREFH;
+      return resp->nfs_resop4_u.oprestorefh.status;
     }
 
   /* If the filehandle is invalid */
-  if( nfs4_Is_Fh_Invalid( &(data->savedFH) ) )
+  if (nfs4_Is_Fh_Invalid(&(data->savedFH)))
     {
-      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_BADHANDLE ;
-      return NFS4ERR_BADHANDLE ;
+      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_BADHANDLE;
+      return NFS4ERR_BADHANDLE;
     }
-  
+
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if( nfs4_Is_Fh_Expired( &(data->savedFH) ) )
+  if (nfs4_Is_Fh_Expired(&(data->savedFH)))
     {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED ;
-      return NFS4ERR_FHEXPIRED ;
+      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
+      return NFS4ERR_FHEXPIRED;
     }
 
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
-  if( data->pexport == NULL )
+  if (data->pexport == NULL)
     {
-      if( ( error = nfs4_SetCompoundExport( data ) ) != NFS4_OK )
-        { 
-          printf( "Erreur %d dans nfs4_SetCompoundExport\n", error ) ;
-          resp->nfs_resop4_u.opgetfh.status = error ;
-          return resp->nfs_resop4_u.opgetfh.status ;
-        }
+      if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+	{
+	  printf("Erreur %d dans nfs4_SetCompoundExport\n", error);
+	  resp->nfs_resop4_u.opgetfh.status = error;
+	  return resp->nfs_resop4_u.opgetfh.status;
+	}
     }
 
   /* Copy the data from current FH to saved FH */
-  memcpy( (char *)(data->currentFH.nfs_fh4_val), (char *)(data->savedFH.nfs_fh4_val), data->savedFH.nfs_fh4_len ) ;
-  
-  data->current_entry   = data->saved_entry ; 
-  data->current_filetype = data->saved_filetype ;
+  memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->savedFH.nfs_fh4_val),
+	 data->savedFH.nfs_fh4_len);
 
-#ifdef _DEBUG_NFS_V4  
-  printf( "CURRENTFH: File handle = { Length = %d  Val = ", data->currentFH.nfs_fh4_len );
-  for( i = 0 ; i < data->currentFH.nfs_fh4_len ; i++ )
-    printf( "%02X", data->currentFH.nfs_fh4_val[i] );
-  printf( " }\n" ) ;
+  data->current_entry = data->saved_entry;
+  data->current_filetype = data->saved_filetype;
+
+#ifdef _DEBUG_NFS_V4
+  printf("CURRENTFH: File handle = { Length = %d  Val = ", data->currentFH.nfs_fh4_len);
+  for (i = 0; i < data->currentFH.nfs_fh4_len; i++)
+    printf("%02X", data->currentFH.nfs_fh4_val[i]);
+  printf(" }\n");
 #endif
-  return NFS4_OK ;
-} /* nfs4_op_restorefh */
-
-
+  return NFS4_OK;
+}				/* nfs4_op_restorefh */
 
 /**
  * nfs4_op_restorefh_Free: frees what was allocared to handle nfs4_op_restorefh.
@@ -217,8 +215,8 @@ int nfs4_op_restorefh(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_restorefh_Free( RESTOREFH4res * resp )
+void nfs4_op_restorefh_Free(RESTOREFH4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_restorefh_Free */
+  return;
+}				/* nfs4_op_restorefh_Free */

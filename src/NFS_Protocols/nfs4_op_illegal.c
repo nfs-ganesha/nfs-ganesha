@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,8 +124,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
-
 /**
  * nfs4_op_illegal: A function to managed illegal calls to NFSv4 operation.
  * 
@@ -138,20 +136,16 @@
  * @return NFS4ERR_OP_ILLEGAL as defined by the RFC3530
  *
  */
-int nfs4_op_illegal(  struct nfs_argop4 * op ,   
-                      compound_data_t   * data,
-                      struct nfs_resop4 * resp)
+int nfs4_op_illegal(struct nfs_argop4 *op,
+		    compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__(( __unused__ )) funcname[] = "nfs4_op_illegal" ;
-   
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_illegal";
 
-  resp->resop = NFS4_OP_ILLEGAL ;
-  resp->nfs_resop4_u.opillegal.status =  NFS4ERR_OP_ILLEGAL  ; /* No other answer should be done !! */
+  resp->resop = NFS4_OP_ILLEGAL;
+  resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;	/* No other answer should be done !! */
 
-  return NFS4ERR_OP_ILLEGAL ;
-} /* nfs4_op_illegal */
-
-
+  return NFS4ERR_OP_ILLEGAL;
+}				/* nfs4_op_illegal */
 
 /**
  * nfs4_op_illegal_Free: frees what was allocared to handle nfs4_op_illegal.
@@ -163,8 +157,8 @@ int nfs4_op_illegal(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_illegal_Free( ILLEGAL4res * resp )
+void nfs4_op_illegal_Free(ILLEGAL4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_illegal_Free */
+  return;
+}				/* nfs4_op_illegal_Free */

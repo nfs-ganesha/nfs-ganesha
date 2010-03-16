@@ -92,12 +92,11 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,176 +142,144 @@
  *
  */
 
-int nfs3_Access( nfs_arg_t               * parg,    
-                 exportlist_t            * pexport, 
-                 fsal_op_context_t       * pcontext,   
-                 cache_inode_client_t    * pclient,
-                 hash_table_t            * ht,
-                 struct svc_req          * preq,    
-                 nfs_res_t               * pres )   
+int nfs3_Access(nfs_arg_t * parg,
+		exportlist_t * pexport,
+		fsal_op_context_t * pcontext,
+		cache_inode_client_t * pclient,
+		hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
-	static char       __attribute__(( __unused__ ))        funcName[] = "nfs3_Access";
+  static char __attribute__ ((__unused__)) funcName[] = "nfs3_Access";
 
-  fsal_accessflags_t        access_mode ;
-  cache_inode_status_t      cache_status ;
-  cache_inode_file_type_t   filetype ;
-  cache_entry_t           * pentry = NULL ;
-  cache_inode_fsal_data_t   fsal_data  ;
-  fsal_attrib_list_t        attr ;
- 
-   /* Is this a xattr FH ? */
-   if( nfs3_Is_Fh_Xattr( &(parg->arg_access3.object) ) )
-     return nfs3_Access_Xattr( parg, 
-			       pexport, 
-			       pcontext,
-                               pclient,
-                               ht,
-			       preq,
-                               pres ) ;
+  fsal_accessflags_t access_mode;
+  cache_inode_status_t cache_status;
+  cache_inode_file_type_t filetype;
+  cache_entry_t *pentry = NULL;
+  cache_inode_fsal_data_t fsal_data;
+  fsal_attrib_list_t attr;
 
-   /* to avoid setting it on each error case */
-   pres->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow = FALSE;
+  /* Is this a xattr FH ? */
+  if (nfs3_Is_Fh_Xattr(&(parg->arg_access3.object)))
+    return nfs3_Access_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
-   /* Convert file handle into a fsal_handle */
-   if( nfs3_FhandleToFSAL( &(parg->arg_access3.object), &fsal_data.handle, pcontext ) == 0  )
-	return NFS_REQ_DROP;
+  /* to avoid setting it on each error case */
+  pres->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow = FALSE;
+
+  /* Convert file handle into a fsal_handle */
+  if (nfs3_FhandleToFSAL(&(parg->arg_access3.object), &fsal_data.handle, pcontext) == 0)
+    return NFS_REQ_DROP;
 
   /* Get cache_inode related entry, but looking up at it */
-  fsal_data.cookie = DIR_START ;
+  fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if( ( pentry = cache_inode_get( &fsal_data, 
-                                  &attr, 
-                                  ht, 
-                                  pclient, 
-                                  pcontext, 
-                                  &cache_status ) ) == NULL )
+  if ((pentry = cache_inode_get(&fsal_data,
+				&attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
-      if( nfs_RetryableError(cache_status) )
-       {
-      	  return NFS_REQ_DROP ;
-       }
-      else
-       {
-          pres->res_access3.status = nfs3_Errno( cache_status ) ;
-      	  return NFS_REQ_OK ;
-       }
+      if (nfs_RetryableError(cache_status))
+	{
+	  return NFS_REQ_DROP;
+	} else
+	{
+	  pres->res_access3.status = nfs3_Errno(cache_status);
+	  return NFS_REQ_OK;
+	}
     }
-  
+
   /* Get file type */
-  filetype = cache_inode_fsal_type_convert( attr.type ) ;
-  
+  filetype = cache_inode_fsal_type_convert(attr.type);
 
   access_mode = 0;
-  
-  if( parg->arg_access3.access & ACCESS3_READ )
-    access_mode |= FSAL_R_OK ;
-  
-	if( parg->arg_access3.access &
-	    (ACCESS3_MODIFY | ACCESS3_EXTEND) )
-    access_mode |= FSAL_W_OK ;
-  
-	if( filetype == REGULAR_FILE )
+
+  if (parg->arg_access3.access & ACCESS3_READ)
+    access_mode |= FSAL_R_OK;
+
+  if (parg->arg_access3.access & (ACCESS3_MODIFY | ACCESS3_EXTEND))
+    access_mode |= FSAL_W_OK;
+
+  if (filetype == REGULAR_FILE)
     {
       if (parg->arg_access3.access & ACCESS3_EXECUTE)
-        access_mode |= FSAL_X_OK;
-    }
-  else if( parg->arg_access3.access & ACCESS3_LOOKUP )
+	access_mode |= FSAL_X_OK;
+  } else if (parg->arg_access3.access & ACCESS3_LOOKUP)
     access_mode |= X_OK;
 
-  
   /* Perform the 'access' call */
- if( cache_inode_access( pentry, 
-                          access_mode, 
-                          ht, 
-                          pclient, 
-                          pcontext, 
-                          &cache_status ) == CACHE_INODE_SUCCESS )
+  if (cache_inode_access(pentry,
+			 access_mode,
+			 ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /* In Unix, delete permission only applies to directories */
-      
-      if ( filetype == DIR_BEGINNING || filetype == DIR_CONTINUE )
-        pres->res_access3.ACCESS3res_u.resok.access = parg->arg_access3.access;
-      else
-        pres->res_access3.ACCESS3res_u.resok.access = (parg->arg_access3.access & ~ACCESS3_DELETE);
-      
+
+      if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+	pres->res_access3.ACCESS3res_u.resok.access = parg->arg_access3.access;
+	else
+	pres->res_access3.ACCESS3res_u.resok.access =
+	    (parg->arg_access3.access & ~ACCESS3_DELETE);
+
       /* Build Post Op Attributes */
-      nfs_SetPostOpAttr( pcontext,
-                         pexport,
-                         pentry,
-                         &attr,
-                         &(pres->res_access3.ACCESS3res_u.resok.obj_attributes));
-      
+      nfs_SetPostOpAttr(pcontext,
+			pexport,
+			pentry,
+			&attr, &(pres->res_access3.ACCESS3res_u.resok.obj_attributes));
+
       pres->res_access3.status = NFS3_OK;
-      return NFS_REQ_OK ;
+      return NFS_REQ_OK;
     }
-	
-  if( cache_status == CACHE_INODE_FSAL_EACCESS )
+
+  if (cache_status == CACHE_INODE_FSAL_EACCESS)
     {
       /*
        * We have to determine which access bits are good one by one 
        */
       pres->res_access3.ACCESS3res_u.resok.access = 0;
-      
-      if( cache_inode_access( pentry, 
-                              FSAL_R_OK,
-                              ht, 
-                              pclient, 
-                              pcontext, 
-                              &cache_status ) == CACHE_INODE_SUCCESS )
-        pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
-      
-      if( cache_inode_access( pentry, 
-                              FSAL_W_OK,
-                              ht, 
-                              pclient, 
-                              pcontext, 
-                              &cache_status ) == CACHE_INODE_SUCCESS )
-        pres->res_access3.ACCESS3res_u.resok.access |= (ACCESS3_MODIFY | ACCESS3_EXTEND) ;
-      
-      if( filetype == REGULAR_FILE )
-        {
-          if( cache_inode_access( pentry, 
-                                  FSAL_X_OK,
-                                  ht, 
-                                  pclient, 
-                                  pcontext, 
-                                  &cache_status ) == CACHE_INODE_SUCCESS )
-            pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
-        } 
-      else
-        {
-          if( cache_inode_access( pentry, 
-                                  FSAL_X_OK,
-                                  ht, 
-                                  pclient, 
-                                  pcontext, 
-                                  &cache_status ) == CACHE_INODE_SUCCESS )
-            pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
-        }
-      
-      pres->res_access3.status = NFS3_OK;
-      return NFS_REQ_OK ;
-    }
-  
-	/* If we are here, there was an error */
-	if( nfs_RetryableError(cache_status) )
-    {
-      return NFS_REQ_DROP ;
-    }
-  
-	nfs_SetFailedStatus( pcontext, pexport,
-                       NFS_V3,
-                       cache_status,
-                       NULL,
-                       &pres->res_access3.status,
-                       pentry,
-                       &(pres->res_access3.ACCESS3res_u.resfail.obj_attributes),
-                       NULL, NULL, NULL,
-                       NULL, NULL, NULL);
-	return NFS_REQ_OK;
 
-} /* nfs3_Access */
+      if (cache_inode_access(pentry,
+			     FSAL_R_OK,
+			     ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+	pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
+
+      if (cache_inode_access(pentry,
+			     FSAL_W_OK,
+			     ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+	pres->res_access3.ACCESS3res_u.resok.access |= (ACCESS3_MODIFY | ACCESS3_EXTEND);
+
+      if (filetype == REGULAR_FILE)
+	{
+	  if (cache_inode_access(pentry,
+				 FSAL_X_OK,
+				 ht,
+				 pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+	    pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
+	} else
+	{
+	  if (cache_inode_access(pentry,
+				 FSAL_X_OK,
+				 ht,
+				 pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+	    pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
+	}
+
+      pres->res_access3.status = NFS3_OK;
+      return NFS_REQ_OK;
+    }
+
+  /* If we are here, there was an error */
+  if (nfs_RetryableError(cache_status))
+    {
+      return NFS_REQ_DROP;
+    }
+
+  nfs_SetFailedStatus(pcontext, pexport,
+		      NFS_V3,
+		      cache_status,
+		      NULL,
+		      &pres->res_access3.status,
+		      pentry,
+		      &(pres->res_access3.ACCESS3res_u.resfail.obj_attributes),
+		      NULL, NULL, NULL, NULL, NULL, NULL);
+  return NFS_REQ_OK;
+
+}				/* nfs3_Access */
 
 /**
  * nfs3_Access_Free: Frees the result structure allocated for nfs3_Access.
@@ -322,8 +289,8 @@ int nfs3_Access( nfs_arg_t               * parg,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nfs3_Access_Free( nfs_res_t * pres )
+void nfs3_Access_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* nfs3_Access_Free */
+  return;
+}				/* nfs3_Access_Free */

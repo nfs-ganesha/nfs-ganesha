@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -121,197 +121,195 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 
-
-int nfs4_Set_Fh_Referral( nfs_fh4 * pfh )
+int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
 {
-  file_handle_v4_t * pfhandle4;
+  file_handle_v4_t *pfhandle4;
 
-  if( pfh == NULL )
-    return 0 ;
+  if (pfh == NULL)
+    return 0;
 
-  pfhandle4 = (file_handle_v4_t *)(pfh->nfs_fh4_val) ;
+  pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
-  pfhandle4->refid = 1 ;
-  
-  return 1 ;
+  pfhandle4->refid = 1;
+
+  return 1;
 }
 
-int nfs4_referral_str_To_Fattr_fs_location( char * input_str, char * buff, u_int * plen )
+int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen)
 {
-   char str[MAXPATHLEN] ;
-   char local_part[MAXPATHLEN] ;
-   char * local_comp[MAXNAMLEN] ;
-   char remote_part[MAXPATHLEN] ;
-   char * remote_comp[MAXNAMLEN] ;
-   char server_part[MAXPATHLEN] ;
+  char str[MAXPATHLEN];
+  char local_part[MAXPATHLEN];
+  char *local_comp[MAXNAMLEN];
+  char remote_part[MAXPATHLEN];
+  char *remote_comp[MAXNAMLEN];
+  char server_part[MAXPATHLEN];
 
-   u_int nb_comp_local  = 1 ;  
-   u_int nb_comp_remote = 1 ;  
-   u_int lastoff = 0 ;
-   u_int tmp_int = 0 ;
-   u_int i = 0 ;
-   u_int delta_xdr = 0 ;
+  u_int nb_comp_local = 1;
+  u_int nb_comp_remote = 1;
+  u_int lastoff = 0;
+  u_int tmp_int = 0;
+  u_int i = 0;
+  u_int delta_xdr = 0;
 
-   char * ptr = NULL ;
- 
-   if( !str || !buff ) 
-	return 0 ;
+  char *ptr = NULL;
 
-   strncpy( str, input_str, MAXPATHLEN ) ;
+  if (!str || !buff)
+    return 0;
 
-   /* Find the ":" in the string */
-   for( ptr = str ; *ptr != ':' ; ptr ++ ) ;
-   *ptr = '\0' ;
-   ptr += 1 ;
+  strncpy(str, input_str, MAXPATHLEN);
 
-   strncpy( local_part, str, MAXPATHLEN ) ; 
-   strncpy( remote_part, ptr, MAXPATHLEN ) ;
+  /* Find the ":" in the string */
+  for (ptr = str; *ptr != ':'; ptr++) ;
+  *ptr = '\0';
+  ptr += 1;
 
-   /* Each part should not start with a leading slash */
-   if( local_part[0] == '/' )
-     strncpy( local_part, str+1, MAXPATHLEN ) ; 
+  strncpy(local_part, str, MAXPATHLEN);
+  strncpy(remote_part, ptr, MAXPATHLEN);
 
-   if( remote_part[0] == '/' )
-     strncpy( remote_part, ptr+1, MAXPATHLEN ) ;
+  /* Each part should not start with a leading slash */
+  if (local_part[0] == '/')
+    strncpy(local_part, str + 1, MAXPATHLEN);
 
-   /* Find the "@" in the remote_part */
-   for( ptr = remote_part; *ptr != '@' ; ptr ++ ) ;
-   *ptr = '\0' ;
-   ptr += 1 ;
- 
-   strncpy( server_part, ptr, MAXPATHLEN ) ;
- 
-   local_comp[0] = local_part ;
-   for( ptr = local_part ; *ptr != '\0' ; ptr ++ )
-     if( *ptr == '/' )
+  if (remote_part[0] == '/')
+    strncpy(remote_part, ptr + 1, MAXPATHLEN);
+
+  /* Find the "@" in the remote_part */
+  for (ptr = remote_part; *ptr != '@'; ptr++) ;
+  *ptr = '\0';
+  ptr += 1;
+
+  strncpy(server_part, ptr, MAXPATHLEN);
+
+  local_comp[0] = local_part;
+  for (ptr = local_part; *ptr != '\0'; ptr++)
+    if (*ptr == '/')
       {
-        local_comp[nb_comp_local] = ptr+1 ;
-        nb_comp_local += 1 ;
+	local_comp[nb_comp_local] = ptr + 1;
+	nb_comp_local += 1;
       }
-   for( tmp_int = 0 ; tmp_int < nb_comp_local ; tmp_int ++ )
+  for (tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
     {
-      ptr = local_comp[tmp_int] - 1 ;
-      *ptr = '\0' ;
+      ptr = local_comp[tmp_int] - 1;
+      *ptr = '\0';
     }
 
-   remote_comp[0] = remote_part ;
-   for( ptr = remote_part ; *ptr != '\0' ; ptr ++ )
-     if( *ptr == '/' ) 
+  remote_comp[0] = remote_part;
+  for (ptr = remote_part; *ptr != '\0'; ptr++)
+    if (*ptr == '/')
       {
-        remote_comp[nb_comp_remote] = ptr+1 ;
-        nb_comp_remote += 1 ;
+	remote_comp[nb_comp_remote] = ptr + 1;
+	nb_comp_remote += 1;
       }
-   for( tmp_int = 0 ; tmp_int < nb_comp_remote ; tmp_int ++ )
+  for (tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
     {
-      ptr = remote_comp[tmp_int] - 1 ;
-      *ptr = '\0' ;
+      ptr = remote_comp[tmp_int] - 1;
+      *ptr = '\0';
     }
 
-   /* This attributes is equivalent to a "mount" command line,
-    * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
+  /* This attributes is equivalent to a "mount" command line,
+   * To understand what's follow, imagine that you do kind of "mount refer@server nfs_ref" */
 
 #ifdef _DEBUG_REFERRAL
-   printf( "--> %s\n", input_str ) ;
+  printf("--> %s\n", input_str);
 
-   printf( "   %u comp local\n", nb_comp_local ) ;
-   for( tmp_int = 0 ; tmp_int < nb_comp_local ; tmp_int ++ )
-    printf( "     #%s#\n", local_comp[tmp_int] ) ;  
+  printf("   %u comp local\n", nb_comp_local);
+  for (tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
+    printf("     #%s#\n", local_comp[tmp_int]);
 
-   printf( "   %u comp remote\n", nb_comp_remote ) ;
-   for( tmp_int = 0 ; tmp_int < nb_comp_remote ; tmp_int ++ )
-    printf( "     #%s#\n", remote_comp[tmp_int] ) ;  
+  printf("   %u comp remote\n", nb_comp_remote);
+  for (tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
+    printf("     #%s#\n", remote_comp[tmp_int]);
 
-   printf( "   server = #%s#\n", server_part ) ;
+  printf("   server = #%s#\n", server_part);
 #endif
 
-   /* 1- Number of component in local path */
-   tmp_int = htonl( nb_comp_local ) ;
-   memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-   lastoff += sizeof( u_int ) ;
+  /* 1- Number of component in local path */
+  tmp_int = htonl(nb_comp_local);
+  memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+  lastoff += sizeof(u_int);
 
-   /* 2- each component in local path */
-   for( i = 0 ; i < nb_comp_local ; i ++ ) 
+  /* 2- each component in local path */
+  for (i = 0; i < nb_comp_local; i++)
     {
-       /* The length for the string */
-       tmp_int = htonl( strlen( local_comp[i] ) ) ;
-       memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-       lastoff += sizeof( u_int ) ;
-       
-       /* the string itself */
-       memcpy( (char *)(buff + lastoff) , local_comp[i], strlen( local_comp[i] ) ) ;
-       lastoff += strlen( local_comp[i] ) ;
+      /* The length for the string */
+      tmp_int = htonl(strlen(local_comp[i]));
+      memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+      lastoff += sizeof(u_int);
 
-       /* The XDR padding  : strings must be aligned to 32bits fields */
-       if( ( strlen( local_comp[i] ) % 4 ) == 0 )
-	 delta_xdr = 0 ;
-       else
-        {
-         delta_xdr =  4 - (  strlen( local_comp[i] ) % 4 ) ;
-         memset( (char *)(buff + lastoff), 0, delta_xdr ) ;
-         lastoff += delta_xdr ;
-        }
+      /* the string itself */
+      memcpy((char *)(buff + lastoff), local_comp[i], strlen(local_comp[i]));
+      lastoff += strlen(local_comp[i]);
+
+      /* The XDR padding  : strings must be aligned to 32bits fields */
+      if ((strlen(local_comp[i]) % 4) == 0)
+	delta_xdr = 0;
+	else
+	{
+	  delta_xdr = 4 - (strlen(local_comp[i]) % 4);
+	  memset((char *)(buff + lastoff), 0, delta_xdr);
+	  lastoff += delta_xdr;
+	}
     }
 
   /* 3- there is only one fs_location in the fs_locations array */
-  tmp_int = htonl( 1 ) ;
-  memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-  lastoff += sizeof( u_int ) ;
+  tmp_int = htonl(1);
+  memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+  lastoff += sizeof(u_int);
 
   /* 4- Only ine server in fs_location entry */
-  tmp_int = htonl( 1 ) ;
-  memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-  lastoff += sizeof( u_int ) ;
+  tmp_int = htonl(1);
+  memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+  lastoff += sizeof(u_int);
 
   /* 5- the len for the server's adress */
-  tmp_int = htonl( strlen( server_part ) ) ;
-  memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-  lastoff += sizeof( u_int ) ;
+  tmp_int = htonl(strlen(server_part));
+  memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+  lastoff += sizeof(u_int);
 
   /* 6- the server's string */
-  memcpy( (char *)(buff + lastoff) , server_part, strlen( server_part ) ) ;
-  lastoff += strlen( server_part ) ;
+  memcpy((char *)(buff + lastoff), server_part, strlen(server_part));
+  lastoff += strlen(server_part);
 
   /* 7- XDR padding for server's string */
-  if( ( strlen( server_part ) % 4 ) == 0 )
-   delta_xdr = 0 ;
-  else
-   {
-      delta_xdr =  4 - (  strlen( server_part ) % 4 ) ;
-      memset( (char *)(buff + lastoff), 0, delta_xdr ) ;
-      lastoff += delta_xdr ;
-   }
-
-  /* 8- Number of component in remote path */
-  tmp_int = htonl( nb_comp_remote ) ;
-  memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-  lastoff += sizeof( u_int ) ;
-
-  /* 9- each component in local path */
-  for( i = 0 ; i < nb_comp_remote ; i ++ ) 
+  if ((strlen(server_part) % 4) == 0)
+    delta_xdr = 0;
+    else
     {
-       /* The length for the string */
-       tmp_int = htonl( strlen( remote_comp[i] ) ) ;
-       memcpy( (char *)(buff + lastoff), &tmp_int, sizeof( u_int ) );
-       lastoff += sizeof( u_int ) ;
-       
-       /* the string itself */
-       memcpy( (char *)(buff + lastoff) , remote_comp[i], strlen( remote_comp[i] ) ) ;
-       lastoff += strlen( remote_comp[i] ) ;
-
-       /* The XDR padding  : strings must be aligned to 32bits fields */
-       if( ( strlen( remote_comp[i] ) % 4 ) == 0 )
-	 delta_xdr = 0 ;
-       else
-        {
-         delta_xdr =  4 - (  strlen( remote_comp[i] ) % 4 ) ;
-         memset( (char *)(buff + lastoff), 0, delta_xdr ) ;
-         lastoff += delta_xdr ;
-        }
+      delta_xdr = 4 - (strlen(server_part) % 4);
+      memset((char *)(buff + lastoff), 0, delta_xdr);
+      lastoff += delta_xdr;
     }
 
- /* Set the len then return */
- *plen = lastoff ;
- 
- return 1 ; 
-} /* nfs4_referral_str_To_Fattr_fs_location */
+  /* 8- Number of component in remote path */
+  tmp_int = htonl(nb_comp_remote);
+  memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+  lastoff += sizeof(u_int);
 
+  /* 9- each component in local path */
+  for (i = 0; i < nb_comp_remote; i++)
+    {
+      /* The length for the string */
+      tmp_int = htonl(strlen(remote_comp[i]));
+      memcpy((char *)(buff + lastoff), &tmp_int, sizeof(u_int));
+      lastoff += sizeof(u_int);
+
+      /* the string itself */
+      memcpy((char *)(buff + lastoff), remote_comp[i], strlen(remote_comp[i]));
+      lastoff += strlen(remote_comp[i]);
+
+      /* The XDR padding  : strings must be aligned to 32bits fields */
+      if ((strlen(remote_comp[i]) % 4) == 0)
+	delta_xdr = 0;
+	else
+	{
+	  delta_xdr = 4 - (strlen(remote_comp[i]) % 4);
+	  memset((char *)(buff + lastoff), 0, delta_xdr);
+	  lastoff += delta_xdr;
+	}
+    }
+
+  /* Set the len then return */
+  *plen = lastoff;
+
+  return 1;
+}				/* nfs4_referral_str_To_Fattr_fs_location */

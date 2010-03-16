@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 /**
  * @defgroup FSALCredFunctions Credential handling functions.
  *
@@ -32,16 +31,15 @@
  * 
  * @{
  */
-          
+
 /**
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(
-        fsal_export_context_t   * p_export_context,    /* OUT */
-        fsal_path_t             * p_export_path,       /* IN */
-        char                    * fs_specific_options  /* IN */
-      )
+fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	/* OUT */
+				      fsal_path_t * p_export_path,	/* IN */
+				      char *fs_specific_options	/* IN */
+    )
 {
   struct tree *tree_head, *sub_tree;
   char snmp_path[FSAL_MAX_PATH_LEN];
@@ -49,175 +47,182 @@ fsal_status_t FSAL_BuildExportContext(
 
   /* sanity check */
   if (!p_export_context)
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_BuildExportContext );
-  
-  
-  if( ( fs_specific_options != NULL ) && ( fs_specific_options[0] != '\0' ) )
-  {
-     DisplayLog( "FSAL BUILD CONTEXT: ERROR: found an EXPORT::FS_Specific item whereas it is not supported for this filesystem." );
-  }
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
+
+  if ((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
+    {
+      DisplayLog
+	  ("FSAL BUILD CONTEXT: ERROR: found an EXPORT::FS_Specific item whereas it is not supported for this filesystem.");
+    }
 
   /* retrieves the MIB tree associated to this export */
-  
-  /*tree_head = get_tree_head();*/
+
+  /*tree_head = get_tree_head(); */
   tree_head = read_all_mibs();
 
-  if ( tree_head == NULL ) Return( ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_BuildExportContext );
+  if (tree_head == NULL)
+    Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_BuildExportContext);
 
   /* convert the path to a SNMP path */
-  if ( p_export_path != NULL )
-     PosixPath2SNMP( p_export_path->path, snmp_path );
-  else
-     strcpy(snmp_path, ".");
+  if (p_export_path != NULL)
+    PosixPath2SNMP(p_export_path->path, snmp_path);
+    else
+    strcpy(snmp_path, ".");
 
-  if ( !strcmp( snmp_path, "." ) )
-  {
-        /* the exported tree is the root tree */
-        p_export_context->root_mib_tree = tree_head;
-        BuildRootHandle( &p_export_context->root_handle );
-  }
-  else
-  {
-       /* convert the SNMP path to an oid */
-       rc = ParseSNMPPath( snmp_path, &p_export_context->root_handle );
-        
-       if ( rc )
-       {
-          DisplayLog( "FSAL BUILD CONTEXT: ERROR parsing SNMP path '%s'", snmp_path );
-          Return( rc , 0 , INDEX_FSAL_BuildExportContext );
-       }
+  if (!strcmp(snmp_path, "."))
+    {
+      /* the exported tree is the root tree */
+      p_export_context->root_mib_tree = tree_head;
+      BuildRootHandle(&p_export_context->root_handle);
+    } else
+    {
+      /* convert the SNMP path to an oid */
+      rc = ParseSNMPPath(snmp_path, &p_export_context->root_handle);
 
-       /* get the subtree */
-       sub_tree = FSAL_GetTree( p_export_context->root_handle.oid_tab, p_export_context->root_handle.oid_len, tree_head, FALSE );
+      if (rc)
+	{
+	  DisplayLog("FSAL BUILD CONTEXT: ERROR parsing SNMP path '%s'", snmp_path);
+	  Return(rc, 0, INDEX_FSAL_BuildExportContext);
+	}
 
-       if ( sub_tree == NULL ) Return( ERR_FSAL_NOENT, snmp_errno, INDEX_FSAL_BuildExportContext );
+      /* get the subtree */
+      sub_tree =
+	  FSAL_GetTree(p_export_context->root_handle.oid_tab,
+		       p_export_context->root_handle.oid_len, tree_head, FALSE);
 
-       /* if it has some childs or the object is unknown, consider it has a node */
-       if ( (sub_tree->child_list != NULL) || (sub_tree->type == TYPE_OTHER) ) 
-       {
-          p_export_context->root_handle.object_type_reminder = FSAL_NODETYPE_NODE ;
-       }
-       else
-       {
-          DisplayLog( "FSAL BUILD CONTEXT: WARNING: '%s' seems to be a leaf !!!", snmp_path );
-       }
-       
-       p_export_context->root_mib_tree = tree_head;
-       
-  }
+      if (sub_tree == NULL)
+	Return(ERR_FSAL_NOENT, snmp_errno, INDEX_FSAL_BuildExportContext);
+
+      /* if it has some childs or the object is unknown, consider it has a node */
+      if ((sub_tree->child_list != NULL) || (sub_tree->type == TYPE_OTHER))
+	{
+	  p_export_context->root_handle.object_type_reminder = FSAL_NODETYPE_NODE;
+	} else
+	{
+	  DisplayLog("FSAL BUILD CONTEXT: WARNING: '%s' seems to be a leaf !!!",
+		     snmp_path);
+	}
+
+      p_export_context->root_mib_tree = tree_head;
+
+    }
 
   /* save the root path (for lookupPath checks)  */
-  if ( p_export_path != NULL )
-        p_export_context->root_path = *p_export_path ;
-  else
-        FSAL_str2path( "/", 2, &p_export_context->root_path );
-    
-  printf( "CREATING EXPORT CONTEXT PATH=%s\n", snmp_path );
+  if (p_export_path != NULL)
+    p_export_context->root_path = *p_export_path;
+    else
+    FSAL_str2path("/", 2, &p_export_context->root_path);
+
+  printf("CREATING EXPORT CONTEXT PATH=%s\n", snmp_path);
 
 #ifdef _DEBUG_FSAL
-{
-        int i;
-        printf("oid ");
-        for(i=0;i<p_export_context->root_handle.oid_len;i++)
-                printf(".%ld",p_export_context->root_handle.oid_tab[i]);
-        printf("\n");
-}
+  {
+    int i;
+    printf("oid ");
+    for (i = 0; i < p_export_context->root_handle.oid_len; i++)
+      printf(".%ld", p_export_context->root_handle.oid_tab[i]);
+    printf("\n");
+  }
 #endif
 
-  Return( ERR_FSAL_NO_ERROR , 0 , INDEX_FSAL_BuildExportContext );
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
+
 }
 
-     
-
-fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
+fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
-  
-  int rc,i;
+
+  int rc, i;
   netsnmp_session session;
-  
+
   /* sanity check */
-  if (!p_thr_context ) Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_InitClientContext );
+  if (!p_thr_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
   p_thr_context->export_context = NULL;
-  
+
   p_thr_context->user_credential.user = 0;
   p_thr_context->user_credential.group = 0;
 
-
   /* initialize the SNMP session  */
 
-  snmp_sess_init( &session );
-  session.version = snmp_glob_config.snmp_version ;
-  session.retries = snmp_glob_config.nb_retries ;
-  session.timeout = snmp_glob_config.microsec_timeout ;
-  session.peername = snmp_glob_config.snmp_server ;
-  if(session.version == SNMP_VERSION_3) {
-	  if(!strcasecmp(snmp_glob_config.auth_proto,"MD5")) {
-		  session.securityAuthProto = usmHMACMD5AuthProtocol;
-		  session.securityAuthProtoLen = USM_AUTH_PROTO_MD5_LEN;
-	  }else if(!strcasecmp(snmp_glob_config.auth_proto,"SHA")) {		  
-		  session.securityAuthProto = usmHMACSHA1AuthProtocol;
-		  session.securityAuthProtoLen = USM_AUTH_PROTO_SHA_LEN;
-	  }
-	  if (!strcasecmp(snmp_glob_config.enc_proto, "DES")) {
-		  session.securityPrivProto = usmDESPrivProtocol;
-		  session.securityPrivProtoLen = USM_PRIV_PROTO_DES_LEN;		   
-	  } else if (!strcasecmp(snmp_glob_config.enc_proto, "AES")) {
-		  session.securityPrivProto = usmAES128PrivProtocol;
-		  session.securityPrivProtoLen = USM_PRIV_PROTO_AES128_LEN;
-	  }	  
-	  
-	  session.securityName=snmp_glob_config.username; /* securityName is not allocated */
-	  session.securityNameLen=strlen(snmp_glob_config.username);
-	  session.securityLevel = SNMP_SEC_LEVEL_AUTHPRIV;
-	 
-	  session.securityAuthKeyLen = USM_AUTH_KU_LEN;
-	  if (generate_Ku(session.securityAuthProto,
-			  session.securityAuthProtoLen,
-			  (u_char *)snmp_glob_config.auth_phrase , strlen(snmp_glob_config.auth_phrase),
-			  session.securityAuthKey,
-			  &session.securityAuthKeyLen) != SNMPERR_SUCCESS) {
-		  DisplayLog( "FSAL INIT CONTEXT: ERROR creating SNMP passphrase for authentification" ); 
-		  Return( ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext );
-	  }
-	  
-	  session.securityPrivKeyLen = USM_PRIV_KU_LEN;	  
-	  if (generate_Ku(session.securityAuthProto,
-			  session.securityAuthProtoLen,
-			  (u_char *) snmp_glob_config.enc_phrase, strlen(snmp_glob_config.enc_phrase),
-			  session.securityPrivKey,
-			  &session.securityPrivKeyLen) != SNMPERR_SUCCESS) {
-		  DisplayLog( "FSAL INIT CONTEXT: ERROR creating SNMP passphrase for encryption" ); 
-		  Return( ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext );
-        }
-  }
-  else /* v1 or v2c */
-  {
-	  session.community = snmp_glob_config.community ;
-	  session.community_len = strlen( snmp_glob_config.community );
-  }
+  snmp_sess_init(&session);
+  session.version = snmp_glob_config.snmp_version;
+  session.retries = snmp_glob_config.nb_retries;
+  session.timeout = snmp_glob_config.microsec_timeout;
+  session.peername = snmp_glob_config.snmp_server;
+  if (session.version == SNMP_VERSION_3)
+    {
+      if (!strcasecmp(snmp_glob_config.auth_proto, "MD5"))
+	{
+	  session.securityAuthProto = usmHMACMD5AuthProtocol;
+	  session.securityAuthProtoLen = USM_AUTH_PROTO_MD5_LEN;
+      } else if (!strcasecmp(snmp_glob_config.auth_proto, "SHA"))
+	{
+	  session.securityAuthProto = usmHMACSHA1AuthProtocol;
+	  session.securityAuthProtoLen = USM_AUTH_PROTO_SHA_LEN;
+	}
+      if (!strcasecmp(snmp_glob_config.enc_proto, "DES"))
+	{
+	  session.securityPrivProto = usmDESPrivProtocol;
+	  session.securityPrivProtoLen = USM_PRIV_PROTO_DES_LEN;
+      } else if (!strcasecmp(snmp_glob_config.enc_proto, "AES"))
+	{
+	  session.securityPrivProto = usmAES128PrivProtocol;
+	  session.securityPrivProtoLen = USM_PRIV_PROTO_AES128_LEN;
+	}
+
+      session.securityName = snmp_glob_config.username;	/* securityName is not allocated */
+      session.securityNameLen = strlen(snmp_glob_config.username);
+      session.securityLevel = SNMP_SEC_LEVEL_AUTHPRIV;
+
+      session.securityAuthKeyLen = USM_AUTH_KU_LEN;
+      if (generate_Ku(session.securityAuthProto,
+		      session.securityAuthProtoLen,
+		      (u_char *) snmp_glob_config.auth_phrase,
+		      strlen(snmp_glob_config.auth_phrase), session.securityAuthKey,
+		      &session.securityAuthKeyLen) != SNMPERR_SUCCESS)
+	{
+	  DisplayLog
+	      ("FSAL INIT CONTEXT: ERROR creating SNMP passphrase for authentification");
+	  Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
+	}
+
+      session.securityPrivKeyLen = USM_PRIV_KU_LEN;
+      if (generate_Ku(session.securityAuthProto,
+		      session.securityAuthProtoLen,
+		      (u_char *) snmp_glob_config.enc_phrase,
+		      strlen(snmp_glob_config.enc_phrase), session.securityPrivKey,
+		      &session.securityPrivKeyLen) != SNMPERR_SUCCESS)
+	{
+	  DisplayLog("FSAL INIT CONTEXT: ERROR creating SNMP passphrase for encryption");
+	  Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
+	}
+    } else			/* v1 or v2c */
+    {
+      session.community = snmp_glob_config.community;
+      session.community_len = strlen(snmp_glob_config.community);
+    }
   p_thr_context->snmp_session = snmp_open(&session);
 
-  if ( p_thr_context->snmp_session == NULL )
-  {
-        char * err_msg;
-        snmp_error( &session, &errno, &snmp_errno, &err_msg );
+  if (p_thr_context->snmp_session == NULL)
+    {
+      char *err_msg;
+      snmp_error(&session, &errno, &snmp_errno, &err_msg);
 
-        DisplayLog( "FSAL INIT CONTEXT: ERROR creating SNMP session: %s", err_msg ); 
-        Return( ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext );
-  }
+      DisplayLog("FSAL INIT CONTEXT: ERROR creating SNMP session: %s", err_msg);
+      Return(ERR_FSAL_BAD_INIT, snmp_errno, INDEX_FSAL_InitClientContext);
+    }
 
-  p_thr_context->snmp_request  = NULL;
+  p_thr_context->snmp_request = NULL;
   p_thr_context->snmp_response = NULL;
   p_thr_context->current_response = NULL;
 
-  Return( ERR_FSAL_NO_ERROR , 0, INDEX_FSAL_InitClientContext );
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+
 }
 
- 
  /**
  * FSAL_GetClientContext :
  * Get a user credential from its uid.
@@ -241,35 +246,32 @@ fsal_status_t FSAL_InitClientContext( fsal_op_context_t * p_thr_context )
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(
-        fsal_op_context_t       * p_thr_context,      /* IN/OUT  */
-        fsal_export_context_t   * p_export_context,   /* IN */    
-        fsal_uid_t              uid,                  /* IN */
-        fsal_gid_t              gid,                  /* IN */
-        fsal_gid_t              * alt_groups,         /* IN */
-        fsal_count_t            nb_alt_groups         /* IN */
-      )
+fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT  */
+				    fsal_export_context_t * p_export_context,	/* IN */
+				    fsal_uid_t uid,	/* IN */
+				    fsal_gid_t gid,	/* IN */
+				    fsal_gid_t * alt_groups,	/* IN */
+				    fsal_count_t nb_alt_groups	/* IN */
+    )
 {
-  
+
   fsal_status_t st;
-  
+
   /* sanity check */
-  if (!p_thr_context || !p_export_context )
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_GetClientContext );
-  
+  if (!p_thr_context || !p_export_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
+
   /* set the specific export context */
   p_thr_context->export_context = p_export_context;
-  
+
   /* @todo for the moment, we only set uid and gid,
    * but they are not really used for authentication.
    */
   p_thr_context->user_credential.user = uid;
   p_thr_context->user_credential.group = gid;
-   
-    
-  Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext );
-  
-}
 
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
+
+}
 
 /* @} */

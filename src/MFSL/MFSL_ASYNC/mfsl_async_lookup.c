@@ -97,7 +97,6 @@
 
 #ifndef _USE_SWIG
 
-
 /**
  *
  * MFSL_getattrs : performs getattr but takes care of the asynchronous logic.
@@ -111,40 +110,34 @@
  *
  * @return the same as FSAL_getattrs
  */
-fsal_status_t MFSL_lookup(  mfsl_object_t         * parent_directory_handle, /* IN */
-			    fsal_name_t           * p_filename,              /* IN */
-    			    fsal_op_context_t     * p_context,               /* IN */
-			    mfsl_context_t        * p_mfsl_context,          /* IN */
-			    mfsl_object_t         * object_handle,           /* OUT */
-			    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */ )
-{   
-  fsal_status_t                  fsal_status ;
-  mfsl_object_specific_data_t  * pasyncdata ;
+fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,	/* IN */
+			  fsal_name_t * p_filename,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  mfsl_context_t * p_mfsl_context,	/* IN */
+			  mfsl_object_t * object_handle,	/* OUT */
+			  fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */ )
+{
+  fsal_status_t fsal_status;
+  mfsl_object_specific_data_t *pasyncdata;
 
-  P( parent_directory_handle->lock ) ;
-  fsal_status = FSAL_lookup( &parent_directory_handle->handle,
-                             p_filename,
-                             p_context,
-                             &object_handle->handle,
-                             object_attributes ) ;
-  V( parent_directory_handle->lock ) ;
+  P(parent_directory_handle->lock);
+  fsal_status = FSAL_lookup(&parent_directory_handle->handle,
+			    p_filename,
+			    p_context, &object_handle->handle, object_attributes);
+  V(parent_directory_handle->lock);
 
-  if( FSAL_IS_ERROR( fsal_status ) )
-     return fsal_status ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  if( mfsl_async_get_specdata( object_handle, &pasyncdata ) )
+  if (mfsl_async_get_specdata(object_handle, &pasyncdata))
     {
-	/* if object is asynchronous and deleted, then return ENOENT */
-	if( pasyncdata->deleted == TRUE )
-          MFSL_return( ERR_FSAL_NOENT, ENOENT ) ;
+      /* if object is asynchronous and deleted, then return ENOENT */
+      if (pasyncdata->deleted == TRUE)
+	MFSL_return(ERR_FSAL_NOENT, ENOENT);
     }
- 
-  /* object was found in FSAL, is not asynchronously deleted, everything is OK */ 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;
-} /* MFSL_lookup */
 
+  /* object was found in FSAL, is not asynchronously deleted, everything is OK */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_lookup */
 
-
-#endif /* ! _USE_SWIG */
-
-
+#endif				/* ! _USE_SWIG */

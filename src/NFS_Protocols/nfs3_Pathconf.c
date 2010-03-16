@@ -92,12 +92,11 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -126,7 +125,6 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-
 /**
  * nfs3_Pathconf: Implements NFSPROC3_PATHCONF
  *
@@ -144,69 +142,62 @@
  *
  */
 
-int nfs3_Pathconf( nfs_arg_t               * parg,    
-                   exportlist_t            * pexport, 
-                   fsal_op_context_t       * pcontext,   
-                   cache_inode_client_t    * pclient,
-                   hash_table_t            * ht,
-                   struct svc_req          * preq,    
-                   nfs_res_t               * pres )  
-{ 
-	static char   __attribute__(( __unused__ ))     funcName[] = "nfs3_Pathconf";
-  
-  cache_inode_status_t      cache_status ;
-  cache_entry_t           * pentry = NULL ;
-  cache_inode_fsal_data_t   fsal_data ;
-  fsal_attrib_list_t        attr ;
-  fsal_staticfsinfo_t       staticinfo ;
-  fsal_dynamicfsinfo_t      dynamicinfo ;
+int nfs3_Pathconf(nfs_arg_t * parg,
+		  exportlist_t * pexport,
+		  fsal_op_context_t * pcontext,
+		  cache_inode_client_t * pclient,
+		  hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+{
+  static char __attribute__ ((__unused__)) funcName[] = "nfs3_Pathconf";
+
+  cache_inode_status_t cache_status;
+  cache_entry_t *pentry = NULL;
+  cache_inode_fsal_data_t fsal_data;
+  fsal_attrib_list_t attr;
+  fsal_staticfsinfo_t staticinfo;
+  fsal_dynamicfsinfo_t dynamicinfo;
 
   /* to avoid setting it on each error case */
   pres->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if( nfs3_FhandleToFSAL( &(parg->arg_access3.object), &fsal_data.handle, pcontext ) == 0 )
-	return NFS_REQ_DROP;
+  if (nfs3_FhandleToFSAL(&(parg->arg_access3.object), &fsal_data.handle, pcontext) == 0)
+    return NFS_REQ_DROP;
 
   /* Set cookie to zero */
-  fsal_data.cookie = DIR_START ;
+  fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if( ( pentry = cache_inode_get( &fsal_data, 
-                                  &attr, 
-                                  ht, 
-                                  pclient, 
-                                  pcontext, 
-                                  &cache_status ) ) == NULL )
+  if ((pentry = cache_inode_get(&fsal_data,
+				&attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
-      pres->res_pathconf3.status = NFS3ERR_STALE ;
-      return NFS_REQ_OK ;
+      pres->res_pathconf3.status = NFS3ERR_STALE;
+      return NFS_REQ_OK;
     }
-  
+
   /* Get the filesystem information */
-  if( cache_inode_statfs( pentry, &staticinfo, &dynamicinfo, pcontext, &cache_status ) != CACHE_INODE_SUCCESS )
+  if (cache_inode_statfs(pentry, &staticinfo, &dynamicinfo, pcontext, &cache_status) !=
+      CACHE_INODE_SUCCESS)
     {
-       pres->res_pathconf3.status = nfs3_Errno( cache_status ) ;
-      return NFS_REQ_OK ;
+      pres->res_pathconf3.status = nfs3_Errno(cache_status);
+      return NFS_REQ_OK;
     }
-    
-  
+
   /* Build post op file attributes */
-  nfs_SetPostOpAttr( pcontext, pexport,
-                     pentry,
-                     &attr,
-                     &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes) );
-  
-  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax          = staticinfo.maxlink ;
-  pres->res_pathconf3.PATHCONF3res_u.resok.name_max         = staticinfo.maxnamelen ;
-  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc         = staticinfo.no_trunc ;
-  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted = staticinfo.chown_restricted ;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = staticinfo.case_insensitive ;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving  = staticinfo.case_preserving ;
-  
-  return NFS_REQ_OK ;
-} /* nfs3_Pathconf */
+  nfs_SetPostOpAttr(pcontext, pexport,
+		    pentry,
+		    &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes));
+
+  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = staticinfo.maxlink;
+  pres->res_pathconf3.PATHCONF3res_u.resok.name_max = staticinfo.maxnamelen;
+  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc = staticinfo.no_trunc;
+  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted = staticinfo.chown_restricted;
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = staticinfo.case_insensitive;
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = staticinfo.case_preserving;
+
+  return NFS_REQ_OK;
+}				/* nfs3_Pathconf */
 
 /**
  * nfs3_Pathconf_Free: Frees the result structure allocated for nfs3_Pathconf.
@@ -216,9 +207,8 @@ int nfs3_Pathconf( nfs_arg_t               * parg,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nfs3_Pathconf_Free( nfs_res_t * pres )
+void nfs3_Pathconf_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* nfs3_Pathconf_Free */
-
+  return;
+}				/* nfs3_Pathconf_Free */

@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -107,18 +107,21 @@
 #include <pthread.h>
 #include <string.h>
 
-static void cache_inode_lock_print( cache_entry_t * pentry ) 
-{ 
+static void cache_inode_lock_print(cache_entry_t * pentry)
+{
 
-  printf( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n" );
-  return ;
+  printf
+      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  return;
 #ifdef BUGAZOMEU
-  if( pentry->internal_md.type == REGULAR_FILE ) 
-        if( piter_state->state_type == CACHE_INODE_STATE_SHARE )
-           printf( "       piter_lock=%p   next=%p prev=%p         offset=%llu      length=%llu\n", 
-                    piter_state, piter_state->next, piter_state->prev, piter_state->data.lock.offset, piter_state->data.lock.length ) ;
-#endif /* BUGAZOMEU */
-} /* cache_inode_lock_print */
+  if (pentry->internal_md.type == REGULAR_FILE)
+    if (piter_state->state_type == CACHE_INODE_STATE_SHARE)
+      printf
+	  ("       piter_lock=%p   next=%p prev=%p         offset=%llu      length=%llu\n",
+	   piter_state, piter_state->next, piter_state->prev,
+	   piter_state->data.lock.offset, piter_state->data.lock.length);
+#endif				/* BUGAZOMEU */
+}				/* cache_inode_lock_print */
 
 /**
  *
@@ -135,105 +138,111 @@ static void cache_inode_lock_print( cache_entry_t * pentry )
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_lock_check_conflicting_range( cache_entry_t              * pentry,
-                                                               uint64_t                     offset,  
-                                                               uint64_t                     length,
-                                                               nfs_lock_type4               lock_type, 
-                                                               cache_inode_status_t       * pstatus ) 
+cache_inode_status_t cache_inode_lock_check_conflicting_range(cache_entry_t * pentry,
+							      uint64_t offset,
+							      uint64_t length,
+							      nfs_lock_type4 lock_type,
+							      cache_inode_status_t *
+							      pstatus)
 {
-  if( pstatus == NULL ) 
-   return CACHE_INODE_INVALID_ARGUMENT ;
+  if (pstatus == NULL)
+    return CACHE_INODE_INVALID_ARGUMENT;
 
   /* pentry should be there */
-  if( pentry == NULL  )
+  if (pentry == NULL)
     {
-       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-       return *pstatus ;
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      return *pstatus;
     }
 
   /* pentry should be a file */
-  if( pentry->internal_md.type != REGULAR_FILE )
+  if (pentry->internal_md.type != REGULAR_FILE)
     {
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* CACHE_INODE_LOCK_OFFSET_EOF should have been handled sooner, use "absolute" length */
-  if( length == CACHE_INODE_LOCK_OFFSET_EOF )
+  if (length == CACHE_INODE_LOCK_OFFSET_EOF)
     {
-       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-       return *pstatus ;
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      return *pstatus;
     }
- 
-  printf( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n" );
-  *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-  return *pstatus ;
+
+  printf
+      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_print !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+  return *pstatus;
 
 #ifdef BUGAZOMEU
-   for( piter_state = pentry->object.file.state_v4 ; piter_state != NULL ; piter_state = piter_state->next )  
+  for (piter_state = pentry->object.file.state_v4; piter_state != NULL;
+       piter_state = piter_state->next)
     {
-       if( piter_state->state_type != CACHE_INODE_STATE_LOCK )
-          continue ;
+      if (piter_state->state_type != CACHE_INODE_STATE_LOCK)
+	continue;
 
-       printf( "--- check_conflicting_range : offset=%llu length=%llu piter_state->offset=%llu piter_state->length=%llu lock_type=%u piter_state->lock_type=%u\n", 
-                offset, length, piter_state->data.lock.offset, piter_state->data.lock.length, lock_type, piter_state->data.lock.lock_type ) ;
- 
-       /* Check for a "conflict on the left" */ 
-       if( ( offset <= piter_state->data.lock.offset ) &&
-           ( ( offset + length ) >= piter_state->data.lock.offset ) ) 
-          found = TRUE ;
- 
-      /* Check for a "conflict on the right" */  
-      if( ( offset >= piter_state->data.lock.offset ) &&
-          ( offset <= ( piter_state->data.lock.offset + piter_state->data.lock.length ) ) ) 
-          found = TRUE ;
+      printf
+	  ("--- check_conflicting_range : offset=%llu length=%llu piter_state->offset=%llu piter_state->length=%llu lock_type=%u piter_state->lock_type=%u\n",
+	   offset, length, piter_state->data.lock.offset, piter_state->data.lock.length,
+	   lock_type, piter_state->data.lock.lock_type);
 
-      if( found )
-         {
-             /* No conflict on read lock */
-             if( ( piter_state->data.lock.lock_type == CACHE_INODE_WRITE_LT ) || ( lock_type == CACHE_INODE_WRITE_LT ) )
-               {
-                  *ppfilelock = piter_state ;
-                  *pstatus = CACHE_INODE_LOCK_CONFLICT ;
-                  return *pstatus ;
-               }
-         }
+      /* Check for a "conflict on the left" */
+      if ((offset <= piter_state->data.lock.offset) &&
+	  ((offset + length) >= piter_state->data.lock.offset))
+	found = TRUE;
 
-       /* Locks are supposed to be ordered by their range. Stop search is lock is "on the right" 
-        * of the right extremity of the requested lock */
-       if( ( offset + length ) < piter_state->data.lock.offset )
-         break ;
+      /* Check for a "conflict on the right" */
+      if ((offset >= piter_state->data.lock.offset) &&
+	  (offset <= (piter_state->data.lock.offset + piter_state->data.lock.length)))
+	found = TRUE;
+
+      if (found)
+	{
+	  /* No conflict on read lock */
+	  if ((piter_state->data.lock.lock_type == CACHE_INODE_WRITE_LT)
+	      || (lock_type == CACHE_INODE_WRITE_LT))
+	    {
+	      *ppfilelock = piter_state;
+	      *pstatus = CACHE_INODE_LOCK_CONFLICT;
+	      return *pstatus;
+	    }
+	}
+
+      /* Locks are supposed to be ordered by their range. Stop search is lock is "on the right" 
+       * of the right extremity of the requested lock */
+      if ((offset + length) < piter_state->data.lock.offset)
+	break;
     }
 
   /* If this line is reached, then no conflict were found */
-  *ppfilelock = NULL ;
-  *pstatus = CACHE_INODE_SUCCESS ;
-  return *pstatus ;
-#endif /* BUGAZOMEU */
-} /* cache_inode_lock_check_conflicting_range */
+  *ppfilelock = NULL;
+  *pstatus = CACHE_INODE_SUCCESS;
+  return *pstatus;
+#endif				/* BUGAZOMEU */
+}				/* cache_inode_lock_check_conflicting_range */
 
-cache_inode_status_t cache_inode_lock_test( cache_entry_t              * pentry,
-                                            uint64_t                     offset,  
-                                            uint64_t                     length,
-                                            nfs_lock_type4               lock_type,
-                                            cache_inode_client_t       * pclient, 
-                                            cache_inode_status_t       * pstatus )
+cache_inode_status_t cache_inode_lock_test(cache_entry_t * pentry,
+					   uint64_t offset,
+					   uint64_t length,
+					   nfs_lock_type4 lock_type,
+					   cache_inode_client_t * pclient,
+					   cache_inode_status_t * pstatus)
 {
   /* stat */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_LOCKT] += 1 ;
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_LOCKT] += 1;
 
-  P_r( &pentry->lock ) ;
-  cache_inode_lock_check_conflicting_range( pentry, offset, length, lock_type, pstatus ) ;
-  V_r( &pentry->lock ) ; 
+  P_r(&pentry->lock);
+  cache_inode_lock_check_conflicting_range(pentry, offset, length, lock_type, pstatus);
+  V_r(&pentry->lock);
 
-  if( *pstatus == CACHE_INODE_SUCCESS )
-    pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCKT] += 1 ;
-  else
-    pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1 ;
+  if (*pstatus == CACHE_INODE_SUCCESS)
+    pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCKT] += 1;
+    else
+    pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1;
 
-  return *pstatus ;
-} /* cache_inode_lock_test */  
+  return *pstatus;
+}				/* cache_inode_lock_test */
 
 /**
  *
@@ -248,42 +257,41 @@ cache_inode_status_t cache_inode_lock_test( cache_entry_t              * pentry,
  *
  */
 
-void cache_inode_lock_insert( cache_entry_t          * pentry,
-                              cache_inode_state_t * pfilelock ) 
+void cache_inode_lock_insert(cache_entry_t * pentry, cache_inode_state_t * pfilelock)
 {
 
-  printf( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!!!!!!!!!!!!!!!!!!!!\n" );
+  printf
+      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_insert !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-  if( pentry == NULL ) 
-   return ;
+  if (pentry == NULL)
+    return;
 
-  if( pentry->internal_md.type != REGULAR_FILE ) 
-   return ;
+  if (pentry->internal_md.type != REGULAR_FILE)
+    return;
 
 #ifdef BUGAZOMEU
-  for( piter_state = pentry->object.file.state_v4 ; piter_state != NULL ; piter_state_prev = piter_state, piter_state = piter_state->next ) 
+  for (piter_state = pentry->object.file.state_v4; piter_state != NULL;
+       piter_state_prev = piter_state, piter_state = piter_state->next)
     {
-       if( pfilelock->data.lock.offset > piter_state->data.lock.offset ) 
-         break ;
+      if (pfilelock->data.lock.offset > piter_state->data.lock.offset)
+	break;
     }
 
   /* At this line, piter_lock is the position before the new lock should be inserted */
-  if( piter_state == NULL ) 
+  if (piter_state == NULL)
     {
       /* Lock is to be inserted at the end of list */
-      pfilelock->next        = NULL ;
-      pfilelock->prev        = piter_state_prev ;
-      piter_state_prev->next = pfilelock ;
-    }
-  else
+      pfilelock->next = NULL;
+      pfilelock->prev = piter_state_prev;
+      piter_state_prev->next = pfilelock;
+    } else
     {
-       pfilelock->next   = piter_state->next ;
-       pfilelock->prev   = piter_state ;
-       piter_state->next = pfilelock ;
+      pfilelock->next = piter_state->next;
+      pfilelock->prev = piter_state;
+      piter_state->next = pfilelock;
     }
-#endif /* BUGAZOMEU */ 
-} /* cache_inode_insert_lock */
-
+#endif				/* BUGAZOMEU */
+}				/* cache_inode_insert_lock */
 
 /**
  *
@@ -296,13 +304,13 @@ void cache_inode_lock_insert( cache_entry_t          * pentry,
  * @return nothing (void function)
  *
  */
-void cache_inode_lock_remove( cache_entry_t          * pentry, 
-                              cache_inode_client_t   * pclient )
+void cache_inode_lock_remove(cache_entry_t * pentry, cache_inode_client_t * pclient)
 {
 
-  printf( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n" );
-  return ;
-} /* cache_inode_lock_remove */
+  printf
+      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  return;
+}				/* cache_inode_lock_remove */
 
 /**
  *
@@ -322,133 +330,129 @@ void cache_inode_lock_remove( cache_entry_t          * pentry,
  *
  */
 
-cache_inode_status_t cache_inode_lock_create( cache_entry_t              * pentry,
-                                              uint64_t                     offset,  
-                                              uint64_t                     length,
-                                              nfs_lock_type4               lock_type, 
-                                              open_owner4                * pstate_owner,   
-                                              unsigned int                 client_inst_num,
-                                              cache_inode_client_t       * pclient, 
-                                              cache_inode_status_t       * pstatus ) 
+cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
+					     uint64_t offset,
+					     uint64_t length,
+					     nfs_lock_type4 lock_type,
+					     open_owner4 * pstate_owner,
+					     unsigned int client_inst_num,
+					     cache_inode_client_t * pclient,
+					     cache_inode_status_t * pstatus)
 {
-  if( pstatus == NULL ) 
-    return CACHE_INODE_INVALID_ARGUMENT ;
+  if (pstatus == NULL)
+    return CACHE_INODE_INVALID_ARGUMENT;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS ;
+  *pstatus = CACHE_INODE_SUCCESS;
 
-  printf( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n" );
-  return CACHE_INODE_INVALID_ARGUMENT ;
+  printf
+      ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Plein de chose a faire dans cache_inode_lock_remove !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  return CACHE_INODE_INVALID_ARGUMENT;
 
 #ifdef BUGAZOMEU
   /* stat */
-  pclient->stat.nb_call_total += 1 ;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_LOCK_CREATE] += 1 ;
-  
-  /* pentry should be there */
-  if( pentry == NULL )
-    {
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1 ;
+  pclient->stat.nb_call_total += 1;
+  pclient->stat.func_stats.nb_call[CACHE_INODE_LOCK_CREATE] += 1;
 
-       *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-       return *pstatus ;
+  /* pentry should be there */
+  if (pentry == NULL)
+    {
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
+
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      return *pstatus;
     }
 
   /* pentry should be a file */
-  if( pentry->internal_md.type != REGULAR_FILE )
+  if (pentry->internal_md.type != REGULAR_FILE)
     {
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1 ;
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
 
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
-  
   /* Use absolute offset, manage CACHE_INODE_LOCK_OFFSET_EOF here */
-  if( length == CACHE_INODE_LOCK_OFFSET_EOF ) 
-   {
-      if( offset > pentry->object.file.attributes.filesize )
-        {
-           /* stat */
-           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1 ;
+  if (length == CACHE_INODE_LOCK_OFFSET_EOF)
+    {
+      if (offset > pentry->object.file.attributes.filesize)
+	{
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
 
-           *pstatus = CACHE_INODE_INVALID_ARGUMENT ;
-           return *pstatus ;
-        }
+	  *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+	  return *pstatus;
+	}
 
-      abslength = pentry->object.file.attributes.filesize - offset ;
-   } 
-  else
-   {    
-      abslength = length ;
-   }
+      abslength = pentry->object.file.attributes.filesize - offset;
+    } else
+    {
+      abslength = length;
+    }
 
   /* Lock the entry */
-  P_w( &pentry->lock ) ;
+  P_w(&pentry->lock);
 
   /* Check if lock is conflicting with an existing one */
-  if( cache_inode_lock_check_conflicting_range( pentry, 
-                                                offset, 
-                                                abslength, 
-                                                lock_type,
-                                                ppfilelock,
-                                                pstatus ) != CACHE_INODE_SUCCESS ) 
+  if (cache_inode_lock_check_conflicting_range(pentry,
+					       offset,
+					       abslength,
+					       lock_type,
+					       ppfilelock,
+					       pstatus) != CACHE_INODE_SUCCESS)
     {
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1 ;
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
 
-        V_w( &pentry->lock ) ; 
+      V_w(&pentry->lock);
 
-        return *pstatus ;
+      return *pstatus;
     }
 
-  /* Get a new lock */ 
-  GET_PREALLOC( pfilelock,
-                pclient->pool_state_v4,
-                pclient->nb_pre_state_v4,
-                cache_inode_state_v4_t,
-                next ) ;
+  /* Get a new lock */
+  GET_PREALLOC(pfilelock,
+	       pclient->pool_state_v4,
+	       pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
 
-   if( pfilelock == NULL ) 
+  if (pfilelock == NULL)
     {
-      DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Can't allocate a new file lock from cache pool" ) ;
-      *pstatus = CACHE_INODE_MALLOC_ERROR ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+			"Can't allocate a new file lock from cache pool");
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
 
-       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1 ;
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOCK_CREATE] += 1;
 
-      V_w( &pentry->lock ) ; 
+      V_w(&pentry->lock);
 
-      return *pstatus ;
+      return *pstatus;
     }
 
-   /* Fills in the lock structure */
-   memset( pfilelock, 0, sizeof ( cache_inode_state_v4_t ) ) ;
-   pfilelock->data.lock.offset     = offset ;
-   pfilelock->data.lock.length     = abslength ;
-   pfilelock->data.lock.lock_type  = lock_type ;
-   pfilelock->state_type           = CACHE_INODE_STATE_LOCK ;
-   pfilelock->clientid4            = clientid ;
-   pfilelock->client_inst_num      = client_inst_num ;
-   pfilelock->seqid                = 0 ;
-   pfilelock->pentry               = pentry ;
+  /* Fills in the lock structure */
+  memset(pfilelock, 0, sizeof(cache_inode_state_v4_t));
+  pfilelock->data.lock.offset = offset;
+  pfilelock->data.lock.length = abslength;
+  pfilelock->data.lock.lock_type = lock_type;
+  pfilelock->state_type = CACHE_INODE_STATE_LOCK;
+  pfilelock->clientid4 = clientid;
+  pfilelock->client_inst_num = client_inst_num;
+  pfilelock->seqid = 0;
+  pfilelock->pentry = pentry;
 
   /* Insert the lock into the list */
-  cache_inode_lock_insert( pentry, pfilelock ) ;
+  cache_inode_lock_insert(pentry, pfilelock);
 
-   /* Successful operation */
-   pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1 ;
+  /* Successful operation */
+  pclient->stat.func_stats.nb_success[CACHE_INODE_LOCK_CREATE] += 1;
 
-   V_w( &pentry->lock ) ; 
+  V_w(&pentry->lock);
 
-   cache_inode_lock_print( pentry ) ;
+  cache_inode_lock_print(pentry);
 
-   *ppnewlock = pfilelock ; 
-   *pstatus = CACHE_INODE_SUCCESS ;
-   return *pstatus ;
+  *ppnewlock = pfilelock;
+  *pstatus = CACHE_INODE_SUCCESS;
+  return *pstatus;
 #endif
-} /* cache_inode_lock_create */
-
-
+}				/* cache_inode_lock_create */

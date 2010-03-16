@@ -89,7 +89,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -125,134 +125,133 @@
  * @return CACHE_CONTENT_SUCCESS is successful .
  *
  */
-cache_content_status_t cache_content_flush(  cache_content_entry_t           * pentry,
-                                             cache_content_flush_behaviour_t   flushhow,
-                                             cache_content_client_t          * pclient,
-                                             fsal_op_context_t               * pcontext,
-                                             cache_content_status_t          * pstatus ) 
+cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
+					   cache_content_flush_behaviour_t flushhow,
+					   cache_content_client_t * pclient,
+					   fsal_op_context_t * pcontext,
+					   cache_content_status_t * pstatus)
 {
-   fsal_handle_t           * pfsal_handle = NULL ;
-   fsal_status_t             fsal_status ;
-   cache_inode_status_t      cache_inode_status ;
-   fsal_path_t               local_path ;
-   cache_entry_t           * pentry_inode = NULL ;
+  fsal_handle_t *pfsal_handle = NULL;
+  fsal_status_t fsal_status;
+  cache_inode_status_t cache_inode_status;
+  fsal_path_t local_path;
+  cache_entry_t *pentry_inode = NULL;
 
+  /* Get the related cache inode entry */
+  pentry_inode = (cache_entry_t *) pentry->pentry_inode;
 
-   /* Get the related cache inode entry */
-   pentry_inode = (cache_entry_t *)pentry->pentry_inode ;   
+  *pstatus = CACHE_CONTENT_SUCCESS;
 
-   *pstatus = CACHE_CONTENT_SUCCESS ;
-   
-   /* stat */
-   pclient->stat.func_stats.nb_call[CACHE_CONTENT_FLUSH] += 1 ;
-   
-   /* Get the fsal handle */
-   if( ( pfsal_handle = cache_inode_get_fsal_handle( pentry->pentry_inode, &cache_inode_status) ) == NULL )
-     {
-       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY ;
-       
-       DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR, 
-                          "cache_content_new_entry: cannot get handle" ) ;
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1 ;
-       
-       return *pstatus ;
-     }
+  /* stat */
+  pclient->stat.func_stats.nb_call[CACHE_CONTENT_FLUSH] += 1;
 
-   /* Lock related Cache Inode pentry to avoid concurrency while read/write operation */
-   P_w( &pentry->pentry_inode->lock ) ;
+  /* Get the fsal handle */
+  if ((pfsal_handle =
+       cache_inode_get_fsal_handle(pentry->pentry_inode, &cache_inode_status)) == NULL)
+    {
+      *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-   /* Convert the path to FSAL path */
-   fsal_status =  FSAL_str2path( pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path )  ;
-   
-   if( FSAL_IS_ERROR( fsal_status ) ) 
-      {
-       *pstatus = CACHE_CONTENT_FSAL_ERROR ;
-       
-       /* Unlock related Cache Inode pentry */
-       V_w( &pentry->pentry_inode->lock ) ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			"cache_content_new_entry: cannot get handle");
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
 
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1 ;
-       
-       return *pstatus ;
-     }
+      return *pstatus;
+    }
 
+  /* Lock related Cache Inode pentry to avoid concurrency while read/write operation */
+  P_w(&pentry->pentry_inode->lock);
+
+  /* Convert the path to FSAL path */
+  fsal_status =
+      FSAL_str2path(pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path);
+
+  if (FSAL_IS_ERROR(fsal_status))
+    {
+      *pstatus = CACHE_CONTENT_FSAL_ERROR;
+
+      /* Unlock related Cache Inode pentry */
+      V_w(&pentry->pentry_inode->lock);
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
+
+      return *pstatus;
+    }
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-   fsal_status = FSAL_rcp_by_name( &(pentry_inode->object.file.pentry_parent_open->object.dir_begin.handle),
-                                   pentry_inode->object.file.pname, 
-                                   pcontext,
-                                   &local_path,
-                                   FSAL_RCP_LOCAL_TO_FS ) ; 
+  fsal_status =
+      FSAL_rcp_by_name(&
+		       (pentry_inode->object.file.pentry_parent_open->object.
+			dir_begin.handle), pentry_inode->object.file.pname, pcontext,
+		       &local_path, FSAL_RCP_LOCAL_TO_FS);
 #else
-   /* Write the data from the local data file to the fs file */
-   fsal_status = FSAL_rcp( pfsal_handle, 
-                           pcontext, 
-                           &local_path,
-                           FSAL_RCP_LOCAL_TO_FS ) ;
+  /* Write the data from the local data file to the fs file */
+  fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
 #endif
 
-   if( FSAL_IS_ERROR( fsal_status ) ) 
-     {
+  if (FSAL_IS_ERROR(fsal_status))
+    {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-       DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR, 
-                          "Error %d,%d from FSAL_rcp_by_name when flushing file", fsal_status.major, fsal_status.minor ) ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			"Error %d,%d from FSAL_rcp_by_name when flushing file",
+			fsal_status.major, fsal_status.minor);
 #else
-       DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR, 
-                          "Error %d,%d from FSAL_rcp when flushing file", fsal_status.major, fsal_status.minor ) ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			"Error %d,%d from FSAL_rcp when flushing file", fsal_status.major,
+			fsal_status.minor);
 #endif
 
-         
-       /* Unlock related Cache Inode pentry */
-       V_w( &pentry->pentry_inode->lock ) ;
+      /* Unlock related Cache Inode pentry */
+      V_w(&pentry->pentry_inode->lock);
 
-       *pstatus = CACHE_CONTENT_FSAL_ERROR ;
-       
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1 ;
-       
+      *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
-       return *pstatus ;
-     }
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
 
-    /* To delete or not to delete ? That is the question ... */	  
-    if( flushhow == CACHE_CONTENT_FLUSH_AND_DELETE ) 
-     {
-        /* Remove the index file from the data cache */
-        if( unlink( pentry->local_fs_entry.cache_path_index ) )
-           {
-             /* Unlock related Cache Inode pentry */
-             V_w( &pentry->pentry_inode->lock ) ;
+      return *pstatus;
+    }
 
-             DisplayLog( "Can't unlink flushed index %s, errno=%u(%s)", pentry->local_fs_entry.cache_path_index, errno, strerror( errno ) ) ;
-       	     *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR ;
-             return *pstatus ;
-           }
+  /* To delete or not to delete ? That is the question ... */
+  if (flushhow == CACHE_CONTENT_FLUSH_AND_DELETE)
+    {
+      /* Remove the index file from the data cache */
+      if (unlink(pentry->local_fs_entry.cache_path_index))
+	{
+	  /* Unlock related Cache Inode pentry */
+	  V_w(&pentry->pentry_inode->lock);
 
-        /* Remove the data file from the data cache */
-        if( unlink( pentry->local_fs_entry.cache_path_data ) )
-          {
-             /* Unlock related Cache Inode pentry */
-             V_w( &pentry->pentry_inode->lock ) ;
+	  DisplayLog("Can't unlink flushed index %s, errno=%u(%s)",
+		     pentry->local_fs_entry.cache_path_index, errno, strerror(errno));
+	  *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+	  return *pstatus;
+	}
 
-             DisplayLog( "Can't unlink flushed index %s, errno=%u(%s)", pentry->local_fs_entry.cache_path_data, errno, strerror( errno ) ) ;
-	     *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR ;
-             return *pstatus ;
-          }
-     }
+      /* Remove the data file from the data cache */
+      if (unlink(pentry->local_fs_entry.cache_path_data))
+	{
+	  /* Unlock related Cache Inode pentry */
+	  V_w(&pentry->pentry_inode->lock);
 
-   /* Unlock related Cache Inode pentry */
-   V_w( &pentry->pentry_inode->lock ) ;
- 
-   /* Exit the function with no error */
-   pclient->stat.func_stats.nb_success[CACHE_CONTENT_FLUSH] += 1 ;
-   
-   /* Update the internal metadata */
-   pentry->internal_md.last_flush_time = time( NULL ) ;
-   pentry->local_fs_entry.sync_state = SYNC_OK ;
-   
-   return *pstatus ;
-} /* cache_content_flush */
+	  DisplayLog("Can't unlink flushed index %s, errno=%u(%s)",
+		     pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
+	  *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+	  return *pstatus;
+	}
+    }
+
+  /* Unlock related Cache Inode pentry */
+  V_w(&pentry->pentry_inode->lock);
+
+  /* Exit the function with no error */
+  pclient->stat.func_stats.nb_success[CACHE_CONTENT_FLUSH] += 1;
+
+  /* Update the internal metadata */
+  pentry->internal_md.last_flush_time = time(NULL);
+  pentry->local_fs_entry.sync_state = SYNC_OK;
+
+  return *pstatus;
+}				/* cache_content_flush */
 
 /**
  *
@@ -272,140 +271,140 @@ cache_content_status_t cache_content_flush(  cache_content_entry_t           * p
  *
  * @todo: BUGAZOMEU: gestion de coherence de date a mettre en place
  */
-cache_content_status_t cache_content_refresh( cache_content_entry_t        * pentry,
-                                              cache_content_client_t       * pclient,
-                                              fsal_op_context_t            * pcontext, 
-					      cache_content_refresh_how_t    how, 
-                                              cache_content_status_t       * pstatus )
+cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
+					     cache_content_client_t * pclient,
+					     fsal_op_context_t * pcontext,
+					     cache_content_refresh_how_t how,
+					     cache_content_status_t * pstatus)
 {
-  fsal_handle_t           * pfsal_handle = NULL ;
-   fsal_status_t            fsal_status ;
-   cache_inode_status_t     cache_inode_status ;
-   cache_entry_t          * pentry_inode = NULL ;
-   fsal_path_t              local_path ;
-   struct stat              buffstat ;
-   
-   *pstatus = CACHE_CONTENT_SUCCESS ;
-   
-   /* stat */
-   pclient->stat.func_stats.nb_call[CACHE_CONTENT_REFRESH] += 1 ;
+  fsal_handle_t *pfsal_handle = NULL;
+  fsal_status_t fsal_status;
+  cache_inode_status_t cache_inode_status;
+  cache_entry_t *pentry_inode = NULL;
+  fsal_path_t local_path;
+  struct stat buffstat;
 
-   /* Get the related cache inode entry */
-   pentry_inode = (cache_entry_t *)pentry->pentry_inode ;   
+  *pstatus = CACHE_CONTENT_SUCCESS;
 
-   /* Get the fsal handle */
-   if( ( pfsal_handle = cache_inode_get_fsal_handle( pentry_inode, &cache_inode_status ) ) == NULL )
-     {
-       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY ;
-       
-       DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR, 
-                          "cache_content_new_entry: cannot get handle" ) ;
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1 ;
-       
-       return *pstatus ;
-     }
+  /* stat */
+  pclient->stat.func_stats.nb_call[CACHE_CONTENT_REFRESH] += 1;
 
-   /* Convert the path to FSAL path */
-   fsal_status =  FSAL_str2path( pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path )  ;
+  /* Get the related cache inode entry */
+  pentry_inode = (cache_entry_t *) pentry->pentry_inode;
 
-   if( FSAL_IS_ERROR( fsal_status ) ) 
-      {
-       *pstatus = CACHE_CONTENT_FSAL_ERROR ;
-       
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1 ;
-       
-       return *pstatus ;
-     }
+  /* Get the fsal handle */
+  if ((pfsal_handle =
+       cache_inode_get_fsal_handle(pentry_inode, &cache_inode_status)) == NULL)
+    {
+      *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
-   /* Stat the data file to check for incoherency (this can occur in a crash recovery context) */
-   if( stat( pentry->local_fs_entry.cache_path_data, &buffstat ) == -1 )
-     {
-       *pstatus = CACHE_CONTENT_FSAL_ERROR ;
+      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			"cache_content_new_entry: cannot get handle");
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;
 
-       DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR,
-                          "cache_content_new_entry: could'nt stat on %s, errno=%u(%s)", 
-			  pentry->local_fs_entry.cache_path_data, errno, strerror( errno ) ) ;
+      return *pstatus;
+    }
 
-       /* stat */
-       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1 ;
+  /* Convert the path to FSAL path */
+  fsal_status =
+      FSAL_str2path(pentry->local_fs_entry.cache_path_data, MAXPATHLEN, &local_path);
 
-       return *pstatus ;
-     }  
-  
-#ifdef _DEBUG_FSAL 
-   if ( how == FORCE_FROM_FSAL )
-     printf("FORCE FROM FSAL\n");
-   else
-     printf("FORCE FROM FSAL PAS ACTIVE\n");
+  if (FSAL_IS_ERROR(fsal_status))
+    {
+      *pstatus = CACHE_CONTENT_FSAL_ERROR;
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
+
+      return *pstatus;
+    }
+
+  /* Stat the data file to check for incoherency (this can occur in a crash recovery context) */
+  if (stat(pentry->local_fs_entry.cache_path_data, &buffstat) == -1)
+    {
+      *pstatus = CACHE_CONTENT_FSAL_ERROR;
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			"cache_content_new_entry: could'nt stat on %s, errno=%u(%s)",
+			pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
+
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
+
+      return *pstatus;
+    }
+#ifdef _DEBUG_FSAL
+  if (how == FORCE_FROM_FSAL)
+    printf("FORCE FROM FSAL\n");
+    else
+    printf("FORCE FROM FSAL PAS ACTIVE\n");
 #endif
-     
-     
-   if( ( how != FORCE_FROM_FSAL ) && ( buffstat.st_mtime > (time_t)pentry_inode->object.file.attributes.mtime.seconds ) )
-     {
-	*pstatus = CACHE_CONTENT_SUCCESS ;
- 
-	DisplayLogJdLevel( pclient->log_outputs, NIV_DEBUG, "Entry %s is more recent in data cache, keeping it" ) ; 
-	pentry_inode->object.file.attributes.mtime.seconds  = buffstat.st_mtime ;
-	pentry_inode->object.file.attributes.mtime.nseconds = 0 ;
-	pentry_inode->object.file.attributes.atime.seconds  = buffstat.st_atime ;
-	pentry_inode->object.file.attributes.atime.nseconds = 0 ;
-	pentry_inode->object.file.attributes.ctime.seconds  = buffstat.st_ctime ;
-	pentry_inode->object.file.attributes.ctime.nseconds = 0 ;
-     }
-   else
-     {
+
+  if ((how != FORCE_FROM_FSAL)
+      && (buffstat.st_mtime >
+	  (time_t) pentry_inode->object.file.attributes.mtime.seconds))
+    {
+      *pstatus = CACHE_CONTENT_SUCCESS;
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+			"Entry %s is more recent in data cache, keeping it");
+      pentry_inode->object.file.attributes.mtime.seconds = buffstat.st_mtime;
+      pentry_inode->object.file.attributes.mtime.nseconds = 0;
+      pentry_inode->object.file.attributes.atime.seconds = buffstat.st_atime;
+      pentry_inode->object.file.attributes.atime.nseconds = 0;
+      pentry_inode->object.file.attributes.ctime.seconds = buffstat.st_ctime;
+      pentry_inode->object.file.attributes.ctime.nseconds = 0;
+    } else
+    {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-       fsal_status = FSAL_rcp_by_name( &(pentry_inode->object.file.pentry_parent_open->object.dir_begin.handle),
-                                       pentry_inode->object.file.pname, 
-                                       pcontext,
-                                       &local_path,
-                                       FSAL_RCP_FS_TO_LOCAL ) ; 
+      fsal_status =
+	  FSAL_rcp_by_name(&
+			   (pentry_inode->object.file.pentry_parent_open->
+			    object.dir_begin.handle), pentry_inode->object.file.pname,
+			   pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #else
-       /* Write the data from the local data file to the fs file */
-       fsal_status = FSAL_rcp( pfsal_handle, 
-                               pcontext, 
-                               &local_path,
-                               FSAL_RCP_FS_TO_LOCAL ) ;
+      /* Write the data from the local data file to the fs file */
+      fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #endif
-       if( FSAL_IS_ERROR( fsal_status ) ) 
-         {
-           *pstatus = CACHE_CONTENT_FSAL_ERROR ;
- 
+      if (FSAL_IS_ERROR(fsal_status))
+	{
+	  *pstatus = CACHE_CONTENT_FSAL_ERROR;
+
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-	   DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR,
-                              "FSAL_rcp_by_name failed for %s: fsal_status.major=%u fsal_status.minor=%u", 
-                               pentry->local_fs_entry.cache_path_data, fsal_status.major, fsal_status.minor ) ;
+	  DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			    "FSAL_rcp_by_name failed for %s: fsal_status.major=%u fsal_status.minor=%u",
+			    pentry->local_fs_entry.cache_path_data, fsal_status.major,
+			    fsal_status.minor);
 #else
-	   DisplayLogJdLevel( pclient->log_outputs, NIV_MAJOR,
-                              "FSAL_rcp failed for %s: fsal_status.major=%u fsal_status.minor=%u", 
-                               pentry->local_fs_entry.cache_path_data, fsal_status.major, fsal_status.minor ) ;
+	  DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
+			    "FSAL_rcp failed for %s: fsal_status.major=%u fsal_status.minor=%u",
+			    pentry->local_fs_entry.cache_path_data, fsal_status.major,
+			    fsal_status.minor);
 #endif
-     
-           /* stat */
-           pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1 ;
-           
-           return *pstatus ;
-         }
-   
-   
-       /* Exit the function with no error */
-       pclient->stat.func_stats.nb_success[CACHE_CONTENT_REFRESH] += 1 ;
-   
-       /* Update the internal metadata */
-       pentry->internal_md.last_refresh_time = time( NULL ) ;
-       pentry->local_fs_entry.sync_state = SYNC_OK ;
-   
-     }
 
-   return *pstatus ;
-} /* cache_content_refresh */
+	  /* stat */
+	  pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;
 
-cache_content_status_t cache_content_sync_all( cache_content_client_t     * pclient,
-                                               fsal_op_context_t                * pcontext, 
-                                               cache_content_status_t     * pstatus ) 
+	  return *pstatus;
+	}
+
+      /* Exit the function with no error */
+      pclient->stat.func_stats.nb_success[CACHE_CONTENT_REFRESH] += 1;
+
+      /* Update the internal metadata */
+      pentry->internal_md.last_refresh_time = time(NULL);
+      pentry->local_fs_entry.sync_state = SYNC_OK;
+
+    }
+
+  return *pstatus;
+}				/* cache_content_refresh */
+
+cache_content_status_t cache_content_sync_all(cache_content_client_t * pclient,
+					      fsal_op_context_t * pcontext,
+					      cache_content_status_t * pstatus)
 {
-   *pstatus = CACHE_CONTENT_SUCCESS ;
-  return *pstatus ;
-} /* cache_content_sync_all */
+  *pstatus = CACHE_CONTENT_SUCCESS;
+  return *pstatus;
+}				/* cache_content_sync_all */

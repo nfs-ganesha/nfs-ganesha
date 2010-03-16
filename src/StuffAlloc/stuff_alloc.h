@@ -30,7 +30,6 @@
  *
  */
 
-
 #ifndef _STUFF_ALLOC_H
 #define _STUFF_ALLOC_H
 
@@ -40,7 +39,7 @@
 #define Mem_Alloc( a )  malloc( a )
 #else
 #include "BuddyMalloc.h"
-#define Mem_Alloc( a ) BuddyMalloc( a ) 
+#define Mem_Alloc( a ) BuddyMalloc( a )
 #endif
 
 /**
@@ -82,8 +81,6 @@ do                                                                        \
     }                                                                     \
 } while( 0 )
 
-
-
 /**
  *
  * GET_PREALLOC: Gets an entry in a preallocated pool. 
@@ -116,7 +113,7 @@ do                                                                        \
     }                                                                     \
   else                                                                    \
    entry = NULL ;                                                         \
-} while( 0 ) 
+} while( 0 )
 
 /**
  *
@@ -138,7 +135,6 @@ do                                                                        \
 {                                                                         \
   entry->name_next = pool ;                                               \
   pool = entry ;                                                          \
-} while( 0 ) 
+} while( 0 )
 
-      
-#endif /* _STUFF_ALLOC_H */
+#endif				/* _STUFF_ALLOC_H */

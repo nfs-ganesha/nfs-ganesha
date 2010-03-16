@@ -103,7 +103,6 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif
@@ -112,7 +111,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,8 +140,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_stat.h"
 
-extern nfs_parameter_t     nfs_param ;
-
+extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -157,100 +155,107 @@ extern nfs_parameter_t     nfs_param ;
  * @return nothing (void function)
  *
  */
-void nfs_stat_update( nfs_stat_type_t        type,
-                      nfs_request_stat_t   * pstat_req,
-                      struct svc_req       * preq ) 
+void nfs_stat_update(nfs_stat_type_t type,
+		     nfs_request_stat_t * pstat_req, struct svc_req *preq)
 {
-  nfs_request_stat_item_t * pitem = NULL ;
+  nfs_request_stat_item_t *pitem = NULL;
 
-  if( preq->rq_prog == nfs_param.core_param.nfs_program )
+  if (preq->rq_prog == nfs_param.core_param.nfs_program)
     {
-      switch( preq->rq_vers )
-        {
-        case NFS_V2:
-          pitem = &pstat_req->stat_req_nfs2[preq->rq_proc] ;
-          pstat_req->nb_nfs2_req += 1 ;
-          break ;
-          
-        case NFS_V3:
-          pitem = &pstat_req->stat_req_nfs3[preq->rq_proc] ;
-          pstat_req->nb_nfs3_req += 1 ;
-          break ;
-          
-        case NFS_V4:
-          pitem = &pstat_req->stat_req_nfs4[preq->rq_proc] ;
-          pstat_req->nb_nfs4_req += 1 ;
-          break ;
+      switch (preq->rq_vers)
+	{
+	case NFS_V2:
+	  pitem = &pstat_req->stat_req_nfs2[preq->rq_proc];
+	  pstat_req->nb_nfs2_req += 1;
+	  break;
 
-        default:
-          /* Bad vers ? */
-          DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %", __FILE__, __LINE__ ) ;
-          return ;
-          break ;
-        }
-    }
-  else if( preq->rq_prog == nfs_param.core_param.mnt_program )
+	case NFS_V3:
+	  pitem = &pstat_req->stat_req_nfs3[preq->rq_proc];
+	  pstat_req->nb_nfs3_req += 1;
+	  break;
+
+	case NFS_V4:
+	  pitem = &pstat_req->stat_req_nfs4[preq->rq_proc];
+	  pstat_req->nb_nfs4_req += 1;
+	  break;
+
+	default:
+	  /* Bad vers ? */
+	  DisplayLog
+	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+	       __FILE__, __LINE__);
+	  return;
+	  break;
+	}
+  } else if (preq->rq_prog == nfs_param.core_param.mnt_program)
     {
-      switch( preq->rq_vers )
-        {
-        case MOUNT_V1:
-          pitem = &pstat_req->stat_req_mnt1[preq->rq_proc] ;
-          pstat_req->nb_mnt1_req += 1 ;
-          break ;
-          
-        case MOUNT_V3:
-          pitem = &pstat_req->stat_req_mnt3[preq->rq_proc] ;
-          pstat_req->nb_mnt3_req += 1 ;
-          break ;
+      switch (preq->rq_vers)
+	{
+	case MOUNT_V1:
+	  pitem = &pstat_req->stat_req_mnt1[preq->rq_proc];
+	  pstat_req->nb_mnt1_req += 1;
+	  break;
 
-        default:
-          /* Bad vers ? */
-          DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %", __FILE__, __LINE__ ) ;
-          return ;
-          break ;
-        }
-    }
-  else if( preq->rq_prog == nfs_param.core_param.nlm_program )
+	case MOUNT_V3:
+	  pitem = &pstat_req->stat_req_mnt3[preq->rq_proc];
+	  pstat_req->nb_mnt3_req += 1;
+	  break;
+
+	default:
+	  /* Bad vers ? */
+	  DisplayLog
+	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+	       __FILE__, __LINE__);
+	  return;
+	  break;
+	}
+  } else if (preq->rq_prog == nfs_param.core_param.nlm_program)
     {
-      switch( preq->rq_vers )
-        {
-        case NLM4_VERS:
-          pitem = &pstat_req->stat_req_nlm4[preq->rq_proc] ;
-          pstat_req->nb_nlm4_req += 1 ;
-          break ;
-        default:
-          /* Bad vers ? */
-          DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s", __FILE__, __LINE__ ) ;
-          return ;
-          break ;
-        }
+      switch (preq->rq_vers)
+	{
+	case NLM4_VERS:
+	  pitem = &pstat_req->stat_req_nlm4[preq->rq_proc];
+	  pstat_req->nb_nlm4_req += 1;
+	  break;
+	default:
+	  /* Bad vers ? */
+	  DisplayLog
+	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s",
+	       __FILE__, __LINE__);
+	  return;
+	  break;
+	}
     }
 
-  else
+    else
     {
       /* Bad program ? */
-      DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %", __FILE__, __LINE__ ) ;
-      return ;
+      DisplayLog
+	  ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+	   __FILE__, __LINE__);
+      return;
     }
 
-  pitem->total += 1 ;
-  
-  switch( type ) 
+  pitem->total += 1;
+
+  switch (type)
     {
     case GANESHA_STAT_SUCCESS:
-      pitem->success += 1 ;
-      break ;
-      
+      pitem->success += 1;
+      break;
+
     case GANESHA_STAT_DROP:
-      pitem->dropped += 1 ;
-      break ;
+      pitem->dropped += 1;
+      break;
 
     default:
       /* Bad type ? */
-      DisplayLog( "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %", __FILE__, __LINE__ ) ;
-      break ;
+      DisplayLog
+	  ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+	   __FILE__, __LINE__);
+      break;
     }
-  
-  return ;
-  
-} /* nfs_stat_update */
+
+  return;
+
+}				/* nfs_stat_update */

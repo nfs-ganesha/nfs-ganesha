@@ -91,12 +91,11 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,7 +123,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
 /**
  * nfs2_Writecache: Implements NFSPROC2_WRITECACHE.
  *
@@ -142,18 +140,16 @@
  *
  */
 
-int nfs2_Writecache( nfs_arg_t               * parg,    
-                     exportlist_t            * pexport, 
-                     fsal_op_context_t       * pcontext,   
-                     cache_inode_client_t    * pclient,
-                     hash_table_t            * ht,
-                     struct svc_req          * preq,    
-                     nfs_res_t               * pres )
+int nfs2_Writecache(nfs_arg_t * parg,
+		    exportlist_t * pexport,
+		    fsal_op_context_t * pcontext,
+		    cache_inode_client_t * pclient,
+		    hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
-  /* This is an unsupported function, it is never used */ 
-  DisplayLogJdLevel( pclient->log_outputs, NIV_CRIT, 
-                     "NFS2_WRITECACHE:  /!\\ | Received unexpected call to deprecated function NFS2PROC_WRITECACHE" ) ;
-	return NFS_REQ_OK ;
+  /* This is an unsupported function, it is never used */
+  DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+		    "NFS2_WRITECACHE:  /!\\ | Received unexpected call to deprecated function NFS2PROC_WRITECACHE");
+  return NFS_REQ_OK;
 }
 
 /**
@@ -164,8 +160,8 @@ int nfs2_Writecache( nfs_arg_t               * parg,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nfs2_Writecache_Free( nfs_res_t * pres )
+void nfs2_Writecache_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* nfs2_Writecache_Free */
+  return;
+}				/* nfs2_Writecache_Free */
