@@ -111,11 +111,11 @@ typedef struct cache_content_policy_data__ {
 } cache_content_policy_data_t;
 
 cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentry_inode,
-							   cache_content_policy_data_t *
-							   ppolicy_data,
-							   cache_content_client_t *
-							   pclient,
-							   cache_content_status_t *
-							   pstatus);
+                                                           cache_content_policy_data_t *
+                                                           ppolicy_data,
+                                                           cache_content_client_t *
+                                                           pclient,
+                                                           cache_content_status_t *
+                                                           pstatus);
 
-#endif				/* _CACHE_CONTENT_POLICY_H */
+#endif                          /* _CACHE_CONTENT_POLICY_H */

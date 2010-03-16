@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -140,7 +140,7 @@ extern nfs_parameter_t nfs_param;
  * 
  */
 
-extern verifier4 NFS4_write_verifier;	/* NFS V4 write verifier from nfs_Main.c     */
+extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c     */
 
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
@@ -216,7 +216,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       pstate_found = NULL;
   }
     else if (!memcmp((char *)all_one, arg_WRITE4.stateid.other, 12) &&
-	       arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
+               arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case", see RFC3530 page 220-221 for details 
        * This will be treated as a client that held no lock at all,
@@ -232,36 +232,36 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   do
     {
       cache_inode_state_iterate(data->current_entry,
-				&pstate_iterate,
-				pstate_previous_iterate,
-				data->pclient, data->pcontext, &cache_status);
+                                &pstate_iterate,
+                                pstate_previous_iterate,
+                                data->pclient, data->pcontext, &cache_status);
       if (cache_status == CACHE_INODE_STATE_ERROR)
-	break;			/* Get out of the loop */
+        break;                  /* Get out of the loop */
 
       if (cache_status == CACHE_INODE_INVALID_ARGUMENT)
-	{
-	  res_WRITE4.status = NFS4ERR_INVAL;
-	  return res_WRITE4.status;
-	}
+        {
+          res_WRITE4.status = NFS4ERR_INVAL;
+          return res_WRITE4.status;
+        }
 
       if (pstate_iterate != NULL)
-	{
-	  switch (pstate_iterate->state_type)
-	    {
-	    case CACHE_INODE_STATE_SHARE:
-	      if (pstate_found != pstate_iterate)
-		{
-		  if (pstate_iterate->state_data.
-		      share.share_deny & OPEN4_SHARE_DENY_WRITE)
-		    {
-		      /* Writing to this file if prohibited, file is write-denied */
-		      res_WRITE4.status = NFS4ERR_LOCKED;
-		      return res_WRITE4.status;
-		    }
-		}
-	      break;
-	    }
-	}
+        {
+          switch (pstate_iterate->state_type)
+            {
+            case CACHE_INODE_STATE_SHARE:
+              if (pstate_found != pstate_iterate)
+                {
+                  if (pstate_iterate->state_data.share.
+                      share_deny & OPEN4_SHARE_DENY_WRITE)
+                    {
+                      /* Writing to this file if prohibited, file is write-denied */
+                      res_WRITE4.status = NFS4ERR_LOCKED;
+                      return res_WRITE4.status;
+                    }
+                }
+              break;
+            }
+        }
       pstate_previous_iterate = pstate_iterate;
     }
   while (pstate_iterate != NULL);
@@ -271,10 +271,10 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* If the destination is no file, return EISDIR if it is a directory and EINAVL otherwise */
       if (data->current_filetype == DIR_BEGINNING
-	  || data->current_filetype == DIR_CONTINUE)
-	res_WRITE4.status = NFS4ERR_ISDIR;
-	else
-	res_WRITE4.status = NFS4ERR_INVAL;
+          || data->current_filetype == DIR_CONTINUE)
+        res_WRITE4.status = NFS4ERR_ISDIR;
+        else
+        res_WRITE4.status = NFS4ERR_INVAL;
 
       return res_WRITE4.status;
     }
@@ -285,15 +285,15 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   stable_how = arg_WRITE4.stable;
 #ifdef _DEBUG_NFS_V4
   printf("   NFS4_OP_WRITE: offset = %llu  length = %llu   stable = %d\n", offset, size,
-	 stable_how);
+         stable_how);
 #endif
 
   if ((data->pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) ==
       EXPORT_OPTION_MAXOFFSETWRITE)
     if ((fsal_off_t) (offset + size) > data->pexport->MaxOffsetWrite)
       {
-	res_WRITE4.status = NFS4ERR_DQUOT;
-	return res_WRITE4.status;
+        res_WRITE4.status = NFS4ERR_DQUOT;
+        return res_WRITE4.status;
       }
 
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked 
@@ -322,7 +322,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
 
       memcpy(res_WRITE4.WRITE4res_u.resok4.writeverf, NFS4_write_verifier,
-	     sizeof(verifier4));
+             sizeof(verifier4));
 
       res_WRITE4.status = NFS4_OK;
       return res_WRITE4.status;
@@ -330,10 +330,10 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   if ((data->pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
       (cache_content_cache_behaviour(entry,
-				     &datapol,
-				     (cache_content_client_t *) (data->
-								 pclient->pcontent_client),
-				     &content_status) == CACHE_CONTENT_FULLY_CACHED)
+                                     &datapol,
+                                     (cache_content_client_t *) (data->pclient->
+                                                                 pcontent_client),
+                                     &content_status) == CACHE_CONTENT_FULLY_CACHED)
       && (entry->object.file.pentry_content == NULL))
     {
       /* Entry is not in datacache, but should be in, cache it .
@@ -347,14 +347,14 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       /* Status is set in last argument */
       cache_inode_add_data_cache(entry, data->ht, data->pclient, data->pcontext,
-				 &cache_status);
+                                 &cache_status);
 
       if ((cache_status != CACHE_INODE_SUCCESS) &&
-	  (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
-	{
-	  res_WRITE4.status = NFS4ERR_SERVERFAULT;
-	  return res_WRITE4.status;
-	}
+          (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
+        {
+          res_WRITE4.status = NFS4ERR_SERVERFAULT;
+          return res_WRITE4.status;
+        }
 
     }
 
@@ -373,16 +373,16 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   seek_descriptor.offset = offset;
 
   if (cache_inode_rdwr(entry,
-		       CACHE_CONTENT_WRITE,
-		       &seek_descriptor,
-		       size,
-		       &written_size,
-		       &attr,
-		       bufferdata,
-		       &eof_met,
-		       data->ht,
-		       data->pclient,
-		       data->pcontext, stable_flag, &cache_status) != CACHE_INODE_SUCCESS)
+                       CACHE_CONTENT_WRITE,
+                       &seek_descriptor,
+                       size,
+                       &written_size,
+                       &attr,
+                       bufferdata,
+                       &eof_met,
+                       data->ht,
+                       data->pclient,
+                       data->pcontext, stable_flag, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_WRITE4.status = nfs4_Errno(cache_status);
       return res_WRITE4.status;
@@ -400,7 +400,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_WRITE4.status = NFS4_OK;
 
   return res_WRITE4.status;
-}				/* nfs41_op_write */
+}                               /* nfs41_op_write */
 
 /**
  * nfs41_op_write_Free: frees what was allocared to handle nfs41_op_write.
@@ -416,4 +416,4 @@ void nfs41_op_write_Free(WRITE4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs41_op_write_Free */
+}                               /* nfs41_op_write_Free */

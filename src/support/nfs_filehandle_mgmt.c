@@ -144,16 +144,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #ifdef _USE_GSSRPC
@@ -193,7 +193,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
-		       fsal_op_context_t * pcontext)
+                       fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *pfile_handle;
@@ -205,7 +205,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 
   /* Verify the len */
   if (pfh4->nfs_fh4_len != sizeof(file_handle_v4_t))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
@@ -213,23 +213,23 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* Check the cksum */
   memcpy((char *)&checksum, &(pfile_handle->checksum), sizeof(checksum));
   if (checksum != nfs4_FhandleCheckSum(pfile_handle))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
   /* The filehandle should not be related to pseudo fs */
   if (pfile_handle->pseudofs_id != 0 || pfile_handle->pseudofs_flag != FALSE)
-    return 0;			/* Bad FH */
+    return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV4,
-			(caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if (FSAL_IS_ERROR(fsal_status))
-    return 0;			/* Corrupted (or stale) FH */
+    return 0;                   /* Corrupted (or stale) FH */
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfsalhandle, sizeof(fsal_handle_t));
 #endif
   return 1;
-}				/* nfs4_FhandleToFSAL */
+}                               /* nfs4_FhandleToFSAL */
 
 /**
  *
@@ -244,7 +244,7 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
  *
  */
 int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
-		       fsal_op_context_t * pcontext)
+                       fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle;
@@ -254,7 +254,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 #endif
   /* Verify the len */
   if (pfh3->data.data_len != sizeof(file_handle_v3_t))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
@@ -264,23 +264,23 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   if (checksum != nfs3_FhandleCheckSum(pfile_handle))
     {
       DisplayLog
-	  ("Invalid checksum in NFSv3 handle. checksum from handle:%llX, expected:%llX",
-	   checksum, nfs3_FhandleCheckSum(pfile_handle));
-      return 0;			/* Corrupted FH */
+          ("Invalid checksum in NFSv3 handle. checksum from handle:%llX, expected:%llX",
+           checksum, nfs3_FhandleCheckSum(pfile_handle));
+      return 0;                 /* Corrupted FH */
     }
 
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV3,
-			(caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if (FSAL_IS_ERROR(fsal_status))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfsalhandle, sizeof(fsal_handle_t));
 #endif
   return 1;
-}				/* nfs3_FhandleToFSAL */
+}                               /* nfs3_FhandleToFSAL */
 
 /**
  *
@@ -295,7 +295,7 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
  *
  */
 int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
-		       fsal_op_context_t * pcontext)
+                       fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t *pfile_handle;
@@ -307,20 +307,20 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
 #endif
   /* Check the cksum */
   if (pfile_handle->checksum != nfs2_FhandleCheckSum(pfile_handle))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_ExpandHandle(pcontext->export_context, FSAL_DIGEST_NFSV2,
-			(caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
   if (FSAL_IS_ERROR(fsal_status))
-    return 0;			/* Corrupted FH */
+    return 0;                   /* Corrupted FH */
 
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfsalhandle, sizeof(fsal_handle_t));
 #endif
   return 1;
-}				/* nfs2_FhandleToFSAL */
+}                               /* nfs2_FhandleToFSAL */
 
 /**
  *
@@ -336,7 +336,7 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
  *
  */
 int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
-		       compound_data_t * data)
+                       compound_data_t * data)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t file_handle;
@@ -348,7 +348,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_DigestHandle(&data->pexport->FS_export_context, FSAL_DIGEST_NFSV4, pfsalhandle,
-			(caddr_t) & file_handle.fsopaque);
+                        (caddr_t) & file_handle.fsopaque);
   if (FSAL_IS_ERROR(fsal_status))
     return 0;
 
@@ -356,7 +356,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   file_handle.exportid = data->pexport->id;
 
   /* A very basic checksum */
-  memset((char *)&file_handle.checksum, 0, 16);	/* NFS checksum is 16 bytes long */
+  memset((char *)&file_handle.checksum, 0, 16); /* NFS checksum is 16 bytes long */
   cksum = nfs4_FhandleCheckSum(&file_handle);
   memcpy((char *)&file_handle.checksum, &cksum, sizeof(cksum));
 
@@ -386,7 +386,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   memcpy(pfh4->nfs_fh4_val, &file_handle, sizeof(file_handle_v4_t));
 
   return 1;
-}				/* nfs4_FSALToFhandle */
+}                               /* nfs4_FSALToFhandle */
 
 /**
  *
@@ -402,7 +402,7 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
  *
  */
 int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
-		       exportlist_t * pexport)
+                       exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t file_handle;
@@ -419,7 +419,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV3, pfsalhandle,
-			(caddr_t) & file_handle.fsopaque);
+                        (caddr_t) & file_handle.fsopaque);
   if (FSAL_IS_ERROR(fsal_status))
     return 0;
 
@@ -430,7 +430,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
   file_handle.xattr_pos = 0;
 
   /* A very basic checksum */
-  memset((char *)&file_handle.checksum, 0, 16);	/* NFSv3 checksum is 16 bytes long */
+  memset((char *)&file_handle.checksum, 0, 16); /* NFSv3 checksum is 16 bytes long */
   cksum = nfs3_FhandleCheckSum(&file_handle);
   memcpy((char *)&file_handle.checksum, &cksum, sizeof(cksum));
 
@@ -445,7 +445,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 #endif
 
   return 1;
-}				/* nfs3_FSALToFhandle */
+}                               /* nfs3_FSALToFhandle */
 
 /**
  *
@@ -461,7 +461,7 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
  *
  */
 int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
-		       exportlist_t * pexport)
+                       exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t file_handle;
@@ -476,7 +476,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   /* Fill in the fs opaque part */
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV2, pfsalhandle,
-			(caddr_t) & file_handle.fsopaque);
+                        (caddr_t) & file_handle.fsopaque);
   if (FSAL_IS_ERROR(fsal_status))
     return 0;
 
@@ -497,7 +497,7 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
   print_fhandle2(*pfh2);
 #endif
   return 1;
-}				/* nfs2_FSALToFhandle */
+}                               /* nfs2_FSALToFhandle */
 
 /**
  *
@@ -517,10 +517,10 @@ short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
 
   if (pfile_handle == NULL)
-    return -1;			/* Badly formed arguments */
+    return -1;                  /* Badly formed arguments */
 
   return pfile_handle->exportid;
-}				/* nfs4_FhandleToExportId */
+}                               /* nfs4_FhandleToExportId */
 
 /**
  *
@@ -540,13 +540,13 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
   if (pfile_handle == NULL)
-    return -1;			/* Badly formed argument */
+    return -1;                  /* Badly formed argument */
 
 #ifdef _DEBUG_FILEHANDLE
   print_buff((char *)pfh3->data.data_val, pfh3->data.data_len);
 #endif
   return pfile_handle->exportid;
-}				/* nfs3_FhandleToExportId */
+}                               /* nfs3_FhandleToExportId */
 
 /**
  *
@@ -566,10 +566,10 @@ short nfs2_FhandleToExportId(fhandle2 * pfh2)
   pfile_handle = (file_handle_v2_t *) (*pfh2);
 
   if (pfile_handle == NULL)
-    return -1;			/* Badly formed argument */
+    return -1;                  /* Badly formed argument */
 
   return pfile_handle->exportid;
-}				/* nfs2_FhandleToExportId */
+}                               /* nfs2_FhandleToExportId */
 
 /**
  *    
@@ -592,7 +592,7 @@ int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh)
   pfhandle3 = (file_handle_v3_t *) (pfh->data.data_val);
 
   return (pfhandle3->xattr_pos != 0) ? 1 : 0;
-}				/* nfs4_Is_Fh_Xattr */
+}                               /* nfs4_Is_Fh_Xattr */
 
 /**
  *
@@ -614,7 +614,7 @@ int nfs4_Is_Fh_Empty(nfs_fh4 * pfh)
     return NFS4ERR_NOFILEHANDLE;
 
   return 0;
-}				/* nfs4_Is_Fh_Empty */
+}                               /* nfs4_Is_Fh_Empty */
 
 /**
  *  
@@ -637,7 +637,7 @@ int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh)
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
   return (pfhandle4->xattr_pos != 0) ? 1 : 0;
-}				/* nfs4_Is_Fh_Xattr */
+}                               /* nfs4_Is_Fh_Xattr */
 
 /**
  *
@@ -660,7 +660,7 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
   pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
 
   return pfhandle4->pseudofs_flag;
-}				/* nfs4_Is_Fh_Pseudo */
+}                               /* nfs4_Is_Fh_Pseudo */
 
 /**
  *
@@ -686,11 +686,11 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
       && (pfilehandle4->srvboot_time != (unsigned int)ServerBootTime))
     {
       if (nfs_param.nfsv4_param.returns_err_fh_expired == TRUE)
-	return NFS4ERR_FHEXPIRED;
+        return NFS4ERR_FHEXPIRED;
     }
 
   return NFS4_OK;
-}				/* nfs4_Is_Fh_Expired */
+}                               /* nfs4_Is_Fh_Expired */
 
 /**
  *
@@ -715,7 +715,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
     return NFS4ERR_BADHANDLE;
 
   return NFS4_OK;
-}				/* nfs4_Is_Fh_Invalid */
+}                               /* nfs4_Is_Fh_Invalid */
 
 /**
  * 
@@ -744,7 +744,7 @@ int nfs4_Is_Fh_Referral(nfs_fh4 * pfh)
     }
 
   return FALSE;
-}				/* nfs4_Is_Fh_Referral */
+}                               /* nfs4_Is_Fh_Referral */
 
 /**
  *
@@ -766,7 +766,7 @@ unsigned int nfs2_FhandleCheckSum(file_handle_v2_t * pfh)
       (unsigned int)pfh->fsopaque[3] + (unsigned int)pfh->fsopaque[5];
 
   return cksum;
-}				/* nfs2_FhandleCheckSum */
+}                               /* nfs2_FhandleCheckSum */
 
 /**
  *
@@ -788,7 +788,7 @@ unsigned long long nfs3_FhandleCheckSum(file_handle_v3_t * pfh)
       (unsigned long long)pfh->fsopaque[3] + (unsigned long long)pfh->fsopaque[5];
 
   return cksum;
-}				/* nfs3_FhandleCheckSum */
+}                               /* nfs3_FhandleCheckSum */
 
 /**
  *
@@ -810,7 +810,7 @@ unsigned long long nfs4_FhandleCheckSum(file_handle_v4_t * pfh)
       (unsigned long long)pfh->fsopaque[3] + (unsigned long long)pfh->fsopaque[5];
 
   return cksum;
-}				/* nfs4_FhandleCheckSum */
+}                               /* nfs4_FhandleCheckSum */
 
 /**
  *
@@ -831,7 +831,7 @@ void print_fhandle2(fhandle2 fh)
   for (i = 0; i < 32; i++)
     printf("%02X", fh[i]);
   printf("\n");
-}				/* print_fhandle2 */
+}                               /* print_fhandle2 */
 
 void sprint_fhandle2(char *str, fhandle2 fh)
 {
@@ -840,7 +840,7 @@ void sprint_fhandle2(char *str, fhandle2 fh)
   sprintf(str, "File Handle V2: ");
   for (i = 0; i < 32; i++)
     sprintf(str, "%02X", fh[i]);
-}				/* sprint_fhandle2 */
+}                               /* sprint_fhandle2 */
 
 /**
  *
@@ -861,7 +861,7 @@ void print_fhandle3(nfs_fh3 fh)
   for (i = 0; i < fh.data.data_len; i++)
     printf("%02X", fh.data.data_val[i]);
   printf("\n");
-}				/* print_fhandle3 */
+}                               /* print_fhandle3 */
 
 void sprint_fhandle3(char *str, nfs_fh3 fh)
 {
@@ -870,7 +870,7 @@ void sprint_fhandle3(char *str, nfs_fh3 fh)
   sprintf(str, "  File Handle V3 : Len=%u ", fh.data.data_len);
   for (i = 0; i < fh.data.data_len; i++)
     sprintf(str, "%02X", fh.data.data_val[i]);
-}				/* sprint_fhandle3 */
+}                               /* sprint_fhandle3 */
 
 /**
  *
@@ -891,7 +891,7 @@ void print_fhandle4(nfs_fh4 fh)
   for (i = 0; i < fh.nfs_fh4_len; i++)
     printf("%02X", fh.nfs_fh4_val[i]);
   printf("\n");
-}				/* print_fhandle4 */
+}                               /* print_fhandle4 */
 
 void sprint_fhandle4(char *str, nfs_fh4 fh)
 {
@@ -900,7 +900,7 @@ void sprint_fhandle4(char *str, nfs_fh4 fh)
   sprintf(str, "  File Handle V4 : Len=%u ", fh.nfs_fh4_len);
   for (i = 0; i < fh.nfs_fh4_len; i++)
     sprintf(str, "%02X", fh.nfs_fh4_val[i]);
-}				/* sprint_fhandle4 */
+}                               /* sprint_fhandle4 */
 
 /**
  *
@@ -922,7 +922,7 @@ void print_buff(char *buff, int len)
   for (i = 0; i < len; i++)
     printf("%02X", buff[i]);
   printf("\n");
-}				/* print_buff */
+}                               /* print_buff */
 
 void sprint_buff(char *str, char *buff, int len)
 {
@@ -931,7 +931,7 @@ void sprint_buff(char *str, char *buff, int len)
   sprintf(str, "  Len=%u Buff=%p Val: ", len, buff);
   for (i = 0; i < len; i++)
     sprintf(str, "%02X", buff[i]);
-}				/* sprint_buff */
+}                               /* sprint_buff */
 
 /**
  *
@@ -957,7 +957,7 @@ void print_compound_fh(compound_data_t * data)
 
   printf("Root FH     ");
   print_fhandle4(data->rootFH);
-}				/* print_compoud_fh */
+}                               /* print_compoud_fh */
 
 /**
  * nfs4_sprint_fhandle : converts a file handle v4 to a string.
@@ -984,6 +984,6 @@ void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr)
     }
 
   sprintf(outstr, "File handle V4 = { Length = %d  Val = %s }", fh4p->nfs_fh4_len,
-	  tmpstr);
+          tmpstr);
 
-}				/* nfs4_sprint_fhandle */
+}                               /* nfs4_sprint_fhandle */

@@ -105,4 +105,4 @@ void *admin_thread(void *IndexArg)
   SetNameFunction("admin_thr");
 
   return NULL;
-}				/* admin_thread */
+}                               /* admin_thread */

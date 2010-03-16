@@ -147,4 +147,4 @@ typedef struct RPCSEC_GSS_cred__ {
   CredData_t data;
 } RPCSEC_GSS_cred_t;
 
-#endif				/* _NFS_CREDS_H */
+#endif                          /* _NFS_CREDS_H */

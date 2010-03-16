@@ -37,11 +37,11 @@
     ((o1)->elements != 0) && ((o2)->elements != 0) && \
     (memcmp((o1)->elements,(o2)->elements,(int) (o1)->length) == 0))
 #define OID_EQ 1
-#endif				/* OID_EQ */
+#endif                          /* OID_EQ */
 
 extern const gss_OID_desc *const gss_mech_spkm3;
 
-#endif				/* SPKM */
+#endif                          /* SPKM */
 
 #ifndef SVCAUTH_DESTROY
 #define SVCAUTH_DESTROY(auth) \
@@ -58,16 +58,16 @@ typedef struct gss_union_ctx_id_t {
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
 
 struct svc_rpc_gss_data {
-  bool_t established;		/* context established */
-  gss_ctx_id_t ctx;		/* context id */
-  struct rpc_gss_sec sec;	/* security triple */
-  gss_buffer_desc cname;	/* GSS client name */
-  u_int seq;			/* sequence number */
-  u_int win;			/* sequence window */
-  u_int seqlast;		/* last sequence number */
-  uint32_t seqmask;		/* bitmask of seqnums */
-  gss_name_t client_name;	/* unparsed name string */
-  gss_buffer_desc checksum;	/* so we can free it */
+  bool_t established;           /* context established */
+  gss_ctx_id_t ctx;             /* context id */
+  struct rpc_gss_sec sec;       /* security triple */
+  gss_buffer_desc cname;        /* GSS client name */
+  u_int seq;                    /* sequence number */
+  u_int win;                    /* sequence window */
+  u_int seqlast;                /* last sequence number */
+  uint32_t seqmask;             /* bitmask of seqnums */
+  gss_name_t client_name;       /* unparsed name string */
+  gss_buffer_desc checksum;     /* so we can free it */
 };
 #define GSS_CNAMELEN  1024
 #define GSS_CKSUM_LEN 1024
@@ -100,7 +100,7 @@ struct svc_rpc_gss_data_stored {
  *
  */
 static int gss_data2stored(struct svc_rpc_gss_data *gd,
-			   struct svc_rpc_gss_data_stored *pstored)
+                           struct svc_rpc_gss_data_stored *pstored)
 {
   OM_uint32 major;
   OM_uint32 minor;
@@ -122,18 +122,18 @@ static int gss_data2stored(struct svc_rpc_gss_data *gd,
 
   /* Duplicate the gss_name */
   if ((major = gss_duplicate_name(&minor,
-				  gd->client_name,
-				  &pstored->client_name)) != GSS_S_COMPLETE)
+                                  gd->client_name,
+                                  &pstored->client_name)) != GSS_S_COMPLETE)
     return FALSE;
 
   /* export the sec context */
   if ((major = gss_export_sec_context(&minor,
-				      &gd->ctx,
-				      &pstored->ctx_exported)) != GSS_S_COMPLETE)
+                                      &gd->ctx,
+                                      &pstored->ctx_exported)) != GSS_S_COMPLETE)
     return FALSE;
 
   return TRUE;
-}				/* gss_data2stored */
+}                               /* gss_data2stored */
 
 /**
  *
@@ -148,7 +148,7 @@ static int gss_data2stored(struct svc_rpc_gss_data *gd,
  *
  */
 static int gss_stored2data(struct svc_rpc_gss_data *gd,
-			   struct svc_rpc_gss_data_stored *pstored)
+                           struct svc_rpc_gss_data_stored *pstored)
 {
   OM_uint32 major;
   OM_uint32 minor;
@@ -165,7 +165,7 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   if (gd->cname.value == NULL && pstored->cname_len != 0)
     {
       if ((gd->cname.value = (char *)Mem_Alloc(pstored->cname_len)) == NULL)
-	return FALSE;
+        return FALSE;
     }
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);
   gd->cname.length = pstored->cname_len;
@@ -173,25 +173,25 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   if (gd->checksum.value == NULL && pstored->checksum_len != 0)
     {
       if ((gd->checksum.value = (char *)Mem_Alloc(pstored->checksum_len)) == NULL)
-	return FALSE;
+        return FALSE;
     }
   memcpy(gd->checksum.value, pstored->checksum_val, pstored->checksum_len);
   gd->checksum.length = pstored->checksum_len;
 
   /* Duplicate the gss_name */
   if ((major = gss_duplicate_name(&minor,
-				  pstored->client_name,
-				  &gd->client_name)) != GSS_S_COMPLETE)
+                                  pstored->client_name,
+                                  &gd->client_name)) != GSS_S_COMPLETE)
     return FALSE;
 
   /* Import the sec context */
   if ((major = gss_import_sec_context(&minor,
-				      &pstored->ctx_exported,
-				      &gd->ctx)) != GSS_S_COMPLETE)
+                                      &pstored->ctx_exported,
+                                      &gd->ctx)) != GSS_S_COMPLETE)
     return FALSE;
 
   return TRUE;
-}				/* gss_stored2data */
+}                               /* gss_stored2data */
 
 #define SVCAUTH_PRIVATE(auth) \
 	(*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
@@ -229,7 +229,7 @@ unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buf
      (unsigned long)pgss_ctx->internal_ctx_id,  (unsigned long)pgss_ctx->mech_type, hash_func ) ; */
 
   return hash_func % p_hparam->index_size;
-}				/*  gss_ctx_hash_func */
+}                               /*  gss_ctx_hash_func */
 
 /**
  *
@@ -263,7 +263,7 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t *
      (unsigned long)pgss_ctx->internal_ctx_id ,(unsigned long)pgss_ctx->mech_type, hash_func ); */
 
   return hash_func;
-}				/* gss_ctx_rbt_hash_func */
+}                               /* gss_ctx_rbt_hash_func */
 
 /**
  *
@@ -285,8 +285,8 @@ int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
   /* Check internal_ctx_id before mech_type before mech_type will VERY often be the same */
   return ((pgss_ctx1->internal_ctx_id == pgss_ctx2->internal_ctx_id)
-	  && (pgss_ctx1->mech_type == pgss_ctx2->mech_type)) ? 0 : 1;
-}				/* compare_gss_ctx */
+          && (pgss_ctx1->mech_type == pgss_ctx2->mech_type)) ? 0 : 1;
+}                               /* compare_gss_ctx */
 
 /**
  *
@@ -308,8 +308,8 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str)
   pgss_ctx = (gss_union_ctx_id_desc *) (pbuff->pdata);
 
   return sprintf(str, "0x%lx%lx", (unsigned long)pgss_ctx->internal_ctx_id,
-		 (unsigned long)pgss_ctx->mech_type);
-}				/* display_gss_ctx */
+                 (unsigned long)pgss_ctx->mech_type);
+}                               /* display_gss_ctx */
 
 /**
  *
@@ -332,11 +332,11 @@ int display_gss_svc_data(hash_buffer_t * pbuff, char *str)
   gd = (struct svc_rpc_gss_data_stored *)pbuff->pdata;
 
   return sprintf(str,
-		 "established=%u ctx=(%u) sec=(mech=%p,qop=%u,svc=%u,cred=%p,flags=%u) cname=(%u|%s) seq=%u win=%u seqlast=%u seqmask=%u",
-		 gd->established, gd->ctx_exported.length, gd->sec.mech, gd->sec.qop,
-		 gd->sec.svc, gd->sec.cred, gd->sec.req_flags, gd->cname_len,
-		 gd->cname_val, gd->seq, gd->win, gd->seqlast, gd->seqmask);
-}				/* display_gss_svc_data */
+                 "established=%u ctx=(%u) sec=(mech=%p,qop=%u,svc=%u,cred=%p,flags=%u) cname=(%u|%s) seq=%u win=%u seqlast=%u seqmask=%u",
+                 gd->established, gd->ctx_exported.length, gd->sec.mech, gd->sec.qop,
+                 gd->sec.svc, gd->sec.cred, gd->sec.req_flags, gd->cname_len,
+                 gd->cname_val, gd->seq, gd->win, gd->seqlast, gd->seqmask);
+}                               /* display_gss_svc_data */
 
 /**
  *
@@ -378,7 +378,7 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *
     return 0;
 
   return 1;
-}				/* Gss_ctx_Hash_Set */
+}                               /* Gss_ctx_Hash_Set */
 
 /**
  *
@@ -390,7 +390,7 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *
  *
  */
 int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
-			     struct svc_rpc_gss_data **pgd)
+                             struct svc_rpc_gss_data **pgd)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -409,7 +409,7 @@ int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
     return 0;
 
   return 1;
-}				/* Gss_ctx_Hash_Get_Pointer */
+}                               /* Gss_ctx_Hash_Get_Pointer */
 
 /**
  *
@@ -439,7 +439,7 @@ int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *
     return 0;
 
   return 1;
-}				/* Gss_ctx_Hash_Get */
+}                               /* Gss_ctx_Hash_Get */
 
 /**
  *
@@ -466,7 +466,7 @@ int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx)
       return 1;
     } else
     return 0;
-}				/* Gss_ctx_Hash_Del */
+}                               /* Gss_ctx_Hash_Del */
 
 /**
  *
@@ -486,7 +486,7 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
     }
 
   return 0;
-}				/* Gss_ctx_Hash_Init */
+}                               /* Gss_ctx_Hash_Init */
 
 /**
  *
@@ -500,4 +500,4 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
 void Gss_ctx_Hash_Print(void)
 {
   HashTable_Print(ht_gss_ctx);
-}				/* Gss_ctx_Hash_Print */
+}                               /* Gss_ctx_Hash_Print */

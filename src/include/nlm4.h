@@ -224,7 +224,7 @@ extern "C" {
   extern void *nlmproc4_free_all_4_svc(nlm4_notify *, struct svc_req *);
   extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
 
-#else				/* K&R C */
+#else                           /* K&R C */
 #define NLMPROC4_NULL 0
   extern void *nlmproc4_null_4();
   extern void *nlmproc4_null_4_svc();
@@ -286,7 +286,7 @@ extern "C" {
   extern void *nlmproc4_free_all_4();
   extern void *nlmproc4_free_all_4_svc();
   extern int nlmprog_4_freeresult();
-#endif				/* K&R C */
+#endif                          /* K&R C */
 
 /* the xdr functions */
 
@@ -313,7 +313,7 @@ extern "C" {
   extern bool_t xdr_nlm4_shareres(XDR *, nlm4_shareres *);
   extern bool_t xdr_nlm4_notify(XDR *, nlm4_notify *);
 
-#else				/* K&R C */
+#else                           /* K&R C */
   extern bool_t xdr_int32_t();
   extern bool_t xdr_uint32_t();
   extern bool_t xdr_int64_t();
@@ -336,9 +336,9 @@ extern "C" {
   extern bool_t xdr_nlm4_shareres();
   extern bool_t xdr_nlm4_notify();
 
-#endif				/* K&R C */
+#endif                          /* K&R C */
 
 #ifdef __cplusplus
 }
 #endif
-#endif				/* !_NLM4_H_RPCGEN */
+#endif                          /* !_NLM4_H_RPCGEN */

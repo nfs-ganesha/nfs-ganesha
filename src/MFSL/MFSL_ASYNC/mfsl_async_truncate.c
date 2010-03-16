@@ -114,15 +114,15 @@ fsal_status_t MFSL_truncate_async_op(mfsl_async_op_desc_t * popasyncdesc)
   fsal_status_t fsal_status;
 
   DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_truncate for async op %p",
-		  popasyncdesc);
+                  popasyncdesc);
 
   P(popasyncdesc->op_args.truncate.pmobject->lock);
-  fsal_status = FSAL_truncate(&(popasyncdesc->op_args.truncate.pmobject->handle), &popasyncdesc->fsal_op_context, popasyncdesc->op_args.truncate.size, NULL,	/* deprecated parameter */
-			      &popasyncdesc->op_res.truncate.attr);
+  fsal_status = FSAL_truncate(&(popasyncdesc->op_args.truncate.pmobject->handle), &popasyncdesc->fsal_op_context, popasyncdesc->op_args.truncate.size, NULL,    /* deprecated parameter */
+                              &popasyncdesc->op_res.truncate.attr);
   V(popasyncdesc->op_args.truncate.pmobject->lock);
 
   return fsal_status;
-}				/* MFSL_truncate_async_op */
+}                               /* MFSL_truncate_async_op */
 
 /**
  *
@@ -139,9 +139,9 @@ fsal_status_t MFSL_truncate_async_op(mfsl_async_op_desc_t * popasyncdesc)
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
 fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
-					 mfsl_object_specific_data_t * pspecdata,
-					 fsal_op_context_t * p_context,
-					 mfsl_context_t * p_mfsl_context)
+                                         mfsl_object_specific_data_t * pspecdata,
+                                         fsal_op_context_t * p_context,
+                                         mfsl_context_t * p_mfsl_context)
 {
   fsal_status_t fsal_status;
 
@@ -151,7 +151,7 @@ fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
     return fsal_status;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_truncate_check_perms */
+}                               /* MFSL_truncate_check_perms */
 
 /**
  *
@@ -169,11 +169,11 @@ fsal_status_t MFSAL_truncate_check_perms(mfsl_object_t * filehandle,
  *
  * @return the same as FSAL_truncate
  */
-fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    mfsl_context_t * p_mfsl_context,	/* IN */
-			    fsal_size_t length, fsal_file_t * file_descriptor,	/* INOUT */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_truncate(mfsl_object_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            mfsl_context_t * p_mfsl_context,    /* IN */
+                            fsal_size_t length, fsal_file_t * file_descriptor,  /* INOUT */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
@@ -183,8 +183,8 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
   P(p_mfsl_context->lock);
 
   GET_PREALLOC(pasyncopdesc,
-	       p_mfsl_context->pool_async_op,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+               p_mfsl_context->pool_async_op,
+               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   V(p_mfsl_context->lock);
 
@@ -205,9 +205,9 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
       P(p_mfsl_context->lock);
 
       GET_PREALLOC(pasyncdata,
-		   p_mfsl_context->pool_spec_data,
-		   mfsl_param.nb_pre_async_op_desc,
-		   mfsl_object_specific_data_t, next_alloc);
+                   p_mfsl_context->pool_spec_data,
+                   mfsl_param.nb_pre_async_op_desc,
+                   mfsl_object_specific_data_t, next_alloc);
 
       V(p_mfsl_context->lock);
 
@@ -222,7 +222,7 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
-		    pasyncopdesc);
+                    pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_TRUNCATE;
   pasyncopdesc->op_mobject = filehandle;
@@ -252,6 +252,6 @@ fsal_status_t MFSL_truncate(mfsl_object_t * filehandle,	/* IN */
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_truncate */
+}                               /* MFSL_truncate */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

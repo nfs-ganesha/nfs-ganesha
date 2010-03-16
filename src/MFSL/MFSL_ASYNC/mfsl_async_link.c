@@ -114,7 +114,7 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
   fsal_status_t fsal_status;
 
   DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_link for async op %p",
-		  popasyncdesc);
+                  popasyncdesc);
 
   if (popasyncdesc->op_args.link.pmobject_src !=
       popasyncdesc->op_args.link.pmobject_dirdest)
@@ -127,10 +127,10 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
     }
 
   fsal_status = FSAL_link(&popasyncdesc->op_args.link.pmobject_src->handle,
-			  &popasyncdesc->op_args.link.pmobject_dirdest->handle,
-			  &popasyncdesc->op_args.link.name_link,
-			  &popasyncdesc->fsal_op_context,
-			  &popasyncdesc->op_res.link.attr);
+                          &popasyncdesc->op_args.link.pmobject_dirdest->handle,
+                          &popasyncdesc->op_args.link.name_link,
+                          &popasyncdesc->fsal_op_context,
+                          &popasyncdesc->op_res.link.attr);
 
   if (popasyncdesc->op_args.link.pmobject_src !=
       popasyncdesc->op_args.link.pmobject_dirdest)
@@ -143,7 +143,7 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
     }
 
   return fsal_status;
-}				/* MFSL_link_async_op */
+}                               /* MFSL_link_async_op */
 
 /**
  *
@@ -160,13 +160,13 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,	/* IN */
-				     mfsl_object_t * dir_handle,	/* IN */
-				     fsal_name_t * p_link_name,	/* IN */
-				     mfsl_object_specific_data_t * tgt_pspecdata,	/* IN */
-				     mfsl_object_specific_data_t * dir_pspecdata,	/* IN */
-				     fsal_op_context_t * p_context,	/* IN */
-				     mfsl_context_t * p_mfsl_context /* IN */ )
+fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,     /* IN */
+                                     mfsl_object_t * dir_handle,        /* IN */
+                                     fsal_name_t * p_link_name, /* IN */
+                                     mfsl_object_specific_data_t * tgt_pspecdata,       /* IN */
+                                     mfsl_object_specific_data_t * dir_pspecdata,       /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     mfsl_context_t * p_mfsl_context /* IN */ )
 {
   fsal_status_t fsal_status;
 
@@ -177,7 +177,7 @@ fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,	/* IN */
 
   /** @todo : put some stuff in this function */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_link_check_perms */
+}                               /* MFSL_link_check_perms */
 
 /**
  *
@@ -196,13 +196,13 @@ fsal_status_t MFSAL_link_check_perms(mfsl_object_t * target_handle,	/* IN */
  *
  * @return the same as FSAL_link
  */
-fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
-			mfsl_object_t * dir_handle,	/* IN */
-			fsal_name_t * p_link_name,	/* IN */
-			fsal_op_context_t * p_context,	/* IN */
-			mfsl_context_t * p_mfsl_context,	/* IN */
-			fsal_attrib_list_t * tgt_attributes,	/* [ IN/OUT ] */
-			fsal_attrib_list_t * dir_attributes /* [ IN/OUT ] */ )
+fsal_status_t MFSL_link(mfsl_object_t * target_handle,  /* IN */
+                        mfsl_object_t * dir_handle,     /* IN */
+                        fsal_name_t * p_link_name,      /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
+                        mfsl_context_t * p_mfsl_context,        /* IN */
+                        fsal_attrib_list_t * tgt_attributes,    /* [ IN/OUT ] */
+                        fsal_attrib_list_t * dir_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
   mfsl_async_op_desc_t *pasyncopdesc = NULL;
@@ -212,8 +212,8 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
   P(p_mfsl_context->lock);
 
   GET_PREALLOC(pasyncopdesc,
-	       p_mfsl_context->pool_async_op,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+               p_mfsl_context->pool_async_op,
+               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   V(p_mfsl_context->lock);
 
@@ -233,9 +233,9 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
       P(p_mfsl_context->lock);
 
       GET_PREALLOC(tgt_pasyncdata,
-		   p_mfsl_context->pool_spec_data,
-		   mfsl_param.nb_pre_async_op_desc,
-		   mfsl_object_specific_data_t, next_alloc);
+                   p_mfsl_context->pool_spec_data,
+                   mfsl_param.nb_pre_async_op_desc,
+                   mfsl_object_specific_data_t, next_alloc);
 
       V(p_mfsl_context->lock);
 
@@ -249,9 +249,9 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
       P(p_mfsl_context->lock);
 
       GET_PREALLOC(dir_pasyncdata,
-		   p_mfsl_context->pool_spec_data,
-		   mfsl_param.nb_pre_async_op_desc,
-		   mfsl_object_specific_data_t, next_alloc);
+                   p_mfsl_context->pool_spec_data,
+                   mfsl_param.nb_pre_async_op_desc,
+                   mfsl_object_specific_data_t, next_alloc);
 
       V(p_mfsl_context->lock);
 
@@ -260,16 +260,16 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
     }
 
   fsal_status = MFSAL_link_check_perms(target_handle,
-				       dir_handle,
-				       p_link_name,
-				       tgt_pasyncdata,
-				       dir_pasyncdata, p_context, p_mfsl_context);
+                                       dir_handle,
+                                       p_link_name,
+                                       tgt_pasyncdata,
+                                       dir_pasyncdata, p_context, p_mfsl_context);
 
   if (FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
-		    pasyncopdesc);
+                    pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_LINK;
   pasyncopdesc->op_args.link.pmobject_src = target_handle;
@@ -308,6 +308,6 @@ fsal_status_t MFSL_link(mfsl_object_t * target_handle,	/* IN */
   *dir_attributes = dir_pasyncdata->async_attr;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_link */
+}                               /* MFSL_link */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

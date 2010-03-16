@@ -117,7 +117,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param);
  * Load parameters from config file.
  */
 int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
-			    nfs_start_info_t * p_start_info, char *config_file);
+                            nfs_start_info_t * p_start_info, char *config_file);
 
 /**
  * nfs_check_param_consistency:

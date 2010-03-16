@@ -89,14 +89,14 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "log_functions.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
-#include <unistd.h>		/* for using gethostname */
-#include <stdlib.h>		/* for using exit */
+#include <unistd.h>             /* for using gethostname */
+#include <stdlib.h>             /* for using exit */
 #include <strings.h>
 #include <sys/types.h>
 
@@ -113,7 +113,7 @@
  *
  */
 unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef)
+                                         hash_buffer_t * buffclef)
 {
   unsigned long h = 0;
 #ifdef _DEBUG_HASHTABLE
@@ -122,16 +122,16 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
   cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_HashIndex(&pfsdata->handle, pfsdata->cookie,
-			       p_hparam->alphabet_length, p_hparam->index_size);
+                               p_hparam->alphabet_length, p_hparam->index_size);
 
 #ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 512, &pfsdata->handle);
   printf("hash_func key: buff =(Handle=%s, Cookie=%u), hash value=%lu\n", printbuf,
-	 pfsdata->cookie, h);
+         pfsdata->cookie, h);
 #endif
 
   return h;
-}				/* cache_inode_fsal_hash_func */
+}                               /* cache_inode_fsal_hash_func */
 
 /**
  *
@@ -146,7 +146,7 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
  *
  */
 unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
-					hash_buffer_t * buffclef)
+                                        hash_buffer_t * buffclef)
 {
   /* A polynomial function too, but reversed, to avoid producing same value as decimal_simple_hash_func */
   unsigned long h = 0;
@@ -161,10 +161,10 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
 #ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 512, &pfsdata->handle);
   printf("hash_func rbt: buff =(Handle=%s, Cookie=%u), value=%lu\n", printbuf,
-	 pfsdata->cookie, h);
+         pfsdata->cookie, h);
 #endif
   return h;
-}				/* cache_inode_fsal_rbt_func */
+}                               /* cache_inode_fsal_rbt_func */
 
 int display_key(hash_buffer_t * pbuff, char *str)
 {
@@ -176,7 +176,7 @@ int display_key(hash_buffer_t * pbuff, char *str)
   snprintHandle(buffer, 128, &(pfsdata->handle));
 
   return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Handle=%s, Cookie=%u)", buffer,
-		  pfsdata->cookie);
+                  pfsdata->cookie);
 }
 
 int display_not_implemented(hash_buffer_t * pbuff, char *str)
@@ -192,5 +192,5 @@ int display_value(hash_buffer_t * pbuff, char *str)
   pentry = (cache_entry_t *) pbuff->pdata;
 
   return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Type=%d, Address=%p)",
-		  pentry->internal_md.type, pentry);
+                  pentry->internal_md.type, pentry);
 }

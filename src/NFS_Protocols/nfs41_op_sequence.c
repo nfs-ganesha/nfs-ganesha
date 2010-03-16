@@ -94,7 +94,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -140,7 +140,7 @@
  *
  */
 int nfs41_op_sequence(struct nfs_argop4 *op,
-		      compound_data_t * data, struct nfs_resop4 *resp)
+                      compound_data_t * data, struct nfs_resop4 *resp)
 {
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
@@ -178,23 +178,23 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
       arg_SEQUENCE4.sa_sequenceid)
     {
       if (psession->slots[arg_SEQUENCE4.sa_slotid].sequence ==
-	  arg_SEQUENCE4.sa_sequenceid)
-	{
-	  if (psession->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE)
-	    {
-	      /* Replay operation through the DRC */
-	      data->use_drc = TRUE;
-	      data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+          arg_SEQUENCE4.sa_sequenceid)
+        {
+          if (psession->slots[arg_SEQUENCE4.sa_slotid].cache_used == TRUE)
+            {
+              /* Replay operation through the DRC */
+              data->use_drc = TRUE;
+              data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
 
-	      res_SEQUENCE4.sr_status = NFS4_OK;
-	      return res_SEQUENCE4.sr_status;
-	    } else
-	    {
-	      /* Illegal replay */
-	      res_SEQUENCE4.sr_status = NFS4ERR_RETRY_UNCACHED_REP;
-	      return res_SEQUENCE4.sr_status;
-	    }
-	}
+              res_SEQUENCE4.sr_status = NFS4_OK;
+              return res_SEQUENCE4.sr_status;
+            } else
+            {
+              /* Illegal replay */
+              res_SEQUENCE4.sr_status = NFS4ERR_RETRY_UNCACHED_REP;
+              return res_SEQUENCE4.sr_status;
+            }
+        }
       V(psession->slots[arg_SEQUENCE4.sa_slotid].lock);
       res_SEQUENCE4.sr_status = NFS4ERR_SEQ_MISORDERED;
       return res_SEQUENCE4.sr_status;
@@ -207,13 +207,13 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
   psession->slots[arg_SEQUENCE4.sa_slotid].sequence += 1;
 
   memcpy((char *)res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sessionid,
-	 (char *)arg_SEQUENCE4.sa_sessionid, NFS4_SESSIONID_SIZE);
+         (char *)arg_SEQUENCE4.sa_sessionid, NFS4_SESSIONID_SIZE);
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_sequenceid =
       psession->slots[arg_SEQUENCE4.sa_slotid].sequence;
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_slotid = arg_SEQUENCE4.sa_slotid;
   res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_highest_slotid = NFS41_NB_SLOTS - 1;
-  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4.sa_slotid;	/* Maybe not the best choice */
-  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0;	/* What is to be set here ? */
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_target_highest_slotid = arg_SEQUENCE4.sa_slotid;    /* Maybe not the best choice */
+  res_SEQUENCE4.SEQUENCE4res_u.sr_resok4.sr_status_flags = 0;   /* What is to be set here ? */
 
   if (arg_SEQUENCE4.sa_cachethis == TRUE)
     {
@@ -228,7 +228,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 
   res_SEQUENCE4.sr_status = NFS4_OK;
   return res_SEQUENCE4.sr_status;
-}				/* nfs41_op_sequence */
+}                               /* nfs41_op_sequence */
 
 /**
  * nfs41_op_sequence_Free: frees what was allocared to handle nfs41_op_sequence.
@@ -244,4 +244,4 @@ void nfs41_op_sequence_Free(SEQUENCE4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_sequence_Free */
+}                               /* nfs4_op_sequence_Free */

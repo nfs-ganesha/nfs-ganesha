@@ -33,4 +33,4 @@ int big2str(char *str, int64_t num);
 
 int str2big(int64_t * pnum, char *str);
 
-#endif				/* __PARSE_DOUBLE__ */
+#endif                          /* __PARSE_DOUBLE__ */

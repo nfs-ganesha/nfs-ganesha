@@ -27,11 +27,11 @@ int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_h
  * or the last oid in the handle.
  */
 int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
-		     fsal_handle_t * p_handle, fsal_name_t * p_out_name);
+                     fsal_handle_t * p_handle, fsal_name_t * p_out_name);
 
 /* print the object value to a string, and return its length (the buffer ends with '\n\0', like /proc files)  */
 int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
-		    size_t * in_out_len);
+                    size_t * in_out_len);
 
 /* convert SNMP object's access rights to the associated FSAL mode (if mib info is available).
  * else, it returns 666 or 555, depending on the node type.
@@ -50,7 +50,7 @@ fsal_u64_t build_object_id(fsal_handle_t * p_in_handle);
  * /!\ the p_in_node is the PARENT NODE (access right are stored in the parent node)
  */
 int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var,
-			 struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out);
+                         struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out);
 
 /* return the type for snmp_add_var, given the associated ASN_xxx type */
 char ASN2add_var(u_char asn_type);

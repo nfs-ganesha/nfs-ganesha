@@ -31,30 +31,30 @@ fsal_staticfsinfo_t global_fs_info;
 
 /* default values; */
 static fsal_staticfsinfo_t default_ghostfs_info = {
-  0xFFFFFFFFFFFFFFFFLL,		/* max file size */
-  0xFFFFFFFF,			/* max links */
-  FSAL_MAX_NAME_LEN,		/* max filename */
-  FSAL_MAX_PATH_LEN,		/* min filename */
-  TRUE,				/* no_trunc */
-  TRUE,				/* chown restricted */
-  FALSE,			/* case insensitive */
-  TRUE,				/* case preserving */
-  FSAL_EXPTYPE_VOLATILE,	/* FH expire type */
-  TRUE,				/* hard link support */
-  TRUE,				/* symlink support */
-  FALSE,			/* lock management */
-  TRUE,				/* named attributes */
-  TRUE,				/* handles are unique and persistent */
-  {1, 0},			/* Duration of lease at FS in seconds */
-  FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
-  TRUE,				/* can change times */
-  TRUE,				/* homogenous */
-  GHOSTFS_SUPPORTED_ATTRIBUTES,	/* supported attributes */
-  0,				/* maxread size */
-  0,				/* maxwrite size */
-  0,				/* default umask */
-  0,				/* don't allow cross fileset export path */
-  0400				/* default access rights for xattrs: root=RW, owner=R */
+  0xFFFFFFFFFFFFFFFFLL,         /* max file size */
+  0xFFFFFFFF,                   /* max links */
+  FSAL_MAX_NAME_LEN,            /* max filename */
+  FSAL_MAX_PATH_LEN,            /* min filename */
+  TRUE,                         /* no_trunc */
+  TRUE,                         /* chown restricted */
+  FALSE,                        /* case insensitive */
+  TRUE,                         /* case preserving */
+  FSAL_EXPTYPE_VOLATILE,        /* FH expire type */
+  TRUE,                         /* hard link support */
+  TRUE,                         /* symlink support */
+  FALSE,                        /* lock management */
+  TRUE,                         /* named attributes */
+  TRUE,                         /* handles are unique and persistent */
+  {1, 0},                       /* Duration of lease at FS in seconds */
+  FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
+  TRUE,                         /* can change times */
+  TRUE,                         /* homogenous */
+  GHOSTFS_SUPPORTED_ATTRIBUTES, /* supported attributes */
+  0,                            /* maxread size */
+  0,                            /* maxwrite size */
+  0,                            /* default umask */
+  0,                            /* don't allow cross fileset export path */
+  0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
 /*
@@ -73,7 +73,7 @@ static void init_keys(void)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
-}				/* init_keys */
+}                               /* init_keys */
 
 /*
  *  Updates fonction call statistics.
@@ -103,17 +103,17 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       int i;
 
       if ((bythread_stat =
-	   (fsal_statistics_t *) malloc(sizeof(fsal_statistics_t))) == NULL)
-	DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, errno);
+           (fsal_statistics_t *) malloc(sizeof(fsal_statistics_t))) == NULL)
+        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, errno);
 
       /* inits the struct */
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -126,11 +126,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       bythread_stat->func_stats.nb_call[function_index]++;
 
       if (!FSAL_IS_ERROR(status))
-	bythread_stat->func_stats.nb_success[function_index]++;
+        bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
-	bythread_stat->func_stats.nb_err_retryable[function_index]++;
-	else
-	bythread_stat->func_stats.nb_err_unrecover[function_index]++;
+        bythread_stat->func_stats.nb_err_retryable[function_index]++;
+        else
+        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
   return;
@@ -158,17 +158,17 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if ((bythread_stat =
-	   (fsal_statistics_t *) malloc(sizeof(fsal_statistics_t))) == NULL)
-	DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, errno);
+           (fsal_statistics_t *) malloc(sizeof(fsal_statistics_t))) == NULL)
+        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, errno);
 
       /* inits the struct */
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -239,7 +239,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
  *  This function initializes shared variables of the fsal.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info)
+                                        fs_common_initinfo_t * fs_common_info)
 {
 
   /* sanity check */
@@ -283,51 +283,51 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "FileSystem info :");
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-		    global_fs_info.maxfilesize);
+                    global_fs_info.maxfilesize);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ", global_fs_info.maxlink);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-		    global_fs_info.maxnamelen);
+                    global_fs_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-		    global_fs_info.maxpathlen);
+                    global_fs_info.maxpathlen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ", global_fs_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-		    global_fs_info.chown_restricted);
+                    global_fs_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-		    global_fs_info.case_insensitive);
+                    global_fs_info.case_insensitive);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-		    global_fs_info.case_preserving);
+                    global_fs_info.case_preserving);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-		    global_fs_info.fh_expire_type);
+                    global_fs_info.fh_expire_type);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-		    global_fs_info.link_support);
+                    global_fs_info.link_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-		    global_fs_info.symlink_support);
+                    global_fs_info.symlink_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-		    global_fs_info.lock_support);
+                    global_fs_info.lock_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-		    global_fs_info.named_attr);
+                    global_fs_info.named_attr);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-		    global_fs_info.unique_handles);
+                    global_fs_info.unique_handles);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lease_time  = %u.%u     ",
-		    global_fs_info.lease_time.seconds,
-		    global_fs_info.lease_time.nseconds);
+                    global_fs_info.lease_time.seconds,
+                    global_fs_info.lease_time.nseconds);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-		    global_fs_info.acl_support);
+                    global_fs_info.acl_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-		    global_fs_info.cansettime);
+                    global_fs_info.cansettime);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-		    global_fs_info.homogenous);
+                    global_fs_info.homogenous);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-		    global_fs_info.supported_attrs);
+                    global_fs_info.supported_attrs);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-		    global_fs_info.maxread);
+                    global_fs_info.maxread);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-		    global_fs_info.maxwrite);
+                    global_fs_info.maxwrite);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %#o ", global_fs_info.umask);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  auth_exportpath_xdev  = %d  ",
-		    global_fs_info.auth_exportpath_xdev);
+                    global_fs_info.auth_exportpath_xdev);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  xattr_access_rights = %#o ",
-		    global_fs_info.xattr_access_rights);
+                    global_fs_info.xattr_access_rights);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

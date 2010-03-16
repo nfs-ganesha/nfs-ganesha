@@ -40,9 +40,9 @@
 #include "tests.h"
 #include "Connectathon_config_parsing.h"
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
 
 static void usage()
 {
@@ -55,9 +55,9 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-  int files;			/* number of files in each dir */
+  int files;                    /* number of files in each dir */
   int fi;
-  int count;			/* times to do each file */
+  int count;                    /* times to do each file */
   int ct;
   char *fname;
   char *sname;
@@ -84,32 +84,32 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* No Test Directory create */
-	      Nflag++;
-	      break;
+            case 'n':          /* No Test Directory create */
+              Nflag++;
+              break;
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 8 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -151,16 +151,16 @@ int main(int argc, char *argv[])
   if (b->files == -1)
     {
       fprintf(stderr,
-	      "Missing 'files' parameter in the config file '%s' for the basic test number 8\n",
-	      config_file);
+              "Missing 'files' parameter in the config file '%s' for the basic test number 8\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->count == -1)
     {
       fprintf(stderr,
-	      "Missing 'count' parameter in the config file '%s' for the basic test number 8\n",
-	      config_file);
+              "Missing 'count' parameter in the config file '%s' for the basic test number 8\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 #ifndef S_IFLNK
   fprintf(stdout, "\
 %s: symlink and readlink not supported on this client\n", Myname);
-#else				/* S_IFLNK */
+#else                           /* S_IFLNK */
   if (!Fflag)
     {
       Tflag = 0;
@@ -195,54 +195,54 @@ int main(int argc, char *argv[])
   for (ct = 0; ct < count; ct++)
     {
       for (fi = 0; fi < files; fi++)
-	{
-	  sprintf(str, "%s%d", fname, fi);
-	  sprintf(new, "%s%d", sname, fi);
-	  if (symlink(new, str) < 0)
-	    {
-	      oerrno = errno;
-	      error("can't make symlink %s", str);
-	      errno = oerrno;
-	      if (errno == EOPNOTSUPP)
-		complete();
-		else
-		exit(1);
-	    }
-	  if (lstat(str, &statb) < 0)
-	    {
-	      error("can't stat %s after symlink", str);
-	      exit(1);
-	    }
-	  if ((statb.st_mode & S_IFMT) != S_IFLNK)
-	    {
-	      error("mode of %s not symlink");
-	      exit(1);
-	    }
-	  if ((ret = readlink(str, buf, MAXPATHLEN)) != (int)strlen(new))
-	    {
-	      error("readlink %s ret %d, expect %d", str, ret, strlen(new));
-	      exit(1);
-	    }
-	  if (strncmp(new, buf, ret) != 0)
-	    {
-	      error("readlink %s returned bad linkname", str);
-	      exit(1);
-	    }
-	  if (unlink(str) < 0)
-	    {
-	      error("can't unlink %s", str);
-	      exit(1);
-	    }
-	}
+        {
+          sprintf(str, "%s%d", fname, fi);
+          sprintf(new, "%s%d", sname, fi);
+          if (symlink(new, str) < 0)
+            {
+              oerrno = errno;
+              error("can't make symlink %s", str);
+              errno = oerrno;
+              if (errno == EOPNOTSUPP)
+                complete();
+                else
+                exit(1);
+            }
+          if (lstat(str, &statb) < 0)
+            {
+              error("can't stat %s after symlink", str);
+              exit(1);
+            }
+          if ((statb.st_mode & S_IFMT) != S_IFLNK)
+            {
+              error("mode of %s not symlink");
+              exit(1);
+            }
+          if ((ret = readlink(str, buf, MAXPATHLEN)) != (int)strlen(new))
+            {
+              error("readlink %s ret %d, expect %d", str, ret, strlen(new));
+              exit(1);
+            }
+          if (strncmp(new, buf, ret) != 0)
+            {
+              error("readlink %s returned bad linkname", str);
+              exit(1);
+            }
+          if (unlink(str) < 0)
+            {
+              error("can't unlink %s", str);
+              exit(1);
+            }
+        }
     }
   endtime(&time);
 
   fprintf(stdout, "\t%d symlinks and readlinks on %d files (size of symlink : %d)",
-	  files * count * 2, files, sname_len);
+          files * count * 2, files, sname_len);
   if (Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
-	      (long)time.tv_sec, (long)time.tv_usec / 10000);
+              (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
@@ -252,9 +252,9 @@ int main(int argc, char *argv[])
       complete();
     }
   fprintf(log, "b8\t%d\t%d\t%d\t%ld.%02ld\n", files * count * 2, files, sname_len,
-	  (long)time.tv_sec, (long)time.tv_usec / 10000);
+          (long)time.tv_sec, (long)time.tv_usec / 10000);
   fclose(log);
 
-#endif				/* S_IFLNK */
+#endif                          /* S_IFLNK */
   complete();
 }

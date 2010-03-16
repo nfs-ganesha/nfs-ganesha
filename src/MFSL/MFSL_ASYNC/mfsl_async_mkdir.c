@@ -120,15 +120,15 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr;
 
   DisplayLogLevel(NIV_DEBUG,
-		  "Renaming directory to complete asynchronous FSAL_mkdir for async op %p",
-		  popasyncdesc);
+                  "Renaming directory to complete asynchronous FSAL_mkdir for async op %p",
+                  popasyncdesc);
 
   P(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock);
   fsal_status = FSAL_rename(&dir_handle_precreate,
-			    &popasyncdesc->op_args.mkdir.precreate_name,
-			    &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
-			    &popasyncdesc->op_args.mkdir.dirname,
-			    &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
+                            &popasyncdesc->op_args.mkdir.precreate_name,
+                            &(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
+                            &popasyncdesc->op_args.mkdir.dirname,
+                            &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
 
   if (FSAL_IS_ERROR(fsal_status))
     {
@@ -139,9 +139,9 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
 
   /* Lookup to get the right attributes for the object */
   fsal_status = FSAL_lookup(&(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->handle),
-			    &popasyncdesc->op_args.mkdir.dirname,
-			    &popasyncdesc->fsal_op_context,
-			    &handle, &popasyncdesc->op_res.mkdir.attr);
+                            &popasyncdesc->op_args.mkdir.dirname,
+                            &popasyncdesc->fsal_op_context,
+                            &handle, &popasyncdesc->op_res.mkdir.attr);
 
   V(popasyncdesc->op_args.mkdir.pmfsl_obj_dirdest->lock);
 
@@ -157,11 +157,11 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
       chown_attr.group = popasyncdesc->op_args.mkdir.group;
 
       fsal_status =
-	  FSAL_setattrs(&handle, &popasyncdesc->fsal_op_context, &chown_attr,
-			&popasyncdesc->op_res.mkdir.attr);
+          FSAL_setattrs(&handle, &popasyncdesc->fsal_op_context, &chown_attr,
+                        &popasyncdesc->op_res.mkdir.attr);
     }
   return fsal_status;
-}				/* MFSL_mkdir_async_op */
+}                               /* MFSL_mkdir_async_op */
 
 /**
  *
@@ -178,10 +178,10 @@ fsal_status_t MFSL_mkdir_async_op(mfsl_async_op_desc_t * popasyncdesc)
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
 fsal_status_t MFSAL_mkdir_check_perms(mfsl_object_t * target_handle,
-				      fsal_name_t * p_dirname,
-				      fsal_op_context_t * p_context,
-				      mfsl_context_t * p_mfsl_context,
-				      fsal_attrib_list_t * object_attributes)
+                                      fsal_name_t * p_dirname,
+                                      fsal_op_context_t * p_context,
+                                      mfsl_context_t * p_mfsl_context,
+                                      fsal_attrib_list_t * object_attributes)
 {
   fsal_status_t fsal_status;
 
@@ -192,7 +192,7 @@ fsal_status_t MFSAL_mkdir_check_perms(mfsl_object_t * target_handle,
 
   /** @todo : put some stuff in this function */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_mkdir_check_perms */
+}                               /* MFSL_mkdir_check_perms */
 
 /**
  *
@@ -211,14 +211,14 @@ fsal_status_t MFSAL_mkdir_check_perms(mfsl_object_t * target_handle,
  *
  * @return the same as FSAL_link
  */
-fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
-			 fsal_name_t * p_dirname,	/* IN */
-			 fsal_op_context_t * p_context,	/* IN */
-			 mfsl_context_t * p_mfsl_context,	/* IN */
-			 fsal_accessmode_t accessmode,	/* IN */
-			 mfsl_object_t * object_handle,	/* OUT */
-			 fsal_attrib_list_t * object_attributes,	/* [ IN/OUT ] */
-			 fsal_attrib_list_t * parent_attributes /* IN */ )
+fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
+                         fsal_name_t * p_dirname,       /* IN */
+                         fsal_op_context_t * p_context, /* IN */
+                         mfsl_context_t * p_mfsl_context,       /* IN */
+                         fsal_accessmode_t accessmode,  /* IN */
+                         mfsl_object_t * object_handle, /* OUT */
+                         fsal_attrib_list_t * object_attributes,        /* [ IN/OUT ] */
+                         fsal_attrib_list_t * parent_attributes /* IN */ )
 {
   fsal_status_t fsal_status;
   mfsl_async_op_desc_t *pasyncopdesc = NULL;
@@ -227,8 +227,8 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
   mfsl_precreated_object_t *pprecreated = NULL;
 
   fsal_status = MFSAL_mkdir_check_perms(parent_directory_handle,
-					p_dirname,
-					p_context, p_mfsl_context, parent_attributes);
+                                        p_dirname,
+                                        p_context, p_mfsl_context, parent_attributes);
 
   if (FSAL_IS_ERROR(fsal_status))
     return fsal_status;
@@ -236,12 +236,12 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
   P(p_mfsl_context->lock);
 
   GET_PREALLOC(pasyncopdesc,
-	       p_mfsl_context->pool_async_op,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+               p_mfsl_context->pool_async_op,
+               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   GET_PREALLOC(newdir_pasyncdata,
-	       p_mfsl_context->pool_spec_data,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
+               p_mfsl_context->pool_spec_data,
+               mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
 
   V(p_mfsl_context->lock);
 
@@ -258,17 +258,17 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
   /* Now get a pre-allocated directory from the synclet data */
   P(p_mfsl_context->lock);
   GET_PREALLOC_CONSTRUCT(pprecreated,
-			 p_mfsl_context->pool_dirs,
-			 mfsl_param.nb_pre_create_dirs,
-			 mfsl_precreated_object_t,
-			 next_alloc, constructor_preacreated_entries);
+                         p_mfsl_context->pool_dirs,
+                         mfsl_param.nb_pre_create_dirs,
+                         mfsl_precreated_object_t,
+                         next_alloc, constructor_preacreated_entries);
   p_mfsl_context->avail_pool_dirs -= 1;
   V(p_mfsl_context->lock);
 
   pnewdir_handle = &(pprecreated->mobject);
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
-		    pasyncopdesc);
+                    pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_MKDIR;
   pasyncopdesc->op_args.mkdir.pmfsl_obj_dirdest = parent_directory_handle;
@@ -307,7 +307,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
   newdir_pasyncdata->async_attr.group = pasyncopdesc->op_args.mkdir.group;
 
   newdir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
-  newdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;	 /** @todo: there may be a coefficient to be applied here */
+  newdir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
 
   newdir_pasyncdata->deleted = FALSE;
 
@@ -323,6 +323,6 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,	/* IN */
   parent_directory_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_mkdir */
+}                               /* MFSL_mkdir */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

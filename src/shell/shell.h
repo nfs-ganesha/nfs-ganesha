@@ -250,54 +250,54 @@ int shell_GetLine(shell_state_t * context);
  *                      Shell commands.
  *-----------------------------------------------------------------*/
 
-int shellcmd_help(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int shellcmd_help(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int shellcmd_if(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int shellcmd_if(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
-int shellcmd_interactive(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int shellcmd_interactive(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     );
 
-int shellcmd_set(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int shellcmd_set(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
-int shellcmd_unset(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int shellcmd_unset(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int shellcmd_print(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int shellcmd_print(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int shellcmd_varlist(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int shellcmd_varlist(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
-int shellcmd_time(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int shellcmd_time(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int shellcmd_quit(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int shellcmd_quit(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int shellcmd_barrier(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int shellcmd_barrier(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** List of the shell commands */
@@ -330,7 +330,7 @@ static command_def_t __attribute__ ((__unused__)) shell_commands[] =
   {
   "varlist", shellcmd_varlist, "print the list of shell variables"},
   {
-  NULL, NULL, NULL}		/* End of command list */
+  NULL, NULL, NULL}             /* End of command list */
 };
 
 /* @todo: if, source */

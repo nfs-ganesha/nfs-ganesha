@@ -196,7 +196,7 @@ void print_item(FILE * out, GHOSTFS_Attrs_t * attrib, char *name, char *target)
 }
 
 void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
-		   unsigned int indent)
+                   unsigned int indent)
 {
 
   char next_path[GHOSTFS_MAX_PATH];
@@ -227,29 +227,29 @@ void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
 
       /* getting attrs */
       if (rc = GHOSTFS_GetAttrs(dirent.handle, &item_attr))
-	Exit(rc, "GHOSTFS_GetAttrs");
+        Exit(rc, "GHOSTFS_GetAttrs");
 
       switch (item_attr.type)
-	{
-	case GHOSTFS_LNK:
-	  if (rc = GHOSTFS_ReadLink(dirent.handle, link, 256))
-	    Exit(rc, "GHOSTFS_Readlink");
-	  print_item(out, &item_attr, dirent.name, link);
-	  break;
-	case GHOSTFS_FILE:
-	  print_item(out, &item_attr, dirent.name, NULL);
-	  break;
-	case GHOSTFS_DIR:
-	  print_item(out, &item_attr, dirent.name, NULL);
-	  if (strcmp(dirent.name, ".") && strcmp(dirent.name, ".."))
-	    {
-	      snprintf(next_path, GHOSTFS_MAX_PATH, "%s/%s", fullpath, dirent.name);
-	      print_dir_rec(out, dirent.handle, next_path, indent + 1);
-	    }
-	  break;
-	default:
-	  print_item(out, &item_attr, dirent.name, NULL);
-	}
+        {
+        case GHOSTFS_LNK:
+          if (rc = GHOSTFS_ReadLink(dirent.handle, link, 256))
+            Exit(rc, "GHOSTFS_Readlink");
+          print_item(out, &item_attr, dirent.name, link);
+          break;
+        case GHOSTFS_FILE:
+          print_item(out, &item_attr, dirent.name, NULL);
+          break;
+        case GHOSTFS_DIR:
+          print_item(out, &item_attr, dirent.name, NULL);
+          if (strcmp(dirent.name, ".") && strcmp(dirent.name, ".."))
+            {
+              snprintf(next_path, GHOSTFS_MAX_PATH, "%s/%s", fullpath, dirent.name);
+              print_dir_rec(out, dirent.handle, next_path, indent + 1);
+            }
+          break;
+        default:
+          print_item(out, &item_attr, dirent.name, NULL);
+        }
 
     }
 
@@ -262,7 +262,7 @@ void print_dir_rec(FILE * out, GHOSTFS_handle_t dir_handle, char *fullpath,
 }
 
 void *ls(void *out)
-{				/* FILE * actually. */
+{                               /* FILE * actually. */
 
   int rc;
   GHOSTFS_handle_t root_handle;
@@ -387,10 +387,10 @@ GHOSTFS_handle_t Lookup(char *path)
     {
 
       if (rc = GHOSTFS_Lookup(handle, p_tok, &handle_new))
-	Exit(rc, "GHOSTFS_Lookup");
+        Exit(rc, "GHOSTFS_Lookup");
 
       printf("Lookup( %p.%u , '%s' ) = %p.%u\n", handle.inode, handle.magic,
-	     p_tok, handle_new.inode, handle_new.magic);
+             p_tok, handle_new.inode, handle_new.magic);
 
       p_tok = p_tok_new;
       handle = handle_new;
@@ -517,11 +517,11 @@ int main(int argc, char **argv)
   if (argc > 1)
     {
       if (!strcmp(argv[1], "-acces"))
-	action = ACTION_ACCES;
+        action = ACTION_ACCES;
       else if (!strcmp(argv[1], "-ls"))
-	action = ACTION_LS;
+        action = ACTION_LS;
       else if (!strcmp(argv[1], "-mkdir"))
-	action = ACTION_MKDIR;
+        action = ACTION_MKDIR;
     }
 
   if ((action == ACTION_ACCES || action == ACTION_MKDIR) && (argc == 5))
@@ -532,17 +532,17 @@ int main(int argc, char **argv)
       str_gid = argv[4];
 
       if (!is_num(str_uid))
-	{
-	  printf("Invalid uid : %s\n", str_uid);
-	  exit(-1);
-	}
+        {
+          printf("Invalid uid : %s\n", str_uid);
+          exit(-1);
+        }
       uid = atoi(str_uid);
 
       if (!is_num(str_gid))
-	{
-	  printf("Invalid gid : %s\n", str_gid);
-	  exit(-1);
-	}
+        {
+          printf("Invalid gid : %s\n", str_gid);
+          exit(-1);
+        }
       gid = atoi(str_gid);
 
   } else if ((action == ACTION_LS) && (argc == 4))

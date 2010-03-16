@@ -39,37 +39,37 @@ int main(int argc, char **argv)
     for (i = 0; i < config_GetNbBlocks(config); i++)
       {
 
-	int j;
-	char *nom;
-	char *val;
+        int j;
+        char *nom;
+        char *val;
 
-	/* affichage du nom de l'item : */
-	block = config_GetBlockByIndex(config, i);
+        /* affichage du nom de l'item : */
+        block = config_GetBlockByIndex(config, i);
 
-	printf("bloc %s\n", config_GetBlockName(block));
+        printf("bloc %s\n", config_GetBlockName(block));
 
-	if ((val_a = config_GetKeyValueByName(block, "b")))
-	  {
-	    printf("%s.b est defini et vaut %s\n", config_GetBlockName(block), val_a);
-	  } else
-	  {
-	    printf("%s.b n'est pas defini\n", config_GetBlockName(block));
-	  }
+        if ((val_a = config_GetKeyValueByName(block, "b")))
+          {
+            printf("%s.b est defini et vaut %s\n", config_GetBlockName(block), val_a);
+          } else
+          {
+            printf("%s.b n'est pas defini\n", config_GetBlockName(block));
+          }
 
-	/* parcours des variables du block */
-	for (j = 0; j < config_GetNbItems(block); j++)
-	  {
+        /* parcours des variables du block */
+        for (j = 0; j < config_GetNbItems(block); j++)
+          {
 
-	    item = config_GetItemByIndex(block, j);
+            item = config_GetItemByIndex(block, j);
 
-	    if (config_ItemType(item) == CONFIG_ITEM_VAR)
-	      {
-		config_GetKeyValue(item, &nom, &val);
-		printf("\t%s = %s\n", nom, val);
-	      } else
-	      printf("\tsub-block = %s\n", config_GetBlockName(item));
-	  }
-	printf("\n");
+            if (config_ItemType(item) == CONFIG_ITEM_VAR)
+              {
+                config_GetKeyValue(item, &nom, &val);
+                printf("\t%s = %s\n", nom, val);
+              } else
+              printf("\tsub-block = %s\n", config_GetBlockName(item));
+          }
+        printf("\n");
 
       }
 

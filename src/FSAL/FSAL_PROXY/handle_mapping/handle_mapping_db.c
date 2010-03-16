@@ -212,31 +212,31 @@ static int init_database_access(db_thread_info_t * p_thr_info)
   /* first open the database file */
 
   snprintf(db_file, MAXPATHLEN, "%s/%s.%u", dbmap_dir, DB_FILE_PREFIX,
-	   p_thr_info->thr_index);
+           p_thr_info->thr_index);
 
   rc = sqlite3_open(db_file, &p_thr_info->db_conn);
 
   if (rc != 0)
     {
       if (p_thr_info->db_conn)
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			    "ERROR: could not connect to SQLite3 database (file %s): %s",
-			    db_file, sqlite3_errmsg(p_thr_info->db_conn));
-	  sqlite3_close(p_thr_info->db_conn);
-	} else
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			    "ERROR: could not connect to SQLite3 database (file %s): status=%d",
-			    db_file, rc);
-	}
+        {
+          DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                            "ERROR: could not connect to SQLite3 database (file %s): %s",
+                            db_file, sqlite3_errmsg(p_thr_info->db_conn));
+          sqlite3_close(p_thr_info->db_conn);
+        } else
+        {
+          DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                            "ERROR: could not connect to SQLite3 database (file %s): status=%d",
+                            db_file, rc);
+        }
       return HANDLEMAP_DB_ERROR;
     }
 
   /* Now check, that the map table exists */
   rc = sqlite3_get_table(p_thr_info->db_conn,
-			 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '"
-			 MAP_TABLE "'", &result, &rows, &cols, &errmsg);
+                         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '"
+                         MAP_TABLE "'", &result, &rows, &cols, &errmsg);
 
   CheckTable(p_thr_info->db_conn, rc, errmsg, result);
 
@@ -247,12 +247,12 @@ static int init_database_access(db_thread_info_t * p_thr_info)
     {
       /* table must be created */
       rc = sqlite3_exec(p_thr_info->db_conn,
-			"CREATE TABLE " MAP_TABLE " ( "
-			OBJID_FIELD "   BIGINT NOT NULL, "
-			HASH_FIELD "    INT NOT NULL, "
-			HANDLE_FIELD "  TEXT, "
-			"PRIMARY KEY(" OBJID_FIELD ", " HASH_FIELD ") )",
-			NULL, NULL, &errmsg);
+                        "CREATE TABLE " MAP_TABLE " ( "
+                        OBJID_FIELD "   BIGINT NOT NULL, "
+                        HASH_FIELD "    INT NOT NULL, "
+                        HANDLE_FIELD "  TEXT, "
+                        "PRIMARY KEY(" OBJID_FIELD ", " HASH_FIELD ") )",
+                        NULL, NULL, &errmsg);
 
       CheckCommand(p_thr_info->db_conn, rc, errmsg);
 
@@ -261,30 +261,30 @@ static int init_database_access(db_thread_info_t * p_thr_info)
   /* Now, create prepared statements */
 
   rc = sqlite3_prepare_v2(p_thr_info->db_conn,
-			  "SELECT " OBJID_FIELD "," HASH_FIELD "," HANDLE_FIELD " FROM "
-			  MAP_TABLE, -1, &(p_thr_info->prep_stmt[LOAD_ALL_STATEMENT]),
-			  &unparsed);
+                          "SELECT " OBJID_FIELD "," HASH_FIELD "," HANDLE_FIELD " FROM "
+                          MAP_TABLE, -1, &(p_thr_info->prep_stmt[LOAD_ALL_STATEMENT]),
+                          &unparsed);
 
   CheckPrepare(p_thr_info->db_conn, rc);
 
   rc = sqlite3_prepare_v2(p_thr_info->db_conn,
-			  "INSERT INTO " MAP_TABLE "(" OBJID_FIELD "," HASH_FIELD ","
-			  HANDLE_FIELD ") " "VALUES (?1, ?2, ?3 )", -1,
-			  &(p_thr_info->prep_stmt[INSERT_STATEMENT]), &unparsed);
+                          "INSERT INTO " MAP_TABLE "(" OBJID_FIELD "," HASH_FIELD ","
+                          HANDLE_FIELD ") " "VALUES (?1, ?2, ?3 )", -1,
+                          &(p_thr_info->prep_stmt[INSERT_STATEMENT]), &unparsed);
 
   CheckPrepare(p_thr_info->db_conn, rc);
 
   rc = sqlite3_prepare_v2(p_thr_info->db_conn,
-			  "DELETE FROM " MAP_TABLE " WHERE " OBJID_FIELD "=?1 AND "
-			  HASH_FIELD "=?2", -1,
-			  &(p_thr_info->prep_stmt[DELETE_STATEMENT]), &unparsed);
+                          "DELETE FROM " MAP_TABLE " WHERE " OBJID_FIELD "=?1 AND "
+                          HASH_FIELD "=?2", -1,
+                          &(p_thr_info->prep_stmt[DELETE_STATEMENT]), &unparsed);
 
   CheckPrepare(p_thr_info->db_conn, rc);
 
   /* Everything is OK now ! */
   return HANDLEMAP_SUCCESS;
 
-}				/* init_database_access */
+}                               /* init_database_access */
 
 static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
 {
@@ -319,11 +319,11 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
       rc = handle_mapping_hash_add(p_hash, object_id, handle_hash, &fsal_handle);
 
       if (rc == 0)
-	nb_loaded++;
-	else
-	DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			  "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
-			  (unsigned long long)object_id, handle_hash, fsal_handle_str);
+        nb_loaded++;
+        else
+        DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                          "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
+                          (unsigned long long)object_id, handle_hash, fsal_handle_str);
 
       rc = sqlite3_step(p_info->prep_stmt[LOAD_ALL_STATEMENT]);
       CheckStep(p_info->db_conn, rc, p_info->prep_stmt[LOAD_ALL_STATEMENT]);
@@ -339,31 +339,31 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
   timersub(&t2, &t1, &tdiff);
 
   DisplayLogJdLevel(fsal_log, NIV_EVENT, "Reloaded %u items in %d.%06ds",
-		    nb_loaded, (int)tdiff.tv_sec, (int)tdiff.tv_usec);
+                    nb_loaded, (int)tdiff.tv_sec, (int)tdiff.tv_usec);
 
   return HANDLEMAP_SUCCESS;
 
-}				/* db_load_operation */
+}                               /* db_load_operation */
 
 static int db_insert_operation(db_thread_info_t * p_info,
-			       nfs23_map_handle_t * p_nfs23_digest,
-			       fsal_handle_t * p_handle)
+                               nfs23_map_handle_t * p_nfs23_digest,
+                               fsal_handle_t * p_handle)
 {
   int rc;
   char handle_str[2 * sizeof(fsal_handle_t) + 1];
 
   rc = sqlite3_bind_int64(p_info->prep_stmt[INSERT_STATEMENT], 1,
-			  p_nfs23_digest->object_id);
+                          p_nfs23_digest->object_id);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[INSERT_STATEMENT]);
 
   rc = sqlite3_bind_int(p_info->prep_stmt[INSERT_STATEMENT], 2,
-			p_nfs23_digest->handle_hash);
+                        p_nfs23_digest->handle_hash);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[INSERT_STATEMENT]);
 
   snprintHandle(handle_str, 2 * sizeof(fsal_handle_t) + 1, p_handle);
 
   rc = sqlite3_bind_text(p_info->prep_stmt[INSERT_STATEMENT], 3, handle_str, -1,
-			 SQLITE_STATIC);
+                         SQLITE_STATIC);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[INSERT_STATEMENT]);
 
   rc = sqlite3_step(p_info->prep_stmt[INSERT_STATEMENT]);
@@ -374,19 +374,19 @@ static int db_insert_operation(db_thread_info_t * p_info,
 
   return HANDLEMAP_SUCCESS;
 
-}				/* db_insert_operation */
+}                               /* db_insert_operation */
 
 static int db_delete_operation(db_thread_info_t * p_info,
-			       nfs23_map_handle_t * p_nfs23_digest)
+                               nfs23_map_handle_t * p_nfs23_digest)
 {
   int rc;
 
   rc = sqlite3_bind_int64(p_info->prep_stmt[DELETE_STATEMENT], 1,
-			  p_nfs23_digest->object_id);
+                          p_nfs23_digest->object_id);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[DELETE_STATEMENT]);
 
   rc = sqlite3_bind_int(p_info->prep_stmt[DELETE_STATEMENT], 2,
-			p_nfs23_digest->handle_hash);
+                        p_nfs23_digest->handle_hash);
   CheckBind(p_info->db_conn, rc, p_info->prep_stmt[DELETE_STATEMENT]);
 
   rc = sqlite3_step(p_info->prep_stmt[DELETE_STATEMENT]);
@@ -397,7 +397,7 @@ static int db_delete_operation(db_thread_info_t * p_info,
 
   return HANDLEMAP_SUCCESS;
 
-}				/* db_delete_operation */
+}                               /* db_delete_operation */
 
 /* push a task to the queue */
 static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
@@ -415,15 +415,15 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
       p_op->p_next = NULL;
 
       if (p_queue->highprio_last == NULL)
-	{
-	  /* first operation */
-	  p_queue->highprio_first = p_op;
-	  p_queue->highprio_last = p_op;
-	} else
-	{
-	  p_queue->highprio_last->p_next = p_op;
-	  p_queue->highprio_last = p_op;
-	}
+        {
+          /* first operation */
+          p_queue->highprio_first = p_op;
+          p_queue->highprio_last = p_op;
+        } else
+        {
+          p_queue->highprio_last->p_next = p_op;
+          p_queue->highprio_last = p_op;
+        }
 
       p_queue->nb_waiting++;
 
@@ -436,15 +436,15 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
       p_op->p_next = NULL;
 
       if (p_queue->lowprio_last == NULL)
-	{
-	  /* first operation */
-	  p_queue->lowprio_first = p_op;
-	  p_queue->lowprio_last = p_op;
-	} else
-	{
-	  p_queue->lowprio_last->p_next = p_op;
-	  p_queue->lowprio_last = p_op;
-	}
+        {
+          /* first operation */
+          p_queue->lowprio_first = p_op;
+          p_queue->lowprio_last = p_op;
+        } else
+        {
+          p_queue->lowprio_last->p_next = p_op;
+          p_queue->lowprio_last = p_op;
+        }
 
       p_queue->nb_waiting++;
 
@@ -452,7 +452,7 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
 
     default:
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"ERROR in dbop_push: Invalid operation type %d", p_op->op_type);
+                        "ERROR in dbop_push: Invalid operation type %d", p_op->op_type);
     }
 
   /* there now some work available */
@@ -493,7 +493,7 @@ static void *database_worker_thread(void *arg)
     {
       /* Failed init */
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Database initialization error %d",
-			rc);
+                        rc);
       exit(rc);
     }
 
@@ -507,61 +507,61 @@ static void *database_worker_thread(void *arg)
 
       /* nothing to be done ? */
       while (p_info->work_queue.highprio_first == NULL
-	     && p_info->work_queue.lowprio_first == NULL)
-	{
-	  to_be_done = NULL;
-	  p_info->work_queue.status = IDLE;
-	  pthread_cond_signal(&p_info->work_queue.work_done_condition);
+             && p_info->work_queue.lowprio_first == NULL)
+        {
+          to_be_done = NULL;
+          p_info->work_queue.status = IDLE;
+          pthread_cond_signal(&p_info->work_queue.work_done_condition);
 
-	  /* if termination is requested, exit */
-	  if (do_terminate)
-	    {
-	      p_info->work_queue.status = FINISHED;
-	      V(p_info->work_queue.queues_mutex);
-	      return (void *)p_info;
-	    }
+          /* if termination is requested, exit */
+          if (do_terminate)
+            {
+              p_info->work_queue.status = FINISHED;
+              V(p_info->work_queue.queues_mutex);
+              return (void *)p_info;
+            }
 
-	  /* else, wait for something to do */
-	  pthread_cond_wait(&p_info->work_queue.work_avail_condition,
-			    &p_info->work_queue.queues_mutex);
+          /* else, wait for something to do */
+          pthread_cond_wait(&p_info->work_queue.work_avail_condition,
+                            &p_info->work_queue.queues_mutex);
 
-	}
+        }
 
       /* there is something to do : first check the highest priority list,
        * then the lower priority.
        */
 
       if (p_info->work_queue.highprio_first != NULL)
-	{
-	  /* take the next item in the list */
-	  to_be_done = p_info->work_queue.highprio_first;
-	  p_info->work_queue.highprio_first = to_be_done->p_next;
+        {
+          /* take the next item in the list */
+          to_be_done = p_info->work_queue.highprio_first;
+          p_info->work_queue.highprio_first = to_be_done->p_next;
 
-	  /* still any entries in the list ? */
-	  if (p_info->work_queue.highprio_first == NULL)
-	    p_info->work_queue.highprio_last = NULL;
-	  /* it it the last entry ? */
-	  else if (p_info->work_queue.highprio_first->p_next == NULL)
-	    p_info->work_queue.highprio_last = p_info->work_queue.highprio_first;
+          /* still any entries in the list ? */
+          if (p_info->work_queue.highprio_first == NULL)
+            p_info->work_queue.highprio_last = NULL;
+          /* it it the last entry ? */
+          else if (p_info->work_queue.highprio_first->p_next == NULL)
+            p_info->work_queue.highprio_last = p_info->work_queue.highprio_first;
 
-	  /* something to do */
-	  p_info->work_queue.status = WORKING;
+          /* something to do */
+          p_info->work_queue.status = WORKING;
       } else if (p_info->work_queue.lowprio_first != NULL)
-	{
-	  /* take the next item in the list */
-	  to_be_done = p_info->work_queue.lowprio_first;
-	  p_info->work_queue.lowprio_first = to_be_done->p_next;
+        {
+          /* take the next item in the list */
+          to_be_done = p_info->work_queue.lowprio_first;
+          p_info->work_queue.lowprio_first = to_be_done->p_next;
 
-	  /* still any entries in the list ? */
-	  if (p_info->work_queue.lowprio_first == NULL)
-	    p_info->work_queue.lowprio_last = NULL;
-	  /* it it the last entry ? */
-	  else if (p_info->work_queue.lowprio_first->p_next == NULL)
-	    p_info->work_queue.lowprio_last = p_info->work_queue.lowprio_first;
+          /* still any entries in the list ? */
+          if (p_info->work_queue.lowprio_first == NULL)
+            p_info->work_queue.lowprio_last = NULL;
+          /* it it the last entry ? */
+          else if (p_info->work_queue.lowprio_first->p_next == NULL)
+            p_info->work_queue.lowprio_last = p_info->work_queue.lowprio_first;
 
-	  /* something to do */
-	  p_info->work_queue.status = WORKING;
-	}
+          /* something to do */
+          p_info->work_queue.status = WORKING;
+        }
 
       p_info->work_queue.nb_waiting--;
 
@@ -570,31 +570,31 @@ static void *database_worker_thread(void *arg)
       /* PROCESS THE REQUEST */
 
       switch (to_be_done->op_type)
-	{
-	case LOAD:
-	  db_load_operation(p_info, to_be_done->op_arg.hash);
-	  break;
+        {
+        case LOAD:
+          db_load_operation(p_info, to_be_done->op_arg.hash);
+          break;
 
-	case INSERT:
-	  db_insert_operation(p_info, &to_be_done->op_arg.fh_info.nfs23_digest,
-			      &to_be_done->op_arg.fh_info.fsal_handle);
-	  break;
+        case INSERT:
+          db_insert_operation(p_info, &to_be_done->op_arg.fh_info.nfs23_digest,
+                              &to_be_done->op_arg.fh_info.fsal_handle);
+          break;
 
-	case DELETE:
-	  db_delete_operation(p_info, &to_be_done->op_arg.fh_info.nfs23_digest);
-	  break;
+        case DELETE:
+          db_delete_operation(p_info, &to_be_done->op_arg.fh_info.nfs23_digest);
+          break;
 
-	default:
-	  DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Invalid operation type %d",
-			    to_be_done->op_type);
-	}
+        default:
+          DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: Invalid operation type %d",
+                            to_be_done->op_type);
+        }
 
       /* free the db operation item */
       P(p_info->pool_mutex);
       RELEASE_PREALLOC(to_be_done, p_info->dbop_pool, p_next);
       V(p_info->pool_mutex);
 
-    }				/* loop forever */
+    }                           /* loop forever */
 
   return (void *)p_info;
 }
@@ -622,7 +622,7 @@ int handlemap_db_count(const char *dir)
   if (dir_hdl == NULL)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: could not access directory %s: %s",
-			dir, strerror(errno));
+                        dir, strerror(errno));
       return -HANDLEMAP_SYSTEM_ERROR;
     }
 
@@ -631,32 +631,32 @@ int handlemap_db_count(const char *dir)
       rc = readdir_r(dir_hdl, &direntry, &cookie);
 
       if (rc == 0 && cookie != NULL)
-	{
-	  /* go to the next loop if the entry is . or .. */
-	  if (!strcmp(".", direntry.d_name) || !strcmp("..", direntry.d_name))
-	    continue;
+        {
+          /* go to the next loop if the entry is . or .. */
+          if (!strcmp(".", direntry.d_name) || !strcmp("..", direntry.d_name))
+            continue;
 
-	  /* does it match the expected db pattern ? */
-	  if (!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
-	    count++;
+          /* does it match the expected db pattern ? */
+          if (!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
+            count++;
 
       } else if (rc == 0 && cookie == NULL)
-	{
-	  /* end of dir */
-	  end_of_dir = TRUE;
+        {
+          /* end of dir */
+          end_of_dir = TRUE;
       } else if (errno != 0)
-	{
-	  /* error */
-	  DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: error reading directory %s: %s",
-			    dir, strerror(errno));
+        {
+          /* error */
+          DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: error reading directory %s: %s",
+                            dir, strerror(errno));
 
-	  closedir(dir_hdl);
-	  return -HANDLEMAP_SYSTEM_ERROR;
-	} else
-	{
-	  /* end of dir */
-	  end_of_dir = TRUE;
-	}
+          closedir(dir_hdl);
+          return -HANDLEMAP_SYSTEM_ERROR;
+        } else
+        {
+          /* end of dir */
+          end_of_dir = TRUE;
+        }
 
     }
   while (!end_of_dir);
@@ -665,7 +665,7 @@ int handlemap_db_count(const char *dir)
 
   return count;
 
-}				/* handlemap_db_count */
+}                               /* handlemap_db_count */
 
 unsigned int select_db_queue(const nfs23_map_handle_t * p_nfs23_digest)
 {
@@ -685,9 +685,9 @@ unsigned int select_db_queue(const nfs23_map_handle_t * p_nfs23_digest)
  * - create db schema if it was empty
  */
 int handlemap_db_init(const char *db_dir,
-		      const char *tmp_dir,
-		      unsigned int db_count,
-		      unsigned int nb_dbop_prealloc, int synchronous_insert)
+                      const char *tmp_dir,
+                      unsigned int db_count,
+                      unsigned int nb_dbop_prealloc, int synchronous_insert)
 {
   unsigned int i;
   int rc;
@@ -713,14 +713,14 @@ int handlemap_db_init(const char *db_dir,
     {
       rc = init_db_thread_info(&db_thread[i]);
       if (rc)
-	return rc;
+        return rc;
 
       db_thread[i].thr_index = i;
 
       rc = pthread_create(&db_thread[i].thr_id, NULL, database_worker_thread,
-			  &db_thread[i]);
+                          &db_thread[i]);
       if (rc)
-	return HANDLEMAP_SYSTEM_ERROR;
+        return HANDLEMAP_SYSTEM_ERROR;
     }
 
   /* I'm ready to serve, my Lord ! */
@@ -737,10 +737,10 @@ static void wait_thread_jobs_finished(db_thread_info_t * p_thr_info)
    * and it is no more working
    */
   while (p_thr_info->work_queue.highprio_first != NULL
-	 || p_thr_info->work_queue.lowprio_first != NULL
-	 || p_thr_info->work_queue.status == WORKING)
+         || p_thr_info->work_queue.lowprio_first != NULL
+         || p_thr_info->work_queue.status == WORKING)
     pthread_cond_wait(&p_thr_info->work_queue.work_done_condition,
-		      &p_thr_info->work_queue.queues_mutex);
+                      &p_thr_info->work_queue.queues_mutex);
 
   V(p_thr_info->work_queue.queues_mutex);
 
@@ -769,7 +769,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
       V(db_thread[i].pool_mutex);
 
       if (!new_task)
-	return HANDLEMAP_SYSTEM_ERROR;
+        return HANDLEMAP_SYSTEM_ERROR;
 
       /* can you fill it ? */
       new_task->op_type = LOAD;
@@ -778,7 +778,7 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
       rc = dbop_push(&db_thread[i].work_queue, new_task);
 
       if (rc)
-	return rc;
+        return rc;
     }
 
   /* wait for all threads to finish their job */
@@ -790,14 +790,14 @@ int handlemap_db_reaload_all(hash_table_t * target_hash)
 
   return HANDLEMAP_SUCCESS;
 
-}				/* handlemap_db_reaload_all */
+}                               /* handlemap_db_reaload_all */
 
 /**
  * Submit a db 'insert' request.
  * The request is inserted in the appropriate db queue.
  */
 int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
-			fsal_handle_t * p_in_handle)
+                        fsal_handle_t * p_in_handle)
 {
   unsigned int i;
   db_op_item_t *new_task;
@@ -817,7 +817,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       V(db_thread[i].pool_mutex);
 
       if (!new_task)
-	return HANDLEMAP_SYSTEM_ERROR;
+        return HANDLEMAP_SYSTEM_ERROR;
 
       /* fill the task info */
       new_task->op_type = INSERT;
@@ -827,7 +827,7 @@ int handlemap_db_insert(nfs23_map_handle_t * p_in_nfs23_digest,
       rc = dbop_push(&db_thread[i].work_queue, new_task);
 
       if (rc)
-	return rc;
+        return rc;
     }
   /* else: @todo not supported yet */
 
@@ -891,8 +891,8 @@ int handlemap_db_flush()
     }
 
   DisplayLogJdLevel(fsal_log, NIV_EVENT,
-		    "Waiting for database synchronization (%u operations pending)",
-		    to_sync);
+                    "Waiting for database synchronization (%u operations pending)",
+                    to_sync);
 
   gettimeofday(&t1, NULL);
 
@@ -908,7 +908,7 @@ int handlemap_db_flush()
   timersub(&t2, &t1, &tdiff);
 
   DisplayLogJdLevel(fsal_log, NIV_EVENT, "Database synchronized in %d.%06ds",
-		    (int)tdiff.tv_sec, (int)tdiff.tv_usec);
+                    (int)tdiff.tv_sec, (int)tdiff.tv_usec);
 
   return HANDLEMAP_SUCCESS;
 

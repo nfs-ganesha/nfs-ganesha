@@ -18,7 +18,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
@@ -53,7 +53,7 @@ extern fsal_staticfsinfo_t global_fs_info;
 extern fs_specific_initinfo_t global_fsal_proxy_specific_info;
 
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
-					  bitmap4 * pbitmap)
+                                          bitmap4 * pbitmap)
 {
   uint32_t tmpattrlist[100];
   uint32_t attrlen = 0;
@@ -74,7 +74,7 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
     tmpattrlist[attrlen++] = FATTR4_TIME_METADATA;
 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
-}				/* fsal_interval_proxy_fsalattr2bitmap4 */
+}                               /* fsal_interval_proxy_fsalattr2bitmap4 */
 
 /**
  * fsal_internal_proxy_create_fattr_bitmap :
@@ -114,7 +114,7 @@ void fsal_internal_proxy_create_fattr_bitmap(bitmap4 * pbitmap)
 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
 
-}				/* fsal_internal_proxy_create_fattr_bitmap */
+}                               /* fsal_internal_proxy_create_fattr_bitmap */
 
 void fsal_internal_proxy_create_fattr_readdir_bitmap(bitmap4 * pbitmap)
 {
@@ -144,7 +144,7 @@ void fsal_internal_proxy_create_fattr_readdir_bitmap(bitmap4 * pbitmap)
 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
 
-}				/* fsal_internal_proxy_create_fattr_readdir_bitmap */
+}                               /* fsal_internal_proxy_create_fattr_readdir_bitmap */
 
 void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap)
 {
@@ -165,7 +165,7 @@ void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap)
 
   nfs4_list_to_bitmap4(pbitmap, &attrlen, tmpattrlist);
 
-}				/* fsal_internal_proxy_create_fattr_fsinfo_bitmap */
+}                               /* fsal_internal_proxy_create_fattr_fsinfo_bitmap */
 
 void fsal_internal_proxy_setup_readdir_fattr(fsal_proxy_internal_fattr_readdir_t * pfattr)
 {
@@ -308,7 +308,7 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
 
     case NFS4ERR_SAME:
     case NFS4ERR_NOT_SAME:
-      Return(ERR_FSAL_NO_ERROR, (int)nfsstatus, indexfunc);	/* no "actual" errors */
+      Return(ERR_FSAL_NO_ERROR, (int)nfsstatus, indexfunc);     /* no "actual" errors */
       break;
 
     case NFS4ERR_GRACE:
@@ -357,7 +357,7 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
     case NFS4ERR_DEADLOCK:
     case NFS4ERR_ADMIN_REVOKED:
     case NFS4ERR_CB_PATH_DOWN:
-      Return(ERR_FSAL_INVAL, (int)nfsstatus, indexfunc);	/* For wanting of something wiser */
+      Return(ERR_FSAL_INVAL, (int)nfsstatus, indexfunc);        /* For wanting of something wiser */
       break;
 
     case NFS4ERR_NOFILEHANDLE:
@@ -372,13 +372,13 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
       Return(ERR_FSAL_ATTRNOTSUPP, (int)nfsstatus, indexfunc);
       break;
 
-    default:			/* Should never occur, all cases are stated above */
+    default:                   /* Should never occur, all cases are stated above */
       Return(ERR_FSAL_INVAL, (int)nfsstatus, indexfunc);
       break;
 
-    }				/* switch( nfsstatus ) */
+    }                           /* switch( nfsstatus ) */
 
-}				/* fsal_internal_proxy_error_convert */
+}                               /* fsal_internal_proxy_error_convert */
 
 /**
  * fsal_internal_proxy_create_fh :
@@ -393,8 +393,8 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
  *
  */
 int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
-				  fsal_nodetype_t type,
-				  fsal_u64_t fileid, fsal_handle_t * pfsal_handle)
+                                  fsal_nodetype_t type,
+                                  fsal_u64_t fileid, fsal_handle_t * pfsal_handle)
 {
 #ifdef _DEBUG_FSAL
   char outstr[1024];
@@ -413,7 +413,7 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
   pfsal_handle->srv_handle_len = pnfs4_handle->nfs_fh4_len;
   memset(pfsal_handle->srv_handle_val, 0, FSAL_PROXY_FILEHANDLE_MAX_LEN);
   memcpy(pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val,
-	 pnfs4_handle->nfs_fh4_len);
+         pnfs4_handle->nfs_fh4_len);
 
 #ifdef _DEBUG_FSAL
   if (type == FSAL_TYPE_FILE)
@@ -424,20 +424,20 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
       tmpfh.nfs_fh4_val = pfsal_handle->srv_handle_val;
       nfs4_sprint_fhandle(&tmpfh, outstr);
       DisplayLog
-	  ("fsal_internal_proxy_create_fh: output nfsv4 server handle= %s fileid=%llu",
-	   outstr, fileid);
+          ("fsal_internal_proxy_create_fh: output nfsv4 server handle= %s fileid=%llu",
+           outstr, fileid);
     }
 
   if (memcmp
       (pfsal_handle->srv_handle_val, pnfs4_handle->nfs_fh4_val,
        pnfs4_handle->nfs_fh4_len))
     DisplayLog
-	("CRITICAL ERROR: ==========> Filehandle mismatch n ifsal_internal_proxy_create");
+        ("CRITICAL ERROR: ==========> Filehandle mismatch n ifsal_internal_proxy_create");
 
 #endif
 
   return TRUE;
-}				/* fsal_internal_proxy_create_fh */
+}                               /* fsal_internal_proxy_create_fh */
 
 /**
  * fsal_internal_proxy_extract_fh :
@@ -468,7 +468,7 @@ int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle, fsal_handle_t * pfsal
 #endif
 
   return TRUE;
-}				/* fsal_internal_proxy_extract_fh */
+}                               /* fsal_internal_proxy_extract_fh */
 
 /**
  * fsal_internal_proxy_fsal_name_2_utf8 :
@@ -502,9 +502,9 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   if (utf8str->utf8string_len == 0)
     {
       if ((utf8str->utf8string_val = (char *)Mem_Alloc(pname->len)) == NULL)
-	return FALSE;
-	else
-	utf8str->utf8string_len = pname->len;
+        return FALSE;
+        else
+        utf8str->utf8string_len = pname->len;
     }
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -514,7 +514,7 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
   if (str2utf8(tmpstr, utf8str) == -1)
     return FALSE;
   return TRUE;
-}				/* fsal_internal_proxy_fsal_name_2_utf8 */
+}                               /* fsal_internal_proxy_fsal_name_2_utf8 */
 
 /**
  * fsal_internal_proxy_fsal_path_2_utf8 :
@@ -548,9 +548,9 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
   if (utf8str->utf8string_len == 0)
     {
       if ((utf8str->utf8string_val = (char *)Mem_Alloc(ppath->len)) == NULL)
-	return FALSE;
-	else
-	utf8str->utf8string_len = ppath->len;
+        return FALSE;
+        else
+        utf8str->utf8string_len = ppath->len;
     }
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -561,7 +561,7 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
     return FALSE;
 
   return TRUE;
-}				/* fsal_internal_proxy_fsal_path_2_utf8 */
+}                               /* fsal_internal_proxy_fsal_path_2_utf8 */
 
 /**
  * fsal_internal_proxy_fsal_utf8_2_path :
@@ -591,7 +591,7 @@ int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8s
     return FALSE;
 
   return TRUE;
-}				/* fsal_internal_proxy_fsal_utf8_2_path */
+}                               /* fsal_internal_proxy_fsal_utf8_2_path */
 
 /**
  * fsal_internal_proxy_fsal_utf8_2_name :
@@ -621,7 +621,7 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
     return FALSE;
 
   return TRUE;
-}				/* fsal_internal_proxy_fsal_utf8_2_name */
+}                               /* fsal_internal_proxy_fsal_utf8_2_name */
 
 /**
  * 
@@ -636,12 +636,12 @@ int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8s
  *
  */
 int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
-				       fattr4 * Fattr)
+                                       fattr4 * Fattr)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
   char __attribute__ ((__unused__)) funcname[] = "proxy_Fattr_To_FSAL_dynamic_fsinfo";
-  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];	/* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrmasklen = 0;
   uint32_t attribute_to_set = 0;
   uint64_t tmp_uint64 = 0LL;
@@ -668,95 +668,95 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
       attribute_to_set = attrmasklist[i];
 
       if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
-	{
-	  /* Erroneous value... skip */
-	  continue;
-	}
+        {
+          /* Erroneous value... skip */
+          continue;
+        }
 #ifdef _DEBUG_NFS_V4
       printf("=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u\n", i,
-	     attrmasklist[i]);
+             attrmasklist[i]);
       printf("Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d\n",
-	     attrmasklist[i], fattr4tab[attribute_to_set].val,
-	     fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
+             attrmasklist[i], fattr4tab[attribute_to_set].val,
+             fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
 #endif
 
       switch (attribute_to_set)
-	{
-	case FATTR4_FILES_AVAIL:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_files_avail));
-	  pdynamicinfo->avail_files = nfs_ntohl64(tmp_uint64);
+        {
+        case FATTR4_FILES_AVAIL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_avail));
+          pdynamicinfo->avail_files = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_FILES_FREE:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_files_free));
-	  pdynamicinfo->free_files = nfs_ntohl64(tmp_uint64);
+        case FATTR4_FILES_FREE:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_free));
+          pdynamicinfo->free_files = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_FILES_TOTAL:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_files_total));
-	  pdynamicinfo->total_files = nfs_ntohl64(tmp_uint64);
+        case FATTR4_FILES_TOTAL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_files_total));
+          pdynamicinfo->total_files = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_SPACE_AVAIL:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_space_avail));
-	  pdynamicinfo->avail_bytes = nfs_ntohl64(tmp_uint64);
+        case FATTR4_SPACE_AVAIL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_avail));
+          pdynamicinfo->avail_bytes = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_SPACE_FREE:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_space_free));
-	  pdynamicinfo->free_bytes = nfs_ntohl64(tmp_uint64);
+        case FATTR4_SPACE_FREE:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_free));
+          pdynamicinfo->free_bytes = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_SPACE_TOTAL:
-	  memcpy((char *)&tmp_uint64,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_space_total));
-	  pdynamicinfo->total_bytes = nfs_ntohl64(tmp_uint64);
+        case FATTR4_SPACE_TOTAL:
+          memcpy((char *)&tmp_uint64,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_total));
+          pdynamicinfo->total_bytes = nfs_ntohl64(tmp_uint64);
 
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	default:
+        default:
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
-		 fattr4tab[attribute_to_set].name);
+          printf("      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
+                 fattr4tab[attribute_to_set].name);
 #endif
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  break;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          break;
 
-	}			/*   switch( attribute_to_set ) */
+        }                       /*   switch( attribute_to_set ) */
 
     }
 
   return 1;
 
-}				/* proxy_Fattr_To_FSAL_dynamic_fsinfo */
+}                               /* proxy_Fattr_To_FSAL_dynamic_fsinfo */
 
 /**
  * 
@@ -771,12 +771,12 @@ int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
  *
  */
 int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
-			     fsal_handle_t * phandle, fattr4 * Fattr)
+                             fsal_handle_t * phandle, fattr4 * Fattr)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
   char __attribute__ ((__unused__)) funcname[] = "proxy_Fattr_To_FSAL_attr";
-  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];	/* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrmasklen = 0;
   uint32_t attribute_to_set = 0;
 
@@ -824,356 +824,356 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
       attribute_to_set = attrmasklist[i];
 
       if (attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
-	{
-	  /* Erroneous value... skip */
-	  continue;
-	}
+        {
+          /* Erroneous value... skip */
+          continue;
+        }
 #ifdef _DEBUG_NFS_V4
       printf("=================> nfs4_Fattr_To_FSAL_attr: i=%u attr=%u\n", i,
-	     attrmasklist[i]);
+             attrmasklist[i]);
       printf("Flag for Operation = %d|%d is ON,  name  = %s  reply_size = %d\n",
-	     attrmasklist[i], fattr4tab[attribute_to_set].val,
-	     fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
+             attrmasklist[i], fattr4tab[attribute_to_set].val,
+             fattr4tab[attribute_to_set].name, fattr4tab[attribute_to_set].size_fattr4);
 #endif
 
       switch (attribute_to_set)
-	{
-	case FATTR4_TYPE:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_type,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_type));
+        {
+        case FATTR4_TYPE:      /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_type,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_type));
 
-	  switch (ntohl(attr_type))
-	    {
-	    case NF4REG:
-	      pFSAL_attr->type = FSAL_TYPE_FILE;
-	      break;
+          switch (ntohl(attr_type))
+            {
+            case NF4REG:
+              pFSAL_attr->type = FSAL_TYPE_FILE;
+              break;
 
-	    case NF4DIR:
-	      pFSAL_attr->type = FSAL_TYPE_DIR;
-	      break;
+            case NF4DIR:
+              pFSAL_attr->type = FSAL_TYPE_DIR;
+              break;
 
-	    case NF4BLK:
-	      pFSAL_attr->type = FSAL_TYPE_BLK;
-	      break;
+            case NF4BLK:
+              pFSAL_attr->type = FSAL_TYPE_BLK;
+              break;
 
-	    case NF4CHR:
-	      pFSAL_attr->type = FSAL_TYPE_CHR;
-	      break;
+            case NF4CHR:
+              pFSAL_attr->type = FSAL_TYPE_CHR;
+              break;
 
-	    case NF4LNK:
-	      pFSAL_attr->type = FSAL_TYPE_LNK;
-	      break;
+            case NF4LNK:
+              pFSAL_attr->type = FSAL_TYPE_LNK;
+              break;
 
-	    case NF4SOCK:
-	      pFSAL_attr->type = FSAL_TYPE_SOCK;
-	      break;
+            case NF4SOCK:
+              pFSAL_attr->type = FSAL_TYPE_SOCK;
+              break;
 
-	    case NF4FIFO:
-	      pFSAL_attr->type = FSAL_TYPE_FIFO;
-	      break;
+            case NF4FIFO:
+              pFSAL_attr->type = FSAL_TYPE_FIFO;
+              break;
 
-	    default:		/* For wanting of a better solution */
-	      pFSAL_attr->type = 0;
-	      break;
-	    }			/* switch( pattr->type ) */
+            default:           /* For wanting of a better solution */
+              pFSAL_attr->type = 0;
+              break;
+            }                   /* switch( pattr->type ) */
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: On voit le type %d\n", pFSAL_attr->filesize);
+          printf("      SATTR: On voit le type %d\n", pFSAL_attr->filesize);
 #endif
-	  break;
+          break;
 
-	case FATTR4_FILEID:	/* Used only by FSAL_PROXY to reverse convert */
-	  /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
-	   * I use hpss_GetObjId to extract this information from the Name Server's handle */
-	  memcpy((char *)&attr_fileid,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_fileid));
-	  pFSAL_attr->fileid = nfs_ntohl64(attr_fileid);
+        case FATTR4_FILEID:    /* Used only by FSAL_PROXY to reverse convert */
+          /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
+           * I use hpss_GetObjId to extract this information from the Name Server's handle */
+          memcpy((char *)&attr_fileid,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_fileid));
+          pFSAL_attr->fileid = nfs_ntohl64(attr_fileid);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEID;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEID;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_FSID:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_fsid,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_fsid));
-	  pFSAL_attr->fsid.major = nfs_ntohl64(attr_fsid.major);
-	  pFSAL_attr->fsid.minor = nfs_ntohl64(attr_fsid.minor);
+        case FATTR4_FSID:      /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_fsid,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_fsid));
+          pFSAL_attr->fsid.major = nfs_ntohl64(attr_fsid.major);
+          pFSAL_attr->fsid.minor = nfs_ntohl64(attr_fsid.minor);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_FSID;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_FSID;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_NUMLINKS:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_numlinks,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_numlinks));
-	  pFSAL_attr->numlinks = ntohl(attr_numlinks);
+        case FATTR4_NUMLINKS:  /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_numlinks,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_numlinks));
+          pFSAL_attr->numlinks = ntohl(attr_numlinks);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEID;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEID;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	  break;
+          break;
 
-	case FATTR4_SIZE:
-	  memcpy((char *)&attr_size,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_size));
+        case FATTR4_SIZE:
+          memcpy((char *)&attr_size,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_size));
 
-	  /* Do not forget the XDR marshalling for the fattr4 stuff */
-	  pFSAL_attr->filesize = nfs_ntohl64(attr_size);
+          /* Do not forget the XDR marshalling for the fattr4 stuff */
+          pFSAL_attr->filesize = nfs_ntohl64(attr_size);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: On voit la taille %d\n", pFSAL_attr->filesize);
+          printf("      SATTR: On voit la taille %d\n", pFSAL_attr->filesize);
 #endif
-	  break;
+          break;
 
-	case FATTR4_MODE:
-	  memcpy((char *)&(pFSAL_attr->mode),
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_mode));
+        case FATTR4_MODE:
+          memcpy((char *)&(pFSAL_attr->mode),
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_mode));
 
-	  /* Do not forget the XDR marshalling for the fattr4 stuff */
-	  pFSAL_attr->mode = ntohl(pFSAL_attr->mode);
+          /* Do not forget the XDR marshalling for the fattr4 stuff */
+          pFSAL_attr->mode = ntohl(pFSAL_attr->mode);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: On voit le mode 0%o\n", pFSAL_attr->mode);
+          printf("      SATTR: On voit le mode 0%o\n", pFSAL_attr->mode);
 #endif
-	  break;
+          break;
 
-	case FATTR4_OWNER:
-	  memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(u_int));
-	  len = ntohl(len);	/* xdr marshalling on fattr4 */
-	  LastOffset += sizeof(u_int);
+        case FATTR4_OWNER:
+          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(u_int));
+          len = ntohl(len);     /* xdr marshalling on fattr4 */
+          LastOffset += sizeof(u_int);
 
-	  memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
-	  buffer[len] = '\0';
+          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
+          buffer[len] = '\0';
 
-	  /* Do not forget that xdr_opaque are aligned on 32bit long words */
-	  while ((len % 4) != 0)
-	    len += 1;
+          /* Do not forget that xdr_opaque are aligned on 32bit long words */
+          while ((len % 4) != 0)
+            len += 1;
 
-	  LastOffset += len;
+          LastOffset += len;
 
-	  utf8buffer.utf8string_val = buffer;
-	  utf8buffer.utf8string_len = strlen(buffer);
+          utf8buffer.utf8string_val = buffer;
+          utf8buffer.utf8string_len = strlen(buffer);
 
-	  utf82uid(&utf8buffer, &(pFSAL_attr->owner));
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
-
-#ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: On voit le owner %s len = %d\n", buffer, len);
-	  printf("      SATTR: On voit le owner %d\n", pFSAL_attr->owner);
-#endif
-	  break;
-
-	case FATTR4_OWNER_GROUP:
-	  memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(u_int));
-	  len = ntohl(len);
-	  LastOffset += sizeof(u_int);
-
-	  memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
-	  buffer[len] = '\0';
-
-	  /* Do not forget that xdr_opaque are aligned on 32bit long words */
-	  while ((len % 4) != 0)
-	    len += 1;
-
-	  LastOffset += len;
-
-	  utf8buffer.utf8string_val = buffer;
-	  utf8buffer.utf8string_len = strlen(buffer);
-
-	  utf82gid(&utf8buffer, &(pFSAL_attr->group));
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
+          utf82uid(&utf8buffer, &(pFSAL_attr->owner));
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: On voit le owner_group %s len = %d\n", buffer, len);
-	  printf("      SATTR: On voit le owner_group %d\n", pFSAL_attr->group);
+          printf("      SATTR: On voit le owner %s len = %d\n", buffer, len);
+          printf("      SATTR: On voit le owner %d\n", pFSAL_attr->owner);
 #endif
-	  break;
+          break;
 
-	case FATTR4_CHANGE:
-	  memcpy((char *)&attr_change,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_change));
-	  pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
-	  pFSAL_attr->chgtime.nseconds = 0;
+        case FATTR4_OWNER_GROUP:
+          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(u_int));
+          len = ntohl(len);
+          LastOffset += sizeof(u_int);
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_CHGTIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset), len);
+          buffer[len] = '\0';
 
-	  break;
+          /* Do not forget that xdr_opaque are aligned on 32bit long words */
+          while ((len % 4) != 0)
+            len += 1;
 
-	case FATTR4_RAWDEV:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_rawdev,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_rawdev));
-	  pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
-	  pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
+          LastOffset += len;
 
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_RAWDEV;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          utf8buffer.utf8string_val = buffer;
+          utf8buffer.utf8string_len = strlen(buffer);
 
-	  break;
+          utf82gid(&utf8buffer, &(pFSAL_attr->group));
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
-	case FATTR4_SPACE_USED:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_space_used,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_space_used));
-	  pFSAL_attr->spaceused = (uint32_t) nfs_ntohl64(attr_space_used);
-
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_SPACEUSED;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_TIME_ACCESS:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_time_access,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_time_access));
-	  pFSAL_attr->atime.seconds = (uint32_t) nfs_ntohl64(attr_time_access.seconds);
-	  pFSAL_attr->atime.nseconds = (uint32_t) ntohl(attr_time_access.nseconds);
-
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_TIME_METADATA:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_time_metadata,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_time_metadata));
-	  pFSAL_attr->ctime.seconds = (uint32_t) nfs_ntohl64(attr_time_metadata.seconds);
-	  pFSAL_attr->ctime.nseconds = (uint32_t) ntohl(attr_time_metadata.nseconds);
-
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_CTIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_TIME_MODIFY:	/* Used only by FSAL_PROXY to reverse convert */
-	  memcpy((char *)&attr_time_modify,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_time_modify));
-	  pFSAL_attr->mtime.seconds = (uint32_t) nfs_ntohl64(attr_time_modify.seconds);
-	  pFSAL_attr->mtime.nseconds = (uint32_t) ntohl(attr_time_modify.nseconds);
-
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_TIME_ACCESS_SET:
-	  memcpy((char *)&attr_time_set,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_time_access_set));
-
-	  if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
-	    {
-	      pFSAL_attr->atime.seconds = time(NULL);	/* Use current server's time */
-	      pFSAL_attr->atime.nseconds = 0;
-	    } else
-	    {
-	      /* Take care of XDR when dealing with fattr4 */
-	      attr_time = attr_time_set.settime4_u.time;
-	      attr_time.seconds = nfs_ntohl64(attr_time.seconds);
-	      attr_time.nseconds = ntohl(attr_time.nseconds);
-
-	      pFSAL_attr->atime.seconds = attr_time.seconds;
-	      pFSAL_attr->atime.nseconds = attr_time.nseconds;
-	    }
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_TIME_MODIFY_SET:
-	  memcpy((char *)&attr_time,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_time_modify_set));
-
-	  if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
-	    {
-	      pFSAL_attr->mtime.seconds = time(NULL);	/* Use current server's time */
-	      pFSAL_attr->mtime.nseconds = 0;
-	    } else
-	    {
-	      /* Take care of XDR when dealing with fattr4 */
-	      attr_time = attr_time_set.settime4_u.time;
-	      attr_time.seconds = nfs_ntohl64(attr_time.seconds);
-	      attr_time.nseconds = ntohl(attr_time.nseconds);
-
-	      pFSAL_attr->mtime.seconds = attr_time.seconds;
-	      pFSAL_attr->mtime.nseconds = attr_time.nseconds;
-	    }
-
-	  pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
-	  break;
-
-	case FATTR4_FILEHANDLE:
-	  memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(u_int));
-	  len = ntohl(len);
-	  LastOffset += sizeof(u_int);
-
-	  /* Extract the file handle */
-	  nfshandle.nfs_fh4_len = len;
-	  nfshandle.nfs_fh4_val = (char *)(Fattr->attr_vals.attrlist4_val + LastOffset);
-
-	  /* Bogus there: FATTR4_FILEHANDLE = 19 < FATTR4_FILEID = 20... This means that the FH is 
-	   * is processed BEFORE the fileid. At this point, pFSAL_attr->fileid has not yet been set
-	   * and has the value 0. A flag is kept in variable compute_fh to add the fileid later */
-	  fsal_internal_proxy_create_fh(&nfshandle, pFSAL_attr->type, pFSAL_attr->fileid,
-					phandle);
-
-	  LastOffset += len;
 #ifdef _DEBUG_NFS_V4
-	  printf("     SATTR: On a demande le filehandle len =%u\n", len);
+          printf("      SATTR: On voit le owner_group %s len = %d\n", buffer, len);
+          printf("      SATTR: On voit le owner_group %d\n", pFSAL_attr->group);
 #endif
-	  compute_fh = TRUE;
-	  break;
+          break;
 
-	case FATTR4_RDATTR_ERROR:
-	  memcpy((char *)&rdattr_error,
-		 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-		 sizeof(fattr4_rdattr_error));
-	  rdattr_error = ntohl(rdattr_error);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+        case FATTR4_CHANGE:
+          memcpy((char *)&attr_change,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_change));
+          pFSAL_attr->chgtime.seconds = (uint32_t) nfs_ntohl64(attr_change);
+          pFSAL_attr->chgtime.nseconds = 0;
 
-	  break;
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_CHGTIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
-	default:
+          break;
+
+        case FATTR4_RAWDEV:    /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_rawdev,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_rawdev));
+          pFSAL_attr->rawdev.major = (uint32_t) nfs_ntohl64(attr_rawdev.specdata1);
+          pFSAL_attr->rawdev.minor = (uint32_t) nfs_ntohl64(attr_rawdev.specdata2);
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_RAWDEV;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_SPACE_USED:        /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_space_used,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_space_used));
+          pFSAL_attr->spaceused = (uint32_t) nfs_ntohl64(attr_space_used);
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_SPACEUSED;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_TIME_ACCESS:       /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_time_access,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_time_access));
+          pFSAL_attr->atime.seconds = (uint32_t) nfs_ntohl64(attr_time_access.seconds);
+          pFSAL_attr->atime.nseconds = (uint32_t) ntohl(attr_time_access.nseconds);
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_TIME_METADATA:     /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_time_metadata,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_time_metadata));
+          pFSAL_attr->ctime.seconds = (uint32_t) nfs_ntohl64(attr_time_metadata.seconds);
+          pFSAL_attr->ctime.nseconds = (uint32_t) ntohl(attr_time_metadata.nseconds);
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_CTIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
+          memcpy((char *)&attr_time_modify,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_time_modify));
+          pFSAL_attr->mtime.seconds = (uint32_t) nfs_ntohl64(attr_time_modify.seconds);
+          pFSAL_attr->mtime.nseconds = (uint32_t) ntohl(attr_time_modify.nseconds);
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_TIME_ACCESS_SET:
+          memcpy((char *)&attr_time_set,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_time_access_set));
+
+          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+            {
+              pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
+              pFSAL_attr->atime.nseconds = 0;
+            } else
+            {
+              /* Take care of XDR when dealing with fattr4 */
+              attr_time = attr_time_set.settime4_u.time;
+              attr_time.seconds = nfs_ntohl64(attr_time.seconds);
+              attr_time.nseconds = ntohl(attr_time.nseconds);
+
+              pFSAL_attr->atime.seconds = attr_time.seconds;
+              pFSAL_attr->atime.nseconds = attr_time.nseconds;
+            }
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_TIME_MODIFY_SET:
+          memcpy((char *)&attr_time,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_time_modify_set));
+
+          if (ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
+            {
+              pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
+              pFSAL_attr->mtime.nseconds = 0;
+            } else
+            {
+              /* Take care of XDR when dealing with fattr4 */
+              attr_time = attr_time_set.settime4_u.time;
+              attr_time.seconds = nfs_ntohl64(attr_time.seconds);
+              attr_time.nseconds = ntohl(attr_time.nseconds);
+
+              pFSAL_attr->mtime.seconds = attr_time.seconds;
+              pFSAL_attr->mtime.nseconds = attr_time.nseconds;
+            }
+
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        case FATTR4_FILEHANDLE:
+          memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(u_int));
+          len = ntohl(len);
+          LastOffset += sizeof(u_int);
+
+          /* Extract the file handle */
+          nfshandle.nfs_fh4_len = len;
+          nfshandle.nfs_fh4_val = (char *)(Fattr->attr_vals.attrlist4_val + LastOffset);
+
+          /* Bogus there: FATTR4_FILEHANDLE = 19 < FATTR4_FILEID = 20... This means that the FH is 
+           * is processed BEFORE the fileid. At this point, pFSAL_attr->fileid has not yet been set
+           * and has the value 0. A flag is kept in variable compute_fh to add the fileid later */
+          fsal_internal_proxy_create_fh(&nfshandle, pFSAL_attr->type, pFSAL_attr->fileid,
+                                        phandle);
+
+          LastOffset += len;
 #ifdef _DEBUG_NFS_V4
-	  printf("      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
-		 fattr4tab[attribute_to_set].name);
+          printf("     SATTR: On a demande le filehandle len =%u\n", len);
 #endif
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  /* return 0 ; *//* Should not stop processing */
-	  break;
-	}			/* switch */
-    }				/* for */
+          compute_fh = TRUE;
+          break;
+
+        case FATTR4_RDATTR_ERROR:
+          memcpy((char *)&rdattr_error,
+                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
+                 sizeof(fattr4_rdattr_error));
+          rdattr_error = ntohl(rdattr_error);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          break;
+
+        default:
+#ifdef _DEBUG_NFS_V4
+          printf("      SATTR: Attribut no supporte %d name=%s\n", attribute_to_set,
+                 fattr4tab[attribute_to_set].name);
+#endif
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          /* return 0 ; *//* Should not stop processing */
+          break;
+        }                       /* switch */
+    }                           /* for */
 
   if (compute_fh)
     {
       phandle->fileid4 = pFSAL_attr->fileid;
     }
   return 1;
-}				/* proxy_Fattr_To_FSAL_attr */
+}                               /* proxy_Fattr_To_FSAL_attr */
 
 fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
 {
@@ -1204,12 +1204,12 @@ fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context)
 
   if ((p_thr_context->rpc_client->cl_auth =
        authgss_create_default(p_thr_context->rpc_client,
-			      global_fsal_proxy_specific_info.remote_principal,
-			      &rpcsec_gss_data)) == NULL)
+                              global_fsal_proxy_specific_info.remote_principal,
+                              &rpcsec_gss_data)) == NULL)
     Return(ERR_FSAL_SEC, 0, INDEX_FSAL_InitClientContext);
 #endif
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-}				/* fsal_internal_set_auth_gss */
+}                               /* fsal_internal_set_auth_gss */
 
 /**
  *
@@ -1240,69 +1240,69 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
   if (!strcmp(p_thr_context->srv_proto, "udp"))
     {
       if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-	return -1;
+        return -1;
 
       if ((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
-							 p_thr_context->srv_prognum,
-							 FSAL_PROXY_NFS_V4,
-							 (struct timeval)
-							 {
-							 25, 0},
-							 &sock,
-							 p_thr_context->srv_sendsize,
-							 p_thr_context->srv_recvsize)) ==
-	  NULL)
-	{
+                                                         p_thr_context->srv_prognum,
+                                                         FSAL_PROXY_NFS_V4,
+                                                         (struct timeval)
+                                                         {
+                                                         25, 0},
+                                                         &sock,
+                                                         p_thr_context->srv_sendsize,
+                                                         p_thr_context->srv_recvsize)) ==
+          NULL)
+        {
 
-	  DisplayLog
-	      ("FSAL RECONNECT : Cannot contact server addr=%u.%u.%u.%u port=%u prognum=%u using NFSv4 protocol",
-	       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-	       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-	       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-	       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-	       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
+          DisplayLog
+              ("FSAL RECONNECT : Cannot contact server addr=%u.%u.%u.%u port=%u prognum=%u using NFSv4 protocol",
+               (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+               (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+               (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+               (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+               ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
 
-	  return -1;
-	}
+          return -1;
+        }
   } else if (!strcmp(p_thr_context->srv_proto, "tcp"))
     {
       if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-	{
-	  DisplayLog("FSAL RECONNECT: cannot create a tcp socket");
+        {
+          DisplayLog("FSAL RECONNECT: cannot create a tcp socket");
 
-	  return -1;
-	}
+          return -1;
+        }
 
       if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
-	{
-	  DisplayLog("FSAL RECONNECT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-		     (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-		     (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-		     (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-		     (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-		     ntohs(p_thr_context->srv_port));
+        {
+          DisplayLog("FSAL RECONNECT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
+                     (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+                     (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+                     (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+                     (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+                     ntohs(p_thr_context->srv_port));
 
-	  return -1;
-	}
+          return -1;
+        }
 
       if ((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
-						      p_thr_context->srv_prognum,
-						      FSAL_PROXY_NFS_V4,
-						      &sock,
-						      p_thr_context->srv_sendsize,
-						      p_thr_context->srv_recvsize)) ==
-	  NULL)
-	{
-	  DisplayLog
-	      ("FSAL RECONNECT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-	       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-	       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-	       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-	       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-	       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
+                                                      p_thr_context->srv_prognum,
+                                                      FSAL_PROXY_NFS_V4,
+                                                      &sock,
+                                                      p_thr_context->srv_sendsize,
+                                                      p_thr_context->srv_recvsize)) ==
+          NULL)
+        {
+          DisplayLog
+              ("FSAL RECONNECT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
+               (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+               (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+               (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+               (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+               ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
 
-	  return -1;
-	}
+          return -1;
+        }
     } else
     {
       return -1;
@@ -1312,7 +1312,7 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
     {
       fsal_status = fsal_internal_set_auth_gss(p_thr_context);
       if (FSAL_IS_ERROR(fsal_status))
-	return -1;
+        return -1;
     } else
 #endif
   if ((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
@@ -1322,8 +1322,8 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
 
   /* test if the newly created context can 'ping' the server via PROC_NULL */
   if ((rc = clnt_call(p_thr_context->rpc_client, NFSPROC4_NULL,
-		      (xdrproc_t) xdr_void, (caddr_t) NULL,
-		      (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
+                      (xdrproc_t) xdr_void, (caddr_t) NULL,
+                      (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
     {
       return -1;
     }
@@ -1333,7 +1333,7 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
     return -1;
 
   return 0;
-}				/* fsal_internal_ClientReconnect */
+}                               /* fsal_internal_ClientReconnect */
 
 /**
  *
@@ -1359,13 +1359,13 @@ int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path)
     return -1;
 
   fsal_status = FSAL_lookupPath(&fsal_path,
-				p_thr_context, &(p_thr_context->openfh_wd_handle), NULL);
+                                p_thr_context, &(p_thr_context->openfh_wd_handle), NULL);
 
   if (FSAL_IS_ERROR(fsal_status))
     return -1;
 
   return 0;
-}				/* FSAL_proxy_set_hldir */
+}                               /* FSAL_proxy_set_hldir */
 
 /**
  * FSAL_proxy_open_confirm:
@@ -1431,13 +1431,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].argop =
       NFS4_OP_OPEN_CONFIRM;
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-      nfs_argop4_u.opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
-  memcpy((char *)argnfs4.
-	 argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-	 nfs_argop4_u.opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-      nfs_argop4_u.opopen_confirm.seqid = pfd->stateid.seqid + 1;
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
+      opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
+  memcpy((char *)argnfs4.argarray.
+         argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
+         opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
+      opopen_confirm.seqid = pfd->stateid.seqid + 1;
   argnfs4.argarray.argarray_len = 2;
 
   TakeTokenFSCall();
@@ -1464,19 +1464,18 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
     }
   /* Update the file descriptor with the new stateid */
   pfd->stateid.seqid =
-      resnfs4.resarray.
-      resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
-      opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
+      resnfs4.resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
   memcpy((char *)pfd->stateid.other,
-	 (char *)resnfs4.
-	 resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-	 nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
+         (char *)resnfs4.resarray.
+         resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
+         opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = NFS4_OK;
 
   return fsal_status;
-}				/* FSAL_proxy_open_confirm */
+}                               /* FSAL_proxy_open_confirm */
 
 void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
 {
@@ -1492,35 +1491,35 @@ void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
 
     case AUTH_UNIX:
       if (!done)
-	{
-	  if (gethostname(hostname, MAXNAMLEN) == -1)
-	    strncpy(hostname, "NFS-GANESHA/Proxy", MAXNAMLEN);
+        {
+          if (gethostname(hostname, MAXNAMLEN) == -1)
+            strncpy(hostname, "NFS-GANESHA/Proxy", MAXNAMLEN);
 
-	  done = TRUE;
-	}
+          done = TRUE;
+        }
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
       p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-							   p_thr_context->
-							   user_credential.user,
-							   p_thr_context->
-							   user_credential.group,
-							   p_thr_context->
-							   user_credential.nbgroups,
-							   p_thr_context->
-							   user_credential.alt_groups);
+                                                           p_thr_context->user_credential.
+                                                           user,
+                                                           p_thr_context->user_credential.
+                                                           group,
+                                                           p_thr_context->user_credential.
+                                                           nbgroups,
+                                                           p_thr_context->user_credential.
+                                                           alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:
 #endif
     default:
-	/** @todo: Nothing done now. Once RPCSEC_GSS will have explicit management, return an error as defaut behavior: non supported auth flavor */
+        /** @todo: Nothing done now. Once RPCSEC_GSS will have explicit management, return an error as defaut behavior: non supported auth flavor */
       break;
 
-    }				/* switch( pthr_context->rpc_client->cl_auth->ah_cred.oa_flavor ) */
+    }                           /* switch( pthr_context->rpc_client->cl_auth->ah_cred.oa_flavor ) */
 
   V(p_thr_context->lock);
 
   /* Return authentication */
   return p_thr_context->rpc_client->cl_auth;
-}				/* FSAL_proxy_change_user */
+}                               /* FSAL_proxy_change_user */

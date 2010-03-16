@@ -423,7 +423,7 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 }
 
 fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
-				    fsal_attrib_list_t * p_fsalattr_out)
+                                    fsal_attrib_list_t * p_fsalattr_out)
 {
 
   fsal_attrib_mask_t supp_attr, unsupp_attr;
@@ -439,7 +439,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   if (unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Unsupported attributes: %#llX",
-			unsupp_attr);
+                        unsupp_attr);
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
@@ -466,9 +466,9 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
       /* XXX : manage ACL */
       int i;
       for (i = 0; i < FSAL_MAX_ACL; i++)
-	{
-	  p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;	/* empty ACL slot */
-	}
+        {
+          p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
+        }
 
     }
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
@@ -510,7 +510,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
-	  = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
+          = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
     }
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -520,7 +520,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
     {
-      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);	/* XXX: convert ? */
+      p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
     }
   /* mounted_on_fileid :
      if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,

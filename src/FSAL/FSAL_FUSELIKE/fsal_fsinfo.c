@@ -48,9 +48,9 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
     )
 {
   /* sanity checks. */
@@ -84,9 +84,9 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
     )
 {
 
@@ -100,7 +100,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
   /* get the full path for the object */
   rc = NamespacePath(filehandle->inode,
-		     filehandle->device, filehandle->validator, object_path);
+                     filehandle->device, filehandle->validator, object_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_dynamic_fsinfo);
 
@@ -114,7 +114,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_dynamic_fsinfo);
 
       dynamicinfo->total_bytes = stbuff.f_frsize * stbuff.f_blocks;
       dynamicinfo->free_bytes = stbuff.f_frsize * stbuff.f_bfree;
@@ -128,7 +128,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
       /* return dummy values for beeing compliant with any client behavior */
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
+                        "FSAL_dynamic_fsinfo: statfs is not implemented on this filesystem. Returning dummy values.");
 
       dynamicinfo->total_bytes = INT_MAX;
       dynamicinfo->free_bytes = INT_MAX;

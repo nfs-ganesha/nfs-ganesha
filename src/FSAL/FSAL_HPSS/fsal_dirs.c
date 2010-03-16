@@ -44,10 +44,10 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_dir_t * dir_descriptor,	/* OUT */
-			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_descriptor, /* OUT */
+                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -110,14 +110,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
-			   fsal_cookie_t start_position,	/* IN */
-			   fsal_attrib_mask_t get_attr_mask,	/* IN */
-			   fsal_mdsize_t buffersize,	/* IN */
-			   fsal_dirent_t * pdirent,	/* OUT */
-			   fsal_cookie_t * end_position,	/* OUT */
-			   fsal_count_t * nb_entries,	/* OUT */
-			   fsal_boolean_t * end_of_dir	/* OUT */
+fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_cookie_t start_position,        /* IN */
+                           fsal_attrib_mask_t get_attr_mask,    /* IN */
+                           fsal_mdsize_t buffersize,    /* IN */
+                           fsal_dirent_t * pdirent,     /* OUT */
+                           fsal_cookie_t * end_position,        /* OUT */
+                           fsal_count_t * nb_entries,   /* OUT */
+                           fsal_boolean_t * end_of_dir  /* OUT */
     )
 {
   int rc, returned, i;
@@ -172,95 +172,95 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
        * we use a smaller output buffer.
        */
       if (missing_entries < FSAL_READDIR_SIZE)
-	buff_size_in = missing_entries * sizeof(ns_DirEntry_t);
-	else
-	buff_size_in = FSAL_READDIR_SIZE * sizeof(ns_DirEntry_t);
+        buff_size_in = missing_entries * sizeof(ns_DirEntry_t);
+        else
+        buff_size_in = FSAL_READDIR_SIZE * sizeof(ns_DirEntry_t);
 
       /* call to hpss clapi */
 
       TakeTokenFSCall();
 
       rc = HPSSFSAL_ReadRawAttrsHandle(&(dir_descriptor->dir_handle.ns_handle),
-				       curr_start_position,
-				       &dir_descriptor->context.credential.hpss_usercred,
-				       buff_size_in,
-				       bool_getattr_in,
-				       ReturnInconsistentDirent,
-				       &bool_eod_out, &last_offset_out, outbuff);
+                                       curr_start_position,
+                                       &dir_descriptor->context.credential.hpss_usercred,
+                                       buff_size_in,
+                                       bool_getattr_in,
+                                       ReturnInconsistentDirent,
+                                       &bool_eod_out, &last_offset_out, outbuff);
 
       ReleaseTokenFSCall();
 
       if (rc < 0)
-	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
-	else
-	returned = rc;
+        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
+        else
+        returned = rc;
 
       /* Fills the fsal dirent list. */
 
       for (i = 0; i < returned; i++)
-	{
+        {
 
-	  pdirent[current_nb_entries].handle.ns_handle = outbuff[i].ObjHandle;
+          pdirent[current_nb_entries].handle.ns_handle = outbuff[i].ObjHandle;
 
-	  pdirent[current_nb_entries].handle.obj_type =
-	      hpss2fsal_type(outbuff[i].ObjHandle.Type);
+          pdirent[current_nb_entries].handle.obj_type =
+              hpss2fsal_type(outbuff[i].ObjHandle.Type);
 
-	  st = FSAL_str2name((char *)outbuff[i].Name, HPSS_MAX_FILE_NAME,
-			     &pdirent[current_nb_entries].name);
+          st = FSAL_str2name((char *)outbuff[i].Name, HPSS_MAX_FILE_NAME,
+                             &pdirent[current_nb_entries].name);
 
       /** @todo : test returned status */
 
-	  pdirent[current_nb_entries].cookie = outbuff[i].ObjOffset;
+          pdirent[current_nb_entries].cookie = outbuff[i].ObjOffset;
 
-	  /* set asked attributes */
-	  pdirent[current_nb_entries].attributes.asked_attributes = get_attr_mask;
+          /* set asked attributes */
+          pdirent[current_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-	  if (bool_getattr_in)
-	    {
+          if (bool_getattr_in)
+            {
 
-	      /* convert HPSS attributes to fsal attributes */
-	      st = hpss2fsal_attributes(&outbuff[i].ObjHandle,
-					&outbuff[i].Attrs,
-					&pdirent[current_nb_entries].attributes);
+              /* convert HPSS attributes to fsal attributes */
+              st = hpss2fsal_attributes(&outbuff[i].ObjHandle,
+                                        &outbuff[i].Attrs,
+                                        &pdirent[current_nb_entries].attributes);
 
-	      /* on error, we set a special bit in the mask. */
-	      if (FSAL_IS_ERROR(st))
-		{
-		  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
-				  attributes.asked_attributes);
-		  FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
-				FSAL_ATTR_RDATTR_ERR);
-		}
+              /* on error, we set a special bit in the mask. */
+              if (FSAL_IS_ERROR(st))
+                {
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
+                                  asked_attributes);
+                  FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
+                                FSAL_ATTR_RDATTR_ERR);
+                }
 
-	  } else if (get_attr_mask)
-	    {
+          } else if (get_attr_mask)
+            {
 
-	      /* extract asked attributes from file handle */
-	      st = hpssHandle2fsalAttributes(&outbuff[i].ObjHandle,
-					     &pdirent[current_nb_entries].attributes);
+              /* extract asked attributes from file handle */
+              st = hpssHandle2fsalAttributes(&outbuff[i].ObjHandle,
+                                             &pdirent[current_nb_entries].attributes);
 
-	      /* on error, we set a special bit in the mask. */
-	      if (FSAL_IS_ERROR(st))
-		{
-		  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
-				  attributes.asked_attributes);
-		  FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
-				FSAL_ATTR_RDATTR_ERR);
-		}
+              /* on error, we set a special bit in the mask. */
+              if (FSAL_IS_ERROR(st))
+                {
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
+                                  asked_attributes);
+                  FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
+                                FSAL_ATTR_RDATTR_ERR);
+                }
 
-	    }
+            }
 
-	  /* set the previous' next */
-	  if (current_nb_entries)
-	    pdirent[current_nb_entries - 1].nextentry = &(pdirent[current_nb_entries]);
+          /* set the previous' next */
+          if (current_nb_entries)
+            pdirent[current_nb_entries - 1].nextentry = &(pdirent[current_nb_entries]);
 
-	  /* current's next */
-	  pdirent[current_nb_entries].nextentry = NULL;
+          /* current's next */
+          pdirent[current_nb_entries].nextentry = NULL;
 
-	  /* increment entries count */
-	  current_nb_entries++;
-	  curr_start_position = last_offset_out;
-	}
+          /* increment entries count */
+          current_nb_entries++;
+          curr_start_position = last_offset_out;
+        }
 
     }
 
@@ -295,7 +295,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     )
 {
 

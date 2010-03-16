@@ -92,7 +92,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -122,19 +122,19 @@
  * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  */
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-					fsal_staticfsinfo_t * pstaticinfo,
-					fsal_dynamicfsinfo_t * pdynamicinfo,
-					fsal_op_context_t * pcontext,
-					cache_inode_status_t * pstatus)
+                                        fsal_staticfsinfo_t * pstaticinfo,
+                                        fsal_dynamicfsinfo_t * pdynamicinfo,
+                                        fsal_op_context_t * pcontext,
+                                        cache_inode_status_t * pstatus)
 {
   fsal_handle_t *pfsal_handle;
   fsal_status_t fsal_status;
 
   /* Sanity check */
-  if (!pentry || !pstaticinfo || !pdynamicinfo || !pstatus)	/* pcontext is not used: it is not tested */
+  if (!pentry || !pstaticinfo || !pdynamicinfo || !pstatus)     /* pcontext is not used: it is not tested */
     {
       if (pstatus != NULL)
-	*pstatus = CACHE_INODE_INVALID_ARGUMENT;
+        *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -176,4 +176,4 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
        pdynamicinfo->total_files, pdynamicinfo->free_files, pdynamicinfo->avail_files);
 #endif
   return CACHE_INODE_SUCCESS;
-}				/* cache_inode_get */
+}                               /* cache_inode_get */

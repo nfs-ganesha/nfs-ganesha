@@ -11,7 +11,7 @@
 #include "stuff_alloc.h"
 #include <string.h>
 #include <unistd.h>
-#include <libgen.h>		/* basename */
+#include <libgen.h>             /* basename */
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -23,7 +23,7 @@
 /* functions related to OP_FIND */
 void find(fsal_posixdb_conn * p_conn);
 void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_parent,
-		       char *basedir);
+                       char *basedir);
 
 /* functions related to OP_EMPTYDB */
 void emptydb(fsal_posixdb_conn * p_conn);
@@ -61,12 +61,12 @@ void populatedb(fsal_posixdb_conn * p_conn, char *path)
   while (*end != '\0')
     {
       while (*begin == '/')
-	begin++;
+        begin++;
       if (*begin == '\0')
-	break;
+        break;
       end = begin + 1;
       while (*end != '/' && *end != '\0')
-	end++;
+        end++;
       backup = *end;
       *end = '\0';
 
@@ -102,33 +102,33 @@ void add_dir(fsal_posixdb_conn * p_conn, char *path, fsal_handle_t * p_dir_handl
   if ((dirp = opendir(path)))
     {
       while (!readdir_r(dirp, &dpe, &dp) && dp)
-	{
-	  if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
-	    continue;
-	  if (!strcmp(dp->d_name, ".snapshot"))
-	    {
-	      fputs("(ignoring .snapshot)", stderr);
-	      continue;
-	    }
-	  strcpy(path_temp, path);
-	  strcat(path_temp, dp->d_name);
-	  lstat(path_temp, &buffstat);
+        {
+          if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+            continue;
+          if (!strcmp(dp->d_name, ".snapshot"))
+            {
+              fputs("(ignoring .snapshot)", stderr);
+              continue;
+            }
+          strcpy(path_temp, path);
+          strcat(path_temp, dp->d_name);
+          lstat(path_temp, &buffstat);
 
-	  fsal_internal_posix2posixdb_fileinfo(&buffstat, &info);
-	  FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN, &fsalname);
-	  st = fsal_internal_posixdb_add_entry(p_conn, &fsalname, &info, p_dir_handle,
-					       &new_handle);
-	  if (FSAL_IS_ERROR(st))
-	    {
-	      fprintf(stderr, "[Error %i/%i]\n", st.major, st.minor);
-	      return;
-	    }
-	  if (S_ISDIR(buffstat.st_mode))
-	    {
-	      strcat(path_temp, "/");
-	      add_dir(p_conn, path_temp, &new_handle);
-	    }
-	};
+          fsal_internal_posix2posixdb_fileinfo(&buffstat, &info);
+          FSAL_str2name(dp->d_name, FSAL_MAX_NAME_LEN, &fsalname);
+          st = fsal_internal_posixdb_add_entry(p_conn, &fsalname, &info, p_dir_handle,
+                                               &new_handle);
+          if (FSAL_IS_ERROR(st))
+            {
+              fprintf(stderr, "[Error %i/%i]\n", st.major, st.minor);
+              return;
+            }
+          if (S_ISDIR(buffstat.st_mode))
+            {
+              strcat(path_temp, "/");
+              add_dir(p_conn, path_temp, &new_handle);
+            }
+        };
       closedir(dirp);
     }
 }
@@ -154,10 +154,10 @@ void find(fsal_posixdb_conn * p_conn)
   fsal_handle_t handle_root;
   fsal_posixdb_status_t st;
 
-  st = fsal_posixdb_getInfoFromName(p_conn, NULL,	/* parent handle */
-				    NULL,	/* filename */
-				    NULL,	/* path */
-				    &handle_root);
+  st = fsal_posixdb_getInfoFromName(p_conn, NULL,       /* parent handle */
+                                    NULL,       /* filename */
+                                    NULL,       /* path */
+                                    &handle_root);
   if (FSAL_POSIXDB_IS_NOENT(st))
     {
       fputs("Error : Root handle not found. Is the database empty ?", stderr);
@@ -173,7 +173,7 @@ void find(fsal_posixdb_conn * p_conn)
 }
 
 void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_parent,
-		       char *basedir)
+                       char *basedir)
 {
   fsal_posixdb_child *p_children;
   fsal_posixdb_status_t st;
@@ -183,21 +183,21 @@ void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_pare
   if (FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while getting children of %s\n", st.major, st.minor,
-	      basedir);
+              basedir);
       return;
     }
   for (i = 0; i < count; i++)
     {
       printf("%llu %s/%s\n", p_children[i].handle.info.inode, basedir,
-	     p_children[i].name.name);
+             p_children[i].name.name);
       if (p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
-	{
-	  char basedir_new[FSAL_MAX_PATH_LEN];
-	  strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);
-	  strncat(basedir_new, "/", FSAL_MAX_PATH_LEN);
-	  strncat(basedir_new, p_children[i].name.name, FSAL_MAX_PATH_LEN);
-	  display_directory(p_conn, &(p_children[i].handle), basedir_new);
-	}
+        {
+          char basedir_new[FSAL_MAX_PATH_LEN];
+          strncpy(basedir_new, basedir, FSAL_MAX_PATH_LEN);
+          strncat(basedir_new, "/", FSAL_MAX_PATH_LEN);
+          strncat(basedir_new, p_children[i].name.name, FSAL_MAX_PATH_LEN);
+          display_directory(p_conn, &(p_children[i].handle), basedir_new);
+        }
     }
   Mem_Free(p_children);
 }
@@ -245,33 +245,33 @@ int main(int argc, char **argv)
   while ((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
-	{
-	case '@':
-	  /* A litlle backdoor to keep track of binary versions */
-	  printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
-	  exit(0);
-	  break;
-	case 'H':
-	  strncpy(dbparams.host, optarg, FSAL_MAX_DBHOST_NAME_LEN);
-	  break;
-	case 'P':
-	  strncpy(dbparams.port, optarg, FSAL_MAX_DBPORT_STR_LEN);
-	  break;
-	case 'L':
-	  strncpy(dbparams.login, optarg, FSAL_MAX_DB_LOGIN_LEN);
-	  break;
-	case 'D':
-	  strncpy(dbparams.dbname, optarg, FSAL_MAX_DB_NAME_LEN);
-	  break;
-	case 'K':
-	  strncpy(dbparams.passwdfile, optarg, PATH_MAX);
-	  break;
-	default:
-	  /* display the help */
-	  fprintf(stderr, usage, exec_name);
-	  exit(0);
-	  break;
-	}
+        {
+        case '@':
+          /* A litlle backdoor to keep track of binary versions */
+          printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
+          exit(0);
+          break;
+        case 'H':
+          strncpy(dbparams.host, optarg, FSAL_MAX_DBHOST_NAME_LEN);
+          break;
+        case 'P':
+          strncpy(dbparams.port, optarg, FSAL_MAX_DBPORT_STR_LEN);
+          break;
+        case 'L':
+          strncpy(dbparams.login, optarg, FSAL_MAX_DB_LOGIN_LEN);
+          break;
+        case 'D':
+          strncpy(dbparams.dbname, optarg, FSAL_MAX_DB_NAME_LEN);
+          break;
+        case 'K':
+          strncpy(dbparams.passwdfile, optarg, PATH_MAX);
+          break;
+        default:
+          /* display the help */
+          fprintf(stderr, usage, exec_name);
+          exit(0);
+          break;
+        }
     }
 
   if (optind == argc)
@@ -283,33 +283,33 @@ int main(int argc, char **argv)
   if (optind < argc)
     {
       if (!strcmp(argv[optind], "test_connection"))
-	{
-	  op = OP_TESTCONN;
+        {
+          op = OP_TESTCONN;
       } else if (!strcmp(argv[optind], "empty_database"))
-	{
-	  op = OP_EMPTYDB;
+        {
+          op = OP_EMPTYDB;
       } else if (!strcmp(argv[optind], "find"))
-	{
-	  op = OP_FIND;
+        {
+          op = OP_FIND;
       } else if (!strcmp(argv[optind], "populate"))
-	{
-	  op = OP_POPULATE;
-	  optind++;
-	  if (optind < argc)
-	    {
-	      strncpy(path, argv[optind], MAXPATHLEN);
-	    } else
-	    {
-	      fputs("Operation 'populate' need a parameter", stderr);
-	      fprintf(stderr, usage, exec_name);
-	      exit(-1);
-	    }
-	} else
-	{
-	  fprintf(stderr, "Unknown operation : %s\n", argv[optind]);
-	  fprintf(stderr, usage, exec_name);
-	  exit(-1);
-	}
+        {
+          op = OP_POPULATE;
+          optind++;
+          if (optind < argc)
+            {
+              strncpy(path, argv[optind], MAXPATHLEN);
+            } else
+            {
+              fputs("Operation 'populate' need a parameter", stderr);
+              fprintf(stderr, usage, exec_name);
+              exit(-1);
+            }
+        } else
+        {
+          fprintf(stderr, "Unknown operation : %s\n", argv[optind]);
+          fprintf(stderr, usage, exec_name);
+          exit(-1);
+        }
     }
 #ifndef _NO_BUDDY_SYSTEM
   BuddyInit(NULL);
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
     {
       rc = setenv("PGPASSFILE", dbparams.passwdfile, 1);
       if (rc != 0)
-	fputs("Could not set POSTGRESQL keytab path.", stderr);
+        fputs("Could not set POSTGRESQL keytab path.", stderr);
     }
 
   fprintf(stderr, "Opening database connection to %s...\n", dbparams.host);

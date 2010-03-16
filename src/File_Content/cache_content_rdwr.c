@@ -91,7 +91,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "fsal.h"
 #include "LRU_List.h"
@@ -129,8 +129,8 @@
  */
 
 cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
-					  cache_content_client_t * pclient,
-					  cache_content_status_t * pstatus)
+                                          cache_content_client_t * pclient,
+                                          cache_content_status_t * pstatus)
 {
   int localfd;
 
@@ -138,16 +138,16 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
     return CACHE_CONTENT_INVALID_ARGUMENT;
 
   if (pclient->use_cache == 0)
-    pentry->local_fs_entry.opened_file.last_op = 0;	/* to force opening the file */
+    pentry->local_fs_entry.opened_file.last_op = 0;     /* to force opening the file */
 
   if ((pclient->use_cache == 0) ||
       (time(NULL) - pentry->local_fs_entry.opened_file.last_op > pclient->retention))
     {
 
       if (pentry->local_fs_entry.opened_file.local_fd > 0)
-	{
-	  close(pentry->local_fs_entry.opened_file.local_fd);
-	}
+        {
+          close(pentry->local_fs_entry.opened_file.local_fd);
+        }
 
       pentry->local_fs_entry.opened_file.local_fd = -1;
       pentry->local_fs_entry.opened_file.last_op = 0;
@@ -157,20 +157,20 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
     {
       /* Close file to be sure */
       if (pentry->local_fs_entry.opened_file.local_fd > 0)
-	{
-	  close(pentry->local_fs_entry.opened_file.local_fd);
-	}
+        {
+          close(pentry->local_fs_entry.opened_file.local_fd);
+        }
 
       /* opened file is not preserved yet */
       if ((localfd = open(pentry->local_fs_entry.cache_path_data, O_RDWR, 0750)) == -1)
-	{
-	  if (errno == ENOENT)
-	    *pstatus = CACHE_CONTENT_LOCAL_CACHE_NOT_FOUND;
-	    else
-	    *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+        {
+          if (errno == ENOENT)
+            *pstatus = CACHE_CONTENT_LOCAL_CACHE_NOT_FOUND;
+            else
+            *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       pentry->local_fs_entry.opened_file.local_fd = localfd;
     }
@@ -181,7 +181,7 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
   *pstatus = CACHE_CONTENT_SUCCESS;
   return *pstatus;
 
-}				/* cache_content_open */
+}                               /* cache_content_open */
 
 /**
  *
@@ -200,8 +200,8 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
  *
  */
 cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
-					   cache_content_client_t * pclient,
-					   cache_content_status_t * pstatus)
+                                           cache_content_client_t * pclient,
+                                           cache_content_status_t * pstatus)
 {
   if ((pentry == NULL) || (pstatus == NULL))
     return CACHE_CONTENT_INVALID_ARGUMENT;
@@ -224,7 +224,7 @@ cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
 
   *pstatus = CACHE_CONTENT_SUCCESS;
   return *pstatus;
-}				/* cache_content_close */
+}                               /* cache_content_close */
 
 /**
  *
@@ -251,16 +251,16 @@ cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
  *
  */
 cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
-					  cache_content_io_direction_t read_or_write,
-					  fsal_seek_t * seek_descriptor,
-					  fsal_size_t * pio_size_in,
-					  fsal_size_t * pio_size_out,
-					  caddr_t buffer,
-					  fsal_boolean_t * p_fsal_eof,
-					  struct stat * pbuffstat,
-					  cache_content_client_t * pclient,
-					  fsal_op_context_t * pcontext,
-					  cache_content_status_t * pstatus)
+                                          cache_content_io_direction_t read_or_write,
+                                          fsal_seek_t * seek_descriptor,
+                                          fsal_size_t * pio_size_in,
+                                          fsal_size_t * pio_size_out,
+                                          caddr_t buffer,
+                                          fsal_boolean_t * p_fsal_eof,
+                                          struct stat * pbuffstat,
+                                          cache_content_client_t * pclient,
+                                          fsal_op_context_t * pcontext,
+                                          cache_content_status_t * pstatus)
 {
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
@@ -279,15 +279,15 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
 
 #ifdef _DEBUG_CACHE_CONTENT
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "---> DATA : IO Size IN = %llu fdsize=%d seeksize=%d",
-		    *pio_size_in, sizeof(fsal_file_t), sizeof(fsal_seek_t));
+                    "---> DATA : IO Size IN = %llu fdsize=%d seeksize=%d",
+                    *pio_size_in, sizeof(fsal_file_t), sizeof(fsal_seek_t));
 #endif
 
   /* For now, only FSAL_SEEK_SET is supported */
   if (seek_descriptor->whence != FSAL_SEEK_SET)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
+                   "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
     }
@@ -319,7 +319,7 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
 
       DisplayLogJdLevel(pclient->log_outputs, NIV_MAJOR,
-			"cache_content_new_entry: cannot get handle");
+                        "cache_content_new_entry: cannot get handle");
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
 
@@ -371,58 +371,58 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
     case CACHE_CONTENT_READ:
       /* The file content was completely read before the IO. The read operation is fully done locally */
       if ((iosize_after =
-	   pread(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
-		 offset)) == -1)
-	{
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
+           pread(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
+                 offset)) == -1)
+        {
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
 
-	  *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
-	  return *pstatus;
-	}
+          *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+          return *pstatus;
+        }
 
       if ((cache_content_status =
-	   cache_content_valid(pentry, CACHE_CONTENT_OP_GET,
-			       pclient)) != CACHE_CONTENT_SUCCESS)
-	{
-	  *pstatus = cache_content_status;
-	  return *pstatus;
-	}
+           cache_content_valid(pentry, CACHE_CONTENT_OP_GET,
+                               pclient)) != CACHE_CONTENT_SUCCESS)
+        {
+          *pstatus = cache_content_status;
+          return *pstatus;
+        }
 
       /* Get the eof */
       if (iosize_after == 0)
-	*p_fsal_eof = TRUE;
-	else
-	{
-	  rc = pread(pentry->local_fs_entry.opened_file.local_fd, &c, 1,
-		     offset + iosize_before);
-	  if (rc == 0)
-	    *p_fsal_eof = TRUE;
-	    else
-	    *p_fsal_eof = FALSE;
-	}
+        *p_fsal_eof = TRUE;
+        else
+        {
+          rc = pread(pentry->local_fs_entry.opened_file.local_fd, &c, 1,
+                     offset + iosize_before);
+          if (rc == 0)
+            *p_fsal_eof = TRUE;
+            else
+            *p_fsal_eof = FALSE;
+        }
       break;
 
     case CACHE_CONTENT_WRITE:
       /* The io is done on the cache before being flushed to the FSAL */
       if ((iosize_after =
-	   pwrite(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
-		  offset)) == -1)
-	{
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
+           pwrite(pentry->local_fs_entry.opened_file.local_fd, buffer, iosize_before,
+                  offset)) == -1)
+        {
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
 
-	  *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
-	  return *pstatus;
-	}
+          *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+          return *pstatus;
+        }
 
       if ((cache_content_status =
-	   cache_content_valid(pentry, CACHE_CONTENT_OP_SET,
-			       pclient)) != CACHE_CONTENT_SUCCESS)
-	{
-	  *pstatus = cache_content_status;
-	  return *pstatus;
-	}
+           cache_content_valid(pentry, CACHE_CONTENT_OP_SET,
+                               pclient)) != CACHE_CONTENT_SUCCESS)
+        {
+          *pstatus = cache_content_status;
+          return *pstatus;
+        }
 
       /* p_fsal_eof has no meaning here, it is unused */
 
@@ -442,8 +442,8 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
     } else
     {
       if (pbuffstat != NULL)
-	*pbuffstat = buffstat;
+        *pbuffstat = buffstat;
     }
 
   return *pstatus;
-}				/* cache_content_rdwr */
+}                               /* cache_content_rdwr */

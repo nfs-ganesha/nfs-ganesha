@@ -79,7 +79,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#define     UDPMSGSIZE      8800	/* rpc imposed limit on udp msg size */
+#define     UDPMSGSIZE      8800        /* rpc imposed limit on udp msg size */
 #ifndef _USE_SNMP
 typedef unsigned short u_short;
 #endif
@@ -141,9 +141,9 @@ void print_nfs_res(nfs_res_t * p_res)
   for (index = 0; index < sizeof(nfs_res_t); index++)
     {
       if ((index + 1) % 32 == 0)
-	printf("%02X\n", ((char *)p_res)[index]);
-	else
-	printf("%02X.", ((char *)p_res)[index]);
+        printf("%02X\n", ((char *)p_res)[index]);
+        else
+        printf("%02X.", ((char *)p_res)[index]);
     }
   printf("\n");
 }
@@ -211,7 +211,7 @@ static prog_vers_client_def_t progvers_clnts[] = {
 };
 
 /** getCLIENT */
-CLIENT *getCLIENT(char *name	/* IN */
+CLIENT *getCLIENT(char *name    /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -219,17 +219,17 @@ CLIENT *getCLIENT(char *name	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  return clnts->clnt;
-	}
+        {
+          return clnts->clnt;
+        }
       clnts++;
     }
   return NULL;
-}				/* getCLIENT */
+}                               /* getCLIENT */
 
 /** setCLIENT */
-int setCLIENT(char *name,	/* IN */
-	      CLIENT * clnt	/* IN */
+int setCLIENT(char *name,       /* IN */
+              CLIENT * clnt     /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -237,17 +237,17 @@ int setCLIENT(char *name,	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  clnts->clnt = clnt;
-	  return 0;
-	}
+        {
+          clnts->clnt = clnt;
+          return 0;
+        }
       clnts++;
     }
   return -1;
-}				/* setCLIENT */
+}                               /* setCLIENT */
 
 /** getHostname */
-char *getHostname(char *name	/* IN */
+char *getHostname(char *name    /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -255,17 +255,17 @@ char *getHostname(char *name	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  return clnts->hostname;
-	}
+        {
+          return clnts->hostname;
+        }
       clnts++;
     }
   return "";
-}				/* getHostname */
+}                               /* getHostname */
 
 /** setHostname */
-int setHostname(char *name,	/* IN */
-		char *hostname	/* IN */
+int setHostname(char *name,     /* IN */
+                char *hostname  /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -273,17 +273,17 @@ int setHostname(char *name,	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  clnts->hostname = (char *)strndup(hostname, HOST_NAME_MAX);
-	  return 0;
-	}
+        {
+          clnts->hostname = (char *)strndup(hostname, HOST_NAME_MAX);
+          return 0;
+        }
       clnts++;
     }
   return -1;
-}				/* setHostname */
+}                               /* setHostname */
 
 /** getProto */
-char *getProto(char *name	/* IN */
+char *getProto(char *name       /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -291,17 +291,17 @@ char *getProto(char *name	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  return clnts->proto;
-	}
+        {
+          return clnts->proto;
+        }
       clnts++;
     }
   return "";
-}				/* getProto */
+}                               /* getProto */
 
 /** setProto */
-int setProto(char *name,	/* IN */
-	     char *proto	/* IN */
+int setProto(char *name,        /* IN */
+             char *proto        /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -309,17 +309,17 @@ int setProto(char *name,	/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  clnts->proto = (char *)strndup(proto, 4);
-	  return 0;
-	}
+        {
+          clnts->proto = (char *)strndup(proto, 4);
+          return 0;
+        }
       clnts++;
     }
   return -1;
-}				/* setProto */
+}                               /* setProto */
 
 /** getPort */
-int getPort(char *name		/* IN */
+int getPort(char *name          /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -327,17 +327,17 @@ int getPort(char *name		/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  return clnts->port;
-	}
+        {
+          return clnts->port;
+        }
       clnts++;
     }
   return 0;
-}				/* getPort */
+}                               /* getPort */
 
 /** setPort */
-int setPort(char *name,		/* IN */
-	    int port		/* IN */
+int setPort(char *name,         /* IN */
+            int port            /* IN */
     )
 {
   prog_vers_client_def_t *clnts = progvers_clnts;
@@ -345,14 +345,14 @@ int setPort(char *name,		/* IN */
   while (clnts->name != NULL)
     {
       if (!strcmp(clnts->name, name))
-	{
-	  clnts->port = port;
-	  return 0;
-	}
+        {
+          clnts->port = port;
+          return 0;
+        }
       clnts++;
     }
   return -1;
-}				/* setPort */
+}                               /* setPort */
 
 /* passwd for CLIENT */
 struct passwd *current_pw;
@@ -372,11 +372,11 @@ static shell_fh3_t current_path_hdl;
 static char current_path[NFS2_MAXPATHLEN];
 
 /** rpc_init */
-int rpc_init(char *hostname,	/* IN */
-	     char *name,	/* IN */
-	     char *proto,	/* IN */
-	     int port,		/* IN */
-	     FILE * output	/* IN */
+int rpc_init(char *hostname,    /* IN */
+             char *name,        /* IN */
+             char *proto,       /* IN */
+             int port,          /* IN */
+             FILE * output      /* IN */
     )
 {
   int rc;
@@ -398,126 +398,126 @@ int rpc_init(char *hostname,	/* IN */
   while (progvers->name != NULL)
     {
       if (!strcmp(progvers->name, name))
-	{
-	  prog = progvers->prog;
-	  vers = progvers->vers;
-	  //fprintf(output, "(%s) Prog : %d - Vers : %d - Proto : %s\n", name, prog, vers, proto);
-	  h = gethostbyname(hostname);
-	  if (h == NULL)
-	    {
-	      rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
-	      fprintf(output, "rpc_init : unknown host %s\n", hostname);
-	      return (-1);
-	    }
-	  if (h->h_addrtype != AF_INET)
-	    {
-	      /*
-	       * Only support INET for now
-	       */
-	      rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-	      rpc_createerr.cf_error.re_errno = EAFNOSUPPORT;
-	      return (-1);
-	    }
-	  memset(&sin, 0, sizeof(sin));
+        {
+          prog = progvers->prog;
+          vers = progvers->vers;
+          //fprintf(output, "(%s) Prog : %d - Vers : %d - Proto : %s\n", name, prog, vers, proto);
+          h = gethostbyname(hostname);
+          if (h == NULL)
+            {
+              rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
+              fprintf(output, "rpc_init : unknown host %s\n", hostname);
+              return (-1);
+            }
+          if (h->h_addrtype != AF_INET)
+            {
+              /*
+               * Only support INET for now
+               */
+              rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+              rpc_createerr.cf_error.re_errno = EAFNOSUPPORT;
+              return (-1);
+            }
+          memset(&sin, 0, sizeof(sin));
 
-	  sin.sin_family = h->h_addrtype;
-	  sin.sin_port = htons((u_short) port);
-	  memcpy((char *)&sin.sin_addr, h->h_addr, h->h_length);
+          sin.sin_family = h->h_addrtype;
+          sin.sin_port = htons((u_short) port);
+          memcpy((char *)&sin.sin_addr, h->h_addr, h->h_length);
 
-	  p = getprotobyname(proto);
-	  if (p == NULL)
-	    {
-	      fprintf(output, "rpc_init : protocol %s not found\n", proto);
-	      return (-1);
-	    }
-	  sock = RPC_ANYSOCK;
+          p = getprotobyname(proto);
+          if (p == NULL)
+            {
+              fprintf(output, "rpc_init : protocol %s not found\n", proto);
+              return (-1);
+            }
+          sock = RPC_ANYSOCK;
 
-	  switch (p->p_proto)
-	    {
-	    case IPPROTO_UDP:
-	      clnt_res = clntudp_bufcreate(&sin, prog, vers,
-					   timeout, &sock, UDPMSGSIZE, UDPMSGSIZE);
-	      if (clnt_res == NULL)
-		{
-		  fprintf(output, "rpc_init : Clntudp_bufcreate failed\n");
-		  return (-1);
-		}
-	      break;
-	    case IPPROTO_TCP:
-	      clnt_res = clnttcp_create(&sin, prog, vers, &sock, 8800, 8800);
-	      if (clnt_res == NULL)
-		{
-		  fprintf(output, "rpc_init : Clnttcp_create failed\n");
-		  return (-1);
-		}
-	      break;
-	    default:
-	      rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-	      rpc_createerr.cf_error.re_errno = EPFNOSUPPORT;
-	      fprintf(output, "rpc_init : unknown protocol %d (%s)\n", p->p_proto, proto);
-	      return (-1);
-	    }
+          switch (p->p_proto)
+            {
+            case IPPROTO_UDP:
+              clnt_res = clntudp_bufcreate(&sin, prog, vers,
+                                           timeout, &sock, UDPMSGSIZE, UDPMSGSIZE);
+              if (clnt_res == NULL)
+                {
+                  fprintf(output, "rpc_init : Clntudp_bufcreate failed\n");
+                  return (-1);
+                }
+              break;
+            case IPPROTO_TCP:
+              clnt_res = clnttcp_create(&sin, prog, vers, &sock, 8800, 8800);
+              if (clnt_res == NULL)
+                {
+                  fprintf(output, "rpc_init : Clnttcp_create failed\n");
+                  return (-1);
+                }
+              break;
+            default:
+              rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+              rpc_createerr.cf_error.re_errno = EPFNOSUPPORT;
+              fprintf(output, "rpc_init : unknown protocol %d (%s)\n", p->p_proto, proto);
+              return (-1);
+            }
 
-	  if (current_pw == NULL)
-	    {			// first rpc_init
-	      pw_struct = getpwuid(getuid());
-	      if (pw_struct == NULL)
-		{
-		  fprintf(output, "getpwuid failed\n");
-		  return -1;
-		}
-	      current_pw = (struct passwd *)malloc(sizeof(struct passwd));
-	      memcpy(current_pw, pw_struct, sizeof(struct passwd));
-	    }
-	  nb_grp =
-	      getugroups(MAX_GRPS, groups_tab, current_pw->pw_name, current_pw->pw_gid);
+          if (current_pw == NULL)
+            {                   // first rpc_init
+              pw_struct = getpwuid(getuid());
+              if (pw_struct == NULL)
+                {
+                  fprintf(output, "getpwuid failed\n");
+                  return -1;
+                }
+              current_pw = (struct passwd *)malloc(sizeof(struct passwd));
+              memcpy(current_pw, pw_struct, sizeof(struct passwd));
+            }
+          nb_grp =
+              getugroups(MAX_GRPS, groups_tab, current_pw->pw_name, current_pw->pw_gid);
 
-	  clnt_res->cl_auth =
-	      authunix_create(localmachine, current_pw->pw_uid, current_pw->pw_gid,
-			      nb_grp, groups_tab);
-	  if (clnt_res->cl_auth == NULL)
-	    {
-	      fprintf(stdout, "rpc_init : error during creating Auth\n");
-	    }
+          clnt_res->cl_auth =
+              authunix_create(localmachine, current_pw->pw_uid, current_pw->pw_gid,
+                              nb_grp, groups_tab);
+          if (clnt_res->cl_auth == NULL)
+            {
+              fprintf(stdout, "rpc_init : error during creating Auth\n");
+            }
 
-	  rc = setCLIENT(name, clnt_res);
-	  if (rc != 0)
-	    {
-	      fprintf(output, "rpc_init : error during setCLIENT\n");
-	      return rc;
-	    }
-	  rc = setHostname(name, hostname);
-	  if (rc != 0)
-	    {
-	      fprintf(output, "rpc_init : error during setHostname\n");
-	      return rc;
-	    }
-	  rc = setProto(name, proto);
-	  if (rc != 0)
-	    {
-	      fprintf(output, "rpc_init : error during setProto\n");
-	      return rc;
-	    }
-	  rc = setPort(name, port);
-	  if (rc != 0)
-	    {
-	      fprintf(output, "rpc_init : error during setPort\n");
-	      return rc;
-	    }
-	  //fprintf(output, "rpc_init : %s client set (%s)\n", name, proto);
-	  return 0;
-	}
+          rc = setCLIENT(name, clnt_res);
+          if (rc != 0)
+            {
+              fprintf(output, "rpc_init : error during setCLIENT\n");
+              return rc;
+            }
+          rc = setHostname(name, hostname);
+          if (rc != 0)
+            {
+              fprintf(output, "rpc_init : error during setHostname\n");
+              return rc;
+            }
+          rc = setProto(name, proto);
+          if (rc != 0)
+            {
+              fprintf(output, "rpc_init : error during setProto\n");
+              return rc;
+            }
+          rc = setPort(name, port);
+          if (rc != 0)
+            {
+              fprintf(output, "rpc_init : error during setPort\n");
+              return rc;
+            }
+          //fprintf(output, "rpc_init : %s client set (%s)\n", name, proto);
+          return 0;
+        }
 
       progvers++;
     }
 
   fprintf(output, "rpc_init : %s: program not found\n", name);
   return -1;
-}				/* rpc_init */
+}                               /* rpc_init */
 
 /** rpc_reinit */
-int rpc_reinit(char *name,	/* IN */
-	       FILE * output	/* IN */
+int rpc_reinit(char *name,      /* IN */
+               FILE * output    /* IN */
     )
 {
   int rc;
@@ -548,12 +548,12 @@ int rpc_reinit(char *name,	/* IN */
     }
 
   return rc;
-}				/* rpc_reinit */
+}                               /* rpc_reinit */
 
 /** try_rpc_reinit */
-int try_rpc_reinit(char *name,	/* IN */
-		   int error,	/* IN */
-		   FILE * output	/* IN */
+int try_rpc_reinit(char *name,  /* IN */
+                   int error,   /* IN */
+                   FILE * output        /* IN */
     )
 {
   unsigned int i;
@@ -561,19 +561,19 @@ int try_rpc_reinit(char *name,	/* IN */
   for (i = 1; i <= MAXIT; i++)
     {
       if (rpc_reinit(name, output) == 0)
-	break;
+        break;
       if (i >= MAXIT)
-	{
-	  return error;
-	}
+        {
+          return error;
+        }
       sleep(1);
     }
   return 0;
-}				/* try_rpc_reinit */
+}                               /* try_rpc_reinit */
 
 int switch_result(int result,
-		  int i,
-		  char *name, char *func_name, char *func_called_name, FILE * output)
+                  int i,
+                  char *name, char *func_name, char *func_called_name, FILE * output)
 {
   int rc = 0;
 
@@ -584,15 +584,15 @@ int switch_result(int result,
     case RPC_CANTRECV:
     case RPC_TIMEDOUT:
       if (i < MAXRETRY)
-	{
-	  rc = try_rpc_reinit(name, rc, output);
-	  if (rc == 0)
-	    return -1;
-	}
+        {
+          rc = try_rpc_reinit(name, rc, output);
+          if (rc == 0)
+            return -1;
+        }
       setCLIENT(name, NULL);
     default:
       fprintf(output, "Error %s (%d) in %s (%s).\n", clnt_sperrno(result), result,
-	      func_called_name, func_name);
+              func_called_name, func_name);
       return result;
       break;
     }
@@ -606,12 +606,12 @@ static void getopt_init()
   Opterr = 0;
   /* reinits getopt processing */
   Optind = 1;
-}				/* getopt_init */
+}                               /* getopt_init */
 
 /** fn_rpc_init */
-int fn_rpc_init(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_rpc_init(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     )
 {
   static char format[] = "h";
@@ -636,20 +636,20 @@ int fn_rpc_init(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "rpc_init: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "rpc_init: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}			/* switch */
-    }				/* while */
+        {
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "rpc_init: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "rpc_init: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }                       /* switch */
+    }                           /* while */
   if (flag_h)
     {
       fprintf(output, help_rpc_init);
@@ -680,16 +680,16 @@ int fn_rpc_init(int argc,	/* IN : number of args in argv */
     {
       rc = gethostname(localmachine, sizeof(localmachine));
       if (rc != 0)
-	{
-	  fprintf(output, "rpc_init: Error %d while getting hostname.\n", rc);
-	  return -1;
-	}
+        {
+          fprintf(output, "rpc_init: Error %d while getting hostname.\n", rc);
+          return -1;
+        }
     }
 
   rc = rpc_init(hostname, name, proto, port, output);
 
   return rc;
-}				/* fn_rpc_init */
+}                               /* fn_rpc_init */
 
 /* nfs_remote_layer_SetLogLevel */
 void nfs_remote_layer_SetLogLevel(int log_lvl)
@@ -698,12 +698,12 @@ void nfs_remote_layer_SetLogLevel(int log_lvl)
   /* Nothing to do. */
   return;
 
-}				/* nfs_remote_layer_SetLogLevel */
+}                               /* nfs_remote_layer_SetLogLevel */
 
 /** process MNT1 protocol's command. */
-int fn_MNT1_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_MNT1_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     )
 {
   cmdnfsremote_funcdesc_t *funcdesc = mnt1_remote_funcdesc;
@@ -717,57 +717,57 @@ int fn_MNT1_remote_command(int argc,	/* IN : number of args in argv */
   while (funcdesc->func_name != NULL)
     {
       if (!strcmp(funcdesc->func_name, argv[0]))
-	{
-	  do
-	    {
-	      clnt = getCLIENT("mount1");
-	      if (clnt == NULL)
-		{
-		  fprintf(output, "MOUNT1 client not initialized\n");
-		  return -1;
-		}
+        {
+          do
+            {
+              clnt = getCLIENT("mount1");
+              if (clnt == NULL)
+                {
+                  fprintf(output, "MOUNT1 client not initialized\n");
+                  return -1;
+                }
 
-	      /* encoding args */
+              /* encoding args */
 
-	      if (funcdesc->func_encode(CMDNFS_ENCODE,
-					argc - 1, argv + 1,
-					0, NULL, (caddr_t) & nfs_arg) == FALSE)
-		{
-		  fprintf(output, "%s: bad arguments.\n", argv[0]);
-		  fprintf(output, "Usage: %s\n", funcdesc->func_help);
-		  return -1;
-		}
+              if (funcdesc->func_encode(CMDNFS_ENCODE,
+                                        argc - 1, argv + 1,
+                                        0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                {
+                  fprintf(output, "%s: bad arguments.\n", argv[0]);
+                  fprintf(output, "Usage: %s\n", funcdesc->func_help);
+                  return -1;
+                }
 
-	      /* nfs call */
+              /* nfs call */
 
-	      rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
-	      rc = switch_result(rc, i, "mount1", argv[0], "fn_MNT1_remote_command",
-				 output);
-	      if (rc > 0)
-		return rc;
-	      i += 1;
-	    }
-	  while (rc == -1);
+              rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
+              rc = switch_result(rc, i, "mount1", argv[0], "fn_MNT1_remote_command",
+                                 output);
+              if (rc > 0)
+                return rc;
+              i += 1;
+            }
+          while (rc == -1);
 
-	  /* freeing args */
+          /* freeing args */
 
-	  funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
+          funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
-	  /* decoding output */
+          /* decoding output */
 
 #ifdef _DEBUG_NFS_SHELL
-	  printf("MNTv1: RETURNED STRUCTURE:\n");
-	  print_nfs_res(&nfs_res);
+          printf("MNTv1: RETURNED STRUCTURE:\n");
+          print_nfs_res(&nfs_res);
 #endif
 
-	  funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
+          funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
 
-	  funcdesc->func_free(&nfs_res);
+          funcdesc->func_free(&nfs_res);
 
-	  /* returning status */
-	  return rc;
+          /* returning status */
+          return rc;
 
-	}
+        }
 
       /* pointer to the next cmdnfs_funcdesc_t */
       funcdesc++;
@@ -775,12 +775,12 @@ int fn_MNT1_remote_command(int argc,	/* IN : number of args in argv */
 
   fprintf(output, "%s: command not found in MNT1 protocol.\n", argv[0]);
   return -1;
-}				/* fn_MNT1_remote_command */
+}                               /* fn_MNT1_remote_command */
 
 /** process MNT3 protocol's command. */
-int fn_MNT3_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_MNT3_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     )
 {
   cmdnfsremote_funcdesc_t *funcdesc = mnt3_remote_funcdesc;
@@ -794,56 +794,56 @@ int fn_MNT3_remote_command(int argc,	/* IN : number of args in argv */
   while (funcdesc->func_name != NULL)
     {
       if (!strcmp(funcdesc->func_name, argv[0]))
-	{
-	  do
-	    {
-	      clnt = getCLIENT("mount3");
-	      if (clnt == NULL)
-		{
-		  fprintf(output, "MOUNT3 client not initialized\n");
-		  return -1;
-		}
+        {
+          do
+            {
+              clnt = getCLIENT("mount3");
+              if (clnt == NULL)
+                {
+                  fprintf(output, "MOUNT3 client not initialized\n");
+                  return -1;
+                }
 
-	      /* encoding args */
+              /* encoding args */
 
-	      if (funcdesc->func_encode(CMDNFS_ENCODE,
-					argc - 1, argv + 1,
-					0, NULL, (caddr_t) & nfs_arg) == FALSE)
-		{
-		  fprintf(output, "%s: bad arguments.\n", argv[0]);
-		  fprintf(output, "Usage: %s\n", funcdesc->func_help);
-		  return -1;
-		}
+              if (funcdesc->func_encode(CMDNFS_ENCODE,
+                                        argc - 1, argv + 1,
+                                        0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                {
+                  fprintf(output, "%s: bad arguments.\n", argv[0]);
+                  fprintf(output, "Usage: %s\n", funcdesc->func_help);
+                  return -1;
+                }
 
-	      /* nfs call */
+              /* nfs call */
 
-	      rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
-	      rc = switch_result(rc, i, "mount3", argv[0], "fn_MNT3_remote_command",
-				 output);
-	      if (rc > 0)
-		return rc;
-	      i += 1;
-	    }
-	  while (rc == -1);
+              rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
+              rc = switch_result(rc, i, "mount3", argv[0], "fn_MNT3_remote_command",
+                                 output);
+              if (rc > 0)
+                return rc;
+              i += 1;
+            }
+          while (rc == -1);
 
-	  /* freeing args */
+          /* freeing args */
 
-	  funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
+          funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
-	  /* decoding output */
+          /* decoding output */
 #ifdef _DEBUG_NFS_SHELL
-	  printf("MNTv3: RETURNED STRUCTURE:\n");
-	  print_nfs_res(&nfs_res);
+          printf("MNTv3: RETURNED STRUCTURE:\n");
+          print_nfs_res(&nfs_res);
 #endif
 
-	  funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
+          funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
 
-	  funcdesc->func_free(&nfs_res);
+          funcdesc->func_free(&nfs_res);
 
-	  /* returning status */
-	  return rc;
+          /* returning status */
+          return rc;
 
-	}
+        }
 
       /* pointer to the next cmdnfs_funcdesc_t */
       funcdesc++;
@@ -852,12 +852,12 @@ int fn_MNT3_remote_command(int argc,	/* IN : number of args in argv */
   fprintf(output, "%s: command not found in MNT3 protocol.\n", argv[0]);
   return -1;
 
-}				/* fn_MNT3_remote_command */
+}                               /* fn_MNT3_remote_command */
 
 /** process NFS2 protocol's command. */
-int fn_NFS2_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_NFS2_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     )
 {
   cmdnfsremote_funcdesc_t *funcdesc = nfs2_remote_funcdesc;
@@ -871,57 +871,57 @@ int fn_NFS2_remote_command(int argc,	/* IN : number of args in argv */
   while (funcdesc->func_name != NULL)
     {
       if (!strcmp(funcdesc->func_name, argv[0]))
-	{
-	  do
-	    {
-	      clnt = getCLIENT("nfs2");
-	      if (clnt == NULL)
-		{
-		  fprintf(output, "NFS2 client not initialized\n");
-		  return -1;
-		}
+        {
+          do
+            {
+              clnt = getCLIENT("nfs2");
+              if (clnt == NULL)
+                {
+                  fprintf(output, "NFS2 client not initialized\n");
+                  return -1;
+                }
 
-	      /* encoding args */
+              /* encoding args */
 
-	      if (funcdesc->func_encode(CMDNFS_ENCODE,
-					argc - 1, argv + 1,
-					0, NULL, (caddr_t) & nfs_arg) == FALSE)
-		{
-		  fprintf(output, "%s: bad arguments.\n", argv[0]);
-		  fprintf(output, "Usage: %s\n", funcdesc->func_help);
-		  return -1;
-		}
+              if (funcdesc->func_encode(CMDNFS_ENCODE,
+                                        argc - 1, argv + 1,
+                                        0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                {
+                  fprintf(output, "%s: bad arguments.\n", argv[0]);
+                  fprintf(output, "Usage: %s\n", funcdesc->func_help);
+                  return -1;
+                }
 
-	      /* nfs call */
+              /* nfs call */
 
-	      rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
-	      rc = switch_result(rc, i, "nfs2", argv[0], "fn_NFS2_remote_command",
-				 output);
-	      if (rc > 0)
-		return rc;
-	      i += 1;
-	    }
-	  while (rc == -1);
+              rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
+              rc = switch_result(rc, i, "nfs2", argv[0], "fn_NFS2_remote_command",
+                                 output);
+              if (rc > 0)
+                return rc;
+              i += 1;
+            }
+          while (rc == -1);
 
-	  /* freeing args */
+          /* freeing args */
 
-	  funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
+          funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
 #ifdef _DEBUG_NFS_SHELL
-	  printf("NFSv2: RETURNED STRUCTURE:\n");
-	  print_nfs_res(&nfs_res);
+          printf("NFSv2: RETURNED STRUCTURE:\n");
+          print_nfs_res(&nfs_res);
 #endif
 
-	  /* decoding output */
+          /* decoding output */
 
-	  funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
+          funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
 
-	  funcdesc->func_free(&nfs_res);
+          funcdesc->func_free(&nfs_res);
 
-	  /* returning status */
-	  return rc;
+          /* returning status */
+          return rc;
 
-	}
+        }
 
       /* pointer to the next cmdnfs_funcdesc_t */
       funcdesc++;
@@ -930,12 +930,12 @@ int fn_NFS2_remote_command(int argc,	/* IN : number of args in argv */
   fprintf(output, "%s: command not found in NFS2 protocol.\n", argv[0]);
   return -1;
 
-}				/* fn_NFS2_remote_command */
+}                               /* fn_NFS2_remote_command */
 
 /** process NFS3 protocol's command. */
-int fn_NFS3_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_NFS3_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     )
 {
   cmdnfsremote_funcdesc_t *funcdesc = nfs3_remote_funcdesc;
@@ -949,57 +949,57 @@ int fn_NFS3_remote_command(int argc,	/* IN : number of args in argv */
   while (funcdesc->func_name != NULL)
     {
       if (!strcmp(funcdesc->func_name, argv[0]))
-	{
-	  do
-	    {
-	      clnt = getCLIENT("nfs3");
-	      if (clnt == NULL)
-		{
-		  fprintf(output, "NFS3 client not initialized\n");
-		  return -1;
-		}
+        {
+          do
+            {
+              clnt = getCLIENT("nfs3");
+              if (clnt == NULL)
+                {
+                  fprintf(output, "NFS3 client not initialized\n");
+                  return -1;
+                }
 
-	      /* encoding args */
+              /* encoding args */
 
-	      if (funcdesc->func_encode(CMDNFS_ENCODE,
-					argc - 1, argv + 1,
-					0, NULL, (caddr_t) & nfs_arg) == FALSE)
-		{
-		  fprintf(output, "%s: bad arguments.\n", argv[0]);
-		  fprintf(output, "Usage: %s\n", funcdesc->func_help);
-		  return -1;
-		}
+              if (funcdesc->func_encode(CMDNFS_ENCODE,
+                                        argc - 1, argv + 1,
+                                        0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                {
+                  fprintf(output, "%s: bad arguments.\n", argv[0]);
+                  fprintf(output, "Usage: %s\n", funcdesc->func_help);
+                  return -1;
+                }
 
-	      /* nfs call */
+              /* nfs call */
 
-	      rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
-	      rc = switch_result(rc, i, "nfs3", argv[0], "fn_NFS3_remote_command",
-				 output);
-	      if (rc > 0)
-		return rc;
-	      i += 1;
-	    }
-	  while (rc == -1);
+              rc = funcdesc->func_call(clnt, &nfs_arg, &nfs_res);
+              rc = switch_result(rc, i, "nfs3", argv[0], "fn_NFS3_remote_command",
+                                 output);
+              if (rc > 0)
+                return rc;
+              i += 1;
+            }
+          while (rc == -1);
 
-	  /* freeing args */
+          /* freeing args */
 
-	  funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
+          funcdesc->func_encode(CMDNFS_FREE, 0, NULL, 0, NULL, (caddr_t) & nfs_arg);
 
 #ifdef _DEBUG_NFS_SHELL
-	  printf("NFSv3: RETURNED STRUCTURE:\n");
-	  print_nfs_res(&nfs_res);
+          printf("NFSv3: RETURNED STRUCTURE:\n");
+          print_nfs_res(&nfs_res);
 #endif
 
-	  /* decoding output */
+          /* decoding output */
 
-	  funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
+          funcdesc->func_decode(CMDNFS_DECODE, 0, NULL, 0, output, (caddr_t) & nfs_res);
 
-	  funcdesc->func_free(&nfs_res);
+          funcdesc->func_free(&nfs_res);
 
-	  /* returning status */
-	  return rc;
+          /* returning status */
+          return rc;
 
-	}
+        }
 
       /* pointer to the next cmdnfs_funcdesc_t */
       funcdesc++;
@@ -1008,20 +1008,20 @@ int fn_NFS3_remote_command(int argc,	/* IN : number of args in argv */
   fprintf(output, "%s: command not found in NFS3 protocol.\n", argv[0]);
   return -1;
 
-}				/* fn_NFS3_remote_command */
+}                               /* fn_NFS3_remote_command */
 
 /*------------------------------------------------------------
  *     Wrapping of NFS calls (used by high level commands)
  *-----------------------------------------------------------*/
 
 /* solves a relative or aboslute path */
-int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mounted path */
-			 char *io_global_path,	/* IN/OUT - global path */
-			 int size_global_path,	/* IN - max size for global path */
-			 char *i_spec_path,	/* IN - specified path */
-			 shell_fh3_t * p_current_hdl,	/* IN - current directory handle */
-			 shell_fh3_t * pnew_hdl,	/* OUT - pointer to solved handle */
-			 FILE * output	/* IN */
+int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle of mounted path */
+                         char *io_global_path,  /* IN/OUT - global path */
+                         int size_global_path,  /* IN - max size for global path */
+                         char *i_spec_path,     /* IN - specified path */
+                         shell_fh3_t * p_current_hdl,   /* IN - current directory handle */
+                         shell_fh3_t * pnew_hdl,        /* OUT - pointer to solved handle */
+                         FILE * output  /* IN */
     )
 {
   char str_path[NFS2_MAXPATHLEN];
@@ -1051,10 +1051,10 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
       rc = cmdnfs_fhandle3(CMDNFS_ENCODE, 1, &pstr_path, 0, NULL, (caddr_t) & hdl_param);
 
       if (rc != TRUE)
-	{
-	  fprintf(output, "Invalid FileHandle: %s\n", str_path);
-	  return -1;
-	}
+        {
+          fprintf(output, "Invalid FileHandle: %s\n", str_path);
+          return -1;
+        }
 
       strncpy(io_global_path, str_path, size_global_path);
 
@@ -1074,11 +1074,11 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
 
       /* the the directory  is /, return */
       if (str_path[1] == '\0')
-	{
-	  strncpy(io_global_path, tmp_path, size_global_path);
-	  *pnew_hdl = hdl_lookup;
-	  return 0;
-	}
+        {
+          strncpy(io_global_path, tmp_path, size_global_path);
+          *pnew_hdl = hdl_lookup;
+          return 0;
+        }
 
     } else
     {
@@ -1092,10 +1092,10 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
       i = 0;
       /* tokenize to the next '/' */
       while ((curr[0] != '\0') && (curr[0] != '/'))
-	curr++;
+        curr++;
 
       if (!curr[0])
-	last = 1;		/* remembers if it was the last dir */
+        last = 1;               /* remembers if it was the last dir */
 
       curr[0] = '\0';
 
@@ -1106,31 +1106,31 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
 
       /* lookup this name */
       do
-	{
-	  clnt = getCLIENT("nfs3");
-	  if (clnt == NULL)
-	    {
-	      fprintf(output, "NFS3 client not initialized\n");
-	      return -1;
-	    }
+        {
+          clnt = getCLIENT("nfs3");
+          if (clnt == NULL)
+            {
+              fprintf(output, "NFS3 client not initialized\n");
+              return -1;
+            }
 
-	  rc = nfs3_remote_Lookup(clnt,
-				  (nfs_arg_t *) & dirop_arg, (nfs_res_t *) & lookup_res);
-	  rc = switch_result(rc, i, "nfs3", "nfs3_remote_Lookup", "nfs_remote_solvepath",
-			     output);
-	  if (rc > 0)
-	    return rc;
-	  i += 1;
-	}
+          rc = nfs3_remote_Lookup(clnt,
+                                  (nfs_arg_t *) & dirop_arg, (nfs_res_t *) & lookup_res);
+          rc = switch_result(rc, i, "nfs3", "nfs3_remote_Lookup", "nfs_remote_solvepath",
+                             output);
+          if (rc > 0)
+            return rc;
+          i += 1;
+        }
       while (rc == -1);
 
       rc = lookup_res.status;
       if (rc != NFS3_OK)
-	{
-	  nfs3_remote_Lookup_Free((nfs_res_t *) & lookup_res);
-	  fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
-	  return rc;
-	}
+        {
+          nfs3_remote_Lookup_Free((nfs_res_t *) & lookup_res);
+          fprintf(output, "Error %d in NFSv3 protocol: %s\n", rc, nfsstat3_to_str(rc));
+          return rc;
+        }
 
       /* updates current handle */
       set_shell_fh3(&hdl_lookup, &lookup_res.LOOKUP3res_u.resok.object);
@@ -1143,18 +1143,18 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
 
       /* updates cursors */
       if (!last)
-	{
-	  curr++;
-	  next_name = curr;
-	  /* ignore successive slashes */
-	  while ((curr[0] != '\0') && (curr[0] == '/'))
-	    {
-	      curr++;
-	      next_name = curr;
-	    }
-	  if (!curr[0])
-	    last = 1;		/* it is the last dir */
-	}
+        {
+          curr++;
+          next_name = curr;
+          /* ignore successive slashes */
+          while ((curr[0] != '\0') && (curr[0] == '/'))
+            {
+              curr++;
+              next_name = curr;
+            }
+          if (!curr[0])
+            last = 1;           /* it is the last dir */
+        }
 
     }
   while (!last);
@@ -1166,12 +1166,12 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,	/* IN - handle of mou
   *pnew_hdl = hdl_lookup;
   return 0;
 
-}				/* nfs_remote_solvepath */
+}                               /* nfs_remote_solvepath */
 
 /** nfs_remote_getattr */
-int nfs_remote_getattr(shell_fh3_t * p_hdl,	/* IN */
-		       fattr3 * attrs,	/* OUT */
-		       FILE * output	/* IN */
+int nfs_remote_getattr(shell_fh3_t * p_hdl,     /* IN */
+                       fattr3 * attrs,  /* OUT */
+                       FILE * output    /* IN */
     )
 {
   GETATTR3res res;
@@ -1187,16 +1187,16 @@ int nfs_remote_getattr(shell_fh3_t * p_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Getattr(clnt, (nfs_arg_t *) & nfshdl, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Getattr", "nfs_remote_getattr",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1216,12 +1216,12 @@ int nfs_remote_getattr(shell_fh3_t * p_hdl,	/* IN */
   nfs3_remote_Getattr_Free((nfs_res_t *) & res);
 
   return 0;
-}				/* nfs_remote_getattr */
+}                               /* nfs_remote_getattr */
 
 /** nfs_remote_access */
-int nfs_remote_access(shell_fh3_t * p_hdl,	/* IN */
-		      nfs3_uint32 * access_mask,	/* IN/OUT */
-		      FILE * output	/* IN */
+int nfs_remote_access(shell_fh3_t * p_hdl,      /* IN */
+                      nfs3_uint32 * access_mask,        /* IN/OUT */
+                      FILE * output     /* IN */
     )
 {
   ACCESS3args arg;
@@ -1238,16 +1238,16 @@ int nfs_remote_access(shell_fh3_t * p_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Access(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Access", "nfs_remote_access",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1267,12 +1267,12 @@ int nfs_remote_access(shell_fh3_t * p_hdl,	/* IN */
 
   return 0;
 
-}				/* nfs_remote_access */
+}                               /* nfs_remote_access */
 
 /** nfs_remote_readlink */
-int nfs_remote_readlink(shell_fh3_t * p_hdl,	/* IN */
-			char *linkcontent,	/* OUT */
-			FILE * output	/* IN */
+int nfs_remote_readlink(shell_fh3_t * p_hdl,    /* IN */
+                        char *linkcontent,      /* OUT */
+                        FILE * output   /* IN */
     )
 {
   READLINK3res res;
@@ -1288,16 +1288,16 @@ int nfs_remote_readlink(shell_fh3_t * p_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Readlink(clnt, (nfs_arg_t *) & nfshdl, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Readlink", "nfs_remote_readlink",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1317,15 +1317,15 @@ int nfs_remote_readlink(shell_fh3_t * p_hdl,	/* IN */
 
   return 0;
 
-}				/* nfs_remote_readlink */
+}                               /* nfs_remote_readlink */
 
 /** nfs_remote_readdirplus */
-int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,	/* IN */
-			   cookie3 cookie,	/* IN */
-			   cookieverf3 * p_cookieverf,	/* IN/OUT */
-			   dirlistplus3 * dirlist,	/* OUT */
-			   nfs_res_t ** to_be_freed,	/* OUT */
-			   FILE * output	/* IN */
+int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,     /* IN */
+                           cookie3 cookie,      /* IN */
+                           cookieverf3 * p_cookieverf,  /* IN/OUT */
+                           dirlistplus3 * dirlist,      /* OUT */
+                           nfs_res_t ** to_be_freed,    /* OUT */
+                           FILE * output        /* IN */
     )
 {
   READDIRPLUS3args arg;
@@ -1349,16 +1349,16 @@ int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Readdirplus(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) p_res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Readdirplus",
-			 "nfs_remote_readdirplus", output);
+                         "nfs_remote_readdirplus", output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1378,7 +1378,7 @@ int nfs_remote_readdirplus(shell_fh3_t * p_dir_hdl,	/* IN */
   *to_be_freed = (nfs_res_t *) p_res;
 
   return 0;
-}				/* nfs_remote_readdirplus */
+}                               /* nfs_remote_readdirplus */
 
 /** nfs_remote_readdirplus_free */
 void nfs_remote_readdirplus_free(nfs_res_t * to_free)
@@ -1388,15 +1388,15 @@ void nfs_remote_readdirplus_free(nfs_res_t * to_free)
 
   nfs3_remote_Readdirplus_Free((nfs_res_t *) to_free);
   Mem_Free(to_free);
-}				/* nfs_remote_readdirplus_free */
+}                               /* nfs_remote_readdirplus_free */
 
 /** nfs_remote_readdir */
-int nfs_remote_readdir(shell_fh3_t * p_dir_hdl,	/* IN */
-		       cookie3 cookie,	/* IN */
-		       cookieverf3 * p_cookieverf,	/* IN/OUT */
-		       dirlist3 * dirlist,	/* OUT */
-		       nfs_res_t ** to_be_freed,	/* OUT */
-		       FILE * output	/* IN */
+int nfs_remote_readdir(shell_fh3_t * p_dir_hdl, /* IN */
+                       cookie3 cookie,  /* IN */
+                       cookieverf3 * p_cookieverf,      /* IN/OUT */
+                       dirlist3 * dirlist,      /* OUT */
+                       nfs_res_t ** to_be_freed,        /* OUT */
+                       FILE * output    /* IN */
     )
 {
   READDIR3args arg;
@@ -1419,16 +1419,16 @@ int nfs_remote_readdir(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Readdir(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) p_res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Readdir", "nfs_remote_readdir",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1448,7 +1448,7 @@ int nfs_remote_readdir(shell_fh3_t * p_dir_hdl,	/* IN */
   *to_be_freed = (nfs_res_t *) p_res;
 
   return 0;
-}				/* nfs_remote_readdirplus */
+}                               /* nfs_remote_readdirplus */
 
 /** nfs_remote_readdir_free */
 void nfs_remote_readdir_free(nfs_res_t * to_free)
@@ -1458,14 +1458,14 @@ void nfs_remote_readdir_free(nfs_res_t * to_free)
 
   nfs3_remote_Readdir_Free((nfs_res_t *) to_free);
   Mem_Free(to_free);
-}				/* nfs_remote_readdir_free */
+}                               /* nfs_remote_readdir_free */
 
 /** nfs_remote_create */
-int nfs_remote_create(shell_fh3_t * p_dir_hdl,	/* IN */
-		      char *obj_name,	/* IN */
-		      mode_t posix_mode,	/* IN */
-		      shell_fh3_t * p_obj_hdl,	/* OUT */
-		      FILE * output	/* IN */
+int nfs_remote_create(shell_fh3_t * p_dir_hdl,  /* IN */
+                      char *obj_name,   /* IN */
+                      mode_t posix_mode,        /* IN */
+                      shell_fh3_t * p_obj_hdl,  /* OUT */
+                      FILE * output     /* IN */
     )
 {
   CREATE3args arg;
@@ -1482,7 +1482,7 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,	/* IN */
 
   /* empty sattr3 list */
   if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-		    (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
+                    (caddr_t) & (arg.how.createhow3_u.obj_attributes)) == FALSE)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1497,16 +1497,16 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Create(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Create", "nfs_remote_create",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1533,14 +1533,14 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,	/* IN */
 
   return 0;
 
-}				/* nfs_remote_create */
+}                               /* nfs_remote_create */
 
 /** nfs_remote_mkdir */
-int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,	/* IN */
-		     char *obj_name,	/* IN */
-		     mode_t posix_mode,	/* IN */
-		     shell_fh3_t * p_obj_hdl,	/* OUT */
-		     FILE * output	/* IN */
+int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,   /* IN */
+                     char *obj_name,    /* IN */
+                     mode_t posix_mode, /* IN */
+                     shell_fh3_t * p_obj_hdl,   /* OUT */
+                     FILE * output      /* IN */
     )
 {
   MKDIR3args arg;
@@ -1556,7 +1556,7 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,	/* IN */
 
   /* empty sattr3 list */
   if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
-		    (caddr_t) & (arg.attributes)) == FALSE)
+                    (caddr_t) & (arg.attributes)) == FALSE)
     {
       /* invalid handle */
       fprintf(output, "\tError encoding nfs arguments.\n");
@@ -1571,15 +1571,15 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Mkdir(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Mkdir", "nfs_remote_mkdir", output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1605,12 +1605,12 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,	/* IN */
   nfs3_remote_Mkdir_Free((nfs_res_t *) & res);
 
   return 0;
-}				/*nfs_remote_mkdir */
+}                               /*nfs_remote_mkdir */
 
 /** nfs_remote_rmdir */
-int nfs_remote_rmdir(shell_fh3_t * p_dir_hdl,	/* IN */
-		     char *obj_name,	/* IN */
-		     FILE * output	/* IN */
+int nfs_remote_rmdir(shell_fh3_t * p_dir_hdl,   /* IN */
+                     char *obj_name,    /* IN */
+                     FILE * output      /* IN */
     )
 {
   diropargs3 arg;
@@ -1628,15 +1628,15 @@ int nfs_remote_rmdir(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Rmdir(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Rmdir", "nfs_remote_rmdir", output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1652,12 +1652,12 @@ int nfs_remote_rmdir(shell_fh3_t * p_dir_hdl,	/* IN */
   nfs3_remote_Rmdir_Free((nfs_res_t *) & res);
   return 0;
 
-}				/* nfs_remote_rmdir */
+}                               /* nfs_remote_rmdir */
 
 /** nfs_remote_remove */
-int nfs_remote_remove(shell_fh3_t * p_dir_hdl,	/* IN */
-		      char *obj_name,	/* IN */
-		      FILE * output	/* IN */
+int nfs_remote_remove(shell_fh3_t * p_dir_hdl,  /* IN */
+                      char *obj_name,   /* IN */
+                      FILE * output     /* IN */
     )
 {
   diropargs3 arg;
@@ -1675,16 +1675,16 @@ int nfs_remote_remove(shell_fh3_t * p_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Remove(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Remove", "nfs_remote_remove",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1700,12 +1700,12 @@ int nfs_remote_remove(shell_fh3_t * p_dir_hdl,	/* IN */
   nfs3_remote_Remove_Free((nfs_res_t *) & res);
   return 0;
 
-}				/* nfs_remote_remove */
+}                               /* nfs_remote_remove */
 
 /** nfs_remote_setattr */
-int nfs_remote_setattr(shell_fh3_t * p_obj_hdl,	/* IN */
-		       sattr3 * p_attributes,	/* IN */
-		       FILE * output	/* IN */
+int nfs_remote_setattr(shell_fh3_t * p_obj_hdl, /* IN */
+                       sattr3 * p_attributes,   /* IN */
+                       FILE * output    /* IN */
     )
 {
   SETATTR3args arg;
@@ -1724,16 +1724,16 @@ int nfs_remote_setattr(shell_fh3_t * p_obj_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Setattr(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Setattr", "nfs_remote_setattr",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1749,14 +1749,14 @@ int nfs_remote_setattr(shell_fh3_t * p_obj_hdl,	/* IN */
   nfs3_remote_Setattr_Free((nfs_res_t *) & res);
   return 0;
 
-}				/*nfs_remote_setattr */
+}                               /*nfs_remote_setattr */
 
 /** nfs_remote_rename */
-int nfs_remote_rename(shell_fh3_t * p_src_dir_hdl,	/* IN */
-		      char *src_name,	/* IN */
-		      shell_fh3_t * p_tgt_dir_hdl,	/* IN */
-		      char *tgt_name,	/* IN */
-		      FILE * output	/* IN */
+int nfs_remote_rename(shell_fh3_t * p_src_dir_hdl,      /* IN */
+                      char *src_name,   /* IN */
+                      shell_fh3_t * p_tgt_dir_hdl,      /* IN */
+                      char *tgt_name,   /* IN */
+                      FILE * output     /* IN */
     )
 {
   RENAME3args arg;
@@ -1776,16 +1776,16 @@ int nfs_remote_rename(shell_fh3_t * p_src_dir_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Rename(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Rename", "nfs_remote_rename",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1801,13 +1801,13 @@ int nfs_remote_rename(shell_fh3_t * p_src_dir_hdl,	/* IN */
   nfs3_remote_Rename_Free((nfs_res_t *) & res);
   return 0;
 
-}				/*nfs_remote_rename */
+}                               /*nfs_remote_rename */
 
 /** nfs_remote_link */
-int nfs_remote_link(shell_fh3_t * p_file_hdl,	/* IN */
-		    shell_fh3_t * p_tgt_dir_hdl,	/* IN */
-		    char *tgt_name,	/* IN */
-		    FILE * output	/* IN */
+int nfs_remote_link(shell_fh3_t * p_file_hdl,   /* IN */
+                    shell_fh3_t * p_tgt_dir_hdl,        /* IN */
+                    char *tgt_name,     /* IN */
+                    FILE * output       /* IN */
     )
 {
   LINK3args arg;
@@ -1826,15 +1826,15 @@ int nfs_remote_link(shell_fh3_t * p_file_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Link(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Link", "nfs_remote_link", output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1850,15 +1850,15 @@ int nfs_remote_link(shell_fh3_t * p_file_hdl,	/* IN */
   nfs3_remote_Link_Free((nfs_res_t *) & res);
   return 0;
 
-}				/*nfs_remote_link */
+}                               /*nfs_remote_link */
 
 /** nfs_remote_symlink */
-int nfs_remote_symlink(shell_fh3_t path_hdl,	/* IN */
-		       char *link_name,	/* IN */
-		       char *link_content,	/* IN */
-		       sattr3 * p_setattr,	/* IN */
-		       shell_fh3_t * p_link_hdl,	/* OUT */
-		       FILE * output	/* IN */
+int nfs_remote_symlink(shell_fh3_t path_hdl,    /* IN */
+                       char *link_name, /* IN */
+                       char *link_content,      /* IN */
+                       sattr3 * p_setattr,      /* IN */
+                       shell_fh3_t * p_link_hdl,        /* OUT */
+                       FILE * output    /* IN */
     )
 {
   SYMLINK3args arg;
@@ -1878,16 +1878,16 @@ int nfs_remote_symlink(shell_fh3_t path_hdl,	/* IN */
     {
       clnt = getCLIENT("nfs3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "NFS3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "NFS3 client not initialized\n");
+          return -1;
+        }
 
       rc = nfs3_remote_Symlink(clnt, (nfs_arg_t *) & arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "nfs3", "nfs3_remote_Symlink", "nfs_remote_symlink",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1917,12 +1917,12 @@ int nfs_remote_symlink(shell_fh3_t path_hdl,	/* IN */
 
   return 0;
 
-}				/*nfs_remote_symlink */
+}                               /*nfs_remote_symlink */
 
 /** nfs_remote_mount */
-int nfs_remote_mount(char *str_path,	/* IN */
-		     shell_fh3_t * p_mnt_hdl,	/* OUT */
-		     FILE * output	/* IN */
+int nfs_remote_mount(char *str_path,    /* IN */
+                     shell_fh3_t * p_mnt_hdl,   /* OUT */
+                     FILE * output      /* IN */
     )
 {
   int rc;
@@ -1942,17 +1942,17 @@ int nfs_remote_mount(char *str_path,	/* IN */
     {
       clnt = getCLIENT("mount3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "MOUNT3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "MOUNT3 client not initialized\n");
+          return -1;
+        }
 
       /* nfs call */
 
       rc = mnt3_remote_Mnt(clnt, &nfs_arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "mount3", "mnt3_remote_Mnt", "nfs_remote_mount", output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -1972,16 +1972,16 @@ int nfs_remote_mount(char *str_path,	/* IN */
   mnt3_remote_Mnt_Free((nfs_res_t *) & res);
 
   return 0;
-}				/* nfs_remote_mount */
+}                               /* nfs_remote_mount */
 
 /*------------------------------------------------------------
  *          High level, shell-like commands 
  *-----------------------------------------------------------*/
 
 /** mount a path to browse it. */
-int fn_nfs_remote_mount(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_mount(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output)  /* IN : output stream          */
 {
   int rc;
   char buff[2 * NFS3_FHSIZE + 1];
@@ -1992,7 +1992,7 @@ int fn_nfs_remote_mount(int argc,	/* IN : number of args in argv */
   if (is_mounted_path != FALSE)
     {
       fprintf(output, "%s: a path is already mounted. Use \"umount\" command first.\n",
-	      argv[0]);
+              argv[0]);
       return -1;
     }
 
@@ -2018,16 +2018,16 @@ int fn_nfs_remote_mount(int argc,	/* IN : number of args in argv */
 
   fprintf(output, "Current directory is \"%s\" \n", current_path);
   snprintmem(buff, 2 * NFS3_FHSIZE + 1,
-	     (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
+             (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
   fprintf(output, "Current File handle is \"@%s\" \n", buff);
 
   return 0;
 }
 
 /** umount a mounted path */
-int fn_nfs_remote_umount(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_umount(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output) /* IN : output stream          */
 {
   int rc;
   unsigned int i = 0;
@@ -2044,7 +2044,7 @@ int fn_nfs_remote_umount(int argc,	/* IN : number of args in argv */
     }
 
   if (cmdnfs_dirpath(CMDNFS_ENCODE,
-		     argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
+                     argc - 1, argv + 1, 0, NULL, (caddr_t) & nfs_arg) == FALSE)
     {
       fprintf(output, "%s: bad arguments.\n", argv[0]);
       fprintf(output, "Usage: umount <path>.\n");
@@ -2062,18 +2062,18 @@ int fn_nfs_remote_umount(int argc,	/* IN : number of args in argv */
     {
       clnt = getCLIENT("mount3");
       if (clnt == NULL)
-	{
-	  fprintf(output, "MOUNT3 client not initialized\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "MOUNT3 client not initialized\n");
+          return -1;
+        }
 
       /* nfs call */
 
       rc = mnt3_remote_Mnt(clnt, &nfs_arg, (nfs_res_t *) & res);
       rc = switch_result(rc, i, "mount3", "mnt3_remote_Umnt", "fn_nfs_remote_umount",
-			 output);
+                         output);
       if (rc > 0)
-	return rc;
+        return rc;
       i += 1;
     }
   while (rc == -1);
@@ -2096,9 +2096,9 @@ int fn_nfs_remote_umount(int argc,	/* IN : number of args in argv */
 }
 
 /** prints current path */
-int fn_nfs_remote_pwd(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_pwd(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output)    /* IN : output stream          */
 {
   char buff[2 * NFS3_FHSIZE + 1];
   if (is_mounted_path != TRUE)
@@ -2109,16 +2109,16 @@ int fn_nfs_remote_pwd(int argc,	/* IN : number of args in argv */
 
   fprintf(output, "Current directory is \"%s\" \n", current_path);
   snprintmem(buff, 2 * NFS3_FHSIZE + 1,
-	     (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
+             (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
   fprintf(output, "Current File handle is \"@%s\" \n", buff);
 
   return 0;
 }
 
 /** proceed an ls command using NFS protocol NFS */
-int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output)     /* IN : output stream          */
 {
 #define NFS_READDIR_SIZE 10
 
@@ -2176,69 +2176,69 @@ int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "ls: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "ls: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "ls: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "ls: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case 'd':
-	  if (flag_d)
-	    fprintf(output,
-		    "ls: warning: option 'd' has been specified more than once.\n");
-	    else
-	    flag_d++;
-	  break;
+        case 'd':
+          if (flag_d)
+            fprintf(output,
+                    "ls: warning: option 'd' has been specified more than once.\n");
+            else
+            flag_d++;
+          break;
 
-	case 'l':
-	  if (flag_l)
-	    fprintf(output,
-		    "ls: warning: option 'l' has been specified more than once.\n");
-	    else
-	    flag_l++;
-	  break;
+        case 'l':
+          if (flag_l)
+            fprintf(output,
+                    "ls: warning: option 'l' has been specified more than once.\n");
+            else
+            flag_l++;
+          break;
 
-	case 'S':
-	  if (flag_S)
-	    fprintf(output,
-		    "ls: warning: option 'S' has been specified more than once.\n");
-	    else
-	    flag_S++;
-	  break;
+        case 'S':
+          if (flag_S)
+            fprintf(output,
+                    "ls: warning: option 'S' has been specified more than once.\n");
+            else
+            flag_S++;
+          break;
 
-	case 'z':
-	  if (flag_z)
-	    fprintf(output,
-		    "ls: warning: option 'z' has been specified more than once.\n");
-	    else
-	    flag_z++;
-	  break;
+        case 'z':
+          if (flag_z)
+            fprintf(output,
+                    "ls: warning: option 'z' has been specified more than once.\n");
+            else
+            flag_z++;
+          break;
 
-	case 'H':
-	  if (flag_H)
-	    fprintf(output,
-		    "ls: warning: option 'H' has been specified more than once.\n");
-	    else
-	    flag_H++;
-	  break;
+        case 'H':
+          if (flag_H)
+            fprintf(output,
+                    "ls: warning: option 'H' has been specified more than once.\n");
+            else
+            flag_H++;
+          break;
 
-	case '?':
-	  fprintf(output, "ls: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
-    }				/* while */
+        case '?':
+          fprintf(output, "ls: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
+    }                           /* while */
 
   if (flag_l + flag_S + flag_H > 1)
     {
@@ -2274,10 +2274,10 @@ int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
 
       /* retrieving handle */
       if (rc = nfs_remote_solvepath(&mounted_path_hdl,
-				    glob_path,
-				    NFS2_MAXPATHLEN,
-				    str_name, &current_path_hdl, &handle_tmp, output))
-	return rc;
+                                    glob_path,
+                                    NFS2_MAXPATHLEN,
+                                    str_name, &current_path_hdl, &handle_tmp, output))
+        return rc;
     } else
     {
       str_name = ".";
@@ -2297,37 +2297,37 @@ int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
   if ((attrs.type != NF3DIR) || flag_d)
     {
       if ((attrs.type == NF3LNK) && flag_l)
-	{
-	  if (rc = nfs_remote_readlink(&handle_tmp, linkdata, output))
-	    return rc;
-	}
+        {
+          if (rc = nfs_remote_readlink(&handle_tmp, linkdata, output))
+            return rc;
+        }
 
       if (flag_l)
-	{
-	  if (!flag_z)
-	    print_nfsitem_line(output, &attrs, str_name, linkdata);
+        {
+          if (!flag_z)
+            print_nfsitem_line(output, &attrs, str_name, linkdata);
       } else if (flag_S)
-	{
-	  if (!flag_z)
-	    {
-	      fprintf(output, "%s :\n", str_name);
-	      print_nfs_attributes(&attrs, output);
-	    }
+        {
+          if (!flag_z)
+            {
+              fprintf(output, "%s :\n", str_name);
+              print_nfs_attributes(&attrs, output);
+            }
       } else if (flag_H)
-	{
-	  if (!flag_z)
-	    {
-	      char buff[2 * NFS3_FHSIZE + 1];
+        {
+          if (!flag_z)
+            {
+              char buff[2 * NFS3_FHSIZE + 1];
 
-	      snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) handle_tmp.data_val,
-			 handle_tmp.data_len);
-	      fprintf(output, "%s (@%s)\n", str_name, buff);
-	    }
-	} else			/* only prints the name */
-	{
-	  if (!flag_z)
-	    fprintf(output, "%s\n", str_name);
-	}
+              snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) handle_tmp.data_val,
+                         handle_tmp.data_len);
+              fprintf(output, "%s (@%s)\n", str_name, buff);
+            }
+        } else                  /* only prints the name */
+        {
+          if (!flag_z)
+            fprintf(output, "%s\n", str_name);
+        }
 
       return 0;
     }
@@ -2342,73 +2342,73 @@ int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
     {
 
       if (flag_v)
-	fprintf(output, "-->nfs3_remote_Readdirplus( path=%s, cookie=%llu )\n",
-		glob_path, begin_cookie);
+        fprintf(output, "-->nfs3_remote_Readdirplus( path=%s, cookie=%llu )\n",
+                glob_path, begin_cookie);
 
-      if (rc = nfs_remote_readdirplus(&handle_tmp, begin_cookie, &cookieverf,	/* IN/OUT */
-				      &dirlist, &to_free, output))
-	return rc;
+      if (rc = nfs_remote_readdirplus(&handle_tmp, begin_cookie, &cookieverf,   /* IN/OUT */
+                                      &dirlist, &to_free, output))
+        return rc;
 
       p_entry = dirlist.entries;
 
       while (p_entry)
-	{
-	  if (!strcmp(str_name, "."))
-	    strncpy(item_path, p_entry->name, NFS2_MAXPATHLEN);
-	  else if (str_name[strlen(str_name) - 1] == '/')
-	    snprintf(item_path, NFS2_MAXPATHLEN, "%s%s", str_name, p_entry->name);
-	    else
-	    snprintf(item_path, NFS2_MAXPATHLEN, "%s/%s", str_name, p_entry->name);
+        {
+          if (!strcmp(str_name, "."))
+            strncpy(item_path, p_entry->name, NFS2_MAXPATHLEN);
+          else if (str_name[strlen(str_name) - 1] == '/')
+            snprintf(item_path, NFS2_MAXPATHLEN, "%s%s", str_name, p_entry->name);
+            else
+            snprintf(item_path, NFS2_MAXPATHLEN, "%s/%s", str_name, p_entry->name);
 
-	  /* interpreting post-op attributes */
+          /* interpreting post-op attributes */
 
-	  if (p_entry->name_attributes.attributes_follow)
-	    p_attrs = &p_entry->name_attributes.post_op_attr_u.attributes;
-	    else
-	    p_attrs = NULL;
+          if (p_entry->name_attributes.attributes_follow)
+            p_attrs = &p_entry->name_attributes.post_op_attr_u.attributes;
+            else
+            p_attrs = NULL;
 
-	  /* interpreting post-op handle */
+          /* interpreting post-op handle */
 
-	  if (p_entry->name_handle.handle_follows)
-	    {
-	      set_shell_fh3(&hdl, &p_entry->name_handle.post_op_fh3_u.handle);
-	      p_hdl = &hdl;
-	    } else
-	    p_hdl = NULL;
+          if (p_entry->name_handle.handle_follows)
+            {
+              set_shell_fh3(&hdl, &p_entry->name_handle.post_op_fh3_u.handle);
+              p_hdl = &hdl;
+            } else
+            p_hdl = NULL;
 
-	  if ((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
-	    {
-	      if (rc = nfs_remote_readlink(p_hdl, linkdata, output))
-		return rc;
-	    }
+          if ((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
+            {
+              if (rc = nfs_remote_readlink(p_hdl, linkdata, output))
+                return rc;
+            }
 
-	  if ((p_attrs != NULL) && flag_l)
-	    {
-	      print_nfsitem_line(output, p_attrs, item_path, linkdata);
-	  } else if ((p_attrs != NULL) && flag_S)
-	    {
-	      fprintf(output, "%s :\n", item_path);
-	      if (!flag_z)
-		print_nfs_attributes(p_attrs, output);
-	  } else if ((p_hdl != NULL) && flag_H)
-	    {
-	      if (!flag_z)
-		{
-		  char buff[2 * NFS3_FHSIZE + 1];
+          if ((p_attrs != NULL) && flag_l)
+            {
+              print_nfsitem_line(output, p_attrs, item_path, linkdata);
+          } else if ((p_attrs != NULL) && flag_S)
+            {
+              fprintf(output, "%s :\n", item_path);
+              if (!flag_z)
+                print_nfs_attributes(p_attrs, output);
+          } else if ((p_hdl != NULL) && flag_H)
+            {
+              if (!flag_z)
+                {
+                  char buff[2 * NFS3_FHSIZE + 1];
 
-		  snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) p_hdl->data_val,
-			     p_hdl->data_len);
-		  fprintf(output, "%s (@%s)\n", item_path, buff);
-		}
-	    } else
-	    {
-	      if (!flag_z)
-		fprintf(output, "%s\n", item_path);
-	    }
+                  snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) p_hdl->data_val,
+                             p_hdl->data_len);
+                  fprintf(output, "%s (@%s)\n", item_path, buff);
+                }
+            } else
+            {
+              if (!flag_z)
+                fprintf(output, "%s\n", item_path);
+            }
 
-	  begin_cookie = p_entry->cookie;
-	  p_entry = p_entry->nextentry;
-	}
+          begin_cookie = p_entry->cookie;
+          p_entry = p_entry->nextentry;
+        }
 
       /* Ready for next iteration */
       eod_met = dirlist.eof;
@@ -2418,12 +2418,12 @@ int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
   nfs_remote_readdirplus_free(to_free);
 
   return 0;
-}				/* fn_nfs_remote_ls */
+}                               /* fn_nfs_remote_ls */
 
 /** change current path */
-int fn_nfs_remote_cd(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     )
 {
 
@@ -2454,7 +2454,7 @@ int fn_nfs_remote_cd(int argc,	/* IN : number of args in argv */
 
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-			   argv[1], &current_path_hdl, &new_hdl, output))
+                           argv[1], &current_path_hdl, &new_hdl, output))
     return rc;
 
   /* verify if the object is a directory */
@@ -2487,7 +2487,7 @@ int fn_nfs_remote_cd(int argc,	/* IN : number of args in argv */
     char buff[2 * NFS3_FHSIZE + 1];
     fprintf(output, "Current directory is \"%s\" \n", current_path);
     snprintmem(buff, 2 * NFS3_FHSIZE + 1,
-	       (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
+               (caddr_t) current_path_hdl.data_val, current_path_hdl.data_len);
     fprintf(output, "Current File handle is \"@%s\" \n", buff);
   }
 
@@ -2496,9 +2496,9 @@ int fn_nfs_remote_cd(int argc,	/* IN : number of args in argv */
 }
 
 /** create a file */
-int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     )
 {
   static char format[] = "hv";
@@ -2535,28 +2535,28 @@ int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "create: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "create: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "create: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "create: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case '?':
-	  fprintf(output, "create: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "create: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2579,7 +2579,7 @@ int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
       /* converting mode string to posix mode */
       mode = atomode(strmode);
       if (mode < 0)
-	err_flag++;
+        err_flag++;
     }
 
   if (err_flag)
@@ -2593,7 +2593,7 @@ int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
 
   /* retrieves path handle */
   if (rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-				path, &current_path_hdl, &subdir_hdl, output))
+                                path, &current_path_hdl, &subdir_hdl, output))
     return rc;
 
   if (rc = nfs_remote_create(&subdir_hdl, file, mode, &new_hdl, output))
@@ -2604,16 +2604,16 @@ int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) new_hdl.data_val, new_hdl.data_len);
       fprintf(output, "%s/%s successfully created.\n(handle=@%s)\n", glob_path, file,
-	      buff);
+              buff);
     }
 
   return 0;
 }
 
 /** create a directory */
-int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output	/* IN : output stream          */
+int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output   /* IN : output stream          */
     )
 {
   static char format[] = "hv";
@@ -2650,28 +2650,28 @@ int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "mkdir: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "mkdir: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "mkdir: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "mkdir: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case '?':
-	  fprintf(output, "mkdir: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "mkdir: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2694,7 +2694,7 @@ int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
       /* converting mode string to posix mode */
       mode = atomode(strmode);
       if (mode < 0)
-	err_flag++;
+        err_flag++;
     }
 
   if (err_flag)
@@ -2708,7 +2708,7 @@ int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
 
   /* retrieves path handle */
   if (rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-				path, &current_path_hdl, &subdir_hdl, output))
+                                path, &current_path_hdl, &subdir_hdl, output))
     return rc;
 
   if (rc = nfs_remote_mkdir(&subdir_hdl, file, mode, &new_hdl, output))
@@ -2719,7 +2719,7 @@ int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) new_hdl.data_val, new_hdl.data_len);
       fprintf(output, "%s/%s successfully created.\n(handle=@%s)\n", glob_path, file,
-	      buff);
+              buff);
     }
 
   return 0;
@@ -2727,9 +2727,9 @@ int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
 }
 
 /** unlink a file */
-int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     )
 {
   static char format[] = "hv";
@@ -2765,28 +2765,28 @@ int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "unlink: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "unlink: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "unlink: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "unlink: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case '?':
-	  fprintf(output, "unlink: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "unlink: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2810,7 +2810,7 @@ int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
 
   /* retrieves parent dir handle */
   if (rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_parent, NFS2_MAXPATHLEN,
-				path, &current_path_hdl, &subdir_hdl, output))
+                                path, &current_path_hdl, &subdir_hdl, output))
     return rc;
 
   /* copy parent path */
@@ -2818,7 +2818,7 @@ int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
 
   /* lookup on child object */
   if (rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_object, NFS2_MAXPATHLEN,
-				file, &subdir_hdl, &obj_hdl, output))
+                                file, &subdir_hdl, &obj_hdl, output))
     return rc;
 
   /* get attributes of child object */
@@ -2831,18 +2831,18 @@ int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
   if (attrs.type != NF3DIR)
     {
       if (flag_v)
-	fprintf(output, "%s is not a directory: calling nfs3_remove...\n",
-		glob_path_object);
+        fprintf(output, "%s is not a directory: calling nfs3_remove...\n",
+                glob_path_object);
 
       if (rc = nfs_remote_remove(&subdir_hdl, file, output))
-	return rc;
+        return rc;
     } else
     {
       if (flag_v)
-	fprintf(output, "%s is a directory: calling nfs3_rmdir...\n", glob_path_object);
+        fprintf(output, "%s is a directory: calling nfs3_rmdir...\n", glob_path_object);
 
       if (rc = nfs_remote_rmdir(&subdir_hdl, file, output))
-	return rc;
+        return rc;
     }
 
   if (flag_v)
@@ -2853,9 +2853,9 @@ int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
 }
 
 /** setattr */
-int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output /* IN : output stream          */ )
+int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */ )
 {
 
   static char format[] = "hv";
@@ -2868,10 +2868,10 @@ int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
       "          size, (unsigned  64 bits integer)\n"
       "          atime, mtime (format: YYYYMMDDHHMMSS.nnnnnnnnn)\n";
 
-  char glob_path[NFS2_MAXPATHLEN];	/* absolute path of the object */
+  char glob_path[NFS2_MAXPATHLEN];      /* absolute path of the object */
 
-  shell_fh3_t obj_hdl;		/* handle of the object    */
-  sattr3 set_attrs;		/* attributes to be setted */
+  shell_fh3_t obj_hdl;          /* handle of the object    */
+  sattr3 set_attrs;             /* attributes to be setted */
   char *attr_string;
 
   int rc, option;
@@ -2879,7 +2879,7 @@ int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
   int flag_h = 0;
   int err_flag = 0;
 
-  char file[NFS2_MAXPATHLEN];	/* the relative path to the object */
+  char file[NFS2_MAXPATHLEN];   /* the relative path to the object */
 
   /* check if a path has been mounted */
 
@@ -2895,28 +2895,28 @@ int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "setattr: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "setattr: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "setattr: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "setattr: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case '?':
-	  fprintf(output, "setattr: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "setattr: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2949,12 +2949,12 @@ int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
   /* retrieve handle to the file whose attributes are to be changed */
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN, file,
-			   &current_path_hdl, &obj_hdl, output))
+                           &current_path_hdl, &obj_hdl, output))
     return rc;
 
   /* Convert the peer (attr_name,attr_val) to an sattr3 structure. */
   if ((rc = cmdnfs_sattr3(CMDNFS_ENCODE,
-			  1, &attr_string, 0, NULL, (caddr_t) & set_attrs)) == FALSE)
+                          1, &attr_string, 0, NULL, (caddr_t) & set_attrs)) == FALSE)
     return rc;
 
   /* executes set attrs */
@@ -2965,12 +2965,12 @@ int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
     fprintf(output, "Attributes of \"%s\" successfully changed.\n", glob_path);
 
   return 0;
-}				/* fn_nfs_remote_setattr */
+}                               /* fn_nfs_remote_setattr */
 
 /** proceed a rename command. */
-int fn_nfs_remote_rename(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     )
 {
 
@@ -3008,26 +3008,26 @@ int fn_nfs_remote_rename(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "rename: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "rename: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "rename: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "rename: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "rename: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "rename: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3059,7 +3059,7 @@ int fn_nfs_remote_rename(int argc,	/* IN : number of args in argv */
 
   if (flag_v)
     fprintf(output, "Renaming %s (dir %s) to %s (dir %s)\n",
-	    src_file, src_path, tgt_file, tgt_path);
+            src_file, src_path, tgt_file, tgt_path);
 
   /* copy current path. */
   strncpy(src_glob_path, current_path, NFS2_MAXPATHLEN);
@@ -3068,35 +3068,35 @@ int fn_nfs_remote_rename(int argc,	/* IN : number of args in argv */
   /* retrieves paths handles */
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, src_glob_path, NFS2_MAXPATHLEN,
-			   src_path, &current_path_hdl, &src_path_handle, output))
+                           src_path, &current_path_hdl, &src_path_handle, output))
     return rc;
 
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, tgt_glob_path, NFS2_MAXPATHLEN,
-			   tgt_path, &current_path_hdl, &tgt_path_handle, output))
+                           tgt_path, &current_path_hdl, &tgt_path_handle, output))
     return rc;
 
   /* Rename operation */
 
-  if (rc = nfs_remote_rename(&src_path_handle,	/* IN */
-			     src_file,	/* IN */
-			     &tgt_path_handle,	/* IN */
-			     tgt_file,	/* IN */
-			     output))
+  if (rc = nfs_remote_rename(&src_path_handle,  /* IN */
+                             src_file,  /* IN */
+                             &tgt_path_handle,  /* IN */
+                             tgt_file,  /* IN */
+                             output))
     return rc;
 
   if (flag_v)
     fprintf(output, "%s/%s successfully renamed to %s/%s\n",
-	    src_glob_path, src_file, tgt_glob_path, tgt_file);
+            src_glob_path, src_file, tgt_glob_path, tgt_file);
 
   return 0;
 
 }
 
 /** proceed a hardlink command. */
-int fn_nfs_remote_hardlink(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     )
 {
 
@@ -3137,26 +3137,26 @@ int fn_nfs_remote_hardlink(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "hardlink: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "hardlink: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "hardlink: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "hardlink: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "hardlink: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "hardlink: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3193,19 +3193,19 @@ int fn_nfs_remote_hardlink(int argc,	/* IN : number of args in argv */
   /* retrieves path handle for target */
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, glob_path_target, NFS2_MAXPATHLEN,
-			   target, &current_path_hdl, &target_hdl, output))
+                           target, &current_path_hdl, &target_hdl, output))
     return rc;
 
   /* retrieves path handle for parent dir */
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, glob_path_link, NFS2_MAXPATHLEN,
-			   path, &current_path_hdl, &dir_hdl, output))
+                           path, &current_path_hdl, &dir_hdl, output))
     return rc;
 
-  rc = nfs_remote_link(&target_hdl,	/* IN - target file */
-		       &dir_hdl,	/* IN - parent dir handle */
-		       name,	/* IN - link name */
-		       output);	/* IN */
+  rc = nfs_remote_link(&target_hdl,     /* IN - target file */
+                       &dir_hdl,        /* IN - parent dir handle */
+                       name,    /* IN - link name */
+                       output); /* IN */
 
   if (rc)
     return rc;
@@ -3219,9 +3219,9 @@ int fn_nfs_remote_hardlink(int argc,	/* IN : number of args in argv */
 
 /** proceed an ln command. */
 
-int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     )
 {
 
@@ -3259,26 +3259,26 @@ int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "ln: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "ln: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "ln: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "ln: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "ln: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "ln: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3314,7 +3314,7 @@ int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
   /* retrieves path handle */
   if (rc =
       nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-			   path, &current_path_hdl, &path_hdl, output))
+                           path, &current_path_hdl, &path_hdl, output))
     return rc;
 
   /* Prepare link attributes : empty sattr3 list */
@@ -3326,12 +3326,12 @@ int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
       return -1;
     }
 
-  rc = nfs_remote_symlink(path_hdl,	/* IN - parent dir handle */
-			  name,	/* IN - link name */
-			  content,	/* IN - link content */
-			  &set_attrs,	/* Link attributes */
-			  &link_hdl,	/* OUT - link handle */
-			  output);
+  rc = nfs_remote_symlink(path_hdl,     /* IN - parent dir handle */
+                          name, /* IN - link name */
+                          content,      /* IN - link content */
+                          &set_attrs,   /* Link attributes */
+                          &link_hdl,    /* OUT - link handle */
+                          output);
 
   if (rc)
     return rc;
@@ -3340,19 +3340,19 @@ int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
     {
       char buff[2 * NFS3_FHSIZE + 1];
       snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) link_hdl.data_val,
-		 link_hdl.data_len);
+                 link_hdl.data_len);
 
       fprintf(output, "%s/%s -> %s successfully created (@%s) \n", path, name, content,
-	      buff);
+              buff);
     }
 
   return 0;
 }
 
 /** proceed an ls command using NFS protocol NFS */
-int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
-		       char **argv,	/* IN : arg list               */
-		       FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
+                       char **argv,     /* IN : arg list               */
+                       FILE * output)   /* IN : output stream          */
 {
   shell_fh3_t handle_tmp;
   fattr3 attrs;
@@ -3389,45 +3389,45 @@ int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "stat: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "stat: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "stat: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "stat: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case 'z':
-	  if (flag_z)
-	    fprintf(output,
-		    "stat: warning: option 'z' has been specified more than once.\n");
-	    else
-	    flag_z++;
-	  break;
+        case 'z':
+          if (flag_z)
+            fprintf(output,
+                    "stat: warning: option 'z' has been specified more than once.\n");
+            else
+            flag_z++;
+          break;
 
-	case 'H':
-	  if (flag_H)
-	    fprintf(output,
-		    "stat: warning: option 'H' has been specified more than once.\n");
-	    else
-	    flag_H++;
-	  break;
+        case 'H':
+          if (flag_H)
+            fprintf(output,
+                    "stat: warning: option 'H' has been specified more than once.\n");
+            else
+            flag_H++;
+          break;
 
-	case '?':
-	  fprintf(output, "stat: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
-    }				/* while */
+        case '?':
+          fprintf(output, "stat: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
+    }                           /* while */
 
   if (flag_z + flag_v > 1)
     {
@@ -3461,9 +3461,9 @@ int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
 
   /* retrieving handle */
   if (rc = nfs_remote_solvepath(&mounted_path_hdl,
-				glob_path,
-				NFS2_MAXPATHLEN,
-				str_name, &current_path_hdl, &handle_tmp, output))
+                                glob_path,
+                                NFS2_MAXPATHLEN,
+                                str_name, &current_path_hdl, &handle_tmp, output))
 
     if (flag_v)
       fprintf(output, "proceeding stat (using NFS protocol) on \"%s\"\n", glob_path);
@@ -3474,13 +3474,13 @@ int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
   if (flag_H)
     {
       if (!flag_z)
-	{
-	  char buff[2 * NFS3_FHSIZE + 1];
+        {
+          char buff[2 * NFS3_FHSIZE + 1];
 
-	  snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) handle_tmp.data_val,
-		     handle_tmp.data_len);
-	  fprintf(output, "%s (@%s)\n", str_name, buff);
-	}
+          snprintmem(buff, 2 * NFS3_FHSIZE + 1, (caddr_t) handle_tmp.data_val,
+                     handle_tmp.data_len);
+          fprintf(output, "%s (@%s)\n", str_name, buff);
+        }
   } else if (!flag_z)
     {
       fprintf(output, "%s :\n", str_name);
@@ -3488,12 +3488,12 @@ int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
     }
 
   return 0;
-}				/* fn_nfs_remote_stat */
+}                               /* fn_nfs_remote_stat */
 
 /** change thread credentials. */
-int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output)     /* IN : output stream          */
 {
   int i;
   char *str_uid;
@@ -3522,10 +3522,10 @@ int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
   if (isdigit(str_uid[0]))
     {
       if ((uid = my_atoi(str_uid)) == (uid_t) - 1)
-	{
-	  fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
-	  return -1;
-	}
+        {
+          fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
+          return -1;
+        }
       pw_struct = getpwuid(uid);
     } else
     {
@@ -3541,24 +3541,24 @@ int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
   nb_grp = getugroups(MAX_GRPS, groups_tab, pw_struct->pw_name, pw_struct->pw_gid);
 
   fprintf(output, "Changing user to : %s ( uid = %d, gid = %d )\n",
-	  pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
+          pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
 
   if (nb_grp > 1)
     {
       fprintf(output, "altgroups = ");
       for (i = 1; i < nb_grp; i++)
-	{
-	  if (i == 1)
-	    fprintf(output, "%d", groups_tab[i]);
-	    else
-	    fprintf(output, ", %d", groups_tab[i]);
-	}
+        {
+          if (i == 1)
+            fprintf(output, "%d", groups_tab[i]);
+            else
+            fprintf(output, ", %d", groups_tab[i]);
+        }
       fprintf(output, "\n");
     }
 
   auth =
       authunix_create(localmachine, pw_struct->pw_uid, pw_struct->pw_gid, nb_grp,
-		      groups_tab);
+                      groups_tab);
   if (auth == NULL)
     {
       fprintf(stdout, "su %s : error during creating Auth\n", pw_struct->pw_name);
@@ -3566,9 +3566,9 @@ int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
   while (clnts->name != NULL)
     {
       if (clnts->clnt != NULL)
-	{
-	  clnts->clnt->cl_auth = auth;
-	}
+        {
+          clnts->clnt->cl_auth = auth;
+        }
       clnts++;
     }
   memcpy(current_pw, pw_struct, sizeof(struct passwd));
@@ -3579,12 +3579,12 @@ int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
 
 }
 
-int fn_nfs_remote_id(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output)	/* IN : output stream          */
+int fn_nfs_remote_id(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output)     /* IN : output stream          */
 {
   fprintf(output, "Current user : %s ( uid = %d, gid = %d )\n",
-	  current_pw->pw_name, current_pw->pw_uid, current_pw->pw_gid);
+          current_pw->pw_name, current_pw->pw_uid, current_pw->pw_gid);
 
   return 0;
 }

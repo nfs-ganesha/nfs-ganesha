@@ -50,7 +50,7 @@ static void *pool(void *v)
 {
   while (running)
     {
-      agent_check_and_process(1);	/* 0 == don't block */
+      agent_check_and_process(1);       /* 0 == don't block */
     }
   return 0;
 }
@@ -66,7 +66,7 @@ static void *polling_fct(void *arg)
   for (;;)
     {
       if (parg->test_fct(parg->args) == 1)
-	snmp_adm_send_trap(parg->type, parg->value);
+        snmp_adm_send_trap(parg->type, parg->value);
       sleep(parg->second);
     }
 }
@@ -94,21 +94,21 @@ static int get_conf_from_env()
 
       /* compute length */
       for (ptr = str_root; *ptr != '\0'; ptr++)
-	if (*ptr == '.')
-	  root_oid_len++;
+        if (*ptr == '.')
+          root_oid_len++;
 
       root_oid = malloc(root_oid_len * sizeof(oid));
 
       /* create root array */
       save = str_root + 1;
       for (ptr = str_root + 1; *ptr != '\0'; ptr++)
-	if (*ptr == '.' || ptr == '\0')
-	  {
-	    *ptr = '\0';
-	    /*FIXME arch spec? */
-	    root_oid[pos++] = atol(save);
-	    save = ++ptr;
-	  }
+        if (*ptr == '.' || ptr == '\0')
+          {
+            *ptr = '\0';
+            /*FIXME arch spec? */
+            root_oid[pos++] = atol(save);
+            save = ++ptr;
+          }
       root_oid[pos++] = atol(save);
     }
   return 0;
@@ -156,7 +156,7 @@ static register_info *new_register(char *label, char *desc, int type, int reg_le
   register desc and name
  */
 static int register_meta(oid * myoid, int len, char *name, char *desc,
-			 netsnmp_handler_registration ** tab_reg)
+                         netsnmp_handler_registration ** tab_reg)
 {
   int err1, err2;
 
@@ -216,7 +216,7 @@ static int register_scal_instance(int type, const register_scal * instance)
       /* create a register object of scalar type.                
          we know we need 4 netsnmp register objects to record a scalar
        */
-      info = new_register(instance->label, instance->desc, SCAL, 4);	/* name+desc+type+value = 4 */
+      info = new_register(instance->label, instance->desc, SCAL, 4);    /* name+desc+type+value = 4 */
 
       get_oid(myoid, type, &len);
 
@@ -229,7 +229,7 @@ static int register_scal_instance(int type, const register_scal * instance)
       /* register a scalar in the tree
          we use the last two netsnmp register (type and value)
        */
-      err2 = reg_scal(myoid, len, instance->value, instance->type, instance->access, info->reg + 2);	/* name+desc offset */
+      err2 = reg_scal(myoid, len, instance->value, instance->type, instance->access, info->reg + 2);    /* name+desc offset */
     } else
     {
       err1 = 1;
@@ -257,7 +257,7 @@ static int register_get_set_instance(int branch, const register_get_set * instan
       /* create a register object of get/set type.               
          we know we need 4 netsnmp register objects to record a get/set
        */
-      info = new_register(instance->label, instance->desc, GET_SET, 4);	/* name+desc+type+value = 4 */
+      info = new_register(instance->label, instance->desc, GET_SET, 4); /* name+desc+type+value = 4 */
 
       /* add get/set specific information on register */
       gs_info = info->function_info.get_set = malloc(sizeof(get_set_info));
@@ -277,7 +277,7 @@ static int register_get_set_instance(int branch, const register_get_set * instan
       /* register a get/set in the tree
          we use the last two netsnmp register (type and value)
        */
-      err2 = reg_get_set(myoid, len, instance->type, instance->access, info->reg + 2);	/* name+desc offset */
+      err2 = reg_get_set(myoid, len, instance->type, instance->access, info->reg + 2);  /* name+desc offset */
     } else
     {
       err1 = 1;
@@ -314,7 +314,7 @@ static int register_proc_instance(const register_proc * instance)
      This function will register the first and the second (name and desc)
    */
   info = new_register(instance->label, instance->desc, PROC,
-		      3 + 2 * (instance->nb_in + instance->nb_out));
+                      3 + 2 * (instance->nb_in + instance->nb_out));
 
   /* add register specific info */
   p_info = info->function_info.proc = malloc(sizeof(proc_info));
@@ -342,7 +342,7 @@ static int register_proc_instance(const register_proc * instance)
   tab_reg_offset += 2;
 
   myoid[len - 1] = TRIGGER_OID;
-  err2 = reg_proc(myoid, len, info->reg + tab_reg_offset);	/* register the instance and save info  */
+  err2 = reg_proc(myoid, len, info->reg + tab_reg_offset);      /* register the instance and save info  */
   tab_reg_offset++;
 
   /* 
@@ -359,7 +359,7 @@ static int register_proc_instance(const register_proc * instance)
       myoid[len - 2] = INPUT_OID;
       myoid[len - 1] = i;
       reg_scal(myoid, len, p_info->inputs[i]->string, instance->type_in[i],
-	       SNMP_ADM_ACCESS_RW, info->reg + tab_reg_offset);
+               SNMP_ADM_ACCESS_RW, info->reg + tab_reg_offset);
       tab_reg_offset += 2;
     }
   /* output */
@@ -368,7 +368,7 @@ static int register_proc_instance(const register_proc * instance)
       myoid[len - 2] = OUTPUT_OID;
       myoid[len - 1] = i;
       reg_scal(myoid, len, p_info->outputs[i]->string, instance->type_out[i],
-	       SNMP_ADM_ACCESS_RO, info->reg + tab_reg_offset);
+               SNMP_ADM_ACCESS_RO, info->reg + tab_reg_offset);
       tab_reg_offset += 2;
     }
   return err1 || err2;
@@ -389,13 +389,13 @@ static void free_register_info(register_info * ptr)
     {
       pinfo = ptr->function_info.proc;
       for (i = 0; i < pinfo->nb_in; i++)
-	free(pinfo->inputs[i]);
+        free(pinfo->inputs[i]);
 
       free(pinfo->inputs);
       pinfo->inputs = NULL;
 
       for (i = 0; i < pinfo->nb_out; i++)
-	free(pinfo->outputs[i]);
+        free(pinfo->outputs[i]);
 
       free(pinfo->outputs);
       pinfo->outputs = NULL;
@@ -426,7 +426,7 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
   /* make us a agentx client. */
   netsnmp_ds_set_boolean(NETSNMP_DS_APPLICATION_ID, NETSNMP_DS_AGENT_ROLE, 1);
   netsnmp_ds_set_string(NETSNMP_DS_APPLICATION_ID,
-			NETSNMP_DS_AGENT_X_SOCKET, agent_x_socket);
+                        NETSNMP_DS_AGENT_X_SOCKET, agent_x_socket);
 
   /* error logging */
   if (strncmp(filelog, "syslog", 10) == 0)
@@ -434,18 +434,18 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
       snmp_enable_syslog();
       issyslog = 1;
     } else
-    snmp_enable_filelog(filelog, 1);	/* 1:append 0:write */
+    snmp_enable_filelog(filelog, 1);    /* 1:append 0:write */
 
   if (get_conf_from_env() == 0)
     {
       int i, len = 1024, write = 0, offset = 0;
       char buf[1024];
       for (i = 0; i < root_oid_len; i++)
-	{
-	  offset += write;
-	  len -= write;
-	  write = snprintf(buf + offset, len, ".%ld", root_oid[i]);
-	}
+        {
+          offset += write;
+          len -= write;
+          write = snprintf(buf + offset, len, ".%ld", root_oid[i]);
+        }
       snmp_adm_log("ROOT_OID=%s", buf);
       err_root = 0;
     } else
@@ -485,13 +485,13 @@ int snmp_adm_register_scalars(int branch, register_scal * tab, int len)
       /* register the instance and save info  */
       err = register_scal_instance(branch, &(tab[i]));
       if (err)
-	{
-	  snmp_adm_log("ERROR registering %s %s",
-		       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
-	  return 1;
-	} else
-	snmp_adm_log("register %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
-		     tab[i].label);
+        {
+          snmp_adm_log("ERROR registering %s %s",
+                       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
+          return 1;
+        } else
+        snmp_adm_log("register %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
+                     tab[i].label);
     }
   registered = 1;
   return 0;
@@ -515,13 +515,13 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
       /* register the instance and save info  */
       err = register_get_set_instance(branch, &(tab[i]));
       if (err)
-	{
-	  snmp_adm_log("ERROR registering getset %s %s",
-		       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
-	  return 1;
-	} else
-	snmp_adm_log("register getset %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
-		     tab[i].label);
+        {
+          snmp_adm_log("ERROR registering getset %s %s",
+                       ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
+          return 1;
+        } else
+        snmp_adm_log("register getset %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
+                     tab[i].label);
 
     }
   registered = 1;
@@ -545,11 +545,11 @@ int snmp_adm_register_procedure(register_proc * tab, int len)
     {
       err = register_proc_instance(&(tab[i]));
       if (err)
-	{
-	  snmp_adm_log("register proc %s", tab[i].label);
-	  return 1;
-	} else
-	snmp_adm_log("register proc %s", tab[i].label);
+        {
+          snmp_adm_log("register proc %s", tab[i].label);
+          return 1;
+        } else
+        snmp_adm_log("register proc %s", tab[i].label);
 
     }
   registered = 1;
@@ -571,7 +571,7 @@ int snmp_adm_unregister(char *label)
   for (ptr = register_info_list; ptr; ptr = ptr->next)
     {
       if (strncmp(ptr->label, label, strlen(label)) == 0)
-	break;
+        break;
       prev = ptr;
     }
 
@@ -581,8 +581,8 @@ int snmp_adm_unregister(char *label)
       prev->next = ptr->next;
       /* unreg */
       for (i = 0; i < ptr->reg_len; i++)
-	if (unreg_instance(ptr->reg[i]) != MIB_UNREGISTERED_OK)
-	  return 1;
+        if (unreg_instance(ptr->reg[i]) != MIB_UNREGISTERED_OK)
+          return 1;
       /* free */
       free_register_info(ptr);
 
@@ -600,7 +600,7 @@ void snmp_adm_send_trap(unsigned char type, snmp_adm_type_union value)
 {
   char str[256];
   int err = 0;
-  struct variable_list vars;	/* NetSNMP type */
+  struct variable_list vars;    /* NetSNMP type */
 
   /* trap oid==root_oid.999 */
   int len = root_oid_len + 1;
@@ -651,7 +651,7 @@ void snmp_adm_send_trap(unsigned char type, snmp_adm_type_union value)
  * @param value value of the variable.
  */
 int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *args,
-				unsigned char type, snmp_adm_type_union value)
+                                unsigned char type, snmp_adm_type_union value)
 {
   static int capacity = 10;
 
@@ -674,7 +674,7 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
   polling_args[polling_list_size].args = args;
 
   pthread_create(&polling_threads[polling_list_size], NULL, polling_fct,
-		 &polling_args[polling_list_size]);
+                 &polling_args[polling_list_size]);
   polling_list_size++;
 
   return 0;
@@ -694,14 +694,14 @@ void snmp_adm_close()
     {
       err = pthread_cancel(thread_id);
       if (!err)
-	pthread_join(thread_id, NULL);
+        pthread_join(thread_id, NULL);
     }
   for (ptr = register_info_list; ptr;)
     {
       next = ptr->next;
 
       for (i = 0; i < ptr->reg_len; i++)
-	unreg_instance(ptr->reg[i]);
+        unreg_instance(ptr->reg[i]);
       free_register_info(ptr);
       free(ptr);
 
@@ -713,7 +713,7 @@ void snmp_adm_close()
     {
       err = pthread_cancel(polling_threads[i]);
       if (!err)
-	pthread_join(polling_threads[i], NULL);
+        pthread_join(polling_threads[i], NULL);
     }
   free(polling_threads);
   free(polling_args);
@@ -747,7 +747,7 @@ int snmp_adm_start()
   if (configured == 0)
     {
       snmp_adm_log("Warning snmp is not configured !\t"
-		   "Did you called config_daemon? snmpd is running?");
+                   "Did you called config_daemon? snmpd is running?");
       return 2;
     }
 
@@ -789,19 +789,19 @@ void snmp_adm_log(char *format, ...)
       static char constant_buf[256];
 
       if (!pid)
-	{
-	  int name_len;
-	  /* first call, let's configure */
-	  gethostname(constant_buf, 256);
-	  pid = getpid();
-	  name_len = strlen(constant_buf);
-	  snprintf(constant_buf + name_len, 256 - name_len, ": snmp_adm-%d: ", pid);
-	}
+        {
+          int name_len;
+          /* first call, let's configure */
+          gethostname(constant_buf, 256);
+          pid = getpid();
+          name_len = strlen(constant_buf);
+          snprintf(constant_buf + name_len, 256 - name_len, ": snmp_adm-%d: ", pid);
+        }
 
       localtime_r(&clock, &the_date);
       snprintf(now, 128, "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld: ",
-	       the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-	       the_date.tm_hour, the_date.tm_min, the_date.tm_sec, clock);
+               the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+               the_date.tm_hour, the_date.tm_min, the_date.tm_sec, clock);
 
       vsnprintf(msg_buf, 256, format, pa);
 

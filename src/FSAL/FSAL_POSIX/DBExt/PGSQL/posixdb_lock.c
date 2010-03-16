@@ -16,9 +16,9 @@
  * @return ERR_FSAL_POSIXDB_NOERR if no error,
  *         another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_conn,	/* IN */
-						       fsal_posixdb_fileinfo_t *
-						       p_info /* IN */ )
+fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_conn,      /* IN */
+                                                       fsal_posixdb_fileinfo_t *
+                                                       p_info /* IN */ )
 {
   PGresult *p_res;
   char devid_str[MAX_DEVICEIDSTR_SIZE];

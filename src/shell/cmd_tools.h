@@ -203,22 +203,22 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
 /** Type of attributes */
 typedef enum shell_attr_type__ {
 
-  ATTR_NONE = 0,		/* this special value is used
-				   to indicate the end of the attribute list */
+  ATTR_NONE = 0,                /* this special value is used
+                                   to indicate the end of the attribute list */
 
-  ATTR_32,			/* 32 bits attribute */
-  ATTR_64,			/* 64 bits attribute */
-  ATTR_OCTAL,			/* octal number attribute */
-  ATTR_TIME			/* YYYYMMDDhhmmss attribute */
+  ATTR_32,                      /* 32 bits attribute */
+  ATTR_64,                      /* 64 bits attribute */
+  ATTR_OCTAL,                   /* octal number attribute */
+  ATTR_TIME                     /* YYYYMMDDhhmmss attribute */
 } shell_attr_type_t;
 
 /** Attribute definition structure. */
 typedef struct shell_attribute__ {
 
-  char *attr_name;		/* name of the attribute. */
-  shell_attr_type_t attr_type;	/* type of the attribute. */
-  fsal_attrib_mask_t attr_mask;	/* fsal mask constant */
-  unsigned long int attr_offset;	/* fsal field offset */
+  char *attr_name;              /* name of the attribute. */
+  shell_attr_type_t attr_type;  /* type of the attribute. */
+  fsal_attrib_mask_t attr_mask; /* fsal mask constant */
+  unsigned long int attr_offset;        /* fsal field offset */
 
 } shell_attribute_t;
 

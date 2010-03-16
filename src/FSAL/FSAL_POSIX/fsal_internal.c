@@ -23,7 +23,7 @@
 #include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h>             /* used for 'dirname' */
 
 #include <pthread.h>
 #include <string.h>
@@ -40,30 +40,30 @@ fsal_posixdb_conn_params_t global_posixdb_params;
 
 /* filesystem info for HPSS */
 static fsal_staticfsinfo_t default_posix_info = {
-  0xFFFFFFFFFFFFFFFFLL,		/* max file size (64bits) */
-  _POSIX_LINK_MAX,		/* max links */
-  FSAL_MAX_NAME_LEN,		/* max filename */
-  FSAL_MAX_PATH_LEN,		/* min filename */
-  TRUE,				/* no_trunc */
-  TRUE,				/* chown restricted */
-  FALSE,			/* case insensitivity */
-  TRUE,				/* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,	/* FH expire type */
-  TRUE,				/* hard link support */
-  TRUE,				/* symlink support */
-  FALSE,			/* lock management */
-  TRUE,				/* named attributes */
-  TRUE,				/* handles are unique and persistent */
-  {10, 0},			/* Duration of lease at FS in seconds */
-  FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
-  TRUE,				/* can change times */
-  TRUE,				/* homogenous */
-  POSIX_SUPPORTED_ATTRIBUTES,	/* supported attributes */
-  0,				/* maxread size */
-  0,				/* maxwrite size */
-  0,				/* default umask */
-  0,				/* cross junctions */
-  0400				/* default access rights for xattrs: root=RW, owner=R */
+  0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
+  _POSIX_LINK_MAX,              /* max links */
+  FSAL_MAX_NAME_LEN,            /* max filename */
+  FSAL_MAX_PATH_LEN,            /* min filename */
+  TRUE,                         /* no_trunc */
+  TRUE,                         /* chown restricted */
+  FALSE,                        /* case insensitivity */
+  TRUE,                         /* case preserving */
+  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
+  TRUE,                         /* hard link support */
+  TRUE,                         /* symlink support */
+  FALSE,                        /* lock management */
+  TRUE,                         /* named attributes */
+  TRUE,                         /* handles are unique and persistent */
+  {10, 0},                      /* Duration of lease at FS in seconds */
+  FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
+  TRUE,                         /* can change times */
+  TRUE,                         /* homogenous */
+  POSIX_SUPPORTED_ATTRIBUTES,   /* supported attributes */
+  0,                            /* maxread size */
+  0,                            /* maxwrite size */
+  0,                            /* default umask */
+  0,                            /* cross junctions */
+  0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
 /*
@@ -86,7 +86,7 @@ static void init_keys(void)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
-}				/* init_keys */
+}                               /* init_keys */
 
 /**
  * fsal_increment_nbcall:
@@ -130,20 +130,20 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
       if (bythread_stat == NULL)
-	{
-	  DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
-	  return;
-	}
+        {
+          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          return;
+        }
 
       /* inits the struct */
 
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -157,11 +157,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       bythread_stat->func_stats.nb_call[function_index]++;
 
       if (!FSAL_IS_ERROR(status))
-	bythread_stat->func_stats.nb_success[function_index]++;
+        bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
-	bythread_stat->func_stats.nb_err_retryable[function_index]++;
-	else
-	bythread_stat->func_stats.nb_err_unrecover[function_index]++;
+        bythread_stat->func_stats.nb_err_retryable[function_index]++;
+        else
+        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
   return;
@@ -200,18 +200,18 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
       if (bythread_stat == NULL)
-	{
-	  DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
-	  return;
-	}
+        {
+          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+          return;
+        }
       /* inits the struct */
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -322,8 +322,8 @@ void ReleaseTokenFSCall()
  *  This function initializes shared variables of the fsal.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info,
-					fs_specific_initinfo_t * fs_specific_info)
+                                        fs_common_initinfo_t * fs_common_info,
+                                        fs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -343,16 +343,16 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
       if (rc != 0)
-	ReturnCode(ERR_FSAL_SERVERFAULT, rc);
+        ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-			fsal_info->max_fs_calls);
+                        "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+                        fsal_info->max_fs_calls);
 
     } else
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+                        "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
@@ -362,45 +362,45 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "{");
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-		    default_posix_info.maxfilesize);
+                    default_posix_info.maxfilesize);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ",
-		    default_posix_info.maxlink);
+                    default_posix_info.maxlink);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-		    default_posix_info.maxnamelen);
+                    default_posix_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-		    default_posix_info.maxpathlen);
+                    default_posix_info.maxpathlen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ",
-		    default_posix_info.no_trunc);
+                    default_posix_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-		    default_posix_info.chown_restricted);
+                    default_posix_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-		    default_posix_info.case_insensitive);
+                    default_posix_info.case_insensitive);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-		    default_posix_info.case_preserving);
+                    default_posix_info.case_preserving);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-		    default_posix_info.fh_expire_type);
+                    default_posix_info.fh_expire_type);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-		    default_posix_info.link_support);
+                    default_posix_info.link_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-		    default_posix_info.symlink_support);
+                    default_posix_info.symlink_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-		    default_posix_info.lock_support);
+                    default_posix_info.lock_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-		    default_posix_info.named_attr);
+                    default_posix_info.named_attr);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-		    default_posix_info.unique_handles);
+                    default_posix_info.unique_handles);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-		    default_posix_info.acl_support);
+                    default_posix_info.acl_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-		    default_posix_info.cansettime);
+                    default_posix_info.cansettime);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-		    default_posix_info.homogenous);
+                    default_posix_info.homogenous);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-		    default_posix_info.supported_attrs);
+                    default_posix_info.supported_attrs);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-		    default_posix_info.maxread);
+                    default_posix_info.maxread);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-		    default_posix_info.maxwrite);
+                    default_posix_info.maxwrite);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_posix_info.umask);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
 
@@ -440,17 +440,17 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		    "Supported attributes constant = 0x%llX.",
-		    POSIX_SUPPORTED_ATTRIBUTES);
+                    "Supported attributes constant = 0x%llX.",
+                    POSIX_SUPPORTED_ATTRIBUTES);
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		    "Supported attributes default = 0x%llX.",
-		    default_posix_info.supported_attrs);
+                    "Supported attributes default = 0x%llX.",
+                    default_posix_info.supported_attrs);
 #endif
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-		    "FSAL INIT: Supported attributes mask = 0x%llX.",
-		    global_fs_info.supported_attrs);
+                    "FSAL INIT: Supported attributes mask = 0x%llX.",
+                    global_fs_info.supported_attrs);
 
   /* initialize database cache */
   if (fsal_posixdb_cache_init())
@@ -460,43 +460,43 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "global_fs_info {");
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-		    global_fs_info.maxfilesize);
+                    global_fs_info.maxfilesize);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ", global_fs_info.maxlink);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-		    global_fs_info.maxnamelen);
+                    global_fs_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-		    global_fs_info.maxpathlen);
+                    global_fs_info.maxpathlen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ", global_fs_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-		    global_fs_info.chown_restricted);
+                    global_fs_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-		    global_fs_info.case_insensitive);
+                    global_fs_info.case_insensitive);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-		    global_fs_info.case_preserving);
+                    global_fs_info.case_preserving);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-		    global_fs_info.fh_expire_type);
+                    global_fs_info.fh_expire_type);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-		    global_fs_info.link_support);
+                    global_fs_info.link_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-		    global_fs_info.symlink_support);
+                    global_fs_info.symlink_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-		    global_fs_info.lock_support);
+                    global_fs_info.lock_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-		    global_fs_info.named_attr);
+                    global_fs_info.named_attr);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-		    global_fs_info.unique_handles);
+                    global_fs_info.unique_handles);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-		    global_fs_info.acl_support);
+                    global_fs_info.acl_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-		    global_fs_info.cansettime);
+                    global_fs_info.cansettime);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-		    global_fs_info.homogenous);
+                    global_fs_info.homogenous);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-		    global_fs_info.supported_attrs);
+                    global_fs_info.supported_attrs);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-		    global_fs_info.maxread);
+                    global_fs_info.maxread);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-		    global_fs_info.maxwrite);
+                    global_fs_info.maxwrite);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", global_fs_info.umask);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
 
@@ -514,7 +514,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  * @return 
  */
 fsal_status_t fsal_internal_posix2posixdb_fileinfo(struct stat *buffstat,
-						   fsal_posixdb_fileinfo_t * info)
+                                                   fsal_posixdb_fileinfo_t * info)
 {
   /* sanity check */
   if (!info || !buffstat)
@@ -533,24 +533,24 @@ fsal_status_t fsal_internal_posix2posixdb_fileinfo(struct stat *buffstat,
  *  This function adds an entry in the database
  */
 fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
-					      fsal_name_t * p_filename,
-					      fsal_posixdb_fileinfo_t * p_info,
-					      fsal_handle_t * p_dir_handle,
-					      fsal_handle_t * p_new_handle)
+                                              fsal_name_t * p_filename,
+                                              fsal_posixdb_fileinfo_t * p_info,
+                                              fsal_handle_t * p_dir_handle,
+                                              fsal_handle_t * p_new_handle)
 {
   fsal_posixdb_status_t stdb;
 
-  if (!p_info || !p_conn || !p_new_handle)	/* p_filename & p_dir_handle can be NULL for the root */
+  if (!p_info || !p_conn || !p_new_handle)      /* p_filename & p_dir_handle can be NULL for the root */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
  add:
   stdb = fsal_posixdb_add(p_conn, p_info, p_dir_handle, p_filename, p_new_handle);
 
   if (stdb.major == ERR_FSAL_POSIXDB_CONSISTENCY)
-    {				/* there is already an entry with this path, but it's an inconsistent one */
+    {                           /* there is already an entry with this path, but it's an inconsistent one */
       stdb = fsal_posixdb_deleteHandle(p_conn, p_new_handle);
       if (FSAL_POSIXDB_IS_ERROR(stdb))
-	return posixdb2fsal_error(stdb);
+        return posixdb2fsal_error(stdb);
       goto add;
   } else if (FSAL_POSIXDB_IS_ERROR(stdb))
     {
@@ -569,7 +569,7 @@ fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
  * @return 
  */
 fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
-						     fsal_name_t * p_name)
+                                                     fsal_name_t * p_name)
 {
   char *end;
   if (!p_path || !p_name)
@@ -579,7 +579,7 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
   if (*end != '/')
     {
       if (p_path->len + 1 + p_name->len > FSAL_MAX_PATH_LEN)
-	ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
+        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len + 1;
       end++;
       *end = '/';
@@ -588,7 +588,7 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
     } else
     {
       if (p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
-	ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
+        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len;
       end++;
       strcpy(end, p_name->name);
@@ -601,11 +601,11 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
  * Get a valid path associated to an handle.
  * The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database.
  */
-fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* IN */
-					      fsal_handle_t * p_handle,	/* IN */
-					      int is_dir,	/* IN */
-					      fsal_path_t * p_fsalpath,	/* OUT */
-					      struct stat *p_buffstat /* OUT */ )
+fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    /* IN */
+                                              fsal_handle_t * p_handle, /* IN */
+                                              int is_dir,       /* IN */
+                                              fsal_path_t * p_fsalpath, /* OUT */
+                                              struct stat *p_buffstat /* OUT */ )
 {
   fsal_status_t status;
   fsal_posixdb_status_t statusdb;
@@ -620,10 +620,10 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* 
   /* Read the path from the Handle. If it's valid & coherent, then no need to query the database ! */
   /* if !p_buffstat, we don't need to check the path */
   statusdb = fsal_posixdb_getInfoFromHandle(p_context->p_conn,
-					    p_handle,
-					    paths,
-					    (is_dir ? 1 : global_fs_info.maxlink),
-					    &count);
+                                            p_handle,
+                                            paths,
+                                            (is_dir ? 1 : global_fs_info.maxlink),
+                                            &count);
   if (FSAL_POSIXDB_IS_ERROR(statusdb)
       && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
     return status;
@@ -632,66 +632,66 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* 
   if (p_buffstat)
     {
       for (i = 0; i < count; i++)
-	{
-	  TakeTokenFSCall();
-	  rc = lstat(paths[i].path, p_buffstat);
-	  errsv = errno;
-	  ReleaseTokenFSCall();
+        {
+          TakeTokenFSCall();
+          rc = lstat(paths[i].path, p_buffstat);
+          errsv = errno;
+          ReleaseTokenFSCall();
 
-	  if (rc)
-	    {
-	      /* error : delete the bad path from the database */
-	      char dirc[FSAL_MAX_PATH_LEN];
-	      char basec[FSAL_MAX_PATH_LEN];
-	      fsal_path_t parentdir;
-	      fsal_name_t filename;
-	      fsal_handle_t parenthdl;
-	      char *dname, *bname;
+          if (rc)
+            {
+              /* error : delete the bad path from the database */
+              char dirc[FSAL_MAX_PATH_LEN];
+              char basec[FSAL_MAX_PATH_LEN];
+              fsal_path_t parentdir;
+              fsal_name_t filename;
+              fsal_handle_t parenthdl;
+              char *dname, *bname;
 
-	      /* split /path/to/filename in /path/to & filename */
-	      strncpy(dirc, paths[i].path, FSAL_MAX_PATH_LEN);
-	      strncpy(basec, paths[i].path, FSAL_MAX_PATH_LEN);
-	      dname = dirname(dirc);
-	      bname = basename(basec);
+              /* split /path/to/filename in /path/to & filename */
+              strncpy(dirc, paths[i].path, FSAL_MAX_PATH_LEN);
+              strncpy(basec, paths[i].path, FSAL_MAX_PATH_LEN);
+              dname = dirname(dirc);
+              bname = basename(basec);
 
-	      status = FSAL_str2path(dname, FSAL_MAX_PATH_LEN, &parentdir);
-	      status = FSAL_str2name(bname, FSAL_MAX_NAME_LEN, &filename);
+              status = FSAL_str2path(dname, FSAL_MAX_PATH_LEN, &parentdir);
+              status = FSAL_str2name(bname, FSAL_MAX_NAME_LEN, &filename);
 
-	      /* get the handle of /path/to */
-	      status = FSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
+              /* get the handle of /path/to */
+              status = FSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
 
-	      if (!FSAL_IS_ERROR(status))
-		{
-		  statusdb =
-		      fsal_posixdb_delete(p_context->p_conn, &parenthdl, &filename, NULL);
-		  /* no need to check if there was an error, because it doesn't change the behavior of the function */
-		}
+              if (!FSAL_IS_ERROR(status))
+                {
+                  statusdb =
+                      fsal_posixdb_delete(p_context->p_conn, &parenthdl, &filename, NULL);
+                  /* no need to check if there was an error, because it doesn't change the behavior of the function */
+                }
 
-	    } else
-	    {			/* no error */
-	      FSAL_pathcpy(p_fsalpath, &(paths[0]));
-	      break;
-	    }
-	}
+            } else
+            {                   /* no error */
+              FSAL_pathcpy(p_fsalpath, &(paths[0]));
+              break;
+            }
+        }
       if (i == count)
-	ReturnCode(ERR_FSAL_STALE, 0);
+        ReturnCode(ERR_FSAL_STALE, 0);
 
       /* check consistency */
       status = fsal_internal_posix2posixdb_fileinfo(p_buffstat, &infofs);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
 
       if (fsal_posixdb_consistency_check(&(p_handle->info), &infofs))
-	{
-	  /* not consistent !! */
-	  /* delete the stale handle */
-	  statusdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_handle);
-	  if (FSAL_POSIXDB_IS_ERROR(statusdb)
-	      && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
-	    return status;
+        {
+          /* not consistent !! */
+          /* delete the stale handle */
+          statusdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_handle);
+          if (FSAL_POSIXDB_IS_ERROR(statusdb)
+              && FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
+            return status;
 
-	  ReturnCode(ERR_FSAL_STALE, 0);
-	}
+          ReturnCode(ERR_FSAL_STALE, 0);
+        }
 
     } else
     {
@@ -719,48 +719,48 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* 
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,	/* IN */
-					    fsal_handle_t * p_parent_dir_handle,	/* IN */
-					    fsal_name_t * p_fsalname,	/* IN */
-					    fsal_posixdb_fileinfo_t * p_infofs,	/* IN */
-					    fsal_handle_t * p_object_handle)	/* OUT */
+fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      /* IN */
+                                            fsal_handle_t * p_parent_dir_handle,        /* IN */
+                                            fsal_name_t * p_fsalname,   /* IN */
+                                            fsal_posixdb_fileinfo_t * p_infofs, /* IN */
+                                            fsal_handle_t * p_object_handle)    /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
 
   stdb = fsal_posixdb_getInfoFromName(p_context->p_conn,
-				      p_parent_dir_handle,
-				      p_fsalname, NULL, p_object_handle);
+                                      p_parent_dir_handle,
+                                      p_fsalname, NULL, p_object_handle);
   switch (stdb.major)
     {
     case ERR_FSAL_POSIXDB_NOERR:
       /* No error, the object is in the database */
       /* check consistency */
       if (fsal_posixdb_consistency_check(&(p_object_handle->info), p_infofs))
-	{
-	  /* Entry not consistent */
-	  /* Delete the Handle entry, then add a new one (with a Parent entry) */
-	  stdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_object_handle);
-	  if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
-	    return st;
-	  /* don't break, add a new entry */
-	} else
-	{
-	  break;
-	}
+        {
+          /* Entry not consistent */
+          /* Delete the Handle entry, then add a new one (with a Parent entry) */
+          stdb = fsal_posixdb_deleteHandle(p_context->p_conn, p_object_handle);
+          if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
+            return st;
+          /* don't break, add a new entry */
+        } else
+        {
+          break;
+        }
     case ERR_FSAL_POSIXDB_NOENT:
       /* object not in the database, add a new entry */
       st = fsal_internal_posixdb_add_entry(p_context->p_conn,
-					   p_fsalname,
-					   p_infofs,
-					   p_parent_dir_handle, p_object_handle);
+                                           p_fsalname,
+                                           p_infofs,
+                                           p_parent_dir_handle, p_object_handle);
       if (FSAL_IS_ERROR(st))
-	return st;
+        return st;
       break;
     default:
       /* error */
       if (FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
-	return st;
+        return st;
     }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -785,17 +785,17 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,	/* IN
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_context,	/* IN */
-						    fsal_handle_t * p_parent_dir_handle,	/* IN */
-						    fsal_name_t * p_fsalname,	/* IN */
-						    fsal_posixdb_fileinfo_t * p_infofs,	/* IN */
-						    fsal_posixdb_child * p_children,	/* IN */
-						    unsigned int children_count,	/* IN */
-						    fsal_handle_t * p_object_handle)	/* OUT */
+fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_context,      /* IN */
+                                                    fsal_handle_t * p_parent_dir_handle,        /* IN */
+                                                    fsal_name_t * p_fsalname,   /* IN */
+                                                    fsal_posixdb_fileinfo_t * p_infofs, /* IN */
+                                                    fsal_posixdb_child * p_children,    /* IN */
+                                                    unsigned int children_count,        /* IN */
+                                                    fsal_handle_t * p_object_handle)    /* OUT */
 {
   fsal_posixdb_status_t stdb;
   fsal_status_t st;
-  int cmp = -1;			/* when no children is available */
+  int cmp = -1;                 /* when no children is available */
   unsigned int count;
 
   /* sanity check */
@@ -808,7 +808,7 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
     {
       cmp = FSAL_namecmp(p_fsalname, &(p_children[count].name));
       if (!cmp)
-	break;
+        break;
       /* maybe a sorted list could give better result */
     }
 
@@ -818,31 +818,31 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
       /* Entry found : check consistency */
 
       if (fsal_posixdb_consistency_check(&(p_children[count].handle.info), p_infofs))
-	{
-	  /* Entry not consistent */
-	  /* Delete the Handle entry, then add a new one (with a Parent entry) */
-	  stdb =
-	      fsal_posixdb_deleteHandle(p_context->p_conn, &(p_children[count].handle));
+        {
+          /* Entry not consistent */
+          /* Delete the Handle entry, then add a new one (with a Parent entry) */
+          stdb =
+              fsal_posixdb_deleteHandle(p_context->p_conn, &(p_children[count].handle));
 
-	  if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
-	    return st;
+          if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
+            return st;
 
-	  /* don't break, add a new entry */
+          /* don't break, add a new entry */
 
-	} else
-	{
-	  memcpy(p_object_handle, &(p_children[count].handle), sizeof(fsal_handle_t));
-	  break;
-	}
+        } else
+        {
+          memcpy(p_object_handle, &(p_children[count].handle), sizeof(fsal_handle_t));
+          break;
+        }
 
     default:
       /* not found ! Add it */
       st = fsal_internal_posixdb_add_entry(p_context->p_conn,
-					   p_fsalname,
-					   p_infofs,
-					   p_parent_dir_handle, p_object_handle);
+                                           p_fsalname,
+                                           p_infofs,
+                                           p_parent_dir_handle, p_object_handle);
       if (FSAL_IS_ERROR(st))
-	return st;
+        return st;
     }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -852,10 +852,10 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
-				       fsal_accessflags_t access_type,	/* IN */
-				       struct stat * p_buffstat,	/* IN */
-				       fsal_attrib_list_t * p_object_attributes /* IN */ )
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+                                       fsal_accessflags_t access_type,  /* IN */
+                                       struct stat * p_buffstat,        /* IN */
+                                       fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
   fsal_accessflags_t missing_access;
   unsigned int is_grp, i;
@@ -904,18 +904,18 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
 #endif
 
       if (mode & FSAL_MODE_RUSR)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (mode & FSAL_MODE_WUSR)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (mode & FSAL_MODE_XUSR)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
-	else
-	ReturnCode(ERR_FSAL_ACCESS, 0);
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        else
+        ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
 
@@ -926,7 +926,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
 # ifdef _DEBUG_FSAL
   if (is_grp)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
-		      p_context->credential.group);
+                      p_context->credential.group);
 # endif
 
   /* Test if file belongs to alt user's groups */
@@ -934,20 +934,20 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
   if (!is_grp)
     {
       for (i = 0; i < p_context->credential.nbgroups; i++)
-	{
-	  is_grp = (p_context->credential.alt_groups[i] == gid);
+        {
+          is_grp = (p_context->credential.alt_groups[i] == gid);
 
 #ifdef _DEBUG_FSAL
-	  if (is_grp)
-	    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			      "File belongs to user's alt group %d",
-			      p_context->credential.alt_groups[i]);
+          if (is_grp)
+            DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+                              "File belongs to user's alt group %d",
+                              p_context->credential.alt_groups[i]);
 #endif
 
-	  // exits loop if found
-	  if (is_grp)
-	    break;
-	}
+          // exits loop if found
+          if (is_grp)
+            break;
+        }
     }
 
   /* finally apply group rights */
@@ -955,18 +955,18 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
   if (is_grp)
     {
       if (mode & FSAL_MODE_RGRP)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (mode & FSAL_MODE_WGRP)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (mode & FSAL_MODE_XGRP)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
-	else
-	ReturnCode(ERR_FSAL_ACCESS, 0);
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        else
+        ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
 

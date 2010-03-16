@@ -123,16 +123,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #ifdef _USE_GSSRPC
@@ -257,22 +257,22 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
   if (!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
     {
       fprintf(stderr,
-	      "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
-	      MNT_List_head, MNT_List_tail);
+              "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.\n",
+              MNT_List_head, MNT_List_tail);
     }
   if (!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
       || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
     {
       fprintf(stderr,
-	      "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
-	      pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
+              "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.\n",
+              pnew_mnt_list_entry->ml_hostname, pnew_mnt_list_entry->ml_directory);
     }
 #endif
 
 #endif
 
   return 1;
-}				/* nfs_Add_MountList_Entry */
+}                               /* nfs_Add_MountList_Entry */
 
 /**
  *
@@ -307,22 +307,22 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 
 #    ifdef _DETECT_MEMCORRUPT
       if (!BuddyCheck(piter_mnt_list_entry)
-	  || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
-	  || !BuddyCheck(piter_mnt_list_entry->ml_directory))
-	{
-	  fprintf(stderr,
-		  "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
-		  piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
-	}
+          || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
+          || !BuddyCheck(piter_mnt_list_entry->ml_directory))
+        {
+          fprintf(stderr,
+                  "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.\n",
+                  piter_mnt_list_entry, MNT_List_head, MNT_List_tail);
+        }
 #    endif
 
       /* BUGAZOMEU: pas de verif sur le path */
       if (!strncmp(piter_mnt_list_entry->ml_hostname, hostname, MAXHOSTNAMELEN)
-	  /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
-	{
-	  found = 1;
-	  break;
-	}
+          /*  && !strncmp( piter_mnt_list_entry->ml_directory, dirpath, MAXPATHLEN ) */ )
+        {
+          found = 1;
+          break;
+        }
 
       piter_mnt_list_entry_prev = piter_mnt_list_entry;
 
@@ -332,13 +332,13 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
     {
       /* remove head item ? */
       if (piter_mnt_list_entry_prev == NULL)
-	MNT_List_head = MNT_List_head->ml_next;
-	else
-	piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next;
+        MNT_List_head = MNT_List_head->ml_next;
+        else
+        piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next;
 
       /* remove tail item ? */
       if (MNT_List_tail == piter_mnt_list_entry)
-	MNT_List_tail = piter_mnt_list_entry_prev;
+        MNT_List_tail = piter_mnt_list_entry_prev;
 
       Mem_Free(piter_mnt_list_entry->ml_hostname);
       Mem_Free(piter_mnt_list_entry->ml_directory);
@@ -352,7 +352,7 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 #endif
 
   return 1;
-}				/* nfs_Remove_MountList_Entry */
+}                               /* nfs_Remove_MountList_Entry */
 
 /**
  *
@@ -393,7 +393,7 @@ int nfs_Purge_MountList(void)
 #endif
 
   return 1;
-}				/* nfs_Purge_MountList */
+}                               /* nfs_Purge_MountList */
 
 /**
  *
@@ -416,7 +416,7 @@ int nfs_Init_MountList(void)
 #endif
 
   return 1;
-}				/* nfs_Init_MountList */
+}                               /* nfs_Init_MountList */
 
 /**
  *
@@ -436,7 +436,7 @@ mountlist nfs_Get_MountList(void)
 #endif
 
   return MNT_List_head;
-}				/* nfs_Get_MountList */
+}                               /* nfs_Get_MountList */
 
 /**
  *
@@ -459,7 +459,7 @@ void nfs_Print_MountList(void)
   for (piter_mnt_list_entry = MNT_List_head;
        piter_mnt_list_entry != NULL; piter_mnt_list_entry = piter_mnt_list_entry->ml_next)
     DisplayLog("Mount List Entry : ml_hostname=%s   ml_directory=%s",
-	       piter_mnt_list_entry->ml_hostname, piter_mnt_list_entry->ml_directory);
+               piter_mnt_list_entry->ml_hostname, piter_mnt_list_entry->ml_directory);
 
   return;
-}				/* nfs_Print_MountList */
+}                               /* nfs_Print_MountList */

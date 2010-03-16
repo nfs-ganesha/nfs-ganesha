@@ -140,7 +140,7 @@ bitmap4 *objp;
     objp->bitmap4_len = 0;
 
   if (!xdr_array(xdrs, (char **)&objp->bitmap4_val, (u_int *) & objp->bitmap4_len, ~0,
-		 sizeof(uint32_t), (xdrproc_t) xdr_uint32_t))
+                 sizeof(uint32_t), (xdrproc_t) xdr_uint32_t))
     return (FALSE);
   return (TRUE);
 }
@@ -315,7 +315,7 @@ pathname4 *objp;
 #endif
 
   if (!xdr_array(xdrs, (char **)&objp->pathname4_val, (u_int *) & objp->pathname4_len, ~0,
-		 sizeof(component4), (xdrproc_t) xdr_component4))
+                 sizeof(component4), (xdrproc_t) xdr_component4))
     return (FALSE);
   return (TRUE);
 }
@@ -499,7 +499,7 @@ settime4 *objp;
     {
     case SET_TO_CLIENT_TIME4:
       if (!xdr_nfstime4(xdrs, &objp->settime4_u.time))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1799,7 +1799,7 @@ ACCESS4res *objp;
     {
     case NFS4_OK:
       if (!xdr_ACCESS4resok(xdrs, &objp->ACCESS4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1840,7 +1840,7 @@ CLOSE4res *objp;
     {
     case NFS4_OK:
       if (!xdr_stateid4(xdrs, &objp->CLOSE4res_u.open_stateid))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1897,7 +1897,7 @@ COMMIT4res *objp;
     {
     case NFS4_OK:
       if (!xdr_COMMIT4resok(xdrs, &objp->COMMIT4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1920,12 +1920,12 @@ createtype4 *objp;
     {
     case NF4LNK:
       if (!xdr_linktext4(xdrs, &objp->createtype4_u.linkdata))
-	return (FALSE);
+        return (FALSE);
       break;
     case NF4BLK:
     case NF4CHR:
       if (!xdr_specdata4(xdrs, &objp->createtype4_u.devdata))
-	return (FALSE);
+        return (FALSE);
       break;
     case NF4SOCK:
     case NF4FIFO:
@@ -1990,7 +1990,7 @@ CREATE4res *objp;
     {
     case NFS4_OK:
       if (!xdr_CREATE4resok(xdrs, &objp->CREATE4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2109,7 +2109,7 @@ GETATTR4res *objp;
     {
     case NFS4_OK:
       if (!xdr_GETATTR4resok(xdrs, &objp->GETATTR4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2148,7 +2148,7 @@ GETFH4res *objp;
     {
     case NFS4_OK:
       if (!xdr_GETFH4resok(xdrs, &objp->GETFH4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2203,7 +2203,7 @@ LINK4res *objp;
     {
     case NFS4_OK:
       if (!xdr_LINK4resok(xdrs, &objp->LINK4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2266,11 +2266,11 @@ locker4 *objp;
     {
     case TRUE:
       if (!xdr_open_to_lock_owner4(xdrs, &objp->locker4_u.open_owner))
-	return (FALSE);
+        return (FALSE);
       break;
     case FALSE:
       if (!xdr_exist_lock_owner4(xdrs, &objp->locker4_u.lock_owner))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2357,11 +2357,11 @@ LOCK4res *objp;
     {
     case NFS4_OK:
       if (!xdr_LOCK4resok(xdrs, &objp->LOCK4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4ERR_DENIED:
       if (!xdr_LOCK4denied(xdrs, &objp->LOCK4res_u.denied))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2406,7 +2406,7 @@ LOCKT4res *objp;
     {
     case NFS4ERR_DENIED:
       if (!xdr_LOCK4denied(xdrs, &objp->LOCKT4res_u.denied))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OK:
       break;
@@ -2455,7 +2455,7 @@ LOCKU4res *objp;
     {
     case NFS4_OK:
       if (!xdr_stateid4(xdrs, &objp->LOCKU4res_u.lock_stateid))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2575,11 +2575,11 @@ createhow4 *objp;
     case UNCHECKED4:
     case GUARDED4:
       if (!xdr_fattr4(xdrs, &objp->createhow4_u.createattrs))
-	return (FALSE);
+        return (FALSE);
       break;
     case EXCLUSIVE4:
       if (!xdr_verifier4(xdrs, objp->createhow4_u.createverf))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2620,7 +2620,7 @@ openflag4 *objp;
     {
     case OPEN4_CREATE:
       if (!xdr_createhow4(xdrs, &objp->openflag4_u.how))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2677,11 +2677,11 @@ nfs_space_limit4 *objp;
     {
     case NFS_LIMIT_SIZE:
       if (!xdr_uint64_t(xdrs, &objp->nfs_space_limit4_u.filesize))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS_LIMIT_BLOCKS:
       if (!xdr_nfs_modified_limit4(xdrs, &objp->nfs_space_limit4_u.mod_blocks))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2756,19 +2756,19 @@ open_claim4 *objp;
     {
     case CLAIM_NULL:
       if (!xdr_component4(xdrs, &objp->open_claim4_u.file))
-	return (FALSE);
+        return (FALSE);
       break;
     case CLAIM_PREVIOUS:
       if (!xdr_open_delegation_type4(xdrs, &objp->open_claim4_u.delegate_type))
-	return (FALSE);
+        return (FALSE);
       break;
     case CLAIM_DELEGATE_CUR:
       if (!xdr_open_claim_delegate_cur4(xdrs, &objp->open_claim4_u.delegate_cur_info))
-	return (FALSE);
+        return (FALSE);
       break;
     case CLAIM_DELEGATE_PREV:
       if (!xdr_component4(xdrs, &objp->open_claim4_u.file_delegate_prev))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2863,11 +2863,11 @@ open_delegation4 *objp;
       break;
     case OPEN_DELEGATE_READ:
       if (!xdr_open_read_delegation4(xdrs, &objp->open_delegation4_u.read))
-	return (FALSE);
+        return (FALSE);
       break;
     case OPEN_DELEGATE_WRITE:
       if (!xdr_open_write_delegation4(xdrs, &objp->open_delegation4_u.write))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2916,7 +2916,7 @@ OPEN4res *objp;
     {
     case NFS4_OK:
       if (!xdr_OPEN4resok(xdrs, &objp->OPEN4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3005,7 +3005,7 @@ OPEN_CONFIRM4res *objp;
     {
     case NFS4_OK:
       if (!xdr_OPEN_CONFIRM4resok(xdrs, &objp->OPEN_CONFIRM4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3066,7 +3066,7 @@ OPEN_DOWNGRADE4res *objp;
     {
     case NFS4_OK:
       if (!xdr_OPEN_DOWNGRADE4resok(xdrs, &objp->OPEN_DOWNGRADE4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3192,7 +3192,7 @@ READ4res *objp;
     {
     case NFS4_OK:
       if (!xdr_READ4resok(xdrs, &objp->READ4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3297,7 +3297,7 @@ READDIR4res *objp;
     {
     case NFS4_OK:
       if (!xdr_READDIR4resok(xdrs, &objp->READDIR4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3336,7 +3336,7 @@ READLINK4res *objp;
     {
     case NFS4_OK:
       if (!xdr_READLINK4resok(xdrs, &objp->READLINK4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3391,7 +3391,7 @@ REMOVE4res *objp;
     {
     case NFS4_OK:
       if (!xdr_REMOVE4resok(xdrs, &objp->REMOVE4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3450,7 +3450,7 @@ RENAME4res *objp;
     {
     case NFS4_OK:
       if (!xdr_RENAME4resok(xdrs, &objp->RENAME4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3589,7 +3589,7 @@ secinfo4 *objp;
     {
     case RPCSEC_GSS:
       if (!xdr_rpcsec_gss_info(xdrs, &objp->secinfo4_u.flavor_info))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3630,7 +3630,7 @@ SECINFO4res *objp;
     {
     case NFS4_OK:
       if (!xdr_SECINFO4resok(xdrs, &objp->SECINFO4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3727,11 +3727,11 @@ SETCLIENTID4res *objp;
     {
     case NFS4_OK:
       if (!xdr_SETCLIENTID4resok(xdrs, &objp->SETCLIENTID4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4ERR_CLID_INUSE:
       if (!xdr_clientaddr4(xdrs, &objp->SETCLIENTID4res_u.client_using))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3879,7 +3879,7 @@ WRITE4res *objp;
     {
     case NFS4_OK:
       if (!xdr_WRITE4resok(xdrs, &objp->WRITE4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3967,79 +3967,79 @@ nfs_argop4 *objp;
     {
     case NFS4_OP_ACCESS:
       if (!xdr_ACCESS4args(xdrs, &objp->nfs_argop4_u.opaccess))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CLOSE:
       if (!xdr_CLOSE4args(xdrs, &objp->nfs_argop4_u.opclose))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_COMMIT:
       if (!xdr_COMMIT4args(xdrs, &objp->nfs_argop4_u.opcommit))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CREATE:
       if (!xdr_CREATE4args(xdrs, &objp->nfs_argop4_u.opcreate))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_DELEGPURGE:
       if (!xdr_DELEGPURGE4args(xdrs, &objp->nfs_argop4_u.opdelegpurge))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_DELEGRETURN:
       if (!xdr_DELEGRETURN4args(xdrs, &objp->nfs_argop4_u.opdelegreturn))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_GETATTR:
       if (!xdr_GETATTR4args(xdrs, &objp->nfs_argop4_u.opgetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_GETFH:
       break;
     case NFS4_OP_LINK:
       if (!xdr_LINK4args(xdrs, &objp->nfs_argop4_u.oplink))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCK:
       if (!xdr_LOCK4args(xdrs, &objp->nfs_argop4_u.oplock))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCKT:
       if (!xdr_LOCKT4args(xdrs, &objp->nfs_argop4_u.oplockt))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCKU:
       if (!xdr_LOCKU4args(xdrs, &objp->nfs_argop4_u.oplocku))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOOKUP:
       if (!xdr_LOOKUP4args(xdrs, &objp->nfs_argop4_u.oplookup))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOOKUPP:
       break;
     case NFS4_OP_NVERIFY:
       if (!xdr_NVERIFY4args(xdrs, &objp->nfs_argop4_u.opnverify))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN:
       if (!xdr_OPEN4args(xdrs, &objp->nfs_argop4_u.opopen))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPENATTR:
       if (!xdr_OPENATTR4args(xdrs, &objp->nfs_argop4_u.opopenattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN_CONFIRM:
       if (!xdr_OPEN_CONFIRM4args(xdrs, &objp->nfs_argop4_u.opopen_confirm))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN_DOWNGRADE:
       if (!xdr_OPEN_DOWNGRADE4args(xdrs, &objp->nfs_argop4_u.opopen_downgrade))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_PUTFH:
       if (!xdr_PUTFH4args(xdrs, &objp->nfs_argop4_u.opputfh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_PUTPUBFH:
       break;
@@ -4047,25 +4047,25 @@ nfs_argop4 *objp;
       break;
     case NFS4_OP_READ:
       if (!xdr_READ4args(xdrs, &objp->nfs_argop4_u.opread))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_READDIR:
       if (!xdr_READDIR4args(xdrs, &objp->nfs_argop4_u.opreaddir))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_READLINK:
       break;
     case NFS4_OP_REMOVE:
       if (!xdr_REMOVE4args(xdrs, &objp->nfs_argop4_u.opremove))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RENAME:
       if (!xdr_RENAME4args(xdrs, &objp->nfs_argop4_u.oprename))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RENEW:
       if (!xdr_RENEW4args(xdrs, &objp->nfs_argop4_u.oprenew))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RESTOREFH:
       break;
@@ -4073,31 +4073,31 @@ nfs_argop4 *objp;
       break;
     case NFS4_OP_SECINFO:
       if (!xdr_SECINFO4args(xdrs, &objp->nfs_argop4_u.opsecinfo))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETATTR:
       if (!xdr_SETATTR4args(xdrs, &objp->nfs_argop4_u.opsetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETCLIENTID:
       if (!xdr_SETCLIENTID4args(xdrs, &objp->nfs_argop4_u.opsetclientid))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETCLIENTID_CONFIRM:
       if (!xdr_SETCLIENTID_CONFIRM4args(xdrs, &objp->nfs_argop4_u.opsetclientid_confirm))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_VERIFY:
       if (!xdr_VERIFY4args(xdrs, &objp->nfs_argop4_u.opverify))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_WRITE:
       if (!xdr_WRITE4args(xdrs, &objp->nfs_argop4_u.opwrite))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RELEASE_LOCKOWNER:
       if (!xdr_RELEASE_LOCKOWNER4args(xdrs, &objp->nfs_argop4_u.oprelease_lockowner))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_ILLEGAL:
       break;
@@ -4124,155 +4124,155 @@ nfs_resop4 *objp;
     {
     case NFS4_OP_ACCESS:
       if (!xdr_ACCESS4res(xdrs, &objp->nfs_resop4_u.opaccess))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CLOSE:
       if (!xdr_CLOSE4res(xdrs, &objp->nfs_resop4_u.opclose))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_COMMIT:
       if (!xdr_COMMIT4res(xdrs, &objp->nfs_resop4_u.opcommit))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CREATE:
       if (!xdr_CREATE4res(xdrs, &objp->nfs_resop4_u.opcreate))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_DELEGPURGE:
       if (!xdr_DELEGPURGE4res(xdrs, &objp->nfs_resop4_u.opdelegpurge))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_DELEGRETURN:
       if (!xdr_DELEGRETURN4res(xdrs, &objp->nfs_resop4_u.opdelegreturn))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_GETATTR:
       if (!xdr_GETATTR4res(xdrs, &objp->nfs_resop4_u.opgetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_GETFH:
       if (!xdr_GETFH4res(xdrs, &objp->nfs_resop4_u.opgetfh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LINK:
       if (!xdr_LINK4res(xdrs, &objp->nfs_resop4_u.oplink))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCK:
       if (!xdr_LOCK4res(xdrs, &objp->nfs_resop4_u.oplock))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCKT:
       if (!xdr_LOCKT4res(xdrs, &objp->nfs_resop4_u.oplockt))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOCKU:
       if (!xdr_LOCKU4res(xdrs, &objp->nfs_resop4_u.oplocku))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOOKUP:
       if (!xdr_LOOKUP4res(xdrs, &objp->nfs_resop4_u.oplookup))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_LOOKUPP:
       if (!xdr_LOOKUPP4res(xdrs, &objp->nfs_resop4_u.oplookupp))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_NVERIFY:
       if (!xdr_NVERIFY4res(xdrs, &objp->nfs_resop4_u.opnverify))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN:
       if (!xdr_OPEN4res(xdrs, &objp->nfs_resop4_u.opopen))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPENATTR:
       if (!xdr_OPENATTR4res(xdrs, &objp->nfs_resop4_u.opopenattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN_CONFIRM:
       if (!xdr_OPEN_CONFIRM4res(xdrs, &objp->nfs_resop4_u.opopen_confirm))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_OPEN_DOWNGRADE:
       if (!xdr_OPEN_DOWNGRADE4res(xdrs, &objp->nfs_resop4_u.opopen_downgrade))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_PUTFH:
       if (!xdr_PUTFH4res(xdrs, &objp->nfs_resop4_u.opputfh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_PUTPUBFH:
       if (!xdr_PUTPUBFH4res(xdrs, &objp->nfs_resop4_u.opputpubfh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_PUTROOTFH:
       if (!xdr_PUTROOTFH4res(xdrs, &objp->nfs_resop4_u.opputrootfh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_READ:
       if (!xdr_READ4res(xdrs, &objp->nfs_resop4_u.opread))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_READDIR:
       if (!xdr_READDIR4res(xdrs, &objp->nfs_resop4_u.opreaddir))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_READLINK:
       if (!xdr_READLINK4res(xdrs, &objp->nfs_resop4_u.opreadlink))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_REMOVE:
       if (!xdr_REMOVE4res(xdrs, &objp->nfs_resop4_u.opremove))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RENAME:
       if (!xdr_RENAME4res(xdrs, &objp->nfs_resop4_u.oprename))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RENEW:
       if (!xdr_RENEW4res(xdrs, &objp->nfs_resop4_u.oprenew))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RESTOREFH:
       if (!xdr_RESTOREFH4res(xdrs, &objp->nfs_resop4_u.oprestorefh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SAVEFH:
       if (!xdr_SAVEFH4res(xdrs, &objp->nfs_resop4_u.opsavefh))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SECINFO:
       if (!xdr_SECINFO4res(xdrs, &objp->nfs_resop4_u.opsecinfo))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETATTR:
       if (!xdr_SETATTR4res(xdrs, &objp->nfs_resop4_u.opsetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETCLIENTID:
       if (!xdr_SETCLIENTID4res(xdrs, &objp->nfs_resop4_u.opsetclientid))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_SETCLIENTID_CONFIRM:
       if (!xdr_SETCLIENTID_CONFIRM4res(xdrs, &objp->nfs_resop4_u.opsetclientid_confirm))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_VERIFY:
       if (!xdr_VERIFY4res(xdrs, &objp->nfs_resop4_u.opverify))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_WRITE:
       if (!xdr_WRITE4res(xdrs, &objp->nfs_resop4_u.opwrite))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_RELEASE_LOCKOWNER:
       if (!xdr_RELEASE_LOCKOWNER4res(xdrs, &objp->nfs_resop4_u.oprelease_lockowner))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_ILLEGAL:
       if (!xdr_ILLEGAL4res(xdrs, &objp->nfs_resop4_u.opillegal))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -4377,7 +4377,7 @@ CB_GETATTR4res *objp;
     {
     case NFS4_OK:
       if (!xdr_CB_GETATTR4resok(xdrs, &objp->CB_GETATTR4res_u.resok4))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -4468,11 +4468,11 @@ nfs_cb_argop4 *objp;
     {
     case NFS4_OP_CB_GETATTR:
       if (!xdr_CB_GETATTR4args(xdrs, &objp->nfs_cb_argop4_u.opcbgetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CB_RECALL:
       if (!xdr_CB_RECALL4args(xdrs, &objp->nfs_cb_argop4_u.opcbrecall))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CB_ILLEGAL:
       break;
@@ -4499,15 +4499,15 @@ nfs_cb_resop4 *objp;
     {
     case NFS4_OP_CB_GETATTR:
       if (!xdr_CB_GETATTR4res(xdrs, &objp->nfs_cb_resop4_u.opcbgetattr))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CB_RECALL:
       if (!xdr_CB_RECALL4res(xdrs, &objp->nfs_cb_resop4_u.opcbrecall))
-	return (FALSE);
+        return (FALSE);
       break;
     case NFS4_OP_CB_ILLEGAL:
       if (!xdr_CB_ILLEGAL4res(xdrs, &objp->nfs_cb_resop4_u.opcbillegal))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);

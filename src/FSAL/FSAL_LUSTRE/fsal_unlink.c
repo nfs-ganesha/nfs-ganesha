@@ -43,10 +43,10 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
-			  fsal_name_t * p_object_name,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_attrib_list_t * p_parent_directory_attributes	/* [IN/OUT ] */
+fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                          fsal_name_t * p_object_name,  /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */
     )
 {
 
@@ -72,9 +72,9 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   if (rc)
     {
       if (errsv == ENOENT)
-	Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
-	else
-	Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
+        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
+        else
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
     }
 
   /* build the child path */
@@ -124,14 +124,14 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   if (p_parent_directory_attributes)
     {
       status =
-	  FSAL_getattrs(p_parent_directory_handle, p_context,
-			p_parent_directory_attributes);
+          FSAL_getattrs(p_parent_directory_handle, p_context,
+                        p_parent_directory_attributes);
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
-			FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
+          FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
+                        FSAL_ATTR_RDATTR_ERR);
+        }
     }
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink);

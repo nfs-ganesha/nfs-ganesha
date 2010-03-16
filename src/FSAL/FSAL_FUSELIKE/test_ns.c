@@ -26,11 +26,11 @@ ns_testset_t testset[] = {
   {ROOT_INODE + 4, ROOT_INODE + 8, "subdir2"},
   {ROOT_INODE + 8, ROOT_INODE + 9, "file1"},
   {ROOT_INODE + 8, ROOT_INODE + 10, "file2"},
-  {ROOT_INODE + 8, ROOT_INODE + 10, "file2.harlink"},	/* same inode = hardlink */
+  {ROOT_INODE + 8, ROOT_INODE + 10, "file2.harlink"},   /* same inode = hardlink */
   {ROOT_INODE, ROOT_INODE + 11, "dir5"},
-  {ROOT_INODE + 11, ROOT_INODE + 10, "file2.hardlink"},	/* same inode = another hardlink */
+  {ROOT_INODE + 11, ROOT_INODE + 10, "file2.hardlink"}, /* same inode = another hardlink */
 
-  {0, 0, NULL}			/* end of list */
+  {0, 0, NULL}                  /* end of list */
 
 };
 
@@ -59,72 +59,72 @@ int main(int argc, char **argv)
 
       /* creation des entrees */
       for (p_test = testset; p_test->name != NULL; p_test++)
-	{
-	  rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
-			    p_test->entry_inode, DEV, &gen);
-	  printf("NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode, p_test->name,
-		 p_test->entry_inode, rc);
-	  if (rc)
-	    exit(1);		/* This is an error */
-	}
+        {
+          rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
+                            p_test->entry_inode, DEV, &gen);
+          printf("NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode, p_test->name,
+                 p_test->entry_inode, rc);
+          if (rc)
+            exit(1);            /* This is an error */
+        }
 
       /* tentative de recreation */
       for (p_test = testset; p_test->name != NULL; p_test++)
-	{
-	  rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
-			    p_test->entry_inode, DEV, &gen);
-	  printf("Redundant NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode,
-		 p_test->name, p_test->entry_inode, rc);
-	  if (rc)
-	    exit(1);		/* This is an error */
-	}
+        {
+          rc = NamespaceAdd(p_test->parent_inode, DEV, gen, p_test->name,
+                            p_test->entry_inode, DEV, &gen);
+          printf("Redundant NamespaceAdd(%lu,%s->%lu) = %d\n", p_test->parent_inode,
+                 p_test->name, p_test->entry_inode, rc);
+          if (rc)
+            exit(1);            /* This is an error */
+        }
 
       /* recolte du chemin complet de root */
 
       rc = NamespacePath(ROOT_INODE, DEV, gen, path);
       if (rc)
-	{
-	  printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE, rc);
-	  exit(1);
-	} else
-	printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE, path);
+        {
+          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE, rc);
+          exit(1);
+        } else
+        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE, path);
 
       /* recolte du chemin complet des entrees */
 
       for (p_test = testset; p_test->name != NULL; p_test++)
-	{
-	  rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
-	  if (rc)
-	    {
-	      printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
-	      exit(1);
-	    } else
-	    printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
-	}
+        {
+          rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
+          if (rc)
+            {
+              printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
+              exit(1);
+            } else
+            printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
+        }
 
       /* on efface les entrees en ordre inverse */
       for (p_test--; p_test >= testset; p_test--)
-	{
-	  rc = NamespaceRemove(p_test->parent_inode, DEV, gen, p_test->name);
-	  printf("NamespaceRemove(%lu,%s) = %d\n", p_test->parent_inode,
-		 p_test->name, rc);
-	}
+        {
+          rc = NamespaceRemove(p_test->parent_inode, DEV, gen, p_test->name);
+          printf("NamespaceRemove(%lu,%s) = %d\n", p_test->parent_inode,
+                 p_test->name, rc);
+        }
 
       /* on essaye d'obtenir leur nom */
       for (p_test = testset; p_test->name != NULL; p_test++)
-	{
-	  rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
-	  if (rc == 0)
-	    {
-	      printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
-	      exit(1);
-	  } else if (rc != ENOENT)
-	    {
-	      printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
-	      exit(1);
-	    } else
-	    printf("NamespacePath(%lu) rc=%d (ENOENT)\n", p_test->entry_inode, rc);
-	}
+        {
+          rc = NamespacePath(p_test->entry_inode, DEV, gen, path);
+          if (rc == 0)
+            {
+              printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
+              exit(1);
+          } else if (rc != ENOENT)
+            {
+              printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
+              exit(1);
+            } else
+            printf("NamespacePath(%lu) rc=%d (ENOENT)\n", p_test->entry_inode, rc);
+        }
     }
 
   /* now create/remove a hardlink to a file N times */
@@ -159,17 +159,17 @@ int main(int argc, char **argv)
 
       rc = NamespaceAdd(ROOT_INODE + 2, DEV, gen, name, ROOT_INODE + 3, DEV, &gen);
       printf("NamespaceAdd(%lu,%s->%lu) = %d\n", ROOT_INODE + 2, name, ROOT_INODE + 3,
-	     rc);
+             rc);
       if (rc)
-	exit(1);
+        exit(1);
 
       rc = NamespacePath(ROOT_INODE + 3, DEV, gen, path);
       if (rc)
-	{
-	  printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
-	  exit(1);
-	} else
-	printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
+        {
+          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
+          exit(1);
+        } else
+        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }
 
@@ -183,15 +183,15 @@ int main(int argc, char **argv)
       rc = NamespaceRemove(ROOT_INODE + 2, DEV, gen, name);
       printf("NamespaceRemove(%lu,%s) = %d\n", ROOT_INODE + 2, name, rc);
       if (rc)
-	exit(1);
+        exit(1);
 
       rc = NamespacePath(ROOT_INODE + 3, DEV, gen, path);
       if (rc)
-	{
-	  printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
-	  exit(1);
-	} else
-	printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
+        {
+          printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
+          exit(1);
+        } else
+        printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }
 

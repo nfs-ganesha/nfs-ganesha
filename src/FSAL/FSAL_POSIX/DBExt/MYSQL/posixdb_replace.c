@@ -9,12 +9,12 @@
 #include "posixdb_internal.h"
 #include <string.h>
 
-fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
-					   fsal_posixdb_fileinfo_t * p_object_info,	/* IN */
-					   fsal_handle_t * p_parent_directory_handle_old,	/* IN */
-					   fsal_name_t * p_filename_old,	/* IN */
-					   fsal_handle_t * p_parent_directory_handle_new,	/* IN */
-					   fsal_name_t * p_filename_new /* IN */ )
+fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
+                                           fsal_posixdb_fileinfo_t * p_object_info,     /* IN */
+                                           fsal_handle_t * p_parent_directory_handle_old,       /* IN */
+                                           fsal_name_t * p_filename_old,        /* IN */
+                                           fsal_handle_t * p_parent_directory_handle_new,       /* IN */
+                                           fsal_name_t * p_filename_new /* IN */ )
 {
   result_handle_t res;
   fsal_posixdb_status_t st;
@@ -46,53 +46,53 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
   /* check if info is in cache or if this info is inconsistent */
   if (!fsal_posixdb_GetInodeCache(p_parent_directory_handle_old)
       || fsal_posixdb_consistency_check(&(p_parent_directory_handle_old->info),
-					p_object_info))
+                                        p_object_info))
     {
       snprintf(query, 4096,
-	       "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
-	       "Handle.nlink, Handle.ctime, Handle.ftype "
-	       "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid "
-	       "AND Parent.handlets=Handle.handlets "
-	       "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-	       p_parent_directory_handle_old->id, p_parent_directory_handle_old->ts,
-	       p_filename_old->name);
+               "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
+               "Handle.nlink, Handle.ctime, Handle.ftype "
+               "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid "
+               "AND Parent.handlets=Handle.handlets "
+               "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
+               p_parent_directory_handle_old->id, p_parent_directory_handle_old->ts,
+               p_filename_old->name);
 
       st = db_exec_sql(p_conn, query, &res);
       if (FSAL_POSIXDB_IS_ERROR(st))
-	goto rollback;
+        goto rollback;
 
       if (mysql_num_rows(res) != 1)
-	{
-	  /* parent entry not found */
-	  mysql_free_result(res);
-	  RollbackTransaction(p_conn);
-	  ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
-	}
+        {
+          /* parent entry not found */
+          mysql_free_result(res);
+          RollbackTransaction(p_conn);
+          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+        }
 
       row = mysql_fetch_row(res);
       if (!row)
-	{
-	  /* Error */
-	  mysql_free_result(res);
-	  RollbackTransaction(p_conn);
-	  ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
-	}
+        {
+          /* Error */
+          mysql_free_result(res);
+          RollbackTransaction(p_conn);
+          ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+        }
 
       /* fill 'infodb' with information about the handle in the database */
       posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle_old->info),
-						 row[2], row[3], row[4], row[5], row[6]);
+                                                 row[2], row[3], row[4], row[5], row[6]);
 
       /* check consistency */
 
       if (fsal_posixdb_consistency_check
-	  (&(p_parent_directory_handle_old->info), p_object_info))
-	{
-	  DisplayLog("Consistency check failed while renaming a file : Handle deleted");
-	  st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
-					    FSAL_TYPE_DIR);
-	  mysql_free_result(res);
-	  return EndTransaction(p_conn);
-	}
+          (&(p_parent_directory_handle_old->info), p_object_info))
+        {
+          DisplayLog("Consistency check failed while renaming a file : Handle deleted");
+          st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
+                                            FSAL_TYPE_DIR);
+          mysql_free_result(res);
+          return EndTransaction(p_conn);
+        }
 
       mysql_free_result(res);
     }
@@ -113,12 +113,12 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
   /* Remove target entry if it exists */
 
   snprintf(query, 4096,
-	   "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
-	   "Handle.nlink, Handle.ctime, Handle.ftype "
-	   "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
-	   "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
-	   p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts,
-	   p_filename_new->name);
+           "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
+           "Handle.nlink, Handle.ctime, Handle.ftype "
+           "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
+           "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
+           p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts,
+           p_filename_new->name);
 
   st = db_exec_sql(p_conn, query, &res);
   if (FSAL_POSIXDB_IS_ERROR(st))
@@ -128,23 +128,23 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
     {
       row = mysql_fetch_row(res);
       if (!row)
-	{
-	  /* Error */
-	  mysql_free_result(res);
-	  RollbackTransaction(p_conn);
-	  ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
-	}
+        {
+          /* Error */
+          mysql_free_result(res);
+          RollbackTransaction(p_conn);
+          ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+        }
 
       st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]),
-				     p_parent_directory_handle_new->id,
-				     p_parent_directory_handle_new->ts,
-				     p_filename_new->name, atoi(row[4]) /* nlink */ );
+                                     p_parent_directory_handle_new->id,
+                                     p_parent_directory_handle_new->ts,
+                                     p_filename_new->name, atoi(row[4]) /* nlink */ );
 
       if (FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
-	{
-	  mysql_free_result(res);
-	  goto rollback;
-	}
+        {
+          mysql_free_result(res);
+          goto rollback;
+        }
 
     }
 
@@ -159,90 +159,90 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
       fsal_posixdb_InvalidateCache();
 
       snprintf(query, 4096, "UPDATE Parent "
-	       "SET handleidparent=%llu, handletsparent=%u, name='%s' "
-	       "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' ",
-	       p_parent_directory_handle_new->id,
-	       p_parent_directory_handle_new->ts,
-	       p_filename_new->name,
-	       p_parent_directory_handle_old->id,
-	       p_parent_directory_handle_old->ts, p_filename_old->name);
+               "SET handleidparent=%llu, handletsparent=%u, name='%s' "
+               "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' ",
+               p_parent_directory_handle_new->id,
+               p_parent_directory_handle_new->ts,
+               p_filename_new->name,
+               p_parent_directory_handle_old->id,
+               p_parent_directory_handle_old->ts, p_filename_old->name);
 
       st = db_exec_sql(p_conn, query, NULL);
 
       if (!FSAL_POSIXDB_IS_ERROR(st))
-	{
-	  /* how many rows updated ? */
+        {
+          /* how many rows updated ? */
 
-	  if (mysql_affected_rows(&p_conn->db_conn) == 1)
-	    {
-	      /* there was 1 update */
-	      st.major = ERR_FSAL_POSIXDB_NOERR;
-	      st.minor = 0;
-	    } else
-	    {
-	      /* no row updated */
-	      st.major = ERR_FSAL_POSIXDB_NOENT;
-	      st.minor = 0;
-	    }
-	} else
-	{
-	  /* error (switch on MySQL status) */
+          if (mysql_affected_rows(&p_conn->db_conn) == 1)
+            {
+              /* there was 1 update */
+              st.major = ERR_FSAL_POSIXDB_NOERR;
+              st.minor = 0;
+            } else
+            {
+              /* no row updated */
+              st.major = ERR_FSAL_POSIXDB_NOENT;
+              st.minor = 0;
+            }
+        } else
+        {
+          /* error (switch on MySQL status) */
 
-	  switch (st.minor)
-	    {
-	    case ER_NO_REFERENCED_ROW:
-	      /* Foreign key violation : new parentdir does not exist, do nothing */
-	      st.major = ERR_FSAL_POSIXDB_NOENT;
-	      st.minor = st.minor;
-	      break;
+          switch (st.minor)
+            {
+            case ER_NO_REFERENCED_ROW:
+              /* Foreign key violation : new parentdir does not exist, do nothing */
+              st.major = ERR_FSAL_POSIXDB_NOENT;
+              st.minor = st.minor;
+              break;
 
-	    case ER_DUP_UNIQUE:
-	      /* Unique violation : there is already a file with the same name in parentdir_new */
-	      /* Delete the existing entry, and then do the update again */
+            case ER_DUP_UNIQUE:
+              /* Unique violation : there is already a file with the same name in parentdir_new */
+              /* Delete the existing entry, and then do the update again */
 
-	      snprintf(query, 4096,
-		       "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
-		       "Handle.nlink, Handle.ctime, Handle.ftype "
-		       "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
-		       "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
-		       p_parent_directory_handle_new->id,
-		       p_parent_directory_handle_new->ts, p_filename_new->name);
+              snprintf(query, 4096,
+                       "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, "
+                       "Handle.nlink, Handle.ctime, Handle.ftype "
+                       "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
+                       "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' FOR UPDATE",
+                       p_parent_directory_handle_new->id,
+                       p_parent_directory_handle_new->ts, p_filename_new->name);
 
-	      st = db_exec_sql(p_conn, query, &res);
-	      if (FSAL_POSIXDB_IS_ERROR(st))
-		goto rollback;
+              st = db_exec_sql(p_conn, query, &res);
+              if (FSAL_POSIXDB_IS_ERROR(st))
+                goto rollback;
 
-	      if (mysql_num_rows(res) > 0)
-		{
-		  row = mysql_fetch_row(res);
-		  if (!row)
-		    {
-		      /* Error */
-		      mysql_free_result(res);
-		      RollbackTransaction(p_conn);
-		      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
-		    }
+              if (mysql_num_rows(res) > 0)
+                {
+                  row = mysql_fetch_row(res);
+                  if (!row)
+                    {
+                      /* Error */
+                      mysql_free_result(res);
+                      RollbackTransaction(p_conn);
+                      ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+                    }
 
-		  st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts, p_filename_new->name, atoi(row[4]));	/* nlink */
+                  st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]), atoi(row[1]), p_parent_directory_handle_new->id, p_parent_directory_handle_new->ts, p_filename_new->name, atoi(row[4]));        /* nlink */
 
-		  if (FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
-		    {
-		      mysql_free_result(res);
-		      break;
-		    }
-		}
+                  if (FSAL_POSIXDB_IS_ERROR(st) && !FSAL_POSIXDB_IS_NOENT(st))
+                    {
+                      mysql_free_result(res);
+                      break;
+                    }
+                }
 
-	      mysql_free_result(res);
+              mysql_free_result(res);
 
-	      /* the entry has been deleted, the update can now be done */
-	      re_update = TRUE;
+              /* the entry has been deleted, the update can now be done */
+              re_update = TRUE;
 
-	      break;
+              break;
 
-	    default:		/* keep error code as it is => do nothing */
-	      ;
-	    }
-	}
+            default:           /* keep error code as it is => do nothing */
+              ;
+            }
+        }
 
     }
   while (re_update);

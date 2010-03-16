@@ -82,7 +82,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -227,14 +227,14 @@ nlm_lock_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock, int exclusive, int s
       continue;
     if (state == NLM4_GRANTED)
       {
-	/*
-	 * We don't check the below flag when looking for
-	 * lock in the lock list with state granted. Lookup
-	 * with state granted happens for unlock operation
-	 * and RFC says it should only match caller_name, fh,oh
-	 * and svid
-	 */
-	break;
+        /*
+         * We don't check the below flag when looking for
+         * lock in the lock list with state granted. Lookup
+         * with state granted happens for unlock operation
+         * and RFC says it should only match caller_name, fh,oh
+         * and svid
+         */
+        break;
       }
     if (nlmb->offset != nlm_lock->l_offset)
       continue;
@@ -295,7 +295,7 @@ void nlm_delete_lock_entry(nlm_lock_t * nlmb, struct nlm4_lock *nlm_lock)
       /* FIXME handle error */
       nlmb_right->offset = nlm_lock->l_offset + nlm_lock->l_len;
       nlmb_right->len = (nlmb->offset + nlmb->len) -
-	  (nlm_lock->l_offset + nlm_lock->l_len);
+          (nlm_lock->l_offset + nlm_lock->l_len);
     }
   /* Delete the old entry and add the two new entries */
   nlm_remove_from_locklist(nlmb);

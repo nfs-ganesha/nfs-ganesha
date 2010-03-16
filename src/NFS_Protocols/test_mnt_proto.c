@@ -94,8 +94,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include <sys/socket.h>		/* For getsockname */
+#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/socket.h>         /* For getsockname */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -139,10 +139,10 @@ void print_export_list(exports export_list)
 
       p_group = p_expnode->ex_groups;
       while (p_group)
-	{
-	  printf("  \"%s\"\n", p_group->gr_name);
-	  p_group = p_group->gr_next;
-	}
+        {
+          printf("  \"%s\"\n", p_group->gr_name);
+          p_group = p_group->gr_next;
+        }
       printf("}\n\n");
 
       p_expnode = p_expnode->ex_next;
@@ -240,66 +240,66 @@ int test_mnt_Export()
 
       /* linking to the next element. */
       if ((i + 1) < NB_EXPORT_ENTRIES)
-	export_entries[i].next = &(export_entries[i + 1]);
-	else
-	export_entries[i].next = NULL;
+        export_entries[i].next = &(export_entries[i + 1]);
+        else
+        export_entries[i].next = NULL;
 
       /* tests several clients list type */
       switch (i % 4)
-	{
+        {
 
-	case 0:
-	  /* empty list */
-	  export_entries[i].clients.num_clients = 0;
-	  break;
+        case 0:
+          /* empty list */
+          export_entries[i].clients.num_clients = 0;
+          break;
 
-	case 1:
+        case 1:
 
-	  /* one element list */
-	  export_entries[i].clients.num_clients = 1;
-	  p_cli[0].type = HOSTIF_CLIENT;
-	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
-	  break;
+          /* one element list */
+          export_entries[i].clients.num_clients = 1;
+          p_cli[0].type = HOSTIF_CLIENT;
+          p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+          break;
 
-	case 2:
+        case 2:
 
-	  /* two elements list */
-	  export_entries[i].clients.num_clients = 2;
+          /* two elements list */
+          export_entries[i].clients.num_clients = 2;
 
-	  p_cli[0].type = HOSTIF_CLIENT;
-	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+          p_cli[0].type = HOSTIF_CLIENT;
+          p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
 
-	  p_cli[1].type = NETGROUP_CLIENT;
-	  strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
+          p_cli[1].type = NETGROUP_CLIENT;
+          strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
 
-	  break;
+          break;
 
-	case 3:
-	  /* several elements list */
+        case 3:
+          /* several elements list */
 
-	  export_entries[i].clients.num_clients = 5;
+          export_entries[i].clients.num_clients = 5;
 
-	  p_cli[0].type = HOSTIF_CLIENT;
-	  p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
+          p_cli[0].type = HOSTIF_CLIENT;
+          p_cli[0].client.hostif.clientaddr = addr.sin_addr.s_addr;
 
-	  p_cli[1].type = NETGROUP_CLIENT;
-	  strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
+          p_cli[1].type = NETGROUP_CLIENT;
+          strcpy(p_cli[1].client.netgroup.netgroupname, "netgroup");
 
-	  p_cli[2].type = WILDCARDHOST_CLIENT;
-	  strcpy(p_cli[2].client.wildcard.wildcard, "wilcard");
+          p_cli[2].type = WILDCARDHOST_CLIENT;
+          strcpy(p_cli[2].client.wildcard.wildcard, "wilcard");
 
-	  p_cli[3].type = GSSPRINCIPAL_CLIENT;
-	  strcpy(p_cli[3].client.gssprinc.princname, "gssprincipal");
+          p_cli[3].type = GSSPRINCIPAL_CLIENT;
+          strcpy(p_cli[3].client.gssprinc.princname, "gssprincipal");
 
-	  p_cli[4].type = NETWORK_CLIENT;
-	  p_cli[4].client.network.netaddr = addr.sin_addr.s_addr;
-	  p_cli[4].client.network.netmask = 0xFFFFFF00;
+          p_cli[4].type = NETWORK_CLIENT;
+          p_cli[4].client.network.netaddr = addr.sin_addr.s_addr;
+          p_cli[4].client.network.netmask = 0xFFFFFF00;
 
-	  break;
-	default:
-	  printf("!!!!!***** TEST ERROR *****!!!!!\n");
-	  return -1;
-	}
+          break;
+        default:
+          printf("!!!!!***** TEST ERROR *****!!!!!\n");
+          return -1;
+        }
 
     }
 

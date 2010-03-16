@@ -23,10 +23,10 @@
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN */
-					       fsal_handle_t * p_parent_directory_handle,	/* IN */
-					       unsigned int max_count, fsal_posixdb_child ** p_children,	/* OUT */
-					       unsigned int *p_count /* OUT */ )
+fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      /* IN */
+                                               fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                               unsigned int max_count, fsal_posixdb_child ** p_children,        /* OUT */
+                                               unsigned int *p_count /* OUT */ )
 {
   PGresult *p_res;
   char handleid_str[MAX_HANDLEIDSTR_SIZE], handlets_str[MAX_HANDLETSSTR_SIZE];
@@ -57,7 +57,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
     {
       *p_children = NULL;
       DisplayLog("Children count %u exceed max_count %u in fsal_posixdb_getChildren",
-		 *p_count, max_count);
+                 *p_count, max_count);
       ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
     }
 
@@ -83,11 +83,11 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
       (*p_children)[i].handle.id = atoll(pq_id);
       (*p_children)[i].handle.ts = atoi(pq_ts);
       posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.info),
-						 PQgetvalue(p_res, i, 4),
-						 PQgetvalue(p_res, i, 3),
-						 PQgetvalue(p_res, i, 5),
-						 PQgetvalue(p_res, i, 6),
-						 PQgetvalue(p_res, i, 7));
+                                                 PQgetvalue(p_res, i, 4),
+                                                 PQgetvalue(p_res, i, 3),
+                                                 PQgetvalue(p_res, i, 5),
+                                                 PQgetvalue(p_res, i, 6),
+                                                 PQgetvalue(p_res, i, 7));
     }
   PQclear(p_res);
 

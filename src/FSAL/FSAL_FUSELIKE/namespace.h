@@ -25,7 +25,7 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen);
  *         
  */
 int NamespaceAdd(ino_t parent_ino, dev_t parent_dev, unsigned int gen,
-		 char *name, ino_t entry_ino, dev_t entry_dev, unsigned int *p_new_gen);
+                 char *name, ino_t entry_ino, dev_t entry_dev, unsigned int *p_new_gen);
 
 /* Remove a child entry
  * \return ENOENT if directoy inode is unknown
@@ -38,8 +38,8 @@ int NamespaceRemove(ino_t parent_ino, dev_t parent_dev, unsigned int gen, char *
  * \return ESTALE if directoy gen number is not correct
  */
 int NamespaceRename(ino_t parent_entry_src, dev_t src_dev, unsigned int srcgen,
-		    char *name_src, ino_t parent_entry_tgt, dev_t tgt_dev,
-		    unsigned int tgtgen, char *name_tgt);
+                    char *name_src, ino_t parent_entry_tgt, dev_t tgt_dev,
+                    unsigned int tgtgen, char *name_tgt);
 
 /**
  * Get a possible full path for an entry.

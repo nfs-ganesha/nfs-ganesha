@@ -120,10 +120,10 @@
  *
  */
 cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
-				      hash_table_t * ht,
-				      cache_inode_client_t * pclient,
-				      fsal_op_context_t * pcontext,
-				      cache_inode_status_t * pstatus, int use_mutex)
+                                      hash_table_t * ht,
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t * pcontext,
+                                      cache_inode_status_t * pstatus, int use_mutex)
 {
   cache_entry_t *pentry_parent = NULL;
   fsal_status_t fsal_status;
@@ -151,7 +151,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
   if (pentry->internal_md.type != DIR_BEGINNING)
     {
       if (use_mutex)
-	V(pentry->lock);
+        V(pentry->lock);
       *pstatus = CACHE_INODE_BAD_TYPE;
 
       /* stats */
@@ -178,67 +178,67 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* NO, the parent is not cached, query FSAL to get it and cache the result */
       object_attributes.asked_attributes = pclient->attrmask;
       fsal_status =
-	  FSAL_lookup(&pentry->object.dir_begin.handle, &FSAL_DOT_DOT, pcontext,
-		      &fsdata.handle, &object_attributes);
+          FSAL_lookup(&pentry->object.dir_begin.handle, &FSAL_DOT_DOT, pcontext,
+                      &fsdata.handle, &object_attributes);
 
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  *pstatus = cache_inode_error_convert(fsal_status);
-	  if (use_mutex)
-	    V(pentry->lock);
+        {
+          *pstatus = cache_inode_error_convert(fsal_status);
+          if (use_mutex)
+            V(pentry->lock);
 
-	  /* Stale File Handle to be detected and managed */
-	  if (fsal_status.major == ERR_FSAL_STALE)
-	    {
-	      cache_inode_status_t kill_status;
+          /* Stale File Handle to be detected and managed */
+          if (fsal_status.major == ERR_FSAL_STALE)
+            {
+              cache_inode_status_t kill_status;
 
-	      DisplayLog("cache_inode_lookupp: Stale FSAL FH detected for pentry %p",
-			 pentry);
+              DisplayLog("cache_inode_lookupp: Stale FSAL FH detected for pentry %p",
+                         pentry);
 
-	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_lookupp: Could not kill entry %p, status = %u",
-			   pentry, kill_status);
+              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_lookupp: Could not kill entry %p, status = %u",
+                           pentry, kill_status);
 
-	      *pstatus = CACHE_INODE_FSAL_ESTALE;
-	    }
+              *pstatus = CACHE_INODE_FSAL_ESTALE;
+            }
 
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
 
-	  return NULL;
-	}
+          return NULL;
+        }
 
       /* Call cache_inode_get to populate the cache with the parent entry */
       fsdata.cookie = 0;
 
       if ((pentry_parent = cache_inode_get(&fsdata,
-					   &object_attributes,
-					   ht, pclient, pcontext, pstatus)) == NULL)
-	{
-	  if (use_mutex)
-	    V(pentry->lock);
+                                           &object_attributes,
+                                           ht, pclient, pcontext, pstatus)) == NULL)
+        {
+          if (use_mutex)
+            V(pentry->lock);
 
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
 
-	  return NULL;
-	}
+          return NULL;
+        }
 
       /* Entry should not be a dead entry */
       /* At this point, getting a dead entry means a strong incoherency in the md cache */
       if (pentry_parent->async_health != CACHE_INODE_ASYNC_STAYING_ALIVE)
-	{
-	  DisplayLog
-	      ("cache_inode_lookupp: /!\\ MAJOR INCOHERENCY in the write-back md cache, parent is dead while entry is not dead...");
-	  if (use_mutex)
-	    V(pentry->lock);
+        {
+          DisplayLog
+              ("cache_inode_lookupp: /!\\ MAJOR INCOHERENCY in the write-back md cache, parent is dead while entry is not dead...");
+          if (use_mutex)
+            V(pentry->lock);
 
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
 
-	  return NULL;
-	}
+          return NULL;
+        }
     }
 
   *pstatus = cache_inode_valid(pentry_parent, CACHE_INODE_OP_GET, pclient);
@@ -252,7 +252,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
     pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUPP] += 1;
 
   return pentry_parent;
-}				/* cache_inode_lookupp_sw */
+}                               /* cache_inode_lookupp_sw */
 
 /**
  *
@@ -271,13 +271,13 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
  *
  */
 cache_entry_t *cache_inode_lookupp(cache_entry_t * pentry,
-				   hash_table_t * ht,
-				   cache_inode_client_t * pclient,
-				   fsal_op_context_t * pcontext,
-				   cache_inode_status_t * pstatus)
+                                   hash_table_t * ht,
+                                   cache_inode_client_t * pclient,
+                                   fsal_op_context_t * pcontext,
+                                   cache_inode_status_t * pstatus)
 {
   return cache_inode_lookupp_sw(pentry, ht, pclient, pcontext, pstatus, TRUE);
-}				/* cache_inode_lookupp_sw */
+}                               /* cache_inode_lookupp_sw */
 
 /**
  *
@@ -296,10 +296,10 @@ cache_entry_t *cache_inode_lookupp(cache_entry_t * pentry,
  *
  */
 cache_entry_t *cache_inode_lookupp_no_mutex(cache_entry_t * pentry,
-					    hash_table_t * ht,
-					    cache_inode_client_t * pclient,
-					    fsal_op_context_t * pcontext,
-					    cache_inode_status_t * pstatus)
+                                            hash_table_t * ht,
+                                            cache_inode_client_t * pclient,
+                                            fsal_op_context_t * pcontext,
+                                            cache_inode_status_t * pstatus)
 {
   return cache_inode_lookupp_sw(pentry, ht, pclient, pcontext, pstatus, FALSE);
-}				/* cache_inode_lookupp_no_mutex */
+}                               /* cache_inode_lookupp_no_mutex */

@@ -180,4 +180,4 @@ typedef struct fs_specific_initinfo__ {
 
 typedef void *fsal_lockdesc_t;
 
-#endif				/* _FSAL_TYPES_SPECIFIC_H */
+#endif                          /* _FSAL_TYPES_SPECIFIC_H */

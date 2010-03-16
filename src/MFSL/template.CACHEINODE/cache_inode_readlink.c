@@ -101,10 +101,10 @@
 #include <time.h>
 #include <pthread.h>
 
-cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * plink_content, hash_table_t * ht,	/* Unused, kept for protototype's homogeneity */
-					  cache_inode_client_t * pclient,
-					  fsal_op_context_t * pcontext,
-					  cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * plink_content, hash_table_t * ht,       /* Unused, kept for protototype's homogeneity */
+                                          cache_inode_client_t * pclient,
+                                          fsal_op_context_t * pcontext,
+                                          cache_inode_status_t * pstatus)
 {
   fsal_status_t fsal_status;
 
@@ -112,7 +112,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   if (pentry == NULL || pclient == NULL || pcontext == NULL || pstatus == NULL)
     {
       if (pstatus != NULL)
-	*pstatus = CACHE_INODE_INVALID_ARGUMENT;
+        *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return CACHE_INODE_INVALID_ARGUMENT;
     }
 
@@ -162,30 +162,30 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
     case SYMBOLIC_LINK:
       fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink.content));
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  *pstatus = cache_inode_error_convert(fsal_status);
-	  V(pentry->lock);
+        {
+          *pstatus = cache_inode_error_convert(fsal_status);
+          V(pentry->lock);
 
-	  if (fsal_status.major == ERR_FSAL_STALE)
-	    {
-	      cache_inode_status_t kill_status;
+          if (fsal_status.major == ERR_FSAL_STALE)
+            {
+              cache_inode_status_t kill_status;
 
-	      DisplayLog
-		  ("cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p",
-		   pentry);
+              DisplayLog
+                  ("cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p",
+                   pentry);
 
-	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_readlink: Could not kill entry %p, status = %u",
-			   pentry, kill_status);
+              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_readlink: Could not kill entry %p, status = %u",
+                           pentry, kill_status);
 
-	      *pstatus = CACHE_INODE_FSAL_ESTALE;
-	    }
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK] += 1;
+              *pstatus = CACHE_INODE_FSAL_ESTALE;
+            }
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READLINK] += 1;
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       break;
     }
@@ -201,4 +201,4 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
     pclient->stat.func_stats.nb_success[CACHE_INODE_READLINK] += 1;
 
   return *pstatus;
-}				/* cache_inode_readlink */
+}                               /* cache_inode_readlink */

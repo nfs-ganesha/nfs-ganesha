@@ -25,31 +25,31 @@ int fsal2hpss_testperm(fsal_accessflags_t testperm);
  * using hpss handle and hpss attributes.
  */
 fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
-				   hpss_Attrs_t * p_hpss_attr_in,
-				   fsal_attrib_list_t * p_fsalattr_out);
+                                   hpss_Attrs_t * p_hpss_attr_in,
+                                   fsal_attrib_list_t * p_fsalattr_out);
 
 /*
  * 
  */
 fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
-					fsal_attrib_list_t * p_fsalattr_out);
+                                        fsal_attrib_list_t * p_fsalattr_out);
 
 /** converts HPSS access mode to FSAL mode */
 fsal_accessmode_t hpss2fsal_mode(unsigned32 uid_bit,
-				 unsigned32 gid_bit,
-				 unsigned32 sticky_bit,
-				 unsigned32 user_perms,
-				 unsigned32 group_perms, unsigned32 other_perms);
+                                 unsigned32 gid_bit,
+                                 unsigned32 sticky_bit,
+                                 unsigned32 user_perms,
+                                 unsigned32 group_perms, unsigned32 other_perms);
 
 /** converts HPSS access mode to FSAL mode */
 void fsal2hpss_mode(fsal_accessmode_t fsal_mode,
 #if HPSS_MAJOR_VERSION < 7
-		    unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit,
+                    unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit,
 #else
-		    unsigned32 * mode_perms,
+                    unsigned32 * mode_perms,
 #endif
-		    unsigned32 * user_perms,
-		    unsigned32 * group_perms, unsigned32 * other_perms);
+                    unsigned32 * user_perms,
+                    unsigned32 * group_perms, unsigned32 * other_perms);
 
 /** converts FSAL access mode to unix mode. */
 mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode);
@@ -71,9 +71,9 @@ fsal_fsid_t hpss2fsal_fsid(u_signed64 hpss_fsid_in);
 
 /** converts fsal attrib list to hpss attrib list and attributes values */
 fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
-				  fsal_attrib_list_t * p_attrib_set,
-				  hpss_fileattrbits_t * p_hpss_attrmask,
-				  hpss_Attrs_t * p_hpss_attrs);
+                                  fsal_attrib_list_t * p_attrib_set,
+                                  hpss_fileattrbits_t * p_hpss_attrmask,
+                                  hpss_Attrs_t * p_hpss_attrs);
 
 /**
  * hpss2fsal_time:

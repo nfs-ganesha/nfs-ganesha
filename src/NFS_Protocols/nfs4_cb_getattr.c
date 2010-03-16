@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -142,7 +142,7 @@ extern nfs_parameter_t nfs_param;
  */
 
 int nfs4_cb_getattr(struct nfs_cb_argop4 *op,
-		    compound_data_t * data, struct nfs_cb_resop4 *resp)
+                    compound_data_t * data, struct nfs_cb_resop4 *resp)
 {
   return NFS4_OK;
-}				/* nfs4_cb_getattr */
+}                               /* nfs4_cb_getattr */

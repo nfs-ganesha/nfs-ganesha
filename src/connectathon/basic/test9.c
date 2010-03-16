@@ -34,9 +34,9 @@
 #include <sys/mount.h>
 #else
 #include <sys/vfs.h>
-#endif				/* OSF1 || BSD */
-#endif				/* SVR4 */
-#endif				/* DOSorWIN32 */
+#endif                          /* OSF1 || BSD */
+#endif                          /* SVR4 */
+#endif                          /* DOSorWIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,9 +52,9 @@
 #include "tests.h"
 #include "Connectathon_config_parsing.h"
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
 
 static void usage()
 {
@@ -67,7 +67,7 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-  int count;			/* times to do statfs call */
+  int count;                    /* times to do statfs call */
   int ct;
   struct timeval time;
 #ifdef SVR4
@@ -90,32 +90,32 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* No Test Directory create */
-	      Nflag++;
-	      break;
+            case 'n':          /* No Test Directory create */
+              Nflag++;
+              break;
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 9 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -157,8 +157,8 @@ int main(int argc, char *argv[])
   if (b->count == -1)
     {
       fprintf(stderr,
-	      "Missing 'count' parameter in the config file '%s' for the basic test number 9\n",
-	      config_file);
+              "Missing 'count' parameter in the config file '%s' for the basic test number 9\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -190,21 +190,21 @@ int main(int argc, char *argv[])
     {
 #ifdef SVR4
       if (statvfs(".", &sfsb) < 0)
-	{
-	  error("can't do statvfs on \".\"");
-	  exit(1);
-	}
+        {
+          error("can't do statvfs on \".\"");
+          exit(1);
+        }
 #else
 #ifdef SVR3
       if (statfs(".", &sfsb, sizeof(sfsb), 0) < 0)
-	{
+        {
 #else
       if (statfs(".", &sfsb) < 0)
-	{
+        {
 #endif
-	  error("can't do statfs on \".\"");
-	  exit(1);
-	}
+          error("can't do statfs on \".\"");
+          exit(1);
+        }
 #endif
     }
   endtime(&time);
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
   if (Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
-	      (long)time.tv_sec, (long)time.tv_usec / 10000);
+              (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
       complete();
     }
   fprintf(log, "b9\t%d\t%ld.%02ld\n", count, (long)time.tv_sec,
-	  (long)time.tv_usec / 10000);
+          (long)time.tv_usec / 10000);
   fclose(log);
 
   complete();

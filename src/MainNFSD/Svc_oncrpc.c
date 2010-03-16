@@ -27,7 +27,7 @@ typedef unsigned long u_long;
 SVCXPRT **Xports;
 
 #define NULL_SVC ((struct svc_callout *)0)
-#define	RQCRED_SIZE	400	/* this size is excessive */
+#define	RQCRED_SIZE	400     /* this size is excessive */
 
 #define max(a, b) (a > b ? a : b)
 
@@ -106,11 +106,11 @@ void Xprt_unregister(SVCXPRT * xprt)
 
       FD_CLR(sock, &Svc_fdset);
       if (sock == mysvc_maxfd)
-	{
-	  for (mysvc_maxfd--; mysvc_maxfd >= 0; mysvc_maxfd--)
-	    if (Xports[mysvc_maxfd])
-	      break;
-	}
+        {
+          for (mysvc_maxfd--; mysvc_maxfd >= 0; mysvc_maxfd--)
+            if (Xports[mysvc_maxfd])
+              break;
+        }
     }
 }
 
@@ -124,7 +124,7 @@ void Xprt_unregister(SVCXPRT * xprt)
 /*  */
 
 bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
-		    int protocol)
+                    int protocol)
 {
   struct svc_callout *prev;
   register struct svc_callout *s;
@@ -132,7 +132,7 @@ bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (
   if ((s = Svc_find(prog, vers, &prev)) != NULL_SVC)
     {
       if (s->sc_dispatch == dispatch)
-	goto pmap_it;		/* he is registering another xptr */
+        goto pmap_it;           /* he is registering another xptr */
       return (FALSE);
     }
   s = (struct svc_callout *)Mem_Alloc(sizeof(struct svc_callout));
@@ -190,7 +190,7 @@ static struct svc_callout *Svc_find(u_long prog, u_long vers, struct svc_callout
   for (s = svc_head; s != NULL_SVC; s = s->sc_next)
     {
       if ((s->sc_prog == prog) && (s->sc_vers == vers))
-	goto done;
+        goto done;
       p = s;
     }
  done:
@@ -226,72 +226,72 @@ void Svc_getreqset(fd_set * readfds)
   for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
       for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1)))
-	{
-	  /* sock has input waiting */
-	  xprt = Xports[sock + bit - 1];
-	  if (xprt == NULL)
-	    /* But do we control sock? */
-	    continue;
-	  /* now receive msgs from xprtprt (support batch calls) */
-	  do
-	    {
-	      if (SVC_RECV(xprt, &msg))
-		{
-		  /* now find the exported program and call it */
-		  register struct svc_callout *s;
-		  enum auth_stat why;
+        {
+          /* sock has input waiting */
+          xprt = Xports[sock + bit - 1];
+          if (xprt == NULL)
+            /* But do we control sock? */
+            continue;
+          /* now receive msgs from xprtprt (support batch calls) */
+          do
+            {
+              if (SVC_RECV(xprt, &msg))
+                {
+                  /* now find the exported program and call it */
+                  register struct svc_callout *s;
+                  enum auth_stat why;
 
-		  r.rq_xprt = xprt;
-		  r.rq_prog = msg.rm_call.cb_prog;
-		  r.rq_vers = msg.rm_call.cb_vers;
-		  r.rq_proc = msg.rm_call.cb_proc;
-		  r.rq_cred = msg.rm_call.cb_cred;
+                  r.rq_xprt = xprt;
+                  r.rq_prog = msg.rm_call.cb_prog;
+                  r.rq_vers = msg.rm_call.cb_vers;
+                  r.rq_proc = msg.rm_call.cb_proc;
+                  r.rq_cred = msg.rm_call.cb_cred;
 
-		  /* first authenticate the message */
-		  if ((why = _authenticate(&r, &msg)) != AUTH_OK)
-		    {
-		      svcerr_auth(xprt, why);
-		      goto call_done;
-		    }
-		  /* now match message with a registered service */
-		  prog_found = FALSE;
-		  low_vers = 0 - 1;
-		  high_vers = 0;
-		  for (s = svc_head; s != NULL_SVC; s = s->sc_next)
-		    {
-		      if (s->sc_prog == r.rq_prog)
-			{
-			  if (s->sc_vers == r.rq_vers)
-			    {
-			      (*s->sc_dispatch) (&r, xprt);
-			      goto call_done;
-			    }	/* found correct version */
-			  prog_found = TRUE;
-			  if (s->sc_vers < low_vers)
-			    low_vers = s->sc_vers;
-			  if (s->sc_vers > high_vers)
-			    high_vers = s->sc_vers;
-			}	/* found correct program */
-		    }
-		  /*
-		   * if we got here, the program or version
-		   * is not served ...
-		   */
-		  if (prog_found)
-		    svcerr_progvers(xprt, low_vers, high_vers);
-		    else
-		    svcerr_noprog(xprt);
-		  /* Fall through to ... */
-		}
+                  /* first authenticate the message */
+                  if ((why = _authenticate(&r, &msg)) != AUTH_OK)
+                    {
+                      svcerr_auth(xprt, why);
+                      goto call_done;
+                    }
+                  /* now match message with a registered service */
+                  prog_found = FALSE;
+                  low_vers = 0 - 1;
+                  high_vers = 0;
+                  for (s = svc_head; s != NULL_SVC; s = s->sc_next)
+                    {
+                      if (s->sc_prog == r.rq_prog)
+                        {
+                          if (s->sc_vers == r.rq_vers)
+                            {
+                              (*s->sc_dispatch) (&r, xprt);
+                              goto call_done;
+                            }   /* found correct version */
+                          prog_found = TRUE;
+                          if (s->sc_vers < low_vers)
+                            low_vers = s->sc_vers;
+                          if (s->sc_vers > high_vers)
+                            high_vers = s->sc_vers;
+                        }       /* found correct program */
+                    }
+                  /*
+                   * if we got here, the program or version
+                   * is not served ...
+                   */
+                  if (prog_found)
+                    svcerr_progvers(xprt, low_vers, high_vers);
+                    else
+                    svcerr_noprog(xprt);
+                  /* Fall through to ... */
+                }
  call_done:
-	      if ((stat = SVC_STAT(xprt)) == XPRT_DIED)
-		{
-		  SVC_DESTROY(xprt);
-		  break;
-		}
-	    }
-	  while (stat == XPRT_MOREREQS);
-	}
+              if ((stat = SVC_STAT(xprt)) == XPRT_DIED)
+                {
+                  SVC_DESTROY(xprt);
+                  break;
+                }
+            }
+          while (stat == XPRT_MOREREQS);
+        }
     }
 }
 

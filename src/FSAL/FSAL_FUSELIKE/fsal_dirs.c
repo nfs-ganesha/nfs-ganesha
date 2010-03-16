@@ -45,10 +45,10 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_dir_t * dir_descriptor,	/* OUT */
-			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_descriptor, /* OUT */
+                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -62,7 +62,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
 
   /* get the full path for this directory */
   rc = NamespacePath(dir_handle->inode, dir_handle->device, dir_handle->validator,
-		     object_path);
+                     object_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_opendir);
 
@@ -80,7 +80,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_opendir);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_opendir);
     } else
     {
       /* ignoring opendir */
@@ -102,10 +102,10 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(dir_attributes->asked_attributes);
-	  FSAL_SET_MASK(dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(dir_attributes->asked_attributes);
+          FSAL_SET_MASK(dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
@@ -128,8 +128,8 @@ typedef struct __fsal_dirbuff {
 #define INODE_TO_BE_COMPLETED   ((ino_t)(-1))
 
 static void fill_dirent(fsal_dirent_t * to_be_filled,
-			fsal_attrib_mask_t getattr_mask,
-			const char *name, const struct stat *stbuf, off_t off)
+                        fsal_attrib_mask_t getattr_mask,
+                        const char *name, const struct stat *stbuf, off_t off)
 {
   fsal_status_t status;
   struct stat tmp_statbuff;
@@ -138,10 +138,10 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
   if (stbuf)
     {
       if (stbuf->st_ino == 0)
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			    "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
-	}
+        {
+          DisplayLogJdLevel(fsal_log, NIV_DEBUG,
+                            "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
+        }
 
       to_be_filled->handle.inode = stbuf->st_ino;
       to_be_filled->handle.device = stbuf->st_dev;
@@ -157,19 +157,19 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
 
 #ifdef _DEBUG_FSAL
       printf
-	  ("getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o\n",
-	   getattr_mask, to_be_filled->attributes.asked_attributes, status.major,
-	   to_be_filled->attributes.fsid.major, to_be_filled->attributes.fileid,
-	   to_be_filled->attributes.type, tmp_statbuff.st_mode,
-	   to_be_filled->attributes.mode);
+          ("getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o\n",
+           getattr_mask, to_be_filled->attributes.asked_attributes, status.major,
+           to_be_filled->attributes.fsid.major, to_be_filled->attributes.fileid,
+           to_be_filled->attributes.type, tmp_statbuff.st_mode,
+           to_be_filled->attributes.mode);
 #endif
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
-	  /* set getattr error bit in attr mask */
-	  FSAL_SET_MASK(to_be_filled->attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	  err = TRUE;
-	}
+        {
+          FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
+          /* set getattr error bit in attr mask */
+          FSAL_SET_MASK(to_be_filled->attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
+          err = TRUE;
+        }
     }
 
   /* if any error occured during conversion,
@@ -190,12 +190,12 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
       to_be_filled->cookie = off;
     }
 
-}				/* fill_dirent */
+}                               /* fill_dirent */
 
 /* this function is used by FUSE dir reader to fill the output buffer */
 
 static int ganefuse_fill_dir(void *buf, const char *name,
-			     const struct stat *stbuf, off_t off)
+                             const struct stat *stbuf, off_t off)
 {
   fsal_dirbuff_t *dirbuff = (fsal_dirbuff_t *) buf;
   fsal_dirent_t *tab;
@@ -237,11 +237,11 @@ static int ganefuse_fill_dir(void *buf, const char *name,
       /* no offset is provided, we must skip some entries */
 
       if (dirbuff->curr_off < dirbuff->begin_off)
-	{
-	  /* skip entry and go to the next */
-	  dirbuff->curr_off++;
-	  return 0;
-	}
+        {
+          /* skip entry and go to the next */
+          dirbuff->curr_off++;
+          return 0;
+        }
 
       /* entry is to be added */
       dirbuff->curr_off++;
@@ -301,14 +301,14 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
-			   fsal_cookie_t start_position,	/* IN */
-			   fsal_attrib_mask_t get_attr_mask,	/* IN */
-			   fsal_mdsize_t buffersize,	/* IN */
-			   fsal_dirent_t * pdirent,	/* OUT */
-			   fsal_cookie_t * end_position,	/* OUT */
-			   fsal_count_t * nb_entries,	/* OUT */
-			   fsal_boolean_t * end_of_dir	/* OUT */
+fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_cookie_t start_position,        /* IN */
+                           fsal_attrib_mask_t get_attr_mask,    /* IN */
+                           fsal_mdsize_t buffersize,    /* IN */
+                           fsal_dirent_t * pdirent,     /* OUT */
+                           fsal_cookie_t * end_position,        /* OUT */
+                           fsal_count_t * nb_entries,   /* OUT */
+                           fsal_boolean_t * end_of_dir  /* OUT */
     )
 {
   int rc;
@@ -324,8 +324,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
 
   /* get the full path for dir inode */
   rc = NamespacePath(dir_descriptor->dir_handle.inode,
-		     dir_descriptor->dir_handle.device,
-		     dir_descriptor->dir_handle.validator, dir_path);
+                     dir_descriptor->dir_handle.device,
+                     dir_descriptor->dir_handle.validator, dir_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readdir);
 
@@ -350,7 +350,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
 
   if (p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
-			   start_position, &dir_descriptor->dir_info);
+                           start_position, &dir_descriptor->dir_info);
     else
     rc = p_fs_ops->getdir(dir_path, (ganefuse_dirh_t) & reqbuff, ganefuse_dirfil_old);
 
@@ -388,54 +388,54 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
       /* 1) chaining entries together */
 
       if (i == reqbuff.nb_entries - 1)
-	{			/* last entry */
-	  pdirent[i].nextentry = NULL;
-	  *end_position = pdirent[i].cookie;
-	} else
-	pdirent[i].nextentry = &(pdirent[i + 1]);
+        {                       /* last entry */
+          pdirent[i].nextentry = NULL;
+          *end_position = pdirent[i].cookie;
+        } else
+        pdirent[i].nextentry = &(pdirent[i + 1]);
 
       /* 2) check weither the filesystem provided stat buff */
 
       if (pdirent[i].handle.inode == INODE_TO_BE_COMPLETED)
-	{
-	  /* If not, make a lookup operation for this entry.
-	   * (this with automatically add it to namespace) */
+        {
+          /* If not, make a lookup operation for this entry.
+           * (this with automatically add it to namespace) */
 
-	  pdirent[i].attributes.asked_attributes = get_attr_mask;
+          pdirent[i].attributes.asked_attributes = get_attr_mask;
 
 #ifdef _DEBUG_FSAL
-	  printf("Inode to be completed\n");
+          printf("Inode to be completed\n");
 #endif
-	  st = FSAL_lookup(&dir_descriptor->dir_handle,
-			   &pdirent[i].name,
-			   &dir_descriptor->context,
-			   &pdirent[i].handle, &pdirent[i].attributes);
+          st = FSAL_lookup(&dir_descriptor->dir_handle,
+                           &pdirent[i].name,
+                           &dir_descriptor->context,
+                           &pdirent[i].handle, &pdirent[i].attributes);
 
-	  if (FSAL_IS_ERROR(st))
-	    Return(st.major, st.minor, INDEX_FSAL_readdir);
-	} else
-	{
-	  /* 3) just add entry to namespace except for '.' and '..'
-	   *    Also set a validator for this entry.
-	   */
+          if (FSAL_IS_ERROR(st))
+            Return(st.major, st.minor, INDEX_FSAL_readdir);
+        } else
+        {
+          /* 3) just add entry to namespace except for '.' and '..'
+           *    Also set a validator for this entry.
+           */
 
-	  if (strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
-	    {
+          if (strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
+            {
 #ifdef _DEBUG_FSAL
-	      printf("adding entry to namespace: %lX.%ld %s\n",
-		     pdirent[i].handle.device,
-		     pdirent[i].handle.inode, pdirent[i].name.name);
+              printf("adding entry to namespace: %lX.%ld %s\n",
+                     pdirent[i].handle.device,
+                     pdirent[i].handle.inode, pdirent[i].name.name);
 #endif
-	      pdirent[i].handle.validator = pdirent[i].attributes.ctime.seconds;
+              pdirent[i].handle.validator = pdirent[i].attributes.ctime.seconds;
 
-	      NamespaceAdd(dir_descriptor->dir_handle.inode,
-			   dir_descriptor->dir_handle.device,
-			   dir_descriptor->dir_handle.validator,
-			   pdirent[i].name.name,
-			   pdirent[i].handle.inode,
-			   pdirent[i].handle.device, &(pdirent[i].handle.validator));
-	    }
-	}
+              NamespaceAdd(dir_descriptor->dir_handle.inode,
+                           dir_descriptor->dir_handle.device,
+                           dir_descriptor->dir_handle.validator,
+                           pdirent[i].name.name,
+                           pdirent[i].handle.inode,
+                           pdirent[i].handle.device, &(pdirent[i].handle.validator));
+            }
+        }
 
     }
 
@@ -464,7 +464,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     )
 {
 
@@ -477,8 +477,8 @@ fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
 
   /* get the full path for dir inode */
   rc = NamespacePath(dir_descriptor->dir_handle.inode,
-		     dir_descriptor->dir_handle.device,
-		     dir_descriptor->dir_handle.validator, dir_path);
+                     dir_descriptor->dir_handle.device,
+                     dir_descriptor->dir_handle.validator, dir_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_closedir);
 

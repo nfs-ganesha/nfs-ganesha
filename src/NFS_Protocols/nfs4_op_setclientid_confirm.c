@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -144,7 +144,7 @@ extern time_t ServerBootTime;
  */
 
 int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
-				compound_data_t * data, struct nfs_resop4 *resp)
+                                compound_data_t * data, struct nfs_resop4 *resp)
 {
   nfs_client_id_t nfs_clientid;
   clientid4 clientid = 0;
@@ -167,41 +167,41 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
     {
       /* The client id should not be confirmed */
       if (nfs_clientid.confirmed == CONFIRMED_CLIENT_ID)
-	{
-	  /* Client id was already confirmed and is then in use, this is NFS4ERR_CLID_INUSE if not same client */
+        {
+          /* Client id was already confirmed and is then in use, this is NFS4ERR_CLID_INUSE if not same client */
 
-	  /* Check the verifier */
-	  if (strncmp
-	      (nfs_clientid.verifier, arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
-	       NFS4_VERIFIER_SIZE))
-	    {
-	      /* Bad verifier */
-	      res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
-	      return res_SETCLIENTID_CONFIRM4.status;
-	    }
-	} else
-	{
-	  if (nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
-	    {
-	      DisplayLogLevel(NIV_DEBUG,
-			      "SETCLIENTID_CONFIRM clientid = %llx, client was rebooted, getting ride of old state from previous client instance",
-			      clientid);
-	    }
+          /* Check the verifier */
+          if (strncmp
+              (nfs_clientid.verifier, arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
+               NFS4_VERIFIER_SIZE))
+            {
+              /* Bad verifier */
+              res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
+              return res_SETCLIENTID_CONFIRM4.status;
+            }
+        } else
+        {
+          if (nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
+            {
+              DisplayLogLevel(NIV_DEBUG,
+                              "SETCLIENTID_CONFIRM clientid = %llx, client was rebooted, getting ride of old state from previous client instance",
+                              clientid);
+            }
 
-	  /* Regular situation, set the client id confirmed and returns */
-	  nfs_clientid.confirmed = CONFIRMED_CLIENT_ID;
+          /* Regular situation, set the client id confirmed and returns */
+          nfs_clientid.confirmed = CONFIRMED_CLIENT_ID;
 
-	  /* Set the time for the client id */
-	  nfs_clientid.last_renew = time(NULL);
+          /* Set the time for the client id */
+          nfs_clientid.last_renew = time(NULL);
 
-	  /* Set the new value */
-	  if (nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
-	      CLIENT_ID_SUCCESS)
-	    {
-	      res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
-	      return res_SETCLIENTID_CONFIRM4.status;
-	    }
-	}
+          /* Set the new value */
+          if (nfs_client_id_set(clientid, nfs_clientid, pworker->clientid_pool) !=
+              CLIENT_ID_SUCCESS)
+            {
+              res_SETCLIENTID_CONFIRM4.status = NFS4ERR_SERVERFAULT;
+              return res_SETCLIENTID_CONFIRM4.status;
+            }
+        }
     } else
     {
       /* The client id does not exist: stale client id */
@@ -212,7 +212,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
   /* Successful exit */
   res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
   return res_SETCLIENTID_CONFIRM4.status;
-}				/* nfs4_op_setclientid_confirm */
+}                               /* nfs4_op_setclientid_confirm */
 
 /**
  * nfs4_op_setclientid_confirm_Free: frees what was allocared to handle nfs4_op_setclientid_confirm.
@@ -228,4 +228,4 @@ void nfs4_op_setclientid_confirm_Free(SETCLIENTID_CONFIRM4res * resp)
 {
   /* To be completed */
   return;
-}				/* nfs4_op_setclientid_confirm_Free */
+}                               /* nfs4_op_setclientid_confirm_Free */

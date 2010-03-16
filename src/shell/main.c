@@ -201,48 +201,48 @@ int main(int argc, char **argv)
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'h':
-	  if (flag_h)
-	    fprintf(stderr,
-		    "%s: warning: option 'h' has been specified more than once.\n",
-		    progname);
-	    else
-	    flag_h++;
-	  break;
+        {
+        case 'h':
+          if (flag_h)
+            fprintf(stderr,
+                    "%s: warning: option 'h' has been specified more than once.\n",
+                    progname);
+            else
+            flag_h++;
+          break;
 
-	case '@':
-	  /* A litlle backdoor to keep track of binary versions */
-	  printf("%s compiled on %s at %s\n", progname, __DATE__, __TIME__);
-	  printf("Release = %s\n", VERSION);
-	  printf("Release comment = %s\n", VERSION_COMMENT);
-	  exit(0);
-	  break;
+        case '@':
+          /* A litlle backdoor to keep track of binary versions */
+          printf("%s compiled on %s at %s\n", progname, __DATE__, __TIME__);
+          printf("Release = %s\n", VERSION);
+          printf("Release comment = %s\n", VERSION_COMMENT);
+          exit(0);
+          break;
 
-	case 'n':
-	  if (nb_instance)
-	    fprintf(stderr,
-		    "%s: warning: option 'n' has been specified more than once.\n",
-		    progname);
-	    else
-	    nb_instance = atoi(Optarg);
+        case 'n':
+          if (nb_instance)
+            fprintf(stderr,
+                    "%s: warning: option 'n' has been specified more than once.\n",
+                    progname);
+            else
+            nb_instance = atoi(Optarg);
 
-	  break;
+          break;
 
-	case 'v':
-	  if (verbose)
-	    fprintf(stderr,
-		    "%s: warning: option 'v' has been specified more than once.\n",
-		    progname);
-	    else
-	    verbose++;
-	  break;
+        case 'v':
+          if (verbose)
+            fprintf(stderr,
+                    "%s: warning: option 'v' has been specified more than once.\n",
+                    progname);
+            else
+            verbose++;
+          break;
 
-	case '?':
-	  fprintf(stderr, "%s: unknown option : %c\n", progname, Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(stderr, "%s: unknown option : %c\n", progname, Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   /* help flag */
@@ -263,64 +263,64 @@ int main(int argc, char **argv)
       /* case when there two or more threads */
 
       for (i = 0; i < nb_instance; i++)
-	{
+        {
 
-	  if (verbose)
-	    fprintf(stderr, "Starting thread %d using file %s...\n",
-		    nb_threads, argv[Optind]);
+          if (verbose)
+            fprintf(stderr, "Starting thread %d using file %s...\n",
+                    nb_threads, argv[Optind]);
 
-	  thrlist[nb_threads].shell_id = nb_threads;
+          thrlist[nb_threads].shell_id = nb_threads;
 
-	  snprintf(thrlist[nb_threads].prompt, 32, "ganeshell-%d>", nb_threads);
-	  strncpy(thrlist[nb_threads].script_file, argv[Optind], 128);
+          snprintf(thrlist[nb_threads].prompt, 32, "ganeshell-%d>", nb_threads);
+          strncpy(thrlist[nb_threads].script_file, argv[Optind], 128);
 
-	  pthread_attr_init(&thrlist[nb_threads].attrs);
-	  pthread_attr_setscope(&thrlist[nb_threads].attrs, PTHREAD_SCOPE_SYSTEM);
+          pthread_attr_init(&thrlist[nb_threads].attrs);
+          pthread_attr_setscope(&thrlist[nb_threads].attrs, PTHREAD_SCOPE_SYSTEM);
 
-	  nb_threads++;
+          nb_threads++;
 
-	  if (nb_threads >= NBTHRMAX)
-	    {
-	      fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
-		      NBTHRMAX);
-	      exit(1);
-	    }
+          if (nb_threads >= NBTHRMAX)
+            {
+              fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
+                      NBTHRMAX);
+              exit(1);
+            }
 
-	}
+        }
 
       /* inits shell barriers */
 
       rc = shell_BarrierInit(nb_threads);
 
       if (rc)
-	{
-	  fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
-	  exit(1);
-	}
+        {
+          fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
+          exit(1);
+        }
 
       /* launching threads */
 
       for (i = 0; i < nb_threads; i++)
-	{
-	  rc = pthread_create(&thrlist[i].thread,
-			      &thrlist[i].attrs, LaunchShell, &thrlist[i]);
+        {
+          rc = pthread_create(&thrlist[i].thread,
+                              &thrlist[i].attrs, LaunchShell, &thrlist[i]);
 
-	  if (rc)
-	    {
-	      fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
-	      exit(1);
-	    }
+          if (rc)
+            {
+              fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
+              exit(1);
+            }
 
-	}
+        }
 
       /* waiting for thread termination */
 
       for (i = 0; i < nb_threads; i++)
-	{
-	  void *ret;
-	  pthread_join(thrlist[i].thread, &ret);
+        {
+          void *ret;
+          pthread_join(thrlist[i].thread, &ret);
 
-	}
+        }
 
       exit(0);
 
@@ -330,25 +330,25 @@ int main(int argc, char **argv)
     {
 
       if (Optind == (argc - 1))
-	{
-	  script_file = argv[Optind];
-	}
+        {
+          script_file = argv[Optind];
+        }
 
       rc = shell_Init(verbose, script_file, prompt, 0);
 
       if (rc)
-	{
-	  fprintf(stderr, "GANESHELL: ERROR %d in shell_Init\n", rc);
-	  exit(1);
-	}
+        {
+          fprintf(stderr, "GANESHELL: ERROR %d in shell_Init\n", rc);
+          exit(1);
+        }
 
       rc = shell_Launch();
 
       if (rc)
-	{
-	  fprintf(stderr, "GANESHELL: ERROR %d in shell_Launch\n", rc);
-	  exit(1);
-	}
+        {
+          fprintf(stderr, "GANESHELL: ERROR %d in shell_Launch\n", rc);
+          exit(1);
+        }
 
       exit(0);
 
@@ -358,63 +358,63 @@ int main(int argc, char **argv)
       /* case when there two or more threads */
 
       for (i = Optind; i < argc; i++)
-	{
+        {
 
-	  if (verbose)
-	    fprintf(stderr, "Starting thread %d using file %s...\n", nb_threads, argv[i]);
+          if (verbose)
+            fprintf(stderr, "Starting thread %d using file %s...\n", nb_threads, argv[i]);
 
-	  thrlist[nb_threads].shell_id = nb_threads;
+          thrlist[nb_threads].shell_id = nb_threads;
 
-	  snprintf(thrlist[nb_threads].prompt, 32, "ganeshell-%d>", nb_threads);
-	  strncpy(thrlist[nb_threads].script_file, argv[i], 128);
+          snprintf(thrlist[nb_threads].prompt, 32, "ganeshell-%d>", nb_threads);
+          strncpy(thrlist[nb_threads].script_file, argv[i], 128);
 
-	  pthread_attr_init(&thrlist[nb_threads].attrs);
-	  pthread_attr_setscope(&thrlist[nb_threads].attrs, PTHREAD_SCOPE_SYSTEM);
+          pthread_attr_init(&thrlist[nb_threads].attrs);
+          pthread_attr_setscope(&thrlist[nb_threads].attrs, PTHREAD_SCOPE_SYSTEM);
 
-	  nb_threads++;
+          nb_threads++;
 
-	  if (nb_threads >= NBTHRMAX)
-	    {
-	      fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
-		      NBTHRMAX);
-	      exit(1);
-	    }
+          if (nb_threads >= NBTHRMAX)
+            {
+              fprintf(stderr, "GANESHELL: Too much threads (%d > %d)\n", nb_threads,
+                      NBTHRMAX);
+              exit(1);
+            }
 
-	}
+        }
 
       /* inits shell barriers */
 
       rc = shell_BarrierInit(nb_threads);
 
       if (rc)
-	{
-	  fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
-	  exit(1);
-	}
+        {
+          fprintf(stderr, "GANESHELL: ERROR %d in shell_BarrierInit\n", rc);
+          exit(1);
+        }
 
       /* launching threads */
 
       for (i = 0; i < nb_threads; i++)
-	{
-	  rc = pthread_create(&thrlist[i].thread,
-			      &thrlist[i].attrs, LaunchShell, &thrlist[i]);
+        {
+          rc = pthread_create(&thrlist[i].thread,
+                              &thrlist[i].attrs, LaunchShell, &thrlist[i]);
 
-	  if (rc)
-	    {
-	      fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
-	      exit(1);
-	    }
+          if (rc)
+            {
+              fprintf(stderr, "GANESHELL: ERROR %d in pthread_create\n", rc);
+              exit(1);
+            }
 
-	}
+        }
 
       /* waiting for thread termination */
 
       for (i = 0; i < nb_threads; i++)
-	{
-	  void *ret;
-	  pthread_join(thrlist[i].thread, &ret);
+        {
+          void *ret;
+          pthread_join(thrlist[i].thread, &ret);
 
-	}
+        }
 
       exit(0);
 

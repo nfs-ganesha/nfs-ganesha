@@ -43,9 +43,9 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
     )
 {
   /* sanity checks. */
@@ -79,9 +79,9 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
     )
 {
 
@@ -115,12 +115,12 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
       TakeTokenFSCall();
       rc = hpss_FilesetGetAttributes(NULL, NULL,
-				     &p_context->export_context->fileset_root_handle,
-				     NULL, attrBits, &fsattrs);
+                                     &p_context->export_context->fileset_root_handle,
+                                     NULL, attrBits, &fsattrs);
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
 
@@ -149,12 +149,12 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
       TakeTokenFSCall();
       rc = hpss_FilesetGetAttributes(NULL, NULL,
-				     &p_context->export_context->fileset_root_handle,
-				     NULL, attrBits, &fsattrs);
+                                     &p_context->export_context->fileset_root_handle,
+                                     NULL, attrBits, &fsattrs);
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
 
@@ -189,7 +189,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       fshdl = rootattr.ObjectHandle;
 
@@ -203,13 +203,13 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
+        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_dynamic_fsinfo);
 
       cos_export = fsattrs.ClassOfService;
 
       /* @todo : sometimes NULL ??? */
       if (cos_export == 0)
-	cos_export = 1;
+        cos_export = 1;
 
     }
 

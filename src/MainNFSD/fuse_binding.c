@@ -96,7 +96,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <signal.h>		/* for sigaction */
+#include <signal.h>             /* for sigaction */
 #include <errno.h>
 
 /* parameters for NFSd startup and default values */
@@ -107,7 +107,7 @@ static nfs_start_info_t nfs_start_info = {
   .flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE,
 };
 
-static char config_path[MAXPATHLEN] = "";	/* None by default */
+static char config_path[MAXPATHLEN] = "";       /* None by default */
 char log_path[MAXPATHLEN] = "/tmp/ganesha_nfsd.log";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -158,7 +158,7 @@ static void action_sigusr1(int sig)
       DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
-}				/* action_sigusr1 */
+}                               /* action_sigusr1 */
 
 static void init_log(log_t * p_log_outputs, char *alt_file)
 {
@@ -185,7 +185,7 @@ static void init_log(log_t * p_log_outputs, char *alt_file)
  */
 
 int ganefuse_main(int argc, char *argv[],
-		  const struct ganefuse_operations *op, void *user_data)
+                  const struct ganefuse_operations *op, void *user_data)
 {
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
@@ -223,93 +223,93 @@ int ganefuse_main(int argc, char *argv[],
     {
 
       switch (c)
-	{
-	case '@':
-	  /* A litlle backdoor to keep track of binary versions */
-	  printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
-	  printf("Release = %s\n", VERSION);
-	  printf("Release comment = %s\n", VERSION_COMMENT);
-	  exit(0);
-	  break;
+        {
+        case '@':
+          /* A litlle backdoor to keep track of binary versions */
+          printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
+          printf("Release = %s\n", VERSION);
+          printf("Release comment = %s\n", VERSION_COMMENT);
+          exit(0);
+          break;
 
-	case 'L':
-	  /* Default Log */
-	  strncpy(log_path, optarg, MAXPATHLEN);
-	  break;
+        case 'L':
+          /* Default Log */
+          strncpy(log_path, optarg, MAXPATHLEN);
+          break;
 
-	case 'N':
-	  /* debug level */
-	  debug_level = ReturnLevelAscii(optarg);
-	  if (debug_level == -1)
-	    {
-	      fprintf(stderr,
-		      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
-	      exit(1);
-	    }
-	  break;
+        case 'N':
+          /* debug level */
+          debug_level = ReturnLevelAscii(optarg);
+          if (debug_level == -1)
+            {
+              fprintf(stderr,
+                      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
+              exit(1);
+            }
+          break;
 
-	case 'f':
-	  /* config file */
-	  strncpy(config_path, optarg, MAXPATHLEN);
-	  break;
+        case 'f':
+          /* config file */
+          strncpy(config_path, optarg, MAXPATHLEN);
+          break;
 
-	case 's':
-	  /* single threaded */
-	  single_threaded = TRUE;
-	  break;
+        case 's':
+          /* single threaded */
+          single_threaded = TRUE;
+          break;
 
-	case 'd':
-	  /* Detach or not detach ? */
-	  detach_flag = TRUE;
-	  break;
+        case 'd':
+          /* Detach or not detach ? */
+          detach_flag = TRUE;
+          break;
 
-	case 'R':
-	  /* Shall we manage  RPCSEC_GSS ? */
-	  fprintf(stderr,
-		  "\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
-	  fprintf(stderr, "NFS_KRB5\n");
-	  fprintf(stderr, "{\n");
-	  fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
-	  fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
-	  fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
-	  fprintf(stderr, "}\n\n\n");
-	  exit(1);
+        case 'R':
+          /* Shall we manage  RPCSEC_GSS ? */
+          fprintf(stderr,
+                  "\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
+          fprintf(stderr, "NFS_KRB5\n");
+          fprintf(stderr, "{\n");
+          fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
+          fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
+          fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
+          fprintf(stderr, "}\n\n\n");
+          exit(1);
 
-	  break;
+          break;
 
-	case 'F':
-	  /* Flushes the data cache to the FSAL and purges the cache */
-	  nfs_start_info.flush_datacache_mode = TRUE;
-	  nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-	  nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
+        case 'F':
+          /* Flushes the data cache to the FSAL and purges the cache */
+          nfs_start_info.flush_datacache_mode = TRUE;
+          nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
+          nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
 
-	  if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-	    nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-	  break;
+          if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+            nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
+          break;
 
-	case 'S':
-	  /* Flushes the data cache to the FSAL, without purging the cache */
-	  nfs_start_info.flush_datacache_mode = TRUE;
-	  nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
-	  nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
+        case 'S':
+          /* Flushes the data cache to the FSAL, without purging the cache */
+          nfs_start_info.flush_datacache_mode = TRUE;
+          nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
+          nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
 
-	  if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-	    nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-	  break;
+          if (nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+            nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
+          break;
 
-	case 'h':
-	  /* display the help */
-	  fprintf(stderr, usage, exec_name);
-	  exit(0);
-	  break;
+        case 'h':
+          /* display the help */
+          fprintf(stderr, usage, exec_name);
+          exit(0);
+          break;
 
-	case '?':
-	default:
-	  /* ignore unsupported options */
-	  fprintf(stderr, "WARNING: unknown GANESHA NFS daemon option: %c\n",
-		  (char)optopt);
+        case '?':
+        default:
+          /* ignore unsupported options */
+          fprintf(stderr, "WARNING: unknown GANESHA NFS daemon option: %c\n",
+                  (char)optopt);
 
-	}
+        }
     }
 
   /* initialize memory and logging */
@@ -325,34 +325,34 @@ int ganefuse_main(int argc, char *argv[],
     {
       /* Step 1: forking a service process */
       switch (son_pid = fork())
-	{
-	case -1:
-	  /* Fork failed */
-	  DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
-	  DisplayLog("Could nout start nfs daemon, exiting...");
-	  exit(1);
+        {
+        case -1:
+          /* Fork failed */
+          DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
+          DisplayLog("Could nout start nfs daemon, exiting...");
+          exit(1);
 
-	case 0:
-	  /* This code is within the son (that will actually work)
-	   * Let's make it the leader of its group of process */
-	  if (setsid() == -1)
-	    {
-	      DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
-	      DisplayLog("Could nout start nfs daemon, exiting...");
-	      exit(1);
-	    }
-	  break;
+        case 0:
+          /* This code is within the son (that will actually work)
+           * Let's make it the leader of its group of process */
+          if (setsid() == -1)
+            {
+              DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
+              DisplayLog("Could nout start nfs daemon, exiting...");
+              exit(1);
+            }
+          break;
 
-	default:
-	  /* This code is within the father, it is useless, it must die */
-	  DisplayLog("Starting a son of pid %d\n", son_pid);
-	  exit(0);
-	  break;
-	}
+        default:
+          /* This code is within the father, it is useless, it must die */
+          DisplayLog("Starting a son of pid %d\n", son_pid);
+          exit(0);
+          break;
+        }
     }
 
   DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-	     FSAL_GetFSName());
+             FSAL_GetFSName());
 
   /* Set the signal handler */
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
@@ -383,10 +383,10 @@ int ganefuse_main(int argc, char *argv[],
   if (strlen(config_path) > 0)
     {
       if (nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
-	{
-	  DisplayLog("NFS MAIN: Error parsing configuration file.");
-	  exit(1);
-	}
+        {
+          DisplayLog("NFS MAIN: Error parsing configuration file.");
+          exit(1);
+        }
     }
 
   /* set filesystem relative info */
@@ -399,7 +399,7 @@ int ganefuse_main(int argc, char *argv[],
   init_log(&nfs_param.fsal_param.fsal_info.log_outputs, log_path);
   init_log(&nfs_param.cache_layers_param.cache_inode_client_param.log_outputs, log_path);
   init_log(&nfs_param.cache_layers_param.cache_content_client_param.log_outputs,
-	   log_path);
+           log_path);
 
 #ifndef _NO_BUDDY_SYSTEM
   if (!nfs_param.buddy_param_worker.buddy_error_file[0])
@@ -419,10 +419,10 @@ int ganefuse_main(int argc, char *argv[],
     {
       nfs_param.pexportlist = BuildDefaultExport();
       if (nfs_param.pexportlist == NULL)
-	{
-	  DisplayLog("NFS MAIN: Could not create export entry for '/'");
-	  exit(1);
-	}
+        {
+          DisplayLog("NFS MAIN: Could not create export entry for '/'");
+          exit(1);
+        }
     }
 
   /* if this is a single threaded application, set worker count */
@@ -435,7 +435,7 @@ int ganefuse_main(int argc, char *argv[],
     {
       DisplayLog("NFS MAIN: Inconsistent parameters found");
       DisplayLog
-	  ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
+          ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
 

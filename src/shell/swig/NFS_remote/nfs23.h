@@ -26,7 +26,7 @@
 #define NFS3_CREATEVERFSIZE 8
 #define NFS3_WRITEVERFSIZE 8
 
-#define NFS2_MAX_FILESIZE   (2147483647)	/* 0x7fffffff */
+#define NFS2_MAX_FILESIZE   (2147483647)        /* 0x7fffffff */
 
 typedef char *nfspath2;
 
@@ -268,7 +268,7 @@ typedef longlong_t nfs3_int64;
 
 typedef u_long nfs3_uint32;
 
-typedef long nfs3_int32;	/* BUGAZOMEU: Is "long" type really 32 bits ?  */
+typedef long nfs3_int32;        /* BUGAZOMEU: Is "long" type really 32 bits ?  */
 
 typedef char *filename3;
 
@@ -1366,4 +1366,4 @@ extern bool_t xdr_COMMIT3resok(XDR *, COMMIT3resok *);
 extern bool_t xdr_COMMIT3resfail(XDR *, COMMIT3resfail *);
 extern bool_t xdr_COMMIT3res(XDR *, COMMIT3res *);
 
-#endif				/* !_NFS23_H_RPCGEN */
+#endif                          /* !_NFS23_H_RPCGEN */

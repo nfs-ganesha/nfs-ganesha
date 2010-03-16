@@ -18,33 +18,33 @@ TYPE_TOKEN_HPSS null_ticket;
 
 static int
 HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
-			hpss_reqid_t RequestID,
-			ns_ObjHandle_t * ObjHandle,
-			TYPE_CRED_HPSS * Ucred,
-			char *Path,
-			api_cwd_stack_t * CwdStack,
-			char *Contents,
-			ns_ObjHandle_t * HandleOut, hpss_Attrs_t * AttrsOut)
+                        hpss_reqid_t RequestID,
+                        ns_ObjHandle_t * ObjHandle,
+                        TYPE_CRED_HPSS * Ucred,
+                        char *Path,
+                        api_cwd_stack_t * CwdStack,
+                        char *Contents,
+                        ns_ObjHandle_t * HandleOut, hpss_Attrs_t * AttrsOut)
 {
   static char function_name[] = "HPSSFSAL_Common_Symlink";
 
 #if HPSS_MAJOR_VERSION == 5
-  volatile long error = 0;	/* return error */
+  volatile long error = 0;      /* return error */
 #elif HPSS_MAJOR_VERSION >= 6
-  signed32 error = 0;		/* return error */
+  signed32 error = 0;           /* return error */
 #endif
 
-  call_type_t call_type;	/* interface to call */
-  TYPE_TOKEN_HPSS ta;		/* security token */
-  ns_ObjHandle_t parent_handle;	/* parent object handle */
-  u_signed64 parent_attr_bits;	/* object attribute bits */
-  hpss_Attrs_t parent_attrs;	/* new object attributes */
-  char *file;			/* name of the new object */
-  char *parent;			/* name of existing parent */
-  ns_ObjHandle_t new_handle;	/* new object handle */
-  ns_ObjHandle_t ret_handle;	/* returned new object handle */
-  u_signed64 new_attr_bits;	/* object attribute bits */
-  hpss_Attrs_t new_attrs;	/* new object attributes */
+  call_type_t call_type;        /* interface to call */
+  TYPE_TOKEN_HPSS ta;           /* security token */
+  ns_ObjHandle_t parent_handle; /* parent object handle */
+  u_signed64 parent_attr_bits;  /* object attribute bits */
+  hpss_Attrs_t parent_attrs;    /* new object attributes */
+  char *file;                   /* name of the new object */
+  char *parent;                 /* name of existing parent */
+  ns_ObjHandle_t new_handle;    /* new object handle */
+  ns_ObjHandle_t ret_handle;    /* returned new object handle */
+  u_signed64 new_attr_bits;     /* object attribute bits */
+  hpss_Attrs_t new_attrs;       /* new object attributes */
 
   /*
    * Allocate memory for object name and parent
@@ -84,26 +84,26 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
   (void)memset(&parent_attrs, 0, sizeof(parent_attrs));
 
   parent_attr_bits = API_AddRegisterValues(cast64m(0),
-					   CORE_ATTR_TYPE,
-					   CORE_ATTR_FILESET_TYPE,
-					   CORE_ATTR_FILESET_ID,
-					   CORE_ATTR_GATEWAY_UUID,
-					   CORE_ATTR_DM_HANDLE,
-					   CORE_ATTR_DM_HANDLE_LENGTH, -1);
+                                           CORE_ATTR_TYPE,
+                                           CORE_ATTR_FILESET_TYPE,
+                                           CORE_ATTR_FILESET_ID,
+                                           CORE_ATTR_GATEWAY_UUID,
+                                           CORE_ATTR_DM_HANDLE,
+                                           CORE_ATTR_DM_HANDLE_LENGTH, -1);
 
   error = API_TraversePath(ThreadContext,
-			   RequestID,
-			   Ucred,
-			   ObjHandle,
-			   Path,
-			   CwdStack,
-			   API_CHASE_ALL,
-			   0,
-			   0,
-			   cast64m(0),
-			   parent_attr_bits,
-			   API_NULL_CWD_STACK,
-			   NULL, NULL, &parent_handle, &parent_attrs, &ta, NULL, NULL);
+                           RequestID,
+                           Ucred,
+                           ObjHandle,
+                           Path,
+                           CwdStack,
+                           API_CHASE_ALL,
+                           0,
+                           0,
+                           cast64m(0),
+                           parent_attr_bits,
+                           API_NULL_CWD_STACK,
+                           NULL, NULL, &parent_handle, &parent_attrs, &ta, NULL, NULL);
 
   if (error == 0)
     error = -EEXIST;
@@ -112,7 +112,7 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
     else
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			"%s: Could not find object.\n", function_name);
+                        "%s: Could not find object.\n", function_name);
     }
 
   if (error == 0)
@@ -132,58 +132,58 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
 #endif
 
       if (call_type == API_CALL_DMG)
-	{
-	  /*
-	   * Here we are being called by a non-gateway client and
-	   * trying to link a object in a DMAP file set.
-	   */
+        {
+          /*
+           * Here we are being called by a non-gateway client and
+           * trying to link a object in a DMAP file set.
+           */
 
 #if defined (API_DMAP_SUPPORT) && !defined (API_DMAP_GATEWAY)
 
-	  error = API_dmg_Symlink(ThreadContext, RequestID, Ucred, &parent_attrs.GatewayUUID, parent_attrs.FilesetId, parent_attrs.DMHandle, parent_attrs.DMHandleLength, file, Contents, NULL,	/* not used */
-				  NULL);	/* not used */
+          error = API_dmg_Symlink(ThreadContext, RequestID, Ucred, &parent_attrs.GatewayUUID, parent_attrs.FilesetId, parent_attrs.DMHandle, parent_attrs.DMHandleLength, file, Contents, NULL, /* not used */
+                                  NULL);        /* not used */
 #else
-	  error = EACCES;
-	  API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			    "%s: No dmap support compiled in.\n", function_name);
+          error = EACCES;
+          API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                            "%s: No dmap support compiled in.\n", function_name);
 #endif
 
       } else if (call_type == API_CALL_HPSS)
-	{
-	  /*
-	   * Here we are being call by either a gateway client
-	   * or a non-gateway client trying to link a object
-	   * in a non-DMAP file set.
-	   */
+        {
+          /*
+           * Here we are being call by either a gateway client
+           * or a non-gateway client trying to link a object
+           * in a non-DMAP file set.
+           */
 
-	  error = API_core_MkSymLink(ThreadContext,
-				     RequestID,
-				     Ucred,
-				     &parent_handle,
-				     file,
-				     &parent_attrs.FilesetId, Contents, &new_handle);
+          error = API_core_MkSymLink(ThreadContext,
+                                     RequestID,
+                                     Ucred,
+                                     &parent_handle,
+                                     file,
+                                     &parent_attrs.FilesetId, Contents, &new_handle);
 
-	  if (error != 0)
-	    {
-	      API_DEBUG_FPRINTF(DebugFile, &RequestID,
-				"%s: can't make symlink, error=%d\n,",
-				function_name, error);
-	    }
+          if (error != 0)
+            {
+              API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                                "%s: can't make symlink, error=%d\n,",
+                                function_name, error);
+            }
 
-	}
+        }
 
       /*
        * Call type is not DMG or HPSS.
        */
 
-	else
-	{
-	  if (error == 0)
-	    error = EIO;
+        else
+        {
+          if (error == 0)
+            error = EIO;
 
-	  API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			    "%s: Bad case from DetermineCall().\n", function_name);
-	}
+          API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                            "%s: Bad case from DetermineCall().\n", function_name);
+        }
 
       /*
        * If requested, return the vattr for the newly created
@@ -191,66 +191,66 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
        */
 
       if (error == 0 && AttrsOut != (hpss_Attrs_t *) NULL)
-	{
-	  new_attr_bits = cast64m(0);
-	  new_attr_bits = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
-	  (void)memset(&ret_handle, 0, sizeof(ret_handle));
-	  (void)memset(&new_attrs, 0, sizeof(new_attrs));
-	  (void)memset(&ta, 0, sizeof(ta));
+        {
+          new_attr_bits = cast64m(0);
+          new_attr_bits = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
+          (void)memset(&ret_handle, 0, sizeof(ret_handle));
+          (void)memset(&new_attrs, 0, sizeof(new_attrs));
+          (void)memset(&ta, 0, sizeof(ta));
 
-	  error = API_TraversePath(ThreadContext,
-				   RequestID,
-				   Ucred,
-				   &new_handle,
-				   NULL,
-				   API_NULL_CWD_STACK,
-				   API_CHASE_NONE,
-				   0,
-				   0,
-				   new_attr_bits,
-				   cast64m(0),
-				   API_NULL_CWD_STACK,
-				   &ret_handle, &new_attrs, NULL, NULL, &ta, NULL, NULL);
+          error = API_TraversePath(ThreadContext,
+                                   RequestID,
+                                   Ucred,
+                                   &new_handle,
+                                   NULL,
+                                   API_NULL_CWD_STACK,
+                                   API_CHASE_NONE,
+                                   0,
+                                   0,
+                                   new_attr_bits,
+                                   cast64m(0),
+                                   API_NULL_CWD_STACK,
+                                   &ret_handle, &new_attrs, NULL, NULL, &ta, NULL, NULL);
 
-	  if (error != 0)
-	    {
-	      API_DEBUG_FPRINTF(DebugFile, &RequestID,
-				"%s: Could not get attributes.\n", function_name);
-	    } else
-	    {
-	      *AttrsOut = new_attrs;
-	      *HandleOut = new_handle;
-	    }
-	}
+          if (error != 0)
+            {
+              API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                                "%s: Could not get attributes.\n", function_name);
+            } else
+            {
+              *AttrsOut = new_attrs;
+              *HandleOut = new_handle;
+            }
+        }
     }
 
   free(file);
   return (error);
 }
-#else				/* from v7 */
+#else                           /* from v7 */
 
 static int
 HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
-			hpss_reqid_t RequestID,
-			ns_ObjHandle_t * ObjHandle,
-			sec_cred_t * Ucred,
-			char *Path,
-			api_cwd_stack_t * CwdStack,
-			char *Contents,
-			ns_ObjHandle_t * HandleOut, hpss_Attrs_t * AttrsOut)
+                        hpss_reqid_t RequestID,
+                        ns_ObjHandle_t * ObjHandle,
+                        sec_cred_t * Ucred,
+                        char *Path,
+                        api_cwd_stack_t * CwdStack,
+                        char *Contents,
+                        ns_ObjHandle_t * HandleOut, hpss_Attrs_t * AttrsOut)
 {
   static char function_name[] = "Common_Symlink";
-  signed32 error = 0;		/* return error */
-  ns_ObjHandle_t parent_handle;	/* parent object handle */
-  char *file;			/* name of the new object */
-  char *parentpath;		/* name of existing parent */
-  hpss_AttrBits_t attr_bits;	/* parent attributes bits */
-  hpss_Attrs_t attrs;		/* parent attributes */
-  ns_ObjHandle_t *hndl_ptr = ObjHandle;	/* parent handle pointer */
-  ns_ObjHandle_t new_handle;	/* new object handle */
-  ns_ObjHandle_t ret_handle;	/* returned new object handle */
-  u_signed64 new_attr_bits;	/* object attribute bits */
-  hpss_Attrs_t new_attrs;	/* new object handle */
+  signed32 error = 0;           /* return error */
+  ns_ObjHandle_t parent_handle; /* parent object handle */
+  char *file;                   /* name of the new object */
+  char *parentpath;             /* name of existing parent */
+  hpss_AttrBits_t attr_bits;    /* parent attributes bits */
+  hpss_Attrs_t attrs;           /* parent attributes */
+  ns_ObjHandle_t *hndl_ptr = ObjHandle; /* parent handle pointer */
+  ns_ObjHandle_t new_handle;    /* new object handle */
+  ns_ObjHandle_t ret_handle;    /* returned new object handle */
+  u_signed64 new_attr_bits;     /* object attribute bits */
+  hpss_Attrs_t new_attrs;       /* new object handle */
 
   /*
    * Allocate memory for object name and parent name
@@ -295,30 +295,30 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
        */
 
       error = API_TraversePath(ThreadContext,
-			       RequestID,
-			       Ucred,
-			       ObjHandle,
-			       parentpath,
-			       CwdStack,
-			       API_CHASE_ALL,
-			       0,
-			       0,
-			       attr_bits,
-			       cast64m(0),
-			       API_NULL_CWD_STACK,
-			       &parent_handle,
-			       &attrs,
-			       (ns_ObjHandle *) NULL, (hpss_Attrs_t *) NULL, NULL, NULL);
+                               RequestID,
+                               Ucred,
+                               ObjHandle,
+                               parentpath,
+                               CwdStack,
+                               API_CHASE_ALL,
+                               0,
+                               0,
+                               attr_bits,
+                               cast64m(0),
+                               API_NULL_CWD_STACK,
+                               &parent_handle,
+                               &attrs,
+                               (ns_ObjHandle *) NULL, (hpss_Attrs_t *) NULL, NULL, NULL);
 
       if (error == 0)
-	{
-	  if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
-	    error = -ENOTDIR;
-	    else
-	    {
-	      hndl_ptr = &parent_handle;
-	    }
-	}
+        {
+          if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
+            error = -ENOTDIR;
+            else
+            {
+              hndl_ptr = &parent_handle;
+            }
+        }
   } else if (API_PATH_IS_ROOT(parentpath))
     {
       /* If needed, use the root handle */
@@ -328,13 +328,13 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
   if (error == 0)
     {
       error = API_core_MkSymLink(ThreadContext,
-				 RequestID, Ucred, hndl_ptr, file, Contents, &new_handle);
+                                 RequestID, Ucred, hndl_ptr, file, Contents, &new_handle);
 
       if (error != 0)
-	{
-	  API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			    "%s: can't make symlink, error=%d\n,", function_name, error);
-	}
+        {
+          API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                            "%s: can't make symlink, error=%d\n,", function_name, error);
+        }
     }
 
   /*
@@ -348,28 +348,28 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
       (void)memset(&new_attrs, 0, sizeof(new_attrs));
 
       error = API_TraversePath(ThreadContext,
-			       RequestID,
-			       Ucred,
-			       &new_handle,
-			       NULL,
-			       API_NULL_CWD_STACK,
-			       API_CHASE_NONE,
-			       0,
-			       0,
-			       new_attr_bits,
-			       cast64m(0),
-			       API_NULL_CWD_STACK,
-			       &ret_handle, &new_attrs, NULL, NULL, NULL, NULL);
+                               RequestID,
+                               Ucred,
+                               &new_handle,
+                               NULL,
+                               API_NULL_CWD_STACK,
+                               API_CHASE_NONE,
+                               0,
+                               0,
+                               new_attr_bits,
+                               cast64m(0),
+                               API_NULL_CWD_STACK,
+                               &ret_handle, &new_attrs, NULL, NULL, NULL, NULL);
 
       if (error != 0)
-	{
-	  API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			    "%s: Could not get attributes.\n", function_name);
-	} else
-	{
-	  *AttrsOut = new_attrs;
-	  *HandleOut = ret_handle;
-	}
+        {
+          API_DEBUG_FPRINTF(DebugFile, &RequestID,
+                            "%s: Could not get attributes.\n", function_name);
+        } else
+        {
+          *AttrsOut = new_attrs;
+          *HandleOut = ret_handle;
+        }
     }
 
   free(file);
@@ -380,12 +380,12 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
 
 #endif
 
-int HPSSFSAL_SymlinkHandle(ns_ObjHandle_t * ObjHandle,	/* IN - Handle of existing file */
-			   char *Contents,	/* IN - Desired contents of the link */
-			   char *Path,	/* IN - New name of the symbolic link */
-			   TYPE_CRED_HPSS * Ucred,	/* IN - pointer to user credentials */
-			   ns_ObjHandle_t * HandleOut,	/* OUT - Handle of crfeated link */
-			   hpss_Attrs_t * AttrsOut)	/* OUT - symbolic link attributes */
+int HPSSFSAL_SymlinkHandle(ns_ObjHandle_t * ObjHandle,  /* IN - Handle of existing file */
+                           char *Contents,      /* IN - Desired contents of the link */
+                           char *Path,  /* IN - New name of the symbolic link */
+                           TYPE_CRED_HPSS * Ucred,      /* IN - pointer to user credentials */
+                           ns_ObjHandle_t * HandleOut,  /* OUT - Handle of crfeated link */
+                           hpss_Attrs_t * AttrsOut)     /* OUT - symbolic link attributes */
 {
   long error = 0;
   apithrdstate_t *threadcontext;
@@ -449,11 +449,11 @@ int HPSSFSAL_SymlinkHandle(ns_ObjHandle_t * ObjHandle,	/* IN - Handle of existin
    */
 
   error = HPSSFSAL_Common_Symlink(threadcontext,
-				  rqstid,
-				  ObjHandle,
-				  ucred_ptr,
-				  Path,
-				  API_NULL_CWD_STACK, Contents, HandleOut, AttrsOut);
+                                  rqstid,
+                                  ObjHandle,
+                                  ucred_ptr,
+                                  Path,
+                                  API_NULL_CWD_STACK, Contents, HandleOut, AttrsOut);
 
   API_RETURN(error);
 }

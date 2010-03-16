@@ -11,7 +11,7 @@
 #ifndef _COMMON_UTILS_H
 #define _COMMON_UTILS_H
 
-#include <sys/types.h>		/* for caddr_t */
+#include <sys/types.h>          /* for caddr_t */
 
 /**
  * This function converts a string to an integer.

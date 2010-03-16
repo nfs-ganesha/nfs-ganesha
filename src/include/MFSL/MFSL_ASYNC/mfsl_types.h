@@ -103,7 +103,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pthread.h>
-#include <dirent.h>		/* for MAXNAMLEN */
+#include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "LRU_List.h"
 #include "HashTable.h"
@@ -309,17 +309,17 @@ fsal_status_t mfsl_async_truncate(mfsl_async_op_desc_t * popasyncdesc);
 fsal_status_t mfsl_async_symlink(mfsl_async_op_desc_t * popasyncdesc);
 
 typedef struct mfsl_parameter__ {
-  unsigned int nb_pre_async_op_desc;		 /**< Number of preallocated Aync Op descriptors       */
-  unsigned int nb_synclet;			 /**< Number of synclet to be used                     */
-  unsigned int async_window_sec;		 /**< Asynchronos Task Dispatcher Window (seconds)     */
-  unsigned int async_window_usec;		 /**< Asynchronos Task Dispatcher Window (useconds)    */
-  unsigned int nb_before_gc;			 /**< Numbers of calls before LRU invalide GC          */
-  LRU_parameter_t lru_async_param;		 /**< Asynchorous Synclet Tasks LRU parameters         */
-  unsigned int nb_pre_create_dirs;		 /**< The size of pre-created directories per synclet  */
-  unsigned int nb_pre_create_files;		 /**< The size of pre-created files per synclet        */
-  char pre_create_obj_dir[MAXPATHLEN];		       /**< Directory for pre-createed objects         */
-  char tmp_symlink_dir[MAXPATHLEN];		       /**< Directory for symlinks's birth             */
-  LRU_parameter_t lru_param;			       /**< Parameter to LRU for async op              */
+  unsigned int nb_pre_async_op_desc;             /**< Number of preallocated Aync Op descriptors       */
+  unsigned int nb_synclet;                       /**< Number of synclet to be used                     */
+  unsigned int async_window_sec;                 /**< Asynchronos Task Dispatcher Window (seconds)     */
+  unsigned int async_window_usec;                /**< Asynchronos Task Dispatcher Window (useconds)    */
+  unsigned int nb_before_gc;                     /**< Numbers of calls before LRU invalide GC          */
+  LRU_parameter_t lru_async_param;               /**< Asynchorous Synclet Tasks LRU parameters         */
+  unsigned int nb_pre_create_dirs;               /**< The size of pre-created directories per synclet  */
+  unsigned int nb_pre_create_files;              /**< The size of pre-created files per synclet        */
+  char pre_create_obj_dir[MAXPATHLEN];                 /**< Directory for pre-createed objects         */
+  char tmp_symlink_dir[MAXPATHLEN];                    /**< Directory for symlinks's birth             */
+  LRU_parameter_t lru_param;                           /**< Parameter to LRU for async op              */
 } mfsl_parameter_t;
 
 typedef struct mfsl_context__ {
@@ -342,15 +342,15 @@ int mfsl_async_remove_specdata(mfsl_object_t * key);
 void *mfsl_async_synclet_thread(void *Arg);
 void *mfsl_async_asynchronous_dispatcher_thread(void *Arg);
 fsal_status_t mfsl_async_post_async_op(mfsl_async_op_desc_t * popdes,
-				       mfsl_object_t * pmobject);
+                                       mfsl_object_t * pmobject);
 fsal_status_t MFSL_async_post(mfsl_async_op_desc_t * popdesc);
 
 fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontext,
-						     mfsl_precreated_object_t *
-						     pool_dirs);
+                                                     mfsl_precreated_object_t *
+                                                     pool_dirs);
 
 fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
-					       mfsl_precreated_object_t * pool_dirs);
+                                               mfsl_precreated_object_t * pool_dirs);
 
 fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcontext);
 
@@ -363,14 +363,14 @@ void constructor_preacreated_entries(void *ptr);
 fsal_status_t MFSL_PrepareContext(fsal_op_context_t * pcontext);
 
 fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
-				  fsal_op_context_t * pfsal_context);
+                                  fsal_op_context_t * pfsal_context);
 
 fsal_status_t MFSL_ASYNC_GetSyncletContext(mfsl_synclet_context_t * pcontext,
-					   fsal_op_context_t * pfsal_context);
+                                           fsal_op_context_t * pfsal_context);
 
 fsal_status_t MFSL_ASYNC_RefreshSyncletContext(mfsl_synclet_context_t * pcontext,
-					       fsal_op_context_t * pfsal_context);
+                                               fsal_op_context_t * pfsal_context);
 
 int MFSL_ASYNC_is_synced(mfsl_object_t * mobject);
 
-#endif				/* _MFSL_ASYNC_TYPES_H */
+#endif                          /* _MFSL_ASYNC_TYPES_H */

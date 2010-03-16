@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
@@ -83,16 +83,16 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
      one of the TOKENS.  */
   for (cnt = 0; tokens[cnt] != NULL; ++cnt)
     if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
-	&& tokens[cnt][vstart - *optionp] == '\0')
+        && tokens[cnt][vstart - *optionp] == '\0')
       {
-	/* We found the current option in TOKENS.  */
-	*valuep = vstart != endp ? vstart + 1 : NULL;
+        /* We found the current option in TOKENS.  */
+        *valuep = vstart != endp ? vstart + 1 : NULL;
 
-	if (*endp != '\0')
-	  *endp++ = '\0';
-	*optionp = endp;
+        if (*endp != '\0')
+          *endp++ = '\0';
+        *optionp = endp;
 
-	return cnt;
+        return cnt;
       }
 
   /* The current suboption does not match any option.  */
@@ -117,9 +117,9 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	/* OUT */
-				      fsal_path_t * p_export_path,	/* IN */
-				      char *fs_specific_options	/* IN */
+fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
+                                      fsal_path_t * p_export_path,      /* IN */
+                                      char *fs_specific_options /* IN */
     )
 {
   char subopts[256];
@@ -135,36 +135,36 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	
 
       /* copy the option string (because it is modified by getsubopt call) */
       strncpy(subopts, fs_specific_options, 256);
-      p_subop = subopts;	/* set initial pointer */
+      p_subop = subopts;        /* set initial pointer */
 
       /* parse the FS specific option string */
 
       switch (Getsubopt(&p_subop, fs_specific_opts, &value))
-	{
-	case YOUR_OPTION_1:
-	  /* analyze your option 1 and fill the export_context structure */
-	  break;
+        {
+        case YOUR_OPTION_1:
+          /* analyze your option 1 and fill the export_context structure */
+          break;
 
-	case YOUR_OPTION_2:
-	  /* analyze your option 2 and fill the export_context structure */
-	  break;
+        case YOUR_OPTION_2:
+          /* analyze your option 2 and fill the export_context structure */
+          break;
 
-	case YOUR_OPTION_3:
-	  /* analyze your option 3 and fill the export_context structure */
-	  break;
+        case YOUR_OPTION_3:
+          /* analyze your option 3 and fill the export_context structure */
+          break;
 
-	case YOUR_OPTION_4:
-	  /* analyze your option 4 and fill the export_context structure */
-	  break;
+        case YOUR_OPTION_4:
+          /* analyze your option 4 and fill the export_context structure */
+          break;
 
-	default:
-	  {
-	    DisplayLog
-		("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
-		 value);
-	    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
-	  }
-	}
+        default:
+          {
+            DisplayLog
+                ("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : xxxxxx expected.",
+                 value);
+            Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
+          }
+        }
 
     }
 
@@ -215,70 +215,70 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   if (!strcmp(p_thr_context->srv_proto, "udp"))
     {
       if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-	Return(ERR_FSAL_FAULT, errno, INDEX_FSAL_InitClientContext);
+        Return(ERR_FSAL_FAULT, errno, INDEX_FSAL_InitClientContext);
 
       if ((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
-							 p_thr_context->srv_prognum,
-							 FSAL_PROXY_NFS_V4,
-							 (struct timeval)
-							 {
-							 25, 0},
-							 &sock,
-							 p_thr_context->srv_sendsize,
-							 p_thr_context->srv_recvsize)) ==
-	  NULL)
-	{
+                                                         p_thr_context->srv_prognum,
+                                                         FSAL_PROXY_NFS_V4,
+                                                         (struct timeval)
+                                                         {
+                                                         25, 0},
+                                                         &sock,
+                                                         p_thr_context->srv_sendsize,
+                                                         p_thr_context->srv_recvsize)) ==
+          NULL)
+        {
 
-	  DisplayLogJd(fsal_log,
-		       "FSAL INIT : Cannot contact server addr=%u.%u.%u.%u port=%u prognum=%u using NFSv4 protocol",
-		       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-		       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-		       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-		       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-		       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
+          DisplayLogJd(fsal_log,
+                       "FSAL INIT : Cannot contact server addr=%u.%u.%u.%u port=%u prognum=%u using NFSv4 protocol",
+                       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+                       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+                       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+                       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+                       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
 
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
-	}
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
+        }
   } else if (!strcmp(p_thr_context->srv_proto, "tcp"))
     {
       if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-	{
-	  DisplayLogJd(fsal_log, "FSAL_INIT: cannot create a tcp socket");
+        {
+          DisplayLogJd(fsal_log, "FSAL_INIT: cannot create a tcp socket");
 
-	  Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-	}
+          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+        }
 
       if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
-	{
-	  DisplayLogJd(fsal_log,
-		       "FSAL INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-		       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-		       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-		       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-		       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-		       ntohs(p_thr_context->srv_port));
+        {
+          DisplayLogJd(fsal_log,
+                       "FSAL INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
+                       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+                       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+                       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+                       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+                       ntohs(p_thr_context->srv_port));
 
-	  Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-	}
+          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+        }
 
       if ((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
-						      p_thr_context->srv_prognum,
-						      FSAL_PROXY_NFS_V4,
-						      &sock,
-						      p_thr_context->srv_sendsize,
-						      p_thr_context->srv_recvsize)) ==
-	  NULL)
-	{
-	  DisplayLogJd(fsal_log,
-		       "FSAL INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-		       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-		       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-		       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-		       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-		       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
+                                                      p_thr_context->srv_prognum,
+                                                      FSAL_PROXY_NFS_V4,
+                                                      &sock,
+                                                      p_thr_context->srv_sendsize,
+                                                      p_thr_context->srv_recvsize)) ==
+          NULL)
+        {
+          DisplayLogJd(fsal_log,
+                       "FSAL INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
+                       (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
+                       (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
+                       (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
+                       (ntohl(p_thr_context->srv_addr) & 0x000000FF),
+                       ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
 
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
-	}
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
+        }
     } else
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
@@ -289,9 +289,9 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
     {
       fsal_status = fsal_internal_set_auth_gss(p_thr_context);
       if (FSAL_IS_ERROR(fsal_status))
-	Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_InitClientContext);
+        Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_InitClientContext);
     } else
-#endif				/* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
   if ((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
@@ -299,8 +299,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
   /* test if the newly created context can 'ping' the server via PROC_NULL */
   if ((rc = clnt_call(p_thr_context->rpc_client, NFSPROC4_NULL,
-		      (xdrproc_t) xdr_void, (caddr_t) NULL,
-		      (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
+                      (xdrproc_t) xdr_void, (caddr_t) NULL,
+                      (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
     {
       Return(ERR_FSAL_INVAL, rc, INDEX_FSAL_InitClientContext);
     }
@@ -342,12 +342,12 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT  */
-				    fsal_export_context_t * p_export_context,	/* IN */
-				    fsal_uid_t uid,	/* IN */
-				    fsal_gid_t gid,	/* IN */
-				    fsal_gid_t * alt_groups,	/* IN */
-				    fsal_count_t nb_alt_groups	/* IN */
+fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                    fsal_export_context_t * p_export_context,   /* IN */
+                                    fsal_uid_t uid,     /* IN */
+                                    fsal_gid_t gid,     /* IN */
+                                    fsal_gid_t * alt_groups,    /* IN */
+                                    fsal_count_t nb_alt_groups  /* IN */
     )
 {
 
@@ -380,12 +380,12 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->user_credential.user,
-		    p_thr_context->user_credential.group);
+                    p_thr_context->user_credential.user,
+                    p_thr_context->user_credential.group);
 
   for (i = 0; i < p_thr_context->user_credential.nbgroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->user_credential.alt_groups[i]);
+                      p_thr_context->user_credential.alt_groups[i]);
 
 #endif
 

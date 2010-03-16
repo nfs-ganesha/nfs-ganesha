@@ -233,7 +233,7 @@ mountres3 *objp;
     {
     case MNT3_OK:
       if (!xdr_mountres3_ok(xdrs, &objp->mountres3_u.mountinfo))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);

@@ -327,7 +327,7 @@ uint64_t nfs_htonl64(uint64_t arg64)
 #endif
 
   return res64;
-}				/* nfs_htonl64 */
+}                               /* nfs_htonl64 */
 
 /**
  *
@@ -355,7 +355,7 @@ uint64_t nfs_ntohl64(uint64_t arg64)
 #endif
 
   return res64;
-}				/* nfs_ntonl64 */
+}                               /* nfs_ntonl64 */
 
 #ifdef _HAVE_GSSAPI
 /**
@@ -379,15 +379,15 @@ int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_s
   FILE *tmplog;
 
   if (gss_display_status(&smin,
-			 maj_stat,
-			 GSS_C_GSS_CODE,
-			 GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
+                         maj_stat,
+                         GSS_C_GSS_CODE,
+                         GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
     return FALSE;
 
   if (gss_display_status(&smin,
-			 min_stat,
-			 GSS_C_MECH_CODE,
-			 GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
+                         min_stat,
+                         GSS_C_MECH_CODE,
+                         GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
     return FALSE;
 
   sprintf(outmsg, "%s - %s : %s ", tag, (char *)msg.value, (char *)msg2.value);
@@ -396,7 +396,7 @@ int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_s
   gss_release_buffer(&smin, &msg2);
 
   return TRUE;
-}				/* log_sperror_gss */
+}                               /* log_sperror_gss */
 #endif
 
 /**
@@ -459,5 +459,5 @@ void auth_stat2str(enum auth_stat why, char *str)
     default:
       strncpy(str, "UNKNOWN AUTH", AUTH_STR_LEN);
       break;
-    }				/* switch */
-}				/* auth_stat2str */
+    }                           /* switch */
+}                               /* auth_stat2str */

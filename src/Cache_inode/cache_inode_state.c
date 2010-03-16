@@ -89,7 +89,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -121,8 +121,8 @@
  *
  */
 int cache_inode_state_conflict(cache_inode_state_t * pstate,
-			       cache_inode_state_type_t state_type,
-			       cache_inode_state_data_t * pstate_data)
+                               cache_inode_state_type_t state_type,
+                               cache_inode_state_data_t * pstate_data)
 {
   int rc = FALSE;
 
@@ -132,20 +132,20 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
   switch (state_type)
     {
     case CACHE_INODE_STATE_NONE:
-      rc = FALSE;		/* STATE_NONE conflicts with nobody */
+      rc = FALSE;               /* STATE_NONE conflicts with nobody */
       break;
 
     case CACHE_INODE_STATE_SHARE:
       if (pstate->state_type == CACHE_INODE_STATE_SHARE)
-	{
-	  if ((pstate->state_data.share.share_access & pstate_data->share.share_deny) ||
-	      (pstate->state_data.share.share_deny & pstate_data->share.share_access))
-	    rc = TRUE;
-	}
+        {
+          if ((pstate->state_data.share.share_access & pstate_data->share.share_deny) ||
+              (pstate->state_data.share.share_deny & pstate_data->share.share_access))
+            rc = TRUE;
+        }
 
     case CACHE_INODE_STATE_LOCK:
       rc = FALSE;
-      break;			/* lock conflict is managed in the NFS request */
+      break;                    /* lock conflict is managed in the NFS request */
 
     case CACHE_INODE_STATE_DELEG:
     default:
@@ -156,7 +156,7 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
     }
 
   return rc;
-}				/* cache_inode_state_conflict */
+}                               /* cache_inode_state_conflict */
 
 /**
  *
@@ -177,13 +177,13 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
  *
  */
 cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
-					   cache_inode_state_type_t state_type,
-					   cache_inode_state_data_t * pstate_data,
-					   cache_inode_open_owner_t * powner_input,
-					   cache_inode_client_t * pclient,
-					   fsal_op_context_t * pcontext,
-					   cache_inode_state_t * *ppstate,
-					   cache_inode_status_t * pstatus)
+                                           cache_inode_state_type_t state_type,
+                                           cache_inode_state_data_t * pstate_data,
+                                           cache_inode_open_owner_t * powner_input,
+                                           cache_inode_client_t * pclient,
+                                           fsal_op_context_t * pcontext,
+                                           cache_inode_state_t * *ppstate,
+                                           cache_inode_status_t * pstatus)
 {
   cache_inode_state_t *phead_state = NULL;
   cache_inode_state_t *pnew_state = NULL;
@@ -218,13 +218,13 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   P_w(&pentry->lock);
 
   GET_PREALLOC(pnew_state,
-	       pclient->pool_state_v4,
-	       pclient->nb_pre_state_v4, cache_inode_state_t, next);
+               pclient->pool_state_v4,
+               pclient->nb_pre_state_v4, cache_inode_state_t, next);
 
   if (pnew_state == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			"Can't allocate a new file state from cache pool");
+                        "Can't allocate a new file state from cache pool");
       *pstatus = CACHE_INODE_MALLOC_ERROR;
 
       /* stat */
@@ -244,24 +244,24 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
       /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
       if (!nfs4_BuildStateId_Other(pentry,
-				   pcontext, powner_input, pnew_state->stateid_other))
-	{
-	  DisplayLogJd(pclient->log_outputs,
-		       "Can't create a new state id for the pentry %p (A)", pentry);
-	  *pstatus = CACHE_INODE_STATE_ERROR;
+                                   pcontext, powner_input, pnew_state->stateid_other))
+        {
+          DisplayLogJd(pclient->log_outputs,
+                       "Can't create a new state id for the pentry %p (A)", pentry);
+          *pstatus = CACHE_INODE_STATE_ERROR;
 
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
 
-	  V_w(&pentry->lock);
+          V_w(&pentry->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
       memcpy((char *)&(pnew_state->state_data), (char *)pstate_data,
-	     sizeof(cache_inode_state_data_t));
+             sizeof(cache_inode_state_data_t));
       pnew_state->seqid = 0;
       pnew_state->pentry = pentry;
       pnew_state->powner = powner;
@@ -272,30 +272,30 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
     {
       /* Brwose the state's list */
       for (piter_state = pentry->object.file.pstate_head; piter_state != NULL;
-	   piter_saved = piter_state, piter_state = piter_state->next)
-	{
-	  if (cache_inode_state_conflict(piter_state, state_type, pstate_data))
-	    {
-	      conflict_found = TRUE;
-	      break;
-	    }
-	}
+           piter_saved = piter_state, piter_state = piter_state->next)
+        {
+          if (cache_inode_state_conflict(piter_state, state_type, pstate_data))
+            {
+              conflict_found = TRUE;
+              break;
+            }
+        }
 
       /* An error is to be returned if a conflict is found */
       if (conflict_found == TRUE)
-	{
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			    "new state conflicts with another state for pentry %p",
-			    pentry);
-	  *pstatus = CACHE_INODE_STATE_CONFLICT;
+        {
+          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+                            "new state conflicts with another state for pentry %p",
+                            pentry);
+          *pstatus = CACHE_INODE_STATE_CONFLICT;
 
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
 
-	  V_w(&pentry->lock);
+          V_w(&pentry->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* If this point is reached, then the state is to be added to the state list and piter_saved is the tail of the list  */
       pnew_state->next = NULL;
@@ -304,37 +304,37 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
       /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
       if (!nfs4_BuildStateId_Other
-	  (pentry, pcontext, powner_input, pnew_state->stateid_other))
-	{
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			    "Can't create a new state id for the pentry %p (E)", pentry);
-	  *pstatus = CACHE_INODE_STATE_ERROR;
+          (pentry, pcontext, powner_input, pnew_state->stateid_other))
+        {
+          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+                            "Can't create a new state id for the pentry %p (E)", pentry);
+          *pstatus = CACHE_INODE_STATE_ERROR;
 
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
 
-	  V_w(&pentry->lock);
+          V_w(&pentry->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
       memcpy((char *)&(pnew_state->state_data), (char *)pstate_data,
-	     sizeof(cache_inode_state_data_t));
+             sizeof(cache_inode_state_data_t));
       pnew_state->seqid = 0;
       pnew_state->pentry = pentry;
       pnew_state->powner = powner;
 
       /* Set the head state id */
       pentry->object.file.pstate_tail = (void *)pnew_state;
-    }				/* else */
+    }                           /* else */
 
   /* Add the state to the related hashtable */
   if (!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			"Can't create a new state id for the pentry %p (F)", pentry);
+                        "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
       /* stat */
@@ -360,7 +360,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   V_w(&pentry->lock);
 
   return *pstatus;
-}				/* cache_inode_add_state */
+}                               /* cache_inode_add_state */
 
 /**
  *
@@ -377,9 +377,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
  *
  */
 cache_inode_status_t cache_inode_get_state(char other[12],
-					   cache_inode_state_t * *ppstate,
-					   cache_inode_client_t * pclient,
-					   cache_inode_status_t * pstatus)
+                                           cache_inode_state_t * *ppstate,
+                                           cache_inode_client_t * pclient,
+                                           cache_inode_status_t * pstatus)
 {
   if (pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -406,7 +406,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
-}				/* cache_inode_get_state */
+}                               /* cache_inode_get_state */
 
 /**
  *
@@ -422,8 +422,8 @@ cache_inode_status_t cache_inode_get_state(char other[12],
  *
  */
 cache_inode_status_t cache_inode_update_state(cache_inode_state_t * pstate,
-					      cache_inode_client_t * pclient,
-					      cache_inode_status_t * pstatus)
+                                              cache_inode_client_t * pclient,
+                                              cache_inode_status_t * pstatus)
 {
   if (pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -446,7 +446,7 @@ cache_inode_status_t cache_inode_update_state(cache_inode_state_t * pstate,
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
-}				/* cache_inode_set_state */
+}                               /* cache_inode_set_state */
 
 /**
  *
@@ -463,8 +463,8 @@ cache_inode_status_t cache_inode_update_state(cache_inode_state_t * pstate,
  *
  */
 cache_inode_status_t cache_inode_del_state_by_key(char other[12],
-						  cache_inode_client_t * pclient,
-						  cache_inode_status_t * pstatus)
+                                                  cache_inode_client_t * pclient,
+                                                  cache_inode_status_t * pstatus)
 {
   cache_inode_state_t *pstate = NULL;
   cache_entry_t *pentry = NULL;
@@ -499,14 +499,14 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
     {
       /* This is the first state managed */
       if (pstate->next == NULL)
-	{
-	  /* I am the only remaining state, set the head counter to 0 in the pentry */
-	  pentry->object.file.pstate_head = NULL;
-	} else
-	{
-	  /* The state that is next to me become the new head */
-	  pentry->object.file.pstate_head = (void *)pstate->next;
-	}
+        {
+          /* I am the only remaining state, set the head counter to 0 in the pentry */
+          pentry->object.file.pstate_head = NULL;
+        } else
+        {
+          /* The state that is next to me become the new head */
+          pentry->object.file.pstate_head = (void *)pstate->next;
+        }
     }
 
   /* redo the double chained list */
@@ -520,16 +520,16 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
     {
       /* Remove the entry from the HashTable */
       if (!nfs4_State_Del(pstate->stateid_other))
-	{
-	  *pstatus = CACHE_INODE_STATE_ERROR;
+        {
+          *pstatus = CACHE_INODE_STATE_ERROR;
 
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
 
-	  V_w(&pentry->lock);
+          V_w(&pentry->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* reset the pstate field to avoid later mistakes */
       memset((char *)pstate->stateid_other, 0, 12);
@@ -546,7 +546,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
   V_w(&pentry->lock);
 
   return *pstatus;
-}				/* cache_inode_del_state_by_key */
+}                               /* cache_inode_del_state_by_key */
 
 /**
  *
@@ -562,8 +562,8 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
  *
  */
 cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
-					   cache_inode_client_t * pclient,
-					   cache_inode_status_t * pstatus)
+                                           cache_inode_client_t * pclient,
+                                           cache_inode_status_t * pstatus)
 {
   cache_inode_state_t *ptest_state = NULL;
   cache_entry_t *pentry = NULL;
@@ -608,14 +608,14 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
     {
       /* This is the first state managed */
       if (pstate->next == NULL)
-	{
-	  /* I am the only remaining state, set the head counter to 0 in the pentry */
-	  pentry->object.file.pstate_head = NULL;
-	} else
-	{
-	  /* The state that is next to me become the new head */
-	  pentry->object.file.pstate_head = (void *)pstate->next;
-	}
+        {
+          /* I am the only remaining state, set the head counter to 0 in the pentry */
+          pentry->object.file.pstate_head = NULL;
+        } else
+        {
+          /* The state that is next to me become the new head */
+          pentry->object.file.pstate_head = (void *)pstate->next;
+        }
     }
 
   /* redo the double chained list */
@@ -652,7 +652,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
   V_w(&pentry->lock);
 
   return *pstatus;
-}				/* cache_inode_del_state */
+}                               /* cache_inode_del_state */
 
 /**
  *
@@ -671,11 +671,11 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
  *
  */
 cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
-					       cache_inode_state_t * *ppstate,
-					       cache_inode_state_t * previous_pstate,
-					       cache_inode_client_t * pclient,
-					       fsal_op_context_t * pcontext,
-					       cache_inode_status_t * pstatus)
+                                               cache_inode_state_t * *ppstate,
+                                               cache_inode_state_t * previous_pstate,
+                                               cache_inode_client_t * pclient,
+                                               fsal_op_context_t * pcontext,
+                                               cache_inode_status_t * pstatus)
 {
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *phead_state = NULL;
@@ -693,12 +693,12 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
 
   /* Here, we need to know the file id */
   if (FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
-				      FSAL_DIGEST_FILEID3,
-				      &(pentry->object.file.handle),
-				      (caddr_t) & fileid_digest)))
+                                      FSAL_DIGEST_FILEID3,
+                                      &(pentry->object.file.handle),
+                                      (caddr_t) & fileid_digest)))
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			"Can't create a new state id for the pentry %p (F)", pentry);
+                        "Can't create a new state id for the pentry %p (F)", pentry);
       *pstatus = CACHE_INODE_STATE_ERROR;
 
       return *pstatus;
@@ -715,17 +715,17 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
     {
       /* Sanity check: make sure that this state is related to this pentry */
       if (previous_pstate->pentry != pentry)
-	{
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
-			    "Bad previous pstate: related to pentry %p, not to %p",
-			    previous_pstate->pentry, pentry);
+        {
+          DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
+                            "Bad previous pstate: related to pentry %p, not to %p",
+                            previous_pstate->pentry, pentry);
 
-	  *pstatus = CACHE_INODE_STATE_ERROR;
+          *pstatus = CACHE_INODE_STATE_ERROR;
 
-	  V_r(&pentry->lock);
+          V_r(&pentry->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       piter_state = previous_pstate->next;
     }
@@ -735,4 +735,4 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
   V_r(&pentry->lock);
 
   return *pstatus;
-}				/* cache_inode_state_iterate */
+}                               /* cache_inode_state_iterate */

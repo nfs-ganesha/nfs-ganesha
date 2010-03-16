@@ -38,7 +38,7 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
 
       rc = hpss_FileGetAttributes("/", &root_attr);
       if (rc)
-	return rc;
+        return rc;
 
       *p_root_hdl = root_attr.ObjectHandle;
       return 0;
@@ -54,7 +54,7 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
       rc = hpss_FilesetGetAttributes(fileset_name, NULL, NULL, NULL, attrBits, &fsattrs);
 
       if (rc)
-	return rc;
+        return rc;
 
       *p_root_hdl = fsattrs.FilesetHandle;
       return 0;
@@ -77,7 +77,7 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
  */
 
 void HPSSFSAL_BuildCos(fsal_uint_t CosId,
-		       hpss_cos_hints_t * hints, hpss_cos_priorities_t * hintpri)
+                       hpss_cos_hints_t * hints, hpss_cos_priorities_t * hintpri)
 {
 
   /* clears the structures */
@@ -108,8 +108,8 @@ int HPSSFSAL_IsStaleHandle(ns_ObjHandle_t * p_hdl, TYPE_CRED_HPSS * p_cred)
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_GetRawAttrHandle(p_hdl, NULL, p_cred, FALSE,	/* don't solve junctions */
-				 NULL, NULL, NULL);
+  rc = HPSSFSAL_GetRawAttrHandle(p_hdl, NULL, p_cred, FALSE,    /* don't solve junctions */
+                                 NULL, NULL, NULL);
 
   ReleaseTokenFSCall();
 

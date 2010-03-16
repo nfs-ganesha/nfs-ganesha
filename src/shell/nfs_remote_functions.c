@@ -89,7 +89,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #ifdef _USE_GSSRPC
 #include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
@@ -126,8 +126,8 @@ static struct timeval TIMEOUT = { 25, 0 };
  *
  */
 int mnt1_remote_Null(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   ////printf("REQUEST PROCESSING: Calling mnt1_remote_Null\n");
   if (clnt == NULL)
@@ -136,8 +136,8 @@ int mnt1_remote_Null(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC2_NULL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -151,8 +151,8 @@ int mnt1_remote_Null(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt1_remote_Mnt(CLIENT * clnt /* IN  */ ,
-		    nfs_arg_t * parg /* IN  */ ,
-		    nfs_res_t * pres /* OUT */ )
+                    nfs_arg_t * parg /* IN  */ ,
+                    nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Mnt\n");
   if (clnt == NULL)
@@ -162,8 +162,8 @@ int mnt1_remote_Mnt(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(fhstatus2));
   return clnt_call(clnt, MOUNTPROC2_MNT,
-		   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
-		   (xdrproc_t) xdr_fhstatus2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
+                   (xdrproc_t) xdr_fhstatus2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -177,8 +177,8 @@ int mnt1_remote_Mnt(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt1_remote_Dump(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Dump\n");
   if (clnt == NULL)
@@ -188,8 +188,8 @@ int mnt1_remote_Dump(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(mountlist));
   return clnt_call(clnt, MOUNTPROC2_DUMP,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_mountlist, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_mountlist, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -203,8 +203,8 @@ int mnt1_remote_Dump(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt1_remote_Umnt(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Umnt\n");
   if (clnt == NULL)
@@ -213,8 +213,8 @@ int mnt1_remote_Umnt(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC2_UMNT,
-		   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -228,8 +228,8 @@ int mnt1_remote_Umnt(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt1_remote_UmntAll(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_UmntAll\n");
   if (clnt == NULL)
@@ -238,8 +238,8 @@ int mnt1_remote_UmntAll(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC2_UMNTALL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -253,8 +253,8 @@ int mnt1_remote_UmntAll(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt1_remote_Export(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt1_remote_Export\n");
   if (clnt == NULL)
@@ -264,8 +264,8 @@ int mnt1_remote_Export(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(exports));
   return clnt_call(clnt, MOUNTPROC2_EXPORT,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_exports, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_exports, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -279,8 +279,8 @@ int mnt1_remote_Export(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_Null(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Null\n");
   if (clnt == NULL)
@@ -289,8 +289,8 @@ int mnt3_remote_Null(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC3_NULL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -304,8 +304,8 @@ int mnt3_remote_Null(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_Mnt(CLIENT * clnt /* IN  */ ,
-		    nfs_arg_t * parg /* IN  */ ,
-		    nfs_res_t * pres /* OUT */ )
+                    nfs_arg_t * parg /* IN  */ ,
+                    nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Mnt\n");
   if (clnt == NULL)
@@ -315,8 +315,8 @@ int mnt3_remote_Mnt(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(mountres3));
   return clnt_call(clnt, MOUNTPROC3_MNT,
-		   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
-		   (xdrproc_t) xdr_mountres3, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
+                   (xdrproc_t) xdr_mountres3, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -330,8 +330,8 @@ int mnt3_remote_Mnt(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_Dump(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Dump\n");
   if (clnt == NULL)
@@ -341,8 +341,8 @@ int mnt3_remote_Dump(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(mountlist));
   return clnt_call(clnt, MOUNTPROC3_DUMP,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_mountlist, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_mountlist, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -356,8 +356,8 @@ int mnt3_remote_Dump(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_Umnt(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Umnt\n");
   if (clnt == NULL)
@@ -366,8 +366,8 @@ int mnt3_remote_Umnt(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC3_UMNT,
-		   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_dirpath, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -381,8 +381,8 @@ int mnt3_remote_Umnt(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_UmntAll(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_UmntAll\n");
   if (clnt == NULL)
@@ -391,8 +391,8 @@ int mnt3_remote_UmntAll(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, MOUNTPROC3_UMNTALL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -406,8 +406,8 @@ int mnt3_remote_UmntAll(CLIENT * clnt /* IN  */ ,
  *
  */
 int mnt3_remote_Export(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling mnt3_remote_Export\n");
   if (clnt == NULL)
@@ -417,8 +417,8 @@ int mnt3_remote_Export(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(exports));
   return clnt_call(clnt, MOUNTPROC3_EXPORT,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_exports, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_exports, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -432,8 +432,8 @@ int mnt3_remote_Export(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Null(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Null\n");
   if (clnt == NULL)
@@ -442,8 +442,8 @@ int nfs2_remote_Null(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, NFSPROC_NULL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -457,8 +457,8 @@ int nfs2_remote_Null(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Getattr(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Getattr\n");
   if (clnt == NULL)
@@ -468,8 +468,8 @@ int nfs2_remote_Getattr(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(ATTR2res));
   return clnt_call(clnt, NFSPROC_GETATTR,
-		   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
-		   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
+                   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -483,8 +483,8 @@ int nfs2_remote_Getattr(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Setattr(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Setattr\n");
   if (clnt == NULL)
@@ -494,8 +494,8 @@ int nfs2_remote_Setattr(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(ATTR2res));
   return clnt_call(clnt, NFSPROC_SETATTR,
-		   (xdrproc_t) xdr_SETATTR2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_SETATTR2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -509,8 +509,8 @@ int nfs2_remote_Setattr(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Root(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Root\n");
   if (clnt == NULL)
@@ -519,8 +519,8 @@ int nfs2_remote_Root(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, NFSPROC_ROOT,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -534,8 +534,8 @@ int nfs2_remote_Root(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Lookup(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Lookup\n");
   if (clnt == NULL)
@@ -545,8 +545,8 @@ int nfs2_remote_Lookup(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(DIROP2res));
   return clnt_call(clnt, NFSPROC_LOOKUP,
-		   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
-		   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
+                   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -560,8 +560,8 @@ int nfs2_remote_Lookup(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Readlink(CLIENT * clnt /* IN  */ ,
-			 nfs_arg_t * parg /* IN  */ ,
-			 nfs_res_t * pres /* OUT */ )
+                         nfs_arg_t * parg /* IN  */ ,
+                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Readlink\n");
   if (clnt == NULL)
@@ -571,8 +571,8 @@ int nfs2_remote_Readlink(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READLINK2res));
   return clnt_call(clnt, NFSPROC_READLINK,
-		   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
-		   (xdrproc_t) xdr_READLINK2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
+                   (xdrproc_t) xdr_READLINK2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -586,8 +586,8 @@ int nfs2_remote_Readlink(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Read(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Read\n");
   if (clnt == NULL)
@@ -597,8 +597,8 @@ int nfs2_remote_Read(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READ2res));
   return clnt_call(clnt, NFSPROC_READ,
-		   (xdrproc_t) xdr_READ2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READ2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READ2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READ2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -612,8 +612,8 @@ int nfs2_remote_Read(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Writecache(CLIENT * clnt /* IN  */ ,
-			   nfs_arg_t * parg /* IN  */ ,
-			   nfs_res_t * pres /* OUT */ )
+                           nfs_arg_t * parg /* IN  */ ,
+                           nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Writecache\n");
   if (clnt == NULL)
@@ -622,8 +622,8 @@ int nfs2_remote_Writecache(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, NFSPROC_WRITECACHE,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -637,8 +637,8 @@ int nfs2_remote_Writecache(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Write(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Write\n");
   if (clnt == NULL)
@@ -648,8 +648,8 @@ int nfs2_remote_Write(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(ATTR2res));
   return clnt_call(clnt, NFSPROC_WRITE,
-		   (xdrproc_t) xdr_WRITE2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_WRITE2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_ATTR2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -663,8 +663,8 @@ int nfs2_remote_Write(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Create(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Create\n");
   if (clnt == NULL)
@@ -674,8 +674,8 @@ int nfs2_remote_Create(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(DIROP2res));
   return clnt_call(clnt, NFSPROC_CREATE,
-		   (xdrproc_t) xdr_CREATE2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_CREATE2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -689,8 +689,8 @@ int nfs2_remote_Create(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Remove(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Remove\n");
   if (clnt == NULL)
@@ -700,8 +700,8 @@ int nfs2_remote_Remove(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(nfsstat2));
   return clnt_call(clnt, NFSPROC_REMOVE,
-		   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
-		   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
+                   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -715,8 +715,8 @@ int nfs2_remote_Remove(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Rename(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Rename\n");
   if (clnt == NULL)
@@ -726,8 +726,8 @@ int nfs2_remote_Rename(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(nfsstat2));
   return clnt_call(clnt, NFSPROC_RENAME,
-		   (xdrproc_t) xdr_RENAME2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_RENAME2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -741,8 +741,8 @@ int nfs2_remote_Rename(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Link(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Link\n");
   if (clnt == NULL)
@@ -752,8 +752,8 @@ int nfs2_remote_Link(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(nfsstat2));
   return clnt_call(clnt, NFSPROC_LINK,
-		   (xdrproc_t) xdr_LINK2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_LINK2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -767,8 +767,8 @@ int nfs2_remote_Link(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Symlink(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Symlink\n");
   if (clnt == NULL)
@@ -778,8 +778,8 @@ int nfs2_remote_Symlink(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(nfsstat2));
   return clnt_call(clnt, NFSPROC_SYMLINK,
-		   (xdrproc_t) xdr_SYMLINK2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_SYMLINK2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -793,8 +793,8 @@ int nfs2_remote_Symlink(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Mkdir(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Mkdir\n");
   if (clnt == NULL)
@@ -804,8 +804,8 @@ int nfs2_remote_Mkdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(DIROP2res));
   return clnt_call(clnt, NFSPROC_MKDIR,
-		   (xdrproc_t) xdr_CREATE2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_CREATE2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_DIROP2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -819,8 +819,8 @@ int nfs2_remote_Mkdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Rmdir(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Rmdir\n");
   if (clnt == NULL)
@@ -830,8 +830,8 @@ int nfs2_remote_Rmdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(nfsstat2));
   return clnt_call(clnt, NFSPROC_RMDIR,
-		   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
-		   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_diropargs2, (caddr_t) parg,
+                   (xdrproc_t) xdr_nfsstat2, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -845,8 +845,8 @@ int nfs2_remote_Rmdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Readdir(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Readdir\n");
   if (clnt == NULL)
@@ -856,8 +856,8 @@ int nfs2_remote_Readdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READDIR2res));
   return clnt_call(clnt, NFSPROC_READDIR,
-		   (xdrproc_t) xdr_READDIR2args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READDIR2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READDIR2args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READDIR2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -871,8 +871,8 @@ int nfs2_remote_Readdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs2_remote_Fsstat(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs2_remote_Fsstat\n");
   if (clnt == NULL)
@@ -882,8 +882,8 @@ int nfs2_remote_Fsstat(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(STATFS2res));
   return clnt_call(clnt, NFSPROC_STATFS,
-		   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
-		   (xdrproc_t) xdr_STATFS2res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_fhandle2, (caddr_t) parg,
+                   (xdrproc_t) xdr_STATFS2res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -897,8 +897,8 @@ int nfs2_remote_Fsstat(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Null(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Null\n");
   if (clnt == NULL)
@@ -907,8 +907,8 @@ int nfs3_remote_Null(CLIENT * clnt /* IN  */ ,
     }
 
   return clnt_call(clnt, NFSPROC3_NULL,
-		   (xdrproc_t) xdr_void, (caddr_t) parg,
-		   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) parg,
+                   (xdrproc_t) xdr_void, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -922,8 +922,8 @@ int nfs3_remote_Null(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Getattr(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Getattr\n");
   if (clnt == NULL)
@@ -933,8 +933,8 @@ int nfs3_remote_Getattr(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(GETATTR3res));
   return clnt_call(clnt, NFSPROC3_GETATTR,
-		   (xdrproc_t) xdr_GETATTR3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_GETATTR3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_GETATTR3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_GETATTR3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -948,8 +948,8 @@ int nfs3_remote_Getattr(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Setattr(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Setattr\n");
   if (clnt == NULL)
@@ -959,8 +959,8 @@ int nfs3_remote_Setattr(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(SETATTR3res));
   return clnt_call(clnt, NFSPROC3_SETATTR,
-		   (xdrproc_t) xdr_SETATTR3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_SETATTR3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_SETATTR3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_SETATTR3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -974,8 +974,8 @@ int nfs3_remote_Setattr(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Lookup(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Lookup\n");
   if (clnt == NULL)
@@ -985,8 +985,8 @@ int nfs3_remote_Lookup(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(LOOKUP3res));
   return clnt_call(clnt, NFSPROC3_LOOKUP,
-		   (xdrproc_t) xdr_LOOKUP3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_LOOKUP3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_LOOKUP3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_LOOKUP3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1000,8 +1000,8 @@ int nfs3_remote_Lookup(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Readlink(CLIENT * clnt /* IN  */ ,
-			 nfs_arg_t * parg /* IN  */ ,
-			 nfs_res_t * pres /* OUT */ )
+                         nfs_arg_t * parg /* IN  */ ,
+                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readlink\n");
   if (clnt == NULL)
@@ -1011,8 +1011,8 @@ int nfs3_remote_Readlink(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READLINK3res));
   return clnt_call(clnt, NFSPROC3_READLINK,
-		   (xdrproc_t) xdr_READLINK3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READLINK3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READLINK3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READLINK3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1026,8 +1026,8 @@ int nfs3_remote_Readlink(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Read(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Read\n");
   if (clnt == NULL)
@@ -1037,8 +1037,8 @@ int nfs3_remote_Read(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READ3res));
   return clnt_call(clnt, NFSPROC3_READ,
-		   (xdrproc_t) xdr_READ3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READ3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READ3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READ3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1052,8 +1052,8 @@ int nfs3_remote_Read(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Write(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Write\n");
   if (clnt == NULL)
@@ -1063,8 +1063,8 @@ int nfs3_remote_Write(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(WRITE3res));
   return clnt_call(clnt, NFSPROC3_WRITE,
-		   (xdrproc_t) xdr_WRITE3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_WRITE3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_WRITE3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_WRITE3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1078,8 +1078,8 @@ int nfs3_remote_Write(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Create(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Create\n");
   if (clnt == NULL)
@@ -1089,8 +1089,8 @@ int nfs3_remote_Create(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(CREATE3res));
   return clnt_call(clnt, NFSPROC3_CREATE,
-		   (xdrproc_t) xdr_CREATE3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_CREATE3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_CREATE3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_CREATE3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1104,8 +1104,8 @@ int nfs3_remote_Create(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Remove(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Remove\n");
   if (clnt == NULL)
@@ -1115,8 +1115,8 @@ int nfs3_remote_Remove(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(REMOVE3res));
   return clnt_call(clnt, NFSPROC3_REMOVE,
-		   (xdrproc_t) xdr_REMOVE3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_REMOVE3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_REMOVE3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_REMOVE3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1130,8 +1130,8 @@ int nfs3_remote_Remove(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Rename(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Rename\n");
   if (clnt == NULL)
@@ -1141,8 +1141,8 @@ int nfs3_remote_Rename(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(RENAME3res));
   return clnt_call(clnt, NFSPROC3_RENAME,
-		   (xdrproc_t) xdr_RENAME3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_RENAME3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_RENAME3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_RENAME3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1156,8 +1156,8 @@ int nfs3_remote_Rename(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Link(CLIENT * clnt /* IN  */ ,
-		     nfs_arg_t * parg /* IN  */ ,
-		     nfs_res_t * pres /* OUT */ )
+                     nfs_arg_t * parg /* IN  */ ,
+                     nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Link\n");
   if (clnt == NULL)
@@ -1167,8 +1167,8 @@ int nfs3_remote_Link(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(LINK3res));
   return clnt_call(clnt, NFSPROC3_LINK,
-		   (xdrproc_t) xdr_LINK3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_LINK3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_LINK3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_LINK3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1182,8 +1182,8 @@ int nfs3_remote_Link(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Symlink(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Symlink\n");
   if (clnt == NULL)
@@ -1193,8 +1193,8 @@ int nfs3_remote_Symlink(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(SYMLINK3res));
   return clnt_call(clnt, NFSPROC3_SYMLINK,
-		   (xdrproc_t) xdr_SYMLINK3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_SYMLINK3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_SYMLINK3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_SYMLINK3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1208,8 +1208,8 @@ int nfs3_remote_Symlink(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Mkdir(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Mkdir\n");
   if (clnt == NULL)
@@ -1219,8 +1219,8 @@ int nfs3_remote_Mkdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(MKDIR3res));
   return clnt_call(clnt, NFSPROC3_MKDIR,
-		   (xdrproc_t) xdr_MKDIR3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_MKDIR3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_MKDIR3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_MKDIR3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1234,8 +1234,8 @@ int nfs3_remote_Mkdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Rmdir(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Rmdir\n");
   if (clnt == NULL)
@@ -1245,8 +1245,8 @@ int nfs3_remote_Rmdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(RMDIR3res));
   return clnt_call(clnt, NFSPROC3_RMDIR,
-		   (xdrproc_t) xdr_RMDIR3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_RMDIR3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_RMDIR3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_RMDIR3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1260,8 +1260,8 @@ int nfs3_remote_Rmdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Readdir(CLIENT * clnt /* IN  */ ,
-			nfs_arg_t * parg /* IN  */ ,
-			nfs_res_t * pres /* OUT */ )
+                        nfs_arg_t * parg /* IN  */ ,
+                        nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readdir\n");
   if (clnt == NULL)
@@ -1271,8 +1271,8 @@ int nfs3_remote_Readdir(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READDIR3res));
   return clnt_call(clnt, NFSPROC3_READDIR,
-		   (xdrproc_t) xdr_READDIR3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READDIR3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READDIR3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READDIR3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1286,8 +1286,8 @@ int nfs3_remote_Readdir(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Fsstat(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Fsstat\n");
   if (clnt == NULL)
@@ -1297,8 +1297,8 @@ int nfs3_remote_Fsstat(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(FSSTAT3res));
   return clnt_call(clnt, NFSPROC3_FSSTAT,
-		   (xdrproc_t) xdr_FSSTAT3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_FSSTAT3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_FSSTAT3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_FSSTAT3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1312,8 +1312,8 @@ int nfs3_remote_Fsstat(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Access(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Access\n");
   if (clnt == NULL)
@@ -1323,8 +1323,8 @@ int nfs3_remote_Access(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(ACCESS3res));
   return clnt_call(clnt, NFSPROC3_ACCESS,
-		   (xdrproc_t) xdr_ACCESS3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_ACCESS3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_ACCESS3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_ACCESS3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1338,8 +1338,8 @@ int nfs3_remote_Access(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Readdirplus(CLIENT * clnt /* IN  */ ,
-			    nfs_arg_t * parg /* IN  */ ,
-			    nfs_res_t * pres /* OUT */ )
+                            nfs_arg_t * parg /* IN  */ ,
+                            nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Readdirplus\n");
   if (clnt == NULL)
@@ -1349,8 +1349,8 @@ int nfs3_remote_Readdirplus(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(READDIRPLUS3res));
   return clnt_call(clnt, NFSPROC3_READDIRPLUS,
-		   (xdrproc_t) xdr_READDIRPLUS3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_READDIRPLUS3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_READDIRPLUS3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_READDIRPLUS3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1364,8 +1364,8 @@ int nfs3_remote_Readdirplus(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Fsinfo(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Fsinfo\n");
   if (clnt == NULL)
@@ -1375,8 +1375,8 @@ int nfs3_remote_Fsinfo(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(FSINFO3res));
   return clnt_call(clnt, NFSPROC3_FSINFO,
-		   (xdrproc_t) xdr_FSINFO3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_FSINFO3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_FSINFO3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_FSINFO3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1390,8 +1390,8 @@ int nfs3_remote_Fsinfo(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Pathconf(CLIENT * clnt /* IN  */ ,
-			 nfs_arg_t * parg /* IN  */ ,
-			 nfs_res_t * pres /* OUT */ )
+                         nfs_arg_t * parg /* IN  */ ,
+                         nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Pathconf\n");
   if (clnt == NULL)
@@ -1401,8 +1401,8 @@ int nfs3_remote_Pathconf(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(PATHCONF3res));
   return clnt_call(clnt, NFSPROC3_PATHCONF,
-		   (xdrproc_t) xdr_PATHCONF3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_PATHCONF3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_PATHCONF3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_PATHCONF3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1416,8 +1416,8 @@ int nfs3_remote_Pathconf(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Commit(CLIENT * clnt /* IN  */ ,
-		       nfs_arg_t * parg /* IN  */ ,
-		       nfs_res_t * pres /* OUT */ )
+                       nfs_arg_t * parg /* IN  */ ,
+                       nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Commit\n");
   if (clnt == NULL)
@@ -1427,8 +1427,8 @@ int nfs3_remote_Commit(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(COMMIT3res));
   return clnt_call(clnt, NFSPROC3_COMMIT,
-		   (xdrproc_t) xdr_COMMIT3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_COMMIT3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_COMMIT3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_COMMIT3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1442,8 +1442,8 @@ int nfs3_remote_Commit(CLIENT * clnt /* IN  */ ,
  *
  */
 int nfs3_remote_Mknod(CLIENT * clnt /* IN  */ ,
-		      nfs_arg_t * parg /* IN  */ ,
-		      nfs_res_t * pres /* OUT */ )
+                      nfs_arg_t * parg /* IN  */ ,
+                      nfs_res_t * pres /* OUT */ )
 {
   //printf("REQUEST PROCESSING: Calling nfs3_remote_Mknod\n");
   if (clnt == NULL)
@@ -1453,8 +1453,8 @@ int nfs3_remote_Mknod(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(MKNOD3res));
   return clnt_call(clnt, NFSPROC3_MKNOD,
-		   (xdrproc_t) xdr_MKNOD3args, (caddr_t) parg,
-		   (xdrproc_t) xdr_MKNOD3res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_MKNOD3args, (caddr_t) parg,
+                   (xdrproc_t) xdr_MKNOD3res, (caddr_t) pres, TIMEOUT);
 }
 
 /**
@@ -1476,8 +1476,8 @@ int nfs4_remote_Null(CLIENT * clnt /* IN  */ )
     }
 
   return clnt_call(clnt, NFSPROC4_NULL,
-		   (xdrproc_t) xdr_void, (caddr_t) & parg,
-		   (xdrproc_t) xdr_void, (caddr_t) & pres, TIMEOUT);
+                   (xdrproc_t) xdr_void, (caddr_t) & parg,
+                   (xdrproc_t) xdr_void, (caddr_t) & pres, TIMEOUT);
 }
 
 /**
@@ -1491,8 +1491,8 @@ int nfs4_remote_Null(CLIENT * clnt /* IN  */ )
  *
  */
 int nfs4_remote_COMPOUND(CLIENT * clnt /* IN  */ ,
-			 COMPOUND4args * parg /* IN  */ ,
-			 COMPOUND4res * pres /* OUT */ )
+                         COMPOUND4args * parg /* IN  */ ,
+                         COMPOUND4res * pres /* OUT */ )
 {
 //      printf("REQUEST PROCESSING: Calling nfs4_remote_COMPOUND\n");
   if (clnt == NULL)
@@ -1502,8 +1502,8 @@ int nfs4_remote_COMPOUND(CLIENT * clnt /* IN  */ ,
 
   memset((char *)pres, 0, sizeof(COMPOUND4res) * parg->argarray.argarray_len);
   return clnt_call(clnt, NFSPROC4_COMPOUND,
-		   (xdrproc_t) xdr_COMPOUND4args, (caddr_t) parg,
-		   (xdrproc_t) xdr_COMPOUND4res, (caddr_t) pres, TIMEOUT);
+                   (xdrproc_t) xdr_COMPOUND4args, (caddr_t) parg,
+                   (xdrproc_t) xdr_COMPOUND4res, (caddr_t) pres, TIMEOUT);
 }
 
 /* Free functions */

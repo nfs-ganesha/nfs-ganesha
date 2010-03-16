@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -242,15 +242,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_READ;
 #if !defined( _USE_HPSS )
       if ((attr.mode & read_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & read_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
+        }
     }
 
   if ((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == FSAL_TYPE_DIR))
@@ -258,15 +258,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_LOOKUP;
 #if !defined( _USE_HPSS )
       if ((attr.mode & exec_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & exec_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
+        }
     }
 
   if (arg_ACCESS4.access & ACCESS4_MODIFY)
@@ -274,15 +274,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_MODIFY;
 #if !defined( _USE_HPSS )
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
+        }
     }
 
   if (arg_ACCESS4.access & ACCESS4_EXTEND)
@@ -290,15 +290,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXTEND;
 #if !defined( _USE_HPSS )
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
+        }
     }
 
   if ((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == FSAL_TYPE_DIR))
@@ -306,15 +306,15 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE;
 #if !defined( _USE_HPSS )
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & write_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
+        }
     }
 
   if ((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != FSAL_TYPE_DIR))
@@ -322,21 +322,21 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXECUTE;
 #if !defined( _USE_HPSS )
       if ((attr.mode & exec_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT) && credentials.user == 0))
 #else
       if ((attr.mode & exec_flag)
-	  || ((data->pexport->options & EXPORT_OPTION_ROOT)
-	      && credentials.hpss_usercred.Uid == 0))
+          || ((data->pexport->options & EXPORT_OPTION_ROOT)
+              && credentials.hpss_usercred.Uid == 0))
 #endif
-	{
-	  res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;
-	}
+        {
+          res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;
+        }
     }
 
   res_ACCESS4.status = NFS4_OK;
 
   return res_ACCESS4.status;
-}				/* nfs4_op_access */
+}                               /* nfs4_op_access */
 
 /**
  * nfs4_op_access_Free: frees what was allocared to handle nfs4_op_access.
@@ -352,4 +352,4 @@ void nfs4_op_access_Free(ACCESS4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_access_Free */
+}                               /* nfs4_op_access_Free */

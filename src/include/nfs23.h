@@ -16,7 +16,7 @@
 #include <rpc/types.h>
 #endif
 
-#endif				/* SWIG */
+#endif                          /* SWIG */
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
@@ -38,7 +38,7 @@
 #define NFS3_CREATEVERFSIZE 8
 #define NFS3_WRITEVERFSIZE 8
 
-#define NFS2_MAX_FILESIZE   (2147483647)	/* 0x7fffffff */
+#define NFS2_MAX_FILESIZE   (2147483647)        /* 0x7fffffff */
 
 typedef char *nfspath2;
 
@@ -1382,6 +1382,6 @@ extern bool_t xdr_COMMIT3resok(XDR *, COMMIT3resok *);
 extern bool_t xdr_COMMIT3resfail(XDR *, COMMIT3resfail *);
 extern bool_t xdr_COMMIT3res(XDR *, COMMIT3res *);
 
-#endif				/* ifndef _USE_SWIG */
+#endif                          /* ifndef _USE_SWIG */
 
-#endif				/* !_NFS23_H_RPCGEN */
+#endif                          /* !_NFS23_H_RPCGEN */

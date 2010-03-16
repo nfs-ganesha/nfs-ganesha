@@ -98,9 +98,9 @@
 #define  ATTRVALS_BUFFLEN  1024
 
 int nfs_ParseConfLine(char *Argv[],
-		      int nbArgv,
-		      char *line,
-		      int (*separator_function) (char), int (*endLine_func) (char));
+                      int nbArgv,
+                      char *line,
+                      int (*separator_function) (char), int (*endLine_func) (char));
 
 int ReadExports(config_file_t in_config, exportlist_t ** pEx);
 
@@ -121,9 +121,9 @@ char *nfstype3_to_str(ftype3 code);
 
 /* Hash and LRU functions */
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef);
+                                       hash_buffer_t * buffclef);
 unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam,
-				    hash_buffer_t * buffclef);
+                                    hash_buffer_t * buffclef);
 
 int display_cache(hash_buffer_t * pbuff, char *str);
 int compare_cache(hash_buffer_t * buff1, hash_buffer_t * buff2);
@@ -135,4 +135,4 @@ int lru_inode_clean_entry(LRU_entry_t * entry, void *adddata);
 int lru_data_clean_entry(LRU_entry_t * entry, void *adddata);
 int lru_inode_entry_to_str(LRU_data_t data, char *str);
 
-#endif				/* _NFS_TOOLS_H */
+#endif                          /* _NFS_TOOLS_H */

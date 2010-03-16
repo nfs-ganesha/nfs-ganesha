@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,7 +141,7 @@
 #define res_OPEN_DOWNGRADE4 resp->nfs_resop4_u.opopen_downgrade
 
 int nfs4_op_open_downgrade(struct nfs_argop4 *op,
-			   compound_data_t * data, struct nfs_resop4 *resp)
+                           compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
@@ -181,8 +181,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
 
   /* Get the state */
   if (cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
-			    &pstate_found,
-			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                            &pstate_found,
+                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
       return res_OPEN_DOWNGRADE4.status;
@@ -196,10 +196,10 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid =
       pstate_found->seqid;
   memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
-	 pstate_found->stateid_other, 12);
+         pstate_found->stateid_other, 12);
 
   return res_OPEN_DOWNGRADE4.status;
-}				/* nfs4_op_opendowngrade */
+}                               /* nfs4_op_opendowngrade */
 
 /**
  * nfs4_op_open_downgrade_Free: frees what was allocared to handle nfs4_op_open_downgrade.
@@ -215,4 +215,4 @@ void nfs4_op_open_downgrade_Free(OPEN_DOWNGRADE4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_open_downgrade_Free */
+}                               /* nfs4_op_open_downgrade_Free */

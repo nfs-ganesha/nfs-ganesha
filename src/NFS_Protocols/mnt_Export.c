@@ -97,7 +97,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -149,25 +149,25 @@
  */
 
 int mnt_Export(nfs_arg_t * parg /* IN     */ ,
-	       exportlist_t * pexport /* IN     */ ,
-	       fsal_op_context_t * pcontext /* IN     */ ,
-	       cache_inode_client_t * pclient /* INOUT  */ ,
-	       hash_table_t * ht /* INOUT  */ ,
-	       struct svc_req *preq /* IN     */ ,
-	       nfs_res_t * pres /* OUT    */ )
+               exportlist_t * pexport /* IN     */ ,
+               fsal_op_context_t * pcontext /* IN     */ ,
+               cache_inode_client_t * pclient /* INOUT  */ ,
+               hash_table_t * ht /* INOUT  */ ,
+               struct svc_req *preq /* IN     */ ,
+               nfs_res_t * pres /* OUT    */ )
 {
 
   /* @todo : memset after Mem_Alloc */
 
-  exportlist_t *p_current_item = pexport;	/* the current export item. */
+  exportlist_t *p_current_item = pexport;       /* the current export item. */
 
-  exports p_exp_out = NULL;	/* Pointer to the first export entry. */
-  exports p_exp_current = NULL;	/* Pointer to the last  export entry. */
+  exports p_exp_out = NULL;     /* Pointer to the first export entry. */
+  exports p_exp_current = NULL; /* Pointer to the last  export entry. */
 
   unsigned int i;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "REQUEST PROCESSING: Calling mnt_Export");
+                    "REQUEST PROCESSING: Calling mnt_Export");
 
   /* paranoid command, to avoid parasites in the result structure. */
   memset(pres, 0, sizeof(nfs_res_t));
@@ -176,7 +176,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
   while (p_current_item)
     {
 
-      exports new_expnode;	/* the export node to be added to the list */
+      exports new_expnode;      /* the export node to be added to the list */
       int buffsize;
 
       new_expnode = (exports) Mem_Alloc(sizeof(exportnode));
@@ -189,9 +189,9 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
       /* we set the export path */
 
       DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			"MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
-			p_current_item->fullpath, p_current_item->clients.num_clients,
-			p_current_item->clients.clientarray);
+                        "MNT_EXPORT: Export entry: %s | Numclients: %d | PtrClients: %p",
+                        p_current_item->fullpath, p_current_item->clients.num_clients,
+                        p_current_item->clients.clientarray);
 
       buffsize = strlen(p_current_item->fullpath) + 1;
 
@@ -207,130 +207,130 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
       /* we convert the group list */
 
       if (p_current_item->clients.num_clients > 0)
-	{
+        {
 
-	  /* Alias, to make the code slim... */
-	  exportlist_client_t *p_clients = &(p_current_item->clients);
+          /* Alias, to make the code slim... */
+          exportlist_client_t *p_clients = &(p_current_item->clients);
 
-	  /* allocates the memory for all the groups, once for all */
-	  new_expnode->ex_groups =
-	      (groups) Mem_Alloc(p_clients->num_clients * sizeof(groupnode));
+          /* allocates the memory for all the groups, once for all */
+          new_expnode->ex_groups =
+              (groups) Mem_Alloc(p_clients->num_clients * sizeof(groupnode));
 
-	  /* paranoid command, to avoid parasites in the allocated strcuture. */
-	  memset(new_expnode->ex_groups, 0, p_clients->num_clients * sizeof(groupnode));
+          /* paranoid command, to avoid parasites in the allocated strcuture. */
+          memset(new_expnode->ex_groups, 0, p_clients->num_clients * sizeof(groupnode));
 
-	  for (i = 0; i < p_clients->num_clients; i++)
-	    {
+          for (i = 0; i < p_clients->num_clients; i++)
+            {
 
-	      /* ---- gr_next ----- */
+              /* ---- gr_next ----- */
 
-	      if ((i + 1) == p_clients->num_clients)	/* this is the last item */
-		new_expnode->ex_groups[i].gr_next = NULL;
-		else		/* other items point to the next memory slot */
-		new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
+              if ((i + 1) == p_clients->num_clients)    /* this is the last item */
+                new_expnode->ex_groups[i].gr_next = NULL;
+                else            /* other items point to the next memory slot */
+                new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
 
-	      /* ---- gr_name ----- */
+              /* ---- gr_name ----- */
 
-	      switch (p_clients->clientarray[i].type)
-		{
-		case HOSTIF_CLIENT:
+              switch (p_clients->clientarray[i].type)
+                {
+                case HOSTIF_CLIENT:
 
-		  /* allocates target buffer (+1 for security ) */
-		  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
+                  /* allocates target buffer (+1 for security ) */
+                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
 
-		  /* clears memory : */
-		  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
-		  if (inet_ntop
-		      (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
-		       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
-		    {
-		      strncpy(new_expnode->ex_groups[i].gr_name, "Invalid Host address",
-			      MAXHOSTNAMELEN);
-		    }
+                  /* clears memory : */
+                  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
+                  if (inet_ntop
+                      (AF_INET, &(p_clients->clientarray[i].client.hostif.clientaddr),
+                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
+                    {
+                      strncpy(new_expnode->ex_groups[i].gr_name, "Invalid Host address",
+                              MAXHOSTNAMELEN);
+                    }
 
-		  break;
+                  break;
 
-		case NETWORK_CLIENT:
+                case NETWORK_CLIENT:
 
-		  /* allocates target buffer (+1 for security ) */
-		  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
+                  /* allocates target buffer (+1 for security ) */
+                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(INET_ADDRSTRLEN + 1);
 
-		  /* clears memory : */
-		  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
-		  if (inet_ntop
-		      (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
-		       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
-		    {
-		      strncpy(new_expnode->ex_groups[i].gr_name,
-			      "Invalid Network address", MAXHOSTNAMELEN);
-		    }
+                  /* clears memory : */
+                  memset(new_expnode->ex_groups[i].gr_name, 0, INET_ADDRSTRLEN + 1);
+                  if (inet_ntop
+                      (AF_INET, &(p_clients->clientarray[i].client.network.netaddr),
+                       new_expnode->ex_groups[i].gr_name, INET_ADDRSTRLEN) == NULL)
+                    {
+                      strncpy(new_expnode->ex_groups[i].gr_name,
+                              "Invalid Network address", MAXHOSTNAMELEN);
+                    }
 
-		  break;
+                  break;
 
-		case NETGROUP_CLIENT:
+                case NETGROUP_CLIENT:
 
-		  /* allocates target buffer */
+                  /* allocates target buffer */
 
-		  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
+                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
 
-		  /* clears memory : */
-		  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  /* clears memory : */
+                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
 
-		  strncpy(new_expnode->ex_groups[i].gr_name,
-			  p_clients->clientarray[i].client.netgroup.netgroupname,
-			  MAXHOSTNAMELEN);
+                  strncpy(new_expnode->ex_groups[i].gr_name,
+                          p_clients->clientarray[i].client.netgroup.netgroupname,
+                          MAXHOSTNAMELEN);
 
-		  break;
+                  break;
 
-		case WILDCARDHOST_CLIENT:
+                case WILDCARDHOST_CLIENT:
 
-		  /* allocates target buffer */
-		  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
+                  /* allocates target buffer */
+                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
 
-		  /* clears memory : */
-		  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  /* clears memory : */
+                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
 
-		  strncpy(new_expnode->ex_groups[i].gr_name,
-			  p_clients->clientarray[i].client.wildcard.wildcard,
-			  MAXHOSTNAMELEN);
-		  break;
+                  strncpy(new_expnode->ex_groups[i].gr_name,
+                          p_clients->clientarray[i].client.wildcard.wildcard,
+                          MAXHOSTNAMELEN);
+                  break;
 
-		case GSSPRINCIPAL_CLIENT:
+                case GSSPRINCIPAL_CLIENT:
 
-		  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
+                  new_expnode->ex_groups[i].gr_name = Mem_Alloc(MAXHOSTNAMELEN);
 
-		  /* clears memory : */
-		  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
+                  /* clears memory : */
+                  memset(new_expnode->ex_groups[i].gr_name, 0, MAXHOSTNAMELEN);
 
-		  strncpy(new_expnode->ex_groups[i].gr_name,
-			  p_clients->clientarray[i].client.gssprinc.princname,
-			  MAXHOSTNAMELEN);
+                  strncpy(new_expnode->ex_groups[i].gr_name,
+                          p_clients->clientarray[i].client.gssprinc.princname,
+                          MAXHOSTNAMELEN);
 
-		  break;
+                  break;
 
-		default:
+                default:
 
-		  /* Mem_Free resources and returns an error. */
+                  /* Mem_Free resources and returns an error. */
 
-		  /* @todo : Mem_Free allocated resources */
+                  /* @todo : Mem_Free allocated resources */
 
-		  DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
-				    "MNT_EXPORT: Unknown export entry type: %d",
-				    p_clients->clientarray[i].type);
+                  DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+                                    "MNT_EXPORT: Unknown export entry type: %d",
+                                    p_clients->clientarray[i].type);
 
-		  new_expnode->ex_groups[i].gr_name = NULL;
+                  new_expnode->ex_groups[i].gr_name = NULL;
 
-		  return NFS_REQ_DROP;
-		}
+                  return NFS_REQ_DROP;
+                }
 
-	    }
+            }
 
-	} else
-	{
-	  /* There are no groups for this export entry. */
-	  new_expnode->ex_groups = NULL;
+        } else
+        {
+          /* There are no groups for this export entry. */
+          new_expnode->ex_groups = NULL;
 
-	}
+        }
 
       /* ---- ex_next ----- */
 
@@ -341,15 +341,15 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
       /* we insert the export node to the export list */
 
       if (p_exp_out)
-	{
-	  p_exp_current->ex_next = new_expnode;
-	  p_exp_current = new_expnode;
-	} else
-	{
-	  /* This is the first item in the list */
-	  p_exp_out = new_expnode;
-	  p_exp_current = new_expnode;
-	}
+        {
+          p_exp_current->ex_next = new_expnode;
+          p_exp_current = new_expnode;
+        } else
+        {
+          /* This is the first item in the list */
+          p_exp_out = new_expnode;
+          p_exp_current = new_expnode;
+        }
 
       p_current_item = (exportlist_t *) (p_current_item->next);
 
@@ -361,7 +361,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
   return NFS_REQ_OK;
 
-}				/* mnt_Export */
+}                               /* mnt_Export */
 
 /**
  * mnt_Export_Free: Frees the result structure allocated for mnt_Export.
@@ -377,4 +377,4 @@ void mnt_Export_Free(nfs_res_t * pres)
   /** @todo: BUGAZOMEU end this function */
 
   return;
-}				/* mnt_Export_Free */
+}                               /* mnt_Export_Free */

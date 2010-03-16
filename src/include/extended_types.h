@@ -105,4 +105,4 @@ typedef unsigned long long int uint64_t;
 typedef long long int int64_t;
 #endif
 
-#endif				/* _EXTENDED_TYPES_H */
+#endif                          /* _EXTENDED_TYPES_H */

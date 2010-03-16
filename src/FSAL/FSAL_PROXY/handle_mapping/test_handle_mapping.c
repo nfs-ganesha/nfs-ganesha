@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
       rc = HandleMap_SetFH(&nfs23_digest, &handle);
       if (rc && (rc != HANDLEMAP_EXISTS))
-	exit(rc);
+        exit(rc);
     }
 
   gettimeofday(&tv2, NULL);
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
   timersub(&tv2, &tv1, &tvdiff);
 
   printf("%u threads inserted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-	 (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_usec);
 
   /* Now get them ! */
 
@@ -96,17 +96,17 @@ int main(int argc, char **argv)
 
       rc = HandleMap_GetFH(&nfs23_digest, &handle);
       if (rc)
-	{
-	  printf("Error %d retrieving handle !\n", rc);
-	  exit(rc);
-	}
+        {
+          printf("Error %d retrieving handle !\n", rc);
+          exit(rc);
+        }
 
       rc = HandleMap_DelFH(&nfs23_digest);
       if (rc)
-	{
-	  printf("Error %d deleting handle !\n", rc);
-	  exit(rc);
-	}
+        {
+          printf("Error %d deleting handle !\n", rc);
+          exit(rc);
+        }
 
     }
 
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
   timersub(&tv3, &tv2, &tvdiff);
 
   printf("Retrieved and deleted 10000 handles in %d.%06ds\n", (int)tvdiff.tv_sec,
-	 (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_usec);
 
   rc = HandleMap_Flush();
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 
   timersub(&tv3, &tv1, &tvdiff);
   printf("Total time with %u threads (including flush): %d.%06ds\n", count,
-	 (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   exit(0);
 

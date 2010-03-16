@@ -96,7 +96,7 @@
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <dirent.h>		/* for MAXNAMLEN */
+#include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "fsal.h"
 #include "fsal_types.h"
@@ -115,4 +115,4 @@
 #include "MFSL/MFSL_PROXY_RPCSECGSS/mfsl_types.h"
 #endif
 
-#endif				/* _MFSL_TYPES_H */
+#endif                          /* _MFSL_TYPES_H */

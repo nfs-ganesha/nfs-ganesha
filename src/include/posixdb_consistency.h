@@ -11,7 +11,7 @@
  * @return 0 if the two fsal_posixdb_fileinfo_t are consistent
  *         1 else (or on error)
  */
-int fsal_posixdb_consistency_check(fsal_posixdb_fileinfo_t * p_info1,	/* IN */
-				   fsal_posixdb_fileinfo_t * p_info2 /* IN */ );
+int fsal_posixdb_consistency_check(fsal_posixdb_fileinfo_t * p_info1,   /* IN */
+                                   fsal_posixdb_fileinfo_t * p_info2 /* IN */ );
 
 #endif

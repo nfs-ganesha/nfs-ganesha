@@ -244,9 +244,9 @@ int config_GetNbBlocks(config_file_t config)
       int nb = 1;
 
       while ((curr_block = curr_block->next) != NULL)
-	{
-	  nb++;
-	}
+        {
+          nb++;
+        }
 
       return nb;
     }
@@ -266,7 +266,7 @@ config_item_t config_GetBlockByIndex(config_file_t config, unsigned int block_no
        curr_block != NULL; curr_block = curr_block->next, i++)
     {
       if (i == block_no)
-	return (config_item_t) curr_block;
+        return (config_item_t) curr_block;
     }
 
   /* not found */
@@ -305,9 +305,9 @@ int config_GetNbItems(config_item_t block)
       int nb = 1;
 
       while ((curr_block = curr_block->next) != NULL)
-	{
-	  nb++;
-	}
+        {
+          nb++;
+        }
 
       return nb;
     }
@@ -328,7 +328,7 @@ config_item_t config_GetItemByIndex(config_item_t block, unsigned int item_no)
        curr_item != NULL; curr_item = curr_item->next, i++)
     {
       if (i == item_no)
-	return (config_item_t) curr_item;
+        return (config_item_t) curr_item;
     }
 
   /* not found */
@@ -373,11 +373,11 @@ static generic_item *GetItemFromList(generic_item * list, const char *name)
   for (curr = list; curr != NULL; curr = curr->next)
     {
       if ((curr->type == TYPE_BLOCK)
-	  && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
-	return curr;
+          && !STRNCMP(curr->item.block.block_name, name, MAXSTRLEN))
+        return curr;
       if ((curr->type == TYPE_AFFECT)
-	  && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
-	return curr;
+          && !STRNCMP(curr->item.affect.varname, name, MAXSTRLEN))
+        return curr;
     }
   /* not found */
   return NULL;
@@ -410,28 +410,28 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
 
       /* it is a whole name */
       if (!separ)
-	return (config_item_t) GetItemFromList(list, current);
-	else
-	{
-	  /* split the name */
-	  *separ = '\0';
+        return (config_item_t) GetItemFromList(list, current);
+        else
+        {
+          /* split the name */
+          *separ = '\0';
 
-	  if ((separ - tmp_name) < MAXSTRLEN - 2)
-	    separ += 2;
-	    else
-	    return NULL;	/* overflow */
+          if ((separ - tmp_name) < MAXSTRLEN - 2)
+            separ += 2;
+            else
+            return NULL;        /* overflow */
 
-	  block = GetItemFromList(list, current);
+          block = GetItemFromList(list, current);
 
-	  /* not found or not a block ? */
-	  if (!block || (block->type != TYPE_BLOCK))
-	    return NULL;
+          /* not found or not a block ? */
+          if (!block || (block->type != TYPE_BLOCK))
+            return NULL;
 
-	  list = block->item.block.block_content;
+          list = block->item.block.block_content;
 
-	  /* "::" was found, must have something after */
-	  current = separ;
-	}
+          /* "::" was found, must have something after */
+          current = separ;
+        }
     }
 
   /* not found */
@@ -480,28 +480,28 @@ config_item_t config_GetItemByName(config_item_t block, const char *name)
 
       /* it is a whole name */
       if (!separ)
-	return (config_item_t) GetItemFromList(list, current);
-	else
-	{
-	  /* split the name */
-	  *separ = '\0';
+        return (config_item_t) GetItemFromList(list, current);
+        else
+        {
+          /* split the name */
+          *separ = '\0';
 
-	  if ((separ - tmp_name) < MAXSTRLEN - 2)
-	    separ += 2;
-	    else
-	    return NULL;	/* overflow */
+          if ((separ - tmp_name) < MAXSTRLEN - 2)
+            separ += 2;
+            else
+            return NULL;        /* overflow */
 
-	  curr_block = GetItemFromList(list, current);
+          curr_block = GetItemFromList(list, current);
 
-	  /* not found or not a block ? */
-	  if (!curr_block || (curr_block->type != TYPE_BLOCK))
-	    return NULL;
+          /* not found or not a block ? */
+          if (!curr_block || (curr_block->type != TYPE_BLOCK))
+            return NULL;
 
-	  list = curr_block->item.block.block_content;
+          list = curr_block->item.block.block_content;
 
-	  /* "::" was found, must have something after */
-	  current = separ;
-	}
+          /* "::" was found, must have something after */
+          current = separ;
+        }
     }
 
   /* not found */

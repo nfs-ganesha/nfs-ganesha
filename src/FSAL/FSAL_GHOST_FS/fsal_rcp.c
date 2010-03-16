@@ -18,10 +18,10 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
-		       fsal_op_context_t * p_context,	/* IN */
-		       fsal_path_t * p_local_path,	/* IN */
-		       fsal_rcpflag_t transfer_opt	/* IN */
+fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
+                       fsal_op_context_t * p_context,   /* IN */
+                       fsal_path_t * p_local_path,      /* IN */
+                       fsal_rcpflag_t transfer_opt      /* IN */
     )
 {
 

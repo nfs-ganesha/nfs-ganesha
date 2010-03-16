@@ -216,12 +216,12 @@ int my_atoi(char *str)
     {
 
       if ((str[i] < '0') || (str[i] > '9'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 10;
-	  out += (int)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 10;
+          out += (int)(str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -250,12 +250,12 @@ int atomode(char *str)
     {
 
       if ((str[i] < '0') || (str[i] > '7'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 8;
-	  out += (int)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 8;
+          out += (int)(str[i] - '0');
+        }
     }
 
   if (i < 3)
@@ -278,12 +278,12 @@ int ato64(char *str, unsigned long long *out64)
     {
 
       if ((str[i] < '0') || (str[i] > '9'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 10;
-	  out += (unsigned long long)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 10;
+          out += (unsigned long long)(str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -315,7 +315,7 @@ time_t atotime(char *str)
   for (i = 0; i < 4; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -336,7 +336,7 @@ time_t atotime(char *str)
   for (i = 4; i < 6; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -357,7 +357,7 @@ time_t atotime(char *str)
   for (i = 6; i < 8; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -378,7 +378,7 @@ time_t atotime(char *str)
   for (i = 8; i < 10; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -399,7 +399,7 @@ time_t atotime(char *str)
   for (i = 10; i < 12; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -420,7 +420,7 @@ time_t atotime(char *str)
   for (i = 12; i < 14; i++)
     {
       if (!str[i])
-	return (time_t) - 1;
+        return (time_t) - 1;
       tmp_str[j] = str[i];
       j++;
     }
@@ -526,8 +526,8 @@ char *time2str(time_t time_in, char *str_out)
 #define TIME_STRLEN 30
 
   struct tm paramtm;
-  time_t now;			/* Now  */
-  time_t jan_1;			/* 01/01 of the current year */
+  time_t now;                   /* Now  */
+  time_t jan_1;                 /* 01/01 of the current year */
 
   /*inits 'jan_1' for date printing */
   time(&now);
@@ -540,10 +540,10 @@ char *time2str(time_t time_in, char *str_out)
   jan_1 = mktime(&paramtm);
 
   if (time_in < jan_1)
-    {				/* if dates back to last year : MM dd YYYY */
+    {                           /* if dates back to last year : MM dd YYYY */
       strftime(str_out, TIME_STRLEN, "%b %e %Y ", Localtime_r(&time_in, &paramtm));
     } else
-    {				/* MM dd hh:mm */
+    {                           /* MM dd hh:mm */
       strftime(str_out, TIME_STRLEN, "%b %e %R", Localtime_r(&time_in, &paramtm));
     }
   return str_out;
@@ -568,15 +568,15 @@ void clean_path(char *str, int len)
 
   int length;
 
-  char *sdd_index;		/* "slash dot dot" index */
-  char *slash_index;		/* previous slash index */
+  char *sdd_index;              /* "slash dot dot" index */
+  char *slash_index;            /* previous slash index */
 
   /* removes double slashes */
     /**************************/
   while (str[indexsrc] && (indexsrc + 1 < len))
     {
       while ((indexsrc + 1 < len) && (str[indexsrc] == '/') && (str[indexsrc + 1] == '/'))
-	indexsrc++;
+        indexsrc++;
       str[indexdest++] = str[indexsrc++];
     }
   if (!str[indexsrc])
@@ -592,10 +592,10 @@ void clean_path(char *str, int len)
   if (length >= 2)
     {
       if ((str[length - 1] == '.') && (str[length - 2] == '/'))
-	{
-	  str[length] = '/';
-	  str[length + 1] = '\0';
-	}
+        {
+          str[length] = '/';
+          str[length + 1] = '\0';
+        }
     }
 #endif
 
@@ -606,13 +606,13 @@ void clean_path(char *str, int len)
     {
 
       /* we copy everything after "/./" to sdd_index */
-      indexsrc = 3;		/* index in sdd_index */
-      indexdest = 1;		/* index in sdd_index */
+      indexsrc = 3;             /* index in sdd_index */
+      indexdest = 1;            /* index in sdd_index */
       while (sdd_index[indexdest] = sdd_index[indexsrc])
-	{
-	  indexdest++;
-	  indexsrc++;
-	}
+        {
+          indexdest++;
+          indexsrc++;
+        }
 
       /* inits the next loop */
       sdd_index = (char *)strstr(str, "/./");
@@ -627,11 +627,11 @@ void clean_path(char *str, int len)
   if (length >= 3)
     {
       if ((str[length - 1] == '.') && (str[length - 2] == '.')
-	  && (str[length - 3] == '/'))
-	{
-	  str[length] = '/';
-	  str[length + 1] = '\0';
-	}
+          && (str[length - 3] == '/'))
+        {
+          str[length] = '/';
+          str[length + 1] = '\0';
+        }
     }
 
   /* detects and removes '/../' */
@@ -643,50 +643,50 @@ void clean_path(char *str, int len)
 
       /* look for the first '/' that preceeds sdd_index */
       for (slash_index = sdd_index - 1; (slash_index >= str) && (slash_index[0] != '/');
-	   slash_index--) ;
+           slash_index--) ;
 
       /* if found, removes rep/../ path */
 
       if ((slash_index[0] == '/') && (slash_index >= str))
-	{
+        {
 
-	  /* we copy everything after "/../" to slash_index */
-	  indexsrc = 4;		/* index in sdd_index */
-	  indexdest = 1;	/* index in slash_index */
-	  while (slash_index[indexdest] = sdd_index[indexsrc])
-	    {
-	      indexdest++;
-	      indexsrc++;
-	    }
+          /* we copy everything after "/../" to slash_index */
+          indexsrc = 4;         /* index in sdd_index */
+          indexdest = 1;        /* index in slash_index */
+          while (slash_index[indexdest] = sdd_index[indexsrc])
+            {
+              indexdest++;
+              indexsrc++;
+            }
 
-	} else
-	{
+        } else
+        {
 
-	  /* if not found, it is '..' on the root directory. */
+          /* if not found, it is '..' on the root directory. */
 
-	  /* If the path begins with a filehandle,
-	     we replace @handle/../ by @handle/..> */
+          /* If the path begins with a filehandle,
+             we replace @handle/../ by @handle/..> */
 
-	  if (str[0] == '@')
-	    {
+          if (str[0] == '@')
+            {
 
-	      sdd_index[3] = '>';
+              sdd_index[3] = '>';
 
-	    } else
-	    {
-	      /* Else , we remove '/..' */
+            } else
+            {
+              /* Else , we remove '/..' */
 
-	      indexsrc = 3;	/* index in str */
-	      indexdest = 0;	/* index in str */
-	      while (str[indexdest] = str[indexsrc])
-		{
-		  indexdest++;
-		  indexsrc++;
-		}
+              indexsrc = 3;     /* index in str */
+              indexdest = 0;    /* index in str */
+              while (str[indexdest] = str[indexsrc])
+                {
+                  indexdest++;
+                  indexsrc++;
+                }
 
-	    }			/* end @ */
+            }                   /* end @ */
 
-	}
+        }
       /* inits the next loop */
       sdd_index = (char *)strstr(str, "/../");
     }
@@ -697,7 +697,7 @@ void clean_path(char *str, int len)
   if (length > 1)
     {
       if (str[length - 1] == '/')
-	str[length - 1] = '\0';
+        str[length - 1] = '\0';
     }
 
 }
@@ -719,12 +719,12 @@ void print_fsal_status(FILE * output, fsal_status_t status)
 #ifdef _USE_GHOSTFS
 
   log_snprintf(_str_, 256, "%J%r,%J%r",
-	       ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
+               ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
 
 #else
 
   log_snprintf(_str_, 256, "%J%r, filesystem status: %d",
-	       ERR_FSAL, status.major, status.minor);
+               ERR_FSAL, status.major, status.minor);
 
 #endif
 
@@ -919,35 +919,35 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
       print_mask(out, attrib->mode, FSAL_MODE_WUSR, "w");
 
       if (attrib->mode & FSAL_MODE_SUID)
-	{
-	  if (attrib->mode & FSAL_MODE_XUSR)
-	    fprintf(out, "s");
-	    else
-	    fprintf(out, "S");
-	} else
-	{
-	  if (attrib->mode & FSAL_MODE_XUSR)
-	    fprintf(out, "x");
-	    else
-	    fprintf(out, "-");
-	}
+        {
+          if (attrib->mode & FSAL_MODE_XUSR)
+            fprintf(out, "s");
+            else
+            fprintf(out, "S");
+        } else
+        {
+          if (attrib->mode & FSAL_MODE_XUSR)
+            fprintf(out, "x");
+            else
+            fprintf(out, "-");
+        }
 
       print_mask(out, attrib->mode, FSAL_MODE_RGRP, "r");
       print_mask(out, attrib->mode, FSAL_MODE_WGRP, "w");
 
       if (attrib->mode & FSAL_MODE_SGID)
-	{
-	  if (attrib->mode & FSAL_MODE_XGRP)
-	    fprintf(out, "s");
-	    else
-	    fprintf(out, "l");
-	} else
-	{
-	  if (attrib->mode & FSAL_MODE_XGRP)
-	    fprintf(out, "x");
-	    else
-	    fprintf(out, "-");
-	}
+        {
+          if (attrib->mode & FSAL_MODE_XGRP)
+            fprintf(out, "s");
+            else
+            fprintf(out, "l");
+        } else
+        {
+          if (attrib->mode & FSAL_MODE_XGRP)
+            fprintf(out, "x");
+            else
+            fprintf(out, "-");
+        }
       print_mask(out, attrib->mode, FSAL_MODE_ROTH, "r");
       print_mask(out, attrib->mode, FSAL_MODE_WOTH, "w");
       print_mask(out, attrib->mode, FSAL_MODE_XOTH, "x");
@@ -1047,94 +1047,94 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
       attrib_str = strtok_r(attrib_str, "=", &value_str);
 
       if ((attrib_str == NULL) || (value_str == NULL))
-	return EINVAL;
+        return EINVAL;
 
       printf("Attribute: \"%s\", Value: \"%s\"\n", attrib_str, value_str);
 
       /* look for the attribute to be set. */
 
       for (current_attr = shell_attr_list;
-	   current_attr->attr_type != ATTR_NONE; current_attr++)
-	{
+           current_attr->attr_type != ATTR_NONE; current_attr++)
+        {
 
-	  if (!strcasecmp(current_attr->attr_name, attrib_str))
-	    {
+          if (!strcasecmp(current_attr->attr_name, attrib_str))
+            {
 
-	      /* exists loop */
-	      break;
-	    }
+              /* exists loop */
+              break;
+            }
 
-	}
+        }
 
       /* attribute not found */
 
       if (current_attr->attr_type == ATTR_NONE)
-	return ENOENT;
+        return ENOENT;
 
       FSAL_SET_MASK(fsal_set_attr_struct->asked_attributes, current_attr->attr_mask);
 
       /* convert the attribute value to the correct type */
 
       switch (current_attr->attr_type)
-	{
-	case ATTR_32:
+        {
+        case ATTR_32:
 
-	  param_32 = my_atoi(value_str);
-	  if (param_32 == -1)
-	    return EINVAL;
-	  p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
+          param_32 = my_atoi(value_str);
+          if (param_32 == -1)
+            return EINVAL;
+          p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
 
-	  *p_32 = param_32;
+          *p_32 = param_32;
 
-	  break;
+          break;
 
-	case ATTR_64:
+        case ATTR_64:
 
-	  rc = ato64(value_str, &param_64);
-	  if (rc == -1)
-	    return EINVAL;
-	  p_64 =
-	      (unsigned long long *)((caddr_t) fsal_set_attr_struct +
-				     current_attr->attr_offset);
+          rc = ato64(value_str, &param_64);
+          if (rc == -1)
+            return EINVAL;
+          p_64 =
+              (unsigned long long *)((caddr_t) fsal_set_attr_struct +
+                                     current_attr->attr_offset);
 
-	  *p_64 = param_64;
+          *p_64 = param_64;
 
-	  break;
+          break;
 
-	case ATTR_OCTAL:	/* only for modes */
+        case ATTR_OCTAL:       /* only for modes */
 
-	  param_32 = atomode(value_str);
-	  if (param_32 == -1)
-	    return EINVAL;
-	  p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
+          param_32 = atomode(value_str);
+          if (param_32 == -1)
+            return EINVAL;
+          p_32 = (int *)((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
 
-	  *p_32 = unix2fsal_mode(param_32);
+          *p_32 = unix2fsal_mode(param_32);
 
-	  break;
+          break;
 
-	case ATTR_TIME:
+        case ATTR_TIME:
 
-	  param_time = atotime(value_str);
-	  if (param_time == (time_t) - 1)
-	    return EINVAL;
-	  p_time =
-	      (time_t *) ((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
+          param_time = atotime(value_str);
+          if (param_time == (time_t) - 1)
+            return EINVAL;
+          p_time =
+              (time_t *) ((caddr_t) fsal_set_attr_struct + current_attr->attr_offset);
 
-	  *p_time = param_time;
+          *p_time = param_time;
 
-	  break;
+          break;
 
-	}
+        }
 
       /* now process the next attribute */
 
       attrib_str = next_str;
 
-      next_str = NULL;		/* paranoid setting */
-      value_str = NULL;		/* paranoid setting */
+      next_str = NULL;          /* paranoid setting */
+      value_str = NULL;         /* paranoid setting */
 
       if (attrib_str != NULL)
-	attrib_str = strtok_r(attrib_str, ",", &next_str);
+        attrib_str = strtok_r(attrib_str, ",", &next_str);
 
     }
 
@@ -1190,7 +1190,7 @@ int getugroups(int maxcount, gid_t * grouplist, char *username, gid_t gid)
   if (gid != (gid_t) - 1)
     {
       if (maxcount != 0)
-	grouplist[count] = gid;
+        grouplist[count] = gid;
 
       count++;
     }
@@ -1199,34 +1199,34 @@ int getugroups(int maxcount, gid_t * grouplist, char *username, gid_t gid)
   while ((grp = getgrent()) != 0)
     {
       for (cp = grp->gr_mem; *cp; ++cp)
-	{
-	  int n;
+        {
+          int n;
 
-	  if (strcmp(username, *cp))
-	    continue;
+          if (strcmp(username, *cp))
+            continue;
 
-	  /* see if this group number is already in the list */
-	  for (n = 0; n < count; ++n)
-	    if (grouplist && grouplist[n] == grp->gr_gid)
-	      break;
+          /* see if this group number is already in the list */
+          for (n = 0; n < count; ++n)
+            if (grouplist && grouplist[n] == grp->gr_gid)
+              break;
 
-	  /* add the group to the list */
-	  if (n == count)
-	    {
-	      if (maxcount != 0)
-		{
-		  if (count >= maxcount)
-		    {
-		      endgrent();
-		      return count;
-		    }
-		  grouplist[count] = grp->gr_gid;
+          /* add the group to the list */
+          if (n == count)
+            {
+              if (maxcount != 0)
+                {
+                  if (count >= maxcount)
+                    {
+                      endgrent();
+                      return count;
+                    }
+                  grouplist[count] = grp->gr_gid;
 
-		}
-	      count++;
-	    }
+                }
+              count++;
+            }
 
-	}
+        }
     }
   endgrent();
 

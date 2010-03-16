@@ -43,7 +43,7 @@ static int ReadPasswordFromFile(char *filename, char *password)
 
 /** connection to database */
 fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams,
-					   fsal_posixdb_conn ** p_conn)
+                                           fsal_posixdb_conn ** p_conn)
 {
   my_bool reconnect = 1;
   char password[1024] = "";
@@ -59,12 +59,12 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   if (dbparams->port[0] != '\0')
     {
       if (!isdigit(dbparams->port[0]))
-	{
-	  DisplayLog
-	      ("Numerical value expected for database port number (invalid value: %s)",
-	       dbparams->port);
-	  ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, 0);
-	}
+        {
+          DisplayLog
+              ("Numerical value expected for database port number (invalid value: %s)",
+               dbparams->port);
+          ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, 0);
+        }
 
       port = atoi(dbparams->port);
     } else
@@ -94,11 +94,11 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
 
   /* connect to server */
   if (!mysql_real_connect(&(*p_conn)->db_conn, dbparams->host, dbparams->login,
-			  password, dbparams->dbname, port, NULL, 0))
+                          password, dbparams->dbname, port, NULL, 0))
     {
       int rc;
       DisplayLog("Failed to connect to MySQL server: Error: %s",
-		 mysql_error(&(*p_conn)->db_conn));
+                 mysql_error(&(*p_conn)->db_conn));
       rc = mysql_errno(&(*p_conn)->db_conn);
       Mem_Free(*p_conn);
       ReturnCode(ERR_FSAL_POSIXDB_BADCONN, rc);
@@ -148,16 +148,16 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
 
       /* retry if connection to server failed */
       if ((p_conn->stmt_tab[BUILDONEPATH] == NULL)
-	  && db_is_retryable(mysql_errno(&p_conn->db_conn)))
-	{
-	  DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
-		     __FUNCTION__, retry);
-	  sleep(retry);
-	  retry *= 2;
-	  /*if ( retry > lmgr_config.connect_retry_max )
-	     retry = lmgr_config.connect_retry_max; */
-	} else
-	break;
+          && db_is_retryable(mysql_errno(&p_conn->db_conn)))
+        {
+          DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
+                     __FUNCTION__, retry);
+          sleep(retry);
+          retry *= 2;
+          /*if ( retry > lmgr_config.connect_retry_max )
+             retry = lmgr_config.connect_retry_max; */
+        } else
+        break;
 
     }
   while (1);
@@ -173,19 +173,19 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
     {
       /* prepare the request */
       rc = mysql_stmt_prepare(p_conn->stmt_tab[BUILDONEPATH], buildonepath_query,
-			      strlen(buildonepath_query));
+                              strlen(buildonepath_query));
 
       if (rc && db_is_retryable(mysql_stmt_errno(p_conn->stmt_tab[BUILDONEPATH])))
-	{
-	  DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
-		     __FUNCTION__, retry);
-	  sleep(retry);
-	  retry *= 2;
-	  /*if ( retry > lmgr_config.connect_retry_max )
-	     retry = lmgr_config.connect_retry_max; */
+        {
+          DisplayLog("Connection to database lost in %s()... Retrying in %u sec.",
+                     __FUNCTION__, retry);
+          sleep(retry);
+          retry *= 2;
+          /*if ( retry > lmgr_config.connect_retry_max )
+             retry = lmgr_config.connect_retry_max; */
 
-	} else
-	break;
+        } else
+        break;
 
     }
   while (1);
@@ -193,7 +193,7 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
   if (rc)
     {
       DisplayLog("Failed to create prepared statement: Error: %s (query='%s')",
-		 mysql_stmt_error(p_conn->stmt_tab[BUILDONEPATH]), buildonepath_query);
+                 mysql_stmt_error(p_conn->stmt_tab[BUILDONEPATH]), buildonepath_query);
       mysql_stmt_close(p_conn->stmt_tab[BUILDONEPATH]);
       ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, rc);
     }

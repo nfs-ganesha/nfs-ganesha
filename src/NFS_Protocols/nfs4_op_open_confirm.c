@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,7 +141,7 @@
 #define res_OPEN_CONFIRM4 resp->nfs_resop4_u.opopen_confirm
 
 int nfs4_op_open_confirm(struct nfs_argop4 *op,
-			 compound_data_t * data, struct nfs_resop4 *resp)
+                         compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
   int rc = 0;
@@ -176,24 +176,24 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   if (data->current_entry->internal_md.type != REGULAR_FILE)
     {
       switch (data->current_entry->internal_md.type)
-	{
-	case DIR_BEGINNING:
-	case DIR_CONTINUE:
-	  res_OPEN_CONFIRM4.status = NFS4ERR_ISDIR;
-	  return res_OPEN_CONFIRM4.status;
-	  break;
-	default:
-	  res_OPEN_CONFIRM4.status = NFS4ERR_INVAL;
-	  return res_OPEN_CONFIRM4.status;
-	  break;
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_OPEN_CONFIRM4.status = NFS4ERR_ISDIR;
+          return res_OPEN_CONFIRM4.status;
+          break;
+        default:
+          res_OPEN_CONFIRM4.status = NFS4ERR_INVAL;
+          return res_OPEN_CONFIRM4.status;
+          break;
 
-	}
+        }
     }
 
   /* Does the stateid match ? */
   if ((rc =
        nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid, data->current_entry,
-			  0LL)) != NFS4_OK)
+                          0LL)) != NFS4_OK)
     {
       res_OPEN_CONFIRM4.status = rc;
       return res_OPEN_CONFIRM4.status;
@@ -201,8 +201,8 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   /* Get the related state */
   if (cache_inode_get_state(arg_OPEN_CONFIRM4.open_stateid.other,
-			    &pstate_found,
-			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                            &pstate_found,
+                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;
@@ -220,11 +220,11 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   if (pstate_found->powner->seqid != arg_OPEN_CONFIRM4.seqid)
     {
       if (pstate_found->powner->seqid + 1 != arg_OPEN_CONFIRM4.seqid)
-	{
-	  V(pstate_found->powner->lock);
-	  res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
-	  return res_OPEN_CONFIRM4.status;
-	}
+        {
+          V(pstate_found->powner->lock);
+          res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
+          return res_OPEN_CONFIRM4.status;
+        }
     }
 
   /* Set the state as confirmed */
@@ -235,7 +235,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   /* Update the state */
   pstate_found->seqid += 1;
   if (cache_inode_update_state(pstate_found,
-			       data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;
@@ -245,10 +245,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid =
       arg_OPEN_CONFIRM4.seqid;
   memcpy(res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other,
-	 pstate_found->stateid_other, 12);
+         pstate_found->stateid_other, 12);
 
   return res_OPEN_CONFIRM4.status;
-}				/* nfs4_op_open_confirm */
+}                               /* nfs4_op_open_confirm */
 
 /**
  * nfs4_op_open_confirm_Free: frees what was allocared to handle nfs4_op_open_confirm.
@@ -264,4 +264,4 @@ void nfs4_op_open_confirm_Free(OPEN_CONFIRM4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_open_confirm_Free */
+}                               /* nfs4_op_open_confirm_Free */

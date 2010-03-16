@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   SetNameFileLog("/dev/tty");
 
   printf("cache_content_check_threshold( %s, %u, %u, %p, %p)\n",
-	 path, 70, 80, &is_over, &to_purge);
+         path, 70, 80, &is_over, &to_purge);
 
   rc = cache_content_check_threshold(path, 70, 80, &is_over, &to_purge);
 

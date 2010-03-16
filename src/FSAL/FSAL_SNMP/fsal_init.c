@@ -110,7 +110,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
 
@@ -128,13 +128,13 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
     {
       /* issue a warning on stderr */
       DisplayLog
-	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
     }
 
   /* proceeds FSAL internal status initialization */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
-				     &(init_info->fs_common_info));
+                                     &(init_info->fs_common_info));
 
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);

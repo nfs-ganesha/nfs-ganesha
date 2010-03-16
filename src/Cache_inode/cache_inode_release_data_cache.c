@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -107,10 +107,10 @@
 #include <pthread.h>
 
 cache_inode_status_t cache_inode_release_data_cache(cache_entry_t * pentry,
-						    hash_table_t * ht,
-						    cache_inode_client_t * pclient,
-						    fsal_op_context_t * pcontext,
-						    cache_inode_status_t * pstatus)
+                                                    hash_table_t * ht,
+                                                    cache_inode_client_t * pclient,
+                                                    fsal_op_context_t * pcontext,
+                                                    cache_inode_status_t * pstatus)
 {
   cache_content_status_t cache_content_status;
 
@@ -172,4 +172,4 @@ cache_inode_status_t cache_inode_release_data_cache(cache_entry_t * pentry,
   pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RELEASE_DATA_CACHE] += 1;
 
   return *pstatus;
-}				/* cache_inode_release_data_cache */
+}                               /* cache_inode_release_data_cache */

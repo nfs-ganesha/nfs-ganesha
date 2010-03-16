@@ -33,19 +33,19 @@
 
 /* function for getting an attribute value */
 
-typedef int (*xattr_getfunc_t) (fsal_handle_t *,	/* object handle */
-				fsal_op_context_t *,	/* context */
-				caddr_t,	/* output buff */
-				size_t,	/* output buff size */
-				size_t *,	/* output size */
-				void *arg);	/* optionnal argument */
+typedef int (*xattr_getfunc_t) (fsal_handle_t *,        /* object handle */
+                                fsal_op_context_t *,    /* context */
+                                caddr_t,        /* output buff */
+                                size_t, /* output buff size */
+                                size_t *,       /* output size */
+                                void *arg);     /* optionnal argument */
 
-typedef int (*xattr_setfunc_t) (fsal_handle_t *,	/* object handle */
-				fsal_op_context_t *,	/* context */
-				caddr_t,	/* input buff */
-				size_t,	/* input size */
-				int,	/* creation flag */
-				void *arg);	/* optionnal argument */
+typedef int (*xattr_setfunc_t) (fsal_handle_t *,        /* object handle */
+                                fsal_op_context_t *,    /* context */
+                                caddr_t,        /* input buff */
+                                size_t, /* input size */
+                                int,    /* creation flag */
+                                void *arg);     /* optionnal argument */
 
 typedef struct fsal_xattr_def__ {
   char xattr_name[FSAL_MAX_NAME_LEN];
@@ -59,28 +59,28 @@ typedef struct fsal_xattr_def__ {
  * DEFINE GET/SET FUNCTIONS
  */
 
-int print_fid(fsal_handle_t * p_objecthandle,	/* object handle */
-	      fsal_op_context_t * p_context,	/* IN */
-	      caddr_t buffer_addr,	/* IN/OUT */
-	      size_t buffer_size,	/* IN */
-	      size_t * p_output_size,	/* OUT */
-	      void *arg)
+int print_fid(fsal_handle_t * p_objecthandle,   /* object handle */
+              fsal_op_context_t * p_context,    /* IN */
+              caddr_t buffer_addr,      /* IN/OUT */
+              size_t buffer_size,       /* IN */
+              size_t * p_output_size,   /* OUT */
+              void *arg)
 {
   *p_output_size = snprintf(buffer_addr, buffer_size, DFID_NOBRACE "\n",
-			    PFID(&p_objecthandle->fid));
+                            PFID(&p_objecthandle->fid));
   return 0;
-}				/* print_fid */
+}                               /* print_fid */
 
 #define ARG_STRIPE_SIZE  ((long)0)
 #define ARG_STRIPE_COUNT ((long)1)
 #define ARG_STORAGE_TGT  ((long)2)
 
-int print_stripe(fsal_handle_t * p_objecthandle,	/* object handle */
-		 fsal_op_context_t * p_context,	/* IN */
-		 caddr_t buffer_addr,	/* IN/OUT */
-		 size_t buffer_size,	/* IN */
-		 size_t * p_output_size,	/* OUT */
-		 void *arg)
+int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
+                 fsal_op_context_t * p_context, /* IN */
+                 caddr_t buffer_addr,   /* IN/OUT */
+                 size_t buffer_size,    /* IN */
+                 size_t * p_output_size,        /* OUT */
+                 void *arg)
 {
   /* buffer userd for llapi_get_stripe.
    * oversize it to 4kB because there can be many stripe entries
@@ -104,12 +104,12 @@ int print_stripe(fsal_handle_t * p_objecthandle,	/* object handle */
   if (rc != 0)
     {
       if (rc == ENODATA)
-	{
-	  DisplayLogLevel(NIV_DEBUG, "%s has no stripe information", entry_path.path);
-	  *p_output_size = sprintf(buffer_addr, "none\n");
-	  return 0;
-	} else
-	DisplayLog("Error %d getting stripe info for %s", rc, entry_path.path);
+        {
+          DisplayLogLevel(NIV_DEBUG, "%s has no stripe information", entry_path.path);
+          *p_output_size = sprintf(buffer_addr, "none\n");
+          return 0;
+        } else
+        DisplayLog("Error %d getting stripe info for %s", rc, entry_path.path);
       return posix2fsal_error(rc);
     }
 
@@ -118,41 +118,41 @@ int print_stripe(fsal_handle_t * p_objecthandle,	/* object handle */
     {
 
       switch ((long)arg)
-	{
-	case ARG_STRIPE_SIZE:
-	  *p_output_size =
-	      snprintf(buffer_addr, buffer_size, "%llu\n", p_lum->lmm_stripe_size);
-	  break;
+        {
+        case ARG_STRIPE_SIZE:
+          *p_output_size =
+              snprintf(buffer_addr, buffer_size, "%llu\n", p_lum->lmm_stripe_size);
+          break;
 
-	case ARG_STRIPE_COUNT:
-	  *p_output_size =
-	      snprintf(buffer_addr, buffer_size, "%u\n", p_lum->lmm_stripe_count);
-	  break;
+        case ARG_STRIPE_COUNT:
+          *p_output_size =
+              snprintf(buffer_addr, buffer_size, "%u\n", p_lum->lmm_stripe_count);
+          break;
 
-	case ARG_STORAGE_TGT:
-	  *p_output_size = 0;
-	  curr = buffer_addr;
-	  curr[0] = '\0';
+        case ARG_STORAGE_TGT:
+          *p_output_size = 0;
+          curr = buffer_addr;
+          curr[0] = '\0';
 
-	  for (i = 0; i < p_lum->lmm_stripe_count; i++)
-	    {
-	      int sz;
-	      if (i != p_lum->lmm_stripe_count - 1)
-		sz = snprintf(curr, buffer_size - *p_output_size, "%u,",
-			      p_lum->lmm_objects[i].l_ost_idx);
-		else
-		sz = snprintf(curr, buffer_size - *p_output_size, "%u\n",
-			      p_lum->lmm_objects[i].l_ost_idx);
-	      curr += sz;
-	      *p_output_size += sz;
-	    }
+          for (i = 0; i < p_lum->lmm_stripe_count; i++)
+            {
+              int sz;
+              if (i != p_lum->lmm_stripe_count - 1)
+                sz = snprintf(curr, buffer_size - *p_output_size, "%u,",
+                              p_lum->lmm_objects[i].l_ost_idx);
+                else
+                sz = snprintf(curr, buffer_size - *p_output_size, "%u\n",
+                              p_lum->lmm_objects[i].l_ost_idx);
+              curr += sz;
+              *p_output_size += sz;
+            }
 
-	  break;
-	}
+          break;
+        }
     } else
     {
       DisplayLog("Wrong Luster magic number for %s: %#X <> %#X",
-		 entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
+                 entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
       return ERR_FSAL_INVAL;
     }
 
@@ -203,15 +203,15 @@ static int attr_is_read_only(unsigned int attr_index)
   if (attr_index < XATTR_COUNT)
     {
       if (xattr_list[attr_index].flags & XATTR_RO)
-	return TRUE;
+        return TRUE;
     }
   /* else : standard xattr */
   return FALSE;
 }
 
 static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
-					  fsal_attrib_list_t * p_xattr_attrs,
-					  unsigned int attr_index)
+                                          fsal_attrib_list_t * p_xattr_attrs,
+                                          unsigned int attr_index)
 {
   /* supported attributes are:
    * - owner (same as the objet)
@@ -239,8 +239,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
       p_xattr_attrs->asked_attributes = supported;
 
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
-			__FUNCTION__, __LINE__, __FILE__);
+                        "Error: p_xattr_attrs->asked_attributes was 0 in %s() line %d, file %s",
+                        __FUNCTION__, __LINE__, __FILE__);
     }
 
   unsupp = p_xattr_attrs->asked_attributes & (~supported);
@@ -248,8 +248,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
   if (unsupp)
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
-			__FUNCTION__, unsupp);
+                        "Asking for unsupported attributes in %s(): %#llX removing it from asked attributes",
+                        __FUNCTION__, unsupp);
 
       p_xattr_attrs->asked_attributes &= (~unsupp);
     }
@@ -262,7 +262,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
       p_xattr_attrs->mode = file_attrs->mode & global_fs_info.xattr_access_rights;
 
       if (attr_is_read_only(attr_index))
-	p_xattr_attrs->mode &= ~(0222);
+        p_xattr_attrs->mode &= ~(0222);
     }
 
   if (p_xattr_attrs->asked_attributes & FSAL_ATTR_FILEID)
@@ -272,9 +272,9 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
       char *str = (char *)&file_attrs->fileid;
 
       for (i = 0; i < sizeof(p_xattr_attrs->fileid); i++, str++)
-	{
-	  hash = (hash << 5) - hash + (unsigned long)(*str);
-	}
+        {
+          hash = (hash << 5) - hash + (unsigned long)(*str);
+        }
       p_xattr_attrs->fileid = hash;
     }
 
@@ -329,7 +329,7 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
       p_xattr_attrs->owner = 0;
       p_xattr_attrs->mode = 0600;
       if (attr_is_read_only(attr_index))
-	p_xattr_attrs->mode &= ~(0200);
+        p_xattr_attrs->mode &= ~(0200);
     }
 
   return 0;
@@ -344,11 +344,11 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param xattr_cookie xattr's cookie (as returned by listxattrs).
  * \param p_attrs xattr's attributes.
  */
-fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 unsigned int xattr_id,	/* IN */
-				 fsal_attrib_list_t * p_attrs
-					  /**< IN/OUT xattr attributes (if supported) */
+fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 unsigned int xattr_id, /* IN */
+                                 fsal_attrib_list_t * p_attrs
+                                          /**< IN/OUT xattr attributes (if supported) */
     )
 {
   int rc;
@@ -381,7 +381,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,	/* IN */
     {
       /* This is user defined xattr */
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			"Getting attributes for xattr #%u", xattr_id - XATTR_COUNT);
+                        "Getting attributes for xattr #%u", xattr_id - XATTR_COUNT);
     }
 
   if ((rc = file_attributes_to_xattr_attrs(&file_attrs, p_attrs, xattr_id)))
@@ -391,7 +391,7 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,	/* IN */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrAttrs);
 
-}				/* FSAL_GetXAttrAttrs */
+}                               /* FSAL_GetXAttrAttrs */
 
 /**
  * Retrieves the list of extended attributes for an object in the filesystem.
@@ -405,13 +405,13 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,	/* IN */
  * \param p_nb_returned the number of xattr entries actually stored in xattrs_tab.
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
-fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,	/* IN */
-			      unsigned int cookie,	/* IN */
-			      fsal_op_context_t * p_context,	/* IN */
-			      fsal_xattrent_t * xattrs_tab,	/* IN/OUT */
-			      unsigned int xattrs_tabsize,	/* IN */
-			      unsigned int *p_nb_returned,	/* OUT */
-			      int *end_of_list	/* OUT */
+fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
+                              unsigned int cookie,      /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
+                              fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
+                              unsigned int xattrs_tabsize,      /* IN */
+                              unsigned int *p_nb_returned,      /* OUT */
+                              int *end_of_list  /* OUT */
     )
 {
   unsigned int index;
@@ -445,27 +445,27 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,	/* IN */
        index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
     {
       if (do_match_type(xattr_list[index].flags, file_attrs.type))
-	{
-	  /* fills an xattr entry */
-	  xattrs_tab[out_index].xattr_id = index;
-	  FSAL_str2name(xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN,
-			&xattrs_tab[out_index].xattr_name);
-	  xattrs_tab[out_index].xattr_cookie = index + 1;
+        {
+          /* fills an xattr entry */
+          xattrs_tab[out_index].xattr_id = index;
+          FSAL_str2name(xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN,
+                        &xattrs_tab[out_index].xattr_name);
+          xattrs_tab[out_index].xattr_cookie = index + 1;
 
-	  /* set asked attributes (all supported) */
-	  xattrs_tab[out_index].attributes.asked_attributes =
-	      global_fs_info.supported_attrs;
+          /* set asked attributes (all supported) */
+          xattrs_tab[out_index].attributes.asked_attributes =
+              global_fs_info.supported_attrs;
 
-	  if (file_attributes_to_xattr_attrs
-	      (&file_attrs, &xattrs_tab[out_index].attributes, index))
-	    {
-	      /* set error flag */
-	      xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
-	    }
+          if (file_attributes_to_xattr_attrs
+              (&file_attrs, &xattrs_tab[out_index].attributes, index))
+            {
+              /* set error flag */
+              xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
+            }
 
-	  /* next output slot */
-	  out_index++;
-	}
+          /* next output slot */
+          out_index++;
+        }
     }
 
   /* save a call if output array is full */
@@ -494,41 +494,41 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,	/* IN */
       errno = 0;
 
       for (ptr = names, xattr_idx = 0;
-	   (ptr < names + namesize) && (out_index < xattrs_tabsize);
-	   xattr_idx++, ptr += len + 1)
-	{
-	  len = strlen(ptr);
-	  index = XATTR_COUNT + xattr_idx;
+           (ptr < names + namesize) && (out_index < xattrs_tabsize);
+           xattr_idx++, ptr += len + 1)
+        {
+          len = strlen(ptr);
+          index = XATTR_COUNT + xattr_idx;
 
-	  /* skip if index is before cookie */
-	  if (index < cookie)
-	    continue;
+          /* skip if index is before cookie */
+          if (index < cookie)
+            continue;
 
-	  /* fills an xattr entry */
-	  xattrs_tab[out_index].xattr_id = index;
-	  FSAL_str2name(ptr, len + 1, &xattrs_tab[out_index].xattr_name);
-	  xattrs_tab[out_index].xattr_cookie = index + 1;
+          /* fills an xattr entry */
+          xattrs_tab[out_index].xattr_id = index;
+          FSAL_str2name(ptr, len + 1, &xattrs_tab[out_index].xattr_name);
+          xattrs_tab[out_index].xattr_cookie = index + 1;
 
-	  /* set asked attributes (all supported) */
-	  xattrs_tab[out_index].attributes.asked_attributes =
-	      global_fs_info.supported_attrs;
+          /* set asked attributes (all supported) */
+          xattrs_tab[out_index].attributes.asked_attributes =
+              global_fs_info.supported_attrs;
 
-	  if (file_attributes_to_xattr_attrs(&file_attrs,
-					     &xattrs_tab[out_index].attributes, index))
-	    {
-	      /* set error flag */
-	      xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
-	    }
+          if (file_attributes_to_xattr_attrs(&file_attrs,
+                                             &xattrs_tab[out_index].attributes, index))
+            {
+              /* set error flag */
+              xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
+            }
 
-	  /* next output slot */
-	  out_index++;
-	}
+          /* next output slot */
+          out_index++;
+        }
       /* all xattrs are in the output array */
       if (ptr >= names + namesize)
-	*end_of_list = TRUE;
-	else
-	*end_of_list = FALSE;
-    } else			/* no xattrs */
+        *end_of_list = TRUE;
+        else
+        *end_of_list = FALSE;
+    } else                      /* no xattrs */
     *end_of_list = TRUE;
 
   *p_nb_returned = out_index;
@@ -565,10 +565,10 @@ static int xattr_id_to_name(char *lustre_path, unsigned int xattr_id, char *name
     {
       len = strlen(ptr);
       if (curr_idx == index)
-	{
-	  strcpy(name, ptr);
-	  return ERR_FSAL_NO_ERROR;
-	}
+        {
+          strcpy(name, ptr);
+          return ERR_FSAL_NO_ERROR;
+        }
     }
   return ERR_FSAL_NOENT;
 }
@@ -596,7 +596,7 @@ static int xattr_name_to_id(char *lustre_path, const char *name)
   for (ptr = names, i = 0; ptr < names + namesize; i++, ptr += strlen(ptr) + 1)
     {
       if (!strcmp(name, ptr))
-	return i + XATTR_COUNT;
+        return i + XATTR_COUNT;
     }
   return -ERR_FSAL_NOENT;
 }
@@ -614,26 +614,26 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
       int i;
 
       for (i = 0; i < len; i++)
-	{
-	  if (!isprint(str[i]) && !isspace(str[i]))
-	    {
-	      ascii = FALSE;
-	      break;
-	    }
-	}
+        {
+          if (!isprint(str[i]) && !isspace(str[i]))
+            {
+              ascii = FALSE;
+              break;
+            }
+        }
 
       if (ascii)
-	{
-	  *datalen = size_in;
-	  /* add additional '\n', if missing */
-	  if ((size_in + 1 < maxlen) && (str[len - 1] != '\n'))
-	    {
-	      str[len] = '\n';
-	      str[len + 1] = '\0';
-	      (*datalen) += 2;
-	    }
-	  return ERR_FSAL_NO_ERROR;
-	}
+        {
+          *datalen = size_in;
+          /* add additional '\n', if missing */
+          if ((size_in + 1 < maxlen) && (str[len - 1] != '\n'))
+            {
+              str[len] = '\n';
+              str[len + 1] = '\0';
+              (*datalen) += 2;
+            }
+          return ERR_FSAL_NO_ERROR;
+        }
     }
 
   /* byte, word, 32 or 64 bits */
@@ -663,18 +663,18 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
       char *curr_out;
       char *tmp_buf = (char *)Mem_Alloc(3 * size_in + 4);
       if (!tmp_buf)
-	return ERR_FSAL_NOMEM;
+        return ERR_FSAL_NOMEM;
       curr_out = tmp_buf;
       curr_out += sprintf(curr_out, "0x");
       /* hexa representation */
       for (i = 0; i < size_in; i++)
-	{
-	  unsigned char *p8 = (unsigned char *)(buffer + i);
-	  if ((i % 4 == 3) && (i != size_in - 1))
-	    curr_out += sprintf(curr_out, "%02hhX.", *p8);
-	    else
-	    curr_out += sprintf(curr_out, "%02hhX", *p8);
-	}
+        {
+          unsigned char *p8 = (unsigned char *)(buffer + i);
+          if ((i % 4 == 3) && (i != size_in - 1))
+            curr_out += sprintf(curr_out, "%02hhX.", *p8);
+            else
+            curr_out += sprintf(curr_out, "%02hhX", *p8);
+        }
       *curr_out = '\n';
       curr_out++;
       *curr_out = '\0';
@@ -682,7 +682,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
       strncpy((char *)buffer, tmp_buf, maxlen);
       *datalen = strlen(tmp_buf) + 1;
       if (*datalen > maxlen)
-	*datalen = maxlen;
+        *datalen = maxlen;
       Mem_Free(tmp_buf);
       return ERR_FSAL_NO_ERROR;
     }
@@ -698,12 +698,12 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
-				     unsigned int xattr_id,	/* IN */
-				     fsal_op_context_t * p_context,	/* IN */
-				     caddr_t buffer_addr,	/* IN/OUT */
-				     size_t buffer_size,	/* IN */
-				     size_t * p_output_size	/* OUT */
+fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
+                                     unsigned int xattr_id,     /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     caddr_t buffer_addr,       /* IN/OUT */
+                                     size_t buffer_size,        /* IN */
+                                     size_t * p_output_size     /* OUT */
     )
 {
   int rc;
@@ -734,16 +734,16 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
 
       st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
       if (FSAL_IS_ERROR(st))
-	ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
+        ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
 
       /* get the name for this attr */
       rc = xattr_id_to_name(lustre_path.path, xattr_id, attr_name);
       if (rc)
-	Return(rc, errno, INDEX_FSAL_GetXAttrValue);
+        Return(rc, errno, INDEX_FSAL_GetXAttrValue);
 
       rc = lgetxattr(lustre_path.path, attr_name, buffer_addr, buffer_size);
       if (rc < 0)
-	Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
+        Return(posix2fsal_error(errno), errno, INDEX_FSAL_GetXAttrValue);
 
       /* the xattr value can be a binary, or a string.
        * trying to determine its type...
@@ -752,12 +752,12 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
       xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else			/* built-in attr */
+    } else                      /* built-in attr */
     {
       /* get the value */
       rc = xattr_list[xattr_id].get_func(p_objecthandle, p_context,
-					 buffer_addr, buffer_size,
-					 p_output_size, xattr_list[xattr_id].arg);
+                                         buffer_addr, buffer_size,
+                                         p_output_size, xattr_list[xattr_id].arg);
       Return(rc, 0, INDEX_FSAL_GetXAttrValue);
     }
 
@@ -773,10 +773,10 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 
-fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,	/* IN */
-				    const fsal_name_t * xattr_name,	/* IN */
-				    fsal_op_context_t * p_context,	/* IN */
-				    unsigned int *pxattr_id	/* OUT */
+fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
+                                    const fsal_name_t * xattr_name,     /* IN */
+                                    fsal_op_context_t * p_context,      /* IN */
+                                    unsigned int *pxattr_id     /* OUT */
     )
 {
   fsal_status_t st;
@@ -791,10 +791,10 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,	/* IN */
   for (index = 0; index < XATTR_COUNT; index++)
     {
       if (!strcmp(xattr_list[index].xattr_name, xattr_name->name))
-	{
-	  found = TRUE;
-	  break;
-	}
+        {
+          found = TRUE;
+          break;
+        }
     }
 
   /* search in xattrs */
@@ -804,17 +804,17 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,	/* IN */
 
       st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
       if (FSAL_IS_ERROR(st))
-	ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
+        ReturnStatus(st, INDEX_FSAL_GetXAttrValue);
 
       errno = 0;
       rc = xattr_name_to_id(lustre_path.path, xattr_name->name);
       if (rc < 0)
-	Return(-rc, errno, INDEX_FSAL_GetXAttrValue);
-	else
-	{
-	  index = rc;
-	  found = TRUE;
-	}
+        Return(-rc, errno, INDEX_FSAL_GetXAttrValue);
+        else
+        {
+          index = rc;
+          found = TRUE;
+        }
     }
 
   if (found)
@@ -823,7 +823,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,	/* IN */
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
     } else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
-}				/* FSAL_GetXAttrIdByName */
+}                               /* FSAL_GetXAttrIdByName */
 
 /**
  * Get the value of an extended attribute from its name.
@@ -835,12 +835,12 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,	/* IN */
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,	/* IN */
-				       const fsal_name_t * xattr_name,	/* IN */
-				       fsal_op_context_t * p_context,	/* IN */
-				       caddr_t buffer_addr,	/* IN/OUT */
-				       size_t buffer_size,	/* IN */
-				       size_t * p_output_size	/* OUT */
+fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
+                                       const fsal_name_t * xattr_name,  /* IN */
+                                       fsal_op_context_t * p_context,   /* IN */
+                                       caddr_t buffer_addr,     /* IN/OUT */
+                                       size_t buffer_size,      /* IN */
+                                       size_t * p_output_size   /* OUT */
     )
 {
   unsigned int index;
@@ -866,12 +866,12 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,	/* IN */
   for (index = 0; index < XATTR_COUNT; index++)
     {
       if (do_match_type(xattr_list[index].flags, file_attrs.type)
-	  && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
-	{
+          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
+        {
 
-	  return FSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
-					buffer_size, p_output_size);
-	}
+          return FSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
+                                        buffer_size, p_output_size);
+        }
     }
 
   st = fsal_internal_Handle2FidPath(p_context, p_objecthandle, &lustre_path);
@@ -907,12 +907,12 @@ static void chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
-fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,	/* IN */
-				 const fsal_name_t * xattr_name,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 caddr_t buffer_addr,	/* IN */
-				 size_t buffer_size,	/* IN */
-				 int create	/* IN */
+fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
+                                 const fsal_name_t * xattr_name,        /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 caddr_t buffer_addr,   /* IN */
+                                 size_t buffer_size,    /* IN */
+                                 int create     /* IN */
     )
 {
   int rc;
@@ -932,10 +932,10 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,	/* IN */
   TakeTokenFSCall();
   if (len == 0)
     rc = lsetxattr(lustre_path.path, xattr_name->name, "", 1,
-		   create ? XATTR_CREATE : XATTR_REPLACE);
+                   create ? XATTR_CREATE : XATTR_REPLACE);
     else
     rc = lsetxattr(lustre_path.path, xattr_name->name, (char *)buffer_addr,
-		   len, create ? XATTR_CREATE : XATTR_REPLACE);
+                   len, create ? XATTR_CREATE : XATTR_REPLACE);
 
   ReleaseTokenFSCall();
   if (rc != 0)
@@ -944,11 +944,11 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,	/* IN */
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 
-fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
-				     unsigned int xattr_id,	/* IN */
-				     fsal_op_context_t * p_context,	/* IN */
-				     caddr_t buffer_addr,	/* IN */
-				     size_t buffer_size	/* IN */
+fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
+                                     unsigned int xattr_id,     /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
+                                     caddr_t buffer_addr,       /* IN */
+                                     size_t buffer_size /* IN */
     )
 {
   int rc;
@@ -975,5 +975,5 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,	/* IN */
   FSAL_str2name(name, FSAL_MAX_NAME_LEN, &attr_name);
 
   return FSAL_SetXAttrValue(p_objecthandle, &attr_name,
-			    p_context, buffer_addr, buffer_size, FALSE);
+                            p_context, buffer_addr, buffer_size, FALSE);
 }

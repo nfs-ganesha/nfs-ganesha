@@ -94,12 +94,12 @@
 
 #if HPSS_MAJOR_VERSION == 5
 
-#include <u_signed64.h>		/* for cast64 function */
+#include <u_signed64.h>         /* for cast64 function */
 #include <hpss_api.h>
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
-#include <u_signed64.h>		/* for cast64 function */
+#include <u_signed64.h>         /* for cast64 function */
 #include <hpss_api.h>
 #include <acct_hpss.h>
 
@@ -201,9 +201,9 @@ typedef struct {
 
 /** directory stream descriptor */
 typedef struct fsal_dir__ {
-  fsal_handle_t dir_handle;	/* directory handle */
-  fsal_op_context_t context;	/* credential for readdir operations */
-  int reserved;			/* not used */
+  fsal_handle_t dir_handle;     /* directory handle */
+  fsal_op_context_t context;    /* credential for readdir operations */
+  int reserved;                 /* not used */
 } fsal_dir_t;
 
 /** FSAL file descriptor */
@@ -211,21 +211,21 @@ typedef struct fsal_dir__ {
 #if (HPSS_MAJOR_VERSION == 5)
 
 typedef struct fsal_file__ {
-  int filedes;			/* file descriptor. */
-  gss_token_t fileauthz;	/* data access credential. */
+  int filedes;                  /* file descriptor. */
+  gss_token_t fileauthz;        /* data access credential. */
 } fsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 6)
 
 typedef struct fsal_file__ {
-  int filedes;			/* file descriptor. */
-  hpss_authz_token_t fileauthz;	/* data access credential. */
+  int filedes;                  /* file descriptor. */
+  hpss_authz_token_t fileauthz; /* data access credential. */
 } fsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 7)
 
 typedef struct fsal_file__ {
-  int filedes;			/* file descriptor. */
+  int filedes;                  /* file descriptor. */
 } fsal_file_t;
 
 #endif
@@ -241,9 +241,9 @@ typedef struct fs_specific_initinfo__ {
   /* specifies the behavior for each init value : */
   struct behaviors {
     fsal_initflag_t
-	/* client API configuration */
+        /* client API configuration */
     PrincipalName, KeytabPath,
-	/* Other specific configuration */
+        /* Other specific configuration */
     CredentialLifetime, ReturnInconsistentDirent;
 
   } behaviors;
@@ -264,9 +264,9 @@ typedef struct fs_specific_initinfo__ {
   /* specifies the behavior for each init value : */
   struct behaviors {
     fsal_initflag_t
-	/* client API configuration */
+        /* client API configuration */
     AuthnMech, NumRetries, BusyDelay, BusyRetries, MaxConnections, DebugPath,
-	/* Other specific configuration */
+        /* Other specific configuration */
     Principal, KeytabPath, CredentialLifetime, ReturnInconsistentDirent;
 
   } behaviors;
@@ -290,10 +290,10 @@ typedef u_signed64 fsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING  (cast64(0))
 
-typedef void *fsal_lockdesc_t;	 /**< not implemented in hpss */
+typedef void *fsal_lockdesc_t;   /**< not implemented in hpss */
 
 #if HPSS_LEVEL >= 730
 #define HAVE_XATTR_CREATE 1
 #endif
 
-#endif				/* _FSAL_TYPES_SPECIFIC_H */
+#endif                          /* _FSAL_TYPES_SPECIFIC_H */

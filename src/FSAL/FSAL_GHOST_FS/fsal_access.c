@@ -56,10 +56,10 @@
  *        - ERR_FSAL_IO           (corrupted FS)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_accessflags_t access_type,	/* IN */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_accessflags_t access_type,       /* IN */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -79,7 +79,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
   /* call to GHOST_FS access */
   rc = GHOSTFS_Access((GHOSTFS_handle_t) (*object_handle), test,
-		      p_context->credential.user, p_context->credential.group);
+                      p_context->credential.user, p_context->credential.group);
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_access);
@@ -93,18 +93,18 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
       fsal_status_t status;
 
       switch ((status = FSAL_getattrs(object_handle, p_context, object_attributes)).major)
-	{
-	  /* change the FAULT error to appears as an internal error.
-	   * indeed, parameters should be null. */
-	case ERR_FSAL_FAULT:
-	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_access);
-	  break;
-	case ERR_FSAL_NO_ERROR:
-	  /* continue */
-	  break;
-	default:
-	  Return(status.major, status.minor, INDEX_FSAL_access);
-	}
+        {
+          /* change the FAULT error to appears as an internal error.
+           * indeed, parameters should be null. */
+        case ERR_FSAL_FAULT:
+          Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_access);
+          break;
+        case ERR_FSAL_NO_ERROR:
+          /* continue */
+          break;
+        default:
+          Return(status.major, status.minor, INDEX_FSAL_access);
+        }
 
     }
 

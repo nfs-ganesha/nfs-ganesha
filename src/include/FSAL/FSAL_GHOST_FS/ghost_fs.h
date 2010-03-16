@@ -197,19 +197,19 @@ typedef struct GHOSTFS_metadata__ {
  */
 typedef struct GHOSTFS_item__ {
 
-  rw_lock_t entry_lock;		/* RW lock on the element */
+  rw_lock_t entry_lock;         /* RW lock on the element */
 
-  GHOSTFS_inode_t inode;	/* inode of this element */
+  GHOSTFS_inode_t inode;        /* inode of this element */
 
-  unsigned int magic;		/* magic number to indicate
-				 * if the entry is still valid. */
+  unsigned int magic;           /* magic number to indicate
+                                 * if the entry is still valid. */
 
-  GHOSTFS_count_t linkcount;	/* number of pointer on
-				   this element in the namespace */
+  GHOSTFS_count_t linkcount;    /* number of pointer on
+                                   this element in the namespace */
 
-  GHOSTFS_typeitem_t type;	/* type of this element */
+  GHOSTFS_typeitem_t type;      /* type of this element */
 
-  GHOSTFS_metadata_t attributes;	/* attributes of this element */
+  GHOSTFS_metadata_t attributes;        /* attributes of this element */
 
   union {
 
@@ -300,7 +300,7 @@ int GHOSTFS_GetRoot(GHOSTFS_handle_t * root_handle);
  *  but it can equal to . or ..
  */
 int GHOSTFS_Lookup(GHOSTFS_handle_t handle_parent,
-		   char *ghostfs_name, GHOSTFS_handle_t * p_handle);
+                   char *ghostfs_name, GHOSTFS_handle_t * p_handle);
 
 /** Gets the attributes of an object in the filesystem. */
 int GHOSTFS_GetAttrs(GHOSTFS_handle_t handle, GHOSTFS_Attrs_t * object_attributes);
@@ -314,8 +314,8 @@ typedef int GHOSTFS_testperm_t;
 /** Tests whether a user can access an object
     by the ways defined in test_set */
 int GHOSTFS_Access(GHOSTFS_handle_t handle,
-		   GHOSTFS_testperm_t test_set,
-		   GHOSTFS_user_t userid, GHOSTFS_group_t groupid);
+                   GHOSTFS_testperm_t test_set,
+                   GHOSTFS_user_t userid, GHOSTFS_group_t groupid);
 
 /** Reads the content of a symlink */
 int GHOSTFS_ReadLink(GHOSTFS_handle_t handle, char *buffer, GHOSTFS_mdsize_t buff_size);
@@ -336,44 +336,44 @@ int GHOSTFS_Closedir(dir_descriptor_t * dir);
 
 /** set object attributes */
 int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
-		     GHOSTFS_setattr_mask_t setattr_mask, GHOSTFS_Attrs_t attrs_values);
+                     GHOSTFS_setattr_mask_t setattr_mask, GHOSTFS_Attrs_t attrs_values);
 
 int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
-		  char *new_dir_name,
-		  GHOSTFS_user_t owner,
-		  GHOSTFS_group_t group,
-		  GHOSTFS_perm_t mode,
-		  GHOSTFS_handle_t * p_new_dir_handle, GHOSTFS_Attrs_t * p_new_dir_attrs);
+                  char *new_dir_name,
+                  GHOSTFS_user_t owner,
+                  GHOSTFS_group_t group,
+                  GHOSTFS_perm_t mode,
+                  GHOSTFS_handle_t * p_new_dir_handle, GHOSTFS_Attrs_t * p_new_dir_attrs);
 
 int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
-		   char *new_file_name,
-		   GHOSTFS_user_t owner,
-		   GHOSTFS_group_t group,
-		   GHOSTFS_perm_t mode,
-		   GHOSTFS_handle_t * p_new_file_handle,
-		   GHOSTFS_Attrs_t * p_new_file_attrs);
+                   char *new_file_name,
+                   GHOSTFS_user_t owner,
+                   GHOSTFS_group_t group,
+                   GHOSTFS_perm_t mode,
+                   GHOSTFS_handle_t * p_new_file_handle,
+                   GHOSTFS_Attrs_t * p_new_file_attrs);
 
 int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
-		 char *new_link_name,
-		 GHOSTFS_handle_t target_handle, GHOSTFS_Attrs_t * p_link_attrs);
+                 char *new_link_name,
+                 GHOSTFS_handle_t target_handle, GHOSTFS_Attrs_t * p_link_attrs);
 
 int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
-		    char *new_symlink_name,
-		    char *symlink_content,
-		    GHOSTFS_user_t owner,
-		    GHOSTFS_group_t group,
-		    GHOSTFS_perm_t mode,
-		    GHOSTFS_handle_t * p_new_symlink_handle,
-		    GHOSTFS_Attrs_t * p_new_symlink_attrs);
+                    char *new_symlink_name,
+                    char *symlink_content,
+                    GHOSTFS_user_t owner,
+                    GHOSTFS_group_t group,
+                    GHOSTFS_perm_t mode,
+                    GHOSTFS_handle_t * p_new_symlink_handle,
+                    GHOSTFS_Attrs_t * p_new_symlink_attrs);
 
-int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,	/* IN */
-		   char *object_name,	/* IN */
-		   GHOSTFS_Attrs_t * p_parent_attrs);	/* [IN/OUT ] */
+int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
+                   char *object_name,   /* IN */
+                   GHOSTFS_Attrs_t * p_parent_attrs);   /* [IN/OUT ] */
 
 int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
-		   GHOSTFS_handle_t tgt_dir_handle,
-		   char *src_name,
-		   char *tgt_name,
-		   GHOSTFS_Attrs_t * p_src_dir_attrs, GHOSTFS_Attrs_t * p_tgt_dir_attrs);
+                   GHOSTFS_handle_t tgt_dir_handle,
+                   char *src_name,
+                   char *tgt_name,
+                   GHOSTFS_Attrs_t * p_src_dir_attrs, GHOSTFS_Attrs_t * p_tgt_dir_attrs);
 
-#endif				/* _GHOST_FS_H */
+#endif                          /* _GHOST_FS_H */

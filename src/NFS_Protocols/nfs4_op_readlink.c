@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -146,7 +146,7 @@
 #define res_READLINK4 resp->nfs_resop4_u.opreadlink
 
 int nfs4_op_readlink(struct nfs_argop4 *op,
-		     compound_data_t * data, struct nfs_resop4 *resp)
+                     compound_data_t * data, struct nfs_resop4 *resp)
 {
   cache_inode_status_t cache_status;
   fsal_path_t symlink_path;
@@ -187,10 +187,10 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 
   /* Using cache_inode_readlink */
   if (cache_inode_readlink(data->current_entry,
-			   &symlink_path,
-			   data->ht,
-			   data->pclient,
-			   data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                           &symlink_path,
+                           data->ht,
+                           data->pclient,
+                           data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /* Alloc read link */
 #ifdef _DEBUG_MEMLEAKS
@@ -199,11 +199,11 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 #endif
 
       if ((res_READLINK4.READLINK4res_u.resok4.link.utf8string_val =
-	   (char *)Mem_Alloc(symlink_path.len)) == NULL)
-	{
-	  res_READLINK4.status = NFS4ERR_INVAL;
-	  return res_READLINK4.status;
-	}
+           (char *)Mem_Alloc(symlink_path.len)) == NULL)
+        {
+          res_READLINK4.status = NFS4ERR_INVAL;
+          return res_READLINK4.status;
+        }
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
       BuddySetDebugLabel("N/A");
@@ -211,11 +211,11 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 
       /* convert the fsal path to a utf8 string */
       if (str2utf8((char *)symlink_path.path, &res_READLINK4.READLINK4res_u.resok4.link)
-	  == -1)
-	{
-	  res_READLINK4.status = NFS4ERR_INVAL;
-	  return res_READLINK4.status;
-	}
+          == -1)
+        {
+          res_READLINK4.status = NFS4ERR_INVAL;
+          return res_READLINK4.status;
+        }
 
       res_READLINK4.status = NFS4_OK;
       return res_READLINK4.status;
@@ -223,7 +223,7 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
 
   res_READLINK4.status = nfs4_Errno(cache_status);
   return res_READLINK4.status;
-}				/* nfs4_op_readlink */
+}                               /* nfs4_op_readlink */
 
 /**
  * nfs4_op_readlink_Free: frees what was allocared to handle nfs4_op_readlink.
@@ -241,4 +241,4 @@ void nfs4_op_readlink_Free(READLINK4res * resp)
     Mem_Free((char *)resp->READLINK4res_u.resok4.link.utf8string_val);
 
   return;
-}				/* nfs4_op_readlink_Free */
+}                               /* nfs4_op_readlink_Free */

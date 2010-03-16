@@ -22,7 +22,7 @@ typedef struct cache_path_entry__ {
 
 } cache_path_entry_t;
 
-#define CACHE_PATH_SIZE 509	/* prime near 512 */
+#define CACHE_PATH_SIZE 509     /* prime near 512 */
 
 static cache_path_entry_t cache_array[CACHE_PATH_SIZE];
 
@@ -36,7 +36,7 @@ int fsal_posixdb_cache_init()
   for (i = 0; i < CACHE_PATH_SIZE; i++)
     {
       if (rw_lock_init(&cache_array[i].entry_lock))
-	return -1;
+        return -1;
 
       cache_array[i].is_set = 0;
       cache_array[i].path_is_set = 0;
@@ -57,8 +57,8 @@ static unsigned int hash_cache_path(fsal_u64_t id, int ts)
  * ayant un hash donne peut occuper une case du tableau.
  */
 
-void fsal_posixdb_CachePath(fsal_handle_t * p_handle,	/* IN */
-			    fsal_path_t * p_path /* IN */ )
+void fsal_posixdb_CachePath(fsal_handle_t * p_handle,   /* IN */
+                            fsal_path_t * p_path /* IN */ )
 {
 
 #ifdef _ENABLE_CACHE_PATH
@@ -67,7 +67,7 @@ void fsal_posixdb_CachePath(fsal_handle_t * p_handle,	/* IN */
 
 #ifdef _DEBUG_FSAL
   DisplayLog("fsal_posixdb_CachePath: %u, %u = %s", (unsigned int)(p_handle->id),
-	     (unsigned int)(p_handle->ts), p_path->path);
+             (unsigned int)(p_handle->ts), p_path->path);
 #endif
 
   i = hash_cache_path(p_handle->id, p_handle->ts);
@@ -101,7 +101,7 @@ void fsal_posixdb_CachePath(fsal_handle_t * p_handle,	/* IN */
 }
 
 /* set/update informations about a handle */
-int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)	/* IN */
+int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)     /* IN */
 {
 #ifdef _ENABLE_CACHE_PATH
 
@@ -126,7 +126,7 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)	/* IN */
 
 #ifdef _DEBUG_FSAL
       DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (existing entry)",
-		 (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
+                 (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 #endif
 
       V_w(&cache_array[i].entry_lock);
@@ -135,7 +135,7 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)	/* IN */
     }
 #ifdef _DEBUG_FSAL
   DisplayLog("fsal_posixdb_UpdateInodeCache: %u, %u (new entry)",
-	     (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
+             (unsigned int)(p_handle->id), (unsigned int)(p_handle->ts));
 #endif
 
   /* add it (replace previous handle) */
@@ -152,7 +152,7 @@ int fsal_posixdb_UpdateInodeCache(fsal_handle_t * p_handle)	/* IN */
 }
 
 /* retrieve last informations about a handle */
-int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)	/* IN/OUT */
+int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)        /* IN/OUT */
 {
 #ifdef _ENABLE_CACHE_PATH
   unsigned int i;
@@ -166,17 +166,17 @@ int fsal_posixdb_GetInodeCache(fsal_handle_t * p_handle)	/* IN/OUT */
       && cache_array[i].handle.ts == p_handle->ts)
     {
       if (cache_array[i].info_is_set)
-	{
-	  p_handle->info = cache_array[i].handle.info;
+        {
+          p_handle->info = cache_array[i].handle.info;
 
 #ifdef _DEBUG_FSAL
-	  DisplayLog("fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
-		     (unsigned int)(p_handle->ts));
+          DisplayLog("fsal_posixdb_GetInodeCache(%u, %u)", (unsigned int)(p_handle->id),
+                     (unsigned int)(p_handle->ts));
 #endif
-	  V_r(&cache_array[i].entry_lock);
+          V_r(&cache_array[i].entry_lock);
 
-	  return TRUE;
-	}
+          return TRUE;
+        }
     }
   V_r(&cache_array[i].entry_lock);
 #endif
@@ -207,8 +207,8 @@ void fsal_posixdb_InvalidateCache()
 #endif
 }
 
-int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle,	/* IN */
-			      fsal_path_t * p_path /* OUT */ )
+int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle, /* IN */
+                              fsal_path_t * p_path /* OUT */ )
 {
 #ifdef _ENABLE_CACHE_PATH
 
@@ -223,18 +223,18 @@ int fsal_posixdb_GetPathCache(fsal_handle_t * p_handle,	/* IN */
       && cache_array[i].handle.ts == p_handle->ts)
     {
       if (cache_array[i].path_is_set)
-	{
-	  /* return path it */
-	  memcpy(p_path, &cache_array[i].path, sizeof(fsal_path_t));
-	  V_r(&cache_array[i].entry_lock);
+        {
+          /* return path it */
+          memcpy(p_path, &cache_array[i].path, sizeof(fsal_path_t));
+          V_r(&cache_array[i].entry_lock);
 
 #ifdef _DEBUG_FSAL
-	  DisplayLog("fsal_posixdb_GetPathCache(%u, %u)=%s",
-		     (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
-		     p_path->path);
+          DisplayLog("fsal_posixdb_GetPathCache(%u, %u)=%s",
+                     (unsigned int)p_handle->id, (unsigned int)p_handle->ts,
+                     p_path->path);
 #endif
-	  return TRUE;
-	}
+          return TRUE;
+        }
     }
   V_r(&cache_array[i].entry_lock);
 #endif
@@ -257,8 +257,8 @@ fsal_posixdb_status_t mysql_error_convert(int err)
       ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, err);
     default:
       DisplayLogLevel(NIV_MAJOR,
-		      "Unhandled error %d: default conversion to ERR_FSAL_POSIXDB_CMDFAILED",
-		      err);
+                      "Unhandled error %d: default conversion to ERR_FSAL_POSIXDB_CMDFAILED",
+                      err);
       ReturnCode(ERR_FSAL_POSIXDB_CMDFAILED, err);
     }
 }
@@ -278,7 +278,7 @@ int db_is_retryable(int sql_err)
 }
 
 fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
-				  result_handle_t * p_result)
+                                  result_handle_t * p_result)
 {
   int rc;
   /* TODO manage retry period */
@@ -294,14 +294,14 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
       rc = mysql_real_query(&conn->db_conn, query, strlen(query));
 
       if (rc && db_is_retryable(mysql_errno(&conn->db_conn)))
-	{
-	  DisplayLogLevel(NIV_MAJOR, "Connection to database lost... Retrying in %u sec.",
-			  retry);
-	  sleep(retry);
-	  retry *= 2;
-	  /*if ( retry > lmgr_config.connect_retry_max )
-	     retry = lmgr_config.connect_retry_max; */
-	}
+        {
+          DisplayLogLevel(NIV_MAJOR, "Connection to database lost... Retrying in %u sec.",
+                          retry);
+          sleep(retry);
+          retry *= 2;
+          /*if ( retry > lmgr_config.connect_retry_max )
+             retry = lmgr_config.connect_retry_max; */
+        }
 
     }
   while (rc && db_is_retryable(mysql_errno(&conn->db_conn)));
@@ -309,27 +309,27 @@ fsal_posixdb_status_t db_exec_sql(fsal_posixdb_conn * conn, const char *query,
   if (rc)
     {
       DisplayLogLevel(NIV_MAJOR, "DB request failed: %s (query: %s)",
-		      mysql_error(&conn->db_conn), query);
+                      mysql_error(&conn->db_conn), query);
       return mysql_error_convert(mysql_errno(&conn->db_conn));
     } else
     {
       if (p_result)
-	*p_result = mysql_store_result(&conn->db_conn);
+        *p_result = mysql_store_result(&conn->db_conn);
 
       ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
     }
 }
 
 fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
-						fsal_handle_t * p_handle,
-						fsal_path_t * p_path)
+                                                fsal_handle_t * p_handle,
+                                                fsal_path_t * p_path)
 {
   unsigned int shift;
   char *new_pos;
   int toomanypaths = 0;
 
-  MYSQL_BIND input[2];		/* input = id, timestamp */
-  MYSQL_BIND output[3];		/* output = path, id, timestamp */
+  MYSQL_BIND input[2];          /* input = id, timestamp */
+  MYSQL_BIND output[3];         /* output = path, id, timestamp */
   my_bool is_null[3];
   unsigned long length[3];
   my_bool error[3];
@@ -421,36 +421,36 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 
       rc = mysql_stmt_execute(stmt);
       if (rc)
-	return mysql_error_convert(mysql_stmt_errno(stmt));
+        return mysql_error_convert(mysql_stmt_errno(stmt));
 
       if (mysql_stmt_store_result(stmt))
-	{
-	  DisplayLog("mysql_stmt_store_result() failed: %s", mysql_stmt_error(stmt));
-	  return mysql_error_convert(mysql_stmt_errno(stmt));
-	}
+        {
+          DisplayLog("mysql_stmt_store_result() failed: %s", mysql_stmt_error(stmt));
+          return mysql_error_convert(mysql_stmt_errno(stmt));
+        }
 
       /* retrieve result */
       rc = mysql_stmt_fetch(stmt);
       if (rc == MYSQL_NO_DATA)
-	{
-	  /* clean prepared statement */
-	  mysql_stmt_free_result(stmt);
-	  ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);	/* not found */
+        {
+          /* clean prepared statement */
+          mysql_stmt_free_result(stmt);
+          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);        /* not found */
       } else if (rc)
-	{
-	  /* clean prepared statement */
-	  mysql_stmt_free_result(stmt);
-	  DisplayLog("mysql_stmt_fetch() failed: %s", mysql_stmt_error(stmt));
-	  return mysql_error_convert(mysql_stmt_errno(stmt));
-	}
+        {
+          /* clean prepared statement */
+          mysql_stmt_free_result(stmt);
+          DisplayLog("mysql_stmt_fetch() failed: %s", mysql_stmt_error(stmt));
+          return mysql_error_convert(mysql_stmt_errno(stmt));
+        }
 
       /* @TODO check if several results are returned */
 
-      if ((id == last_id) && (ts == last_ts))	/* handle is equal to its parent handle (root reached) */
-	{
-	  root_reached = TRUE;
-	  break;
-	}
+      if ((id == last_id) && (ts == last_ts))   /* handle is equal to its parent handle (root reached) */
+        {
+          root_reached = TRUE;
+          break;
+        }
 
       /* prepare next step */
       last_id = id;
@@ -459,7 +459,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
       /* insert the name at the beginning of the path */
       shift = strlen(name);
       if (p_path->len + shift >= FSAL_MAX_PATH_LEN)
-	ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
       new_pos = p_path->path + shift;
       memmove(new_pos, p_path->path, p_path->len);
       memcpy(p_path->path, name, shift);
@@ -472,7 +472,7 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
   if (toomanypaths)
     {
       DisplayLog("Returned path: %s", p_path->path);
-      ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);	/* too many entries */
+      ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
     } else
     {
       /* set result in cache and return */
@@ -483,8 +483,8 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
 }
 
 fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
-						   unsigned long long id, unsigned int ts,
-						   fsal_nodetype_t ftype)
+                                                   unsigned long long id, unsigned int ts,
+                                                   fsal_nodetype_t ftype)
 {
   fsal_posixdb_status_t st;
   fsal_nodetype_t ftype_tmp;
@@ -503,36 +503,36 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
       /* find all the children of the directory in order to delete them, and then we delete the current handle */
 
       snprintf(query, 2048,
-	       "SELECT Handle.handleid, Handle.handlets, Handle.ftype, Parent.name, Handle.nlink "
-	       "FROM Parent INNER JOIN Handle ON Handle.handleid=Parent.handleid "
-	       "AND Handle.handlets=Parent.handlets "
-	       "WHERE Parent.handleidparent=%llu AND Parent.handletsparent=%u "
-	       "AND NOT (Parent.handleidparent = Parent.handleid AND Parent.handletsparent = Parent.handlets) "
-	       "FOR UPDATE", id, ts);
+               "SELECT Handle.handleid, Handle.handlets, Handle.ftype, Parent.name, Handle.nlink "
+               "FROM Parent INNER JOIN Handle ON Handle.handleid=Parent.handleid "
+               "AND Handle.handlets=Parent.handlets "
+               "WHERE Parent.handleidparent=%llu AND Parent.handletsparent=%u "
+               "AND NOT (Parent.handleidparent = Parent.handleid AND Parent.handletsparent = Parent.handlets) "
+               "FOR UPDATE", id, ts);
       st = db_exec_sql(p_conn, query, &res);
       if (FSAL_POSIXDB_IS_ERROR(st))
-	return st;
+        return st;
 
       while ((row = mysql_fetch_row(res)) != NULL)
-	{
-	  ftype_tmp = (fsal_nodetype_t) atoi(row[2]);
-	  if (ftype_tmp == FSAL_TYPE_DIR)
-	    {
-	      st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
-						ftype_tmp);
-	    } else
-	    {
-	      st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]),	/* handleidparent */
-					     atoi(row[1]),	/* handletsparent */
-					     id, ts, row[3],	/* filename */
-					     atoi(row[4]));	/* nlink */
-	    }
-	  if (FSAL_POSIXDB_IS_ERROR(st))
-	    {
-	      mysql_free_result(res);
-	      return st;
-	    }
-	}
+        {
+          ftype_tmp = (fsal_nodetype_t) atoi(row[2]);
+          if (ftype_tmp == FSAL_TYPE_DIR)
+            {
+              st = fsal_posixdb_recursiveDelete(p_conn, atoll(row[0]), atoi(row[1]),
+                                                ftype_tmp);
+            } else
+            {
+              st = fsal_posixdb_deleteParent(p_conn, atoll(row[0]),     /* handleidparent */
+                                             atoi(row[1]),      /* handletsparent */
+                                             id, ts, row[3],    /* filename */
+                                             atoi(row[4]));     /* nlink */
+            }
+          if (FSAL_POSIXDB_IS_ERROR(st))
+            {
+              mysql_free_result(res);
+              return st;
+            }
+        }
       mysql_free_result(res);
     }
 
@@ -550,7 +550,7 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
   /* Delete this handle from parent table (it is supposed not having children now) */
 
   snprintf(query, 2048, "DELETE FROM Parent WHERE (handleid=%llu AND handlets=%u)", id,
-	   ts);
+           ts);
 
   st = db_exec_sql(p_conn, query, NULL);
   if (FSAL_POSIXDB_IS_ERROR(st))
@@ -560,13 +560,13 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
   ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
-fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,	/* IN */
-						unsigned long long id,	/* IN */
-						unsigned int ts,	/* IN */
-						unsigned long long idparent,	/* IN */
-						unsigned int tsparent,	/* IN */
-						char *filename,	/* IN */
-						int nlink)	/* IN */
+fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     /* IN */
+                                                unsigned long long id,  /* IN */
+                                                unsigned int ts,        /* IN */
+                                                unsigned long long idparent,    /* IN */
+                                                unsigned int tsparent,  /* IN */
+                                                char *filename, /* IN */
+                                                int nlink)      /* IN */
 {
   char query[1024];
   fsal_posixdb_status_t st;
@@ -578,8 +578,8 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,	/* I
     }
 
   snprintf(query, 1024,
-	   "DELETE FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-	   idparent, tsparent, filename);
+           "DELETE FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
+           idparent, tsparent, filename);
   st = db_exec_sql(p_conn, query, NULL);
   if (FSAL_POSIXDB_IS_ERROR(st))
     return st;
@@ -594,19 +594,19 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,	/* I
       /* delete the handle */
 
       snprintf(query, 1024, "DELETE FROM Handle WHERE handleid=%llu AND handlets=%u", id,
-	       ts);
+               ts);
       st = db_exec_sql(p_conn, query, NULL);
       if (FSAL_POSIXDB_IS_ERROR(st))
-	return st;
+        return st;
 
 #ifdef _NO_DELETE_CASCADE
       /* Delete from parent table */
 
       snprintf(query, 1024, "DELETE FROM Parent WHERE handleid=%llu AND handlets=%u", id,
-	       ts);
+               ts);
       st = db_exec_sql(p_conn, query, NULL);
       if (FSAL_POSIXDB_IS_ERROR(st))
-	return st;
+        return st;
 #endif
 
     } else
@@ -616,22 +616,22 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,	/* I
 
       /* update the Handle entry ( Handle.nlink <- (nlink - 1) ) */
       snprintf(query, 1024,
-	       "UPDATE Handle SET nlink=%u WHERE handleid=%llu AND handlets=%u",
-	       nlink - 1, id, ts);
+               "UPDATE Handle SET nlink=%u WHERE handleid=%llu AND handlets=%u",
+               nlink - 1, id, ts);
       st = db_exec_sql(p_conn, query, NULL);
       if (FSAL_POSIXDB_IS_ERROR(st))
-	return st;
+        return st;
     }
 
   ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
-fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,	/* IN */
-						   unsigned long long idparent,	/* IN */
-						   unsigned int tsparent,	/* IN */
-						   char *filename,	/* IN */
-						   fsal_posixdb_fileinfo_t *
-						   p_object_info /* IN */ )
+fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,  /* IN */
+                                                   unsigned long long idparent, /* IN */
+                                                   unsigned int tsparent,       /* IN */
+                                                   char *filename,      /* IN */
+                                                   fsal_posixdb_fileinfo_t *
+                                                   p_object_info /* IN */ )
 {
   unsigned long long id;
   unsigned int ts;
@@ -646,10 +646,10 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,	/
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   snprintf(query, 2048,
-	   "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
-	   "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
-	   "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' "
-	   "FOR UPDATE", idparent, tsparent, filename);
+           "SELECT Parent.handleid, Parent.handlets, Handle.deviceid, Handle.inode, Handle.nlink, Handle.ctime, Handle.ftype "
+           "FROM Parent INNER JOIN Handle ON Parent.handleid = Handle.handleid AND Parent.handlets=Handle.handlets "
+           "WHERE handleidparent=%llu AND handletsparent=%u AND name='%s' "
+           "FOR UPDATE", idparent, tsparent, filename);
 
   st = db_exec_sql(p_conn, query, &res);
   if (FSAL_POSIXDB_IS_ERROR(st))
@@ -671,14 +671,14 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,	/
   /* fill 'infodb' with information about the handle in the database */
   /* no need to compare inode & devid, they are the same */
   posixdb_internal_fillFileinfoFromStrValues(&infodb, row[2], row[3], row[4], row[5],
-					     row[6]);
+                                             row[6]);
   mysql_free_result(res);
 
   if (p_object_info && fsal_posixdb_consistency_check(&infodb, p_object_info))
     {
       /* not consistent, the bad handle have to be deleted */
       DisplayLog("Consistency check failed while deleting a Path : Handle deleted");
-      infodb.ftype = FSAL_TYPE_DIR;	/* considers that the entry is a directory in order to delete all its Parent entries and its Handle */
+      infodb.ftype = FSAL_TYPE_DIR;     /* considers that the entry is a directory in order to delete all its Parent entries and its Handle */
     }
 
   switch (infodb.ftype)
@@ -689,17 +689,17 @@ fsal_posixdb_status_t fsal_posixdb_internal_delete(fsal_posixdb_conn * p_conn,	/
       break;
     default:
       st = fsal_posixdb_deleteParent(p_conn,
-				     id, ts, idparent, tsparent, filename, infodb.nlink);
+                                     id, ts, idparent, tsparent, filename, infodb.nlink);
     }
   return st;
 }
 
 fsal_posixdb_status_t posixdb_internal_fillFileinfoFromStrValues(fsal_posixdb_fileinfo_t *
-								 p_info, char *devid_str,
-								 char *inode_str,
-								 char *nlink_str,
-								 char *ctime_str,
-								 char *ftype_str)
+                                                                 p_info, char *devid_str,
+                                                                 char *inode_str,
+                                                                 char *nlink_str,
+                                                                 char *ctime_str,
+                                                                 char *ftype_str)
 {
 
   if (!p_info)

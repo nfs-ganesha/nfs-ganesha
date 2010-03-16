@@ -121,7 +121,7 @@
 /* variable struct */
 typedef struct shell_variable__ {
   char var_name[MAX_VAR_LEN];
-  char *var_value;		/* mallocated */
+  char *var_value;              /* mallocated */
   int datalen;
   struct shell_variable__ *next;
   struct shell_variable__ *prev;
@@ -137,10 +137,10 @@ static void init_keys(void)
 {
   if (pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
-	   errno, (caddr_t) pthread_self(), strerror(errno));
+           errno, (caddr_t) pthread_self(), strerror(errno));
 
   return;
-}				/* init_keys */
+}                               /* init_keys */
 
 /**
  * manages pthread_keys.
@@ -152,13 +152,13 @@ static shell_variable_t *GetVarTable()
   if (pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
-	     errno, (caddr_t) pthread_self(), strerror(errno));
+             errno, (caddr_t) pthread_self(), strerror(errno));
       return NULL;
     }
 
   return (shell_variable_t *) pthread_getspecific(thread_key);
 
-}				/* GetVarTable */
+}                               /* GetVarTable */
 
 void SetVarTable(shell_variable_t * var_table)
 {
@@ -176,9 +176,9 @@ void print_varlist(FILE * output, int is_dlen)
   while (current)
     {
       if (is_dlen)
-	fprintf(output, "\t%s (%d Bytes)\n", current->var_name, current->datalen - 1);
-	else
-	fprintf(output, "\t%s\n", current->var_name);
+        fprintf(output, "\t%s (%d Bytes)\n", current->var_name, current->datalen - 1);
+        else
+        fprintf(output, "\t%s\n", current->var_name);
       current = current->next;
     }
   return;
@@ -190,7 +190,7 @@ static shell_variable_t *find_var(char *str)
   while (current)
     {
       if (!strncmp(current->var_name, str, MAX_VAR_LEN))
-	return current;
+        return current;
       current = current->next;
     }
   return NULL;
@@ -285,14 +285,14 @@ int is_authorized_varname(char *str)
     {
       char c = str[len];
       if (!IS_LETTER(c) &&
-	  !IS_LETTER_CAP(c) && !IS_NUMERIC(c) && (c != '.') && (c != '_') && (c != ':'))
-	{
-	  return 0;
-	}
+          !IS_LETTER_CAP(c) && !IS_NUMERIC(c) && (c != '.') && (c != '_') && (c != ':'))
+        {
+          return 0;
+        }
 
       len++;
       if (len > MAX_VAR_LEN)
-	return 0;
+        return 0;
     }
 
   return 1;

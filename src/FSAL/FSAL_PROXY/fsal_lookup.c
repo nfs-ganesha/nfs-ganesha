@@ -16,7 +16,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -75,11 +75,11 @@
  */
 extern struct timeval timeout;
 
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
-			  fsal_name_t * p_filename,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_handle_t * object_handle,	/* OUT */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
+                          fsal_name_t * p_filename,     /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_handle_t * object_handle,        /* OUT */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -131,7 +131,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
        * be NULL.
        */
       if (p_filename != NULL)
-	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup Root" ; */
       argnfs4.tag.utf8string_val = NULL;
@@ -147,25 +147,23 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
       index_getattr = FSAL_LOOKUP_IDX_OP_GETATTR_ROOT;
       index_getfh = FSAL_LOOKUP_IDX_OP_GETFH_ROOT;
 
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].
-	  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	  bitmap4_val = bitmap_res;
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].
-	  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	  bitmap4_len = 2;
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].nfs_resop4_u.
+          opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].nfs_resop4_u.
+          opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].
-	  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	  attrlist4_val = (char *)&fattr_internal;
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].
-	  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	  attrlist4_len = sizeof(fattr_internal);
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].nfs_resop4_u.
+          opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+          (char *)&fattr_internal;
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR_ROOT].nfs_resop4_u.
+          opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+          sizeof(fattr_internal);
 
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.
-	  opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.
-	  opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
-    } else			/* this is a real lookup(parent, name)  */
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+      resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH_ROOT].nfs_resop4_u.opgetfh.
+          GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
+    } else                      /* this is a real lookup(parent, name)  */
     {
 #ifdef _DEBUG_FSAL
       PRINT_HANDLE("FSAL_lookup parent", parent_directory_handle);
@@ -173,153 +171,147 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
 
       /* the filename should not be null */
       if (p_filename == NULL)
-	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       /* >> Be careful about junction crossing, symlinks, hardlinks,...
        * You may check the parent type if it's sored into the handle <<
        */
 
       switch (parent_directory_handle->object_type_reminder)
-	{
-	case FSAL_TYPE_DIR:
-	  /* OK */
-	  break;
+        {
+        case FSAL_TYPE_DIR:
+          /* OK */
+          break;
 
-	case FSAL_TYPE_JUNCTION:
-	  /* This is a junction */
-	  Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
+        case FSAL_TYPE_JUNCTION:
+          /* This is a junction */
+          Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
 
-	case FSAL_TYPE_FILE:
-	case FSAL_TYPE_LNK:
-	case FSAL_TYPE_XATTR:
-	  /* not a directory */
-	  Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
+        case FSAL_TYPE_FILE:
+        case FSAL_TYPE_LNK:
+        case FSAL_TYPE_XATTR:
+          /* not a directory */
+          Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
 
-	default:
-	  Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
-	}
+        default:
+          Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
+        }
 
       /* >> Call your filesystem lookup function here << */
       if (fsal_internal_proxy_extract_fh(&nfs4fh, parent_directory_handle) == FALSE)
-	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       memset((char *)&name, 0, sizeof(component4));
       name.utf8string_val = nameval;
       if (fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == FALSE)
-	Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
+        Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
       if (!FSAL_namecmp(p_filename, &FSAL_DOT))
-	{
-	  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup current" ; */
-	  argnfs4.tag.utf8string_val = NULL;
-	  argnfs4.tag.utf8string_len = 0;
+        {
+          /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup current" ; */
+          argnfs4.tag.utf8string_val = NULL;
+          argnfs4.tag.utf8string_len = 0;
 
 #define FSAL_LOOKUP_IDX_OP_DOT_PUTFH     0
 #define FSAL_LOOKUP_IDX_OP_DOT_GETATTR   1
 #define FSAL_LOOKUP_IDX_OP_DOT_GETFH     2
-	  COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
-	  COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
-	  COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
+          COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
+          COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
+          COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
 
-	  index_getattr = FSAL_LOOKUP_IDX_OP_DOT_GETATTR;
-	  index_getfh = FSAL_LOOKUP_IDX_OP_DOT_GETFH;
+          index_getattr = FSAL_LOOKUP_IDX_OP_DOT_GETATTR;
+          index_getfh = FSAL_LOOKUP_IDX_OP_DOT_GETFH;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_val = bitmap_res;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_len = 2;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+              bitmap_res;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_val = (char *)&fattr_internal;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_len = sizeof(fattr_internal);
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+              (char *)&fattr_internal;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+              sizeof(fattr_internal);
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETFH].
-	      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
-	      (char *)padfilehandle;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETFH].
-	      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-	      FSAL_PROXY_FILEHANDLE_MAX_LEN;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETFH].nfs_resop4_u.
+              opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_GETFH].nfs_resop4_u.
+              opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
+              FSAL_PROXY_FILEHANDLE_MAX_LEN;
       } else if (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
-	{
-	  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup parent" ; */
-	  argnfs4.tag.utf8string_val = NULL;
-	  argnfs4.tag.utf8string_len = 0;
+        {
+          /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup parent" ; */
+          argnfs4.tag.utf8string_val = NULL;
+          argnfs4.tag.utf8string_len = 0;
 
 #define FSAL_LOOKUP_IDX_OP_DOT_DOT_PUTFH     0
 #define FSAL_LOOKUP_IDX_OP_DOT_DOT_LOOKUPP   1
 #define FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR   2
 #define FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH     3
-	  COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
-	  COMPOUNDV4_ARG_ADD_OP_LOOKUPP(argnfs4);
-	  COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
-	  COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
+          COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
+          COMPOUNDV4_ARG_ADD_OP_LOOKUPP(argnfs4);
+          COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
+          COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
 
-	  index_getattr = FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR;
-	  index_getfh = FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH;
+          index_getattr = FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR;
+          index_getfh = FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_val = bitmap_res;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_len = 2;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+              bitmap_res;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_val = (char *)&fattr_internal;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_len = sizeof(fattr_internal);
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+              (char *)&fattr_internal;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+              sizeof(fattr_internal);
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH].
-	      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val =
-	      (char *)padfilehandle;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH].
-	      nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-	      FSAL_PROXY_FILEHANDLE_MAX_LEN;
-	} else
-	{
-	  /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup name" ; */
-	  argnfs4.tag.utf8string_val = NULL;
-	  argnfs4.tag.utf8string_len = 0;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH].nfs_resop4_u.
+              opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_DOT_DOT_GETFH].nfs_resop4_u.
+              opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
+              FSAL_PROXY_FILEHANDLE_MAX_LEN;
+        } else
+        {
+          /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup name" ; */
+          argnfs4.tag.utf8string_val = NULL;
+          argnfs4.tag.utf8string_len = 0;
 
 #define FSAL_LOOKUP_IDX_OP_PUTFH     0
 #define FSAL_LOOKUP_IDX_OP_LOOKUP    1
 #define FSAL_LOOKUP_IDX_OP_GETATTR   2
 #define FSAL_LOOKUP_IDX_OP_GETFH     3
-	  COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
-	  COMPOUNDV4_ARG_ADD_OP_LOOKUP(argnfs4, name);
-	  COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
-	  COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
+          COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
+          COMPOUNDV4_ARG_ADD_OP_LOOKUP(argnfs4, name);
+          COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
+          COMPOUNDV4_ARG_ADD_OP_GETFH(argnfs4);
 
-	  index_getattr = FSAL_LOOKUP_IDX_OP_GETATTR;
-	  index_getfh = FSAL_LOOKUP_IDX_OP_GETFH;
+          index_getattr = FSAL_LOOKUP_IDX_OP_GETATTR;
+          index_getfh = FSAL_LOOKUP_IDX_OP_GETFH;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_val = bitmap_res;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.
-	      bitmap4_len = 2;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
+              bitmap_res;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_val = (char *)&fattr_internal;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].
-	      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.
-	      attrlist4_len = sizeof(fattr_internal);
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+              (char *)&fattr_internal;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETATTR].nfs_resop4_u.
+              opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+              sizeof(fattr_internal);
 
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-	      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
-	  resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.
-	      opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-	      FSAL_PROXY_FILEHANDLE_MAX_LEN;
-	}
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+              GETFH4res_u.resok4.object.nfs_fh4_val = (char *)padfilehandle;
+          resnfs4.resarray.resarray_val[FSAL_LOOKUP_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
+              GETFH4res_u.resok4.object.nfs_fh4_len = FSAL_PROXY_FILEHANDLE_MAX_LEN;
+        }
     }
 
   TakeTokenFSCall();
@@ -339,9 +331,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
 
   /* Use NFSv4 service function to build the FSAL_attr */
   if (nfs4_Fattr_To_FSAL_attr(&attributes,
-			      &resnfs4.resarray.resarray_val[index_getattr].
-			      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-			      obj_attributes) != 1)
+                              &resnfs4.resarray.resarray_val[index_getattr].nfs_resop4_u.
+                              opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
     {
       FSAL_CLEAR_MASK(object_attributes->asked_attributes);
       FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -356,9 +347,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
 
   /* Build the handle */
   if (fsal_internal_proxy_create_fh
-      (&resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.
-       GETFH4res_u.resok4.object, attributes.type, attributes.fileid,
-       object_handle) == FALSE)
+      (&resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.
+       resok4.object, attributes.type, attributes.fileid, object_handle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lookup);
 
 #ifdef _DEBUG_FSAL
@@ -403,10 +393,10 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_handle_t * p_fsoot_handle,	/* OUT */
-				  fsal_attrib_list_t * p_fsroot_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
   /* sanity checks
@@ -475,17 +465,17 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
-			      fsal_op_context_t * p_context,	/* IN */
-			      fsal_handle_t * object_handle,	/* OUT */
-			      fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
+                              fsal_handle_t * object_handle,    /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
-  fsal_name_t obj_name = FSAL_NAME_INITIALIZER;	/* empty string */
+  fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
   fsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;	/* is it the last lookup ? */
+  int b_is_last = FALSE;        /* is it the last lookup ? */
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  *  this function may be adapted to most FSALs
@@ -518,12 +508,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
 
   /* retrieves root directory */
 
-  status = FSAL_lookup(NULL,	/* looking up for root */
-		       NULL,	/* empty string to get root handle */
-		       p_context,	/* user's credentials */
-		       &out_hdl,	/* output root handle */
-		       /* retrieves attributes if this is the last lookup : */
-		       (b_is_last ? object_attributes : NULL));
+  status = FSAL_lookup(NULL,    /* looking up for root */
+                       NULL,    /* empty string to get root handle */
+                       p_context,       /* user's credentials */
+                       &out_hdl,        /* output root handle */
+                       /* retrieves attributes if this is the last lookup : */
+                       (b_is_last ? object_attributes : NULL));
 
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -552,52 +542,52 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
       obj_name.len = 0;
       dest_ptr = obj_name.name;
       while (ptr_str[0] != '\0' && ptr_str[0] != '/')
-	{
-	  dest_ptr[0] = ptr_str[0];
-	  dest_ptr++;
-	  ptr_str++;
-	  obj_name.len++;
-	}
+        {
+          dest_ptr[0] = ptr_str[0];
+          dest_ptr++;
+          ptr_str++;
+          obj_name.len++;
+        }
       /* final null char */
       dest_ptr[0] = '\0';
 
       /* skip multiple slashes */
       while (ptr_str[0] == '/')
-	ptr_str++;
+        ptr_str++;
 
       /* is the next name empty ? */
       if (ptr_str[0] == '\0')
-	b_is_last = TRUE;
+        b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      status = FSAL_lookup(&in_hdl,	/* parent directory handle */
-			   &obj_name,	/* object name */
-			   p_context,	/* user's credentials */
-			   &out_hdl,	/* output root handle */
-			   /* retrieves attributes if this is the last lookup : */
-			   (b_is_last ? object_attributes : NULL));
+      status = FSAL_lookup(&in_hdl,     /* parent directory handle */
+                           &obj_name,   /* object name */
+                           p_context,   /* user's credentials */
+                           &out_hdl,    /* output root handle */
+                           /* retrieves attributes if this is the last lookup : */
+                           (b_is_last ? object_attributes : NULL));
 
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_lookupPath);
+        Return(status.major, status.minor, INDEX_FSAL_lookupPath);
 
       /* if the target object is a junction, an we allow cross junction lookups,
        * we cross it.
        */
       if (global_fs_info.auth_exportpath_xdev
-	  && (out_hdl.object_type_reminder == FSAL_TYPE_JUNCTION))
-	{
-	  fsal_handle_t tmp_hdl;
+          && (out_hdl.object_type_reminder == FSAL_TYPE_JUNCTION))
+        {
+          fsal_handle_t tmp_hdl;
 
-	  tmp_hdl = out_hdl;
+          tmp_hdl = out_hdl;
 
-	  /*call to FSAL_lookup */
-	  status = FSAL_lookupJunction(&tmp_hdl,	/* object handle */
-				       p_context,	/* user's credentials */
-				       &out_hdl,	/* output root handle */
-				       /* retrieves attributes if this is the last lookup : */
-				       (b_is_last ? object_attributes : NULL));
+          /*call to FSAL_lookup */
+          status = FSAL_lookupJunction(&tmp_hdl,        /* object handle */
+                                       p_context,       /* user's credentials */
+                                       &out_hdl,        /* output root handle */
+                                       /* retrieves attributes if this is the last lookup : */
+                                       (b_is_last ? object_attributes : NULL));
 
-	}
+        }
 
       /* ptr_str is ok, we are ready for next loop */
     }

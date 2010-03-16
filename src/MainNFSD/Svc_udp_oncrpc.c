@@ -72,10 +72,10 @@ static struct xp_ops Svcudp_op = {
  * kept in xprt->xp_p2
  */
 struct Svcudp_data {
-  u_int su_iosz;		/* byte size of send.recv buffer */
-  u_long su_xid;		/* transaction id */
-  XDR su_xdrs;			/* XDR handle */
-  char su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
+  u_int su_iosz;                /* byte size of send.recv buffer */
+  u_long su_xid;                /* transaction id */
+  XDR su_xdrs;                  /* XDR handle */
+  char su_verfbody[MAX_AUTH_BYTES];     /* verifier body */
 };
 #define	Su_data(xprt)	((struct Svcudp_data *)(xprt->xp_p2))
 
@@ -104,10 +104,10 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   if (sock == RPC_ANYSOCK)
     {
       if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-	{
-	  perror("Svcudp_create: socket creation problem");
-	  return ((SVCXPRT *) NULL);
-	}
+        {
+          perror("Svcudp_create: socket creation problem");
+          return ((SVCXPRT *) NULL);
+        }
       madesock = TRUE;
     }
 
@@ -123,7 +123,7 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
     {
       perror("Svcudp_create - cannot getsockname");
       if (madesock)
-	(void)close(sock);
+        (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
 
@@ -201,10 +201,10 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
 #ifdef _FREEBSD
   rlen = recvfrom(xprt->xp_fd, rpc_buffer(xprt), (int)su->su_iosz,
-		  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
+                  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
 #else
   rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
-		  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
+                  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
 #endif
 
   if (rlen == -1 && errno == EINTR)
@@ -245,8 +245,8 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
       msg->acpted_rply.ar_results.where = NULL;
 
       if (!xdr_replymsg(xdrs, msg) ||
-	  !SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_proc, xdr_where))
-	return (FALSE);
+          !SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_proc, xdr_where))
+        return (FALSE);
   } else if (!xdr_replymsg(xdrs, msg))
     {
       return (FALSE);
@@ -258,8 +258,8 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
 #else
   if (sendto(xprt->xp_sock,
 #endif
-	     rpc_buffer(xprt),
-	     slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
+             rpc_buffer(xprt),
+             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {
       return (FALSE);
     }

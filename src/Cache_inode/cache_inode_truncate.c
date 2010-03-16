@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "fsal.h"
 #include "LRU_List.h"
@@ -126,13 +126,13 @@
  *
  */
 cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
-					     fsal_size_t length,
-					     fsal_attrib_list_t * pattr,
-					     hash_table_t * ht,
-					     cache_inode_client_t * pclient,
-					     fsal_op_context_t * pcontext,
-					     cache_inode_status_t * pstatus,
-					     int use_mutex)
+                                             fsal_size_t length,
+                                             fsal_attrib_list_t * pattr,
+                                             hash_table_t * ht,
+                                             cache_inode_client_t * pclient,
+                                             fsal_op_context_t * pcontext,
+                                             cache_inode_status_t * pstatus,
+                                             int use_mutex)
 {
   fsal_status_t fsal_status;
   cache_content_status_t cache_content_status;
@@ -152,7 +152,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       if (use_mutex)
-	V_w(&pentry->lock);
+        V_w(&pentry->lock);
 
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
@@ -164,27 +164,27 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
   if (pentry->object.file.pentry_content != NULL)
     {
       if (cache_content_truncate(pentry->object.file.pentry_content,
-				 length,
-				 (cache_content_client_t *) pclient->pcontent_client,
-				 &cache_content_status) != CACHE_CONTENT_SUCCESS)
-	{
-	  *pstatus = cache_content_error_convert(cache_content_status);
-	  if (use_mutex)
-	    V_w(&pentry->lock);
+                                 length,
+                                 (cache_content_client_t *) pclient->pcontent_client,
+                                 &cache_content_status) != CACHE_CONTENT_SUCCESS)
+        {
+          *pstatus = cache_content_error_convert(cache_content_status);
+          if (use_mutex)
+            V_w(&pentry->lock);
 
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* Cache truncate succeeded, we must now update the size in the attributes */
       if ((pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SIZE) ||
-	  (pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
-	{
-	  pentry->object.file.attributes.filesize = length;
-	  pentry->object.file.attributes.spaceused = length;
-	}
+          (pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
+        {
+          pentry->object.file.attributes.filesize = length;
+          pentry->object.file.attributes.spaceused = length;
+        }
 
       /* Set the time stamp values too */
       pentry->object.file.attributes.mtime.seconds = time(NULL);
@@ -195,40 +195,40 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
       /* Call FSAL to actually truncate */
       pentry->object.file.attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,	/** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
-				  &pentry->object.file.attributes);
+      fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,     /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
+                                  &pentry->object.file.attributes);
 #else
-      fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, NULL,	/** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
-				  &pentry->object.file.attributes);
+      fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, NULL,  /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
+                                  &pentry->object.file.attributes);
 #endif
 
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  *pstatus = cache_inode_error_convert(fsal_status);
-	  if (use_mutex)
-	    V_w(&pentry->lock);
+        {
+          *pstatus = cache_inode_error_convert(fsal_status);
+          if (use_mutex)
+            V_w(&pentry->lock);
 
-	  /* stats */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
+          /* stats */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_TRUNCATE] += 1;
 
-	  if (fsal_status.major == ERR_FSAL_STALE)
-	    {
-	      cache_inode_status_t kill_status;
+          if (fsal_status.major == ERR_FSAL_STALE)
+            {
+              cache_inode_status_t kill_status;
 
-	      DisplayLog
-		  ("cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
-		   pentry);
+              DisplayLog
+                  ("cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
+                   pentry);
 
-	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_truncate: Could not kill entry %p, status = %u",
-			   pentry, kill_status);
+              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_truncate: Could not kill entry %p, status = %u",
+                           pentry, kill_status);
 
-	      *pstatus = CACHE_INODE_FSAL_ESTALE;
-	    }
+              *pstatus = CACHE_INODE_FSAL_ESTALE;
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
     }
 
   /* Validate the entry */
@@ -248,7 +248,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
     pclient->stat.func_stats.nb_success[CACHE_INODE_TRUNCATE] += 1;
 
   return *pstatus;
-}				/* cache_inode_truncate_sw */
+}                               /* cache_inode_truncate_sw */
 
 /**
  *
@@ -269,16 +269,16 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
  *
  */
 cache_inode_status_t cache_inode_truncate_no_mutex(cache_entry_t * pentry,
-						   fsal_size_t length,
-						   fsal_attrib_list_t * pattr,
-						   hash_table_t * ht,
-						   cache_inode_client_t * pclient,
-						   fsal_op_context_t * pcontext,
-						   cache_inode_status_t * pstatus)
+                                                   fsal_size_t length,
+                                                   fsal_attrib_list_t * pattr,
+                                                   hash_table_t * ht,
+                                                   cache_inode_client_t * pclient,
+                                                   fsal_op_context_t * pcontext,
+                                                   cache_inode_status_t * pstatus)
 {
   return cache_inode_truncate_sw(pentry,
-				 length, pattr, ht, pclient, pcontext, pstatus, FALSE);
-}				/* cache_inode_truncate_no_mutex */
+                                 length, pattr, ht, pclient, pcontext, pstatus, FALSE);
+}                               /* cache_inode_truncate_no_mutex */
 
 /**
  *
@@ -299,13 +299,13 @@ cache_inode_status_t cache_inode_truncate_no_mutex(cache_entry_t * pentry,
  *
  */
 cache_inode_status_t cache_inode_truncate(cache_entry_t * pentry,
-					  fsal_size_t length,
-					  fsal_attrib_list_t * pattr,
-					  hash_table_t * ht,
-					  cache_inode_client_t * pclient,
-					  fsal_op_context_t * pcontext,
-					  cache_inode_status_t * pstatus)
+                                          fsal_size_t length,
+                                          fsal_attrib_list_t * pattr,
+                                          hash_table_t * ht,
+                                          cache_inode_client_t * pclient,
+                                          fsal_op_context_t * pcontext,
+                                          cache_inode_status_t * pstatus)
 {
   return cache_inode_truncate_sw(pentry,
-				 length, pattr, ht, pclient, pcontext, pstatus, TRUE);
-}				/* cache_inode_truncate */
+                                 length, pattr, ht, pclient, pcontext, pstatus, TRUE);
+}                               /* cache_inode_truncate */

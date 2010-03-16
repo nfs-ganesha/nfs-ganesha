@@ -16,8 +16,8 @@
 
 #include "fsal.h"
 #include "log_functions.h"
-#include <unistd.h>		/* for using gethostname */
-#include <stdlib.h>		/* for using exit */
+#include <unistd.h>             /* for using gethostname */
+#include <stdlib.h>             /* for using exit */
 #include <string.h>
 #include <sys/types.h>
 #include "BuddyMalloc.h"
@@ -328,18 +328,18 @@ int main(int argc, char **argv)
       printmask(attribs.asked_attributes);
 
       if (FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       printf("supported attributes :\n");
 
       /* getting all spported attributes of root */
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_getattrs(&root_handle, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       printattributes(attribs);
 
@@ -350,16 +350,16 @@ int main(int argc, char **argv)
 
       /* getting handle and attributes for subdirectory "OSF1_V5" */
       if (FSAL_IS_ERROR(st = FSAL_str2name("cea", 4, &name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR
-	  (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+          (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea handle = %s\n", tracebuff);
@@ -369,16 +369,16 @@ int main(int argc, char **argv)
 
       /* getting handle and attributes for subdirectory "bin" */
       if (FSAL_IS_ERROR(st = FSAL_str2name("prot", 5, &name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       root_handle = handle;
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR
-	  (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+          (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea/prot handle = %s\n", tracebuff);
@@ -388,16 +388,16 @@ int main(int argc, char **argv)
 
       /* getting handle and attributes for symlink "AglaePwrSW" */
       if (FSAL_IS_ERROR(st = FSAL_str2name("lama", 5, &name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       root_handle = handle;
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR
-	  (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+          (st = FSAL_lookup(&root_handle, &name, &op_ctx, &handle, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea/prot/lama handle = %s\n", tracebuff);
@@ -412,14 +412,14 @@ int main(int argc, char **argv)
 
       /* lookup root */
       if (FSAL_IS_ERROR(st = FSAL_str2path("/", 30, &path)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/ handle = %s\n", tracebuff);
@@ -429,14 +429,14 @@ int main(int argc, char **argv)
 
       /* lookup path */
       if (FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/lama", 15, &path)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea/prot/lama handle = %s\n", tracebuff);
@@ -459,9 +459,9 @@ int main(int argc, char **argv)
 
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       printf("'/' attributes :\n");
 
       /* displaying attributes */
@@ -470,34 +470,34 @@ int main(int argc, char **argv)
       from = FSAL_READDIR_FROM_BEGINNING;
 
       while (!error && !eod)
-	{
-	  unsigned int i;
-	  char cookiebuff[256];
+        {
+          unsigned int i;
+          char cookiebuff[256];
 
-	  snprintCookie(cookiebuff, 256, &from);
-	  printf("\nReaddir cookie = %s\n", cookiebuff);
-	  if (FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
-					      mask, READDIR_SIZE * sizeof(fsal_dirent_t),
-					      entries, &to, &number, &eod)))
-	    {
-	      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	      error = TRUE;
-	    }
+          snprintCookie(cookiebuff, 256, &from);
+          printf("\nReaddir cookie = %s\n", cookiebuff);
+          if (FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
+                                              mask, READDIR_SIZE * sizeof(fsal_dirent_t),
+                                              entries, &to, &number, &eod)))
+            {
+              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              error = TRUE;
+            }
 
-	  for (i = 0; (!error) && (i < number); i++)
-	    {
+          for (i = 0; (!error) && (i < number); i++)
+            {
 
-	      snprintHandle(tracebuff, 256, &entries[i].handle);
+              snprintHandle(tracebuff, 256, &entries[i].handle);
 
-	      snprintCookie(cookiebuff, 256, &entries[i].cookie);
+              snprintCookie(cookiebuff, 256, &entries[i].cookie);
 
-	      printf("\t%s : %s (cookie %s)\n", tracebuff,
-		     entries[i].name.name, cookiebuff);
-	    }
-	  /* preparing next call */
-	  from = to;
+              printf("\t%s : %s (cookie %s)\n", tracebuff,
+                     entries[i].name.name, cookiebuff);
+            }
+          /* preparing next call */
+          from = to;
 
-	}
+        }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     } else
@@ -515,9 +515,9 @@ int main(int argc, char **argv)
 
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       printf("'/' attributes :\n");
 
       /* displaying attributes */
@@ -526,41 +526,41 @@ int main(int argc, char **argv)
       from = FSAL_READDIR_FROM_BEGINNING;
 
       while (!error && !eod)
-	{
-	  fsal_dirent_t *curr;
+        {
+          fsal_dirent_t *curr;
 
-	  char cookiebuff[256];
+          char cookiebuff[256];
 
-	  snprintCookie(cookiebuff, 256, &from);
+          snprintCookie(cookiebuff, 256, &from);
 
-	  printf("\nReaddir cookie = %s\n", cookiebuff);
+          printf("\nReaddir cookie = %s\n", cookiebuff);
 
-	  if (FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
-					      mask, READDIR_SIZE * sizeof(fsal_dirent_t),
-					      entries, &to, &number, &eod)))
-	    {
-	      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	      error = TRUE;
-	    }
+          if (FSAL_IS_ERROR(st = FSAL_readdir(&dir, from,
+                                              mask, READDIR_SIZE * sizeof(fsal_dirent_t),
+                                              entries, &to, &number, &eod)))
+            {
+              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              error = TRUE;
+            }
 
-	  if (number > 0)
-	    {
-	      curr = entries;
-	      do
-		{
+          if (number > 0)
+            {
+              curr = entries;
+              do
+                {
 
-		  snprintHandle(tracebuff, 256, &curr->handle);
-		  snprintCookie(cookiebuff, 256, &curr->cookie);
+                  snprintHandle(tracebuff, 256, &curr->handle);
+                  snprintCookie(cookiebuff, 256, &curr->cookie);
 
-		  printf("\t%s : %s (cookie %s)\n", tracebuff,
-			 curr->name.name, cookiebuff);
-		}
-	      while (curr = curr->nextentry);
-	    }
-	  /* preparing next call */
-	  from = to;
+                  printf("\t%s : %s (cookie %s)\n", tracebuff,
+                         curr->name.name, cookiebuff);
+                }
+              while (curr = curr->nextentry);
+            }
+          /* preparing next call */
+          from = to;
 
-	}
+        }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     } else
@@ -578,9 +578,9 @@ int main(int argc, char **argv)
 
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_opendir(&root_handle, &op_ctx, &dir, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       printf("'/' attributes :\n");
 
       /* displaying attributes */
@@ -589,96 +589,96 @@ int main(int argc, char **argv)
       from = FSAL_READDIR_FROM_BEGINNING;
 
       while (!error && !eod)
-	{
-	  unsigned int i;
+        {
+          unsigned int i;
 
-	  snprintCookie(tracebuff, 256, &from);
-	  printf("\nReaddir cookie = %s\n", tracebuff);
+          snprintCookie(tracebuff, 256, &from);
+          printf("\nReaddir cookie = %s\n", tracebuff);
 
-	  st = FSAL_readdir(&dir, from, mask,
-			    READDIR_SIZE * sizeof(fsal_dirent_t),
-			    entries, &to, &number, &eod);
+          st = FSAL_readdir(&dir, from, mask,
+                            READDIR_SIZE * sizeof(fsal_dirent_t),
+                            entries, &to, &number, &eod);
 
-	  if (FSAL_IS_ERROR(st))
-	    {
-	      DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	      error = TRUE;
-	    }
+          if (FSAL_IS_ERROR(st))
+            {
+              DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+              error = TRUE;
+            }
 
-	  /* for each entry, we compare the result of FSAL_access
-	   * to FSAL_test_access. */
-	  for (i = 0; (!error) && (i < number); i++)
-	    {
+          /* for each entry, we compare the result of FSAL_access
+           * to FSAL_test_access. */
+          for (i = 0; (!error) && (i < number); i++)
+            {
 
-	      fsal_status_t st1, st2;
-	      char cookiebuff[256];
+              fsal_status_t st1, st2;
+              char cookiebuff[256];
 
-	      snprintHandle(tracebuff, 256, &entries[i].handle);
-	      snprintCookie(cookiebuff, 256, &entries[i].cookie);
+              snprintHandle(tracebuff, 256, &entries[i].handle);
+              snprintCookie(cookiebuff, 256, &entries[i].cookie);
 
-	      printf("\t%s : %s (cookie %s)\n", tracebuff,
-		     entries[i].name.name, cookiebuff);
+              printf("\t%s : %s (cookie %s)\n", tracebuff,
+                     entries[i].name.name, cookiebuff);
 
-	      if (FSAL_IS_ERROR
-		  (st = FSAL_getattrs(&entries[i].handle, &op_ctx, &attribs)))
-		{
-		  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-		}
+              if (FSAL_IS_ERROR
+                  (st = FSAL_getattrs(&entries[i].handle, &op_ctx, &attribs)))
+                {
+                  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+                }
 
-	      /* 1 - test R access */
+              /* 1 - test R access */
 
-	      st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_R_OK, NULL);
+              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_R_OK, NULL);
 
-	      st2 = FSAL_test_access(&op_ctx, FSAL_R_OK, &attribs);
+              st2 = FSAL_test_access(&op_ctx, FSAL_R_OK, &attribs);
 
-	      DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-	      DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
 
-	      if (st1.major != st2.major)
-		{
-		  printf
-		      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-		       st1.major, st2.major);
-		}
+              if (st1.major != st2.major)
+                {
+                  printf
+                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                       st1.major, st2.major);
+                }
 
-	      /* 2 - test W access */
+              /* 2 - test W access */
 
-	      st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_W_OK, NULL);
+              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_W_OK, NULL);
 
-	      st2 = FSAL_test_access(&op_ctx, FSAL_W_OK, &attribs);
+              st2 = FSAL_test_access(&op_ctx, FSAL_W_OK, &attribs);
 
-	      DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-	      DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
 
-	      if (st1.major != st2.major)
-		{
-		  printf
-		      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-		       st1.major, st2.major);
-		}
+              if (st1.major != st2.major)
+                {
+                  printf
+                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                       st1.major, st2.major);
+                }
 
-	      /* 3 - test X access */
+              /* 3 - test X access */
 
-	      st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_X_OK, NULL);
+              st1 = FSAL_access(&entries[i].handle, &op_ctx, FSAL_X_OK, NULL);
 
-	      st2 = FSAL_test_access(&op_ctx, FSAL_X_OK, &attribs);
+              st2 = FSAL_test_access(&op_ctx, FSAL_X_OK, &attribs);
 
-	      DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
-	      DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st1.major, st1.minor);
+              DisplayErrorJd(log_desc, ERR_FSAL, st2.major, st2.minor);
 
-	      if (st1.major != st2.major)
-		{
-		  printf
-		      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
-		       st1.major, st2.major);
-		}
+              if (st1.major != st2.major)
+                {
+                  printf
+                      ("Error : different access permissions given by FSAL_access and FSAL_test_access : %d <>%d\n",
+                       st1.major, st2.major);
+                }
 
-	    }
+            }
 
-	  /* preparing next call */
-	  from = to;
+          /* preparing next call */
+          from = to;
 
-	}
+        }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
     } else
@@ -688,16 +688,16 @@ int main(int argc, char **argv)
 
       /* test snprintmem and sscanmem */
       char test_string[] =
-	  "Ceci est une chaine d'essai.\nLes chiffres : 0123456789\nLes lettres : ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+          "Ceci est une chaine d'essai.\nLes chiffres : 0123456789\nLes lettres : ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
       char buffer[256];
-      char string[200];		/* 200 suffit car test_string fait <100 */
+      char string[200];         /* 200 suffit car test_string fait <100 */
 
       int size1, size2, size3, i;
 
       /* we put bad values in string, to see if it is correctly set. */
       for (i = 0; i < 200; i++)
-	string[i] = (char)i;
+        string[i] = (char)i;
 
       printf("Initial data (%d Bytes) = <<%s>>\n", strlen(test_string), test_string);
 
@@ -712,7 +712,7 @@ int main(int argc, char **argv)
 
       /* sets the final 0 to print the content of the buffer */
       printf("Retrieved string : following byte = %d\n",
-	     (int)string[strlen(test_string)]);
+             (int)string[strlen(test_string)]);
       string[strlen(test_string)] = '\0';
 
       printf("Retrieved string (%d Bytes) = <<%s>>\n", strlen(string), string);
@@ -725,22 +725,22 @@ int main(int argc, char **argv)
       printf("-------------------------------------\n");
 
       if (size1 <= 0)
-	printf("***** ERROR: source size=0 !!!\n");
+        printf("***** ERROR: source size=0 !!!\n");
 
       if (size1 != size3)
-	printf("***** ERROR: source size <> target size\n");
-	else
-	printf("OK: source size = target size\n");
+        printf("***** ERROR: source size <> target size\n");
+        else
+        printf("OK: source size = target size\n");
 
       if ((size1 * 2) != size2)
-	printf("***** ERROR: hexa size <> 2 * source size\n");
-	else
-	printf("OK: hexa size = 2 * source size\n");
+        printf("***** ERROR: hexa size <> 2 * source size\n");
+        else
+        printf("OK: hexa size = 2 * source size\n");
 
       if (strcmp(test_string, string))
-	printf("***** ERROR: source string <> target string\n");
-	else
-	printf("OK: source string = target string\n");
+        printf("***** ERROR: source string <> target string\n");
+        else
+        printf("OK: source string = target string\n");
 
     } else
 /* TEST 8 */
@@ -750,9 +750,9 @@ int main(int argc, char **argv)
       char *fixpath;
 
       if (argc > 2)
-	fixpath = argv[2];
-	else
-	fixpath = "/cea/prot/S/lama/s8/leibovic";
+        fixpath = argv[2];
+        else
+        fixpath = "/cea/prot/S/lama/s8/leibovic";
 
       fsal_handle_t dir_hdl, subdir_hdl;
       fsal_name_t subdir_name;
@@ -760,14 +760,14 @@ int main(int argc, char **argv)
       /* lookup on /cea/prot/S/lama/s8/leibovic */
 
       if (FSAL_IS_ERROR(st = FSAL_str2path(fixpath, strlen(fixpath) + 1, &path)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("%s: handle = %s\n", fixpath, tracebuff);
@@ -778,28 +778,28 @@ int main(int argc, char **argv)
       printf("------- Create a directory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_str2name("tests_GANESHA", 30, &name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       attribs.asked_attributes = mask;
 
       if (FSAL_IS_ERROR(st = FSAL_mkdir(&handle, &name, &op_ctx,
-					FSAL_MODE_RUSR | FSAL_MODE_WUSR
-					| FSAL_MODE_XUSR | FSAL_MODE_RGRP
-					| FSAL_MODE_WGRP | FSAL_MODE_XGRP,
-					&dir_hdl, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+                                        FSAL_MODE_RUSR | FSAL_MODE_WUSR
+                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
+                                        | FSAL_MODE_WGRP | FSAL_MODE_XGRP,
+                                        &dir_hdl, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  snprintHandle(tracebuff, 256, &dir_hdl);
-	  printf("newly created dir handle = %s\n", tracebuff);
+          snprintHandle(tracebuff, 256, &dir_hdl);
+          printf("newly created dir handle = %s\n", tracebuff);
 
-	  printattributes(attribs);
+          printattributes(attribs);
 
-	}
+        }
 
       sleep(1);
 
@@ -807,17 +807,17 @@ int main(int argc, char **argv)
       printf("------- Try to create it again -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_mkdir(&handle, &name, &op_ctx,
-					FSAL_MODE_RUSR | FSAL_MODE_WUSR
-					| FSAL_MODE_XUSR | FSAL_MODE_RGRP
-					| FSAL_MODE_WGRP, &dir_hdl, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+                                        FSAL_MODE_RUSR | FSAL_MODE_WUSR
+                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
+                                        | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  printf("**** Error: FSAL should have returned ERR_FSAL_EXIST\n");
+          printf("**** Error: FSAL should have returned ERR_FSAL_EXIST\n");
 
-	}
+        }
 
       sleep(1);
 
@@ -825,38 +825,38 @@ int main(int argc, char **argv)
       printf("------- Create a subdirectory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_str2name("subdir_GANESHA", 30, &subdir_name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       if (FSAL_IS_ERROR(st = FSAL_mkdir(&dir_hdl, &subdir_name, &op_ctx,
-					FSAL_MODE_RUSR | FSAL_MODE_WUSR
-					| FSAL_MODE_XUSR | FSAL_MODE_RGRP
-					| FSAL_MODE_WGRP, &subdir_hdl, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+                                        FSAL_MODE_RUSR | FSAL_MODE_WUSR
+                                        | FSAL_MODE_XUSR | FSAL_MODE_RGRP
+                                        | FSAL_MODE_WGRP, &subdir_hdl, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  snprintHandle(tracebuff, 256, &subdir_hdl);
-	  printf("newly created subdir handle = %s\n", tracebuff);
+          snprintHandle(tracebuff, 256, &subdir_hdl);
+          printf("newly created subdir handle = %s\n", tracebuff);
 
-	  printattributes(attribs);
+          printattributes(attribs);
 
-	}
+        }
 
       /* try to remove the parent directory */
       printf("------- Try to remove the parent directory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  printf("FSAL should not have unlinked %s because it is not empty\n", name.name);
+          printf("FSAL should not have unlinked %s because it is not empty\n", name.name);
 
-	}
+        }
 
       sleep(1);
 
@@ -864,28 +864,28 @@ int main(int argc, char **argv)
       printf("------- Removes the subdirectory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_unlink(&dir_hdl, &subdir_name, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  printf("New attributes for parent directory:\n");
-	  printattributes(attribs);
+          printf("New attributes for parent directory:\n");
+          printattributes(attribs);
 
-	}
+        }
 
       /* removes the parent directory */
       printf("------- Removes the parent directory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  printf("Unlink %s OK\n", name.name);
+          printf("Unlink %s OK\n", name.name);
 
-	}
+        }
 
     }
 /* TEST 9 */
@@ -907,14 +907,14 @@ int main(int argc, char **argv)
       /* lookup on /cea/prot/S/lama/s8/leibovic */
 
       if (FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/S/lama/s8/leibovic", 40, &path)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
@@ -925,27 +925,27 @@ int main(int argc, char **argv)
       printf("------- Create a file -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_str2name("tests_GANESHA_setattrs", 30, &name)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       attribs.asked_attributes = mask;
 
       if (FSAL_IS_ERROR(st = FSAL_create(&handle, &name, &op_ctx,
-					 FSAL_MODE_RUSR | FSAL_MODE_WUSR
-					 | FSAL_MODE_XUSR | FSAL_MODE_RGRP
-					 | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+                                         FSAL_MODE_RUSR | FSAL_MODE_WUSR
+                                         | FSAL_MODE_XUSR | FSAL_MODE_RGRP
+                                         | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  snprintHandle(tracebuff, 256, &dir_hdl);
-	  printf("newly created file handle = %s\n", tracebuff);
+          snprintHandle(tracebuff, 256, &dir_hdl);
+          printf("newly created file handle = %s\n", tracebuff);
 
-	  printattributes(attribs);
+          printattributes(attribs);
 
-	}
+        }
 
       sleep(1);
 
@@ -968,15 +968,15 @@ int main(int argc, char **argv)
   } while(0)
 
       CHANGE_ATTRS("supported_attributes", supported_attributes,
-		   FSAL_ATTR_SUPPATTR, FSAL_ATTRS_MANDATORY);
+                   FSAL_ATTR_SUPPATTR, FSAL_ATTRS_MANDATORY);
 
       CHANGE_ATTRS("type", type, FSAL_ATTR_TYPE, FSAL_TYPE_LNK);
 
-      sleep(1);			/* to see mtime modification by truncate */
+      sleep(1);                 /* to see mtime modification by truncate */
 
       CHANGE_ATTRS("filesize", filesize, FSAL_ATTR_SIZE, (fsal_size_t) 12);
 
-      sleep(1);			/* to see mtime modification by truncate */
+      sleep(1);                 /* to see mtime modification by truncate */
 
       CHANGE_ATTRS("fsid", fsid, FSAL_ATTR_FSID, set_fsid);
 
@@ -985,7 +985,7 @@ int main(int argc, char **argv)
       CHANGE_ATTRS("fileid", fileid, FSAL_ATTR_FILEID, (fsal_u64_t) 1234);
 
       CHANGE_ATTRS("mode", mode, FSAL_ATTR_MODE,
-		   (FSAL_MODE_RUSR | FSAL_MODE_WUSR | FSAL_MODE_RGRP));
+                   (FSAL_MODE_RUSR | FSAL_MODE_WUSR | FSAL_MODE_RGRP));
 
       CHANGE_ATTRS("numlinks", numlinks, FSAL_ATTR_NUMLINKS, 7);
 
@@ -1008,11 +1008,11 @@ int main(int argc, char **argv)
       CHANGE_ATTRS("spaceused", spaceused, FSAL_ATTR_SPACEUSED, (fsal_size_t) 12345);
 
       CHANGE_ATTRS("mounted_on_fileid", mounted_on_fileid,
-		   FSAL_ATTR_MOUNTFILEID, (fsal_u64_t) 3210);
+                   FSAL_ATTR_MOUNTFILEID, (fsal_u64_t) 3210);
 
-      CHANGE_ATTRS("owner", owner, FSAL_ATTR_OWNER, 3051);	/* deniel */
+      CHANGE_ATTRS("owner", owner, FSAL_ATTR_OWNER, 3051);      /* deniel */
 
-      CHANGE_ATTRS("group", group, FSAL_ATTR_GROUP, 5953);	/* sr */
+      CHANGE_ATTRS("group", group, FSAL_ATTR_GROUP, 5953);      /* sr */
 
       sleep(1);
 
@@ -1020,14 +1020,14 @@ int main(int argc, char **argv)
       printf("------- Removes the directory -------\n");
 
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
 
-	  printf("Unlink %s OK\n", name.name);
+          printf("Unlink %s OK\n", name.name);
 
-	}
+        }
 
   } else if (test[0] == 'A')
     {
@@ -1037,14 +1037,14 @@ int main(int argc, char **argv)
       /* lookup on /cea/prot/S/lama/s8/leibovic */
 
       if (FSAL_IS_ERROR(st = FSAL_str2path("/cea/prot/S/lama/s8/leibovic", 40, &path)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
       attribs.asked_attributes = mask;
       if (FSAL_IS_ERROR(st = FSAL_lookupPath(&path, &op_ctx, &handle, &attribs)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        }
 
       snprintHandle(tracebuff, 256, &handle);
       printf("/cea/prot/S/lama/s8/leibovic: handle = %s\n", tracebuff);
@@ -1054,14 +1054,14 @@ int main(int argc, char **argv)
       st = FSAL_DigestHandle(&export_ctx, FSAL_DIGEST_NFSV3, &handle, digest_buff);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
-	  /* print digest */
-	  snprintmem(tracebuff, 256, digest_buff, FSAL_DIGEST_SIZE_HDLV3);
-	  printf("/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
+          /* print digest */
+          snprintmem(tracebuff, 256, digest_buff, FSAL_DIGEST_SIZE_HDLV3);
+          printf("/cea/prot/S/lama/s8/leibovic: handle_digest = %s\n", tracebuff);
+        }
 
       memset(&handle, 0, sizeof(fsal_handle_t));
 
@@ -1070,14 +1070,14 @@ int main(int argc, char **argv)
       st = FSAL_ExpandHandle(&export_ctx, FSAL_DIGEST_NFSV3, digest_buff, &handle);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	} else
-	{
-	  /* print expended handle */
-	  snprintHandle(tracebuff, 256, &handle);
-	  printf("/cea/prot/S/lama/s8/leibovic: handle expended = %s\n", tracebuff);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+        } else
+        {
+          /* print expended handle */
+          snprintHandle(tracebuff, 256, &handle);
+          printf("/cea/prot/S/lama/s8/leibovic: handle expended = %s\n", tracebuff);
+        }
 
   } else if (test[0] == 'B')
     {
@@ -1085,10 +1085,10 @@ int main(int argc, char **argv)
       fsal_dynamicfsinfo_t dyninfo;
 
       if (FSAL_IS_ERROR(st = FSAL_dynamic_fsinfo(&root_handle, &op_ctx, &dyninfo)))
-	{
-	  DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-	  exit(st.major);
-	}
+        {
+          DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
+          exit(st.major);
+        }
 
       printf("total_bytes = %llu\n", dyninfo.total_bytes);
       printf("free_bytes = %llu\n", dyninfo.free_bytes);
@@ -1097,7 +1097,7 @@ int main(int argc, char **argv)
       printf("free_files = %llu\n", dyninfo.free_files);
       printf("avail_files = %llu\n", dyninfo.avail_files);
       printf("time_delta = %u.%u\n", dyninfo.time_delta.seconds,
-	     dyninfo.time_delta.nseconds);
+             dyninfo.time_delta.nseconds);
 
     } else
     printf("%s : test inconnu\n", test);

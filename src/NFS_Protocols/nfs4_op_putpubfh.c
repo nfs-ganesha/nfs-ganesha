@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -164,7 +164,7 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 #endif
 
   return NFS4_OK;
-}				/* CreatePUBFH4 */
+}                               /* CreatePUBFH4 */
 
 /**
  *
@@ -187,7 +187,7 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 #define res_PUTPUBFH4 resp->nfs_resop4_u.opputpubfh
 
 int nfs4_op_putpubfh(struct nfs_argop4 *op,
-		     compound_data_t * data, struct nfs_resop4 *resp)
+                     compound_data_t * data, struct nfs_resop4 *resp)
 {
   int error;
 
@@ -236,18 +236,18 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   if (data->currentFH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
-	{
-	  resp->nfs_resop4_u.opputpubfh.status = error;
-	  return error;
-	}
+        {
+          resp->nfs_resop4_u.opputpubfh.status = error;
+          return error;
+        }
     }
 
   /* Copy the data from current FH to saved FH */
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->publicFH.nfs_fh4_val),
-	 data->publicFH.nfs_fh4_len);
+         data->publicFH.nfs_fh4_len);
 
   return NFS4_OK;
-}				/* nfs4_op_putpubfh */
+}                               /* nfs4_op_putpubfh */
 
 /**
  * nfs4_op_putpubfh_Free: frees what was allocared to handle nfs4_op_putpubfh.
@@ -263,4 +263,4 @@ void nfs4_op_putpubfh_Free(PUTPUBFH4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_putpubfh_Free */
+}                               /* nfs4_op_putpubfh_Free */

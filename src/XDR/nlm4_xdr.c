@@ -99,7 +99,7 @@ bool_t xdr_nlm4_testrply(XDR * xdrs, nlm4_testrply * objp)
     {
     case NLM4_DENIED:
       if (!xdr_nlm4_holder(xdrs, &objp->nlm4_testrply_u.holder))
-	return FALSE;
+        return FALSE;
       break;
     default:
       break;

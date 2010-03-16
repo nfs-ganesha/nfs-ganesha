@@ -92,12 +92,12 @@ static struct xp_ops Svctcp_rendezvous_op = {
 int Readtcp(), Writetcp();
 static SVCXPRT *Makefd_xprt();
 
-struct tcp_rendezvous {		/* kept in xprt->xp_p1 */
+struct tcp_rendezvous {         /* kept in xprt->xp_p1 */
   u_int sendsize;
   u_int recvsize;
 };
 
-struct tcp_conn {		/* kept in xprt->xp_p1 */
+struct tcp_conn {               /* kept in xprt->xp_p1 */
   enum xprt_stat strm_stat;
   u_long x_id;
   XDR xdrs;
@@ -136,10 +136,10 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   if (sock == RPC_ANYSOCK)
     {
       if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-	{
-	  perror("svctcp_.c - udp socket creation problem");
-	  return ((SVCXPRT *) NULL);
-	}
+        {
+          perror("svctcp_.c - udp socket creation problem");
+          return ((SVCXPRT *) NULL);
+        }
       madesock = TRUE;
     }
   memset(&addr, 0, sizeof(addr));
@@ -154,7 +154,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
     {
       perror("svctcp_.c - cannot getsockname or listen");
       if (madesock)
-	(void)close(sock);
+        (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
   r = (struct tcp_rendezvous *)Mem_Alloc(sizeof(*r));
@@ -217,8 +217,8 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_p1 = (caddr_t) cd;
   xprt->xp_verf.oa_base = cd->verf_body;
   xprt->xp_addrlen = 0;
-  xprt->xp_ops = &Svctcp_op;	/* truely deals with calls */
-  xprt->xp_port = 0;		/* this is a connection, not a rendezvouser */
+  xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
+  xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
 #ifdef _FREEBSD
   xprt->xp_fd = fd;
 #else
@@ -240,20 +240,20 @@ void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
      * out-goung bits
      */
     int (*writeit) (caddr_t, caddr_t, int);
-    caddr_t out_base;		/* output buffer (points to frag header) */
-    caddr_t out_finger;		/* next output position */
-    caddr_t out_boundry;	/* data cannot up to this address */
-    u_int32_t *frag_header;	/* beginning of current fragment */
-    bool_t frag_sent;		/* true if buffer sent in middle of record */
+    caddr_t out_base;           /* output buffer (points to frag header) */
+    caddr_t out_finger;         /* next output position */
+    caddr_t out_boundry;        /* data cannot up to this address */
+    u_int32_t *frag_header;     /* beginning of current fragment */
+    bool_t frag_sent;           /* true if buffer sent in middle of record */
     /*
      * in-coming bits
      */
     int (*readit) (caddr_t, caddr_t, int);
-    u_long in_size;		/* fixed size of the input buffer */
+    u_long in_size;             /* fixed size of the input buffer */
     caddr_t in_base;
-    caddr_t in_finger;		/* location of next byte to be had */
-    caddr_t in_boundry;		/* can read up to this location */
-    long fbtbc;			/* fragment bytes to be consumed */
+    caddr_t in_finger;          /* location of next byte to be had */
+    caddr_t in_boundry;         /* can read up to this location */
+    long fbtbc;                 /* fragment bytes to be consumed */
     bool_t last_frag;
     u_int sendsize;
     u_int recvsize;
@@ -288,10 +288,10 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
 #else
   if ((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr,
 #endif
-		     (socklen_t *) & len)) < 0)
+                     (socklen_t *) & len)) < 0)
     {
       if (errno == EINTR)
-	goto again;
+        goto again;
       return (FALSE);
     }
 
@@ -307,7 +307,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   /* Spawns a new thread to handle the connection */
   pthread_attr_init(&attr_thr);
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);	/* If not, the conn mgr will be "defunct" threads */
+  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
 
 #ifdef _FREEBSD
   FD_CLR(xprt->xp_fd, &Svc_fdset);
@@ -320,7 +320,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
 
   if ((rc =
        pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-		      (void *)((unsigned long)xprt->xp_fd))) != 0)
+                      (void *)((unsigned long)xprt->xp_fd))) != 0)
     return FALSE;
 #else
   FD_CLR(xprt->xp_sock, &Svc_fdset);
@@ -333,12 +333,12 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
 
   if ((rc =
        pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-		      (void *)((unsigned long)xprt->xp_sock))) != 0)
+                      (void *)((unsigned long)xprt->xp_sock))) != 0)
     return FALSE;
 
 #endif
 
-  return (FALSE);		/* there is never an rpc msg to be processed */
+  return (FALSE);               /* there is never an rpc msg to be processed */
 }
 
 static enum xprt_stat Rendezvous_stat()
@@ -396,20 +396,20 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
       pollfd.fd = sock;
       pollfd.events = POLLIN;
       switch (poll(&pollfd, 1, milliseconds))
-	{
-	case -1:
-	  if (errno == EINTR)
-	    {
-	      continue;
-	    }
-	  goto fatal_err;
+        {
+        case -1:
+          if (errno == EINTR)
+            {
+              continue;
+            }
+          goto fatal_err;
 
-	case 0:
-	  continue;
+        case 0:
+          continue;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
     }
   while ((pollfd.revents & POLLIN) == 0);
 
@@ -424,11 +424,11 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
     } else
     {
       if (len < 0 && errno == EAGAIN)
-	{
-	  len = 0;
-	  return len;
-	} else
-	goto fatal_err;
+        {
+          len = 0;
+          return len;
+        } else
+        goto fatal_err;
     }
  fatal_err:
   ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
@@ -454,10 +454,10 @@ int Writetcp(register SVCXPRT * xprt, caddr_t buf, int len)
       i = write(xprt->xp_sock, buf, cnt);
 #endif
       if (i < 0)
-	{
-	  ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
-	  return (-1);
-	}
+        {
+          ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
+          return (-1);
+        }
     }
   return (len);
 }
@@ -492,8 +492,8 @@ static bool_t Svctcp_getargs(SVCXPRT * xprt, xdrproc_t xdr_args, caddr_t args_pt
 {
 
   return (SVCAUTH_UNWRAP(NULL,
-			 &(((struct tcp_conn *)(xprt->xp_p1))->xdrs),
-			 xdr_args, args_ptr));
+                         &(((struct tcp_conn *)(xprt->xp_p1))->xdrs),
+                         xdr_args, args_ptr));
 }
 
 static bool_t Svctcp_freeargs(SVCXPRT * xprt, xdrproc_t xdr_args, caddr_t args_ptr)
@@ -522,7 +522,7 @@ static bool_t Svctcp_reply(SVCXPRT * xprt, register struct rpc_msg *msg)
       msg->acpted_rply.ar_results.where = NULL;
 
       if (!xdr_replymsg(xdrs, msg) || !SVCAUTH_WRAP(NULL, xdrs, xdr_proc, xdr_where))
-	return (FALSE);
+        return (FALSE);
   } else if (!xdr_replymsg(xdrs, msg))
     {
       return (FALSE);

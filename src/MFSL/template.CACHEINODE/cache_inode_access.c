@@ -122,11 +122,11 @@
  *
  */
 cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
-					   fsal_accessflags_t access_type,
-					   hash_table_t * ht,
-					   cache_inode_client_t * pclient,
-					   fsal_op_context_t * pcontext,
-					   cache_inode_status_t * pstatus, int use_mutex)
+                                           fsal_accessflags_t access_type,
+                                           hash_table_t * ht,
+                                           cache_inode_client_t * pclient,
+                                           fsal_op_context_t * pcontext,
+                                           cache_inode_status_t * pstatus, int use_mutex)
 {
   fsal_attrib_list_t attr;
   fsal_status_t fsal_status;
@@ -168,54 +168,54 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
        * is configurable via the configuration file. */
 
       if (pclient->use_test_access == 1)
-	{
-	  /* We get the attributes */
-	  cache_inode_get_attributes(pentry, &attr);
+        {
+          /* We get the attributes */
+          cache_inode_get_attributes(pentry, &attr);
 
-	  fsal_status = FSAL_test_access(pcontext, used_access_type, &attr);
-	} else
-	{
-	  if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
-	    {
-	      if (use_mutex)
-		V(pentry->lock);
-	      return *pstatus;
-	    }
+          fsal_status = FSAL_test_access(pcontext, used_access_type, &attr);
+        } else
+        {
+          if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
+            {
+              if (use_mutex)
+                V(pentry->lock);
+              return *pstatus;
+            }
 
-	  fsal_status = FSAL_access(pfsal_handle, pcontext, used_access_type, &attr);
-	}
+          fsal_status = FSAL_access(pfsal_handle, pcontext, used_access_type, &attr);
+        }
 
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  *pstatus = cache_inode_error_convert(fsal_status);
-	  pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ACCESS] += 1;
+        {
+          *pstatus = cache_inode_error_convert(fsal_status);
+          pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ACCESS] += 1;
 
-	  if (fsal_status.major == ERR_FSAL_STALE)
-	    {
-	      cache_inode_status_t kill_status;
+          if (fsal_status.major == ERR_FSAL_STALE)
+            {
+              cache_inode_status_t kill_status;
 
-	      DisplayLog
-		  ("cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
-		   pentry);
+              DisplayLog
+                  ("cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
+                   pentry);
 
-	      if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_access: Could not kill entry %p, status = %u",
-			   pentry, kill_status);
+              if (cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_access: Could not kill entry %p, status = %u",
+                           pentry, kill_status);
 
-	      *pstatus = CACHE_INODE_FSAL_ESTALE;
+              *pstatus = CACHE_INODE_FSAL_ESTALE;
 
-	      return *pstatus;
-	    }
-	} else
-	*pstatus = CACHE_INODE_SUCCESS;
+              return *pstatus;
+            }
+        } else
+        *pstatus = CACHE_INODE_SUCCESS;
 
     }
 
   if (*pstatus != CACHE_INODE_SUCCESS)
     {
       if (use_mutex)
-	V(pentry->lock);
+        V(pentry->lock);
 
       return *pstatus;
     }
@@ -230,7 +230,7 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
     V(pentry->lock);
 
   return *pstatus;
-}				/* cache_inode_access_sw */
+}                               /* cache_inode_access_sw */
 
 /**
  *
@@ -250,15 +250,15 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
  *
  */
 cache_inode_status_t cache_inode_access_no_mutex(cache_entry_t * pentry,
-						 fsal_accessflags_t access_type,
-						 hash_table_t * ht,
-						 cache_inode_client_t * pclient,
-						 fsal_op_context_t * pcontext,
-						 cache_inode_status_t * pstatus)
+                                                 fsal_accessflags_t access_type,
+                                                 hash_table_t * ht,
+                                                 cache_inode_client_t * pclient,
+                                                 fsal_op_context_t * pcontext,
+                                                 cache_inode_status_t * pstatus)
 {
   return cache_inode_access_sw(pentry,
-			       access_type, ht, pclient, pcontext, pstatus, FALSE);
-}				/* cache_inode_access_no_mutex */
+                               access_type, ht, pclient, pcontext, pstatus, FALSE);
+}                               /* cache_inode_access_no_mutex */
 
 /**
  *
@@ -278,11 +278,11 @@ cache_inode_status_t cache_inode_access_no_mutex(cache_entry_t * pentry,
  *
  */
 cache_inode_status_t cache_inode_access(cache_entry_t * pentry,
-					fsal_accessflags_t access_type,
-					hash_table_t * ht,
-					cache_inode_client_t * pclient,
-					fsal_op_context_t * pcontext,
-					cache_inode_status_t * pstatus)
+                                        fsal_accessflags_t access_type,
+                                        hash_table_t * ht,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t * pcontext,
+                                        cache_inode_status_t * pstatus)
 {
   return cache_inode_access_sw(pentry, access_type, ht, pclient, pcontext, pstatus, TRUE);
-}				/* cache_inode_access */
+}                               /* cache_inode_access */

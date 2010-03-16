@@ -54,10 +54,10 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_accessflags_t access_type,	/* IN */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_accessflags_t access_type,       /* IN */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -77,7 +77,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
   /* get the full path for the object */
   rc = NamespacePath(object_handle->inode, object_handle->device,
-		     object_handle->validator, object_path);
+                     object_handle->validator, object_path);
 
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_access);
@@ -96,7 +96,7 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
       /* TODO : remove entry from namespace if entry is stale */
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_access);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_access);
   } else if (p_fs_ops->getattr)
     {
       /* we emulate 'access' call using getattr + fsal_test_access
@@ -113,12 +113,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
       status = FSAL_getattrs(object_handle, p_context, &tmp_attrs);
 
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_access);
+        Return(status.major, status.minor, INDEX_FSAL_access);
 
       status = FSAL_test_access(p_context, access_type, &tmp_attrs);
 
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_access);
+        Return(status.major, status.minor, INDEX_FSAL_access);
 
     }
   /* else : always grant access */
@@ -135,10 +135,10 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_access);
@@ -177,9 +177,9 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
-			       fsal_accessflags_t access_type,	/* IN */
-			       fsal_attrib_list_t * object_attributes	/* IN */
+fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
+                               fsal_accessflags_t access_type,  /* IN */
+                               fsal_attrib_list_t * object_attributes   /* IN */
     )
 {
   fsal_accessflags_t missing_access;
@@ -199,7 +199,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
 
 #ifdef _DEBUG_FSAL
   printf("test_access: mode=%#o, user=%d, owner=%u\n", object_attributes->mode,
-	 p_context->credential.user, object_attributes->owner);
+         p_context->credential.user, object_attributes->owner);
 #endif
 
   /* test root access */
@@ -217,18 +217,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
     {
 
       if (object_attributes->mode & FSAL_MODE_RUSR)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (object_attributes->mode & FSAL_MODE_WUSR)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (object_attributes->mode & FSAL_MODE_XUSR)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-	else
-	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+        Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+        else
+        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
 
@@ -243,18 +243,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
   if (is_grp)
     {
       if (object_attributes->mode & FSAL_MODE_RGRP)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (object_attributes->mode & FSAL_MODE_WGRP)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (object_attributes->mode & FSAL_MODE_XGRP)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-	else
-	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+        Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+        else
+        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
 

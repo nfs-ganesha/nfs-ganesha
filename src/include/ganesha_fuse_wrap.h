@@ -23,7 +23,7 @@
 struct ganefuse;
 struct ganefuse_cmd;
 typedef int (*ganefuse_fill_dir_t) (void *buf, const char *name,
-				    const struct stat * stbuf, off_t off);
+                                    const struct stat * stbuf, off_t off);
 
 struct ganefuse_file_info {
   int flags;
@@ -50,7 +50,7 @@ struct ganefuse_conn_info {
 /* Used by deprecated getdir() method */
 typedef struct ganefuse_dirhandle *ganefuse_dirh_t;
 typedef int (*ganefuse_dirfil_t) (ganefuse_dirh_t h, const char *name, int type,
-				  ino_t ino);
+                                  ino_t ino);
 
 struct ganefuse_operations {
   int (*getattr) (const char *, struct stat *);
@@ -91,7 +91,7 @@ struct ganefuse_operations {
   int (*removexattr) (const char *, const char *);
   int (*opendir) (const char *, struct ganefuse_file_info *);
   int (*readdir) (const char *, void *, ganefuse_fill_dir_t, off_t,
-		  struct ganefuse_file_info *);
+                  struct ganefuse_file_info *);
   int (*releasedir) (const char *, struct ganefuse_file_info *);
   int (*fsyncdir) (const char *, int, struct ganefuse_file_info *);
   void *(*init) (struct ganefuse_conn_info * conn);
@@ -120,7 +120,7 @@ extern "C" {
 #endif
 
   int ganefuse_main(int argc, char *argv[],
-		    const struct ganefuse_operations *op, void *user_data);
+                    const struct ganefuse_operations *op, void *user_data);
 
 #ifdef  __cplusplus
 }

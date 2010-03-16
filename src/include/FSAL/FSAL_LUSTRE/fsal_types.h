@@ -157,7 +157,7 @@ typedef struct fsal_cred__ {
 
 typedef struct fsal_export_context_t {
   char mount_point[FSAL_MAX_PATH_LEN];
-  unsigned int mnt_len;		/* for optimizing concatenation */
+  unsigned int mnt_len;         /* for optimizing concatenation */
   dev_t dev_id;
 } fsal_export_context_t;
 
@@ -182,22 +182,22 @@ typedef struct fsal_cookie__ {
 
 static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef void *fsal_lockdesc_t;	 /**< not implemented for now */
+typedef void *fsal_lockdesc_t;   /**< not implemented for now */
 
 /* Directory stream descriptor. */
 
 typedef struct fsal_dir__ {
   DIR *p_dir;
-  fsal_op_context_t context;	/* credential for accessing the directory */
+  fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   fsal_handle_t handle;
 } fsal_dir_t;
 
 typedef struct fsal_file__ {
   int fd;
-  int ro;			/* read only file ? */
+  int ro;                       /* read only file ? */
 } fsal_file_t;
 
 #define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
-#endif				/* _FSAL_TYPES__SPECIFIC_H */
+#endif                          /* _FSAL_TYPES__SPECIFIC_H */

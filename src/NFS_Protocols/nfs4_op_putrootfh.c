@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -165,7 +165,7 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 #endif
 
   return NFS4_OK;
-}				/* CreateROOTFH4 */
+}                               /* CreateROOTFH4 */
 
 /**
  *
@@ -187,7 +187,7 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 #define res_PUTROOTFH4 resp->nfs_resop4_u.opputrootfh
 
 int nfs4_op_putrootfh(struct nfs_argop4 *op,
-		      compound_data_t * data, struct nfs_resop4 *resp)
+                      compound_data_t * data, struct nfs_resop4 *resp)
 {
   int error;
 
@@ -209,8 +209,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
       res_PUTROOTFH4.status = error;
       return res_PUTROOTFH4.status;
     }
-  data->current_entry = NULL;	/* No cache inode entry for the directory within pseudo fs */
-  data->current_filetype = DIR_BEGINNING;	/* Only directory in the pseudo fs */
+  data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
+  data->current_filetype = DIR_BEGINNING;       /* Only directory in the pseudo fs */
 
   /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
   /* For the moment, I choose to have rootFH = publicFH */
@@ -218,38 +218,38 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   if (data->currentFH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
-	{
-	  resp->nfs_resop4_u.opputrootfh.status = error;
-	  return error;
-	}
+        {
+          resp->nfs_resop4_u.opputrootfh.status = error;
+          return error;
+        }
     }
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
-	 data->rootFH.nfs_fh4_len);
+         data->rootFH.nfs_fh4_len);
   data->currentFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   if (data->mounted_on_FH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
-	{
-	  resp->nfs_resop4_u.opputrootfh.status = error;
-	  return error;
-	}
+        {
+          resp->nfs_resop4_u.opputrootfh.status = error;
+          return error;
+        }
     }
   memcpy((char *)(data->mounted_on_FH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
-	 data->rootFH.nfs_fh4_len);
+         data->rootFH.nfs_fh4_len);
   data->mounted_on_FH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   if (data->publicFH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->publicFH))) != NFS4_OK)
-	{
-	  resp->nfs_resop4_u.opputrootfh.status = error;
-	  return error;
-	}
+        {
+          resp->nfs_resop4_u.opputrootfh.status = error;
+          return error;
+        }
     }
   /* Copy the data where they are supposed to be */
   memcpy((char *)(data->publicFH.nfs_fh4_val), (char *)(data->rootFH.nfs_fh4_val),
-	 data->rootFH.nfs_fh4_len);
+         data->rootFH.nfs_fh4_len);
   data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
   /* Test */
@@ -261,11 +261,11 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
 #endif
 
   DisplayLogJdLevel(data->pclient->log_outputs,
-		    NIV_FULL_DEBUG, "NFS4 PUTROOTFH: Ending on status %d",
-		    resp->nfs_resop4_u.opputrootfh.status);
+                    NIV_FULL_DEBUG, "NFS4 PUTROOTFH: Ending on status %d",
+                    resp->nfs_resop4_u.opputrootfh.status);
 
   return resp->nfs_resop4_u.opputrootfh.status;
-}				/* nfs4_op_putrootfh */
+}                               /* nfs4_op_putrootfh */
 
 /**
  * nfs4_op_putrootfh_Free: frees what was allocared to handle nfs4_op_putrootfh.
@@ -281,4 +281,4 @@ void nfs4_op_putrootfh_Free(PUTROOTFH4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_putrootfh_Free */
+}                               /* nfs4_op_putrootfh_Free */
