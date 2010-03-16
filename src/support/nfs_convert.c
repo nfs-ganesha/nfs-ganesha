@@ -120,123 +120,185 @@
 #include "nfs23.h"
 
 #ifdef HAVE_GSSAPI
-OM_uint32 Gss_release_buffer ( OM_uint32 * minor_status, gss_buffer_t buffer ) ;
+OM_uint32 Gss_release_buffer(OM_uint32 * minor_status, gss_buffer_t buffer);
 #endif
 
-char * nfsstat2_to_str( nfsstat2 code )
+char *nfsstat2_to_str(nfsstat2 code)
 {
-  switch( code )
-  {
-    /* no nead for break statments,
-     * because we "return".
-     */
-  	case NFS_OK : return "NFS_OK";
-	case NFSERR_PERM : return "NFSERR_PERM";
-	case NFSERR_NOENT : return "NFSERR_NOENT";
-	case NFSERR_IO : return "NFSERR_IO";
-	case NFSERR_NXIO : return "NFSERR_NXIO";
-	case NFSERR_ACCES : return "NFSERR_ACCES";
-	case NFSERR_EXIST : return "NFSERR_EXIST";
-	case NFSERR_NODEV : return "NFSERR_NODEV";
-	case NFSERR_NOTDIR : return "NFSERR_NOTDIR";
-	case NFSERR_ISDIR : return "NFSERR_ISDIR";
-	case NFSERR_FBIG : return "NFSERR_FBIG";
-	case NFSERR_NOSPC : return "NFSERR_NOSPC";
-	case NFSERR_ROFS : return "NFSERR_ROFS";
-	case NFSERR_NAMETOOLONG : return "NFSERR_NAMETOOLONG";
-	case NFSERR_NOTEMPTY : return "NFSERR_NOTEMPTY";
-	case NFSERR_DQUOT : return "NFSERR_DQUOT";
-	case NFSERR_STALE : return "NFSERR_STALE";
-	case NFSERR_WFLUSH : return "NFSERR_WFLUSH";
+  switch (code)
+    {
+      /* no nead for break statments,
+       * because we "return".
+       */
+    case NFS_OK:
+      return "NFS_OK";
+    case NFSERR_PERM:
+      return "NFSERR_PERM";
+    case NFSERR_NOENT:
+      return "NFSERR_NOENT";
+    case NFSERR_IO:
+      return "NFSERR_IO";
+    case NFSERR_NXIO:
+      return "NFSERR_NXIO";
+    case NFSERR_ACCES:
+      return "NFSERR_ACCES";
+    case NFSERR_EXIST:
+      return "NFSERR_EXIST";
+    case NFSERR_NODEV:
+      return "NFSERR_NODEV";
+    case NFSERR_NOTDIR:
+      return "NFSERR_NOTDIR";
+    case NFSERR_ISDIR:
+      return "NFSERR_ISDIR";
+    case NFSERR_FBIG:
+      return "NFSERR_FBIG";
+    case NFSERR_NOSPC:
+      return "NFSERR_NOSPC";
+    case NFSERR_ROFS:
+      return "NFSERR_ROFS";
+    case NFSERR_NAMETOOLONG:
+      return "NFSERR_NAMETOOLONG";
+    case NFSERR_NOTEMPTY:
+      return "NFSERR_NOTEMPTY";
+    case NFSERR_DQUOT:
+      return "NFSERR_DQUOT";
+    case NFSERR_STALE:
+      return "NFSERR_STALE";
+    case NFSERR_WFLUSH:
+      return "NFSERR_WFLUSH";
 
     default:
-        return "/!\\ | UNKNOWN NFSv2 ERROR CODE";
-  }
+      return "/!\\ | UNKNOWN NFSv2 ERROR CODE";
+    }
 }
 
-char * nfsstat3_to_str( nfsstat3 code )
+char *nfsstat3_to_str(nfsstat3 code)
 {
-  switch( code )
-  {
-    /* no nead for break statments,
-     * because we "return".
-     */
-	case NFS3_OK : return "NFS3_OK";
-	case NFS3ERR_PERM : return "NFS3ERR_PERM";
-	case NFS3ERR_NOENT : return "NFS3ERR_NOENT";
-	case NFS3ERR_IO : return "NFS3ERR_IO";
-	case NFS3ERR_NXIO : return "NFS3ERR_NXIO";
-	case NFS3ERR_ACCES : return "NFS3ERR_ACCES";
-	case NFS3ERR_EXIST : return "NFS3ERR_EXIST";
-	case NFS3ERR_XDEV : return "NFS3ERR_XDEV";
-	case NFS3ERR_NODEV : return "NFS3ERR_NODEV";
-	case NFS3ERR_NOTDIR : return "NFS3ERR_NOTDIR";
-	case NFS3ERR_ISDIR : return "NFS3ERR_ISDIR";
-	case NFS3ERR_INVAL : return "NFS3ERR_INVAL";
-	case NFS3ERR_FBIG : return "NFS3ERR_FBIG";
-	case NFS3ERR_NOSPC : return "NFS3ERR_NOSPC";
-	case NFS3ERR_ROFS : return "NFS3ERR_ROFS";
-	case NFS3ERR_MLINK : return "NFS3ERR_MLINK";
-	case NFS3ERR_NAMETOOLONG : return "NFS3ERR_NAMETOOLONG";
-	case NFS3ERR_NOTEMPTY : return "NFS3ERR_NOTEMPTY";
-	case NFS3ERR_DQUOT : return "NFS3ERR_DQUOT";
-	case NFS3ERR_STALE : return "NFS3ERR_STALE";
-	case NFS3ERR_REMOTE : return "NFS3ERR_REMOTE";
-	case NFS3ERR_BADHANDLE : return "NFS3ERR_BADHANDLE";
-	case NFS3ERR_NOT_SYNC : return "NFS3ERR_NOT_SYNC";
-	case NFS3ERR_BAD_COOKIE : return "NFS3ERR_BAD_COOKIE";
-	case NFS3ERR_NOTSUPP : return "NFS3ERR_NOTSUPP";
-	case NFS3ERR_TOOSMALL : return "NFS3ERR_TOOSMALL";
-	case NFS3ERR_SERVERFAULT : return "NFS3ERR_SERVERFAULT";
-	case NFS3ERR_BADTYPE : return "NFS3ERR_BADTYPE";
-	case NFS3ERR_JUKEBOX : return "NFS3ERR_JUKEBOX";
+  switch (code)
+    {
+      /* no nead for break statments,
+       * because we "return".
+       */
+    case NFS3_OK:
+      return "NFS3_OK";
+    case NFS3ERR_PERM:
+      return "NFS3ERR_PERM";
+    case NFS3ERR_NOENT:
+      return "NFS3ERR_NOENT";
+    case NFS3ERR_IO:
+      return "NFS3ERR_IO";
+    case NFS3ERR_NXIO:
+      return "NFS3ERR_NXIO";
+    case NFS3ERR_ACCES:
+      return "NFS3ERR_ACCES";
+    case NFS3ERR_EXIST:
+      return "NFS3ERR_EXIST";
+    case NFS3ERR_XDEV:
+      return "NFS3ERR_XDEV";
+    case NFS3ERR_NODEV:
+      return "NFS3ERR_NODEV";
+    case NFS3ERR_NOTDIR:
+      return "NFS3ERR_NOTDIR";
+    case NFS3ERR_ISDIR:
+      return "NFS3ERR_ISDIR";
+    case NFS3ERR_INVAL:
+      return "NFS3ERR_INVAL";
+    case NFS3ERR_FBIG:
+      return "NFS3ERR_FBIG";
+    case NFS3ERR_NOSPC:
+      return "NFS3ERR_NOSPC";
+    case NFS3ERR_ROFS:
+      return "NFS3ERR_ROFS";
+    case NFS3ERR_MLINK:
+      return "NFS3ERR_MLINK";
+    case NFS3ERR_NAMETOOLONG:
+      return "NFS3ERR_NAMETOOLONG";
+    case NFS3ERR_NOTEMPTY:
+      return "NFS3ERR_NOTEMPTY";
+    case NFS3ERR_DQUOT:
+      return "NFS3ERR_DQUOT";
+    case NFS3ERR_STALE:
+      return "NFS3ERR_STALE";
+    case NFS3ERR_REMOTE:
+      return "NFS3ERR_REMOTE";
+    case NFS3ERR_BADHANDLE:
+      return "NFS3ERR_BADHANDLE";
+    case NFS3ERR_NOT_SYNC:
+      return "NFS3ERR_NOT_SYNC";
+    case NFS3ERR_BAD_COOKIE:
+      return "NFS3ERR_BAD_COOKIE";
+    case NFS3ERR_NOTSUPP:
+      return "NFS3ERR_NOTSUPP";
+    case NFS3ERR_TOOSMALL:
+      return "NFS3ERR_TOOSMALL";
+    case NFS3ERR_SERVERFAULT:
+      return "NFS3ERR_SERVERFAULT";
+    case NFS3ERR_BADTYPE:
+      return "NFS3ERR_BADTYPE";
+    case NFS3ERR_JUKEBOX:
+      return "NFS3ERR_JUKEBOX";
 
     default:
-        return "/!\\ | UNKNOWN NFSv3 ERROR CODE";
-  }
+      return "/!\\ | UNKNOWN NFSv3 ERROR CODE";
+    }
 }
 
-char * nfstype2_to_str( ftype2 code )
+char *nfstype2_to_str(ftype2 code)
 {
-  switch( code )
-  {
-    /* no nead for break statments,
-     * because we "return".
-     */
-	case NFNON : return "NFNON";
-	case NFREG : return "NFREG";
-	case NFDIR : return "NFDIR";
-	case NFBLK : return "NFBLK";
-	case NFCHR : return "NFCHR";
-	case NFLNK : return "NFLNK";
-	case NFSOCK : return "NFSOCK";
-	case NFBAD : return "NFBAD";
-	case NFFIFO : return "NFFIFO";
+  switch (code)
+    {
+      /* no nead for break statments,
+       * because we "return".
+       */
+    case NFNON:
+      return "NFNON";
+    case NFREG:
+      return "NFREG";
+    case NFDIR:
+      return "NFDIR";
+    case NFBLK:
+      return "NFBLK";
+    case NFCHR:
+      return "NFCHR";
+    case NFLNK:
+      return "NFLNK";
+    case NFSOCK:
+      return "NFSOCK";
+    case NFBAD:
+      return "NFBAD";
+    case NFFIFO:
+      return "NFFIFO";
 
     default:
-        return "/!\\ | UNKNOWN NFSv2 TYPE";
-  }
+      return "/!\\ | UNKNOWN NFSv2 TYPE";
+    }
 }
 
-
-char * nfstype3_to_str( ftype3 code )
+char *nfstype3_to_str(ftype3 code)
 {
-  switch( code )
-  {
-    /* no nead for break statments,
-     * because we "return".
-     */
-	case NF3REG : return "NF3REG";
-	case NF3DIR : return "NF3DIR";
-	case NF3BLK : return "NF3BLK";
-	case NF3CHR : return "NF3CHR";
-	case NF3LNK : return "NF3LNK";
-	case NF3SOCK : return "NF3SOCK";
-	case NF3FIFO : return "NF3FIFO";
+  switch (code)
+    {
+      /* no nead for break statments,
+       * because we "return".
+       */
+    case NF3REG:
+      return "NF3REG";
+    case NF3DIR:
+      return "NF3DIR";
+    case NF3BLK:
+      return "NF3BLK";
+    case NF3CHR:
+      return "NF3CHR";
+    case NF3LNK:
+      return "NF3LNK";
+    case NF3SOCK:
+      return "NF3SOCK";
+    case NF3FIFO:
+      return "NF3FIFO";
 
     default:
-        return "/!\\ | UNKNOWN NFSv3 TYPE";
-  }
+      return "/!\\ | UNKNOWN NFSv3 TYPE";
+    }
 }
 
 /**
@@ -248,24 +310,24 @@ char * nfstype3_to_str( ftype3 code )
  * @return converted value.
  *
  */
-uint64_t nfs_htonl64( uint64_t arg64 )
+uint64_t nfs_htonl64(uint64_t arg64)
 {
-    uint64_t res64 ;
+  uint64_t res64;
 
 #ifdef LITTLEEND
-    uint32_t low =  (uint32_t)(arg64 & 0x00000000FFFFFFFFLL) ;
-    uint32_t high = (uint32_t)(( arg64 & 0xFFFFFFFF00000000LL ) >> 32 );
-		
-    low = htonl( low ) ;
-    high = htonl( high ) ;
+  uint32_t low = (uint32_t) (arg64 & 0x00000000FFFFFFFFLL);
+  uint32_t high = (uint32_t) ((arg64 & 0xFFFFFFFF00000000LL) >> 32);
 
-    res64 = (uint64_t)high + (((uint64_t)low) << 32 ) ;
+  low = htonl(low);
+  high = htonl(high);
+
+  res64 = (uint64_t) high + (((uint64_t) low) << 32);
 #else
-    res64 = arg64 ;
+  res64 = arg64;
 #endif
 
-    return res64 ;
-} /* nfs_htonl64 */
+  return res64;
+}				/* nfs_htonl64 */
 
 /**
  *
@@ -276,24 +338,24 @@ uint64_t nfs_htonl64( uint64_t arg64 )
  * @return converted value.
  *
  */
-uint64_t nfs_ntohl64( uint64_t arg64 )
+uint64_t nfs_ntohl64(uint64_t arg64)
 {
-    uint64_t res64 ;
+  uint64_t res64;
 
 #ifdef LITTLEEND
-    uint32_t low =  (uint32_t)(arg64 & 0x00000000FFFFFFFFLL) ;
-    uint32_t high = (uint32_t)(( arg64 & 0xFFFFFFFF00000000LL ) >> 32 );
-		
-    low = ntohl( low ) ;
-    high = ntohl( high ) ;
+  uint32_t low = (uint32_t) (arg64 & 0x00000000FFFFFFFFLL);
+  uint32_t high = (uint32_t) ((arg64 & 0xFFFFFFFF00000000LL) >> 32);
 
-    res64 = (uint64_t)high + (((uint64_t)low) << 32 ) ;
+  low = ntohl(low);
+  high = ntohl(high);
+
+  res64 = (uint64_t) high + (((uint64_t) low) << 32);
 #else
-    res64 = arg64 ;
+  res64 = arg64;
 #endif
 
-    return res64 ;
-} /* nfs_ntonl64 */
+  return res64;
+}				/* nfs_ntonl64 */
 
 #ifdef _HAVE_GSSAPI
 /**
@@ -308,37 +370,33 @@ uint64_t nfs_ntohl64( uint64_t arg64 )
  * @return TRUE is successfull, false otherwise.
  * 
  */
-int log_sperror_gss( char * outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat)
+int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
-        OM_uint32 smin;
-        gss_buffer_desc msg;
-        gss_buffer_desc msg2;
-        int msg_ctx = 0;
-        FILE * tmplog ;
+  OM_uint32 smin;
+  gss_buffer_desc msg;
+  gss_buffer_desc msg2;
+  int msg_ctx = 0;
+  FILE *tmplog;
 
-        if( gss_display_status( &smin, 
-				maj_stat, 
-				GSS_C_GSS_CODE, 
-				GSS_C_NULL_OID,
-              	             	&msg_ctx, 
-				&msg)  != GSS_S_COMPLETE )
-		return FALSE ;
+  if (gss_display_status(&smin,
+			 maj_stat,
+			 GSS_C_GSS_CODE,
+			 GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
+    return FALSE;
 
-        if( gss_display_status( &smin, 
-				min_stat, 
-				GSS_C_MECH_CODE, 
-				GSS_C_NULL_OID, 
-				&msg_ctx, 
-				&msg2 ) != GSS_S_COMPLETE ) 
-		return FALSE ;
+  if (gss_display_status(&smin,
+			 min_stat,
+			 GSS_C_MECH_CODE,
+			 GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
+    return FALSE;
 
-        sprintf( outmsg, "%s - %s : %s ", tag, (char *)msg.value, (char *)msg2.value );
+  sprintf(outmsg, "%s - %s : %s ", tag, (char *)msg.value, (char *)msg2.value);
 
-        gss_release_buffer(&smin, &msg);
-        gss_release_buffer(&smin, &msg2);
+  gss_release_buffer(&smin, &msg);
+  gss_release_buffer(&smin, &msg2);
 
-	return  TRUE ;
-} /* log_sperror_gss */
+  return TRUE;
+}				/* log_sperror_gss */
 #endif
 
 /**
@@ -352,54 +410,54 @@ int log_sperror_gss( char * outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min
  *
  */
 
-void auth_stat2str( enum auth_stat why, char * str ) 
+void auth_stat2str(enum auth_stat why, char *str)
 {
-   switch( why )
-     {
-	case AUTH_OK:	
-		strncpy( str, "AUTH_OK", AUTH_STR_LEN ) ;
-		break ;
+  switch (why)
+    {
+    case AUTH_OK:
+      strncpy(str, "AUTH_OK", AUTH_STR_LEN);
+      break;
 
-	case AUTH_BADCRED:
-		strncpy( str, "AUTH_BADCRED", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_REJECTEDCRED:
-		strncpy( str, "AUTH_REJECTEDCRED", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_BADVERF:
-		strncpy( str, "AUTH_BADVERF", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_REJECTEDVERF:
-		strncpy( str, "AUTH_REJECTEDVERF", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_TOOWEAK:
-		strncpy( str, "AUTH_TOOWEAK", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_INVALIDRESP:
-		strncpy( str, "AUTH_INVALIDRESP", AUTH_STR_LEN ) ;
-		break ;
-	
-        case AUTH_FAILED:
-		strncpy( str, "AUTH_FAILED", AUTH_STR_LEN ) ;
-		break ;
-	
+    case AUTH_BADCRED:
+      strncpy(str, "AUTH_BADCRED", AUTH_STR_LEN);
+      break;
+
+    case AUTH_REJECTEDCRED:
+      strncpy(str, "AUTH_REJECTEDCRED", AUTH_STR_LEN);
+      break;
+
+    case AUTH_BADVERF:
+      strncpy(str, "AUTH_BADVERF", AUTH_STR_LEN);
+      break;
+
+    case AUTH_REJECTEDVERF:
+      strncpy(str, "AUTH_REJECTEDVERF", AUTH_STR_LEN);
+      break;
+
+    case AUTH_TOOWEAK:
+      strncpy(str, "AUTH_TOOWEAK", AUTH_STR_LEN);
+      break;
+
+    case AUTH_INVALIDRESP:
+      strncpy(str, "AUTH_INVALIDRESP", AUTH_STR_LEN);
+      break;
+
+    case AUTH_FAILED:
+      strncpy(str, "AUTH_FAILED", AUTH_STR_LEN);
+      break;
+
 #ifdef _USE_GSSRPC
-  	case RPCSEC_GSS_CREDPROBLEM:
-		strncpy( str, "RPCSEC_GSS_CREDPROBLEM", AUTH_STR_LEN ) ;
-		break ;
-	
-  	case RPCSEC_GSS_CTXPROBLEM:
-		strncpy( str, "RPCSEC_GSS_CTXPROBLEM", AUTH_STR_LEN ) ;
-		break ;
+    case RPCSEC_GSS_CREDPROBLEM:
+      strncpy(str, "RPCSEC_GSS_CREDPROBLEM", AUTH_STR_LEN);
+      break;
+
+    case RPCSEC_GSS_CTXPROBLEM:
+      strncpy(str, "RPCSEC_GSS_CTXPROBLEM", AUTH_STR_LEN);
+      break;
 #endif
 
-        default:
-		strncpy( str, "UNKNOWN AUTH", AUTH_STR_LEN ) ;
-		break ;
-     } /* switch */
-} /* auth_stat2str */
+    default:
+      strncpy(str, "UNKNOWN AUTH", AUTH_STR_LEN);
+      break;
+    }				/* switch */
+}				/* auth_stat2str */

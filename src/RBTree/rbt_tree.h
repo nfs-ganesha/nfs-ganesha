@@ -680,4 +680,4 @@ iterators invalidated are those referring to the deleted node.
   }									\
 }
 
-#endif /* _RBT_TREE_H */
+#endif				/* _RBT_TREE_H */

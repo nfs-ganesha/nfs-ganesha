@@ -24,48 +24,40 @@
 
 /** command definition */
 
-typedef struct command_def__
-{
-  
-  /* name of a command */
-  char * command_name;
-  
-  /* function for processing the command : */
-  int  (*command_func)(int,char **,FILE *);
-  
-  /* short help message */
-  char * command_help;
+typedef struct command_def__ {
 
+  /* name of a command */
+  char *command_name;
+
+  /* function for processing the command : */
+  int (*command_func) (int, char **, FILE *);
+
+  /* short help message */
+  char *command_help;
 
 } command_def_t;
 
-
-
 /** layer definition */
 
-typedef struct layer_def__
-{
-  
-  char *          layer_name;
-  command_def_t * command_list;
-  char *          layer_description;  
-  void  (*setlog_func)(int);
-  
+typedef struct layer_def__ {
+
+  char *layer_name;
+  command_def_t *command_list;
+  char *layer_description;
+  void (*setlog_func) (int);
+
 } layer_def_t;
-
-
 
 /* shell state structure */
 
-typedef struct shell_state__
-{
-  FILE *        input_stream;  
-  int           interactive;
-  layer_def_t * layer;
-  int           status;
-  int           verbose;
-  int           debug_level;
-  int           line;
+typedef struct shell_state__ {
+  FILE *input_stream;
+  int interactive;
+  layer_def_t *layer;
+  int status;
+  int verbose;
+  int debug_level;
+  int line;
 } shell_state_t;
 
 #endif

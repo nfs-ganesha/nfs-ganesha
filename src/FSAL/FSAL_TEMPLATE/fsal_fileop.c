@@ -18,8 +18,6 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-
-
 /**
  * FSAL_open:
  * Open a regular file for reading/writing its data content.
@@ -56,53 +54,51 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open(
-    fsal_handle_t         * filehandle,             /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t      openflags,                /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
+			fsal_op_context_t * p_context,	/* IN */
+			fsal_openflags_t openflags,	/* IN */
+			fsal_file_t * file_descriptor,	/* OUT */
+			fsal_attrib_list_t * file_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-      
+
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if ( !filehandle || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_open);
-  
+  if (!filehandle || !p_context || !file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
+
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
-  
-  if ( filehandle->object_type_reminder != FSAL_TYPE_FILE )
-  {
-    Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_open);
-  }
-  
+
+  if (filehandle->object_type_reminder != FSAL_TYPE_FILE)
+    {
+      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
+    }
+
   /* >> convert fsal open flags to your FS open flags
    * Take care of conflicting flags << */
-  
+
   TakeTokenFSCall();
-  
+
   /* >> call your FS open function << */
-    
+
   ReleaseTokenFSCall();
-  
+
   /* >> interpret returned status << */
-    
+
   /* >> fill output struct << */
-  
-  if ( file_attributes )
-  {
-    /* >> set output attributes if asked << */  
-  }
-  
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_open);
-  
+
+  if (file_attributes)
+    {
+      /* >> set output attributes if asked << */
+    }
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
+
 }
-
-
 
 /**
  * FSAL_open_byname:
@@ -143,30 +139,25 @@ fsal_status_t FSAL_open(
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(
-    fsal_handle_t         * dirhandle,             /* IN */
-    fsal_name_t           * filename,              /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t        openflags,              /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */)
+fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,	/* IN */
+				fsal_name_t * filename,	/* IN */
+				fsal_op_context_t * p_context,	/* IN */
+				fsal_openflags_t openflags,	/* IN */
+				fsal_file_t * file_descriptor,	/* OUT */
+				fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  fsal_status_t fsal_status ;
-  fsal_handle_t filehandle ;
+  fsal_status_t fsal_status;
+  fsal_handle_t filehandle;
 
-  if ( !dirhandle || !filename || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_open_by_name);
+  if (!dirhandle || !filename || !p_context || !file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FSAL_lookup( dirhandle, filename, p_context, &filehandle, file_attributes ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-        return fsal_status ;
+  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  return FSAL_open( &filehandle, p_context, openflags, file_descriptor, file_attributes ) ; 
+  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
 }
-
-
-
-
 
 /**
  * FSAL_read:
@@ -196,39 +187,33 @@ fsal_status_t FSAL_open_by_name(
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(
-    fsal_file_t     * file_descriptor,  /* IN */
-    fsal_seek_t     * seek_descriptor,  /* [IN] */
-    fsal_size_t     buffer_size,        /* IN */
-    caddr_t         buffer,             /* OUT */
-    fsal_size_t     * read_amount,      /* OUT */
-    fsal_boolean_t  * end_of_file       /* OUT */
-){
+fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
+			fsal_seek_t * seek_descriptor,	/* [IN] */
+			fsal_size_t buffer_size,	/* IN */
+			caddr_t buffer,	/* OUT */
+			fsal_size_t * read_amount,	/* OUT */
+			fsal_boolean_t * end_of_file	/* OUT */
+    )
+{
 
   /* sanity checks. */
-  
-  if ( !file_descriptor ||!buffer || !read_amount || !end_of_file )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_read);
 
-  
+  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
+
   TakeTokenFSCall();
-  
+
   /* >> read the correct amount of data at the good offset << */
-   
+
   ReleaseTokenFSCall();
-  
+
   /* >> interpreted returned status << */
-  
-  /* >> dont forget setting output vars : read_amount, end_of_file <<*/
- 
-  Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read ); 
-  
+
+  /* >> dont forget setting output vars : read_amount, end_of_file << */
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
+
 }
-
-
-
-
-
 
 /**
  * FSAL_write:
@@ -255,34 +240,31 @@ fsal_status_t FSAL_read(
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(
-    fsal_file_t        * file_descriptor,     /* IN */
-    fsal_seek_t        * seek_descriptor,     /* IN */
-    fsal_size_t        buffer_size,           /* IN */
-    caddr_t            buffer,                /* IN */
-    fsal_size_t        * write_amount         /* OUT */
-){
+fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
+			 fsal_seek_t * seek_descriptor,	/* IN */
+			 fsal_size_t buffer_size,	/* IN */
+			 caddr_t buffer,	/* IN */
+			 fsal_size_t * write_amount	/* OUT */
+    )
+{
 
   /* sanity checks. */
-  if ( !file_descriptor || !buffer || !write_amount )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_write);
+  if (!file_descriptor || !buffer || !write_amount)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
-      
   TakeTokenFSCall();
-  
+
   /* >> write the correct amount of data at the good offset << */
-   
+
   ReleaseTokenFSCall();
-  
+
   /* >> interpreted returned status << */
-  
-  /* >> dont forget setting output vars : write_amount <<*/
-   
-  Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_write ); 
-  
+
+  /* >> dont forget setting output vars : write_amount << */
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
+
 }
-
-
 
 /**
  * FSAL_close:
@@ -298,45 +280,41 @@ fsal_status_t FSAL_write(
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(
-    fsal_file_t        * file_descriptor /* IN */
-){
-  
+fsal_status_t FSAL_close(fsal_file_t * file_descriptor	/* IN */
+    )
+{
+
   int rc;
-  
+
   /* sanity checks. */
-  if ( !file_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_close);
-  
+  if (!file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
+
   TakeTokenFSCall();
-  
+
   /* >> close your file << */
-  
+
   ReleaseTokenFSCall();
-  
+
   /* release your read/write internal resources */
-      
-  Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_close );
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
+
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(
-    fsal_handle_t         * filehandle,             /* IN */
-    fsal_u64_t              fileid,                 /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t        openflags,              /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */ )
+fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,	/* IN */
+				  fsal_u64_t fileid,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_openflags_t openflags,	/* IN */
+				  fsal_file_t * file_descriptor,	/* OUT */
+				  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_open_by_fileid);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t FSAL_close_by_fileid(
-    fsal_file_t        * file_descriptor /* IN */,
-    fsal_u64_t           fileid )
+fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+				   fsal_u64_t fileid)
 {
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_open_by_fileid);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
-
-

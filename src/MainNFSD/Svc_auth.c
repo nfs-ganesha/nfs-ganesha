@@ -57,35 +57,38 @@
  *
  */
 
-enum auth_stat Gssrpc__svcauth_none( register struct svc_req * rqst,
-                                     register struct rpc_msg * msg,
-                                     bool_t                  * no_dispatch) ;
+enum auth_stat Gssrpc__svcauth_none(register struct svc_req *rqst,
+				    register struct rpc_msg *msg, bool_t * no_dispatch);
 
-enum auth_stat Gssrpc__svcauth_unix( register struct svc_req * rqst,
-                                     register struct rpc_msg * msg,
-                                     bool_t                  * no_dispatch) ;
+enum auth_stat Gssrpc__svcauth_unix(register struct svc_req *rqst,
+				    register struct rpc_msg *msg, bool_t * no_dispatch);
 
-enum auth_stat Gssrpc__svcauth_gss( register struct svc_req * rqst,
-                                    register struct rpc_msg * msg,
-                                    bool_t                  * no_dispatch) ;
+enum auth_stat Gssrpc__svcauth_gss(register struct svc_req *rqst,
+				   register struct rpc_msg *msg, bool_t * no_dispatch);
 
 #define Gssrpc__svcauth_short Gssrpc__svcauth_unix
- 
 
 static struct svcauthsw_type {
-     u_int flavor;
-     enum auth_stat (*authenticator)(struct svc_req *, struct rpc_msg *,
-				     bool_t *);
-} svcauthsw[] = {
-     {AUTH_GSSAPI, Gssrpc__svcauth_gss},	/* AUTH_GSSAPI */
-     {AUTH_NONE, Gssrpc__svcauth_none},		/* AUTH_NONE */
+  u_int flavor;
+  enum auth_stat (*authenticator) (struct svc_req *, struct rpc_msg *, bool_t *);
+} svcauthsw[] =
+{
+  {
+  AUTH_GSSAPI, Gssrpc__svcauth_gss},	/* AUTH_GSSAPI */
+  {
+  AUTH_NONE, Gssrpc__svcauth_none},	/* AUTH_NONE */
 #if 0
-     {AUTH_GSSAPI_COMPAT, gssrpc__svcauth_gssapi}, /* AUTH_GSSAPI_COMPAT */
+  {
+  AUTH_GSSAPI_COMPAT, gssrpc__svcauth_gssapi},	/* AUTH_GSSAPI_COMPAT */
 #endif
-     {AUTH_UNIX, Gssrpc__svcauth_unix},		/* AUTH_UNIX */
-     {AUTH_SHORT, Gssrpc__svcauth_short},	/* AUTH_SHORT */
-     {RPCSEC_GSS, Gssrpc__svcauth_gss}		/* RPCSEC_GSS */
+  {
+  AUTH_UNIX, Gssrpc__svcauth_unix},	/* AUTH_UNIX */
+  {
+  AUTH_SHORT, Gssrpc__svcauth_short},	/* AUTH_SHORT */
+  {
+  RPCSEC_GSS, Gssrpc__svcauth_gss}	/* RPCSEC_GSS */
 };
+
 static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
 
 /*
@@ -104,26 +107,23 @@ static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
  * rqst->rq_client_cred, the cooked credentials.
  */
 enum auth_stat
-Rpcsecgss__authenticate(
-	register struct svc_req *rqst,
-	struct rpc_msg *msg,
-	bool_t *no_dispatch)
+Rpcsecgss__authenticate(register struct svc_req *rqst,
+			struct rpc_msg *msg, bool_t * no_dispatch)
 {
-	register int cred_flavor, i;
+  register int cred_flavor, i;
 
-	rqst->rq_cred = msg->rm_call.cb_cred;
-	rqst->rq_xprt->xp_verf.oa_flavor = 0 ;
-	rqst->rq_xprt->xp_verf.oa_length = 0;
-	cred_flavor = rqst->rq_cred.oa_flavor;
-	*no_dispatch = FALSE;
-	for (i = 0; i < svcauthnum; i++) {
-	     if (cred_flavor == svcauthsw[i].flavor &&
-		 svcauthsw[i].authenticator != NULL) {
-		  return ((*(svcauthsw[i].authenticator))(rqst,
-							  msg,
-							  no_dispatch));
-	     }
+  rqst->rq_cred = msg->rm_call.cb_cred;
+  rqst->rq_xprt->xp_verf.oa_flavor = 0;
+  rqst->rq_xprt->xp_verf.oa_length = 0;
+  cred_flavor = rqst->rq_cred.oa_flavor;
+  *no_dispatch = FALSE;
+  for (i = 0; i < svcauthnum; i++)
+    {
+      if (cred_flavor == svcauthsw[i].flavor && svcauthsw[i].authenticator != NULL)
+	{
+	  return ((*(svcauthsw[i].authenticator)) (rqst, msg, no_dispatch));
 	}
-	
-	return (AUTH_REJECTEDCRED);
+    }
+
+  return (AUTH_REJECTEDCRED);
 }

@@ -43,66 +43,51 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(
-    fsal_handle_t         * filehandle,         /* IN */
-    fsal_op_context_t     * p_context,          /* IN */
-    fsal_attrib_list_t    * object_attributes   /* IN/OUT */
-  )
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+    )
 {
-  
+
   int rc;
   fsal_status_t status;
   ns_ObjHandle_t hpss_hdl;
-  hpss_Attrs_t    hpss_attr;
+  hpss_Attrs_t hpss_attr;
 
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
    */
   if (!filehandle || !p_context || !object_attributes)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_getattrs);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-    
   /* get attributes */
   /* We use  HPSSFSAL_GetRawAttrHandle for not chasing junctions
    * nor solving symlinks. What's more, we want hpss_Attrs_t.
-   */  
-  
+   */
+
   TakeTokenFSCall();
-  
-  rc = HPSSFSAL_GetRawAttrHandle(
-        &(filehandle->ns_handle),
-        NULL,
-        &p_context->credential.hpss_usercred,
-        FALSE, /* don't solve junctions */
-        &hpss_hdl,
-        NULL,
-        &hpss_attr);
-  
+
+  rc = HPSSFSAL_GetRawAttrHandle(&(filehandle->ns_handle), NULL, &p_context->credential.hpss_usercred, FALSE,	/* don't solve junctions */
+				 &hpss_hdl, NULL, &hpss_attr);
+
   ReleaseTokenFSCall();
-  
+
   /* The HPSS_ENOENT error actually means that handle is STALE */
-  if ( rc == HPSS_ENOENT )
-    Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_getattrs);
+  if (rc == HPSS_ENOENT)
+    Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_getattrs);
   else if (rc)
-    Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_getattrs);
-  
-  
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_getattrs);
+
   /* convert attributes */
-                                 
-  status = hpss2fsal_attributes( &hpss_hdl,
-                                 &hpss_attr,
-                                 object_attributes );
-                                 
+
+  status = hpss2fsal_attributes(&hpss_hdl, &hpss_attr, object_attributes);
+
   if (FSAL_IS_ERROR(status))
-    Return(status.major,status.minor,INDEX_FSAL_getattrs);
-  
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_getattrs);
+    Return(status.major, status.minor, INDEX_FSAL_getattrs);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
 
 }
-
-
-
 
 /**
  * FSAL_setattrs:
@@ -137,147 +122,130 @@ fsal_status_t FSAL_getattrs(
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(
-    fsal_handle_t              * filehandle,          /* IN */
-    fsal_op_context_t          * p_context,           /* IN */
-    fsal_attrib_list_t         * attrib_set,          /* IN */
-    fsal_attrib_list_t         * object_attributes    /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_attrib_list_t * attrib_set,	/* IN */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  fsal_status_t       status;
-  fsal_attrib_list_t  attrs ;
-  
-  hpss_fileattrbits_t  hpss_attr_mask;
-  hpss_fileattr_t      hpss_fattr_in, hpss_fattr_out ;  
-  
+  fsal_status_t status;
+  fsal_attrib_list_t attrs;
+
+  hpss_fileattrbits_t hpss_attr_mask;
+  hpss_fileattr_t hpss_fattr_in, hpss_fattr_out;
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
   if (!filehandle || !p_context || !attrib_set)
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_setattrs);
-    
-  /* local copy of attributes */  
-  attrs = *attrib_set ;
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+
+  /* local copy of attributes */
+  attrs = *attrib_set;
+
   /* First, check that FSAL attributes changes are allowed. */
-  
-  /* Is it allowed to change times ? */  
-  
-  if ( !global_fs_info.cansettime ){
 
-      if ( attrs.asked_attributes
-           &
-           ( FSAL_ATTR_ATIME | FSAL_ATTR_CREATION
-            | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME )
-         )
-      {
-        
-        /* handled as an unsettable attribute. */
-        Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs );
-      }
-          
-  }
-  
-    
+  /* Is it allowed to change times ? */
+
+  if (!global_fs_info.cansettime)
+    {
+
+      if (attrs.asked_attributes
+	  & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+	{
+
+	  /* handled as an unsettable attribute. */
+	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
+	}
+
+    }
+
   /* apply umask, if mode attribute is to be changed */
-  
-  if ( FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_MODE ) ){
-     attrs.mode &= (~global_fs_info.umask) ;
-  }
 
-  
+  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+    {
+      attrs.mode &= (~global_fs_info.umask);
+    }
+
   /** @todo : chown restricted seems to be OK. */
-  
-  
+
   /* init variables */
-  memset(&hpss_fattr_in,0,sizeof(hpss_fileattr_t));
-  
+  memset(&hpss_fattr_in, 0, sizeof(hpss_fileattr_t));
+
   hpss_fattr_in.ObjectHandle = filehandle->ns_handle;
 
-  
   /* Then, convert attribute set. */
-  
-  status = fsal2hpss_attribset( filehandle,
-                                &attrs ,
-                                &hpss_attr_mask ,
-                                &(hpss_fattr_in.Attrs) );
 
-  
+  status = fsal2hpss_attribset(filehandle,
+			       &attrs, &hpss_attr_mask, &(hpss_fattr_in.Attrs));
+
   if (FSAL_IS_ERROR(status))
-      Return(status.major,status.minor,INDEX_FSAL_setattrs);
-  
-  /* Call HPSS client API function. */
-  
-  TakeTokenFSCall();
-  
-  rc = HPSSFSAL_FileSetAttrHandle(
-            &(filehandle->ns_handle),   /* IN  - object handle */
-            NULL,                       /* IN  - path to the object */
-            &(p_context->credential.hpss_usercred),     /* IN  - user credentials */
-            hpss_attr_mask,             /* IN - attributes fields to set */
-            &hpss_fattr_in,             /* IN  - input attributes */
-            &hpss_fattr_out             /* OUT - attributes after change */
-          );
-  
-  ReleaseTokenFSCall();
-  
-  /* The HPSS_ENOENT error actually means that handle is STALE */
-  if ( rc == HPSS_ENOENT )
-    Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_setattrs);
-  else if (rc)
-    Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_setattrs);
+    Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
-    
+  /* Call HPSS client API function. */
+
+  TakeTokenFSCall();
+
+  rc = HPSSFSAL_FileSetAttrHandle(&(filehandle->ns_handle),	/* IN  - object handle */
+				  NULL,	/* IN  - path to the object */
+				  &(p_context->credential.hpss_usercred),	/* IN  - user credentials */
+				  hpss_attr_mask,	/* IN - attributes fields to set */
+				  &hpss_fattr_in,	/* IN  - input attributes */
+				  &hpss_fattr_out	/* OUT - attributes after change */
+      );
+
+  ReleaseTokenFSCall();
+
+  /* The HPSS_ENOENT error actually means that handle is STALE */
+  if (rc == HPSS_ENOENT)
+    Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_setattrs);
+  else if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_setattrs);
+
   /* Optionaly fills output attributes. */
-  
+
   /** @todo voir pourquoi hpss_fattr_out ne contient pas
      ce qu'il devrait contenir */
-  
+
   /*
    * HPSS only fills the modified attribute in hpss_fattr_out.
    * Thus, if the modified attributes equal the attributes to be returned
    * there is no need to proceed a getattr.
    */
-  if ( object_attributes &&
-       ( object_attributes->asked_attributes == attrib_set->asked_attributes ))
-  {
-    
-    /* caution: hpss_fattr_out.ObjectHandle is not filled. */
-    
-    status = hpss2fsal_attributes( &(filehandle->ns_handle),
-                                   &(hpss_fattr_out.Attrs),
-                                   object_attributes ) ;
-       
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+  if (object_attributes &&
+      (object_attributes->asked_attributes == attrib_set->asked_attributes))
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      /* caution: hpss_fattr_out.ObjectHandle is not filled. */
+
+      status = hpss2fsal_attributes(&(filehandle->ns_handle),
+				    &(hpss_fattr_out.Attrs), object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-    
-  }
   /* if more attributes are asked, we have to proceed a getattr. */
-  else if ( object_attributes )
-  {
-    
-    status = FSAL_getattrs( filehandle, p_context, object_attributes );    
-
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+  else if (object_attributes)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      status = FSAL_getattrs(filehandle, p_context, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-    
-  }
-  
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_setattrs);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
+
 }
-
-
-

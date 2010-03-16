@@ -20,8 +20,6 @@
 #include "fsal_convert.h"
 #include "namespace.h"
 
-
-
 /**
  * FSAL_truncate:
  * Modify the data length of a regular file.
@@ -49,56 +47,58 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(
-    fsal_handle_t         * filehandle,         /* IN */
-    fsal_op_context_t     * p_context,          /* IN */
-    fsal_size_t             length,             /* IN */
-    fsal_file_t           * file_descriptor,    /* Unused in this FSAL */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_size_t length,	/* IN */
+			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
   char object_path[FSAL_MAX_PATH_LEN];
-      
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !filehandle || !p_context )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_truncate);
+  if (!filehandle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  if ( !p_fs_ops->truncate )
-      Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_truncate);
-  
+  if (!p_fs_ops->truncate)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_truncate);
+
   /* get the full path for the object */
-  rc = NamespacePath( filehandle->inode, filehandle->device, filehandle->validator, object_path );
-  if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_truncate );
-  
+  rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
+		     object_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_truncate);
+
   /* set context for the next operation, so it can be retrieved by FS thread */
-  fsal_set_thread_context( p_context );      
-  
-  TakeTokenFSCall();  
-  rc = p_fs_ops->truncate( object_path, (off_t)length );
+  fsal_set_thread_context(p_context);
+
+  TakeTokenFSCall();
+  rc = p_fs_ops->truncate(object_path, (off_t) length);
   ReleaseTokenFSCall();
-  
-  if ( rc ) Return(fuse2fsal_error(rc,TRUE), rc, INDEX_FSAL_truncate);
- 
-  if( object_attributes )
-  {
-    
-    fsal_status_t st;
-        
-    st = FSAL_getattrs( filehandle, p_context, object_attributes );
-    
-    if ( FSAL_IS_ERROR( st ) )
+
+  if (rc)
+    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_truncate);
+
+  if (object_attributes)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      fsal_status_t st;
+
+      st = FSAL_getattrs(filehandle, p_context, object_attributes);
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
 
-  }
-    
   /* No error occured */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_truncate);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
+
 }

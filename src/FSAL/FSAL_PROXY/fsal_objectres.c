@@ -14,7 +14,7 @@
 #endif
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "fsal.h"
 #include "fsal_internal.h"
@@ -28,9 +28,9 @@
  *        The handle whose the resources are to be cleaned.
  */
 
-fsal_status_t FSAL_CleanObjectResources( fsal_handle_t * in_fsal_handle )
+fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
 {
-    
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_CleanObjectResources);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanObjectResources);
 
 }

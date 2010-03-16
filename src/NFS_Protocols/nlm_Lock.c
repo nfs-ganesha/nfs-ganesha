@@ -82,7 +82,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -110,15 +110,15 @@
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
 
-static int nlm_should_track(nlm_lock_t *nlmb)
+static int nlm_should_track(nlm_lock_t * nlmb)
 {
-	if (nlmb->state == NLM4_GRANTED)
-		return 1;
-	/*
-	 * FIXME!! we should also track NLM4_BLOCKED locks
-	 * when we do problem blocke lock support
-	 */
-	return 0;
+  if (nlmb->state == NLM4_GRANTED)
+    return 1;
+  /*
+   * FIXME!! we should also track NLM4_BLOCKED locks
+   * when we do problem blocke lock support
+   */
+  return 0;
 }
 
 /**
@@ -134,95 +134,92 @@ static int nlm_should_track(nlm_lock_t *nlmb)
  *
  */
 
-int nlm4_Lock( nfs_arg_t            * parg    /* IN     */,
-              exportlist_t         * pexport /* IN     */,
-              fsal_op_context_t    * pcontext   /* IN     */,
-              cache_inode_client_t * pclient /* INOUT  */,
-              hash_table_t         * ht      /* INOUT  */,
-              struct svc_req       * preq    /* IN     */,
-              nfs_res_t            * pres    /* OUT    */ )
+int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
+	      exportlist_t * pexport /* IN     */ ,
+	      fsal_op_context_t * pcontext /* IN     */ ,
+	      cache_inode_client_t * pclient /* INOUT  */ ,
+	      hash_table_t * ht /* INOUT  */ ,
+	      struct svc_req *preq /* IN     */ ,
+	      nfs_res_t * pres /* OUT    */ )
 {
-	fsal_file_t *fd;
-	fsal_status_t retval;
-	nlm4_lockargs *arg;
-	cache_entry_t *pentry;
-	fsal_attrib_list_t attr;
-	fsal_lockdesc_t *lock_desc;
-	nlm_lock_t *nlmb = NULL;
-	cache_inode_status_t cache_status;
-	cache_inode_fsal_data_t fsal_data;
+  fsal_file_t *fd;
+  fsal_status_t retval;
+  nlm4_lockargs *arg;
+  cache_entry_t *pentry;
+  fsal_attrib_list_t attr;
+  fsal_lockdesc_t *lock_desc;
+  nlm_lock_t *nlmb = NULL;
+  cache_inode_status_t cache_status;
+  cache_inode_fsal_data_t fsal_data;
 
-	DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG,
-			"REQUEST PROCESSING: Calling nlm4_Lock" ) ;
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+		    "REQUEST PROCESSING: Calling nlm4_Lock");
 
-	/* Convert file handle into a cache entry */
-	arg = &parg->arg_nlm4_lock;
-	if (!nfs3_FhandleToFSAL((nfs_fh3 *)&(arg->alock.fh),
-				&fsal_data.handle,
-				pcontext)) {
-		/* handle is not valid */
-		pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-		/*
-		 * Should we do a REQ_OK so that the client get
-		 * a response ? FIXME!!
-		 */
-		return NFS_REQ_DROP;
+  /* Convert file handle into a cache entry */
+  arg = &parg->arg_nlm4_lock;
+  if (!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+    {
+      /* handle is not valid */
+      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      /*
+       * Should we do a REQ_OK so that the client get
+       * a response ? FIXME!!
+       */
+      return NFS_REQ_DROP;
+    }
+  /* Now get the cached inode attributes */
+  fsal_data.cookie = DIR_START;
+  if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
+				pclient, pcontext, &cache_status)) == NULL)
+    {
+      /* handle is not valid */
+      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      return NFS_REQ_OK;
+    }
+  fd = &pentry->object.file.open_fd.fd;
+  lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
+  if (!lock_desc)
+    {
+      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
+      return NFS_REQ_OK;
+    }
+  /*
+   * add to the lock list expecting that we will probably block
+   * This make sure that FSAL can safely create a child and wait
+   * on lock without worrying about whether we were able to add
+   * the lock to the block list
+   */
+  nlmb = nlm_add_to_locklist(&(arg->alock), arg->exclusive);
+  if (!nlmb)
+    {
+      pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
+      return NFS_REQ_OK;
+    }
+
+  retval = FSAL_lock(fd, lock_desc, arg->block);
+  if (!FSAL_IS_ERROR(retval))
+    {
+      pres->res_nlm4.stat.stat = NLM4_GRANTED;
+    } else
+    {
+      if (fsal_is_retryable(retval) && arg->block)
+	{
+	  /* FIXME!! fsal_is_retryable don't check for EACCESS */
+	  pres->res_nlm4.stat.stat = NLM4_BLOCKED;
+	} else
+	{
+	  pres->res_nlm4.stat.stat = NLM4_DENIED;
 	}
-	/* Now get the cached inode attributes */
-	fsal_data.cookie = DIR_START;
-	if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-					pclient,
-					pcontext,
-					&cache_status)) == NULL) {
-		/* handle is not valid */
-		pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-		return NFS_REQ_OK;
-	}
-	fd = &pentry->object.file.open_fd.fd;
-	lock_desc = nlm_lock_to_fsal_lockdesc(&(arg->alock), arg->exclusive);
-	if (!lock_desc)
-         {
-	   pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-	   return NFS_REQ_OK;
-	 }
-	/*
-	 * add to the lock list expecting that we will probably block
-	 * This make sure that FSAL can safely create a child and wait
-	 * on lock without worrying about whether we were able to add
-	 * the lock to the block list
-	 */
-	nlmb = nlm_add_to_locklist(&(arg->alock), arg->exclusive);
-	if (!nlmb)
-         {
-	   pres->res_nlm4.stat.stat = NLM4_DENIED_NOLOCKS;
-	   return NFS_REQ_OK;
-         }
+    }
 
-	retval = FSAL_lock(fd, lock_desc, arg->block);
-	if (!FSAL_IS_ERROR(retval))
-         {
-		pres->res_nlm4.stat.stat = NLM4_GRANTED;
-	 } 
-        else 
-         {
-            if (fsal_is_retryable(retval) && arg->block)
-             {
-	 	/* FIXME!! fsal_is_retryable don't check for EACCESS */
-		pres->res_nlm4.stat.stat = NLM4_BLOCKED;
-  	     } 
-           else 
-             {
-	        pres->res_nlm4.stat.stat = NLM4_DENIED;
-	     }
-	 } 
-
-	if (!nlmb) {
-		nlmb->state = pres->res_nlm4.stat.stat;
-		if (!nlm_should_track(nlmb))
-			nlm_remove_from_locklist(nlmb);
-	}
-	Mem_Free(lock_desc);
-	return NFS_REQ_OK;
+  if (!nlmb)
+    {
+      nlmb->state = pres->res_nlm4.stat.stat;
+      if (!nlm_should_track(nlmb))
+	nlm_remove_from_locklist(nlmb);
+    }
+  Mem_Free(lock_desc);
+  return NFS_REQ_OK;
 }
 
 /**
@@ -233,7 +230,7 @@ int nlm4_Lock( nfs_arg_t            * parg    /* IN     */,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Lock_Free(nfs_res_t *pres)
+void nlm4_Lock_Free(nfs_res_t * pres)
 {
-  return ;
+  return;
 }

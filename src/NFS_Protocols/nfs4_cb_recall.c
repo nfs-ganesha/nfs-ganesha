@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -126,8 +126,7 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-extern nfs_parameter_t nfs_param ;
-
+extern nfs_parameter_t nfs_param;
 
 /**
  * nfs4_cb_recall: NFS4_OP_CB_recall, nfsv4 call back to recall from a delegation
@@ -142,11 +141,8 @@ extern nfs_parameter_t nfs_param ;
  * 
  */
 
-int nfs4_cb_recall(  struct nfs_cb_argop4 * op ,
-                     compound_data_t   * data,
-                     struct nfs_cb_resop4 * resp)
+int nfs4_cb_recall(struct nfs_cb_argop4 *op,
+		   compound_data_t * data, struct nfs_cb_resop4 *resp)
 {
-    return NFS4_OK ;
-} /* nfs4_cb_recall */
-
-
+  return NFS4_OK;
+}				/* nfs4_cb_recall */

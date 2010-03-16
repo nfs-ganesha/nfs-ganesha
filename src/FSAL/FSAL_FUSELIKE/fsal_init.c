@@ -20,7 +20,6 @@
 #include "fsal_common.h"
 #include "namespace.h"
 
-
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
     switch( (p_init_info)->behaviors._field ){                \
@@ -59,7 +58,7 @@
     /* In the other cases, we keep the default value. */          \
     }                                                             \
 
-  
+
 #define SET_STRING_PARAM( api_cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
@@ -71,82 +70,80 @@
 
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init( fs_specific_initinfo_t * fs_init_info ){
+static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+{
 
   int rc = 0;
-  fsal_op_context_t         ctx;
-  struct stat               stbuf;
-  unsigned int              root_gen;
-  
-  struct ganefuse_conn_info conn =
-  {
-      .proto_major      = 0, /* XXX is another value necessary ? */
-      .proto_minor      = 0, /* XXX is another value necessary ? */
-      .async_read       = 0,
-      .max_write        = global_fs_info.maxwrite ,
-      .max_readahead    = global_fs_info.maxread  ,
-      .reserved         = {0}
+  fsal_op_context_t ctx;
+  struct stat stbuf;
+  unsigned int root_gen;
+
+  struct ganefuse_conn_info conn = {
+    .proto_major = 0,		/* XXX is another value necessary ? */
+    .proto_minor = 0,		/* XXX is another value necessary ? */
+    .async_read = 0,
+    .max_write = global_fs_info.maxwrite,
+    .max_readahead = global_fs_info.maxread,
+    .reserved = {0}
   };
-                  
+
   /* set filesystems operations and opaque info */
-  p_fs_ops     = fs_init_info->fs_ops;
+  p_fs_ops = fs_init_info->fs_ops;
   fs_user_data = fs_init_info->user_data;
 
   /* create a "fake" context in case init use it */
-  
+
   fs_private_data = NULL;
-  
-  FSAL_InitClientContext( &ctx );    
-  fsal_set_thread_context( &ctx );
-  
-  /* call filesystem's init */  
-  
-  if ( p_fs_ops->init )
-  {
-      fs_private_data = p_fs_ops->init( &conn );
-  }
+
+  FSAL_InitClientContext(&ctx);
+  fsal_set_thread_context(&ctx);
+
+  /* call filesystem's init */
+
+  if (p_fs_ops->init)
+    {
+      fs_private_data = p_fs_ops->init(&conn);
+    }
 
   /* reset context now fs_private_data is known */
-  
-  FSAL_InitClientContext( &ctx );
-  fsal_set_thread_context( &ctx );  
-   
+
+  FSAL_InitClientContext(&ctx);
+  fsal_set_thread_context(&ctx);
+
   /* initialize namespace by getting root inode number
    * getattr is mandatory !
    */
-  
-  if ( !p_fs_ops->getattr )
-      return -ENOSYS;
-  
-  rc = p_fs_ops->getattr( "/", &stbuf );
-  
-  if ( rc )
-  {
-      DisplayLogJdLevel( fsal_log, NIV_CRIT,
-        "FSAL INIT: Could not call initial 'getattr' on filesystem root" );
+
+  if (!p_fs_ops->getattr)
+    return -ENOSYS;
+
+  rc = p_fs_ops->getattr("/", &stbuf);
+
+  if (rc)
+    {
+      DisplayLogJdLevel(fsal_log, NIV_CRIT,
+			"FSAL INIT: Could not call initial 'getattr' on filesystem root");
 
       return rc;
-  }
-  
+    }
+
   /* generation based on ctime for avoiding stale handles */
   root_gen = stbuf.st_ctime;
 
-  if ( stbuf.st_ino == 0 )
-  {
-              /* filesystem does not provide inodes ! */
-              DisplayLog("WARNING in lookup: filesystem does not provide inode numbers");
-              /* root will have inode nbr 1 */
-              stbuf.st_ino = 1;
-  }
+  if (stbuf.st_ino == 0)
+    {
+      /* filesystem does not provide inodes ! */
+      DisplayLog("WARNING in lookup: filesystem does not provide inode numbers");
+      /* root will have inode nbr 1 */
+      stbuf.st_ino = 1;
+    }
 
-  
   /* initialize namespace */
-  rc =  NamespaceInit( stbuf.st_ino, stbuf.st_dev, &root_gen );
-  
-  return rc;
-    
-}
+  rc = NamespaceInit(stbuf.st_ino, stbuf.st_dev, &root_gen);
 
+  return rc;
+
+}
 
 /**
  * FSAL_Init : Initializes the FileSystem Abstraction Layer.
@@ -169,51 +166,48 @@ static int FS_Specific_Init( fs_specific_initinfo_t * fs_init_info ){
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t  FSAL_Init(
-    fsal_parameter_t        * init_info         /* IN */
-){
-  
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+    )
+{
+
   fsal_status_t status;
   int rc;
-              
+
   /* sanity check.  */
-  
+
   if (!init_info)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_Init);
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* >> You can check args bellow << */
 
-  if ( init_info->fsal_info.log_outputs.liste_voies == NULL )
-  {
-    /* issue a warning on stderr */
-    DisplayLog("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-  }
+  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+    {
+      /* issue a warning on stderr */
+      DisplayLog
+	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+    }
 
-    
   /* proceeds FSAL internal status initialization */
-  
-  status = fsal_internal_init_global( &(init_info->fsal_info),
-                                      &(init_info->fs_common_info) );  
-  
-  if (FSAL_IS_ERROR(status)) Return(status.major,status.minor,INDEX_FSAL_Init);
-  
-  
-  /* initialize filesystem stuff */
-  
-  if ( rc = FS_Specific_Init( &init_info->fs_specific_info ))
-    Return( ERR_FSAL_BAD_INIT , -rc, INDEX_FSAL_Init);
 
-      
+  status = fsal_internal_init_global(&(init_info->fsal_info),
+				     &(init_info->fs_common_info));
+
+  if (FSAL_IS_ERROR(status))
+    Return(status.major, status.minor, INDEX_FSAL_Init);
+
+  /* initialize filesystem stuff */
+
+  if (rc = FS_Specific_Init(&init_info->fs_specific_info))
+    Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
+
   /* Everything went OK. */
-  
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_Init);  
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+
 }
 
-
 /* To be called before exiting */
-fsal_status_t  FSAL_terminate()
+fsal_status_t FSAL_terminate()
 {
-    ReturnCode( ERR_FSAL_NO_ERROR, 0);
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

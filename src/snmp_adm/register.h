@@ -18,8 +18,8 @@
  * @param phandler output parameter, contain the netsnmp handler registration of the string.
  * @return MIB_REGISTERED_OK on success.
  */
-int register_ro_string(oid* myoid, size_t oid_len, char* string,netsnmp_handler_registration **phandler);
-
+int register_ro_string(oid * myoid, size_t oid_len, char *string,
+		       netsnmp_handler_registration ** phandler);
 
 /**
  * Register scalar variable by pointer.
@@ -32,8 +32,8 @@ int register_ro_string(oid* myoid, size_t oid_len, char* string,netsnmp_handler_
  * @param phandler_tab output parameters, contain the netsnmp handlers registration of the value and type.
  * @return MIB_REGISTERED_OK on success.
  */
-int reg_scal(oid* myoid, size_t oid_len, void* value,unsigned char type,int access,netsnmp_handler_registration *phandler_tab[2]);
-
+int reg_scal(oid * myoid, size_t oid_len, void *value, unsigned char type, int access,
+	     netsnmp_handler_registration * phandler_tab[2]);
 
 /**
  * Register scalar variable by getter setter.
@@ -45,8 +45,8 @@ int reg_scal(oid* myoid, size_t oid_len, void* value,unsigned char type,int acce
  * @param phandler_tab output parameters, contain the netsnmp handlers registration of the value and type.
  * @return MIB_REGISTERED_OK on success.
  */
-int reg_get_set(oid* myoid, size_t oid_len,unsigned char type,int access,netsnmp_handler_registration *phandler[2]);
-
+int reg_get_set(oid * myoid, size_t oid_len, unsigned char type, int access,
+		netsnmp_handler_registration * phandler[2]);
 
 /**
  * Register a procedure
@@ -55,9 +55,8 @@ int reg_get_set(oid* myoid, size_t oid_len,unsigned char type,int access,netsnmp
  * @param phandler output parameters, contain the netsnmp handler registration (trigger node).
  * @return MIB_REGISTERED_OK on success.
  */
-int reg_proc(oid *myoid, size_t oid_len,netsnmp_handler_registration **phandler);
+int reg_proc(oid * myoid, size_t oid_len, netsnmp_handler_registration ** phandler);
 
+int unreg_instance(netsnmp_handler_registration * myreg);
 
-int unreg_instance(netsnmp_handler_registration *myreg);
-
-#endif /* __REGISTER_H__ */
+#endif				/* __REGISTER_H__ */

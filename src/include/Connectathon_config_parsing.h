@@ -14,30 +14,30 @@ enum test_number {
 };
 
 struct btest {
-	enum test_number	num;
-	enum test_number 	num2;
+  enum test_number num;
+  enum test_number num2;
 
-	int	              levels;
-	int 	            files;
-	int 	            dirs;
-	int 	            count;
-	int	              size;
-	int	              blocksize;
+  int levels;
+  int files;
+  int dirs;
+  int count;
+  int size;
+  int blocksize;
 
-	char 	            *bigfile;
+  char *bigfile;
 
-	char 	            *fname;
-	char 	            *dname;
-	char 	            *nname;
-	char	            *sname;
+  char *fname;
+  char *dname;
+  char *nname;
+  char *sname;
 
-	struct btest 	    *nextbtest;
+  struct btest *nextbtest;
 };
 
 struct testparam {
-	char 		          *dirtest;
-  char              *logfile;
-	struct btest	    *btest;
+  char *dirtest;
+  char *logfile;
+  struct btest *btest;
 };
 
 void btest_init_defaults(struct btest *b);
@@ -49,6 +49,6 @@ char *get_test_directory(struct testparam *t);
 char *get_log_file(struct testparam *t);
 struct btest *get_btest_args(struct testparam *param, enum test_number k);
 
-struct testparam * readin_config(char *fname);
+struct testparam *readin_config(char *fname);
 
 #endif

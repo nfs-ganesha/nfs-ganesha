@@ -16,7 +16,6 @@
 #include "config.h"
 #endif
 
-
 #include "fsal.h"
 
 /**
@@ -31,20 +30,18 @@
  * \return - TRUE if the error is retryable.
  *         - FALSE if the error is NOT retryable.
  */
-fsal_boolean_t  fsal_is_retryable( fsal_status_t  status ){
+fsal_boolean_t fsal_is_retryable(fsal_status_t status)
+{
 
-  switch( status.major ){
-    
+  switch (status.major)
+    {
+
     /** @todo : ERR_FSAL_DELAY : The only retryable error ? */
     case ERR_FSAL_DELAY:
       return TRUE;
-      
-    default :
-        return FALSE;
-  }
+
+    default:
+      return FALSE;
+    }
 
 }
-
-
-
-

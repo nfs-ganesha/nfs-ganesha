@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -123,27 +123,20 @@
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 
-
-typedef struct nfs4_cb_desc__
-{
-  char *         name;
-  unsigned int   val ;
-  int          (*funct)( struct nfs_cb_argop4 *,  
-                         compound_data_t *,
-                         struct nfs_cb_resop4 *) ;
-} nfs4_cb_desc_t ;
+typedef struct nfs4_cb_desc__ {
+  char *name;
+  unsigned int val;
+  int (*funct) (struct nfs_cb_argop4 *, compound_data_t *, struct nfs_cb_resop4 *);
+} nfs4_cb_desc_t;
 
 /* This array maps the operation number to the related position in array optab4 */
-const int cbtab4index[] = { 0,0,0,0,1,2};
+const int cbtab4index[] = { 0, 0, 0, 0, 1, 2 };
 
-
-static const nfs4_cb_desc_t cbtab4[] = 
-{
-    {"OP_CB_GETATTR",              NFS4_OP_CB_GETATTR,              nfs4_cb_getattr 		},
-    {"OP_CB_RECALL",               NFS4_OP_CB_RECALL,               nfs4_cb_recall 		},
-    {"OP_CB_ILLEGAL",              NFS4_OP_CB_ILLEGAL,              nfs4_cb_illegal		},
-}; 
-
+static const nfs4_cb_desc_t cbtab4[] = {
+  {"OP_CB_GETATTR", NFS4_OP_CB_GETATTR, nfs4_cb_getattr},
+  {"OP_CB_RECALL", NFS4_OP_CB_RECALL, nfs4_cb_recall},
+  {"OP_CB_ILLEGAL", NFS4_OP_CB_ILLEGAL, nfs4_cb_illegal},
+};
 
 /**
  * nfs4_cb_COMPOUND: The NFSCB PROC4 COMPOUND
@@ -164,18 +157,18 @@ static const nfs4_cb_desc_t cbtab4[] =
  * 
  */
 
-int nfs4_cb_Compound( nfs_arg_t               * parg     /* IN     */,
-                      exportlist_t            * pexport  /* IN     */,
-                      fsal_op_context_t       * pcontext /* IN     */,
-                      cache_inode_client_t    * pclient  /* INOUT  */,
-                      hash_table_t            * ht       /* INOUT */,
-                      struct svc_req          * preq     /* IN     */,
-                      nfs_res_t               * pres     /* OUT    */ ) 
+int nfs4_cb_Compound(nfs_arg_t * parg /* IN     */ ,
+		     exportlist_t * pexport /* IN     */ ,
+		     fsal_op_context_t * pcontext /* IN     */ ,
+		     cache_inode_client_t * pclient /* INOUT  */ ,
+		     hash_table_t * ht /* INOUT */ ,
+		     struct svc_req *preq /* IN     */ ,
+		     nfs_res_t * pres /* OUT    */ )
 {
-  return 0 ;
-} /* nfs4_cb_Compound */
+  return 0;
+}				/* nfs4_cb_Compound */
 
-void nfs4_cb_Compound_Free( nfs_res_t * pres)
+void nfs4_cb_Compound_Free(nfs_res_t * pres)
 {
-  return ; 
-} /* nfs4_cb_Compound_Free */
+  return;
+}				/* nfs4_cb_Compound_Free */

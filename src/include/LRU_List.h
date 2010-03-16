@@ -93,62 +93,62 @@
 #include <sys/param.h>
 #include <pthread.h>
 
-typedef enum LRU_List_state__ { LRU_ENTRY_BLANK   = 0,
-				LRU_ENTRY_VALID   = 1,
-                                LRU_ENTRY_INVALID = 2 } LRU_List_state_t ;
+typedef enum LRU_List_state__ { LRU_ENTRY_BLANK = 0,
+  LRU_ENTRY_VALID = 1,
+  LRU_ENTRY_INVALID = 2
+} LRU_List_state_t;
 
-typedef struct LRU_data__
-{
-  caddr_t      pdata ;
-  size_t       len ;
-} LRU_data_t ;
+typedef struct LRU_data__ {
+  caddr_t pdata;
+  size_t len;
+} LRU_data_t;
 
-typedef struct lru_entry__ 
-{
-  struct lru_entry__ * next ;
-  struct lru_entry__ * prev ;
-  LRU_List_state_t     valid_state ;
-  LRU_data_t           buffdata ;
-} LRU_entry_t  ;
+typedef struct lru_entry__ {
+  struct lru_entry__ *next;
+  struct lru_entry__ *prev;
+  LRU_List_state_t valid_state;
+  LRU_data_t buffdata;
+} LRU_entry_t;
 
-typedef struct lru_param__
-{
-  unsigned int nb_entry_prealloc ;                 /**< Number of node to allocated when new nodes are necessary. */
-  unsigned int nb_call_gc_invalid ;                /**< How many call before garbagging invalid entries           */
-  int (*entry_to_str)( LRU_data_t , char * ) ;     /**< Function used to convert an entry to a string. */
-  int (*clean_entry)( LRU_entry_t *, void * ) ;    /**< Function used for cleaning an entry while released */
-} LRU_parameter_t ;
+typedef struct lru_param__ {
+  unsigned int nb_entry_prealloc;		   /**< Number of node to allocated when new nodes are necessary. */
+  unsigned int nb_call_gc_invalid;		   /**< How many call before garbagging invalid entries           */
+  int (*entry_to_str) (LRU_data_t, char *);	   /**< Function used to convert an entry to a string. */
+  int (*clean_entry) (LRU_entry_t *, void *);	   /**< Function used for cleaning an entry while released */
+} LRU_parameter_t;
 
-typedef struct lru_list__
-{
-  LRU_entry_t *   LRU ;
-  LRU_entry_t *   MRU ;
-  unsigned int    nb_entry ;
-  unsigned int    nb_invalid ;
-  unsigned int    nb_call_gc ;
-  LRU_parameter_t parameter ;
-  LRU_entry_t *   entry_prealloc ;
-} LRU_list_t ;
+typedef struct lru_list__ {
+  LRU_entry_t *LRU;
+  LRU_entry_t *MRU;
+  unsigned int nb_entry;
+  unsigned int nb_invalid;
+  unsigned int nb_call_gc;
+  LRU_parameter_t parameter;
+  LRU_entry_t *entry_prealloc;
+} LRU_list_t;
 
-typedef int LRU_status_t ;
+typedef int LRU_status_t;
 
-LRU_entry_t * LRU_new_entry( LRU_list_t * plru, LRU_status_t * pstatus ) ;
-LRU_list_t * LRU_Init( LRU_parameter_t lru_param, LRU_status_t *pstatus ) ;
-int LRU_gc_invalid( LRU_list_t * plru, void * cleanparam ) ;
-int LRU_invalidate( LRU_list_t * plru, LRU_entry_t * pentry ) ;
-int LRU_invalidate_by_function( LRU_list_t * plru, int (*testfunc)(LRU_entry_t *, void * addparam), void * addparam ) ;
-int LRU_apply_function( LRU_list_t * plru, int (*myfunc)(LRU_entry_t *, void * addparam), void * addparam ) ;
-void LRU_Print( LRU_list_t * plru ) ;
+LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus);
+LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus);
+int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam);
+int LRU_invalidate(LRU_list_t * plru, LRU_entry_t * pentry);
+int LRU_invalidate_by_function(LRU_list_t * plru,
+			       int (*testfunc) (LRU_entry_t *, void *addparam),
+			       void *addparam);
+int LRU_apply_function(LRU_list_t * plru, int (*myfunc) (LRU_entry_t *, void *addparam),
+		       void *addparam);
+void LRU_Print(LRU_list_t * plru);
 
 /* How many character used to display a key or value */
 #define LRU_DISPLAY_STRLEN 1024
 
 /* Possible errors */
-#define LRU_LIST_SUCCESS           0 
+#define LRU_LIST_SUCCESS           0
 #define LRU_LIST_MALLOC_ERROR      1
 #define LRU_LIST_EMPTY_LIST        2
 #define LRU_LIST_BAD_RELEASE_ENTRY 3
 
-#define LRU_LIST_SET_INVALID        0 
+#define LRU_LIST_SET_INVALID        0
 #define LRU_LIST_DO_NOT_SET_INVALID 1
-#endif /* _LRU_LIST_H */
+#endif				/* _LRU_LIST_H */

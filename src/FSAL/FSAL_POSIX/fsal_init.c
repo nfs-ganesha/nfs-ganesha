@@ -56,7 +56,7 @@
     /* In the other cases, we keep the default value. */          \
     }                                                             \
 
-  
+
 #define SET_STRING_PARAM( api_cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
@@ -88,54 +88,55 @@
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t  FSAL_Init(
-    fsal_parameter_t        * init_info         /* IN */
-){
-  
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+    )
+{
+
   fsal_status_t status;
   int rc;
-              
+
   /* sanity check.  */
   if (!init_info)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_Init);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* Check for very important args */
 
-  if ( init_info->fsal_info.log_outputs.liste_voies == NULL )
-  {
-    /* issue a warning on stderr */
-    DisplayLog("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-  }
-  
+  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+    {
+      /* issue a warning on stderr */
+      DisplayLog
+	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+    }
+
   /* proceeds FSAL internal initialization */
-  
-  status = fsal_internal_init_global( &(init_info->fsal_info),
-                                      &(init_info->fs_common_info),
-                                      &(init_info->fs_specific_info));  
-  
-  if (FSAL_IS_ERROR(status)) Return(status.major,status.minor,INDEX_FSAL_Init);
+
+  status = fsal_internal_init_global(&(init_info->fsal_info),
+				     &(init_info->fs_common_info),
+				     &(init_info->fs_specific_info));
+
+  if (FSAL_IS_ERROR(status))
+    Return(status.major, status.minor, INDEX_FSAL_Init);
 
   /* FS Specific initialization. */
 
   /* Define the password file path used by PostgreSQL */
 #if defined(_USE_PGSQL)
-  if (! init_info->fs_specific_info.dbparams.passwdfile[0] == '\0') {
-    rc = setenv("PGPASSFILE", init_info->fs_specific_info.dbparams.passwdfile, 1);
-    if (rc != 0)
-      DisplayLog("FSAL INIT: *** WARNING: Could not set POSTGRESQL keytab path.");
-  }
+  if (!init_info->fs_specific_info.dbparams.passwdfile[0] == '\0')
+    {
+      rc = setenv("PGPASSFILE", init_info->fs_specific_info.dbparams.passwdfile, 1);
+      if (rc != 0)
+	DisplayLog("FSAL INIT: *** WARNING: Could not set POSTGRESQL keytab path.");
+    }
 #elif defined (_USE_MYSQL)
   my_init();
 #endif
-    
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_Init);  
-  
-}
 
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+
+}
 
 /* To be called before exiting */
-fsal_status_t  FSAL_terminate()
+fsal_status_t FSAL_terminate()
 {
-    ReturnCode( ERR_FSAL_NO_ERROR, 0);
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-

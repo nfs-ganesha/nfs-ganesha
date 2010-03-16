@@ -19,7 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-
 /**
  * FSAL_unlink:
  * Remove a filesystem object .
@@ -48,131 +47,124 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
- 
-fsal_status_t FSAL_unlink(
-    fsal_handle_t           * parentdir_handle,     /* IN */
-    fsal_name_t             * p_object_name,        /* IN */
-    fsal_op_context_t       * p_context,            /* IN */
-    fsal_attrib_list_t      * parentdir_attributes  /* [IN/OUT ] */
-){
-  
+
+fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,	/* IN */
+			  fsal_name_t * p_object_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_attrib_list_t * parentdir_attributes	/* [IN/OUT ] */
+    )
+{
+
   fsal_status_t st;
   int rc;
   fsal_handle_t obj_handle;
-  
+
   /* sanity checks.
    * note : parentdir_attributes are optional.
    *        parentdir_handle is mandatory,
    *        because, we do not allow to delete FS root !
    */
-  if ( !parentdir_handle || !p_context || !p_object_name)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_unlink);
-  
-  
+  if (!parentdir_handle || !p_context || !p_object_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
+
   /* Action depends on the object type to be deleted.
    * To know that, we get fsal object handle.
    */
-  st=FSAL_lookup (
-        parentdir_handle,   /* IN */
-        p_object_name,      /* IN */
-        p_context,          /* IN */
-        &obj_handle,        /* OUT */
-        NULL );             /* IN/OUT */
+  st = FSAL_lookup(parentdir_handle,	/* IN */
+		   p_object_name,	/* IN */
+		   p_context,	/* IN */
+		   &obj_handle,	/* OUT */
+		   NULL);	/* IN/OUT */
 
-  if (FSAL_IS_ERROR(st)) Return( st.major ,st.minor , INDEX_FSAL_unlink );
+  if (FSAL_IS_ERROR(st))
+    Return(st.major, st.minor, INDEX_FSAL_unlink);
 
-  
-  switch( obj_handle.obj_type ){
-        
-    case FSAL_TYPE_DIR   :
-      
+  switch (obj_handle.obj_type)
+    {
+
+    case FSAL_TYPE_DIR:
+
       /* remove a directory */
-      
+
       TakeTokenFSCall();
-      
-      rc = hpss_RmdirHandle(
-              &(parentdir_handle->ns_handle),
-              p_object_name->name,
-              &(p_context->credential.hpss_usercred));
-      
-      ReleaseTokenFSCall();
-      
-      /* The EEXIST error is actually an NOTEMPTY error. */
-      
-      if ( rc == EEXIST || rc == -EEXIST )
-        Return( ERR_FSAL_NOTEMPTY, -rc, INDEX_FSAL_unlink );      
-      else if (rc)
-        Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
-      
-      break;            
-            
-    case FSAL_TYPE_LNK   :
-    case FSAL_TYPE_FILE  :
-      
-      /* remove an object */
-      
-      TakeTokenFSCall();
-      
-      rc = hpss_UnlinkHandle(
-              &(parentdir_handle->ns_handle),
-              p_object_name->name,
-              &(p_context->credential.hpss_usercred));
+
+      rc = hpss_RmdirHandle(&(parentdir_handle->ns_handle),
+			    p_object_name->name, &(p_context->credential.hpss_usercred));
 
       ReleaseTokenFSCall();
-      
-      if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
-      
-      break;      
-      
-    case FSAL_TYPE_JUNCTION  :
-      /* remove a junction */
-      
-      TakeTokenFSCall();
-      
-      rc = hpss_JunctionDeleteHandle(
-              &(parentdir_handle->ns_handle),
-              p_object_name->name,
-              &(p_context->credential.hpss_usercred));
-      
-      ReleaseTokenFSCall();
-      
-      if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
+
+      /* The EEXIST error is actually an NOTEMPTY error. */
+
+      if (rc == EEXIST || rc == -EEXIST)
+	Return(ERR_FSAL_NOTEMPTY, -rc, INDEX_FSAL_unlink);
+      else if (rc)
+	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
 
       break;
-      
-      
-    case FSAL_TYPE_FIFO :
-    case FSAL_TYPE_CHR   :
-    case FSAL_TYPE_BLK   :
-    case FSAL_TYPE_SOCK  :
+
+    case FSAL_TYPE_LNK:
+    case FSAL_TYPE_FILE:
+
+      /* remove an object */
+
+      TakeTokenFSCall();
+
+      rc = hpss_UnlinkHandle(&(parentdir_handle->ns_handle),
+			     p_object_name->name, &(p_context->credential.hpss_usercred));
+
+      ReleaseTokenFSCall();
+
+      if (rc)
+	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
+
+      break;
+
+    case FSAL_TYPE_JUNCTION:
+      /* remove a junction */
+
+      TakeTokenFSCall();
+
+      rc = hpss_JunctionDeleteHandle(&(parentdir_handle->ns_handle),
+				     p_object_name->name,
+				     &(p_context->credential.hpss_usercred));
+
+      ReleaseTokenFSCall();
+
+      if (rc)
+	Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_unlink);
+
+      break;
+
+    case FSAL_TYPE_FIFO:
+    case FSAL_TYPE_CHR:
+    case FSAL_TYPE_BLK:
+    case FSAL_TYPE_SOCK:
     default:
-       DisplayLogJdLevel( fsal_log, NIV_CRIT, "Unexpected object type : %d\n",
-            obj_handle.obj_type );
-       Return(ERR_FSAL_SERVERFAULT ,0 , INDEX_FSAL_unlink);
-    
-  }
-  
-  
+      DisplayLogJdLevel(fsal_log, NIV_CRIT, "Unexpected object type : %d\n",
+			obj_handle.obj_type);
+      Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_unlink);
+
+    }
+
   /* Now, we get new attributes for the parent directory,
    * if they are asked.
    */
-  
-  if (parentdir_attributes){
-    
-    st = FSAL_getattrs( parentdir_handle, p_context , parentdir_attributes );
-    
-    /* On error, we set a flag in the returned attributes */
-    
-    if ( FSAL_IS_ERROR( st ) )
-    {
-      FSAL_CLEAR_MASK( parentdir_attributes->asked_attributes );
-      FSAL_SET_MASK( parentdir_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
-    }
-  }
-  
-  /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_unlink);
-  
-}
 
+  if (parentdir_attributes)
+    {
+
+      st = FSAL_getattrs(parentdir_handle, p_context, parentdir_attributes);
+
+      /* On error, we set a flag in the returned attributes */
+
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
+	  FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+    }
+
+  /* OK */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink);
+
+}

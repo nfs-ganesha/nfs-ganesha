@@ -20,7 +20,6 @@
 #include "fsal_convert.h"
 #include <string.h>
 
-
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
@@ -45,31 +44,27 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(
-    fsal_handle_t             * dir_handle,           /* IN */
-    fsal_op_context_t         * p_context,            /* IN */
-    fsal_dir_t                * dir_descriptor,       /* OUT */
-    fsal_attrib_list_t        * dir_attributes        /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
+			   fsal_op_context_t * p_context,	/* IN */
+			   fsal_dir_t * dir_descriptor,	/* OUT */
+			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+    )
+{
   int rc;
-  fsal_status_t  st;
-      
+  fsal_status_t st;
+
   /* sanity checks
    * note : dir_attributes is optionnal.
    */
   if (!dir_handle || !p_context || !dir_descriptor)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_opendir);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
-  
   /* >> You can prepare your directory for beeing read  
    * and check that the user has the right for reading its content <<*/
-  
-    
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_opendir );
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
 }
-
-
 
 /**
  * FSAL_readdir :
@@ -106,46 +101,41 @@ fsal_status_t FSAL_opendir(
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(
-    fsal_dir_t            * dir_descriptor,     /* IN */
-    fsal_cookie_t         start_position ,      /* IN */
-    fsal_attrib_mask_t    get_attr_mask,        /* IN */
-    fsal_mdsize_t         buffersize,           /* IN */
-    fsal_dirent_t         * pdirent,            /* OUT */
-    fsal_cookie_t         * end_position,       /* OUT */
-    fsal_count_t          * nb_entries,         /* OUT */
-    fsal_boolean_t        * end_of_dir          /* OUT */
-){
-  
+fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
+			   fsal_cookie_t start_position,	/* IN */
+			   fsal_attrib_mask_t get_attr_mask,	/* IN */
+			   fsal_mdsize_t buffersize,	/* IN */
+			   fsal_dirent_t * pdirent,	/* OUT */
+			   fsal_cookie_t * end_position,	/* OUT */
+			   fsal_count_t * nb_entries,	/* OUT */
+			   fsal_boolean_t * end_of_dir	/* OUT */
+    )
+{
+
   /* sanity checks */
-  
-  if ( !dir_descriptor || !pdirent || !end_position
-        || !nb_entries || !end_of_dir )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_readdir);
-  
-  
+
+  if (!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+
   TakeTokenFSCall();
-    
+
   /* >> read some entry from you filesystem << */
-    
+
   ReleaseTokenFSCall();
-    
+
   /* >> convert error code and return on error << */
-  
+
   /* >> fill the output dirent array << */
-    
+
   /* until the requested count is reached
    * or the end of dir is reached...
    */
-  
-  /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */  
-       
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_readdir );
+
+  /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
 }
-
-
 
 /**
  * FSAL_closedir :
@@ -160,19 +150,18 @@ fsal_status_t FSAL_readdir(
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(
-    fsal_dir_t * dir_descriptor         /* IN */
-){
-  
-  int rc;
-  
-  /* sanity checks */
-  if ( !dir_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_closedir);
-  
-  /* >> release the resources used for reading your directory << */
-    
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_closedir );
-  
-}
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
+    )
+{
 
+  int rc;
+
+  /* sanity checks */
+  if (!dir_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
+
+  /* >> release the resources used for reading your directory << */
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
+
+}

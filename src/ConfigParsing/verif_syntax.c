@@ -29,32 +29,36 @@
 #include "config_parsing.h"
 #include <errno.h>
 
-int main(int argc, char ** argv){
-    
-        
-    char * errtxt;
-    char * fichier;
-    
-    config_file_t config;
-    
-    if ((argc>1)&&(argv[1])){
-        fichier=argv[1];
-    } else {
-        fprintf(stderr,"Usage %s <config_file>\n",argv[0]);
-        exit(EINVAL);
+int main(int argc, char **argv)
+{
+
+  char *errtxt;
+  char *fichier;
+
+  config_file_t config;
+
+  if ((argc > 1) && (argv[1]))
+    {
+      fichier = argv[1];
+    } else
+    {
+      fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
+      exit(EINVAL);
     }
 
-	/* test de la syntaxe du fichier */
-    config = config_ParseFile(fichier);    
-    if (config == NULL){
-		errtxt = config_GetErrorMsg();
-        fprintf(stderr,"Erreur de parsing de %s : %s\n",argv[1],errtxt);
-        exit(EINVAL);
-    } else {
-    	fprintf(stderr,"La syntaxe du fichier %s est correcte !\n",argv[1]);
-    	exit(0);
-	}
-	
-	return 0; /* supprime warning du compilo */
+  /* test de la syntaxe du fichier */
+  config = config_ParseFile(fichier);
+  if (config == NULL)
+    {
+      errtxt = config_GetErrorMsg();
+      fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);
+      exit(EINVAL);
+    } else
+    {
+      fprintf(stderr, "La syntaxe du fichier %s est correcte !\n", argv[1]);
+      exit(0);
+    }
+
+  return 0;			/* supprime warning du compilo */
 
 }

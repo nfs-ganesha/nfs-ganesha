@@ -19,7 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_convertions.h"
 
-
 /**
  * FSAL_access :
  * Tests whether the user or entity identified by permcontext
@@ -57,57 +56,58 @@
  *        - ERR_FSAL_IO           (corrupted FS)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_access(
-    fsal_handle_t              * object_handle,      /* IN */
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
-)
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessflags_t access_type,	/* IN */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
 {
 
   GHOSTFS_testperm_t test = 0;
   int rc;
-  
-  SetFuncID(INDEX_FSAL_access)  ;
+
+  SetFuncID(INDEX_FSAL_access);
 
   /* sanity checks.
    * note : object_attributes is optionnal in FSAL_getattrs.
    */
   if (!object_handle || !p_context)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_access);
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
+
   /* converts fsal access type to ghostfs access type */
   test = fsal2ghost_testperm(access_type);
-  
+
   /* call to GHOST_FS access */
-  rc = GHOSTFS_Access( (GHOSTFS_handle_t)(*object_handle), test ,
-                               p_context->credential.user,
-                               p_context->credential.group );
-  
-  if ( rc ) Return( ghost2fsal_error(rc), rc, INDEX_FSAL_access );
-  
+  rc = GHOSTFS_Access((GHOSTFS_handle_t) (*object_handle), test,
+		      p_context->credential.user, p_context->credential.group);
+
+  if (rc)
+    Return(ghost2fsal_error(rc), rc, INDEX_FSAL_access);
+
   /* get attributes if object_attributes is not null.
    * If an error occures during getattr operation,
    * it is returned, even though the access operation succeeded.
    */
-  if ( object_attributes ){
-    fsal_status_t status;
-     
-    switch( (status = FSAL_getattrs( object_handle, p_context , object_attributes )).major){
-      /* change the FAULT error to appears as an internal error.
-       * indeed, parameters should be null. */
-      case ERR_FSAL_FAULT:
-        Return( ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_access);
-        break;
-      case ERR_FSAL_NO_ERROR :
-        /* continue */
-        break;
-      default:
-        Return( status.major, status.minor,INDEX_FSAL_access);
+  if (object_attributes)
+    {
+      fsal_status_t status;
+
+      switch ((status = FSAL_getattrs(object_handle, p_context, object_attributes)).major)
+	{
+	  /* change the FAULT error to appears as an internal error.
+	   * indeed, parameters should be null. */
+	case ERR_FSAL_FAULT:
+	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_access);
+	  break;
+	case ERR_FSAL_NO_ERROR:
+	  /* continue */
+	  break;
+	default:
+	  Return(status.major, status.minor, INDEX_FSAL_access);
+	}
+
     }
-    
-  }
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_access );
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_access);
+
 }

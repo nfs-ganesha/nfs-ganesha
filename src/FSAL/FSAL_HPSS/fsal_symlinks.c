@@ -23,7 +23,6 @@
 
 #include <hpss_errno.h>
 
-
 /**
  * FSAL_readlink:
  * Read the content of a symbolic link.
@@ -52,79 +51,72 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(
-    fsal_handle_t         * linkhandle,       /* IN */
-    fsal_op_context_t     * p_context,                     /* IN */
-    fsal_path_t           * p_link_content,     /* OUT */
-    fsal_attrib_list_t    * link_attributes   /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_path_t * p_link_content,	/* OUT */
+			    fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+    )
+{
 
   int rc;
   fsal_status_t st;
   char link_content_out[FSAL_MAX_PATH_LEN];
-  
- /* sanity checks.
-  * note : link_attributes is optional.
-  */
+
+  /* sanity checks.
+   * note : link_attributes is optional.
+   */
   if (!linkhandle || !p_context || !p_link_content)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_readlink);
-    
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
+
   /* call to the API */
-  
+
   TakeTokenFSCall();
-  
-  rc = hpss_ReadlinkHandle(
-    &(linkhandle->ns_handle),       /* IN - Handle of symbolic link */
-    NULL,                           /* IN - Path of the link (null=>ignored) */
-    link_content_out,               /* OUT - contents of the link */
-    FSAL_MAX_PATH_LEN,              /* IN - Size, in bytes, of contents buffer */
-    &p_context->credential.hpss_usercred ); /* IN - pointer to user credentials */
+
+  rc = hpss_ReadlinkHandle(&(linkhandle->ns_handle),	/* IN - Handle of symbolic link */
+			   NULL,	/* IN - Path of the link (null=>ignored) */
+			   link_content_out,	/* OUT - contents of the link */
+			   FSAL_MAX_PATH_LEN,	/* IN - Size, in bytes, of contents buffer */
+			   &p_context->credential.hpss_usercred);	/* IN - pointer to user credentials */
 
   ReleaseTokenFSCall();
-  
+
   /* /!\ rc is the length for the symlink content !!! */
-  
+
   /* The HPSS_ENOENT error actually means that handle is STALE */
-  if ( rc == HPSS_ENOENT )
-    Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_readlink);
-  else if ( rc < 0 )
-    Return( hpss2fsal_error(rc), -rc, INDEX_FSAL_readlink);
-  
-    
+  if (rc == HPSS_ENOENT)
+    Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_readlink);
+  else if (rc < 0)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readlink);
+
   /* convert char * to fsal_path_t */
-  
-  st = FSAL_str2path(link_content_out,FSAL_MAX_PATH_LEN,p_link_content);
-  
-  if ( FSAL_IS_ERROR( st ) )
-    Return(st.major, st.minor,INDEX_FSAL_readlink);
-    
-  
+
+  st = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
+
+  if (FSAL_IS_ERROR(st))
+    Return(st.major, st.minor, INDEX_FSAL_readlink);
+
   /* retrieves object attributes, if asked */
-  
-  if ( link_attributes ){
-    
-    fsal_status_t status;
-    
-    status = FSAL_getattrs( linkhandle, p_context , link_attributes );
-    
-    /* On error, we set a flag in the returned attributes */
-    
-    if ( FSAL_IS_ERROR( status ) )
+
+  if (link_attributes)
     {
-      FSAL_CLEAR_MASK( link_attributes->asked_attributes );
-      FSAL_SET_MASK( link_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      fsal_status_t status;
+
+      status = FSAL_getattrs(linkhandle, p_context, link_attributes);
+
+      /* On error, we set a flag in the returned attributes */
+
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-    
-  }
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_readlink );
-  
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readlink);
+
 }
-
-
 
 /**
  * FSAL_symlink:
@@ -160,94 +152,82 @@ fsal_status_t FSAL_readlink(
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(
-    fsal_handle_t         * parent_directory_handle,    /* IN */
-    fsal_name_t           * p_linkname,                 /* IN */
-    fsal_path_t           * p_linkcontent,              /* IN */
-    fsal_op_context_t     * p_context,                     /* IN */
-    fsal_accessmode_t       accessmode,                 /* IN (ignored) */
-    fsal_handle_t         * link_handle,                /* OUT */
-    fsal_attrib_list_t    * link_attributes             /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
+			   fsal_name_t * p_linkname,	/* IN */
+			   fsal_path_t * p_linkcontent,	/* IN */
+			   fsal_op_context_t * p_context,	/* IN */
+			   fsal_accessmode_t accessmode,	/* IN (ignored) */
+			   fsal_handle_t * link_handle,	/* OUT */
+			   fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+    )
+{
 
   int rc;
-  hpss_Attrs_t  attrs;
-  
+  hpss_Attrs_t attrs;
+
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if ( !parent_directory_handle || 
-       !p_context   ||
-       !link_handle ||
-       !p_linkname  ||
-       !p_linkcontent )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_symlink);
-  
+  if (!parent_directory_handle ||
+      !p_context || !link_handle || !p_linkname || !p_linkcontent)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_symlink);
 
   /* Tests if symlinking is allowed by configuration. */
-  
-  if ( !global_fs_info.symlink_support )
-      Return( ERR_FSAL_NOTSUPP, 0,INDEX_FSAL_symlink);
 
-    
+  if (!global_fs_info.symlink_support)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
+
   /* call to hpss client API. */
-  
+
   TakeTokenFSCall();
-  
-  rc = HPSSFSAL_SymlinkHandle(
-          &(parent_directory_handle->ns_handle),  /* IN - Handle of existing file */
-          p_linkcontent->path,    /* IN - Desired contents of the link */
-          p_linkname->name,       /* IN - New name of the symbolic link */
-          &(p_context->credential.hpss_usercred), /* IN - pointer to user credentials */
-          &(link_handle->ns_handle), /* OUT */
-          &attrs                 /* OUT - symbolic link attributes */
-       );
-  
+
+  rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->ns_handle),	/* IN - Handle of existing file */
+			      p_linkcontent->path,	/* IN - Desired contents of the link */
+			      p_linkname->name,	/* IN - New name of the symbolic link */
+			      &(p_context->credential.hpss_usercred),	/* IN - pointer to user credentials */
+			      &(link_handle->ns_handle),	/* OUT */
+			      &attrs	/* OUT - symbolic link attributes */
+      );
+
   ReleaseTokenFSCall();
-  
+
   /* /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.
    * Thus, we must double-check by calling getattrs.   
    */
-  if ( rc == HPSS_ENOTDIR || rc == HPSS_ENOENT )
-  {
-      if ( HPSSFSAL_IsStaleHandle( &parent_directory_handle->ns_handle,
-                                   &p_context->credential.hpss_usercred ) )
-      {
-        Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_symlink );
-      }
-  }
-  
+  if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
+    {
+      if (HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+				 &p_context->credential.hpss_usercred))
+	{
+	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_symlink);
+	}
+    }
+
   /* other errors */
-  if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_symlink);
-  
+  if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_symlink);
+
   /* set output handle */
   link_handle->obj_type = FSAL_TYPE_LNK;
-  
-  
+
   /* get attributes if asked */
-  
-  if ( link_attributes ){
-    
-    fsal_status_t status;
-    
-    status = hpss2fsal_attributes(
-                     &(link_handle->ns_handle),
-                     &attrs,
-                     link_attributes );
 
-    
-    if ( FSAL_IS_ERROR( status ) )
+  if (link_attributes)
     {
-        FSAL_CLEAR_MASK( link_attributes->asked_attributes );
-        FSAL_SET_MASK( link_attributes->asked_attributes,
-            FSAL_ATTR_RDATTR_ERR );
-    }
-    
-  }
-  
-  
-  /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_symlink);
-}
 
+      fsal_status_t status;
+
+      status = hpss2fsal_attributes(&(link_handle->ns_handle), &attrs, link_attributes);
+
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
+    }
+
+  /* OK */
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_symlink);
+}

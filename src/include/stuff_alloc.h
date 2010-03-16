@@ -85,7 +85,6 @@
  *
  */
 
-
 #ifndef _STUFF_ALLOC_H
 #define _STUFF_ALLOC_H
 
@@ -112,7 +111,7 @@
 #  define Mem_Calloc( s1, s2 ) BuddyCalloc_Autolabel( s1, s2, __FILE__, __FUNCTION__, __LINE__ )
 #  define Mem_Realloc( p, s)   BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__ )
 #else
-#  define Mem_Alloc( a )       BuddyMallocExit( a ) 
+#  define Mem_Alloc( a )       BuddyMallocExit( a )
 #  define Mem_Calloc( s1, s2 ) BuddyCalloc( s1, s2 )
 #  define Mem_Realloc( p, s)   BuddyRealloc( (caddr_t)(p), s )
 #endif
@@ -123,9 +122,6 @@
 #define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
 
 #endif
-
-
-
 
 #ifndef _NO_BLOCK_PREALLOC
 
@@ -170,8 +166,6 @@ do                                                                            \
     }                                                                         \
 } while( 0 )
 
-
-
 /**
  *
  * GET_PREALLOC: Gets an entry in a preallocated pool. 
@@ -204,7 +198,7 @@ do                                                                        \
     }                                                                     \
   else                                                                    \
    _entry = NULL ;                                                        \
-} while( 0 ) 
+} while( 0 )
 
 /**
  *
@@ -226,7 +220,7 @@ do                                                                        \
 {                                                                         \
   _entry->_name_next = _pool ;                                            \
   _pool = _entry ;                                                        \
-} while( 0 ) 
+} while( 0 )
 
 /**
  *
@@ -333,9 +327,7 @@ do                                                                        \
   pool = entry ;                                                          \
 } while( 0 )
 
-#else /* no block preallocation */
-
-
+#else				/* no block preallocation */
 
 #define STUFF_PREALLOC( pool, nb, type, name_next )                       \
               do {                                                        \
@@ -348,10 +340,9 @@ do                                                                        \
 {                                                                         \
   entry = (type *)Mem_Alloc( sizeof( type ));                             \
   entry->name_next = NULL;                                                \
-} while( 0 ) 
+} while( 0 )
 
 #define RELEASE_PREALLOC( entry, pool, name_next )     Mem_Free( entry )
-        
 
 #define STUFF_PREALLOC_CONSTRUCT( pool, nb, type, name_next, construct )   \
               do {                                                        \
@@ -374,7 +365,6 @@ do                                                                        \
   Mem_Free( entry );                                                      \
 } while( 0 )
 
+#endif				/* no block preallocation */
 
-#endif /* no block preallocation */
-
-#endif /* _STUFF_ALLOC_H */
+#endif				/* _STUFF_ALLOC_H */

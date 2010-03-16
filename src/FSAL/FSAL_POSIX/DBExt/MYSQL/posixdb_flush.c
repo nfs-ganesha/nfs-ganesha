@@ -7,18 +7,17 @@
 #include "fsal_types.h"
 #include "posixdb_internal.h"
 
-
-fsal_posixdb_status_t fsal_posixdb_flush( fsal_posixdb_conn * p_conn )
+fsal_posixdb_status_t fsal_posixdb_flush(fsal_posixdb_conn * p_conn)
 {
-    fsal_posixdb_status_t rc;
+  fsal_posixdb_status_t rc;
 
-    rc = db_exec_sql( p_conn, "DELETE FROM Parent", NULL );
-    if ( FSAL_POSIXDB_IS_ERROR( rc ) )
-        return rc;
+  rc = db_exec_sql(p_conn, "DELETE FROM Parent", NULL);
+  if (FSAL_POSIXDB_IS_ERROR(rc))
+    return rc;
 
-    rc = db_exec_sql( p_conn, "DELETE FROM Handle", NULL );
-    if ( FSAL_POSIXDB_IS_ERROR( rc ) )
-        return rc;
+  rc = db_exec_sql(p_conn, "DELETE FROM Handle", NULL);
+  if (FSAL_POSIXDB_IS_ERROR(rc))
+    return rc;
 
-    ReturnCode( ERR_FSAL_POSIXDB_NOERR, 0 );
+  ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }

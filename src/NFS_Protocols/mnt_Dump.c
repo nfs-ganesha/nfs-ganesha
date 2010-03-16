@@ -93,7 +93,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -131,21 +131,22 @@
  *
  */
 
-int mnt_Dump( nfs_arg_t            * parg    /* IN     */,
-              exportlist_t         * pexport /* IN     */,
-              fsal_op_context_t          * pcontext   /* IN     */,
-              cache_inode_client_t * pclient /* INOUT  */,
-              hash_table_t         * ht      /* INOUT  */, 
-              struct svc_req       * preq    /* IN     */,
-              nfs_res_t            * pres    /* OUT    */ ) 
+int mnt_Dump(nfs_arg_t * parg /* IN     */ ,
+	     exportlist_t * pexport /* IN     */ ,
+	     fsal_op_context_t * pcontext /* IN     */ ,
+	     cache_inode_client_t * pclient /* INOUT  */ ,
+	     hash_table_t * ht /* INOUT  */ ,
+	     struct svc_req *preq /* IN     */ ,
+	     nfs_res_t * pres /* OUT    */ )
 {
-  DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "REQUEST PROCESSING: Calling mnt_Dump" ) ;
-  
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+		    "REQUEST PROCESSING: Calling mnt_Dump");
+
   /* Get the root of the mount list */
-  pres->res_dump =  nfs_Get_MountList( ) ;
-  
-	return NFS_REQ_OK ;
-} /* mnt_Null */
+  pres->res_dump = nfs_Get_MountList();
+
+  return NFS_REQ_OK;
+}				/* mnt_Null */
 
 /**
  * mnt_Dump_Free: Frees the result structure allocated for mnt_Dump.
@@ -155,8 +156,8 @@ int mnt_Dump( nfs_arg_t            * parg    /* IN     */,
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Dump_Free( nfs_res_t * pres )
+void mnt_Dump_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
-  return ;
-} /* mnt_Dump_Free */ 
+  return;
+}				/* mnt_Dump_Free */

@@ -97,7 +97,7 @@
 
 #ifndef _USE_SWIG
 
-extern mfsl_parameter_t  mfsl_param ;
+extern mfsl_parameter_t mfsl_param;
 
 /**
  *
@@ -109,21 +109,22 @@ extern mfsl_parameter_t  mfsl_param ;
  *
  * @return the status of the performed FSAL_setattrs.
  */
-fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
+fsal_status_t MFSL_unlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  DisplayLogLevel( NIV_DEBUG, "Making asynchronous FSAL_unlink for async op %p", popasyncdesc ) ;
+  DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_unlink for async op %p",
+		  popasyncdesc);
 
-  P( popasyncdesc->op_args.remove.pmobject->lock ) ;
-  fsal_status = FSAL_unlink( &(popasyncdesc->op_args.remove.pmobject->handle),
-			     &popasyncdesc->op_args.remove.name,
-                             &popasyncdesc->fsal_op_context,
-                             &popasyncdesc->op_res.remove.attr ) ;
-  V( popasyncdesc->op_args.remove.pmobject->lock ) ;
+  P(popasyncdesc->op_args.remove.pmobject->lock);
+  fsal_status = FSAL_unlink(&(popasyncdesc->op_args.remove.pmobject->handle),
+			    &popasyncdesc->op_args.remove.name,
+			    &popasyncdesc->fsal_op_context,
+			    &popasyncdesc->op_res.remove.attr);
+  V(popasyncdesc->op_args.remove.pmobject->lock);
 
-  return fsal_status ; 
-} /* MFSL_unlink_async_op */
+  return fsal_status;
+}				/* MFSL_unlink_async_op */
 
 /**
  *
@@ -140,23 +141,23 @@ fsal_status_t  MFSL_unlink_async_op( mfsl_async_op_desc_t  * popasyncdesc )
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handle,        /* IN */
-				        mfsl_object_specific_data_t  * dir_pspecdata,     /* IN */
-    			                fsal_name_t                  * p_object_name,     /* IN */
-    			    		fsal_attrib_list_t           * dir_attributes,    /* [ IN/OUT ] */ 
-    					fsal_op_context_t            * p_context,         /* IN */
-    					mfsl_context_t               * p_mfsl_context     /* IN */ )
+fsal_status_t MFSAL_unlink_check_perms(mfsl_object_t * dir_handle,	/* IN */
+				       mfsl_object_specific_data_t * dir_pspecdata,	/* IN */
+				       fsal_name_t * p_object_name,	/* IN */
+				       fsal_attrib_list_t * dir_attributes,	/* [ IN/OUT ] */
+				       fsal_op_context_t * p_context,	/* IN */
+				       mfsl_context_t * p_mfsl_context /* IN */ )
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  fsal_status = FSAL_unlink_access( p_context, dir_attributes ) ;
+  fsal_status = FSAL_unlink_access(p_context, dir_attributes);
 
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /** @todo : put some stuff in this function */
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_unlink_check_perms */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_unlink_check_perms */
 
 /**
  *
@@ -173,114 +174,105 @@ fsal_status_t MFSAL_unlink_check_perms( mfsl_object_t                * dir_handl
  *
  * @return the same as FSAL_unlink
  */
-fsal_status_t MFSL_unlink(  mfsl_object_t         * dir_handle,           /* IN */
-    			    fsal_name_t           * p_object_name,        /* IN */
-			    mfsl_object_t         * object_handle,        /* INOUT */
-    			    fsal_op_context_t     * p_context,            /* IN */
-    			    mfsl_context_t        * p_mfsl_context,       /* IN */
-    			    fsal_attrib_list_t    * dir_attributes        /* [ IN/OUT ] */ )
+fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,	/* IN */
+			  fsal_name_t * p_object_name,	/* IN */
+			  mfsl_object_t * object_handle,	/* INOUT */
+			  fsal_op_context_t * p_context,	/* IN */
+			  mfsl_context_t * p_mfsl_context,	/* IN */
+			  fsal_attrib_list_t * dir_attributes /* [ IN/OUT ] */ )
 {
-  fsal_status_t fsal_status ;
-  mfsl_async_op_desc_t        * pasyncopdesc = NULL ;
-  mfsl_object_specific_data_t * dir_pasyncdata   = NULL ;
-  mfsl_object_specific_data_t * obj_pasyncdata   = NULL ;
+  fsal_status_t fsal_status;
+  mfsl_async_op_desc_t *pasyncopdesc = NULL;
+  mfsl_object_specific_data_t *dir_pasyncdata = NULL;
+  mfsl_object_specific_data_t *obj_pasyncdata = NULL;
 
-  GET_PREALLOC( pasyncopdesc,
-                p_mfsl_context->pool_async_op,
-                mfsl_param.nb_pre_async_op_desc,
-                mfsl_async_op_desc_t,
-                next_alloc ) ;
+  GET_PREALLOC(pasyncopdesc,
+	       p_mfsl_context->pool_async_op,
+	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
-  if( pasyncopdesc == NULL )
-    MFSL_return( ERR_FSAL_INVAL, 0 ) ;
-   
-  if( gettimeofday( &pasyncopdesc->op_time, NULL ) != 0 )
-   {
+  if (pasyncopdesc == NULL)
+    MFSL_return(ERR_FSAL_INVAL, 0);
+
+  if (gettimeofday(&pasyncopdesc->op_time, NULL) != 0)
+    {
       /* Could'not get time of day... Stopping, this may need a major failure */
-      DisplayLog( "MFSL_link: cannot get time of day... exiting" ) ;
-      exit( 1 ) ;
-   }
+      DisplayLog("MFSL_link: cannot get time of day... exiting");
+      exit(1);
+    }
 
-  if( !mfsl_async_get_specdata( dir_handle, &dir_pasyncdata ) )
-   {
-	/* Target is not yet asynchronous */
- 	
-  	GET_PREALLOC( dir_pasyncdata,
-        	      p_mfsl_context->pool_spec_data,
-                      mfsl_param.nb_pre_async_op_desc,
-               	      mfsl_object_specific_data_t,
-               	      next_alloc ) ;
+  if (!mfsl_async_get_specdata(dir_handle, &dir_pasyncdata))
+    {
+      /* Target is not yet asynchronous */
 
-	/* In this case use object_attributes parameter to initiate asynchronous object */
-	dir_pasyncdata->async_attr = *dir_attributes ;
-   }
- 
-  fsal_status = MFSAL_unlink_check_perms( dir_handle, 
-					  dir_pasyncdata, 
-					  p_object_name,
-					  dir_attributes,
-					  p_context, 
-					  p_mfsl_context ) ;
+      GET_PREALLOC(dir_pasyncdata,
+		   p_mfsl_context->pool_spec_data,
+		   mfsl_param.nb_pre_async_op_desc,
+		   mfsl_object_specific_data_t, next_alloc);
 
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return fsal_status ;
+      /* In this case use object_attributes parameter to initiate asynchronous object */
+      dir_pasyncdata->async_attr = *dir_attributes;
+    }
 
-  DisplayLogJdLevel( p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p", pasyncopdesc ) ; 
+  fsal_status = MFSAL_unlink_check_perms(dir_handle,
+					 dir_pasyncdata,
+					 p_object_name,
+					 dir_attributes, p_context, p_mfsl_context);
 
-  pasyncopdesc->op_type    = MFSL_ASYNC_OP_REMOVE ;
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  pasyncopdesc->op_args.remove.pmobject = dir_handle ;
-  pasyncopdesc->op_args.remove.name     = *p_object_name ;
-  pasyncopdesc->op_res.remove.attr      = *dir_attributes ;
+  DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
+		    pasyncopdesc);
 
-  pasyncopdesc->op_func = MFSL_unlink_async_op ;
-  pasyncopdesc->fsal_op_context = *p_context ;
+  pasyncopdesc->op_type = MFSL_ASYNC_OP_REMOVE;
 
-  pasyncopdesc->ptr_mfsl_context = (caddr_t)p_mfsl_context ;
+  pasyncopdesc->op_args.remove.pmobject = dir_handle;
+  pasyncopdesc->op_args.remove.name = *p_object_name;
+  pasyncopdesc->op_res.remove.attr = *dir_attributes;
 
-  fsal_status = MFSL_async_post( pasyncopdesc ) ;
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+  pasyncopdesc->op_func = MFSL_unlink_async_op;
+  pasyncopdesc->fsal_op_context = *p_context;
+
+  pasyncopdesc->ptr_mfsl_context = (caddr_t) p_mfsl_context;
+
+  fsal_status = MFSL_async_post(pasyncopdesc);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
   /* Update the asynchronous metadata */
-  dir_pasyncdata->async_attr.ctime.seconds  = pasyncopdesc->op_time.tv_sec ;
-  dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec ; /** @todo: there may be a coefficient to be applied here */
-  dir_handle->health = MFSL_ASYNC_ASYNCHRONOUS ;
+  dir_pasyncdata->async_attr.ctime.seconds = pasyncopdesc->op_time.tv_sec;
+  dir_pasyncdata->async_attr.ctime.nseconds = pasyncopdesc->op_time.tv_usec;  /** @todo: there may be a coefficient to be applied here */
+  dir_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
-  if( !mfsl_async_set_specdata( dir_handle, dir_pasyncdata ) )
-    MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+  if (!mfsl_async_set_specdata(dir_handle, dir_pasyncdata))
+    MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  if( !mfsl_async_get_specdata( object_handle, &obj_pasyncdata ) )
-   {
-        /* The object to be deleted is not asynchronous, but it has
-         * has to become asynchronous to be correctly managed until the FSAL deletes it */   
-  	GET_PREALLOC( obj_pasyncdata,
-        	      p_mfsl_context->pool_spec_data,
-                      mfsl_param.nb_pre_async_op_desc,
-               	      mfsl_object_specific_data_t,
-               	      next_alloc ) ;
+  if (!mfsl_async_get_specdata(object_handle, &obj_pasyncdata))
+    {
+      /* The object to be deleted is not asynchronous, but it has
+       * has to become asynchronous to be correctly managed until the FSAL deletes it */
+      GET_PREALLOC(obj_pasyncdata,
+		   p_mfsl_context->pool_spec_data,
+		   mfsl_param.nb_pre_async_op_desc,
+		   mfsl_object_specific_data_t, next_alloc);
 
-        /* Possible bug here with getattr because it has not data */
-   }
+      /* Possible bug here with getattr because it has not data */
+    }
 
   /* Depending on the value of numlinks, the object should be deleted or not */
-  if( ( obj_pasyncdata->async_attr.numlinks > 1 ) && ( obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE ) )
-     obj_pasyncdata->async_attr.numlinks -= 1 ;
-  else
-    obj_pasyncdata->deleted = TRUE ;
+  if ((obj_pasyncdata->async_attr.numlinks > 1)
+      && (obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE))
+    obj_pasyncdata->async_attr.numlinks -= 1;
+    else
+    obj_pasyncdata->deleted = TRUE;
 
-  if( !mfsl_async_set_specdata( object_handle, obj_pasyncdata ) )
-    		MFSL_return( ERR_FSAL_SERVERFAULT, 0 ) ;
+  if (!mfsl_async_set_specdata(object_handle, obj_pasyncdata))
+    MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
-  /* Return the correct attributes */ 
-  *dir_attributes = dir_pasyncdata->async_attr ;
+  /* Return the correct attributes */
+  *dir_attributes = dir_pasyncdata->async_attr;
 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_unlink */
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_unlink */
 
-
-
-#endif /* ! _USE_SWIG */
-
-
-
+#endif				/* ! _USE_SWIG */

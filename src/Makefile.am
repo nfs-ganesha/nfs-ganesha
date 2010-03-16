@@ -99,6 +99,8 @@ if USE_FSAL_FUSE
 RPMARGS= --with fuse
 endif
 
+indent:
+	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -bl -i2 -l90 -lc90 {} \;
 
 if USE_FSAL_HPSS
 rpm: nfs-ganesha.spec dist 
@@ -115,9 +117,6 @@ srpm: nfs-ganesha.spec remove_hpss
 	rpmbuild $(RPM_DB_ARGS) $(RPMARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
-
-indent:
-	find . -name '*.[ch]' \! -path './rpm/BUILD/*' -exec indent -linux -bl -i2 -l90 -lc 90 \{\} \\;
 
 EXTRA_DIST=nfs-ganesha.spec           \
            COMPILING_HOWTO.txt        \

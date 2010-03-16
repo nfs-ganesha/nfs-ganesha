@@ -12,7 +12,6 @@
 
 #include "fsal.h"
 
-
 /* some ideas of conversion functions...
 
 int fs2fsal_error(int fs_errorcode);
@@ -45,6 +44,5 @@ fsal_time_t fs2fsal_time( <your fs time structure> );
 <your fs time structure> fsal2fs_time(fsal_time_t in_time);
      
 */
-    
-    
+
 #endif

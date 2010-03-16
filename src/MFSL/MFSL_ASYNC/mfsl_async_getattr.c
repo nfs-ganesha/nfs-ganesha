@@ -110,21 +110,21 @@
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSAL_getattrs_check_perms( mfsl_object_t                * filehandle,        /* IN */
-                                          mfsl_object_specific_data_t  * pspecdata,         /* IN */
- 					  fsal_op_context_t            * p_context,         /* IN */
-    					  mfsl_context_t               * p_mfsl_context,    /* IN */
-    					  fsal_attrib_list_t           * object_attributes  /* IN */ )
+fsal_status_t MFSAL_getattrs_check_perms(mfsl_object_t * filehandle,	/* IN */
+					 mfsl_object_specific_data_t * pspecdata,	/* IN */
+					 fsal_op_context_t * p_context,	/* IN */
+					 mfsl_context_t * p_mfsl_context,	/* IN */
+					 fsal_attrib_list_t * object_attributes /* IN */ )
 {
-  fsal_status_t fsal_status ;
-  
-  fsal_status = FSAL_test_access( p_context, FSAL_R_OK, object_attributes ) ;
+  fsal_status_t fsal_status;
 
-  if( FSAL_IS_ERROR( fsal_status ) ) 
-    return fsal_status ;
+  fsal_status = FSAL_test_access(p_context, FSAL_R_OK, object_attributes);
 
-  MFSL_return( ERR_FSAL_NO_ERROR, 0 );
-} /* MFSL_setattr_check_perms */
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
+
+  MFSL_return(ERR_FSAL_NO_ERROR, 0);
+}				/* MFSL_setattr_check_perms */
 
 /**
  *
@@ -139,77 +139,68 @@ fsal_status_t MFSAL_getattrs_check_perms( mfsl_object_t                * filehan
  *
  * @return the same as FSAL_getattrs
  */
-fsal_status_t MFSL_getattrs(
-    mfsl_object_t         * filehandle,        /* IN */
-    fsal_op_context_t     * p_context,         /* IN */
-    mfsl_context_t        * p_mfsl_context,    /* IN */
-    fsal_attrib_list_t    * object_attributes  /* [ IN/OUT ] */
-)
+fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    mfsl_context_t * p_mfsl_context,	/* IN */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
 {
-  fsal_status_t                  fsal_status ;
-  mfsl_object_specific_data_t  * pasyncdata ;
+  fsal_status_t fsal_status;
+  mfsl_object_specific_data_t *pasyncdata;
 
-  if( mfsl_async_get_specdata( filehandle, &pasyncdata ) )
-   {
-     P( filehandle->lock ) ;
-     fsal_status = MFSAL_getattrs_check_perms( filehandle,
+  if (mfsl_async_get_specdata(filehandle, &pasyncdata))
+    {
+      P(filehandle->lock);
+      fsal_status = MFSAL_getattrs_check_perms(filehandle,
 					       pasyncdata,
-					       p_context, 
-					       p_mfsl_context, 
-					       object_attributes ) ;
-     V( filehandle->lock ) ;
+					       p_context,
+					       p_mfsl_context, object_attributes);
+      V(filehandle->lock);
 
-     if( FSAL_IS_ERROR( fsal_status ) )
-       return fsal_status ;
+      if (FSAL_IS_ERROR(fsal_status))
+	return fsal_status;
 
-     /* Is the object deleted ? */
-     if( pasyncdata->deleted == TRUE )
-       MFSL_return( ERR_FSAL_NOENT, ENOENT ) ;
+      /* Is the object deleted ? */
+      if (pasyncdata->deleted == TRUE)
+	MFSL_return(ERR_FSAL_NOENT, ENOENT);
 
-     /* merge the attributes to the asynchronous attributes */
-     if( ( object_attributes->asked_attributes & FSAL_ATTR_SIZE ) ||
-         ( object_attributes->asked_attributes & FSAL_ATTR_SPACEUSED) )
-       {
-         /* Operation on a non data cached file */
-          object_attributes->filesize  = pasyncdata->async_attr.filesize   ;
-          object_attributes->spaceused = pasyncdata->async_attr.spaceused  ;
-       }
-  
-      
-     if( object_attributes->asked_attributes & (FSAL_ATTR_MODE|FSAL_ATTR_OWNER|FSAL_ATTR_GROUP) )
-       {
-         if( object_attributes->asked_attributes & FSAL_ATTR_MODE )
-           object_attributes->mode = pasyncdata->async_attr.mode ;
-      
-         if( object_attributes->asked_attributes & FSAL_ATTR_OWNER )
-           object_attributes->owner = pasyncdata->async_attr.owner ;
-      
-         if( object_attributes->asked_attributes & FSAL_ATTR_GROUP )
-           object_attributes->group = pasyncdata->async_attr.group ;
-       }
-  
-     if( object_attributes->asked_attributes & (FSAL_ATTR_ATIME|FSAL_ATTR_MTIME) )
-       {
-         if( object_attributes->asked_attributes & FSAL_ATTR_ATIME )
-           object_attributes->atime = pasyncdata->async_attr.atime ;
-      
-         if( object_attributes->asked_attributes & FSAL_ATTR_MTIME )
-           object_attributes->mtime = pasyncdata->async_attr.mtime ;
-       }  
+      /* merge the attributes to the asynchronous attributes */
+      if ((object_attributes->asked_attributes & FSAL_ATTR_SIZE) ||
+	  (object_attributes->asked_attributes & FSAL_ATTR_SPACEUSED))
+	{
+	  /* Operation on a non data cached file */
+	  object_attributes->filesize = pasyncdata->async_attr.filesize;
+	  object_attributes->spaceused = pasyncdata->async_attr.spaceused;
+	}
 
-     /* Regular exit */
-     MFSL_return( ERR_FSAL_NO_ERROR, 0 ) ;
-   }
-  else
-   {
-     return FSAL_getattrs( &filehandle->handle,
-                           p_context,
-                           object_attributes ) ;
-   }
-} /* MFSL_getattrs */
+      if (object_attributes->asked_attributes &
+	  (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
+	{
+	  if (object_attributes->asked_attributes & FSAL_ATTR_MODE)
+	    object_attributes->mode = pasyncdata->async_attr.mode;
 
+	  if (object_attributes->asked_attributes & FSAL_ATTR_OWNER)
+	    object_attributes->owner = pasyncdata->async_attr.owner;
 
+	  if (object_attributes->asked_attributes & FSAL_ATTR_GROUP)
+	    object_attributes->group = pasyncdata->async_attr.group;
+	}
 
-#endif /* ! _USE_SWIG */
+      if (object_attributes->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
+	{
+	  if (object_attributes->asked_attributes & FSAL_ATTR_ATIME)
+	    object_attributes->atime = pasyncdata->async_attr.atime;
 
+	  if (object_attributes->asked_attributes & FSAL_ATTR_MTIME)
+	    object_attributes->mtime = pasyncdata->async_attr.mtime;
+	}
 
+      /* Regular exit */
+      MFSL_return(ERR_FSAL_NO_ERROR, 0);
+    } else
+    {
+      return FSAL_getattrs(&filehandle->handle, p_context, object_attributes);
+    }
+}				/* MFSL_getattrs */
+
+#endif				/* ! _USE_SWIG */

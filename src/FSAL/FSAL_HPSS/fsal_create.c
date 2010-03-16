@@ -23,7 +23,6 @@
 
 #include <hpss_errno.h>
 
-
 /**
  * FSAL_create:
  * Create a regular file.
@@ -60,138 +59,124 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_create(
-    fsal_handle_t         * parent_directory_handle, /* IN */
-    fsal_name_t           * p_filename,              /* IN */
-    fsal_op_context_t     * p_context,               /* IN */
-    fsal_accessmode_t       accessmode,              /* IN */
-    fsal_handle_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes        /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,	/* IN */
+			  fsal_name_t * p_filename,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessmode_t accessmode,	/* IN */
+			  fsal_handle_t * object_handle,	/* OUT */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  mode_t  unix_mode;
-  
+  mode_t unix_mode;
+
   hpss_Attrs_t new_attrs;
   ns_ObjHandle_t new_hdl;
-  
-  /* cos management */  
-  hpss_cos_hints_t      hint;
+
+  /* cos management */
+  hpss_cos_hints_t hint;
   hpss_cos_priorities_t hintpri;
-  
+
   /* If no COS is specified in the config file,
    * we give NULL pointers to CreateHandle,
    * to use the default Cos for this Fileset.
    */
-  hpss_cos_hints_t      * p_hint = NULL;
-  hpss_cos_priorities_t * p_hintpri = NULL;
-      
+  hpss_cos_hints_t *p_hint = NULL;
+  hpss_cos_priorities_t *p_hintpri = NULL;
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !parent_directory_handle || 
-       !p_context ||
-       !object_handle ||
-       !p_filename )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_create);
-  
-  
-  /* convert fsal mode to unix mode. */
-  unix_mode = fsal2unix_mode( accessmode );
-  
-  /* Apply umask */
-  unix_mode = unix_mode & ~global_fs_info.umask ;
-  
-  
-  /* Eventually set cos */
-  
-  if ( p_context->export_context->default_cos != 0 )
-  {
-    HPSSFSAL_BuildCos( p_context->export_context->default_cos, &hint, &hintpri);
-    p_hint = &hint;
-    p_hintpri = &hintpri;
-  }
+  if (!parent_directory_handle || !p_context || !object_handle || !p_filename)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
-  if ( p_context->export_context->default_cos != 0 )
-    DisplayLogJdLevel( fsal_log, NIV_DEBUG, "Creating file with COS = %d",p_context->export_context->default_cos ) ;
-  else
-    DisplayLogJdLevel( fsal_log, NIV_DEBUG, "Creating file with default fileset COS." ) ;
+  /* convert fsal mode to unix mode. */
+  unix_mode = fsal2unix_mode(accessmode);
+
+  /* Apply umask */
+  unix_mode = unix_mode & ~global_fs_info.umask;
+
+  /* Eventually set cos */
+
+  if (p_context->export_context->default_cos != 0)
+    {
+      HPSSFSAL_BuildCos(p_context->export_context->default_cos, &hint, &hintpri);
+      p_hint = &hint;
+      p_hintpri = &hintpri;
+    }
+
+  if (p_context->export_context->default_cos != 0)
+    DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with COS = %d",
+		      p_context->export_context->default_cos);
+    else
+    DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with default fileset COS.");
 
 #ifdef _DEBUG_FSAL
-  DisplayLogJdLevel( fsal_log, NIV_DEBUG, "Creation mode: 0%o", accessmode ) ;
+  DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creation mode: 0%o", accessmode);
 #endif
-  
-  
+
   /* call to API */
-  
+
   TakeTokenFSCall();
-  
-  rc = HPSSFSAL_CreateHandle(
-          &(parent_directory_handle->ns_handle), /* IN - Parent object handle */
-          p_filename->name,       /* IN - Name of the file to be created */
-          unix_mode,              /* IN - Desired file perms */
-          &(p_context->credential.hpss_usercred), /* IN - User credentials */
-          p_hint,       /* IN - Desired class of service */
-          p_hintpri,    /* IN - Priorities of hint struct */
-          NULL,         /* OUT - Granted class of service */
-          (object_attributes ? &new_attrs : NULL ), /* OUT - File attributes */
-          &new_hdl,                                 /* OUT - File handle */
-          NULL );     /* OUT - Client authorization */
-  
+
+  rc = HPSSFSAL_CreateHandle(&(parent_directory_handle->ns_handle),	/* IN - Parent object handle */
+			     p_filename->name,	/* IN - Name of the file to be created */
+			     unix_mode,	/* IN - Desired file perms */
+			     &(p_context->credential.hpss_usercred),	/* IN - User credentials */
+			     p_hint,	/* IN - Desired class of service */
+			     p_hintpri,	/* IN - Priorities of hint struct */
+			     NULL,	/* OUT - Granted class of service */
+			     (object_attributes ? &new_attrs : NULL),	/* OUT - File attributes */
+			     &new_hdl,	/* OUT - File handle */
+			     NULL);	/* OUT - Client authorization */
+
   ReleaseTokenFSCall();
-  
-  
+
   /* /!\ WARNING : When the directory handle is stale, HPSS returns ENOTDIR.
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.
    * Thus, we must double-check by calling getattrs.   
    */
-  if ( rc == HPSS_ENOTDIR || rc == HPSS_ENOENT )
-  {
-      if ( HPSSFSAL_IsStaleHandle( &parent_directory_handle->ns_handle,
-                                   &p_context->credential.hpss_usercred ) )
-      {
-        Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_create );
-      }      
-  }
-  
+  if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
+    {
+      if (HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+				 &p_context->credential.hpss_usercred))
+	{
+	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_create);
+	}
+    }
+
   /* other errors */
-  
-  if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_create);
-  
-  
+
+  if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_create);
+
   /* set output handle */
-  object_handle->obj_type  = FSAL_TYPE_FILE;
+  object_handle->obj_type = FSAL_TYPE_FILE;
   object_handle->ns_handle = new_hdl;
-  
-  
-  if ( object_attributes ) {
-      
+
+  if (object_attributes)
+    {
+
       fsal_status_t status;
-    
+
       /* convert hpss attributes to fsal attributes */
-    
-      status=hpss2fsal_attributes( &new_hdl,
-                                   &new_attrs,
-                                   object_attributes );
-      
-        /* on error, we set a special bit in the mask. */        
-        if ( FSAL_IS_ERROR( status ) )
-        {
-          FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-          FSAL_SET_MASK( object_attributes->asked_attributes,
-              FSAL_ATTR_RDATTR_ERR );
-        }
-        
-  }
-    
-  
+
+      status = hpss2fsal_attributes(&new_hdl, &new_attrs, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
+    }
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_create);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create);
+
 }
-
-
-
 
 /**
  * FSAL_mkdir:
@@ -230,48 +215,39 @@ fsal_status_t FSAL_create(
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FSAL_mkdir(
-    fsal_handle_t         * parent_directory_handle, /* IN */
-    fsal_name_t           * p_dirname,             /* IN */
-    fsal_op_context_t     * p_context,                     /* IN */
-    fsal_accessmode_t     accessmode,          /* IN */
-    fsal_handle_t         * object_handle,           /* OUT */
-    fsal_attrib_list_t    * object_attributes   /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_mkdir(fsal_handle_t * parent_directory_handle,	/* IN */
+			 fsal_name_t * p_dirname,	/* IN */
+			 fsal_op_context_t * p_context,	/* IN */
+			 fsal_accessmode_t accessmode,	/* IN */
+			 fsal_handle_t * object_handle,	/* OUT */
+			 fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
 
   int rc;
-  mode_t  unix_mode;
-  ns_ObjHandle_t  lnk_hdl;
-  hpss_Attrs_t    lnk_attr;
-  
+  mode_t unix_mode;
+  ns_ObjHandle_t lnk_hdl;
+  hpss_Attrs_t lnk_attr;
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
-  if ( !parent_directory_handle || 
-       !p_context ||
-       !object_handle ||
-       !p_dirname)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_mkdir);
-  
+  if (!parent_directory_handle || !p_context || !object_handle || !p_dirname)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-    
   /* convert FSAL mode to HPSS mode. */
-  unix_mode = fsal2unix_mode( accessmode );
+  unix_mode = fsal2unix_mode(accessmode);
 
   /* Apply umask */
-  unix_mode = unix_mode & ~global_fs_info.umask ;
+  unix_mode = unix_mode & ~global_fs_info.umask;
 
-    
   TakeTokenFSCall();
-  
-  rc = HPSSFSAL_MkdirHandle(
-         &(parent_directory_handle->ns_handle),
-         p_dirname->name,
-         unix_mode,
-         &( p_context->credential.hpss_usercred ),
-         &lnk_hdl,
-         ( object_attributes ? &lnk_attr : NULL)
-      );
+
+  rc = HPSSFSAL_MkdirHandle(&(parent_directory_handle->ns_handle),
+			    p_dirname->name,
+			    unix_mode,
+			    &(p_context->credential.hpss_usercred),
+			    &lnk_hdl, (object_attributes ? &lnk_attr : NULL));
 
   ReleaseTokenFSCall();
 
@@ -279,50 +255,45 @@ fsal_status_t FSAL_mkdir(
    * If the returned value is HPSS_ENOTDIR, parent handle MAY be stale.
    * Thus, we must double-check by calling getattrs.   
    */
-  if ( rc == HPSS_ENOTDIR || rc == HPSS_ENOENT )
-  {
-      if ( HPSSFSAL_IsStaleHandle( &parent_directory_handle->ns_handle,
-                                   &p_context->credential.hpss_usercred ) )
-      {
-        Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_mkdir );
-      }
-  }
-  
+  if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
+    {
+      if (HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
+				 &p_context->credential.hpss_usercred))
+	{
+	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_mkdir);
+	}
+    }
+
   /* other errors */
-  
-  if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_mkdir);
-  
+
+  if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_mkdir);
+
   /* set output handle */
   object_handle->obj_type = FSAL_TYPE_DIR;
   object_handle->ns_handle = lnk_hdl;
-  
-  
-  if ( object_attributes ) {
-      
+
+  if (object_attributes)
+    {
+
       fsal_status_t status;
-    
+
       /* convert hpss attributes to fsal attributes */
-    
-      status=hpss2fsal_attributes( &lnk_hdl,
-                                   &lnk_attr,
-                                   object_attributes );
-      
-      /* on error, we set a special bit in the mask. */        
-      if ( FSAL_IS_ERROR( status ) )
-      {
-        FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-        FSAL_SET_MASK( object_attributes->asked_attributes,
-            FSAL_ATTR_RDATTR_ERR );
-      }
-  }
-  
+
+      status = hpss2fsal_attributes(&lnk_hdl, &lnk_attr, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+    }
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_mkdir);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_mkdir);
+
 }
-
-
-
 
 /**
  * FSAL_link:
@@ -361,88 +332,81 @@ fsal_status_t FSAL_mkdir(
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FSAL_link(
-    fsal_handle_t         * target_handle,        /* IN */
-    fsal_handle_t         * dir_handle,           /* IN */
-    fsal_name_t           * p_link_name,          /* IN */
-    fsal_op_context_t     * p_context,            /* IN */
-    fsal_attrib_list_t    * attributes       /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_link(fsal_handle_t * target_handle,	/* IN */
+			fsal_handle_t * dir_handle,	/* IN */
+			fsal_name_t * p_link_name,	/* IN */
+			fsal_op_context_t * p_context,	/* IN */
+			fsal_attrib_list_t * attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  
+
   /* sanity checks.
    * note : attributes is optional.
    */
-  printf( "%p %p %p %p \n", target_handle, dir_handle, p_context, p_link_name ) ;
+  printf("%p %p %p %p \n", target_handle, dir_handle, p_context, p_link_name);
 
-  if ( !target_handle || 
-       !dir_handle || 
-       !p_context || 
-       !p_link_name)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_link);
-  
-  
+  if (!target_handle || !dir_handle || !p_context || !p_link_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
+
   /* Tests if hardlinking is allowed by configuration. */
-  
-  if ( !global_fs_info.link_support )
-      Return( ERR_FSAL_NOTSUPP, 0,INDEX_FSAL_link);
-  
+
+  if (!global_fs_info.link_support)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
+
   /* Call to HPSS API */
-  
+
   TakeTokenFSCall();
-  
-  rc = hpss_LinkHandle(
-      &(target_handle->ns_handle),    /* IN - Handle of existing file */
-      &(dir_handle->ns_handle),       /* IN - parent directory handle */
-      p_link_name->name,              /* IN - New name of the object */
-      &(p_context->credential.hpss_usercred)); /* IN - pointer to user credentials */
-  
+
+  rc = hpss_LinkHandle(&(target_handle->ns_handle),	/* IN - Handle of existing file */
+		       &(dir_handle->ns_handle),	/* IN - parent directory handle */
+		       p_link_name->name,	/* IN - New name of the object */
+		       &(p_context->credential.hpss_usercred));	/* IN - pointer to user credentials */
+
   ReleaseTokenFSCall();
-  
+
   /* /!\ WARNING : When one of the handles is stale, HPSS returns ENOTDIR or ENOENT.
    * Thus, we must check this by calling HPSSFSAL_IsStaleHandle.
    */
-  if ( rc == HPSS_ENOTDIR || rc == HPSS_ENOENT )
-  {
-    if ( HPSSFSAL_IsStaleHandle( &dir_handle->ns_handle,
-                                 &p_context->credential.hpss_usercred ) 
-        ||
-        HPSSFSAL_IsStaleHandle( &target_handle->ns_handle,
-                                 &p_context->credential.hpss_usercred ))
+  if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
     {
-      Return( ERR_FSAL_STALE, -rc, INDEX_FSAL_link );
+      if (HPSSFSAL_IsStaleHandle(&dir_handle->ns_handle,
+				 &p_context->credential.hpss_usercred)
+	  ||
+	  HPSSFSAL_IsStaleHandle(&target_handle->ns_handle,
+				 &p_context->credential.hpss_usercred))
+	{
+	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_link);
+	}
     }
-  }
-  
+
   /* other errors */
-  if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_link);
-  
-  
+  if (rc)
+    Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_link);
+
   /* optionnaly get attributes */
-  
-  if ( attributes ) {
-    
-    fsal_status_t st;
-    
-    st = FSAL_getattrs( target_handle, p_context , attributes );
-    
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( st ) )
+
+  if (attributes)
     {
-      FSAL_CLEAR_MASK( attributes->asked_attributes );
-      FSAL_SET_MASK( attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      fsal_status_t st;
+
+      st = FSAL_getattrs(target_handle, p_context, attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(attributes->asked_attributes);
+	  FSAL_SET_MASK(attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-          
-  }
-    
+
   /* OK */
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_link);
-  
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
+
 }
-
-
 
 /**
  * FSAL_mknode:
@@ -451,28 +415,24 @@ fsal_status_t FSAL_link(
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FSAL_mknode(
-    fsal_handle_t             * parentdir_handle,     /* IN */
-    fsal_name_t               * p_node_name,          /* IN */
-    fsal_op_context_t         * p_context,                     /* IN */
-    fsal_accessmode_t         accessmode,             /* IN */
-    fsal_nodetype_t           nodetype,             /* IN */
-    fsal_dev_t                * dev,                  /* IN */
-    fsal_handle_t             * p_object_handle,      /* OUT (handle to the created node) */    
-    fsal_attrib_list_t        * node_attributes       /* [ IN/OUT ] */
-){
+fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,	/* IN */
+			  fsal_name_t * p_node_name,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessmode_t accessmode,	/* IN */
+			  fsal_nodetype_t nodetype,	/* IN */
+			  fsal_dev_t * dev,	/* IN */
+			  fsal_handle_t * p_object_handle,	/* OUT (handle to the created node) */
+			  fsal_attrib_list_t * node_attributes	/* [ IN/OUT ] */
+    )
+{
 
   /* sanity checks.
    * note : link_attributes is optional.
    */
-  if ( !parentdir_handle || 
-       !p_context ||
-       !nodetype ||
-       !dev ||
-       !p_node_name )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_mknode);
-  
+  if (!parentdir_handle || !p_context || !nodetype || !dev || !p_node_name)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mknode);
+
   /* Not implemented */
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_mknode);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_mknode);
 
 }

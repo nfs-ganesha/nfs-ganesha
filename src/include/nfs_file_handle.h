@@ -98,93 +98,94 @@
 #include <rpc/types.h>
 #endif
 
-#include <dirent.h> /* for having MAXNAMLEN */
-#include <netdb.h>  /* for having MAXHOSTNAMELEN */
+#include <dirent.h>		/* for having MAXNAMLEN */
+#include <netdb.h>		/* for having MAXHOSTNAMELEN */
 /*
  * Structure of the filehandle 
  */
 
 /* This must be exactly 32 bytes long, and aligned on 32 bits */
-typedef struct file_handle_v2__ 
-{
-  unsigned int   checksum ;     /* FH checksum, for encryption support      len = 4 bytes  */
-  unsigned short exportid ;     /* must be correlated to exportlist_t::id   len = 2 bytes  */
-  char           fsopaque[25] ; /* persistent part of FSAL handle, opaque   len = 25 bytes */
-  char           xattr_pos ;    /* Used for xattr management                len = 1  byte  */
-} file_handle_v2_t ;
+typedef struct file_handle_v2__ {
+  unsigned int checksum;	/* FH checksum, for encryption support      len = 4 bytes  */
+  unsigned short exportid;	/* must be correlated to exportlist_t::id   len = 2 bytes  */
+  char fsopaque[25];		/* persistent part of FSAL handle, opaque   len = 25 bytes */
+  char xattr_pos;		/* Used for xattr management                len = 1  byte  */
+} file_handle_v2_t;
 
 /* This is up to 64 bytes long, aligned on 32 bits */
-typedef struct file_handle_v3__
-{
-  char           checksum[16] ; /* FH checksum, for encryption support      len = 16 bytes  */
-  unsigned short exportid ;     /* must be correlated to exportlist_t::id   len = 2 bytes   */
-  char           fsopaque[25] ; /* persistent part of FSAL handle, opaque   len = 25 bytes  */
-  /* char           reserved[18] ; */ /* what's left...                     len = 18 bytes  */
-  char           xattr_pos ;    /* Used for xattr management                len = 1  byte  */
-} file_handle_v3_t ; 
+typedef struct file_handle_v3__ {
+  char checksum[16];		/* FH checksum, for encryption support      len = 16 bytes  */
+  unsigned short exportid;	/* must be correlated to exportlist_t::id   len = 2 bytes   */
+  char fsopaque[25];		/* persistent part of FSAL handle, opaque   len = 25 bytes  */
+  /* char           reserved[18] ; *//* what's left...                     len = 18 bytes  */
+  char xattr_pos;		/* Used for xattr management                len = 1  byte  */
+} file_handle_v3_t;
 
 /* This must be up to 64 bytes, aligned on 32 bits */
-typedef struct file_handle_v4__
-{
-  char           checksum[16] ;  /* FH checksum, for encryption support      len = 16 bytes  */
-  unsigned int   exportid ;      /* must be correlated to exportlist_t::id   len = 4 bytes   */
-  unsigned short pseudofs_id ;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
-  unsigned short refid ;         /* used for referral                        len = 2 bytes   */
-  unsigned char  pseudofs_flag ; /* TRUE if FH is within pseudofs            len = 1 byte    */
-  unsigned int   srvboot_time ;  /* 0 if FH won't expire                     len = 4 bytes   */
+typedef struct file_handle_v4__ {
+  char checksum[16];		/* FH checksum, for encryption support      len = 16 bytes  */
+  unsigned int exportid;	/* must be correlated to exportlist_t::id   len = 4 bytes   */
+  unsigned short pseudofs_id;	/* Id for the pseudo fs related to this fh  len = 2 bytes   */
+  unsigned short refid;		/* used for referral                        len = 2 bytes   */
+  unsigned char pseudofs_flag;	/* TRUE if FH is within pseudofs            len = 1 byte    */
+  unsigned int srvboot_time;	/* 0 if FH won't expire                     len = 4 bytes   */
 #ifdef _USE_PROXY
-  char           fsopaque[93] ;  /* persistent part of FSAL handle */
+  char fsopaque[93];		/* persistent part of FSAL handle */
 #else
-  char           fsopaque[22] ;
+  char fsopaque[22];
 #endif
-  char           xattr_pos ;     /*                                          len = 1 byte    */
-} file_handle_v4_t ;
+  char xattr_pos;		/*                                          len = 1 byte    */
+} file_handle_v4_t;
 
-#define LEN_FH_STR 1024 
-void nfs4_sprint_fhandle( nfs_fh4 * fh4p, char * outstr ) ;
+#define LEN_FH_STR 1024
+void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
 /* File handle translation utility */
-int nfs4_FhandleToFSAL( nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext ) ;
-int nfs3_FhandleToFSAL( nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext ) ;
-int nfs2_FhandleToFSAL( fhandle2 * pfh2, fsal_handle_t * pfsalhandle, fsal_op_context_t * pcontext ) ;
+int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
+		       fsal_op_context_t * pcontext);
+int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
+		       fsal_op_context_t * pcontext);
+int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
+		       fsal_op_context_t * pcontext);
 
-int nfs4_FSALToFhandle( nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle, compound_data_t * data ) ;
-int nfs3_FSALToFhandle( nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle, exportlist_t * pexport ) ;
-int nfs2_FSALToFhandle( fhandle2 * pfh2, fsal_handle_t * pfsalhandle, exportlist_t * pexport ) ;
+int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
+		       compound_data_t * data);
+int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
+		       exportlist_t * pexport);
+int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
+		       exportlist_t * pexport);
 
 /* Computation of file handle checksum */
-unsigned int  nfs2_FhandleCheckSum( file_handle_v2_t * pfh ) ;
-unsigned long long  nfs3_FhandleCheckSum( file_handle_v3_t * pfh ) ;
-unsigned long long  nfs4_FhandleCheckSum( file_handle_v4_t * pfh ) ;
+unsigned int nfs2_FhandleCheckSum(file_handle_v2_t * pfh);
+unsigned long long nfs3_FhandleCheckSum(file_handle_v3_t * pfh);
+unsigned long long nfs4_FhandleCheckSum(file_handle_v4_t * pfh);
 
 /* Extraction of export id from a file handle */
-short nfs2_FhandleToExportId( fhandle2 * pfh2 )  ;
-short nfs4_FhandleToExportId( nfs_fh4 * pfh4 ) ;
-short nfs3_FhandleToExportId( nfs_fh3 * pfh3 ) ;
+short nfs2_FhandleToExportId(fhandle2 * pfh2);
+short nfs4_FhandleToExportId(nfs_fh4 * pfh4);
+short nfs3_FhandleToExportId(nfs_fh3 * pfh3);
 
 /* NFSv4 specific FH related functions */
-int nfs4_Is_Fh_Empty( nfs_fh4 * pfh ) ;
-int nfs4_Is_Fh_Xattr( nfs_fh4 * pfh ) ;
-int nfs4_Is_Fh_Pseudo( nfs_fh4 * pfh ) ;
-int nfs4_Is_Fh_Expired( nfs_fh4 * pfh ) ;
-int nfs4_Is_Fh_Invalid(  nfs_fh4 * pfh ) ;
-int nfs4_Is_Fh_Referral( nfs_fh4 * pfh ) ;
+int nfs4_Is_Fh_Empty(nfs_fh4 * pfh);
+int nfs4_Is_Fh_Xattr(nfs_fh4 * pfh);
+int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh);
+int nfs4_Is_Fh_Expired(nfs_fh4 * pfh);
+int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh);
+int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 
 /* This one is used to detect Xattr related FH */
-int nfs3_Is_Fh_Xattr( nfs_fh3 * pfh ) ;
+int nfs3_Is_Fh_Xattr(nfs_fh3 * pfh);
 
 /* File handle print function (;ostly use for debugging) */
-void print_fhandle2( fhandle2 fh ) ;
-void print_fhandle3( nfs_fh3 fh ) ;
-void print_fhandle4( nfs_fh4 fh ) ;
-void print_buff( char * buff, int len ) ;
-void print_compound_fh( compound_data_t * data ) ;
+void print_fhandle2(fhandle2 fh);
+void print_fhandle3(nfs_fh3 fh);
+void print_fhandle4(nfs_fh4 fh);
+void print_buff(char *buff, int len);
+void print_compound_fh(compound_data_t * data);
 
-void sprint_fhandle2( char * str, fhandle2 fh ) ;
-void sprint_fhandle3( char * str, nfs_fh3 fh ) ;
-void sprint_fhandle4( char * str, nfs_fh4 fh ) ;
-void sprint_buff( char * str, char * buff, int len ) ;
+void sprint_fhandle2(char *str, fhandle2 fh);
+void sprint_fhandle3(char *str, nfs_fh3 fh);
+void sprint_fhandle4(char *str, nfs_fh4 fh);
+void sprint_buff(char *str, char *buff, int len);
 
-#endif /* _NFS_FILE_HANDLE_H */
-
-
+#endif				/* _NFS_FILE_HANDLE_H */

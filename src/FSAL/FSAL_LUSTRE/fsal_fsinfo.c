@@ -20,9 +20,6 @@
 #include "fsal_convert.h"
 #include <sys/statvfs.h>
 
-
-
-
 /**
  * FSAL_static_fsinfo:
  * Return static filesystem info such as
@@ -41,23 +38,21 @@
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t FSAL_static_fsinfo( fsal_handle_t * p_filehandle, /* IN */
-                                  fsal_op_context_t * p_context,        /* IN */
-                                  fsal_staticfsinfo_t * p_staticinfo    /* OUT */
-     )
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,	/* IN */
+				 fsal_op_context_t * p_context,	/* IN */
+				 fsal_staticfsinfo_t * p_staticinfo	/* OUT */
+    )
 {
-    /* sanity checks. */
-    if ( !p_staticinfo )
-        Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo );
+  /* sanity checks. */
+  if (!p_staticinfo)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
-    /* returning static info about the filesystem */
-    ( *p_staticinfo ) = global_fs_info;
+  /* returning static info about the filesystem */
+  (*p_staticinfo) = global_fs_info;
 
-    Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo );
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
 
 }
-
-
 
 /**
  * FSAL_dynamic_fsinfo:
@@ -77,41 +72,41 @@ fsal_status_t FSAL_static_fsinfo( fsal_handle_t * p_filehandle, /* IN */
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t FSAL_dynamic_fsinfo( fsal_handle_t * p_filehandle,        /* IN */
-                                   fsal_op_context_t * p_context,       /* IN */
-                                   fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */
-     )
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_dynamicfsinfo_t * p_dynamicinfo	/* OUT */
+    )
 {
-    fsal_path_t    pathfsal;
-    fsal_status_t  status;
-    struct statvfs buffstatvfs;
-    int            rc, errsv;
-    /* sanity checks. */
-    if ( !p_filehandle || !p_dynamicinfo || !p_context )
-        Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo );
+  fsal_path_t pathfsal;
+  fsal_status_t status;
+  struct statvfs buffstatvfs;
+  int rc, errsv;
+  /* sanity checks. */
+  if (!p_filehandle || !p_dynamicinfo || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
-    status = fsal_internal_Handle2FidPath( p_context, p_filehandle, &pathfsal );
-    if ( FSAL_IS_ERROR( status ) )
-        Return( status.major, status.minor, INDEX_FSAL_dynamic_fsinfo );
+  status = fsal_internal_Handle2FidPath(p_context, p_filehandle, &pathfsal);
+  if (FSAL_IS_ERROR(status))
+    Return(status.major, status.minor, INDEX_FSAL_dynamic_fsinfo);
 
-    TakeTokenFSCall(  );
-    rc = statvfs( pathfsal.path, &buffstatvfs );
-    errsv = errno;
-    ReleaseTokenFSCall(  );
-    if ( rc )
-        Return( posix2fsal_error( errsv ), errsv, INDEX_FSAL_dynamic_fsinfo );
+  TakeTokenFSCall();
+  rc = statvfs(pathfsal.path, &buffstatvfs);
+  errsv = errno;
+  ReleaseTokenFSCall();
+  if (rc)
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_dynamic_fsinfo);
 
-    p_dynamicinfo->total_bytes = buffstatvfs.f_frsize * buffstatvfs.f_blocks;
-    p_dynamicinfo->free_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bfree;
-    p_dynamicinfo->avail_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bavail;
+  p_dynamicinfo->total_bytes = buffstatvfs.f_frsize * buffstatvfs.f_blocks;
+  p_dynamicinfo->free_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bfree;
+  p_dynamicinfo->avail_bytes = buffstatvfs.f_frsize * buffstatvfs.f_bavail;
 
-    p_dynamicinfo->total_files = buffstatvfs.f_files;
-    p_dynamicinfo->free_files = buffstatvfs.f_ffree;
-    p_dynamicinfo->avail_files = buffstatvfs.f_favail;
+  p_dynamicinfo->total_files = buffstatvfs.f_files;
+  p_dynamicinfo->free_files = buffstatvfs.f_ffree;
+  p_dynamicinfo->avail_files = buffstatvfs.f_favail;
 
-    p_dynamicinfo->time_delta.seconds = 1;
-    p_dynamicinfo->time_delta.nseconds = 0;
+  p_dynamicinfo->time_delta.seconds = 1;
+  p_dynamicinfo->time_delta.nseconds = 0;
 
-    Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo );
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
 
 }

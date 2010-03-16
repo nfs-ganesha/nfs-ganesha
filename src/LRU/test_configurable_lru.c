@@ -106,7 +106,6 @@
 #include "config.h"
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -117,87 +116,86 @@
 #define LENBUF 256
 #define STRSIZE 10
 #define PREALLOC 1000000
-#define MAXTEST 1000000    
+#define MAXTEST 1000000
 
-LRU_entry_t * tabentry[MAXTEST] ;
+LRU_entry_t *tabentry[MAXTEST];
 
-static int print_entry( LRU_data_t data, char *str )
+static int print_entry(LRU_data_t data, char *str)
 {
-  return snprintf( str, LRU_DISPLAY_STRLEN, "%s, len=%d", (char *)data.pdata, data.len ) ;
-} /* print_entry */
+  return snprintf(str, LRU_DISPLAY_STRLEN, "%s, len=%d", (char *)data.pdata, data.len);
+}				/* print_entry */
 
-static int clean_entry(  LRU_entry_t * pentry, void * addparam )
+static int clean_entry(LRU_entry_t * pentry, void *addparam)
 {
-  return 0 ;
-} /* cleanentry */
+  return 0;
+}				/* cleanentry */
 
-int do_invalidate( LRU_list_t * plru, int key )
+int do_invalidate(LRU_list_t * plru, int key)
 {
-  LRU_entry_t * pentry = NULL ;
-  
-  pentry = tabentry[key] ;
+  LRU_entry_t *pentry = NULL;
 
-  return  LRU_invalidate( plru, pentry ) ;
+  pentry = tabentry[key];
+
+  return LRU_invalidate(plru, pentry);
 }
 
-int do_new(  LRU_list_t * plru, int key )
+int do_new(LRU_list_t * plru, int key)
 {
-  char * tmpkey = NULL ;
-  
-  LRU_entry_t * pentry = NULL ;
-  LRU_status_t status ;
+  char *tmpkey = NULL;
 
-  if( ( tmpkey = (char *)malloc( STRSIZE ) ) == NULL )
-    return -1 ;
+  LRU_entry_t *pentry = NULL;
+  LRU_status_t status;
 
-  sprintf( tmpkey, "%d", key ) ;
-  
-  if( ( pentry = LRU_new_entry( plru, &status ) ) == NULL )
-  {
-    free( tmpkey ) ;
-    return status ;
-  }
-  
-  pentry->buffdata.len   = strlen( tmpkey ) ;
-  pentry->buffdata.pdata = tmpkey ;
+  if ((tmpkey = (char *)malloc(STRSIZE)) == NULL)
+    return -1;
 
-  tabentry[key] = pentry ;
-  
-  return status ;
+  sprintf(tmpkey, "%d", key);
+
+  if ((pentry = LRU_new_entry(plru, &status)) == NULL)
+    {
+      free(tmpkey);
+      return status;
+    }
+
+  pentry->buffdata.len = strlen(tmpkey);
+  pentry->buffdata.pdata = tmpkey;
+
+  tabentry[key] = pentry;
+
+  return status;
 }
 
-int do_gc( LRU_list_t * plru )
+int do_gc(LRU_list_t * plru)
 {
-  return LRU_gc_invalid( plru, NULL ) ;
+  return LRU_gc_invalid(plru, NULL);
 }
 
-
-int main( int argc, char * argv[] )
+int main(int argc, char *argv[])
 {
   char buf[LENBUF];
-  int ok = 1 ;
-  int hrc = 0 ;
-  int rc = 0 ;
-  int expected_rc ;
-  char c ;
-  char * p;
-  int key  ;
+  int ok = 1;
+  int hrc = 0;
+  int rc = 0;
+  int expected_rc;
+  char c;
+  char *p;
+  int key;
 
-  LRU_status_t status = 0 ;
-  LRU_list_t * plru ;
-  LRU_parameter_t param ;
+  LRU_status_t status = 0;
+  LRU_list_t *plru;
+  LRU_parameter_t param;
 
-  param.nb_entry_prealloc =  PREALLOC ;
-  param.entry_to_str = print_entry ;
-  param.clean_entry = clean_entry ;
-  
-  BuddyInit( NULL ) ;
-  
-  if( ( plru = LRU_Init( param, &status ) ) == NULL )
+  param.nb_entry_prealloc = PREALLOC;
+  param.entry_to_str = print_entry;
+  param.clean_entry = clean_entry;
+
+  BuddyInit(NULL);
+
+  if ((plru = LRU_Init(param, &status)) == NULL)
     {
-       printf( "Test ECHOUE : Mauvaise init\n" ) ;
-       exit( 1 ) ;
-    }  
+      printf("Test ECHOUE : Mauvaise init\n");
+      exit(1);
+    }
 
   /*
    *
@@ -214,99 +212,98 @@ int main( int argc, char * argv[] )
    *
    */
 
-  printf( "============ Debut de l'interactif =================\n" ) ;
+  printf("============ Debut de l'interactif =================\n");
 
-  while( ok ) 
+  while (ok)
     {
       /* Code interactif, pompe sur le test rbt de Jacques */
       fputs("> ", stdout);
-      if( ( p = fgets(buf, LENBUF, stdin) ) == NULL ) 
-        {
-          printf("fin des commandes\n");
-          ok = 0;
-          continue;
-        }
-      if( ( p = strchr(buf, '\n') ) != NULL )
-        *p = '\0' ;
-      
-      rc = sscanf(buf, "%c %d %d", &c, &key, &expected_rc) ;
-      if( c == '#' )
-        {
-          /* # indique un commentaire */
-          continue ;
-        }
-      else if( c == ' ' || c == '\t' || rc == -1 )
-        {
-          /* Cas d'une ligne vide */
-          if( rc > 1 )
-            printf( "Erreur de syntaxe : mettre un diese au debut d'un commentaire\n" ) ;
-          
-          continue ;
-        }
-      else
-        {
-          if( rc != 3 )
-            {
-              printf( "Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc ) ;
-              continue ;
-            }
-          printf( "---> %c %d %d\n", c, key, expected_rc ) ;
-        }
-      
-      switch( c ) 
-        {
-        case 'i':
-          /* set overwrite */
-          printf( "invalidate  %d  --> %d ?\n", key, expected_rc ) ;
-          
-          hrc = do_invalidate( plru, key ) ;
-          
-          if( hrc != expected_rc ) 
-            printf( ">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc, expected_rc ) ;
-          else
-            printf( ">>>> OK invalidate %d\n", key ) ;
-          break ;
-          
-        case 'n':
-          /* test */
-          printf( "new %d --> %d ?\n", key, expected_rc ) ;
-          
-          hrc = do_new( plru, key ) ;
-          
-          if( hrc != expected_rc ) 
-            printf( ">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc ) ;
-          else
-            printf( ">>>> OK new %d\n", key ) ;
-          break ;
-          
-        case 'g':
-          /* set no overwrite */
-          printf( "gc  %d --> %d ?\n", key, expected_rc ) ;
-          
-          hrc = do_gc( plru ) ;
-          
-          if( hrc != expected_rc ) 
-            printf( ">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc ) ;
-          else
-            printf( ">>>> OK new  %d\n", key ) ;
-          break ;
-          
-        case 'p':
-          /* Print */
-          LRU_Print( plru ) ;
-          break ;
-          
-        default:
-          /* syntaxe error */
-          printf( "ordre '%c' non-reconnu\n", c ) ;
-          break ;
-         }
-      
-      fflush( stdin ) ;
+      if ((p = fgets(buf, LENBUF, stdin)) == NULL)
+	{
+	  printf("fin des commandes\n");
+	  ok = 0;
+	  continue;
+	}
+      if ((p = strchr(buf, '\n')) != NULL)
+	*p = '\0';
+
+      rc = sscanf(buf, "%c %d %d", &c, &key, &expected_rc);
+      if (c == '#')
+	{
+	  /* # indique un commentaire */
+	  continue;
+      } else if (c == ' ' || c == '\t' || rc == -1)
+	{
+	  /* Cas d'une ligne vide */
+	  if (rc > 1)
+	    printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
+
+	  continue;
+	} else
+	{
+	  if (rc != 3)
+	    {
+	      printf("Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc);
+	      continue;
+	    }
+	  printf("---> %c %d %d\n", c, key, expected_rc);
+	}
+
+      switch (c)
+	{
+	case 'i':
+	  /* set overwrite */
+	  printf("invalidate  %d  --> %d ?\n", key, expected_rc);
+
+	  hrc = do_invalidate(plru, key);
+
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
+		   expected_rc);
+	    else
+	    printf(">>>> OK invalidate %d\n", key);
+	  break;
+
+	case 'n':
+	  /* test */
+	  printf("new %d --> %d ?\n", key, expected_rc);
+
+	  hrc = do_new(plru, key);
+
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
+	    else
+	    printf(">>>> OK new %d\n", key);
+	  break;
+
+	case 'g':
+	  /* set no overwrite */
+	  printf("gc  %d --> %d ?\n", key, expected_rc);
+
+	  hrc = do_gc(plru);
+
+	  if (hrc != expected_rc)
+	    printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
+	    else
+	    printf(">>>> OK new  %d\n", key);
+	  break;
+
+	case 'p':
+	  /* Print */
+	  LRU_Print(plru);
+	  break;
+
+	default:
+	  /* syntaxe error */
+	  printf("ordre '%c' non-reconnu\n", c);
+	  break;
+	}
+
+      fflush(stdin);
     }
-  
-  printf( "====================================================\n" ) ;
-  printf( "Test reussi : tous les tests sont passes avec succes\n" ) ;
-  exit( 0 ) ;
-  return ;
-} /* main */
+
+  printf("====================================================\n");
+  printf("Test reussi : tous les tests sont passes avec succes\n");
+  exit(0);
+  return;
+}				/* main */

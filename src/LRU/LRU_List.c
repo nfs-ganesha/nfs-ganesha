@@ -149,8 +149,6 @@
 #include "config.h"
 #endif
 
-
-
 #include <stdlib.h>
 #include "BuddyMalloc.h"
 #include "LRU_List.h"
@@ -177,47 +175,46 @@
  * @see PreAllocEntry
  */
 
-LRU_list_t * LRU_Init( LRU_parameter_t lru_param, LRU_status_t *pstatus ) 
+LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
 {
-  LRU_list_t * plru = NULL ;
-
+  LRU_list_t *plru = NULL;
 
   /* Sanity check */
-  if( ( plru = (LRU_list_t *)Mem_Alloc( sizeof( LRU_list_t  ) ) ) == NULL )
+  if ((plru = (LRU_list_t *) Mem_Alloc(sizeof(LRU_list_t))) == NULL)
     {
-      *pstatus = LRU_LIST_MALLOC_ERROR ;
-      return NULL ;
+      *pstatus = LRU_LIST_MALLOC_ERROR;
+      return NULL;
     }
-  
-  plru->nb_entry = 0 ;
-  plru->nb_invalid = 0 ;
-  plru->nb_call_gc = 0 ;
-  plru->MRU = plru->LRU = NULL ;
-  plru->parameter = lru_param ;
+
+  plru->nb_entry = 0;
+  plru->nb_invalid = 0;
+  plru->nb_call_gc = 0;
+  plru->MRU = plru->LRU = NULL;
+  plru->parameter = lru_param;
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "LRU_entry_t" ) ;
+  BuddySetDebugLabel("LRU_entry_t");
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
   /* Pre allocate entries */
-  STUFF_PREALLOC( plru->entry_prealloc, lru_param.nb_entry_prealloc, LRU_entry_t, next ) ;
-  if( plru->entry_prealloc == NULL )
+  STUFF_PREALLOC(plru->entry_prealloc, lru_param.nb_entry_prealloc, LRU_entry_t, next);
+  if (plru->entry_prealloc == NULL)
     {
-      *pstatus = LRU_LIST_MALLOC_ERROR ;
-      return NULL ;
+      *pstatus = LRU_LIST_MALLOC_ERROR;
+      return NULL;
     }
 #endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
+  BuddySetDebugLabel("N/A");
 #endif
-  
-  *pstatus = LRU_LIST_SUCCESS ;
-  return plru ;
-} /* LRU_Init */
+
+  *pstatus = LRU_LIST_SUCCESS;
+  return plru;
+}				/* LRU_Init */
 
 /**
  * 
@@ -233,16 +230,16 @@ LRU_list_t * LRU_Init( LRU_parameter_t lru_param, LRU_status_t *pstatus )
  *
  * @see LRU_gc_invalid
  */
-int LRU_invalidate( LRU_list_t * plru, LRU_entry_t * pentry )
+int LRU_invalidate(LRU_list_t * plru, LRU_entry_t * pentry)
 {
-  if( pentry->valid_state != LRU_ENTRY_INVALID )
+  if (pentry->valid_state != LRU_ENTRY_INVALID)
     {
-      pentry->valid_state =  LRU_ENTRY_INVALID ;
-      plru->nb_invalid += 1 ;
+      pentry->valid_state = LRU_ENTRY_INVALID;
+      plru->nb_invalid += 1;
     }
-  
-  return LRU_LIST_SUCCESS ;
-} /* LRU_invalidate */
+
+  return LRU_LIST_SUCCESS;
+}				/* LRU_invalidate */
 
 /**
  * 
@@ -257,52 +254,52 @@ int LRU_invalidate( LRU_list_t * plru, LRU_entry_t * pentry )
  *
  * @see PreAllocEntry
  */
-LRU_entry_t * LRU_new_entry( LRU_list_t * plru, LRU_status_t * pstatus )
+LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
 {
-  LRU_entry_t * new_entry = NULL ;
-  
+  LRU_entry_t *new_entry = NULL;
+
 #ifdef _DEBUG_LRU
-  printf( "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d\n", plru->nb_entry,plru->parameter. nb_entry_prealloc ) ;
+  printf("==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d\n", plru->nb_entry,
+	 plru->parameter.nb_entry_prealloc);
 #endif
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "LRU_entry_t" ) ;
+  BuddySetDebugLabel("LRU_entry_t");
 #endif
 
-  GET_PREALLOC( new_entry, plru->entry_prealloc, plru->parameter.nb_entry_prealloc, LRU_entry_t, next ) ;
-  if( new_entry == NULL )
+  GET_PREALLOC(new_entry, plru->entry_prealloc, plru->parameter.nb_entry_prealloc,
+	       LRU_entry_t, next);
+  if (new_entry == NULL)
     {
-      *pstatus = LRU_LIST_MALLOC_ERROR ;
-      return NULL ;
+      *pstatus = LRU_LIST_MALLOC_ERROR;
+      return NULL;
     }
-
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
-  BuddySetDebugLabel( "N/A" ) ;
+  BuddySetDebugLabel("N/A");
 #endif
-  
-  new_entry->valid_state = LRU_ENTRY_VALID ;
-  new_entry->next = NULL ; /* Entry is added as the MRU entry */
-   
-  if( plru->MRU == NULL )
+
+  new_entry->valid_state = LRU_ENTRY_VALID;
+  new_entry->next = NULL;	/* Entry is added as the MRU entry */
+
+  if (plru->MRU == NULL)
     {
-      new_entry->prev = NULL ;
-      plru->LRU = new_entry ;
-    }
-  else
+      new_entry->prev = NULL;
+      plru->LRU = new_entry;
+    } else
     {
-      new_entry->prev = plru->MRU ;
-      plru->MRU->next = new_entry ;
+      new_entry->prev = plru->MRU;
+      plru->MRU->next = new_entry;
     }
-  
-  plru->nb_entry += 1 ;
-  plru->nb_call_gc += 1 ;
-  plru->MRU = new_entry ;
-  
-  *pstatus = LRU_LIST_SUCCESS ;
-  return new_entry ;
-} /* LRU_new_entry */
+
+  plru->nb_entry += 1;
+  plru->nb_call_gc += 1;
+  plru->MRU = new_entry;
+
+  *pstatus = LRU_LIST_SUCCESS;
+  return new_entry;
+}				/* LRU_new_entry */
 
 /**
  * 
@@ -315,66 +312,66 @@ LRU_entry_t * LRU_new_entry( LRU_list_t * plru, LRU_status_t * pstatus )
  *
  * @see LRU_invalidate
  */
-int LRU_gc_invalid( LRU_list_t * plru, void * cleanparam )
+int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
 {
-  LRU_entry_t * pentry = NULL ;
-  LRU_entry_t * pentrynext = NULL ;
-  int           rc = 0 ;
-  
-  if( plru == NULL )
-    return LRU_LIST_EMPTY_LIST ;
-  
-  if( plru->nb_invalid == 0 ) 
-    return LRU_LIST_SUCCESS ; /* Nothing to be done in this case */
+  LRU_entry_t *pentry = NULL;
+  LRU_entry_t *pentrynext = NULL;
+  int rc = 0;
 
-  if( plru->MRU == NULL ) 
-    return LRU_LIST_EMPTY_LIST ;
+  if (plru == NULL)
+    return LRU_LIST_EMPTY_LIST;
 
-  if( plru->MRU->prev == NULL ) /* One entry only, returns success (the MRU cannot be invalid) */
-    return LRU_LIST_SUCCESS ; 
-  
+  if (plru->nb_invalid == 0)
+    return LRU_LIST_SUCCESS;	/* Nothing to be done in this case */
+
+  if (plru->MRU == NULL)
+    return LRU_LIST_EMPTY_LIST;
+
+  if (plru->MRU->prev == NULL)	/* One entry only, returns success (the MRU cannot be invalid) */
+    return LRU_LIST_SUCCESS;
+
   /* Do nothing if not enough calls were done */
-  if( plru->nb_call_gc < plru->parameter.nb_call_gc_invalid )
-    return LRU_LIST_SUCCESS ; 
+  if (plru->nb_call_gc < plru->parameter.nb_call_gc_invalid)
+    return LRU_LIST_SUCCESS;
 
   /* From the LRU to the entry BEFORE the MRU */
-  rc = LRU_LIST_SUCCESS ; 
-    
-  for( pentry = plru->LRU ; pentry != plru->MRU ; pentry = pentrynext )
+  rc = LRU_LIST_SUCCESS;
+
+  for (pentry = plru->LRU; pentry != plru->MRU; pentry = pentrynext)
     {
-      pentrynext = pentry->next ;
+      pentrynext = pentry->next;
 
-      if( pentry->valid_state == LRU_ENTRY_INVALID )
-        {
-          if( plru->parameter.clean_entry( pentry, cleanparam ) != 0 )
-          {
+      if (pentry->valid_state == LRU_ENTRY_INVALID)
+	{
+	  if (plru->parameter.clean_entry(pentry, cleanparam) != 0)
+	    {
 #ifdef _DEBUG_LRU
-            printf("Error cleaning pentry %p\n", pentry);
+	      printf("Error cleaning pentry %p\n", pentry);
 #endif
-            rc = LRU_LIST_BAD_RELEASE_ENTRY ;
-          }
-          
-          if( pentry->prev != NULL )
-            pentry->prev->next = pentry->next ;
-          else
-            plru->LRU = pentry->next ;
+	      rc = LRU_LIST_BAD_RELEASE_ENTRY;
+	    }
 
-          if( pentry->next != NULL )
-            pentry->next->prev = pentry->prev ;
+	  if (pentry->prev != NULL)
+	    pentry->prev->next = pentry->next;
+	    else
+	    plru->LRU = pentry->next;
+
+	  if (pentry->next != NULL)
+	    pentry->next->prev = pentry->prev;
 #ifdef _DEBUG_LRU
-          else
-            printf("SHOULD Never appear  !!!! line %d file %s\n", __LINE__, __FILE__ );
+	    else
+	    printf("SHOULD Never appear  !!!! line %d file %s\n", __LINE__, __FILE__);
 #endif
-           plru->nb_entry -= 1 ;
-           plru->nb_invalid -= 1 ;
+	  plru->nb_entry -= 1;
+	  plru->nb_invalid -= 1;
 
-           /* Put it back to pre-allocated pool */
-           RELEASE_PREALLOC( pentry, plru->entry_prealloc, next ) ;
-        }
+	  /* Put it back to pre-allocated pool */
+	  RELEASE_PREALLOC(pentry, plru->entry_prealloc, next);
+	}
     }
-      
-  return rc ;
-} /* LRU_gc_invalid */
+
+  return rc;
+}				/* LRU_gc_invalid */
 
 /**
  *
@@ -392,44 +389,45 @@ int LRU_gc_invalid( LRU_list_t * plru, void * cleanparam )
  * @see LRU_gc_invalid
  *
  */
-int LRU_invalidate_by_function( LRU_list_t * plru, int (*testfunc)(LRU_entry_t *, void * addparam), void * addparam  ) 
+int LRU_invalidate_by_function(LRU_list_t * plru,
+			       int (*testfunc) (LRU_entry_t *, void *addparam),
+			       void *addparam)
 {
-  LRU_entry_t * pentry = NULL ;
-  LRU_entry_t * pentry_next = NULL;
-  int           rc     = 0 ;
+  LRU_entry_t *pentry = NULL;
+  LRU_entry_t *pentry_next = NULL;
+  int rc = 0;
 
-   if( plru == NULL )
-    return LRU_LIST_EMPTY_LIST ;
-  
-  if( plru->nb_entry == 0 ) 
-    return LRU_LIST_SUCCESS ; /* Nothing to be done in this case */
+  if (plru == NULL)
+    return LRU_LIST_EMPTY_LIST;
 
-   if( plru->MRU == NULL ) 
-    return LRU_LIST_EMPTY_LIST ;
+  if (plru->nb_entry == 0)
+    return LRU_LIST_SUCCESS;	/* Nothing to be done in this case */
 
-  if( plru->MRU->prev == NULL ) /* One entry only, returns success (the MRU cannot be set invalid) */
-    return LRU_LIST_SUCCESS ;
+  if (plru->MRU == NULL)
+    return LRU_LIST_EMPTY_LIST;
+
+  if (plru->MRU->prev == NULL)	/* One entry only, returns success (the MRU cannot be set invalid) */
+    return LRU_LIST_SUCCESS;
 
   /* From the LRU to the entry BEFORE the MRU */
-  rc = LRU_LIST_SUCCESS ;
-  
-  for( pentry = plru->LRU ; pentry != plru->MRU ; pentry = pentry_next )
-    {
-      pentry_next = pentry->next ;
-      if( pentry->valid_state != LRU_ENTRY_INVALID )
-        {
-          /* Use test function on the entry to know if it should be set invalid or not */
-          if( testfunc( pentry, addparam ) == LRU_LIST_SET_INVALID )
-            {
-              if( ( rc = LRU_invalidate( plru, pentry ) ) != LRU_LIST_SUCCESS )
-                break ; /* end of loop, error will be returned */
-            }
-        } 
-    }
-    
-  return rc ;
-} /* LRU_invalidate_by_function */
+  rc = LRU_LIST_SUCCESS;
 
+  for (pentry = plru->LRU; pentry != plru->MRU; pentry = pentry_next)
+    {
+      pentry_next = pentry->next;
+      if (pentry->valid_state != LRU_ENTRY_INVALID)
+	{
+	  /* Use test function on the entry to know if it should be set invalid or not */
+	  if (testfunc(pentry, addparam) == LRU_LIST_SET_INVALID)
+	    {
+	      if ((rc = LRU_invalidate(plru, pentry)) != LRU_LIST_SUCCESS)
+		break;		/* end of loop, error will be returned */
+	    }
+	}
+    }
+
+  return rc;
+}				/* LRU_invalidate_by_function */
 
 /**
  *
@@ -448,40 +446,41 @@ int LRU_invalidate_by_function( LRU_list_t * plru, int (*testfunc)(LRU_entry_t *
  *
  */
 
-int LRU_apply_function( LRU_list_t * plru, int (*myfunc)(LRU_entry_t *, void * addparam), void * addparam )
+int LRU_apply_function(LRU_list_t * plru, int (*myfunc) (LRU_entry_t *, void *addparam),
+		       void *addparam)
 {
-  LRU_entry_t * pentry = NULL ;
-  int           rc     = 0 ;
+  LRU_entry_t *pentry = NULL;
+  int rc = 0;
 
-   if( plru == NULL )
-    return LRU_LIST_EMPTY_LIST ;
+  if (plru == NULL)
+    return LRU_LIST_EMPTY_LIST;
 
-  if( plru->nb_entry == 0 )
-    return LRU_LIST_SUCCESS ; /* Nothing to be done in this case */
+  if (plru->nb_entry == 0)
+    return LRU_LIST_SUCCESS;	/* Nothing to be done in this case */
 
-   if( plru->MRU == NULL )
-    return LRU_LIST_EMPTY_LIST ;
+  if (plru->MRU == NULL)
+    return LRU_LIST_EMPTY_LIST;
 
-  if( plru->MRU->prev == NULL ) /* One entry only, returns success (the MRU cannot be set invalid) */
-    return LRU_LIST_SUCCESS ;
+  if (plru->MRU->prev == NULL)	/* One entry only, returns success (the MRU cannot be set invalid) */
+    return LRU_LIST_SUCCESS;
 
   /* From the LRU to the entry BEFORE the MRU */
-  rc = LRU_LIST_SUCCESS ;
-  for( pentry = plru->MRU->prev ; pentry != NULL ; pentry = pentry->prev )
+  rc = LRU_LIST_SUCCESS;
+  for (pentry = plru->MRU->prev; pentry != NULL; pentry = pentry->prev)
     {
-      if( pentry->valid_state != LRU_ENTRY_INVALID )
-        {
-          /* Use test function on the entry to know if it should be set invalid or not */
-          if( myfunc( pentry, addparam ) == FALSE ) 
-            {
-                break ; /* end of loop */
-            }
-        }
-    } /* for */
+      if (pentry->valid_state != LRU_ENTRY_INVALID)
+	{
+	  /* Use test function on the entry to know if it should be set invalid or not */
+	  if (myfunc(pentry, addparam) == FALSE)
+	    {
+	      break;		/* end of loop */
+	    }
+	}
+    }				/* for */
 
-  return rc ;
+  return rc;
 
-} /* LRU_apply_function */
+}				/* LRU_apply_function */
 
 /**
  * 
@@ -494,19 +493,17 @@ int LRU_apply_function( LRU_list_t * plru, int (*myfunc)(LRU_entry_t *, void * a
  * @return none (returns void).
  *
  */
-void LRU_Print( LRU_list_t * plru )
+void LRU_Print(LRU_list_t * plru)
 {
-  LRU_entry_t * pentry = NULL ;
-  char dispdata[LRU_DISPLAY_STRLEN] ;
-  
-  for( pentry = plru->LRU ; pentry != NULL ; pentry = pentry->next )
-    {
-      plru->parameter.entry_to_str( pentry->buffdata, dispdata ) ;
-      printf( "Entry value = %s, valid_state = %d\n", dispdata, pentry->valid_state ) ;
-    }
-  printf( "-----------------------------------------\n" ) ;
-} /* LRU_Print */
- 
-/* @} */
-  
+  LRU_entry_t *pentry = NULL;
+  char dispdata[LRU_DISPLAY_STRLEN];
 
+  for (pentry = plru->LRU; pentry != NULL; pentry = pentry->next)
+    {
+      plru->parameter.entry_to_str(pentry->buffdata, dispdata);
+      printf("Entry value = %s, valid_state = %d\n", dispdata, pentry->valid_state);
+    }
+  printf("-----------------------------------------\n");
+}				/* LRU_Print */
+
+/* @} */

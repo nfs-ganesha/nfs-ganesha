@@ -86,10 +86,9 @@
 #include "config.h"
 #endif
 
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif /* _SOLARIS */
+#endif				/* _SOLARIS */
 
 #include "fsal.h"
 
@@ -110,7 +109,6 @@
 #include <pthread.h>
 #include <strings.h>
 
-
 /**
  *
  * cache_content_open: opens the local fd on  the cache.
@@ -127,99 +125,100 @@
  *
  */
 
-
-cache_inode_status_t cache_inode_open( cache_entry_t              * pentry,
-                                       cache_inode_client_t       * pclient,
-		   		       fsal_openflags_t             openflags,
-				       fsal_op_context_t          * pcontext,
-                                       cache_inode_status_t       * pstatus )
+cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
+				      cache_inode_client_t * pclient,
+				      fsal_openflags_t openflags,
+				      fsal_op_context_t * pcontext,
+				      cache_inode_status_t * pstatus)
 {
-  fsal_status_t   fsal_status ;
+  fsal_status_t fsal_status;
 
-  if( ( pentry == NULL ) || ( pclient == NULL ) || ( pcontext == NULL ) || ( pstatus == NULL ) )
-     return CACHE_INODE_INVALID_ARGUMENT ;
+  if ((pentry == NULL) || (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
+    return CACHE_INODE_INVALID_ARGUMENT;
 
-  if( pentry->internal_md.type != REGULAR_FILE ) 
-    {  
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+  if (pentry->internal_md.type != REGULAR_FILE)
+    {
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Open file need to be closed */
-  if( ( pentry->object.file.open_fd.openflags != 0 ) &&
-      ( pentry->object.file.open_fd.fileno != 0 )     &&
-      ( pentry->object.file.open_fd.openflags != openflags ) )
+  if ((pentry->object.file.open_fd.openflags != 0) &&
+      (pentry->object.file.open_fd.fileno != 0) &&
+      (pentry->object.file.open_fd.openflags != openflags))
     {
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close( &(pentry->object.file.open_fd.fd), &pclient->mfsl_context ) ;
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
 #else
-      fsal_status = FSAL_close( &(pentry->object.file.open_fd.fd) ) ;
+      fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif
-      if( FSAL_IS_ERROR( fsal_status ) && (fsal_status.major != ERR_FSAL_NOT_OPENED) )
-         {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
+      if (FSAL_IS_ERROR(fsal_status) && (fsal_status.major != ERR_FSAL_NOT_OPENED))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
 
-           return *pstatus ;
-         }
+	  return *pstatus;
+	}
 
-       /* force re-openning */
-       pentry->object.file.open_fd.last_op = 0;
-       pentry->object.file.open_fd.fileno = 0 ; 
+      /* force re-openning */
+      pentry->object.file.open_fd.last_op = 0;
+      pentry->object.file.open_fd.fileno = 0;
 
     }
-        
 
-  if( (pentry->object.file.open_fd.last_op  == 0) || (pentry->object.file.open_fd.fileno == 0 ) )
-   {
-     /* opened file is not preserved yet */
+  if ((pentry->object.file.open_fd.last_op == 0)
+      || (pentry->object.file.open_fd.fileno == 0))
+    {
+      /* opened file is not preserved yet */
 #ifdef _USE_MFSL
-     fsal_status = MFSL_open( &(pentry->mobject),
-                              pcontext,
+      fsal_status = MFSL_open(&(pentry->mobject),
+			      pcontext,
 			      &pclient->mfsl_context,
-                              openflags,
-                              &pentry->object.file.open_fd.fd,
-                              &(pentry->object.file.attributes) ) ;
+			      openflags,
+			      &pentry->object.file.open_fd.fd,
+			      &(pentry->object.file.attributes));
 #else
-     fsal_status = FSAL_open( &(pentry->object.file.handle),
-                              pcontext,
-                              openflags,
-                              &pentry->object.file.open_fd.fd,
-                              &(pentry->object.file.attributes) ) ;
+      fsal_status = FSAL_open(&(pentry->object.file.handle),
+			      pcontext,
+			      openflags,
+			      &pentry->object.file.open_fd.fd,
+			      &(pentry->object.file.attributes));
 #endif
 
-     if( FSAL_IS_ERROR( fsal_status ) )
-         {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
+      if (FSAL_IS_ERROR(fsal_status))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
 
-           return *pstatus ;
-         }
+	  return *pstatus;
+	}
 
-     pentry->object.file.open_fd.fileno    = (int)FSAL_FILENO( &(pentry->object.file.open_fd.fd) ) ; 
-     pentry->object.file.open_fd.openflags = openflags ;
+      pentry->object.file.open_fd.fileno =
+	  (int)FSAL_FILENO(&(pentry->object.file.open_fd.fd));
+      pentry->object.file.open_fd.openflags = openflags;
 
 #ifdef _DEBUG_CACHE_INODE
-     printf("cache_inode_open: pentry %p: lastop=0, fileno = %d\n", pentry,pentry->object.file.open_fd.fileno );
+      printf("cache_inode_open: pentry %p: lastop=0, fileno = %d\n", pentry,
+	     pentry->object.file.open_fd.fileno);
 #endif
-   }
+    }
 
+  /* regular exit */
+  pentry->object.file.open_fd.last_op = time(NULL);
 
-   /* regular exit */
-   pentry->object.file.open_fd.last_op = time( NULL ) ;
+  /* if file descriptor is too high, garbage collect FDs */
+  if (pclient->use_cache
+      && (pentry, pentry->object.file.open_fd.fileno > pclient->max_fd_per_thread))
+    {
+      if (cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
+	{
+	  DisplayLogJd(pclient->log_outputs, "FAILURE performing FD garbage collection");
+	  return *pstatus;
+	}
+    }
 
-   /* if file descriptor is too high, garbage collect FDs */
-   if ( pclient->use_cache && ( pentry,pentry->object.file.open_fd.fileno > pclient->max_fd_per_thread ) )
-   {
-        if ( cache_inode_gc_fd( pclient, pstatus ) != CACHE_INODE_SUCCESS )
-        {
-                DisplayLogJd( pclient->log_outputs, "FAILURE performing FD garbage collection" );
-                return *pstatus;
-        }
-   }
+  *pstatus = CACHE_INODE_SUCCESS;
+  return *pstatus;
 
-  *pstatus = CACHE_INODE_SUCCESS ;
-  return *pstatus ;
-
-} /* cache_content_open */
+}				/* cache_content_open */
 
 /**
  *
@@ -239,150 +238,154 @@ cache_inode_status_t cache_inode_open( cache_entry_t              * pentry,
  *
  */
 
-
-cache_inode_status_t cache_inode_open_by_name( cache_entry_t              * pentry_dir,
-                                               fsal_name_t                * pname,
-                                               cache_entry_t              * pentry_file,
-                                               cache_inode_client_t       * pclient,
-		   		               fsal_openflags_t             openflags,
-				               fsal_op_context_t          * pcontext,
-                                               cache_inode_status_t       * pstatus )
+cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
+					      fsal_name_t * pname,
+					      cache_entry_t * pentry_file,
+					      cache_inode_client_t * pclient,
+					      fsal_openflags_t openflags,
+					      fsal_op_context_t * pcontext,
+					      cache_inode_status_t * pstatus)
 {
-  fsal_status_t   fsal_status ;
-  fsal_size_t     save_filesize ;
-  fsal_size_t     save_spaceused ;
-  fsal_time_t     save_mtime ; 
+  fsal_status_t fsal_status;
+  fsal_size_t save_filesize;
+  fsal_size_t save_spaceused;
+  fsal_time_t save_mtime;
 
-  if( ( pentry_dir == NULL ) || ( pname == NULL ) || ( pentry_file == NULL ) || 
-      ( pclient == NULL ) || ( pcontext == NULL ) || ( pstatus == NULL ) )
-     return CACHE_INODE_INVALID_ARGUMENT ;
+  if ((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
+      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
+    return CACHE_INODE_INVALID_ARGUMENT;
 
-  if( ( pentry_dir->internal_md.type != DIR_BEGINNING ) && ( pentry_dir->internal_md.type != DIR_CONTINUE ) )
-    {  
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+  if ((pentry_dir->internal_md.type != DIR_BEGINNING)
+      && (pentry_dir->internal_md.type != DIR_CONTINUE))
+    {
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
-  if( pentry_file->internal_md.type != REGULAR_FILE ) 
-    {  
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+  if (pentry_file->internal_md.type != REGULAR_FILE)
+    {
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Open file need to be close */
-  if( ( pentry_file->object.file.open_fd.openflags != 0 ) &&
-      ( pentry_file->object.file.open_fd.fileno >= 0 )     &&
-      ( pentry_file->object.file.open_fd.openflags != openflags ) )
+  if ((pentry_file->object.file.open_fd.openflags != 0) &&
+      (pentry_file->object.file.open_fd.fileno >= 0) &&
+      (pentry_file->object.file.open_fd.openflags != openflags))
     {
 #ifdef _USE_MFSL
-      fsal_status = MFSL_close( &(pentry_file->object.file.open_fd.fd), &pclient->mfsl_context ) ;
+      fsal_status =
+	  MFSL_close(&(pentry_file->object.file.open_fd.fd), &pclient->mfsl_context);
 #else
-      fsal_status = FSAL_close( &(pentry_file->object.file.open_fd.fd) ) ;
+      fsal_status = FSAL_close(&(pentry_file->object.file.open_fd.fd));
 #endif
-      if( FSAL_IS_ERROR( fsal_status )  && (fsal_status.major != ERR_FSAL_NOT_OPENED) )
-         {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
+      if (FSAL_IS_ERROR(fsal_status) && (fsal_status.major != ERR_FSAL_NOT_OPENED))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
 
-           return *pstatus ;
-         }
+	  return *pstatus;
+	}
 
-       pentry_file->object.file.open_fd.last_op = 0 ;
-       pentry_file->object.file.open_fd.fileno = 0;
+      pentry_file->object.file.open_fd.last_op = 0;
+      pentry_file->object.file.open_fd.fileno = 0;
     }
-       
-  if( pentry_file->object.file.open_fd.last_op  == 0 || pentry_file->object.file.open_fd.fileno == 0 )
-   {
+
+  if (pentry_file->object.file.open_fd.last_op == 0
+      || pentry_file->object.file.open_fd.fileno == 0)
+    {
 #ifdef _DEBUG_FSAL
       printf("cache_inode_open_by_name: pentry %p: lastop=0\n", pentry_file);
 #endif
-       
-     /* Keep coherency with the cache_content */ 
-     if( pentry_file->object.file.pentry_content != NULL ) 
-      {
-          save_filesize  = pentry_file->object.file.attributes.filesize ;
-          save_spaceused = pentry_file->object.file.attributes.spaceused ;
-          save_mtime     = pentry_file->object.file.attributes.mtime ; 
-      }
 
-     /* opened file is not preserved yet */
+      /* Keep coherency with the cache_content */
+      if (pentry_file->object.file.pentry_content != NULL)
+	{
+	  save_filesize = pentry_file->object.file.attributes.filesize;
+	  save_spaceused = pentry_file->object.file.attributes.spaceused;
+	  save_mtime = pentry_file->object.file.attributes.mtime;
+	}
+
+      /* opened file is not preserved yet */
 #ifdef _USE_MFSL
-     fsal_status = MFSL_open_by_name( &(pentry_dir->mobject),
-                                      pname,
+      fsal_status = MFSL_open_by_name(&(pentry_dir->mobject),
+				      pname,
 				      &(pentry_file->mobject),
-                                      pcontext,
-                                      &pclient->mfsl_context,
-                                      openflags,
-                                      &pentry_file->object.file.open_fd.fd,
-                                      &(pentry_file->object.file.attributes) ) ;
+				      pcontext,
+				      &pclient->mfsl_context,
+				      openflags,
+				      &pentry_file->object.file.open_fd.fd,
+				      &(pentry_file->object.file.attributes));
 #else
-     fsal_status = FSAL_open_by_name( &(pentry_dir->object.file.handle),
-                                      pname,
-                                      pcontext,
-                                      openflags,
-                                      &pentry_file->object.file.open_fd.fd,
-                                      &(pentry_file->object.file.attributes) ) ;
+      fsal_status = FSAL_open_by_name(&(pentry_dir->object.file.handle),
+				      pname,
+				      pcontext,
+				      openflags,
+				      &pentry_file->object.file.open_fd.fd,
+				      &(pentry_file->object.file.attributes));
 #endif
 
-     if( FSAL_IS_ERROR( fsal_status ) )
-         {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
+      if (FSAL_IS_ERROR(fsal_status))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
 
-           return *pstatus ;
-         }
-
+	  return *pstatus;
+	}
 #ifdef _USE_PROXY
 
-     /* If proxy if used, we should keep the name of the file to do FSAL_rcp if needed */
-     if( ( pentry_file->object.file.pname = (fsal_name_t *)Mem_Alloc( sizeof( fsal_name_t ) ) ) == NULL )
-        {
-           *pstatus = CACHE_INODE_MALLOC_ERROR ;
-        
-            return *pstatus ;
-        }
+      /* If proxy if used, we should keep the name of the file to do FSAL_rcp if needed */
+      if ((pentry_file->object.file.pname =
+	   (fsal_name_t *) Mem_Alloc(sizeof(fsal_name_t))) == NULL)
+	{
+	  *pstatus = CACHE_INODE_MALLOC_ERROR;
 
-     pentry_file->object.file.pentry_parent_open = pentry_dir ;
-     pentry_file->object.file.pname->len = pname->len ;
-     memcpy( (char *)(pentry_file->object.file.pname->name), (char *)(pname->name), FSAL_MAX_NAME_LEN ) ;
-     
+	  return *pstatus;
+	}
+
+      pentry_file->object.file.pentry_parent_open = pentry_dir;
+      pentry_file->object.file.pname->len = pname->len;
+      memcpy((char *)(pentry_file->object.file.pname->name), (char *)(pname->name),
+	     FSAL_MAX_NAME_LEN);
+
 #endif
 
-     /* Keep coherency with the cache_content */ 
-     if( pentry_file->object.file.pentry_content != NULL ) 
-      {
-          pentry_file->object.file.attributes.filesize  = save_filesize ;
-          pentry_file->object.file.attributes.spaceused = save_spaceused ;
-          pentry_file->object.file.attributes.mtime     = save_mtime; 
-      }
+      /* Keep coherency with the cache_content */
+      if (pentry_file->object.file.pentry_content != NULL)
+	{
+	  pentry_file->object.file.attributes.filesize = save_filesize;
+	  pentry_file->object.file.attributes.spaceused = save_spaceused;
+	  pentry_file->object.file.attributes.mtime = save_mtime;
+	}
 
-     pentry_file->object.file.open_fd.fileno    = (int)FSAL_FILENO( &(pentry_file->object.file.open_fd.fd) ) ; 
-     pentry_file->object.file.open_fd.last_op   = time( NULL ) ;
-     pentry_file->object.file.open_fd.openflags = openflags ;
-     
+      pentry_file->object.file.open_fd.fileno =
+	  (int)FSAL_FILENO(&(pentry_file->object.file.open_fd.fd));
+      pentry_file->object.file.open_fd.last_op = time(NULL);
+      pentry_file->object.file.open_fd.openflags = openflags;
+
 #ifdef _DEBUG_FSAL
-     printf("cache_inode_open_by_name: pentry %p: fd=%u\n", pentry_file, pentry_file->object.file.open_fd.fileno);     
+      printf("cache_inode_open_by_name: pentry %p: fd=%u\n", pentry_file,
+	     pentry_file->object.file.open_fd.fileno);
 #endif
-     
-   }
 
-   /* regular exit */
-   pentry_file->object.file.open_fd.last_op = time( NULL ) ;
+    }
 
-   /* if file descriptor is too high, garbage collect FDs */
-   if ( pclient->use_cache && ( pentry_file->object.file.open_fd.fileno > pclient->max_fd_per_thread ) )
-   {
-        if ( cache_inode_gc_fd( pclient, pstatus ) != CACHE_INODE_SUCCESS )
-        {
-                DisplayLogJd( pclient->log_outputs, "FAILURE performing FD garbage collection" );
-                return *pstatus;
-        }
-   }
+  /* regular exit */
+  pentry_file->object.file.open_fd.last_op = time(NULL);
 
-  *pstatus = CACHE_INODE_SUCCESS ;
-  return *pstatus ;
+  /* if file descriptor is too high, garbage collect FDs */
+  if (pclient->use_cache
+      && (pentry_file->object.file.open_fd.fileno > pclient->max_fd_per_thread))
+    {
+      if (cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
+	{
+	  DisplayLogJd(pclient->log_outputs, "FAILURE performing FD garbage collection");
+	  return *pstatus;
+	}
+    }
 
-} /* cache_inode_open_by_name */
+  *pstatus = CACHE_INODE_SUCCESS;
+  return *pstatus;
 
-
+}				/* cache_inode_open_by_name */
 
 /**
  *
@@ -400,68 +403,65 @@ cache_inode_status_t cache_inode_open_by_name( cache_entry_t              * pent
  * @return CACHE_CONTENT_SUCCESS is successful .
  *
  */
-cache_inode_status_t cache_inode_close( cache_entry_t         * pentry,
-                                        cache_inode_client_t  * pclient,
-                                        cache_inode_status_t  * pstatus )
+cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
+				       cache_inode_client_t * pclient,
+				       cache_inode_status_t * pstatus)
 {
-  fsal_status_t fsal_status ;
+  fsal_status_t fsal_status;
 
-  if( ( pentry == NULL ) || ( pclient == NULL ) || ( pstatus == NULL ) )
-     return CACHE_CONTENT_INVALID_ARGUMENT ;
+  if ((pentry == NULL) || (pclient == NULL) || (pstatus == NULL))
+    return CACHE_CONTENT_INVALID_ARGUMENT;
 
-  if( pentry->internal_md.type != REGULAR_FILE ) 
-    {  
-       *pstatus = CACHE_INODE_BAD_TYPE ;
-       return *pstatus ;
+  if (pentry->internal_md.type != REGULAR_FILE)
+    {
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* if nothing is opened, do nothing */
-  if(  pentry->object.file.open_fd.fileno < 0 )
-   {
-     *pstatus = CACHE_INODE_SUCCESS ;
-     return *pstatus ;
-   }
+  if (pentry->object.file.open_fd.fileno < 0)
+    {
+      *pstatus = CACHE_INODE_SUCCESS;
+      return *pstatus;
+    }
 
-  if( ( pclient->use_cache == 0 ) ||
-      ( time( NULL) - pentry->object.file.open_fd.last_op > pclient->retention ) || 
-      ( pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread) ) )
-   {
+  if ((pclient->use_cache == 0) ||
+      (time(NULL) - pentry->object.file.open_fd.last_op > pclient->retention) ||
+      (pentry->object.file.open_fd.fileno > (int)(pclient->max_fd_per_thread)))
+    {
 #ifdef _DEBUG_CACHE_INODE
-     printf( "cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n", 
-	     pentry,pentry->object.file.open_fd.fileno, 
-	     (int)(time(NULL) - pentry->object.file.open_fd.last_op) );
+      printf("cache_inode_close: pentry %p, fileno = %d, lastop=%d ago\n",
+	     pentry, pentry->object.file.open_fd.fileno,
+	     (int)(time(NULL) - pentry->object.file.open_fd.last_op));
 #endif
 
 #ifdef _USE_MFSL
-     fsal_status = MFSL_close( &(pentry->object.file.open_fd.fd), &pclient->mfsl_context ) ;
+      fsal_status = MFSL_close(&(pentry->object.file.open_fd.fd), &pclient->mfsl_context);
 #else
-     fsal_status = FSAL_close( &(pentry->object.file.open_fd.fd) ) ;
+      fsal_status = FSAL_close(&(pentry->object.file.open_fd.fd));
 #endif
 
-     pentry->object.file.open_fd.fileno  = 0 ;
-     pentry->object.file.open_fd.last_op = 0 ;
+      pentry->object.file.open_fd.fileno = 0;
+      pentry->object.file.open_fd.last_op = 0;
 
-     if( FSAL_IS_ERROR( fsal_status ) && (fsal_status.major != ERR_FSAL_NOT_OPENED) )
-         {
-           *pstatus = cache_inode_error_convert( fsal_status ) ;
+      if (FSAL_IS_ERROR(fsal_status) && (fsal_status.major != ERR_FSAL_NOT_OPENED))
+	{
+	  *pstatus = cache_inode_error_convert(fsal_status);
 
-           return *pstatus ;
-         }
-   }
-
+	  return *pstatus;
+	}
+    }
 #ifdef _USE_PROXY
   /* If proxy if used, free the name if needed */
-  if( pentry->object.file.pname != NULL )
+  if (pentry->object.file.pname != NULL)
     {
-       Mem_Free( (char *)( pentry->object.file.pname ) ) ;
-       pentry->object.file.pname = NULL ;
+      Mem_Free((char *)(pentry->object.file.pname));
+      pentry->object.file.pname = NULL;
     }
-  pentry->object.file.pentry_parent_open = NULL ;
+  pentry->object.file.pentry_parent_open = NULL;
 #endif
 
-  *pstatus = CACHE_CONTENT_SUCCESS ;
+  *pstatus = CACHE_CONTENT_SUCCESS;
 
-  return *pstatus ;
-} /* cache_content_close */
-
-                                                      
+  return *pstatus;
+}				/* cache_content_close */

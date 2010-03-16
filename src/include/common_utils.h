@@ -11,7 +11,7 @@
 #ifndef _COMMON_UTILS_H
 #define _COMMON_UTILS_H
 
-#include <sys/types.h> /* for caddr_t */
+#include <sys/types.h>		/* for caddr_t */
 
 /**
  * This function converts a string to an integer.
@@ -21,8 +21,7 @@
  * \return A negative value on error.
  *         Else, the converted integer.
  */
-int s_read_int(char * str);
-
+int s_read_int(char *str);
 
 /**
  * This function converts an octal to an integer.
@@ -32,8 +31,7 @@ int s_read_int(char * str);
  * \return A negative value on error.
  *         Else, the converted integer.
  */
-int s_read_octal(char * str);
-
+int s_read_octal(char *str);
 
 /**
  * This function converts a string to an integer.
@@ -43,19 +41,15 @@ int s_read_octal(char * str);
  * \return A non null value on error.
  *         Else, 0.
  */
-int s_read_int64(char * str, unsigned long long * out64);
+int s_read_int64(char *str, unsigned long long *out64);
 
-
-
-int s_read_size( char * str, size_t * p_size );
-
+int s_read_size(char *str, size_t * p_size);
 
 /**
  * string to boolean convertion.
  * \return 1 for TRUE, 0 for FALSE, -1 on error
  */
-int StrToBoolean ( char * str );
-
+int StrToBoolean(char *str);
 
 /**
  * snprintmem:
@@ -73,8 +67,7 @@ int StrToBoolean ( char * str );
  *
  * \return The number of bytes written in the target buffer.
  */
-int snprintmem(char * target, int tgt_size, caddr_t source, int mem_size);
-
+int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size);
 
 /**
  * snscanmem:
@@ -91,14 +84,14 @@ int snprintmem(char * target, int tgt_size, caddr_t source, int mem_size);
  * \return - The number of bytes read in the source string.
  *         - -1 on error.
  */
-int sscanmem(caddr_t target, int tgt_size, const char * str_source );
+int sscanmem(caddr_t target, int tgt_size, const char *str_source);
 
 /* String parsing functions */
 
-int find_space(   char  c ) ;
-int find_comma(   char  c ) ;
-int find_colon(   char  c ) ;
-int find_endLine( char  c );
-int find_slash(   char  c );
+int find_space(char c);
+int find_comma(char c);
+int find_colon(char c);
+int find_endLine(char c);
+int find_slash(char c);
 
 #endif

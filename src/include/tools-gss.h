@@ -16,8 +16,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "aglae.h"            /* Mes routines de gestion des logs */
-#include <dce/gssapi.h>    /* Header de la gssapi */
+#include "aglae.h"		/* Mes routines de gestion des logs */
+#include <dce/gssapi.h>		/* Header de la gssapi */
 
 #define TOKEN_NOOP              (1<<0)
 #define TOKEN_CONTEXT           (1<<1)
@@ -36,15 +36,12 @@
 #define TOKEN_ENCRYPTED         (1<<6)
 #define TOKEN_SEND_MIC          (1<<7)
 
-void sperror_gss( char * str, OM_uint32 major, OM_uint32 minor ) ;
+void sperror_gss(char *str, OM_uint32 major, OM_uint32 minor);
 
-int write_tok( int s, gss_buffer_t tok ) ;
-int read_tok( int s, gss_buffer_t tok ) ;
-int recv_msg( int fd, char * msg, gss_ctx_id_t context, char * errbuf ) ;
-int send_msg( int fd, char * msg, gss_ctx_id_t context, char * errbuf ) ;
-int recv_token( int s, int * flags, gss_buffer_t tok) ;
+int write_tok(int s, gss_buffer_t tok);
+int read_tok(int s, gss_buffer_t tok);
+int recv_msg(int fd, char *msg, gss_ctx_id_t context, char *errbuf);
+int send_msg(int fd, char *msg, gss_ctx_id_t context, char *errbuf);
+int recv_token(int s, int *flags, gss_buffer_t tok);
 int send_token(int s, int flags, gss_buffer_t tok)
-
-
-
 #endif

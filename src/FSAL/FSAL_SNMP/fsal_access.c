@@ -17,12 +17,11 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif 
+#endif
 
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-
 
 /**
  * FSAL_access :
@@ -58,41 +57,38 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(
-    fsal_handle_t              * object_handle,      /* IN */
-    fsal_op_context_t          * p_context,          /* IN */
-    fsal_accessflags_t         access_type,          /* IN */
-    fsal_attrib_list_t         * object_attributes   /* [ IN/OUT ] */
-){
-    fsal_attrib_list_t attrs;
-    fsal_status_t st;
-          
-    /* sanity checks.
-     * note : object_attributes is optional in FSAL_access.
-     */
-    if (!object_handle || !p_context)
-        Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_access);
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
+			  fsal_op_context_t * p_context,	/* IN */
+			  fsal_accessflags_t access_type,	/* IN */
+			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+  fsal_attrib_list_t attrs;
+  fsal_status_t st;
 
-    FSAL_CLEAR_MASK( attrs.asked_attributes );
-    FSAL_SET_MASK( attrs.asked_attributes, global_fs_info.supported_attrs );
+  /* sanity checks.
+   * note : object_attributes is optional in FSAL_access.
+   */
+  if (!object_handle || !p_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_access);
 
-    st = FSAL_getattrs( object_handle, p_context , &attrs );
+  FSAL_CLEAR_MASK(attrs.asked_attributes);
+  FSAL_SET_MASK(attrs.asked_attributes, global_fs_info.supported_attrs);
 
-    if ( FSAL_IS_ERROR( st ) ) Return(st.major, st.minor, INDEX_FSAL_access);
+  st = FSAL_getattrs(object_handle, p_context, &attrs);
 
-    /* set attributes if needed, then call test_access.
-     */
-    if ( object_attributes )
+  if (FSAL_IS_ERROR(st))
+    Return(st.major, st.minor, INDEX_FSAL_access);
+
+  /* set attributes if needed, then call test_access.
+   */
+  if (object_attributes)
     {
       *object_attributes = attrs;
     }
 
-    st = FSAL_test_access( p_context, access_type, &attrs ); 
-  
-    Return( st.major, st.minor, INDEX_FSAL_access );
-  
+  st = FSAL_test_access(p_context, access_type, &attrs);
+
+  Return(st.major, st.minor, INDEX_FSAL_access);
+
 }
-
-
-
-

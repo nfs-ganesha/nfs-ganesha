@@ -19,8 +19,6 @@
 #include "fsal_internal.h"
 #include "fsal_common.h"
 
-
-
 /* Macros for analysing parameters. */
 #define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
     switch( (p_init_info)->behaviors._field ){                \
@@ -59,7 +57,7 @@
     /* In the other cases, we keep the default value. */          \
     }                                                             \
 
-  
+
 #define SET_STRING_PARAM( api_cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
@@ -71,24 +69,25 @@
 
 
 /** Initializes filesystem, security management... */
-static int FS_Specific_Init( fs_specific_initinfo_t * fs_init_info ){
+static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
+{
 
-  if ( !fs_init_info ) return ERR_FSAL_FAULT;
+  if (!fs_init_info)
+    return ERR_FSAL_FAULT;
 
   /* indicate if we load descriptions  */
-  if ( fs_init_info->enable_descriptions )
-        snmp_set_save_descriptions(1);
+  if (fs_init_info->enable_descriptions)
+    snmp_set_save_descriptions(1);
 
   /* load mibs and set client name */
-  init_snmp( fs_init_info->client_name );
+  init_snmp(fs_init_info->client_name);
 
-  /* save connection information for threads  */ 
-  set_snmp_global_config( fs_init_info );
-  
+  /* save connection information for threads  */
+  set_snmp_global_config(fs_init_info);
+
   return 0;
-  
-}
 
+}
 
 /**
  * FSAL_Init : Initializes the FileSystem Abstraction Layer.
@@ -111,52 +110,48 @@ static int FS_Specific_Init( fs_specific_initinfo_t * fs_init_info ){
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t  FSAL_Init(
-    fsal_parameter_t        * init_info         /* IN */
-){
-  
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+    )
+{
+
   fsal_status_t status;
   int rc;
-              
+
   /* sanity check.  */
-  
+
   if (!init_info)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_Init);
-  
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
   /* >> You can check args bellow << */
 
-  if ( init_info->fsal_info.log_outputs.liste_voies == NULL )
-  {
-    /* issue a warning on stderr */
-    DisplayLog("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
-  }
+  if (init_info->fsal_info.log_outputs.liste_voies == NULL)
+    {
+      /* issue a warning on stderr */
+      DisplayLog
+	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+    }
 
-    
   /* proceeds FSAL internal status initialization */
-  
-  status = fsal_internal_init_global( &(init_info->fsal_info),
-                                      &(init_info->fs_common_info) );  
-  
-  if (FSAL_IS_ERROR(status)) Return(status.major,status.minor,INDEX_FSAL_Init);
 
-  
+  status = fsal_internal_init_global(&(init_info->fsal_info),
+				     &(init_info->fs_common_info));
+
+  if (FSAL_IS_ERROR(status))
+    Return(status.major, status.minor, INDEX_FSAL_Init);
+
   /* >> You can also initialize some filesystem stuff << */
-  
-  if ( rc = FS_Specific_Init( &init_info->fs_specific_info ))  
-    Return( ERR_FSAL_BAD_INIT , -rc, INDEX_FSAL_Init);
-      
 
-      
+  if (rc = FS_Specific_Init(&init_info->fs_specific_info))
+    Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
+
   /* Everything went OK. */
-  
-  Return(ERR_FSAL_NO_ERROR,0,INDEX_FSAL_Init);  
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
+
 }
 
-
 /* To be called before exiting */
-fsal_status_t  FSAL_terminate()
+fsal_status_t FSAL_terminate()
 {
-    ReturnCode( ERR_FSAL_NO_ERROR, 0);
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

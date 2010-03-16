@@ -91,12 +91,11 @@
 #include "solaris_port.h"
 #endif
 
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 
@@ -126,7 +125,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
-extern nfs_parameter_t nfs_param ;
+extern nfs_parameter_t nfs_param;
 
 /**
  * mnt_Mnt: The Mount proc mount function, for all versions.
@@ -143,189 +142,199 @@ extern nfs_parameter_t nfs_param ;
  *
  */
 
-int mnt_Mnt( nfs_arg_t             * parg       /* IN      */,
-             exportlist_t          * pexport    /* IN      */,
-             fsal_op_context_t     * pcontext   /* IN      */,
-             cache_inode_client_t  * pclient    /* IN/OUT  */,
-             hash_table_t          * ht         /* IN/OUT  */, 
-             struct svc_req        * preq       /* IN      */,
-             nfs_res_t             * pres       /* OUT     */ ) 
-{  
-  
-  char    exportPath[MNTPATHLEN + 1];
-  exportlist_t * p_current_item;
+int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
+	    exportlist_t * pexport /* IN      */ ,
+	    fsal_op_context_t * pcontext /* IN      */ ,
+	    cache_inode_client_t * pclient /* IN/OUT  */ ,
+	    hash_table_t * ht /* IN/OUT  */ ,
+	    struct svc_req *preq /* IN      */ ,
+	    nfs_res_t * pres /* OUT     */ )
+{
 
-  fsal_handle_t     * pfsal_handle = NULL ;
-  
-  int auth_flavor[NB_AUTH_FLAVOR] ;
-  int index_auth = 0 ;
-  int i = 0  ;
-  
-  char                      exported_path[MAXPATHLEN] ;
-  char                    * hostname ;
-  
-  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers ) ;
-  
+  char exportPath[MNTPATHLEN + 1];
+  exportlist_t *p_current_item;
+
+  fsal_handle_t *pfsal_handle = NULL;
+
+  int auth_flavor[NB_AUTH_FLAVOR];
+  int index_auth = 0;
+  int i = 0;
+
+  char exported_path[MAXPATHLEN];
+  char *hostname;
+
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+		    "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers);
+
   /* Paranoid command to clean the result struct. */
-  memset( pres, 0, sizeof(nfs_res_t) );
+  memset(pres, 0, sizeof(nfs_res_t));
 
 #ifdef _DETECT_MEMCORRUPT
-  if (!BuddyCheck( parg->arg_mnt ))
-  {
-    fprintf( stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt );
-  }       
-#endif  
-  
-  if ( parg->arg_mnt == NULL )
-  {
-    DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT, "/!\\ | MOUNT: NULL path passed as Mount argument !!!") ;    
-    return NFS_REQ_DROP;
-  }
-      
-  /* Retrieving arguments */
-  strncpy( exportPath, parg->arg_mnt, MNTPATHLEN + 1 );
-  
+  if (!BuddyCheck(parg->arg_mnt))
+    {
+      fprintf(stderr, "Memory corruption in mnt_Mnt. arg_mnt = %p\n", parg->arg_mnt);
+    }
+#endif
 
-  DisplayLogJdLevel( pclient->log_outputs, NIV_FULL_DEBUG, "MOUNT: Asked path=%s", exportPath ) ;
-  
-  
+  if (parg->arg_mnt == NULL)
+    {
+      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+			"/!\\ | MOUNT: NULL path passed as Mount argument !!!");
+      return NFS_REQ_DROP;
+    }
+
+  /* Retrieving arguments */
+  strncpy(exportPath, parg->arg_mnt, MNTPATHLEN + 1);
+
+  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "MOUNT: Asked path=%s",
+		    exportPath);
+
   /*
    * Find the export for the dirname (using as well Path or Tag ) 
    */
-  for(  p_current_item = pexport ; p_current_item != NULL ; p_current_item = p_current_item->next )
-    {  
-      if( exportPath[0] != '/')
-       {
-        /* The input value may be a "Tag" */
-        if( !strcmp( exportPath, p_current_item->FS_tag ) )
-        {
-          strncpy( exported_path, p_current_item->fullpath, MAXPATHLEN ) ;
-          break ;
-        }
-       }
-      else
-       {
-        if( !strncmp(p_current_item->fullpath, exportPath, MAXPATHLEN ) )
-	  {
-	    strncpy( exported_path, p_current_item->fullpath, MAXPATHLEN ) ;
-	    break ;
-	  }
-       }
+  for (p_current_item = pexport; p_current_item != NULL;
+       p_current_item = p_current_item->next)
+    {
+      if (exportPath[0] != '/')
+	{
+	  /* The input value may be a "Tag" */
+	  if (!strcmp(exportPath, p_current_item->FS_tag))
+	    {
+	      strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
+	      break;
+	    }
+	} else
+	{
+	  if (!strncmp(p_current_item->fullpath, exportPath, MAXPATHLEN))
+	    {
+	      strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
+	      break;
+	    }
+	}
     }
-  
+
   /* if p_current_item is not null,
    * it points to the asked export entry.
    */
-  
-  if ( !p_current_item )
-     {
-      DisplayLogJdLevel( pclient->log_outputs, NIV_CRIT, "MOUNT: Export entry %s not found", exportPath ) ;
-       
+
+  if (!p_current_item)
+    {
+      DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
+			"MOUNT: Export entry %s not found", exportPath);
+
       /* entry not found. */
       /* @todo : not MNT3ERR_NOENT => ok */
-       switch( preq->rq_vers )
-        {
-        case MOUNT_V1:
-          pres->res_mnt1.status = NFSERR_ACCES ;
-          break ;
-          
-        case MOUNT_V3:
-          pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
-          break ;
-        }
-       return NFS_REQ_OK ;
+      switch (preq->rq_vers)
+	{
+	case MOUNT_V1:
+	  pres->res_mnt1.status = NFSERR_ACCES;
+	  break;
+
+	case MOUNT_V3:
+	  pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
+	  break;
+	}
+      return NFS_REQ_OK;
     }
-  DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
-                     exported_path, p_current_item->FS_tag, exportPath, p_current_item->id ) ;
-                   
+  DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+		    "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
+		    exported_path, p_current_item->FS_tag, exportPath,
+		    p_current_item->id);
+
   /* @todo : check wether mount is allowed.
    *  to do so, retrieve client identifier from the credential.
    */
-  
+
   /*
    * retrieve the associated NFS handle
    */
-  
+
   /* Set the FSAL HANDLE (for lighter code) */
-  pfsal_handle =  p_current_item->proot_handle  ;
+  pfsal_handle = p_current_item->proot_handle;
 
   /* convert the fsal_handle to a file handle */
-  switch( preq->rq_vers )
+  switch (preq->rq_vers)
     {
     case MOUNT_V1:
-      if( !nfs2_FSALToFhandle( &(pres->res_mnt1.fhstatus2_u.directory), 
-                               pfsal_handle, p_current_item ) )
-        {
-          pres->res_mnt1.status = NFSERR_IO ;
-        }
-      else
-        {
-          pres->res_mnt1.status = NFS_OK ;
-        }
-      break ;
-      
+      if (!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
+			      pfsal_handle, p_current_item))
+	{
+	  pres->res_mnt1.status = NFSERR_IO;
+	} else
+	{
+	  pres->res_mnt1.status = NFS_OK;
+	}
+      break;
+
     case MOUNT_V3:
-      if( ( pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val = Mem_Alloc( NFS3_FHSIZE ) ) == NULL )
-        pres->res_mnt3.fhs_status = MNT3ERR_INVAL ; /* BUGAZOMEU: pas forcement le meilleur code retour ... */
-      else
-        {
-          if( !nfs3_FSALToFhandle( (nfs_fh3 *)&(pres->res_mnt3.mountres3_u.mountinfo.fhandle ), 
-                                   pfsal_handle, p_current_item ) )
-            {
-              pres->res_mnt3.fhs_status = MNT3ERR_INVAL ;
-            }
-          else
-            {
-              pres->res_mnt3.fhs_status = MNT3_OK ;
-          
-          /* Auth et nfs_SetPostOpAttr ici */
-            }
-        }
-      
-      break ;
+      if ((pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val =
+	   Mem_Alloc(NFS3_FHSIZE)) == NULL)
+	pres->res_mnt3.fhs_status = MNT3ERR_INVAL;	/* BUGAZOMEU: pas forcement le meilleur code retour ... */
+	else
+	{
+	  if (!nfs3_FSALToFhandle
+	      ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
+	       p_current_item))
+	    {
+	      pres->res_mnt3.fhs_status = MNT3ERR_INVAL;
+	    } else
+	    {
+	      pres->res_mnt3.fhs_status = MNT3_OK;
+
+	      /* Auth et nfs_SetPostOpAttr ici */
+	    }
+	}
+
+      break;
     }
 
   /* Return the supported authentication flavor in V3 */
-  if( preq->rq_vers == MOUNT_V3 )
+  if (preq->rq_vers == MOUNT_V3)
     {
-      if( p_current_item->options & EXPORT_OPTION_AUTH_NONE ) auth_flavor[index_auth++] = AUTH_NONE ;
-      if( p_current_item->options & EXPORT_OPTION_AUTH_UNIX ) auth_flavor[index_auth++] = AUTH_UNIX ;
+      if (p_current_item->options & EXPORT_OPTION_AUTH_NONE)
+	auth_flavor[index_auth++] = AUTH_NONE;
+      if (p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
+	auth_flavor[index_auth++] = AUTH_UNIX;
 #ifdef _USE_GSSRPC
-      if( nfs_param.krb5_param.active_krb5 == TRUE )
-       {
-         auth_flavor[index_auth++] =  MNT_RPC_GSS_NONE ;
-         auth_flavor[index_auth++] =  MNT_RPC_GSS_INTEGRITY ;
-         auth_flavor[index_auth++] =  MNT_RPC_GSS_PRIVACY ;
-       }
+      if (nfs_param.krb5_param.active_krb5 == TRUE)
+	{
+	  auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
+	  auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
+	  auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
+	}
 #endif
-      
-      DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: Entry support %d different flavours", index_auth ) ;
-      
+
+      DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+			"MOUNT: Entry support %d different flavours", index_auth);
+
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
-      if( ( RES_MOUNTINFO.auth_flavors.auth_flavors_val = (int*)Mem_Alloc( index_auth * sizeof( int ) ) ) == NULL )
-        return NFS_REQ_DROP ;
-  
-      RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth ;
-      for( i = 0 ; i < index_auth ; i++ )
-        RES_MOUNTINFO.auth_flavors.auth_flavors_val[i] = auth_flavor[i] ;
+      if ((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
+	   (int *)Mem_Alloc(index_auth * sizeof(int))) == NULL)
+	return NFS_REQ_DROP;
+
+      RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth;
+      for (i = 0; i < index_auth; i++)
+	RES_MOUNTINFO.auth_flavors.auth_flavors_val[i] = auth_flavor[i];
     }
-  
+
   /* Add the client to the mount list */
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
-  hostname= ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname ;
-  
-  
-  if( !nfs_Add_MountList_Entry( hostname, exportPath ) )
+  hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
+
+  if (!nfs_Add_MountList_Entry(hostname, exportPath))
     {
-      DisplayLogJd( pclient->log_outputs,  "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list", hostname, exportPath ) ;
-      DisplayLogJd( pclient->log_outputs, "MOUNT: /!\\ | Mount command will be successfull anyway" ) ;
-    }
-  else
-    DisplayLogJdLevel( pclient->log_outputs, NIV_EVENT, "MOUNT: mount list entry (%s,%s) added",  hostname, exportPath ) ;
-                  
-  return NFS_REQ_OK ;
-  
-} /* mnt_Mnt */
+      DisplayLogJd(pclient->log_outputs,
+		   "MOUNT: /!\\ | Error when adding entry (%s,%s) to the mount list",
+		   hostname, exportPath);
+      DisplayLogJd(pclient->log_outputs,
+		   "MOUNT: /!\\ | Mount command will be successfull anyway");
+    } else
+    DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+		      "MOUNT: mount list entry (%s,%s) added", hostname, exportPath);
+
+  return NFS_REQ_OK;
+
+}				/* mnt_Mnt */
 
 /**
  * mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.
@@ -336,18 +345,18 @@ int mnt_Mnt( nfs_arg_t             * parg       /* IN      */,
  *
  */
 
-void mnt1_Mnt_Free( nfs_res_t * pres )
+void mnt1_Mnt_Free(nfs_res_t * pres)
 {
-  return ;
-} /* mnt_Mnt_Free */
+  return;
+}				/* mnt_Mnt_Free */
 
-
-void mnt3_Mnt_Free( nfs_res_t * pres )
+void mnt3_Mnt_Free(nfs_res_t * pres)
 {
-  if( pres->res_mnt3.fhs_status == MNT3_OK )
+  if (pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free( (char *)pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val) ;
-      Mem_Free( (char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val) ;
+      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
+	       auth_flavors.auth_flavors_val);
+      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
-  return ;
-} /* mnt_Mnt_Free */
+  return;
+}				/* mnt_Mnt_Free */

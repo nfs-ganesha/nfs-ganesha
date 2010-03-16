@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>  /* for having FNDELAY */
+#include <sys/file.h>		/* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,8 +124,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 
-
-
 /**
  * nfs4_op_secinfo: The NFS4_OP_SECINFO
  * 
@@ -141,32 +139,29 @@
 #define arg_SECINFO4 op->nfs_argop4_u.opsecinfo
 #define res_SECINFO4 resp->nfs_resop4_u.opsecinfo
 
-int nfs4_op_secinfo(  struct nfs_argop4 * op ,   
-                      compound_data_t   * data,
-                      struct nfs_resop4 * resp)
+int nfs4_op_secinfo(struct nfs_argop4 *op,
+		    compound_data_t * data, struct nfs_resop4 *resp)
 {
-    char            __attribute__(( __unused__ )) funcname[] = "nfs4_op_secinfo" ;
-    
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_secinfo";
 
-    resp->resop = NFS4_OP_SECINFO ;
-    res_SECINFO4.status =  NFS4_OK  ;
-    
-    
-    if( ( res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val = (secinfo4 *)Mem_Alloc( 2*sizeof( secinfo4 ) ) ) == NULL )
-      {
-        res_SECINFO4.status = NFS4ERR_SERVERFAULT ;
-        return res_SECINFO4.status ;
-      }
-    
-    /* For the moment, we just have AUTH_NONE and AUTH_UNIX, and this needs no secinfo */
-    res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[0].flavor = AUTH_UNIX ;
-    res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[1].flavor = AUTH_NONE ;
-    res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = 2 ;
-    
-    return res_SECINFO4.status;
-} /* nfs4_op_secinfo */
+  resp->resop = NFS4_OP_SECINFO;
+  res_SECINFO4.status = NFS4_OK;
 
-    
+  if ((res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val =
+       (secinfo4 *) Mem_Alloc(2 * sizeof(secinfo4))) == NULL)
+    {
+      res_SECINFO4.status = NFS4ERR_SERVERFAULT;
+      return res_SECINFO4.status;
+    }
+
+  /* For the moment, we just have AUTH_NONE and AUTH_UNIX, and this needs no secinfo */
+  res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[0].flavor = AUTH_UNIX;
+  res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[1].flavor = AUTH_NONE;
+  res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = 2;
+
+  return res_SECINFO4.status;
+}				/* nfs4_op_secinfo */
+
 /**
  * nfs4_op_secinfo_Free: frees what was allocared to handle nfs4_op_secinfo.
  * 
@@ -177,8 +172,8 @@ int nfs4_op_secinfo(  struct nfs_argop4 * op ,
  * @return nothing (void function )
  * 
  */
-void nfs4_op_secinfo_Free( SECINFO4res * resp )
+void nfs4_op_secinfo_Free(SECINFO4res * resp)
 {
   /* Nothing to be done */
-  return ;
-} /* nfs4_op_secinfo_Free */
+  return;
+}				/* nfs4_op_secinfo_Free */

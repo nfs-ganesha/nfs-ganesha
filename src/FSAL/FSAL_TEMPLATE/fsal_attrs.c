@@ -40,13 +40,12 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(
-    fsal_handle_t         * filehandle,         /* IN */
-    fsal_op_context_t     * p_context,          /* IN */
-    fsal_attrib_list_t    * object_attributes   /* IN/OUT */
-  )
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+    )
 {
-  
+
   int rc;
   fsal_status_t status;
 
@@ -54,25 +53,21 @@ fsal_status_t FSAL_getattrs(
    * note : object_attributes is mandatory in FSAL_getattrs.
    */
   if (!filehandle || !p_context || !object_attributes)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_getattrs);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-    
   TakeTokenFSCall();
 
   /* >> get attributes from your filesystem << */
-  
+
   ReleaseTokenFSCall();
-  
+
   /* >> convert error code, and return on error << */
-  
+
   /* >> convert your filesystem attributes to FSAL attributes << */
-                                 
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_getattrs);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
 
 }
-
-
-
 
 /**
  * FSAL_setattrs:
@@ -107,89 +102,79 @@ fsal_status_t FSAL_getattrs(
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(
-    fsal_handle_t              * filehandle,          /* IN */
-    fsal_op_context_t          * p_context,           /* IN */
-    fsal_attrib_list_t         * attrib_set,          /* IN */
-    fsal_attrib_list_t         * object_attributes    /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
+			    fsal_op_context_t * p_context,	/* IN */
+			    fsal_attrib_list_t * attrib_set,	/* IN */
+			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc;
-  fsal_status_t       status;
-  fsal_attrib_list_t  attrs ;
-  
+  fsal_status_t status;
+  fsal_attrib_list_t attrs;
+
   /* sanity checks.
    * note : object_attributes is optional.
    */
   if (!filehandle || !p_context || !attrib_set)
-    Return( ERR_FSAL_FAULT ,0 , INDEX_FSAL_setattrs);
-    
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+
   /* local copy of attributes */
-  attrs = *attrib_set ;
-  
+  attrs = *attrib_set;
+
   /* First, check that FSAL attributes changes are allowed. */
-  
-  /* Is it allowed to change times ? */  
-  
-  if ( !global_fs_info.cansettime ){
 
-      if ( attrs.asked_attributes
-           &
-           ( FSAL_ATTR_ATIME | FSAL_ATTR_CREATION
-            | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME )
-         )
-      {
-        
-        /* handled as an unsettable attribute. */
-        Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs );
-      }
+  /* Is it allowed to change times ? */
 
-  }
-  
-    
+  if (!global_fs_info.cansettime)
+    {
+
+      if (attrs.asked_attributes
+	  & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+	{
+
+	  /* handled as an unsettable attribute. */
+	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
+	}
+
+    }
+
   /* apply umask, if mode attribute is to be changed */
-  
-  if ( FSAL_TEST_MASK( attrs.asked_attributes, FSAL_ATTR_MODE ) ){
-     attrs.mode &= (~global_fs_info.umask) ;
-  }
 
-  
+  if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE))
+    {
+      attrs.mode &= (~global_fs_info.umask);
+    }
+
   /* >> Then, convert the attribute set to your FS format << */
-  
+
   TakeTokenFSCall();
-  
+
   /* >> Call your fs setattr function << */
-  
+
   ReleaseTokenFSCall();
-  
+
   /* >> convert error code, and return on error << */
-  
-  
-  
+
   /* >> Optionaly fill output attributes.
    * If your filesystem setattr call doesn't
    * return object attributes, you may do something
    * like that : << */
-  
-  if ( object_attributes )
-  {
-    
-    status = FSAL_getattrs( filehandle, p_context, object_attributes );    
 
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+  if (object_attributes)
     {
-      FSAL_CLEAR_MASK( object_attributes->asked_attributes );
-      FSAL_SET_MASK( object_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+
+      status = FSAL_getattrs(filehandle, p_context, object_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+
     }
-    
-  }
-  
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_setattrs);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
+
 }
-
-
-

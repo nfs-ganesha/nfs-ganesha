@@ -20,8 +20,6 @@
 #include "namespace.h"
 #include <string.h>
 
-
-
 /**
  * FSAL_open:
  * Open a regular file for reading/writing its data content.
@@ -58,166 +56,158 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open(
-    fsal_handle_t         * filehandle,             /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t      openflags,                /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */
-){
-  
+fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
+			fsal_op_context_t * p_context,	/* IN */
+			fsal_openflags_t openflags,	/* IN */
+			fsal_file_t * file_descriptor,	/* OUT */
+			fsal_attrib_list_t * file_attributes	/* [ IN/OUT ] */
+    )
+{
+
   int rc = 0;
-  char           object_path[FSAL_MAX_PATH_LEN];
+  char object_path[FSAL_MAX_PATH_LEN];
   int file_info_provided = FALSE;
-      
+
   /* sanity checks.
    * note : file_attributes is optional.
    */
-  if ( !filehandle || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_open);
-  
+  if (!filehandle || !p_context || !file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
+
   /* get the full path for this file */
-  rc = NamespacePath( filehandle->inode, filehandle->device, filehandle->validator, object_path );
-  if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_open);
-  
+  rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
+		     object_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_open);
+
   memset(file_descriptor, 0, sizeof(fsal_file_t));
-  
+
   /* set access mode flags */
-  
+
   file_descriptor->file_info.flags = 0;
-  
-  if ( openflags & FSAL_O_RDONLY )
-      file_descriptor->file_info.flags |= O_RDONLY;
-  if ( openflags & FSAL_O_WRONLY )
-      file_descriptor->file_info.flags |= O_WRONLY ;
-  if ( openflags & FSAL_O_RDWR )
-      file_descriptor->file_info.flags |= O_RDWR ;
-  
-  
+
+  if (openflags & FSAL_O_RDONLY)
+    file_descriptor->file_info.flags |= O_RDONLY;
+  if (openflags & FSAL_O_WRONLY)
+    file_descriptor->file_info.flags |= O_WRONLY;
+  if (openflags & FSAL_O_RDWR)
+    file_descriptor->file_info.flags |= O_RDWR;
+
   /* set context for the next operation, so it can be retrieved by FS thread */
-  fsal_set_thread_context( p_context );
-  
+  fsal_set_thread_context(p_context);
+
   /* check open call */
-  
-  if ( p_fs_ops->open )
-  {
-      
+
+  if (p_fs_ops->open)
+    {
+
 #ifdef _DEBUG_FSAL
-     printf("Call to open( %s, %#X )\n", object_path, file_descriptor->file_info.flags );
+      printf("Call to open( %s, %#X )\n", object_path, file_descriptor->file_info.flags);
 #endif
-      
+
       TakeTokenFSCall();
-      rc =  p_fs_ops->open( object_path, &(file_descriptor->file_info) );
+      rc = p_fs_ops->open(object_path, &(file_descriptor->file_info));
       ReleaseTokenFSCall();
-      
-      if ( rc )
-          Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open );
-      
+
+      if (rc)
+	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+
       file_info_provided = TRUE;
 
-  }
-  else
-  {
+    } else
+    {
 #ifdef _DEBUG_FSAL
-     printf("no open command provided\n" );
+      printf("no open command provided\n");
 #endif
-             
-      /* ignoring open */
-      memset( &(file_descriptor->file_info), 0, sizeof(struct ganefuse_file_info) );
-  }    
-  
-  /* check open flags (only FSAL_O_TRUNC and FSAL_O_APPEND are used for FUSE filesystems) */
-  
-  if ( openflags & FSAL_O_TRUNC )
-  {
-      if ( file_info_provided && p_fs_ops->ftruncate )
-      {
-#ifdef _DEBUG_FSAL
-     printf("call to ftruncate on file since FSAL_O_TRUNC was set\n" );
-#endif
-          /* ftruncate the file */
-          TakeTokenFSCall();
-          rc = p_fs_ops->ftruncate( object_path, 0, &(file_descriptor->file_info) );
-          ReleaseTokenFSCall();
-          
-          if ( rc )
-              Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open );
-      }
-      else if ( p_fs_ops->truncate )
-      {
-#ifdef _DEBUG_FSAL
-     printf("call to truncate on file since FSAL_O_TRUNC was set\n" );
-#endif
-     
-          /* truncate the file */
-          TakeTokenFSCall();
-          rc = p_fs_ops->truncate( object_path, 0 );
-          ReleaseTokenFSCall();
-          
-          if ( rc )
-              Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open );          
-      }
-      /* else: ignoring flag */
-  }
 
-  
-  if ( openflags & FSAL_O_APPEND )
-  {
-        struct stat stbuf;
-        
-        /* In this case, this only solution is to get file attributes */
-        
-        if ( file_info_provided && p_fs_ops->fgetattr )
-        {
-            rc =  p_fs_ops->fgetattr( object_path, &stbuf, &(file_descriptor->file_info) );
-        }
-        else
-        {
-            rc =  p_fs_ops->getattr( object_path, &stbuf );
-        }        
-        
-        if ( rc ) Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open );
-      
-        file_descriptor->current_offset = stbuf.st_size;
-  }
-  else
-  {
-        file_descriptor->current_offset = 0;
-  }
-  
-      
+      /* ignoring open */
+      memset(&(file_descriptor->file_info), 0, sizeof(struct ganefuse_file_info));
+    }
+
+  /* check open flags (only FSAL_O_TRUNC and FSAL_O_APPEND are used for FUSE filesystems) */
+
+  if (openflags & FSAL_O_TRUNC)
+    {
+      if (file_info_provided && p_fs_ops->ftruncate)
+	{
+#ifdef _DEBUG_FSAL
+	  printf("call to ftruncate on file since FSAL_O_TRUNC was set\n");
+#endif
+	  /* ftruncate the file */
+	  TakeTokenFSCall();
+	  rc = p_fs_ops->ftruncate(object_path, 0, &(file_descriptor->file_info));
+	  ReleaseTokenFSCall();
+
+	  if (rc)
+	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+      } else if (p_fs_ops->truncate)
+	{
+#ifdef _DEBUG_FSAL
+	  printf("call to truncate on file since FSAL_O_TRUNC was set\n");
+#endif
+
+	  /* truncate the file */
+	  TakeTokenFSCall();
+	  rc = p_fs_ops->truncate(object_path, 0);
+	  ReleaseTokenFSCall();
+
+	  if (rc)
+	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+	}
+      /* else: ignoring flag */
+    }
+
+  if (openflags & FSAL_O_APPEND)
+    {
+      struct stat stbuf;
+
+      /* In this case, this only solution is to get file attributes */
+
+      if (file_info_provided && p_fs_ops->fgetattr)
+	{
+	  rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
+	} else
+	{
+	  rc = p_fs_ops->getattr(object_path, &stbuf);
+	}
+
+      if (rc)
+	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
+
+      file_descriptor->current_offset = stbuf.st_size;
+    } else
+    {
+      file_descriptor->current_offset = 0;
+    }
+
   /* fill the file descriptor structure */
   file_descriptor->file_handle = *filehandle;
-  
+
   /* backup context */
   file_descriptor->context = *p_context;
 
 #ifdef _DEBUG_FSAL
-    if ( file_info_provided )
-        printf("FSAL_open: FH=%d\n", file_descriptor->file_info.fh );
+  if (file_info_provided)
+    printf("FSAL_open: FH=%d\n", file_descriptor->file_info.fh);
 #endif
-  
-  
-  if ( file_attributes )
-  {
-    fsal_status_t status;
-    
-    status = FSAL_getattrs( filehandle, p_context , file_attributes );
-    
-    /* on error, we set a special bit in the mask. */        
-    if ( FSAL_IS_ERROR( status ) )
+
+  if (file_attributes)
     {
-      FSAL_CLEAR_MASK( file_attributes->asked_attributes );
-      FSAL_SET_MASK( file_attributes->asked_attributes,
-          FSAL_ATTR_RDATTR_ERR );
+      fsal_status_t status;
+
+      status = FSAL_getattrs(filehandle, p_context, file_attributes);
+
+      /* on error, we set a special bit in the mask. */
+      if (FSAL_IS_ERROR(status))
+	{
+	  FSAL_CLEAR_MASK(file_attributes->asked_attributes);
+	  FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
     }
-  }
-  
-  Return(ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_open);
-  
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
+
 }
-
-
 
 /**
  * FSAL_open_byname:
@@ -258,30 +248,25 @@ fsal_status_t FSAL_open(
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(
-    fsal_handle_t         * dirhandle,             /* IN */
-    fsal_name_t           * filename,              /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t        openflags,              /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */)
+fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,	/* IN */
+				fsal_name_t * filename,	/* IN */
+				fsal_op_context_t * p_context,	/* IN */
+				fsal_openflags_t openflags,	/* IN */
+				fsal_file_t * file_descriptor,	/* OUT */
+				fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  fsal_status_t fsal_status ;
-  fsal_handle_t filehandle ;
+  fsal_status_t fsal_status;
+  fsal_handle_t filehandle;
 
-  if ( !dirhandle || !filename || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_open_by_name);
+  if (!dirhandle || !filename || !p_context || !file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
-  fsal_status = FSAL_lookup( dirhandle, filename, p_context, &filehandle, file_attributes ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-        return fsal_status ;
+  fsal_status = FSAL_lookup(dirhandle, filename, p_context, &filehandle, file_attributes);
+  if (FSAL_IS_ERROR(fsal_status))
+    return fsal_status;
 
-  return FSAL_open( &filehandle, p_context, openflags, file_descriptor, file_attributes ) ; 
+  return FSAL_open(&filehandle, p_context, openflags, file_descriptor, file_attributes);
 }
-
-
-
-
 
 /**
  * FSAL_read:
@@ -311,120 +296,116 @@ fsal_status_t FSAL_open_by_name(
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(
-    fsal_file_t     * file_descriptor,  /* IN */
-    fsal_seek_t     * seek_descriptor,  /* [IN] */
-    fsal_size_t     buffer_size,        /* IN */
-    caddr_t         buffer,             /* OUT */
-    fsal_size_t     * read_amount,      /* OUT */
-    fsal_boolean_t  * end_of_file       /* OUT */
-){
-    size_t req_size;
-    size_t nb_read;
-    int    rc;
-    off_t  seekoffset = 0;
-    struct stat stbuf;
-    char   object_path[FSAL_MAX_PATH_LEN];    
+fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
+			fsal_seek_t * seek_descriptor,	/* [IN] */
+			fsal_size_t buffer_size,	/* IN */
+			caddr_t buffer,	/* OUT */
+			fsal_size_t * read_amount,	/* OUT */
+			fsal_boolean_t * end_of_file	/* OUT */
+    )
+{
+  size_t req_size;
+  size_t nb_read;
+  int rc;
+  off_t seekoffset = 0;
+  struct stat stbuf;
+  char object_path[FSAL_MAX_PATH_LEN];
 
-    /* sanity checks. */
+  /* sanity checks. */
 
-    if ( !file_descriptor ||!buffer || !read_amount || !end_of_file )
-        Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_read);
+  if (!file_descriptor || !buffer || !read_amount || !end_of_file)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
-    if ( !p_fs_ops->read )
-        Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_read);
+  if (!p_fs_ops->read)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_read);
 
-    /* initialize returned values */
-        
-    *read_amount = 0;
-    *end_of_file = 0;
-    
-    
-    req_size = (size_t) buffer_size;    
-    
-    /* get file's full path */
-    rc = NamespacePath( file_descriptor->file_handle.inode,
-                        file_descriptor->file_handle.device,
-                        file_descriptor->file_handle.validator, object_path );
-    if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_read);
-    
-    
-    /* set context so it can be retrieved by FS */
-    fsal_set_thread_context( &file_descriptor->context );
-    
+  /* initialize returned values */
+
+  *read_amount = 0;
+  *end_of_file = 0;
+
+  req_size = (size_t) buffer_size;
+
+  /* get file's full path */
+  rc = NamespacePath(file_descriptor->file_handle.inode,
+		     file_descriptor->file_handle.device,
+		     file_descriptor->file_handle.validator, object_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_read);
+
+  /* set context so it can be retrieved by FS */
+  fsal_set_thread_context(&file_descriptor->context);
+
 #ifdef _DEBUG_FSAL
-    printf("FSAL_read: FH=%d\n", file_descriptor->file_info.fh );
-#endif    
-    
-    if ( seek_descriptor )
+  printf("FSAL_read: FH=%d\n", file_descriptor->file_info.fh);
+#endif
+
+  if (seek_descriptor)
     {
 
-        switch ( seek_descriptor->whence )
-        {
-            case FSAL_SEEK_SET :
-                /* set absolute position to offset */                
-                seekoffset = seek_descriptor->offset;
-                break;
-                
-            case FSAL_SEEK_CUR:                
-                /* current position + offset */
-                seekoffset = file_descriptor->current_offset + seek_descriptor->offset;
-                break;
+      switch (seek_descriptor->whence)
+	{
+	case FSAL_SEEK_SET:
+	  /* set absolute position to offset */
+	  seekoffset = seek_descriptor->offset;
+	  break;
 
-            case FSAL_SEEK_END :
-                /* set end of file + offset */
-                /* in this case, the only solution is to get entry attributes */
-                
-                if ( p_fs_ops->fgetattr )
-                {
-                    rc =  p_fs_ops->fgetattr( object_path, &stbuf, &(file_descriptor->file_info) );
-                }
-                else
-                {
-                    rc =  p_fs_ops->getattr( object_path, &stbuf );
-                }
-                
-                if ( rc ) Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read );
-                
-                seekoffset = (off_t)stbuf.st_size + seek_descriptor->offset;
-                
-                break;
-                
-            default:
-                DisplayLogJdLevel( fsal_log, NIV_CRIT, "FSAL_read: Invalid seek parameter: whence=%d",seek_descriptor->whence);
-                Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
-        }
+	case FSAL_SEEK_CUR:
+	  /* current position + offset */
+	  seekoffset = file_descriptor->current_offset + seek_descriptor->offset;
+	  break;
+
+	case FSAL_SEEK_END:
+	  /* set end of file + offset */
+	  /* in this case, the only solution is to get entry attributes */
+
+	  if (p_fs_ops->fgetattr)
+	    {
+	      rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
+	    } else
+	    {
+	      rc = p_fs_ops->getattr(object_path, &stbuf);
+	    }
+
+	  if (rc)
+	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read);
+
+	  seekoffset = (off_t) stbuf.st_size + seek_descriptor->offset;
+
+	  break;
+
+	default:
+	  DisplayLogJdLevel(fsal_log, NIV_CRIT,
+			    "FSAL_read: Invalid seek parameter: whence=%d",
+			    seek_descriptor->whence);
+	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
+	}
+    } else
+    {
+      seekoffset = file_descriptor->current_offset;
     }
-    else
-    {
-        seekoffset = file_descriptor->current_offset;
-    }    
-    
-    /* If the call does not fill all the buffer, the rest of the data must be
-     * substituted with zeroes. */
-    memset( buffer, 0, req_size );
-    
-    TakeTokenFSCall();
-    rc = p_fs_ops->read( object_path, buffer, req_size, seekoffset, &(file_descriptor->file_info) );
-    ReleaseTokenFSCall();
-    
-    if ( rc < 0 )
-        Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read );
-    
-    /* rc >= 0 */
-    
-    *read_amount = (fsal_size_t)rc;
-    *end_of_file = (rc < (off_t)req_size);
-    file_descriptor->current_offset = seekoffset + (off_t)rc;
-        
-    Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_read );
-  
+
+  /* If the call does not fill all the buffer, the rest of the data must be
+   * substituted with zeroes. */
+  memset(buffer, 0, req_size);
+
+  TakeTokenFSCall();
+  rc = p_fs_ops->read(object_path, buffer, req_size, seekoffset,
+		      &(file_descriptor->file_info));
+  ReleaseTokenFSCall();
+
+  if (rc < 0)
+    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_read);
+
+  /* rc >= 0 */
+
+  *read_amount = (fsal_size_t) rc;
+  *end_of_file = (rc < (off_t) req_size);
+  file_descriptor->current_offset = seekoffset + (off_t) rc;
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_read);
+
 }
-
-
-
-
-
 
 /**
  * FSAL_write:
@@ -451,105 +432,105 @@ fsal_status_t FSAL_read(
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(
-    fsal_file_t        * file_descriptor,     /* IN */
-    fsal_seek_t        * seek_descriptor,     /* IN */
-    fsal_size_t        buffer_size,           /* IN */
-    caddr_t            buffer,                /* IN */
-    fsal_size_t        * write_amount         /* OUT */
-){
-    size_t req_size;
-    int    rc;
-    off_t  seekoffset = 0;
-    struct stat stbuf;
-    char   object_path[FSAL_MAX_PATH_LEN];
+fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
+			 fsal_seek_t * seek_descriptor,	/* IN */
+			 fsal_size_t buffer_size,	/* IN */
+			 caddr_t buffer,	/* IN */
+			 fsal_size_t * write_amount	/* OUT */
+    )
+{
+  size_t req_size;
+  int rc;
+  off_t seekoffset = 0;
+  struct stat stbuf;
+  char object_path[FSAL_MAX_PATH_LEN];
 
-    /* sanity checks. */
-    if ( !file_descriptor || !buffer || !write_amount )
-        Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_write);
+  /* sanity checks. */
+  if (!file_descriptor || !buffer || !write_amount)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
-    if ( !p_fs_ops->write )
-        Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_write);
-  
-    /* initialize returned values */
-        
-    *write_amount = 0;
+  if (!p_fs_ops->write)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_write);
 
-    req_size = (size_t) buffer_size;    
-        
-    /* set context so it can be retrieved by FS */
-    fsal_set_thread_context( &file_descriptor->context );
-    
+  /* initialize returned values */
+
+  *write_amount = 0;
+
+  req_size = (size_t) buffer_size;
+
+  /* set context so it can be retrieved by FS */
+  fsal_set_thread_context(&file_descriptor->context);
+
 #ifdef _DEBUG_FSAL
-    printf("FSAL_write: FH=%d\n", file_descriptor->file_info.fh );
-#endif    
-    
-    /* get file's full path */
-    rc = NamespacePath( file_descriptor->file_handle.inode,
-                        file_descriptor->file_handle.device,
-                        file_descriptor->file_handle.validator, object_path );
-    if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_write);        
-    
-    
-    if ( seek_descriptor )
+  printf("FSAL_write: FH=%d\n", file_descriptor->file_info.fh);
+#endif
+
+  /* get file's full path */
+  rc = NamespacePath(file_descriptor->file_handle.inode,
+		     file_descriptor->file_handle.device,
+		     file_descriptor->file_handle.validator, object_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_write);
+
+  if (seek_descriptor)
     {
 
-        switch ( seek_descriptor->whence )
-        {
-            case FSAL_SEEK_SET :
-                /* set absolute position to offset */                
-                seekoffset = seek_descriptor->offset;
-                break;
-                
-            case FSAL_SEEK_CUR:                
-                /* current position + offset */
-                seekoffset = file_descriptor->current_offset + seek_descriptor->offset;
-                break;
+      switch (seek_descriptor->whence)
+	{
+	case FSAL_SEEK_SET:
+	  /* set absolute position to offset */
+	  seekoffset = seek_descriptor->offset;
+	  break;
 
-            case FSAL_SEEK_END :
-                /* set end of file + offset */
-                /* in this case, the only solution is to get entry attributes */
-                
-                if ( p_fs_ops->fgetattr )
-                {
-                    rc =  p_fs_ops->fgetattr( object_path, &stbuf, &(file_descriptor->file_info) );
-                }
-                else
-                {
-                    rc =  p_fs_ops->getattr( object_path, &stbuf );
-                }
-                
-                if ( rc ) Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write );
-                
-                seekoffset = (off_t)stbuf.st_size + seek_descriptor->offset;
-                
-                break;
-                
-            default:
-                DisplayLogJdLevel( fsal_log, NIV_CRIT, "FSAL_write: Invalid seek parameter: whence=%d",seek_descriptor->whence);
-                Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
-        }
-    }
-    else
+	case FSAL_SEEK_CUR:
+	  /* current position + offset */
+	  seekoffset = file_descriptor->current_offset + seek_descriptor->offset;
+	  break;
+
+	case FSAL_SEEK_END:
+	  /* set end of file + offset */
+	  /* in this case, the only solution is to get entry attributes */
+
+	  if (p_fs_ops->fgetattr)
+	    {
+	      rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
+	    } else
+	    {
+	      rc = p_fs_ops->getattr(object_path, &stbuf);
+	    }
+
+	  if (rc)
+	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write);
+
+	  seekoffset = (off_t) stbuf.st_size + seek_descriptor->offset;
+
+	  break;
+
+	default:
+	  DisplayLogJdLevel(fsal_log, NIV_CRIT,
+			    "FSAL_write: Invalid seek parameter: whence=%d",
+			    seek_descriptor->whence);
+	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
+	}
+    } else
     {
-        seekoffset = file_descriptor->current_offset;
+      seekoffset = file_descriptor->current_offset;
     }
-    
-    TakeTokenFSCall();
-    rc = p_fs_ops->write( object_path, buffer, req_size, seekoffset, &(file_descriptor->file_info) );
-    ReleaseTokenFSCall();
 
-    if ( rc < 0 )
-        Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write );
-    
-    file_descriptor->current_offset = seekoffset + (off_t)rc;
-    
-    *write_amount = (fsal_size_t)rc;
+  TakeTokenFSCall();
+  rc = p_fs_ops->write(object_path, buffer, req_size, seekoffset,
+		       &(file_descriptor->file_info));
+  ReleaseTokenFSCall();
 
-    Return( ERR_FSAL_NO_ERROR ,0 , INDEX_FSAL_write );   
+  if (rc < 0)
+    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_write);
+
+  file_descriptor->current_offset = seekoffset + (off_t) rc;
+
+  *write_amount = (fsal_size_t) rc;
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_write);
 }
-
-
 
 /**
  * FSAL_close:
@@ -565,63 +546,61 @@ fsal_status_t FSAL_write(
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(
-    fsal_file_t        * file_descriptor /* IN */
-){
-  
-  int rc;
-  char             file_path[FSAL_MAX_PATH_LEN];
-  
-  /* sanity checks. */
-  if ( !file_descriptor )
-    Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_close);
-  
-  
-  /* get the full path for file inode */
-  rc = NamespacePath( file_descriptor->file_handle.inode, file_descriptor->file_handle.device, file_descriptor->file_handle.validator, file_path );
-  if ( rc ) Return( ERR_FSAL_STALE, rc, INDEX_FSAL_close);
+fsal_status_t FSAL_close(fsal_file_t * file_descriptor	/* IN */
+    )
+{
 
-  if ( !p_fs_ops->release )
-      /* ignore this call */
-      Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
-  
+  int rc;
+  char file_path[FSAL_MAX_PATH_LEN];
+
+  /* sanity checks. */
+  if (!file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
+
+  /* get the full path for file inode */
+  rc = NamespacePath(file_descriptor->file_handle.inode,
+		     file_descriptor->file_handle.device,
+		     file_descriptor->file_handle.validator, file_path);
+  if (rc)
+    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_close);
+
+  if (!p_fs_ops->release)
+    /* ignore this call */
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
+
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context( &file_descriptor->context );
-  
+  fsal_set_thread_context(&file_descriptor->context);
+
 #ifdef _DEBUG_FSAL
-    printf("FSAL_close: FH=%d\n", file_descriptor->file_info.fh );
-#endif    
-      
+  printf("FSAL_close: FH=%d\n", file_descriptor->file_info.fh);
+#endif
+
   TakeTokenFSCall();
-  
-  rc = p_fs_ops->release( file_path, &file_descriptor->file_info );
-  
+
+  rc = p_fs_ops->release(file_path, &file_descriptor->file_info);
+
   ReleaseTokenFSCall();
-  
-  if ( rc )
-      Return ( fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_close );
-  
-  Return( ERR_FSAL_NO_ERROR, 0 ,INDEX_FSAL_close );
-  
+
+  if (rc)
+    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_close);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
+
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(
-    fsal_handle_t         * filehandle,             /* IN */
-    fsal_u64_t              fileid,                 /* IN */
-    fsal_op_context_t     * p_context,              /* IN */
-    fsal_openflags_t        openflags,              /* IN */
-    fsal_file_t           * file_descriptor,        /* OUT */
-    fsal_attrib_list_t    * file_attributes         /* [ IN/OUT ] */ )
+fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,	/* IN */
+				  fsal_u64_t fileid,	/* IN */
+				  fsal_op_context_t * p_context,	/* IN */
+				  fsal_openflags_t openflags,	/* IN */
+				  fsal_file_t * file_descriptor,	/* OUT */
+				  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_open_by_fileid);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t FSAL_close_by_fileid(
-    fsal_file_t        * file_descriptor /* IN */,
-    fsal_u64_t           fileid )
+fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+				   fsal_u64_t fileid)
 {
-  Return(ERR_FSAL_NOTSUPP ,0 , INDEX_FSAL_open_by_fileid);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
-
-

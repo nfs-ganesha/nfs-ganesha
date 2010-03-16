@@ -8,9 +8,8 @@
  *          defined in fsal_internal.c.
  * 
  */
- 
-#include  "fsal.h"
 
+#include  "fsal.h"
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -18,14 +17,12 @@
 /* static filesystem info.
  * read access only.
  */
-extern fsal_staticfsinfo_t   global_fs_info;
+extern fsal_staticfsinfo_t global_fs_info;
 
 /* log descriptor */
-extern log_t   fsal_log;
+extern log_t fsal_log;
 
 #endif
-
-
 
 /* defined the set of attributes supported with HPSS */
 #define GHOSTFS_SUPPORTED_ATTRIBUTES (                                    \
@@ -36,30 +33,28 @@ extern log_t   fsal_log;
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME  | FSAL_ATTR_SPACEUSED | \
           FSAL_ATTR_CHGTIME )
 
-
 /**
  *  This function initializes shared variables of the FSAL.
  */
-fsal_status_t fsal_internal_init_global( fsal_init_info_t    *    fsal_info ,
-                                     fs_common_initinfo_t  *  fs_common_info );
+fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
+					fs_common_initinfo_t * fs_common_info);
 
 /**
  *  Increments the number of calls for a function.
  */
-void fsal_increment_nbcall( int function_index , fsal_status_t  status );
+void fsal_increment_nbcall(int function_index, fsal_status_t status);
 
 /**
  * Retrieves current thread statistics.
  */
 void fsal_internal_getstats(fsal_statistics_t * output_stats);
 
-
 /**
  * Return :
  * Macro for returning from functions
  * with trace and function call increment.
  */
- 
+
 #define Return( _code_, _minor_ , _f_ ) do {                          \
                char _str_[256];                                       \
                fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ; \
@@ -79,7 +74,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats);
                (_struct_status_).minor = (_minor_) ;         \
                return (_struct_status_);                     \
               } while(0)
-
 
 /* automaticaly sets the function name, from the function index. */
 /*#define SetFuncID(_f_) SetNameFunction(fsal_function_names[_f_])*/
