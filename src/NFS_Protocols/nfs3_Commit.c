@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,13 +141,13 @@
  *
  */
 
-extern writeverf3 NFS3_write_verifier;	/* NFS V3 write verifier      */
+extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 
 int nfs3_Commit(nfs_arg_t * parg,
-		exportlist_t * pexport,
-		fsal_op_context_t * pcontext,
-		cache_inode_client_t * pclient,
-		hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                exportlist_t * pexport,
+                fsal_op_context_t * pcontext,
+                cache_inode_client_t * pclient,
+                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs3_Access";
 
@@ -171,7 +171,7 @@ int nfs3_Commit(nfs_arg_t * parg,
 
   /* Get the entry in the cache_inode */
   if ((pentry = cache_inode_get(&fsal_data,
-				&pre_attr, ht, pclient, pcontext, &cache_status)) == NULL)
+                                &pre_attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_commit3.status = NFS3ERR_STALE;
@@ -179,18 +179,18 @@ int nfs3_Commit(nfs_arg_t * parg,
     }
 
   if (cache_inode_commit(pentry,
-			 parg->arg_commit3.offset,
-			 parg->arg_commit3.count,
-			 &pre_attr,
-			 ht, pclient, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                         parg->arg_commit3.offset,
+                         parg->arg_commit3.count,
+                         &pre_attr,
+                         ht, pclient, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;
 
       nfs_SetWccData(pcontext,
-		     pexport,
-		     pentry,
-		     ppre_attr,
-		     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
+                     pexport,
+                     pentry,
+                     ppre_attr,
+                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
 
       return NFS_REQ_OK;
     }
@@ -199,17 +199,17 @@ int nfs3_Commit(nfs_arg_t * parg,
   ppre_attr = &pre_attr;
 
   nfs_SetWccData(pcontext,
-		 pexport,
-		 pentry,
-		 ppre_attr, ppre_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
+                 pexport,
+                 pentry,
+                 ppre_attr, ppre_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
 
   /* Set the write verifier */
   memcpy(pres->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-	 sizeof(writeverf3));
+         sizeof(writeverf3));
   pres->res_commit3.status = NFS3_OK;
 
   return NFS_REQ_OK;
-}				/* nfs3_Commit */
+}                               /* nfs3_Commit */
 
 /**
  * nfs3_Commit_Free: Frees the result structure allocated for nfs3_Commit.
@@ -223,4 +223,4 @@ void nfs3_Commit_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
   return;
-}				/* nfs3_Commit_Free */
+}                               /* nfs3_Commit_Free */

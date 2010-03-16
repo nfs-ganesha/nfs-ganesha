@@ -56,7 +56,7 @@ static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
  * FSAL_lock:
  */
 fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
-			fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int cmd;
   int retval;
@@ -72,16 +72,16 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
   if (retval && ((errno == EACCES) || (errno == EAGAIN)))
     {
       if (blocking)
-	{
-	  /*
-	   * Conflicting lock present create a child and
-	   * do F_SETLKW if we can block. The lock is already
-	   * added to the blocking list.
-	   */
-	  do_blocking_lock(obj_handle, ldesc);
-	  /* We need to send NLM4_BLOCKED reply */
-	  Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
-	}
+        {
+          /*
+           * Conflicting lock present create a child and
+           * do F_SETLKW if we can block. The lock is already
+           * added to the blocking list.
+           */
+          do_blocking_lock(obj_handle, ldesc);
+          /* We need to send NLM4_BLOCKED reply */
+          Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
+        }
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock);
 
     }
@@ -93,8 +93,8 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
-			      fsal_lockparam_t * lock_info	/* IN */
+fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                              fsal_lockparam_t * lock_info      /* IN */
     )
 {
 

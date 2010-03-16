@@ -92,7 +92,7 @@ typedef struct hashbuff__ {
   caddr_t pdata;
   size_t len;
   unsigned int type;
-  struct hashbuff__ *next_alloc;	/* for stuff allocator */
+  struct hashbuff__ *next_alloc;        /* for stuff allocator */
 } hash_buffer_t;
 
 typedef struct hash_data__ {

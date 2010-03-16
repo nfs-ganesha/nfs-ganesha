@@ -135,10 +135,10 @@ extern nfs_parameter_t nfs_param;
  *
  */
 unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
-					   hash_buffer_t * buffclef)
+                                           hash_buffer_t * buffclef)
 {
   return (unsigned long int)(buffclef->pdata) % p_hparam->index_size;
-}				/*  ip_stats_value_hash_func */
+}                               /*  ip_stats_value_hash_func */
 
 /**
  *
@@ -157,11 +157,11 @@ unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef)
+                                         hash_buffer_t * buffclef)
 {
   /* We use the Xid as the rbt value */
   return (unsigned long int)(buffclef->pdata);
-}				/* ip_stats_rbt_hash_func */
+}                               /* ip_stats_rbt_hash_func */
 
 /**
  *
@@ -181,7 +181,7 @@ int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
   unsigned long int xid1 = (unsigned long int)(buff1->pdata);
   unsigned long int xid2 = (unsigned long int)(buff2->pdata);
   return (xid1 == xid2) ? 0 : 1;
-}				/* compare_xid */
+}                               /* compare_xid */
 
 /**
  *
@@ -201,12 +201,12 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
   unsigned long int ip_stats = (unsigned long int)(pbuff->pdata);
 
   return sprintf(str, "%x : %u.%u.%u.%u",
-		 (unsigned int)ip_stats,
-		 ((unsigned int)ip_stats & 0xFF000000) >> 24,
-		 ((unsigned int)ip_stats & 0x00FF0000) >> 16,
-		 ((unsigned int)ip_stats & 0x0000FF00) >> 8,
-		 ((unsigned int)ip_stats & 0x000000FF));
-}				/* display_ip_stats */
+                 (unsigned int)ip_stats,
+                 ((unsigned int)ip_stats & 0xFF000000) >> 24,
+                 ((unsigned int)ip_stats & 0x00FF0000) >> 16,
+                 ((unsigned int)ip_stats & 0x0000FF00) >> 8,
+                 ((unsigned int)ip_stats & 0x000000FF));
+}                               /* display_ip_stats */
 
 /**
  *
@@ -224,7 +224,7 @@ int display_ip_stats(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-		     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -242,8 +242,8 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
 
   /* Entry to be cached */
   GET_PREALLOC(pnfs_ip_stats,
-	       nfs_ip_stats_pool,
-	       nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
+               nfs_ip_stats_pool,
+               nfs_param.worker_param.nb_ip_stats_prealloc, nfs_ip_stats_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -278,7 +278,7 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
     return IP_STATS_INSERT_MALLOC_ERROR;
 
   return IP_STATS_SUCCESS;
-}				/* nfs_ip_stats_add */
+}                               /* nfs_ip_stats_add */
 
 /**
  *
@@ -292,9 +292,9 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
-		      unsigned int ipaddr,
-		      unsigned int nfs_prog,
-		      unsigned int mnt_prog, struct svc_req *ptr_req)
+                      unsigned int ipaddr,
+                      unsigned int nfs_prog,
+                      unsigned int mnt_prog, struct svc_req *ptr_req)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -317,44 +317,44 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
       status = IP_STATS_SUCCESS;
 
       if (ptr_req->rq_prog == nfs_prog)
-	{
-	  switch (ptr_req->rq_vers)
-	    {
-	    case NFS_V2:
-	      pnfs_ip_stats->nb_req_nfs2 += 1;
-	      pnfs_ip_stats->req_nfs2[ptr_req->rq_proc] += 1;
-	      break;
+        {
+          switch (ptr_req->rq_vers)
+            {
+            case NFS_V2:
+              pnfs_ip_stats->nb_req_nfs2 += 1;
+              pnfs_ip_stats->req_nfs2[ptr_req->rq_proc] += 1;
+              break;
 
-	    case NFS_V3:
-	      pnfs_ip_stats->nb_req_nfs3 += 1;
-	      pnfs_ip_stats->req_nfs3[ptr_req->rq_proc] += 1;
-	      break;
+            case NFS_V3:
+              pnfs_ip_stats->nb_req_nfs3 += 1;
+              pnfs_ip_stats->req_nfs3[ptr_req->rq_proc] += 1;
+              break;
 
-	    case NFS_V4:
-	      pnfs_ip_stats->nb_req_nfs4 += 1;
-	      break;
-	    }
+            case NFS_V4:
+              pnfs_ip_stats->nb_req_nfs4 += 1;
+              break;
+            }
       } else if (ptr_req->rq_prog == mnt_prog)
-	{
-	  switch (ptr_req->rq_vers)
-	    {
-	    case MOUNT_V1:
-	      pnfs_ip_stats->nb_req_mnt1 += 1;
-	      pnfs_ip_stats->req_mnt1[ptr_req->rq_proc] += 1;
-	      break;
+        {
+          switch (ptr_req->rq_vers)
+            {
+            case MOUNT_V1:
+              pnfs_ip_stats->nb_req_mnt1 += 1;
+              pnfs_ip_stats->req_mnt1[ptr_req->rq_proc] += 1;
+              break;
 
-	    case MOUNT_V3:
-	      pnfs_ip_stats->nb_req_mnt3 += 1;
-	      pnfs_ip_stats->req_mnt3[ptr_req->rq_proc] += 1;
-	      break;
-	    }
-	}
+            case MOUNT_V3:
+              pnfs_ip_stats->nb_req_mnt3 += 1;
+              pnfs_ip_stats->req_mnt3[ptr_req->rq_proc] += 1;
+              break;
+            }
+        }
     } else
     {
       status = IP_STATS_NOT_FOUND;
     }
   return status;
-}				/* nfs_ip_stats_incr */
+}                               /* nfs_ip_stats_incr */
 
 /**
  *
@@ -368,7 +368,7 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
-		     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
+                     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -392,7 +392,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
       status = IP_STATS_NOT_FOUND;
     }
   return status;
-}				/* nfs_ip_stats_get */
+}                               /* nfs_ip_stats_get */
 
 /**
  *
@@ -407,7 +407,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-			int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
+                        int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool)
 {
   hash_buffer_t buffkey, old_value;
   int status = IP_STATS_SUCCESS;
@@ -433,7 +433,7 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
     }
 
   return status;
-}				/* nfs_ip_stats_remove */
+}                               /* nfs_ip_stats_remove */
 
 /**
  *
@@ -457,7 +457,7 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
     }
 
   return ht_ip_stats;
-}				/* nfs_Init_ip_stats */
+}                               /* nfs_Init_ip_stats */
 
 /**
  *
@@ -470,7 +470,7 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
  *
  */
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
-		       unsigned int nb_worker, char *path_stat)
+                       unsigned int nb_worker, char *path_stat)
 {
   struct rbt_node *it;
   struct rbt_head *tete_rbt;
@@ -495,12 +495,12 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
   current_time = time(NULL);
   memcpy(&current_time_struct, localtime(&current_time), sizeof(current_time_struct));
   snprintf(strdate, 1024, "%u, %.2d/%.2d/%.4d %.2d:%.2d:%.2d ",
-	   (unsigned int)current_time,
-	   current_time_struct.tm_mday,
-	   current_time_struct.tm_mon + 1,
-	   1900 + current_time_struct.tm_year,
-	   current_time_struct.tm_hour,
-	   current_time_struct.tm_min, current_time_struct.tm_sec);
+           (unsigned int)current_time,
+           current_time_struct.tm_mday,
+           current_time_struct.tm_mon + 1,
+           1900 + current_time_struct.tm_year,
+           current_time_struct.tm_hour,
+           current_time_struct.tm_min, current_time_struct.tm_sec);
 
   /* All clients are supposed to have call at least one time worker #0 
    * we loop on every client in the HashTable */
@@ -509,94 +509,94 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
       tete_rbt = &((ht_ip_stats[0]->array_rbt)[i]);
       RBT_LOOP(tete_rbt, it)
       {
-	pdata = (hash_data_t *) it->rbt_opaq;
+        pdata = (hash_data_t *) it->rbt_opaq;
 
-	ipaddr = (unsigned long int)pdata->buffkey.pdata;
+        ipaddr = (unsigned long int)pdata->buffkey.pdata;
 
-	snprintf(ifpathdump,
-		 MAXPATHLEN,
-		 "%s/stats_nfs-0x%x=%u.%u.%u.%u",
-		 path_stat,
-		 ntohl(ipaddr),
-		 (ntohl(ipaddr) & 0xFF000000) >> 24,
-		 (ntohl(ipaddr) & 0x00FF0000) >> 16,
-		 (ntohl(ipaddr) & 0x0000FF00) >> 8, (ntohl(ipaddr) & 0x000000FF));
+        snprintf(ifpathdump,
+                 MAXPATHLEN,
+                 "%s/stats_nfs-0x%x=%u.%u.%u.%u",
+                 path_stat,
+                 ntohl(ipaddr),
+                 (ntohl(ipaddr) & 0xFF000000) >> 24,
+                 (ntohl(ipaddr) & 0x00FF0000) >> 16,
+                 (ntohl(ipaddr) & 0x0000FF00) >> 8, (ntohl(ipaddr) & 0x000000FF));
 
-	if ((flushipstat = fopen(ifpathdump, "a")) == NULL)
-	  return;
+        if ((flushipstat = fopen(ifpathdump, "a")) == NULL)
+          return;
 
-	/* Collect stats for each worker and aggregate them */
-	memset(&ip_stats_aggreg, 0, sizeof(ip_stats_aggreg));
-	for (j = 0; j < nb_worker; j++)
-	  {
-	    if (nfs_ip_stats_get(ht_ip_stats[j],
-				 ipaddr, &pnfs_ip_stats[j]) != IP_STATS_SUCCESS)
-	      {
-		fclose(flushipstat);
-		return;
-	      }
-	    ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call;
+        /* Collect stats for each worker and aggregate them */
+        memset(&ip_stats_aggreg, 0, sizeof(ip_stats_aggreg));
+        for (j = 0; j < nb_worker; j++)
+          {
+            if (nfs_ip_stats_get(ht_ip_stats[j],
+                                 ipaddr, &pnfs_ip_stats[j]) != IP_STATS_SUCCESS)
+              {
+                fclose(flushipstat);
+                return;
+              }
+            ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call;
 
-	    ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2;
-	    ip_stats_aggreg.nb_req_nfs3 += (pnfs_ip_stats[j])->nb_req_nfs3;
-	    ip_stats_aggreg.nb_req_nfs4 += (pnfs_ip_stats[j])->nb_req_nfs4;
-	    ip_stats_aggreg.nb_req_mnt1 += (pnfs_ip_stats[j])->nb_req_mnt1;
-	    ip_stats_aggreg.nb_req_mnt3 += (pnfs_ip_stats[j])->nb_req_mnt3;
+            ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2;
+            ip_stats_aggreg.nb_req_nfs3 += (pnfs_ip_stats[j])->nb_req_nfs3;
+            ip_stats_aggreg.nb_req_nfs4 += (pnfs_ip_stats[j])->nb_req_nfs4;
+            ip_stats_aggreg.nb_req_mnt1 += (pnfs_ip_stats[j])->nb_req_mnt1;
+            ip_stats_aggreg.nb_req_mnt3 += (pnfs_ip_stats[j])->nb_req_mnt3;
 
-	    for (k = 0; k < MNT_V1_NB_COMMAND; k++)
-	      ip_stats_aggreg.req_mnt1[k] += (pnfs_ip_stats[j])->req_mnt1[k];
+            for (k = 0; k < MNT_V1_NB_COMMAND; k++)
+              ip_stats_aggreg.req_mnt1[k] += (pnfs_ip_stats[j])->req_mnt1[k];
 
-	    for (k = 0; k < MNT_V3_NB_COMMAND; k++)
-	      ip_stats_aggreg.req_mnt3[k] += (pnfs_ip_stats[j])->req_mnt3[k];
+            for (k = 0; k < MNT_V3_NB_COMMAND; k++)
+              ip_stats_aggreg.req_mnt3[k] += (pnfs_ip_stats[j])->req_mnt3[k];
 
-	    for (k = 0; k < NFS_V2_NB_COMMAND; k++)
-	      ip_stats_aggreg.req_nfs2[k] += (pnfs_ip_stats[j])->req_nfs2[k];
+            for (k = 0; k < NFS_V2_NB_COMMAND; k++)
+              ip_stats_aggreg.req_nfs2[k] += (pnfs_ip_stats[j])->req_nfs2[k];
 
-	    for (k = 0; k < NFS_V3_NB_COMMAND; k++)
-	      ip_stats_aggreg.req_nfs3[k] += (pnfs_ip_stats[j])->req_nfs3[k];
-	  }
+            for (k = 0; k < NFS_V3_NB_COMMAND; k++)
+              ip_stats_aggreg.req_nfs3[k] += (pnfs_ip_stats[j])->req_nfs3[k];
+          }
 
-	/* Write stats to file */
-	fprintf(flushipstat, "NFS/MOUNT STATISTICS,%s;%u|%u,%u,%u,%u,%u\n",
-		strdate,
-		ip_stats_aggreg.nb_call,
-		ip_stats_aggreg.nb_req_mnt1,
-		ip_stats_aggreg.nb_req_mnt3,
-		ip_stats_aggreg.nb_req_nfs2,
-		ip_stats_aggreg.nb_req_nfs3, ip_stats_aggreg.nb_req_nfs4);
+        /* Write stats to file */
+        fprintf(flushipstat, "NFS/MOUNT STATISTICS,%s;%u|%u,%u,%u,%u,%u\n",
+                strdate,
+                ip_stats_aggreg.nb_call,
+                ip_stats_aggreg.nb_req_mnt1,
+                ip_stats_aggreg.nb_req_mnt3,
+                ip_stats_aggreg.nb_req_nfs2,
+                ip_stats_aggreg.nb_req_nfs3, ip_stats_aggreg.nb_req_nfs4);
 
-	fprintf(flushipstat, "MNT V1 REQUEST,%s;%u|", strdate,
-		ip_stats_aggreg.nb_req_mnt1);
-	for (k = 0; k < MNT_V1_NB_COMMAND - 1; k++)
-	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt1[k]);
-	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt1[MNT_V1_NB_COMMAND - 1]);
+        fprintf(flushipstat, "MNT V1 REQUEST,%s;%u|", strdate,
+                ip_stats_aggreg.nb_req_mnt1);
+        for (k = 0; k < MNT_V1_NB_COMMAND - 1; k++)
+          fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt1[k]);
+        fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt1[MNT_V1_NB_COMMAND - 1]);
 
-	fprintf(flushipstat, "MNT V3 REQUEST,%s;%u|", strdate,
-		ip_stats_aggreg.nb_req_mnt3);
-	for (k = 0; k < MNT_V3_NB_COMMAND - 1; k++)
-	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt3[k]);
-	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt3[MNT_V3_NB_COMMAND - 1]);
+        fprintf(flushipstat, "MNT V3 REQUEST,%s;%u|", strdate,
+                ip_stats_aggreg.nb_req_mnt3);
+        for (k = 0; k < MNT_V3_NB_COMMAND - 1; k++)
+          fprintf(flushipstat, "%u,", ip_stats_aggreg.req_mnt3[k]);
+        fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_mnt3[MNT_V3_NB_COMMAND - 1]);
 
-	fprintf(flushipstat, "NFS V2 REQUEST,%s;%u|", strdate,
-		ip_stats_aggreg.nb_req_nfs2);
-	for (k = 0; k < NFS_V2_NB_COMMAND - 1; k++)
-	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs2[k]);
-	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs2[NFS_V2_NB_COMMAND - 1]);
+        fprintf(flushipstat, "NFS V2 REQUEST,%s;%u|", strdate,
+                ip_stats_aggreg.nb_req_nfs2);
+        for (k = 0; k < NFS_V2_NB_COMMAND - 1; k++)
+          fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs2[k]);
+        fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs2[NFS_V2_NB_COMMAND - 1]);
 
-	fprintf(flushipstat, "NFS V3 REQUEST,%s;%u|", strdate,
-		ip_stats_aggreg.nb_req_nfs3);
-	for (k = 0; k < NFS_V3_NB_COMMAND - 1; k++)
-	  fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs3[k]);
-	fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs3[NFS_V3_NB_COMMAND - 1]);
+        fprintf(flushipstat, "NFS V3 REQUEST,%s;%u|", strdate,
+                ip_stats_aggreg.nb_req_nfs3);
+        for (k = 0; k < NFS_V3_NB_COMMAND - 1; k++)
+          fprintf(flushipstat, "%u,", ip_stats_aggreg.req_nfs3[k]);
+        fprintf(flushipstat, "%u\n", ip_stats_aggreg.req_nfs3[NFS_V3_NB_COMMAND - 1]);
 
-	fprintf(flushipstat, "END, ----- NO MORE STATS FOR THIS PASS ----\n");
+        fprintf(flushipstat, "END, ----- NO MORE STATS FOR THIS PASS ----\n");
 
-	fflush(flushipstat);
+        fflush(flushipstat);
 
-	/* Check next client */
-	RBT_INCREMENT(it);
+        /* Check next client */
+        RBT_INCREMENT(it);
       }
 
       fclose(flushipstat);
     }
-}				/* nfs_ip_stats_dump */
+}                               /* nfs_ip_stats_dump */

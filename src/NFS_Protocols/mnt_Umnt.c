@@ -94,7 +94,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -136,17 +136,17 @@
  */
 
 int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
-	     exportlist_t * pexport /* IN     */ ,
-	     fsal_op_context_t * pcontext /* IN     */ ,
-	     cache_inode_client_t * pclient /* INOUT  */ ,
-	     hash_table_t * ht /* INOUT  */ ,
-	     struct svc_req *preq /* IN     */ ,
-	     nfs_res_t * pres /* OUT    */ )
+             exportlist_t * pexport /* IN     */ ,
+             fsal_op_context_t * pcontext /* IN     */ ,
+             cache_inode_client_t * pclient /* INOUT  */ ,
+             hash_table_t * ht /* INOUT  */ ,
+             struct svc_req *preq /* IN     */ ,
+             nfs_res_t * pres /* OUT    */ )
 {
   char *hostname;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "REQUEST PROCESSING: Calling mnt_Umnt");
+                    "REQUEST PROCESSING: Calling mnt_Umnt");
 
   /* @todo: BUGAZOMEU; seul AUTHUNIX est supporte */
   hostname = ((struct authunix_parms *)(preq->rq_clntcred))->aup_machname;
@@ -154,7 +154,7 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
   if (hostname == NULL)
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
-			"/!\\ | UMOUNT: NULL passed as Umount argument !!!");
+                        "/!\\ | UMOUNT: NULL passed as Umount argument !!!");
       return NFS_REQ_DROP;
     }
 
@@ -162,13 +162,13 @@ int mnt_Umnt(nfs_arg_t * parg /* IN     */ ,
   if (!nfs_Remove_MountList_Entry(hostname, NULL))
     {
       DisplayLogJd(pclient->log_outputs,
-		   "UMOUNT: /!\\ | Cannot remove mount entry for client %s", hostname);
+                   "UMOUNT: /!\\ | Cannot remove mount entry for client %s", hostname);
     }
   DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
-		    "UMOUNT: Client %s was removed from mount list", hostname);
+                    "UMOUNT: Client %s was removed from mount list", hostname);
 
   return NFS_REQ_OK;
-}				/* mnt_Umnt */
+}                               /* mnt_Umnt */
 
 /**
  * mnt_Umnt_Free: Frees the result structure allocated for mnt_Umnt.
@@ -182,4 +182,4 @@ void mnt_Umnt_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
   return;
-}				/* mnt_Umnt_Free */
+}                               /* mnt_Umnt_Free */

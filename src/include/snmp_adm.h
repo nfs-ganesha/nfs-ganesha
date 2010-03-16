@@ -25,8 +25,8 @@ enum {
 
 /** A var is made of this two */
 enum {
-  TYPE_OID,	  /**< contain a string with the type */
-  VAL_OID	  /**< contain the value */
+  TYPE_OID,       /**< contain a string with the type */
+  VAL_OID         /**< contain the value */
 };
 
 enum {
@@ -37,12 +37,12 @@ enum {
 
 /** Enum of available type number */
 enum type_number {
-  SNMP_ADM_INTEGER,	  /**< 32 bits integer */
-  SNMP_ADM_STRING,	  /**< null terminated */
-  SNMP_ADM_IP,		  /**< Ip address (4 octets in network byte-order) */
-  SNMP_ADM_REAL,	  /**< 64 bits floating point (double) */
-  SNMP_ADM_BIGINT,	  /**< 64 bits integer */
-  SNMP_ADM_TIMETICKS	  /**< Match ASN_TIMETICKS meaning hundredths of a second since some epoch (not EPOCH).
+  SNMP_ADM_INTEGER,       /**< 32 bits integer */
+  SNMP_ADM_STRING,        /**< null terminated */
+  SNMP_ADM_IP,            /**< Ip address (4 octets in network byte-order) */
+  SNMP_ADM_REAL,          /**< 64 bits floating point (double) */
+  SNMP_ADM_BIGINT,        /**< 64 bits integer */
+  SNMP_ADM_TIMETICKS      /**< Match ASN_TIMETICKS meaning hundredths of a second since some epoch (not EPOCH).
 			     It is encoded in a unsigned int, so time range is quite short.
 			     You should use description field to identifies the reference epoch.
 			     
@@ -64,14 +64,14 @@ enum type_number {
  * ROOT.prodid.PROC_OID.numproc.TRIGGER_OID.
  */
 enum trigger_state {
-  SNMP_ADM_READY,	       /**< A set (whatever the value) will call the procedure. */
-  SNMP_ADM_PROGRESS,	       /**< Procedure not terminated. Cannot set trigger or inputs */
-  SNMP_ADM_DONE,	       /**< Procedure terminated with success, user can read values.
+  SNMP_ADM_READY,              /**< A set (whatever the value) will call the procedure. */
+  SNMP_ADM_PROGRESS,           /**< Procedure not terminated. Cannot set trigger or inputs */
+  SNMP_ADM_DONE,               /**< Procedure terminated with success, user can read values.
 				  User must set the value to 0 to pass in READY state.
 				  Other values are ignored.
 				  Inputs cannot be set.
 			       */
-  SNMP_ADM_ERROR	       /**< like DONE but procedure was terminated with error */
+  SNMP_ADM_ERROR               /**< like DONE but procedure was terminated with error */
 };
 
 /** Maximum length for a string */
@@ -81,23 +81,23 @@ enum trigger_state {
  * The type of variables handle by the library.
  */
 typedef union type_union_e {
-  int integer;				/**< SNMP_ADM_INTEGER */
-  char string[SNMP_ADM_MAX_STR];	/**< SNMP_ADM_STRING */
-  in_addr_t ip;				/**< SNMP_ADM_IP */
-  double real;				/**< SNMP_ADM_REAL */
-  int64_t bigint;			/**< SNMP_ADM_BIGINT */
-  unsigned int time;			/**< SNMP_ADM_TIMETICKS */
+  int integer;                          /**< SNMP_ADM_INTEGER */
+  char string[SNMP_ADM_MAX_STR];        /**< SNMP_ADM_STRING */
+  in_addr_t ip;                         /**< SNMP_ADM_IP */
+  double real;                          /**< SNMP_ADM_REAL */
+  int64_t bigint;                       /**< SNMP_ADM_BIGINT */
+  unsigned int time;                    /**< SNMP_ADM_TIMETICKS */
 } snmp_adm_type_union;
 
 /**
  * Scalar information.
  */
 typedef struct register_scal_s {
-  char *label;			       /**< The variable's name */
-  char *desc;			       /**< A useful description */
-  unsigned char type;		       /**< The value's type @see type_number */
-  int access;			       /**< Access right SNMP_ADM_ACCESS_RO or SNMP_ADM_ACCESS_RW */
-  void *value;			       /**< Pointer on the scalar */
+  char *label;                         /**< The variable's name */
+  char *desc;                          /**< A useful description */
+  unsigned char type;                  /**< The value's type @see type_number */
+  int access;                          /**< Access right SNMP_ADM_ACCESS_RO or SNMP_ADM_ACCESS_RW */
+  void *value;                         /**< Pointer on the scalar */
 } register_scal;
 
 /**
@@ -122,13 +122,13 @@ typedef int (*fct_set) (const snmp_adm_type_union * param, void *opt_arg);
  * get/set information.
  */
 typedef struct register_get_set_s {
-  char *label;			  /**< The variable's name */
-  char *desc;			  /**< A useful description */
-  unsigned char type;		  /**< The value's type @see type_number */
-  int access;			  /**< Access right SNMP_ADM_ACCESS_RO or SNMP_ADM_ACCESS_RW */
-  fct_get getter;		  /**< getter function @see fct_get */
-  fct_set setter;		  /**< getter function @see fct_set */
-  void *opt_arg;		  /**< optional argument (could be NULL) */
+  char *label;                    /**< The variable's name */
+  char *desc;                     /**< A useful description */
+  unsigned char type;             /**< The value's type @see type_number */
+  int access;                     /**< Access right SNMP_ADM_ACCESS_RO or SNMP_ADM_ACCESS_RW */
+  fct_get getter;                 /**< getter function @see fct_get */
+  fct_set setter;                 /**< getter function @see fct_set */
+  void *opt_arg;                  /**< optional argument (could be NULL) */
 } register_get_set;
 
 /**
@@ -140,20 +140,20 @@ typedef struct register_get_set_s {
  * @return value should be 0 on success.
  */
 typedef int (*proc) (const snmp_adm_type_union ** tab_in, snmp_adm_type_union ** tab_out,
-		     void *opt_arg);
+                     void *opt_arg);
 
 /**
  * Procedure information.
  */
 typedef struct register_proc_s {
-  char *label;			  /**< The variable's name */
-  char *desc;			  /**< A useful description */
-  int nb_in;			  /**< Number of inputs values */
-  unsigned char *type_in;	  /**< Array of input type. @see type_number */
-  int nb_out;			  /**< Number of outputs values */
-  unsigned char *type_out;	  /**< Array of output type */
-  void *opt_arg;		  /**< Optional argument, could be null*/
-  proc myproc;			  /**< Pointer on the procedure @see proc */
+  char *label;                    /**< The variable's name */
+  char *desc;                     /**< A useful description */
+  int nb_in;                      /**< Number of inputs values */
+  unsigned char *type_in;         /**< Array of input type. @see type_number */
+  int nb_out;                     /**< Number of outputs values */
+  unsigned char *type_out;        /**< Array of output type */
+  void *opt_arg;                  /**< Optional argument, could be null*/
+  proc myproc;                    /**< Pointer on the procedure @see proc */
 } register_proc;
 
 /**
@@ -236,7 +236,7 @@ void snmp_adm_send_trap(unsigned char type, snmp_adm_type_union value);
  * @return 0 on success.
  */
 int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *args,
-				unsigned char type, snmp_adm_type_union value);
+                                unsigned char type, snmp_adm_type_union value);
 
 /**
  * Launch the thread.
@@ -258,4 +258,4 @@ void snmp_adm_close();
  */
 void snmp_adm_log(char *format, ...);
 
-#endif				/* __LIBDAEMON_H__ */
+#endif                          /* __LIBDAEMON_H__ */

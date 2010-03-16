@@ -137,4 +137,4 @@ do                                                                        \
   pool = entry ;                                                          \
 } while( 0 )
 
-#endif				/* _STUFF_ALLOC_H */
+#endif                          /* _STUFF_ALLOC_H */

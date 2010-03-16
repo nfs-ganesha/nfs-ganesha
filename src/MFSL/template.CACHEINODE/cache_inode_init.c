@@ -115,7 +115,7 @@
  *
  */
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
-			       cache_inode_status_t * pstatus)
+                               cache_inode_status_t * pstatus)
 {
   hash_table_t *ht = NULL;
 
@@ -129,7 +129,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
   DisplayLog("Using write-back (asynchronous) metadata cache");
   /* Return the hashtable */
   return ht;
-}				/* cache_inode_init */
+}                               /* cache_inode_init */
 
 /**
  *
@@ -145,8 +145,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
  *
  */
 int cache_inode_client_init(cache_inode_client_t * pclient,
-			    cache_inode_client_parameter_t param,
-			    int thread_index, void *pworker_data)
+                            cache_inode_client_parameter_t param,
+                            int thread_index, void *pworker_data)
 {
   LRU_status_t lru_status;
   pthread_mutexattr_t mutexattr;
@@ -166,7 +166,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->use_test_access = param.use_test_access;
   pclient->getattr_dir_invalidation = param.getattr_dir_invalidation;
   pclient->call_since_last_gc = 0;
-  pclient->time_of_last_gc = time(NULL) + thread_index * 20;	/* All the thread will not gc at the same time */
+  pclient->time_of_last_gc = time(NULL) + thread_index * 20;    /* All the thread will not gc at the same time */
   pclient->pworker = pworker_data;
   pclient->use_cache = param.use_cache;
   pclient->retention = param.retention;
@@ -197,7 +197,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   if (pclient->pool_entry == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init cache_inode client entry pool");
+                   "Error : can't init cache_inode client entry pool");
       return 1;
     }
 #endif
@@ -209,11 +209,11 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_dir_data,
-		 pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
+                 pclient->nb_pre_dir_data, cache_inode_dir_data_t, next_alloc);
   if (pclient->pool_dir_data == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init cache_inode client dir data pool");
+                   "Error : can't init cache_inode client dir data pool");
       return 1;
     }
 #endif
@@ -225,11 +225,11 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_parent,
-		 pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
+                 pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
   if (pclient->pool_parent == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init cache_inode client parent link pool");
+                   "Error : can't init cache_inode client parent link pool");
       return 1;
     }
 #endif
@@ -241,18 +241,18 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_state_v4,
-		 pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
+                 pclient->nb_pre_state_v4, cache_inode_state_v4_t, next);
   if (pclient->pool_state_v4 == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init cache_inode client state v4 pool");
+                   "Error : can't init cache_inode client state v4 pool");
       return 1;
     }
 #endif
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_async_op,
-		 pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
+                 pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   if (pclient->pool_async_op == NULL)
     {
       DisplayLogJd(pclient->log_outputs, "Error : can't init cache_inode async op pool");
@@ -267,7 +267,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_key,
-		 pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
+                 pclient->nb_prealloc, cache_inode_fsal_data_t, next_alloc);
 
 # ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -277,7 +277,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   if (pclient->pool_key == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init cache_inode client key pool");
+                   "Error : can't init cache_inode client key pool");
       return 1;
     }
 #endif
@@ -290,4 +290,4 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   /* Everything was ok, return 0 */
   return 0;
-}				/* cache_inode_client_init */
+}                               /* cache_inode_client_init */

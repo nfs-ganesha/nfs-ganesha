@@ -42,10 +42,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * p_link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -94,10 +94,10 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
       /* On error, we set a flag in the returned attributes */
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
+          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
@@ -134,13 +134,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored) */
-			   fsal_handle_t * p_link_handle,	/* OUT */
-			   fsal_attrib_list_t * p_link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored) */
+                           fsal_handle_t * p_link_handle,       /* OUT */
+                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
     )
 {
 
@@ -165,7 +165,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   /* build the new path and check the permissions on the parent directory */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
-				      &buffstat);
+                                      &buffstat);
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
@@ -201,7 +201,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   if (FSAL_IS_ERROR
       (status =
        fsal_internal_posixdb_add_entry(p_context->p_conn, p_linkname, &infofs,
-				       p_parent_directory_handle, p_link_handle)))
+                                       p_parent_directory_handle, p_link_handle)))
     Return(status.major, status.minor, INDEX_FSAL_symlink);
 
   /* chown the symlink to the current user */
@@ -222,10 +222,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
       status = posix2fsal_attributes(&buffstat, p_link_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
+          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

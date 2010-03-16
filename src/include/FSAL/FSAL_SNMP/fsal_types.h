@@ -216,8 +216,8 @@ typedef struct fs_specific_initinfo__ {
   long snmp_version;
   char snmp_server[HOST_NAME_MAX];
   char community[COMMUNITY_MAX_LEN];
-  int nb_retries;		/* Number of retries before timeout */
-  int microsec_timeout;		/* Number of uS until first timeout, then exponential backoff */
+  int nb_retries;               /* Number of retries before timeout */
+  int microsec_timeout;         /* Number of uS until first timeout, then exponential backoff */
   int enable_descriptions;
   char client_name[HOST_NAME_MAX];
   unsigned int getbulk_count;
@@ -230,4 +230,4 @@ typedef struct fs_specific_initinfo__ {
 
 typedef void *fsal_lockdesc_t;
 
-#endif				/* _FSAL_TYPES_SPECIFIC_H */
+#endif                          /* _FSAL_TYPES_SPECIFIC_H */

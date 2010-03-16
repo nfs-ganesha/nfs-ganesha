@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,7 +143,7 @@ extern time_t ServerBootTime;
  */
 
 int nfs41_op_destroy_session(struct nfs_argop4 *op,
-			     compound_data_t * data, struct nfs_resop4 *resp)
+                             compound_data_t * data, struct nfs_resop4 *resp)
 {
 
 #define arg_DESTROY_SESSION4 op->nfs_argop4_u.opdestroy_session
@@ -158,7 +158,7 @@ int nfs41_op_destroy_session(struct nfs_argop4 *op,
     res_DESTROY_SESSION4.dsr_status = NFS4_OK;
 
   return res_DESTROY_SESSION4.dsr_status;
-}				/* nfs41_op_destroy_session */
+}                               /* nfs41_op_destroy_session */
 
 /**
  * nfs41_op_destroy_session_Free: frees what was allocared to handle nfs41_op_destroy_session.
@@ -174,4 +174,4 @@ void nfs41_op_destroy_session_Free(DESTROY_SESSION4res * resp)
 {
   /* To be completed */
   return;
-}				/* nfs41_op_destroy_session_Free */
+}                               /* nfs41_op_destroy_session_Free */

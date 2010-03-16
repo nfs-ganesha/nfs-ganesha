@@ -34,9 +34,9 @@
 #include "tests.h"
 #include "Connectathon_config_parsing.h"
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
 
 static void usage()
 {
@@ -49,11 +49,11 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-  int files;			/* number of files in each dir */
+  int files;                    /* number of files in each dir */
   int totfiles = 0;
-  int dirs;			/* directories in each dir */
+  int dirs;                     /* directories in each dir */
   int totdirs = 0;
-  int levels;			/* levels deep */
+  int levels;                   /* levels deep */
   char *fname;
   char *dname;
   struct timeval time;
@@ -72,32 +72,32 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* No Test Directory create */
-	      Nflag++;
-	      break;
+            case 'n':          /* No Test Directory create */
+              Nflag++;
+              break;
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 2 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -139,24 +139,24 @@ int main(int argc, char *argv[])
   if (b->levels == -1)
     {
       fprintf(stderr,
-	      "Missing 'levels' parameter in the config file '%s' for the basic test number 2\n",
-	      config_file);
+              "Missing 'levels' parameter in the config file '%s' for the basic test number 2\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->files == -1)
     {
       fprintf(stderr,
-	      "Missing 'files' parameter in the config file '%s' for the basic test number 2\n",
-	      config_file);
+              "Missing 'files' parameter in the config file '%s' for the basic test number 2\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->dirs == -1)
     {
       fprintf(stderr,
-	      "Missing 'dirs' parameter in the config file '%s' for the basic test number 2\n",
-	      config_file);
+              "Missing 'dirs' parameter in the config file '%s' for the basic test number 2\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -183,17 +183,17 @@ int main(int argc, char *argv[])
   if (mtestdir(test_dir))
     {
       sprintf(str, "test1 -s %s %d %d %d %s %s",
-	      Nflag ? "-n" : "", levels, files, dirs, fname, dname);
+              Nflag ? "-n" : "", levels, files, dirs, fname, dname);
       if (system(str) != 0)
-	{
-	  error("can't make directroy tree to remove");
-	  exit(1);
-	}
+        {
+          error("can't make directroy tree to remove");
+          exit(1);
+        }
       if (mtestdir(test_dir))
-	{
-	  error("still can't go to test directory");
-	  exit(1);
-	}
+        {
+          error("still can't go to test directory");
+          exit(1);
+        }
     }
 
   starttime();
@@ -201,11 +201,11 @@ int main(int argc, char *argv[])
   endtime(&time);
 
   fprintf(stdout,
-	  "\tremoved %d files %d directories %d levels deep", totfiles, totdirs, levels);
+          "\tremoved %d files %d directories %d levels deep", totfiles, totdirs, levels);
   if (Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
-	      (long)time.tv_sec, (long)time.tv_usec / 10000);
+              (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
       complete();
     }
   fprintf(log, "b2\t%d\t%d\t%d\t%ld.%02ld\n", totfiles, totdirs, levels,
-	  (long)time.tv_sec, (long)time.tv_usec / 10000);
+          (long)time.tv_sec, (long)time.tv_usec / 10000);
   fclose(log);
 
   complete();

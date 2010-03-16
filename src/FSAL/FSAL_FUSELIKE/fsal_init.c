@@ -79,8 +79,8 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   unsigned int root_gen;
 
   struct ganefuse_conn_info conn = {
-    .proto_major = 0,		/* XXX is another value necessary ? */
-    .proto_minor = 0,		/* XXX is another value necessary ? */
+    .proto_major = 0,           /* XXX is another value necessary ? */
+    .proto_minor = 0,           /* XXX is another value necessary ? */
     .async_read = 0,
     .max_write = global_fs_info.maxwrite,
     .max_readahead = global_fs_info.maxread,
@@ -122,7 +122,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   if (rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"FSAL INIT: Could not call initial 'getattr' on filesystem root");
+                        "FSAL INIT: Could not call initial 'getattr' on filesystem root");
 
       return rc;
     }
@@ -166,7 +166,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
 
@@ -184,13 +184,13 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
     {
       /* issue a warning on stderr */
       DisplayLog
-	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
     }
 
   /* proceeds FSAL internal status initialization */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
-				     &(init_info->fs_common_info));
+                                     &(init_info->fs_common_info));
 
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);

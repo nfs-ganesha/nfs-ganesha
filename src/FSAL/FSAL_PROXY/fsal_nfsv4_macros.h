@@ -282,4 +282,4 @@ do {                                                                            
               (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound,        \
               timeout )
 
-#endif				/* _FSAL_NFSV4_MACROS_H */
+#endif                          /* _FSAL_NFSV4_MACROS_H */

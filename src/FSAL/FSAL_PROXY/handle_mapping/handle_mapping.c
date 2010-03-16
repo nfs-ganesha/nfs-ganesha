@@ -188,8 +188,8 @@ static unsigned long hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * 
 
   hash =
       (p_conf->alphabet_length +
-       ((unsigned long)p_digest->nfs23_digest.
-	object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
+       ((unsigned long)p_digest->nfs23_digest.object_id ^ (unsigned int)p_digest->
+        nfs23_digest.handle_hash));
   hash = (743 * hash + 1999) % p_conf->index_size;
 
   return hash;
@@ -217,8 +217,8 @@ static int cmp_digest(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
     return (int)(p_digest1->nfs23_digest.object_id - p_digest2->nfs23_digest.object_id);
   else if (p_digest1->nfs23_digest.handle_hash != p_digest2->nfs23_digest.handle_hash)
     return (int)p_digest1->nfs23_digest.handle_hash -
-	(int)p_digest2->nfs23_digest.handle_hash;
-    else			/* same */
+        (int)p_digest2->nfs23_digest.handle_hash;
+    else                        /* same */
     return 0;
 }
 
@@ -227,7 +227,7 @@ static int print_digest(hash_buffer_t * p_val, char *outbuff)
   digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_val->pdata;
 
   return sprintf(outbuff, "%llu, %u", p_digest->nfs23_digest.object_id,
-		 p_digest->nfs23_digest.handle_hash);
+                 p_digest->nfs23_digest.handle_hash);
 }
 
 static int print_handle(hash_buffer_t * p_val, char *outbuff)
@@ -238,8 +238,8 @@ static int print_handle(hash_buffer_t * p_val, char *outbuff)
 }
 
 int handle_mapping_hash_add(hash_table_t * p_hash,
-			    uint64_t object_id,
-			    unsigned int handle_hash, fsal_handle_t * p_handle)
+                            uint64_t object_id,
+                            unsigned int handle_hash, fsal_handle_t * p_handle)
 {
   int rc;
   hash_buffer_t buffkey;
@@ -264,7 +264,7 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
   buffval.len = sizeof(handle_pool_entry_t);
 
   rc = HashTable_Test_And_Set(handle_map_hash, &buffkey, &buffval,
-			      HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if (rc != HASHTABLE_SUCCESS)
     {
@@ -272,14 +272,14 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
       handle_free(handle);
 
       if (rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			    "ERROR %d inserting entry to handle mapping hash table", rc);
-	  return HANDLEMAP_HASHTABLE_ERROR;
-	} else
-	{
-	  return HANDLEMAP_EXISTS;
-	}
+        {
+          DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                            "ERROR %d inserting entry to handle mapping hash table", rc);
+          return HANDLEMAP_HASHTABLE_ERROR;
+        } else
+        {
+          return HANDLEMAP_EXISTS;
+        }
     }
 
   return HANDLEMAP_SUCCESS;
@@ -304,8 +304,8 @@ int HandleMap_Init(const handle_map_param_t * p_param)
   if ((rc > 0) && (rc != p_param->database_count))
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"ERROR: The number of existing databases (%u) does not match the requested DB thread count (%u)",
-			rc, p_param->database_count);
+                        "ERROR: The number of existing databases (%u) does not match the requested DB thread count (%u)",
+                        rc, p_param->database_count);
 
       return HANDLEMAP_INVALID_PARAM;
   } else if (rc < 0)
@@ -314,9 +314,9 @@ int HandleMap_Init(const handle_map_param_t * p_param)
   /* init database module */
 
   rc = handlemap_db_init(p_param->databases_directory,
-			 p_param->temp_directory,
-			 p_param->database_count,
-			 p_param->nb_db_op_prealloc, p_param->synchronous_insert);
+                         p_param->temp_directory,
+                         p_param->database_count,
+                         p_param->nb_db_op_prealloc, p_param->synchronous_insert);
 
   if (rc)
     {
@@ -340,7 +340,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
   if (!handle_map_hash)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"ERROR creating hash table for handle mapping");
+                        "ERROR creating hash table for handle mapping");
       return HANDLEMAP_INTERNAL_ERROR;
     }
 
@@ -351,7 +351,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
   if (rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			"ERROR %d reloading handle mapping from database", rc);
+                        "ERROR %d reloading handle mapping from database", rc);
       return rc;
     }
 
@@ -368,7 +368,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
  *         HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
  */
 int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
-		    fsal_handle_t * p_out_fsal_handle)
+                    fsal_handle_t * p_out_fsal_handle)
 {
 
   int rc;
@@ -393,7 +393,7 @@ int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
     } else
     return HANDLEMAP_STALE;
 
-}				/* HandleMap_GetFH */
+}                               /* HandleMap_GetFH */
 
 /**
  * Save the handle association if it was unknown.
@@ -405,7 +405,7 @@ int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, fsal_handle_t * p_in
   /* first, try to insert it to the hash table */
 
   rc = handle_mapping_hash_add(handle_map_hash, p_in_nfs23_digest->object_id,
-			       p_in_nfs23_digest->handle_hash, p_in_handle);
+                               p_in_nfs23_digest->handle_hash, p_in_handle);
 
   if ((rc != 0) && (rc != HANDLEMAP_EXISTS))
     /* error */

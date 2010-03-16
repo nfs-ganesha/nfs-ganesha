@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -119,10 +119,10 @@
  */
 
 cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
-				     hash_table_t * ht,
-				     cache_inode_client_t * pclient,
-				     fsal_op_context_t * pcontext,
-				     cache_inode_status_t * pstatus)
+                                     hash_table_t * ht,
+                                     cache_inode_client_t * pclient,
+                                     fsal_op_context_t * pcontext,
+                                     cache_inode_status_t * pstatus)
 {
   cache_entry_t *pentry = NULL;
   cache_inode_parent_entry_t *next_parent_entry = NULL;
@@ -135,8 +135,8 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* BUGAZOMEU: gestion de junctions, : peut etre pas correct de faire pointer root sur lui meme */
-  if ((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,	/* This is a population, not a creation */
-				      pstatus)) != NULL)
+  if ((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,   /* This is a population, not a creation */
+                                      pstatus)) != NULL)
     {
 
 #ifdef _DEBUG_MEMLEAKS
@@ -145,8 +145,8 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
 #endif
 
       GET_PREALLOC(next_parent_entry,
-		   pclient->pool_parent,
-		   pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
+                   pclient->pool_parent,
+                   pclient->nb_pre_parent, cache_inode_parent_entry_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
@@ -154,11 +154,11 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
 #endif
 
       if (next_parent_entry == NULL)
-	{
-	  *pstatus = CACHE_INODE_MALLOC_ERROR;
-	  pentry = NULL;
-	  return pentry;
-	}
+        {
+          *pstatus = CACHE_INODE_MALLOC_ERROR;
+          pentry = NULL;
+          return pentry;
+        }
 
       pentry->parent_list = next_parent_entry;
 
@@ -170,4 +170,4 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
     }
 
   return pentry;
-}				/* cache_inode_make_root */
+}                               /* cache_inode_make_root */

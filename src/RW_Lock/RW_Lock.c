@@ -40,7 +40,7 @@ static void print_lock(char *s, rw_lock_t * plock)
 #else
   return;
 #endif
-}				/* print_lock */
+}                               /* print_lock */
 
 /* 
  * Take the lock for reading 
@@ -66,7 +66,7 @@ int P_r(rw_lock_t * plock)
   print_lock("P_r.end", plock);
 
   return 0;
-}				/* P_r */
+}                               /* P_r */
 
 /*
  * Release the lock after reading 
@@ -92,7 +92,7 @@ int V_r(rw_lock_t * plock)
   V(plock->mutexProtect);
 
   return 0;
-}				/* V_r */
+}                               /* V_r */
 
 /*
  * Take the lock for writting 
@@ -117,7 +117,7 @@ int P_w(rw_lock_t * plock)
 
   print_lock("P_w.end", plock);
   return 0;
-}				/* P_w */
+}                               /* P_w */
 
 /*
  * Release the lock after writting 
@@ -155,7 +155,7 @@ int V_w(rw_lock_t * plock)
   print_lock("V_w.end", plock);
 
   return 0;
-}				/* V_w */
+}                               /* V_w */
 
 /* Roughly, downgrading a writer lock is making a V_w atomically followed by a P_r */
 int rw_lock_downgrade(rw_lock_t * plock)
@@ -187,7 +187,7 @@ int rw_lock_downgrade(rw_lock_t * plock)
 
   return 0;
 
-}				/* rw_lock_downgrade */
+}                               /* rw_lock_downgrade */
 
 /*
  * Routine for initializing a lock
@@ -218,7 +218,7 @@ int rw_lock_init(rw_lock_t * plock)
   plock->nbw_active = 0;
 
   return 0;
-}				/* rw_lock_init */
+}                               /* rw_lock_init */
 
 /*
  * Routine for destroying a lock
@@ -238,4 +238,4 @@ int rw_lock_destroy(rw_lock_t * plock)
   memset(plock, 0, sizeof(rw_lock_t));
 
   return 0;
-}				/* rw_lock_init */
+}                               /* rw_lock_init */

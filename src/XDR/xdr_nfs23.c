@@ -171,72 +171,72 @@ fattr2 *objp;
   if (xdrs->x_op == XDR_ENCODE)
     {
       if (!xdr_ftype2(xdrs, &objp->type))
-	return (FALSE);
+        return (FALSE);
 #if defined(_LP64) || defined(_KERNEL)
       buf = (int *)XDR_INLINE(xdrs, (10 * BYTES_PER_XDR_UNIT));
 #else
       buf = (long *)XDR_INLINE(xdrs, (10 * BYTES_PER_XDR_UNIT));
 #endif
       if (buf == NULL)
-	{
-	  if (!xdr_u_int(xdrs, &objp->mode))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->nlink))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->uid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->gid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->size))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocksize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->rdev))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocks))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->fsid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->fileid))
-	    return (FALSE);
+        {
+          if (!xdr_u_int(xdrs, &objp->mode))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->nlink))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->uid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->gid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->size))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocksize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->rdev))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocks))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->fsid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->fileid))
+            return (FALSE);
 
-	} else
-	{
+        } else
+        {
 #if defined(_LP64) || defined(_KERNEL)
-	  IXDR_PUT_U_INT32(buf, objp->mode);
-	  IXDR_PUT_U_INT32(buf, objp->nlink);
-	  IXDR_PUT_U_INT32(buf, objp->uid);
-	  IXDR_PUT_U_INT32(buf, objp->gid);
-	  IXDR_PUT_U_INT32(buf, objp->size);
-	  IXDR_PUT_U_INT32(buf, objp->blocksize);
-	  IXDR_PUT_U_INT32(buf, objp->rdev);
-	  IXDR_PUT_U_INT32(buf, objp->blocks);
-	  IXDR_PUT_U_INT32(buf, objp->fsid);
-	  IXDR_PUT_U_INT32(buf, objp->fileid);
+          IXDR_PUT_U_INT32(buf, objp->mode);
+          IXDR_PUT_U_INT32(buf, objp->nlink);
+          IXDR_PUT_U_INT32(buf, objp->uid);
+          IXDR_PUT_U_INT32(buf, objp->gid);
+          IXDR_PUT_U_INT32(buf, objp->size);
+          IXDR_PUT_U_INT32(buf, objp->blocksize);
+          IXDR_PUT_U_INT32(buf, objp->rdev);
+          IXDR_PUT_U_INT32(buf, objp->blocks);
+          IXDR_PUT_U_INT32(buf, objp->fsid);
+          IXDR_PUT_U_INT32(buf, objp->fileid);
 #else
-	  IXDR_PUT_U_LONG(buf, objp->mode);
-	  IXDR_PUT_U_LONG(buf, objp->nlink);
-	  IXDR_PUT_U_LONG(buf, objp->uid);
-	  IXDR_PUT_U_LONG(buf, objp->gid);
-	  IXDR_PUT_U_LONG(buf, objp->size);
-	  IXDR_PUT_U_LONG(buf, objp->blocksize);
-	  IXDR_PUT_U_LONG(buf, objp->rdev);
-	  IXDR_PUT_U_LONG(buf, objp->blocks);
-	  IXDR_PUT_U_LONG(buf, objp->fsid);
-	  IXDR_PUT_U_LONG(buf, objp->fileid);
+          IXDR_PUT_U_LONG(buf, objp->mode);
+          IXDR_PUT_U_LONG(buf, objp->nlink);
+          IXDR_PUT_U_LONG(buf, objp->uid);
+          IXDR_PUT_U_LONG(buf, objp->gid);
+          IXDR_PUT_U_LONG(buf, objp->size);
+          IXDR_PUT_U_LONG(buf, objp->blocksize);
+          IXDR_PUT_U_LONG(buf, objp->rdev);
+          IXDR_PUT_U_LONG(buf, objp->blocks);
+          IXDR_PUT_U_LONG(buf, objp->fsid);
+          IXDR_PUT_U_LONG(buf, objp->fileid);
 #endif
-	}
+        }
       if (!xdr_nfstime2(xdrs, &objp->atime))
-	return (FALSE);
+        return (FALSE);
       if (!xdr_nfstime2(xdrs, &objp->mtime))
-	return (FALSE);
+        return (FALSE);
       if (!xdr_nfstime2(xdrs, &objp->ctime))
-	return (FALSE);
+        return (FALSE);
       return (TRUE);
   } else if (xdrs->x_op == XDR_DECODE)
     {
       if (!xdr_ftype2(xdrs, &objp->type))
-	return (FALSE);
+        return (FALSE);
 #if defined(_LP64) || defined(_KERNEL)
       buf = (int *)XDR_INLINE(xdrs, 10 * BYTES_PER_XDR_UNIT);
 #else
@@ -244,60 +244,60 @@ fattr2 *objp;
 #endif
 
       if (buf == NULL)
-	{
-	  if (!xdr_u_int(xdrs, &objp->mode))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->nlink))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->uid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->gid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->size))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocksize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->rdev))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocks))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->fsid))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->fileid))
-	    return (FALSE);
+        {
+          if (!xdr_u_int(xdrs, &objp->mode))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->nlink))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->uid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->gid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->size))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocksize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->rdev))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocks))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->fsid))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->fileid))
+            return (FALSE);
 
-	} else
-	{
+        } else
+        {
 #if defined(_LP64) || defined(_KERNEL)
-	  objp->mode = IXDR_GET_U_INT32(buf);
-	  objp->nlink = IXDR_GET_U_INT32(buf);
-	  objp->uid = IXDR_GET_U_INT32(buf);
-	  objp->gid = IXDR_GET_U_INT32(buf);
-	  objp->size = IXDR_GET_U_INT32(buf);
-	  objp->blocksize = IXDR_GET_U_INT32(buf);
-	  objp->rdev = IXDR_GET_U_INT32(buf);
-	  objp->blocks = IXDR_GET_U_INT32(buf);
-	  objp->fsid = IXDR_GET_U_INT32(buf);
-	  objp->fileid = IXDR_GET_U_INT32(buf);
+          objp->mode = IXDR_GET_U_INT32(buf);
+          objp->nlink = IXDR_GET_U_INT32(buf);
+          objp->uid = IXDR_GET_U_INT32(buf);
+          objp->gid = IXDR_GET_U_INT32(buf);
+          objp->size = IXDR_GET_U_INT32(buf);
+          objp->blocksize = IXDR_GET_U_INT32(buf);
+          objp->rdev = IXDR_GET_U_INT32(buf);
+          objp->blocks = IXDR_GET_U_INT32(buf);
+          objp->fsid = IXDR_GET_U_INT32(buf);
+          objp->fileid = IXDR_GET_U_INT32(buf);
 #else
-	  objp->mode = IXDR_GET_U_LONG(buf);
-	  objp->nlink = IXDR_GET_U_LONG(buf);
-	  objp->uid = IXDR_GET_U_LONG(buf);
-	  objp->gid = IXDR_GET_U_LONG(buf);
-	  objp->size = IXDR_GET_U_LONG(buf);
-	  objp->blocksize = IXDR_GET_U_LONG(buf);
-	  objp->rdev = IXDR_GET_U_LONG(buf);
-	  objp->blocks = IXDR_GET_U_LONG(buf);
-	  objp->fsid = IXDR_GET_U_LONG(buf);
-	  objp->fileid = IXDR_GET_U_LONG(buf);
+          objp->mode = IXDR_GET_U_LONG(buf);
+          objp->nlink = IXDR_GET_U_LONG(buf);
+          objp->uid = IXDR_GET_U_LONG(buf);
+          objp->gid = IXDR_GET_U_LONG(buf);
+          objp->size = IXDR_GET_U_LONG(buf);
+          objp->blocksize = IXDR_GET_U_LONG(buf);
+          objp->rdev = IXDR_GET_U_LONG(buf);
+          objp->blocks = IXDR_GET_U_LONG(buf);
+          objp->fsid = IXDR_GET_U_LONG(buf);
+          objp->fileid = IXDR_GET_U_LONG(buf);
 #endif
-	}
+        }
       if (!xdr_nfstime2(xdrs, &objp->atime))
-	return (FALSE);
+        return (FALSE);
       if (!xdr_nfstime2(xdrs, &objp->mtime))
-	return (FALSE);
+        return (FALSE);
       if (!xdr_nfstime2(xdrs, &objp->ctime))
-	return (FALSE);
+        return (FALSE);
       return (TRUE);
     }
 
@@ -349,7 +349,7 @@ fhstatus2 *objp;
     {
     case 0:
       if (!xdr_fhandle2(xdrs, objp->fhstatus2_u.directory))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -408,7 +408,7 @@ DIROP2res *objp;
     {
     case NFS_OK:
       if (!xdr_DIROP2resok(xdrs, &objp->DIROP2res_u.diropok))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -431,7 +431,7 @@ ATTR2res *objp;
     {
     case NFS_OK:
       if (!xdr_fattr2(xdrs, &objp->ATTR2res_u.attributes))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -482,33 +482,33 @@ statinfo2 *objp;
       buf = (long *)XDR_INLINE(xdrs, 5 * BYTES_PER_XDR_UNIT);
 #endif
       if (buf == NULL)
-	{
-	  if (!xdr_u_int(xdrs, &objp->tsize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bsize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocks))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bfree))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bavail))
-	    return (FALSE);
-	} else
-	{
+        {
+          if (!xdr_u_int(xdrs, &objp->tsize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bsize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocks))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bfree))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bavail))
+            return (FALSE);
+        } else
+        {
 #if defined(_LP64) || defined(_KERNEL)
-	  IXDR_PUT_U_INT32(buf, objp->tsize);
-	  IXDR_PUT_U_INT32(buf, objp->bsize);
-	  IXDR_PUT_U_INT32(buf, objp->blocks);
-	  IXDR_PUT_U_INT32(buf, objp->bfree);
-	  IXDR_PUT_U_INT32(buf, objp->bavail);
+          IXDR_PUT_U_INT32(buf, objp->tsize);
+          IXDR_PUT_U_INT32(buf, objp->bsize);
+          IXDR_PUT_U_INT32(buf, objp->blocks);
+          IXDR_PUT_U_INT32(buf, objp->bfree);
+          IXDR_PUT_U_INT32(buf, objp->bavail);
 #else
-	  IXDR_PUT_U_LONG(buf, objp->tsize);
-	  IXDR_PUT_U_LONG(buf, objp->bsize);
-	  IXDR_PUT_U_LONG(buf, objp->blocks);
-	  IXDR_PUT_U_LONG(buf, objp->bfree);
-	  IXDR_PUT_U_LONG(buf, objp->bavail);
+          IXDR_PUT_U_LONG(buf, objp->tsize);
+          IXDR_PUT_U_LONG(buf, objp->bsize);
+          IXDR_PUT_U_LONG(buf, objp->blocks);
+          IXDR_PUT_U_LONG(buf, objp->bfree);
+          IXDR_PUT_U_LONG(buf, objp->bavail);
 #endif
-	}
+        }
       return (TRUE);
   } else if (xdrs->x_op == XDR_DECODE)
     {
@@ -518,33 +518,33 @@ statinfo2 *objp;
       buf = (long *)XDR_INLINE(xdrs, 5 * BYTES_PER_XDR_UNIT);
 #endif
       if (buf == NULL)
-	{
-	  if (!xdr_u_int(xdrs, &objp->tsize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bsize))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->blocks))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bfree))
-	    return (FALSE);
-	  if (!xdr_u_int(xdrs, &objp->bavail))
-	    return (FALSE);
-	} else
-	{
+        {
+          if (!xdr_u_int(xdrs, &objp->tsize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bsize))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->blocks))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bfree))
+            return (FALSE);
+          if (!xdr_u_int(xdrs, &objp->bavail))
+            return (FALSE);
+        } else
+        {
 #if defined(_LP64) || defined(_KERNEL)
-	  objp->tsize = IXDR_GET_U_INT32(buf);
-	  objp->bsize = IXDR_GET_U_INT32(buf);
-	  objp->blocks = IXDR_GET_U_INT32(buf);
-	  objp->bfree = IXDR_GET_U_INT32(buf);
-	  objp->bavail = IXDR_GET_U_INT32(buf);
+          objp->tsize = IXDR_GET_U_INT32(buf);
+          objp->bsize = IXDR_GET_U_INT32(buf);
+          objp->blocks = IXDR_GET_U_INT32(buf);
+          objp->bfree = IXDR_GET_U_INT32(buf);
+          objp->bavail = IXDR_GET_U_INT32(buf);
 #else
-	  objp->tsize = IXDR_GET_U_LONG(buf);
-	  objp->bsize = IXDR_GET_U_LONG(buf);
-	  objp->blocks = IXDR_GET_U_LONG(buf);
-	  objp->bfree = IXDR_GET_U_LONG(buf);
-	  objp->bavail = IXDR_GET_U_LONG(buf);
+          objp->tsize = IXDR_GET_U_LONG(buf);
+          objp->bsize = IXDR_GET_U_LONG(buf);
+          objp->blocks = IXDR_GET_U_LONG(buf);
+          objp->bfree = IXDR_GET_U_LONG(buf);
+          objp->bavail = IXDR_GET_U_LONG(buf);
 #endif
-	}
+        }
       return (TRUE);
     }
 
@@ -578,7 +578,7 @@ STATFS2res *objp;
     {
     case NFS_OK:
       if (!xdr_statinfo2(xdrs, &objp->STATFS2res_u.info))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -662,7 +662,7 @@ READDIR2res *objp;
     {
     case NFS_OK:
       if (!xdr_READDIR2resok(xdrs, &objp->READDIR2res_u.readdirok))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -801,7 +801,7 @@ READ2res *objp;
     {
     case NFS_OK:
       if (!xdr_READ2resok(xdrs, &objp->READ2res_u.readok))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -846,7 +846,7 @@ READLINK2res *objp;
     {
     case NFS_OK:
       if (!xdr_nfspath2(xdrs, &objp->READLINK2res_u.data))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1284,7 +1284,7 @@ post_op_attr *objp;
     {
     case TRUE:
       if (!xdr_fattr3(xdrs, &objp->post_op_attr_u.attributes))
-	return (FALSE);
+        return (FALSE);
       break;
     case FALSE:
       break;
@@ -1331,7 +1331,7 @@ pre_op_attr *objp;
     {
     case TRUE:
       if (!xdr_wcc_attr(xdrs, &objp->pre_op_attr_u.attributes))
-	return (FALSE);
+        return (FALSE);
       break;
     case FALSE:
       break;
@@ -1376,7 +1376,7 @@ post_op_fh3 *objp;
     {
     case TRUE:
       if (!xdr_nfs_fh3(xdrs, &objp->post_op_fh3_u.handle))
-	return (FALSE);
+        return (FALSE);
       break;
     case FALSE:
       break;
@@ -1419,7 +1419,7 @@ set_mode3 *objp;
     {
     case TRUE:
       if (!xdr_mode3(xdrs, &objp->set_mode3_u.mode))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1442,7 +1442,7 @@ set_uid3 *objp;
     {
     case TRUE:
       if (!xdr_uid3(xdrs, &objp->set_uid3_u.uid))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1465,7 +1465,7 @@ set_gid3 *objp;
     {
     case TRUE:
       if (!xdr_gid3(xdrs, &objp->set_gid3_u.gid))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1488,7 +1488,7 @@ set_size3 *objp;
     {
     case TRUE:
       if (!xdr_size3(xdrs, &objp->set_size3_u.size))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1511,7 +1511,7 @@ set_atime *objp;
     {
     case SET_TO_CLIENT_TIME:
       if (!xdr_nfstime3(xdrs, &objp->set_atime_u.atime))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1534,7 +1534,7 @@ set_mtime *objp;
     {
     case SET_TO_CLIENT_TIME:
       if (!xdr_nfstime3(xdrs, &objp->set_mtime_u.mtime))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1633,7 +1633,7 @@ GETATTR3res *objp;
     {
     case NFS3_OK:
       if (!xdr_GETATTR3resok(xdrs, &objp->GETATTR3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1656,7 +1656,7 @@ sattrguard3 *objp;
     {
     case TRUE:
       if (!xdr_nfstime3(xdrs, &objp->sattrguard3_u.obj_ctime))
-	return (FALSE);
+        return (FALSE);
       break;
     case FALSE:
       break;
@@ -1735,11 +1735,11 @@ SETATTR3res *objp;
     {
     case NFS3_OK:
       if (!xdr_SETATTR3resok(xdrs, &objp->SETATTR3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_SETATTR3resfail(xdrs, &objp->SETATTR3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1814,11 +1814,11 @@ LOOKUP3res *objp;
     {
     case NFS3_OK:
       if (!xdr_LOOKUP3resok(xdrs, &objp->LOOKUP3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_LOOKUP3resfail(xdrs, &objp->LOOKUP3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1893,11 +1893,11 @@ ACCESS3res *objp;
     {
     case NFS3_OK:
       if (!xdr_ACCESS3resok(xdrs, &objp->ACCESS3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_ACCESS3resfail(xdrs, &objp->ACCESS3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -1970,11 +1970,11 @@ READLINK3res *objp;
     {
     case NFS3_OK:
       if (!xdr_READLINK3resok(xdrs, &objp->READLINK3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_READLINK3resfail(xdrs, &objp->READLINK3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2056,11 +2056,11 @@ READ3res *objp;
     {
     case NFS3_OK:
       if (!xdr_READ3resok(xdrs, &objp->READ3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_READ3resfail(xdrs, &objp->READ3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2162,11 +2162,11 @@ WRITE3res *objp;
     {
     case NFS3_OK:
       if (!xdr_WRITE3resok(xdrs, &objp->WRITE3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_WRITE3resfail(xdrs, &objp->WRITE3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2206,11 +2206,11 @@ createhow3 *objp;
     case UNCHECKED:
     case GUARDED:
       if (!xdr_sattr3(xdrs, &objp->createhow3_u.obj_attributes))
-	return (FALSE);
+        return (FALSE);
       break;
     case EXCLUSIVE:
       if (!xdr_createverf3(xdrs, objp->createhow3_u.verf))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       return (FALSE);
@@ -2289,11 +2289,11 @@ CREATE3res *objp;
     {
     case NFS3_OK:
       if (!xdr_CREATE3resok(xdrs, &objp->CREATE3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_CREATE3resfail(xdrs, &objp->CREATE3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2370,11 +2370,11 @@ MKDIR3res *objp;
     {
     case NFS3_OK:
       if (!xdr_MKDIR3resok(xdrs, &objp->MKDIR3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_MKDIR3resfail(xdrs, &objp->MKDIR3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2469,11 +2469,11 @@ SYMLINK3res *objp;
     {
     case NFS3_OK:
       if (!xdr_SYMLINK3resok(xdrs, &objp->SYMLINK3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_SYMLINK3resfail(xdrs, &objp->SYMLINK3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2515,12 +2515,12 @@ mknoddata3 *objp;
     case NF3CHR:
     case NF3BLK:
       if (!xdr_devicedata3(xdrs, &objp->mknoddata3_u.device))
-	return (FALSE);
+        return (FALSE);
       break;
     case NF3SOCK:
     case NF3FIFO:
       if (!xdr_sattr3(xdrs, &objp->mknoddata3_u.pipe_attributes))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2597,11 +2597,11 @@ MKNOD3res *objp;
     {
     case NFS3_OK:
       if (!xdr_MKNOD3resok(xdrs, &objp->MKNOD3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_MKNOD3resfail(xdrs, &objp->MKNOD3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2672,11 +2672,11 @@ REMOVE3res *objp;
     {
     case NFS3_OK:
       if (!xdr_REMOVE3resok(xdrs, &objp->REMOVE3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_REMOVE3resfail(xdrs, &objp->REMOVE3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2747,11 +2747,11 @@ RMDIR3res *objp;
     {
     case NFS3_OK:
       if (!xdr_RMDIR3resok(xdrs, &objp->RMDIR3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_RMDIR3resfail(xdrs, &objp->RMDIR3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2828,11 +2828,11 @@ RENAME3res *objp;
     {
     case NFS3_OK:
       if (!xdr_RENAME3resok(xdrs, &objp->RENAME3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_RENAME3resfail(xdrs, &objp->RENAME3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -2909,11 +2909,11 @@ LINK3res *objp;
     {
     case NFS3_OK:
       if (!xdr_LINK3resok(xdrs, &objp->LINK3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_LINK3resfail(xdrs, &objp->LINK3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3035,11 +3035,11 @@ READDIR3res *objp;
     {
     case NFS3_OK:
       if (!xdr_READDIR3resok(xdrs, &objp->READDIR3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_READDIR3resfail(xdrs, &objp->READDIR3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3168,11 +3168,11 @@ READDIRPLUS3res *objp;
     {
     case NFS3_OK:
       if (!xdr_READDIRPLUS3resok(xdrs, &objp->READDIRPLUS3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_READDIRPLUS3resfail(xdrs, &objp->READDIRPLUS3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3257,11 +3257,11 @@ FSSTAT3res *objp;
     {
     case NFS3_OK:
       if (!xdr_FSSTAT3resok(xdrs, &objp->FSSTAT3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_FSSTAT3resfail(xdrs, &objp->FSSTAT3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3352,11 +3352,11 @@ FSINFO3res *objp;
     {
     case NFS3_OK:
       if (!xdr_FSINFO3resok(xdrs, &objp->FSINFO3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_FSINFO3resfail(xdrs, &objp->FSINFO3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3439,11 +3439,11 @@ PATHCONF3res *objp;
     {
     case NFS3_OK:
       if (!xdr_PATHCONF3resok(xdrs, &objp->PATHCONF3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_PATHCONF3resfail(xdrs, &objp->PATHCONF3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);
@@ -3520,11 +3520,11 @@ COMMIT3res *objp;
     {
     case NFS3_OK:
       if (!xdr_COMMIT3resok(xdrs, &objp->COMMIT3res_u.resok))
-	return (FALSE);
+        return (FALSE);
       break;
     default:
       if (!xdr_COMMIT3resfail(xdrs, &objp->COMMIT3res_u.resfail))
-	return (FALSE);
+        return (FALSE);
       break;
     }
   return (TRUE);

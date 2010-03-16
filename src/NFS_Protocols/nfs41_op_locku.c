@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -187,15 +187,15 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
-	{
-	case DIR_BEGINNING:
-	case DIR_CONTINUE:
-	  res_LOCKU4.status = NFS4ERR_ISDIR;
-	  break;
-	default:
-	  res_LOCKU4.status = NFS4ERR_INVAL;
-	  break;
-	}
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_LOCKU4.status = NFS4ERR_ISDIR;
+          break;
+        default:
+          res_LOCKU4.status = NFS4ERR_INVAL;
+          break;
+        }
     }
 
   /* Lock length should not be 0 */
@@ -211,15 +211,15 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* Comparing beyond 2^64 is not possible int 64 bits precision, but off+len > 2^64 is equivalent to len > 2^64 - off */
       if (arg_LOCKU4.length > (0xffffffffffffffffLL - arg_LOCKU4.offset))
-	{
-	  res_LOCKU4.status = NFS4ERR_INVAL;
-	  return res_LOCKU4.status;
-	}
+        {
+          res_LOCKU4.status = NFS4ERR_INVAL;
+          return res_LOCKU4.status;
+        }
     }
 
   /* Check for correctness of the provided stateid */
   if ((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
-			       data->current_entry, data->psession->clientid)) != NFS4_OK)
+                               data->current_entry, data->psession->clientid)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
       return res_LOCKU4.status;
@@ -227,13 +227,13 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* Get the related state */
   if (cache_inode_get_state(arg_LOCKU4.lock_stateid.other,
-			    &pstate_found,
-			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                            &pstate_found,
+                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       if (cache_status == CACHE_INODE_NOT_FOUND)
-	res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
-	else
-	res_LOCKU4.status = nfs4_Errno(cache_status);
+        res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
+        else
+        res_LOCKU4.status = nfs4_Errno(cache_status);
 
       return res_LOCKU4.status;
     }
@@ -243,7 +243,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* Remove the state associated with the lock */
   if (cache_inode_del_state(pstate_found,
-			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno(cache_status);
       return res_LOCKU4.status;
@@ -256,7 +256,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_LOCKU4.status = NFS4_OK;
   return res_LOCKU4.status;
 #endif
-}				/* nfs41_op_locku */
+}                               /* nfs41_op_locku */
 
 /**
  * nfs41_op_locku_Free: frees what was allocared to handle nfs41_op_locku.
@@ -272,4 +272,4 @@ void nfs41_op_locku_Free(LOCKU4res * resp)
 {
   /* Nothing to Mem_Free */
   return;
-}				/* nfs41_op_locku_Free */
+}                               /* nfs41_op_locku_Free */

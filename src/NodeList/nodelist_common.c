@@ -12,8 +12,8 @@
 
 /* Forward declaration */
 int _nodelist_common_string_get_token_common(char *string, char *separators_list,
-					     int *p_token_nb, int token_id,
-					     char **p_token);
+                                             int *p_token_nb, int token_id,
+                                             char **p_token);
 
 /*
   ----------------------------------------------------------------------------------------------------------------
@@ -21,13 +21,13 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
   -------------------------------
 */
 int nodelist_common_string_get_token(char *string, char *separators_list, int token_id,
-				     char **p_token)
+                                     char **p_token)
 {
   int fstatus = -1;
   int token_nb = 0;
   fstatus =
       _nodelist_common_string_get_token_common(string, separators_list, &token_nb,
-					       token_id, p_token);
+                                               token_id, p_token);
   if (*p_token != NULL)
     fstatus = 0;
     else
@@ -47,12 +47,12 @@ int nodelist_common_string_get_token(char *string, char *separators_list, int to
   -------------------------------------
 */
 int nodelist_common_string_get_tokens_quantity(char *string, char *separators_list,
-					       int *p_token_nb)
+                                               int *p_token_nb)
 {
   int fstatus = -1;
   fstatus =
       _nodelist_common_string_get_token_common(string, separators_list, p_token_nb, 0,
-					       NULL);
+                                               NULL);
   return fstatus;
 }
 
@@ -80,9 +80,9 @@ int nodelist_common_string_get_tokens_quantity(char *string, char *separators_li
   ----------------------------------------------------------------------------------------------------------------
 */
 int nodelist_common_string_appends_and_extends(char **p_io_string,
-					       size_t * p_current_length,
-					       size_t inc_length, char *string2append,
-					       char *separator)
+                                               size_t * p_current_length,
+                                               size_t inc_length, char *string2append,
+                                               char *separator)
 {
   int fstatus = -1;
 
@@ -100,40 +100,40 @@ int nodelist_common_string_appends_and_extends(char **p_io_string,
     {
 
       if (separator != NULL)
-	local_separator = separator;
-	else
-	local_separator = default_separator;
+        local_separator = separator;
+        else
+        local_separator = default_separator;
 
       if (strlen(*p_io_string) == 0)
-	local_separator = "";
+        local_separator = "";
 
       output_string_length = strlen(*p_io_string);
       separator_length = strlen(local_separator);
       append_length = strlen(string2append);
       new_string_length = output_string_length + separator_length + append_length;
       if (new_string_length > *p_current_length)
-	{
-	  new_output_length = *p_current_length;
-	  while (new_string_length > new_output_length)
-	    new_output_length += inc_length;
-	  *p_io_string =
-	      (char *)realloc(*p_io_string, (new_output_length + 1) * sizeof(char));
-	  if (*p_io_string != NULL)
-	    *p_current_length = new_output_length;
-	    else
-	    *p_current_length = 0;
-	}
+        {
+          new_output_length = *p_current_length;
+          while (new_string_length > new_output_length)
+            new_output_length += inc_length;
+          *p_io_string =
+              (char *)realloc(*p_io_string, (new_output_length + 1) * sizeof(char));
+          if (*p_io_string != NULL)
+            *p_current_length = new_output_length;
+            else
+            *p_current_length = 0;
+        }
 
       if (*p_io_string != NULL)
-	{
+        {
 
-	  strncpy(*p_io_string + output_string_length, local_separator, separator_length);
-	  strncpy(*p_io_string + output_string_length + separator_length, string2append,
-		  append_length);
-	  *(*p_io_string + output_string_length + separator_length + append_length) =
-	      '\0';
-	  fstatus = 0;
-	}
+          strncpy(*p_io_string + output_string_length, local_separator, separator_length);
+          strncpy(*p_io_string + output_string_length + separator_length, string2append,
+                  append_length);
+          *(*p_io_string + output_string_length + separator_length + append_length) =
+              '\0';
+          fstatus = 0;
+        }
 
     }
 
@@ -172,9 +172,9 @@ int nodelist_common_extended2condensed_nodelist(char *src_list, char **p_dst_lis
   if (status == 0)
     {
       if (nodelist_nodelist_get_compacted_string(&nodelist, p_dst_list) == 0)
-	fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
-	else
-	fstatus = -1;
+        fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
+        else
+        fstatus = -1;
       nodelist_nodelist_free_contents(&nodelist);
     } else
     {
@@ -217,9 +217,9 @@ int nodelist_common_condensed2extended_nodelist(char *src_list, char **p_dst_lis
   if (status == 0)
     {
       if (nodelist_nodelist_get_extended_string(&nodelist, p_dst_list) == 0)
-	fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
-	else
-	fstatus = -1;
+        fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
+        else
+        fstatus = -1;
       nodelist_nodelist_free_contents(&nodelist);
     } else
     {
@@ -248,21 +248,21 @@ static char *get_next_token(char *workingstr, char separator)
   while (*current)
     {
       if (!in_bracket && (*current == '['))
-	in_bracket = 1;
+        in_bracket = 1;
       else if (in_bracket && (*current == ']'))
-	in_bracket = 0;
+        in_bracket = 0;
       else if (!in_bracket && (*current == separator))
-	return current;
+        return current;
 
       current++;
     }
   return NULL;
 
-}				/* get_next_token */
+}                               /* get_next_token */
 
 int _nodelist_common_string_get_token_common(char *string, char *separators_list,
-					     int *p_token_nb, int token_id,
-					     char **p_token)
+                                             int *p_token_nb, int token_id,
+                                             char **p_token)
 {
   int fstatus = -1;
 
@@ -293,72 +293,72 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
          Then, that their lengths are not null
        */
       if (string_length != 0 && separators_list_length != 0)
-	{
-	  /*
-	     Then, the separators research loop start
-	   */
-	  working_string = string;
-	  old_pointer = working_string;
-	  local_token_nb = 1;
-	  end_of_loop = 0;
-	  while (!end_of_loop)
-	    {
-	      best_pointer = NULL;
-	      /*
-	         Search the first occurence of a separator
-	       */
-	      for (i = 0; i < separators_list_length; i++)
-		{
-		  current_pointer =
-		      get_next_token(working_string, *(separators_list + i));
-		  if (best_pointer == NULL)
-		    {
-		      best_pointer = current_pointer;
-		  } else if (best_pointer > current_pointer && current_pointer != NULL)
-		    {
-		      best_pointer = current_pointer;
-		    }
-		}
-	      /*
-	         If this token must be extracted, extract it
-	       */
-	      if (token_id == local_token_nb && (*p_token) == NULL)
-		{
-		  if (best_pointer == NULL)
-		    copy_length = strlen(old_pointer);
-		    else
-		    copy_length = (size_t) (best_pointer - old_pointer);
-		  *p_token = (char *)malloc((copy_length + 1) * sizeof(char));
-		  if (*p_token != NULL)
-		    {
-		      (*p_token)[copy_length] = '\0';
-		      strncpy(*p_token, old_pointer, copy_length);
-		      fstatus++;
-		    } else
-		    {
-		      fstatus = -2;
-		    }
-		}
-	      /*
-	         If no more occurences, break the loop
-	       */
-	      if (best_pointer == NULL)
-		{
-		  end_of_loop = 1;
-		}
-	      /*
-	         Otherwise, increment token counter and adjust working string
-	       */
-		else
-		{
-		  local_token_nb++;
-		  working_string = best_pointer + 1;
-		  old_pointer = working_string;
-		}
-	    }
-	  *p_token_nb = local_token_nb;
-	  fstatus++;
-	}
+        {
+          /*
+             Then, the separators research loop start
+           */
+          working_string = string;
+          old_pointer = working_string;
+          local_token_nb = 1;
+          end_of_loop = 0;
+          while (!end_of_loop)
+            {
+              best_pointer = NULL;
+              /*
+                 Search the first occurence of a separator
+               */
+              for (i = 0; i < separators_list_length; i++)
+                {
+                  current_pointer =
+                      get_next_token(working_string, *(separators_list + i));
+                  if (best_pointer == NULL)
+                    {
+                      best_pointer = current_pointer;
+                  } else if (best_pointer > current_pointer && current_pointer != NULL)
+                    {
+                      best_pointer = current_pointer;
+                    }
+                }
+              /*
+                 If this token must be extracted, extract it
+               */
+              if (token_id == local_token_nb && (*p_token) == NULL)
+                {
+                  if (best_pointer == NULL)
+                    copy_length = strlen(old_pointer);
+                    else
+                    copy_length = (size_t) (best_pointer - old_pointer);
+                  *p_token = (char *)malloc((copy_length + 1) * sizeof(char));
+                  if (*p_token != NULL)
+                    {
+                      (*p_token)[copy_length] = '\0';
+                      strncpy(*p_token, old_pointer, copy_length);
+                      fstatus++;
+                    } else
+                    {
+                      fstatus = -2;
+                    }
+                }
+              /*
+                 If no more occurences, break the loop
+               */
+              if (best_pointer == NULL)
+                {
+                  end_of_loop = 1;
+                }
+              /*
+                 Otherwise, increment token counter and adjust working string
+               */
+                else
+                {
+                  local_token_nb++;
+                  working_string = best_pointer + 1;
+                  old_pointer = working_string;
+                }
+            }
+          *p_token_nb = local_token_nb;
+          fstatus++;
+        }
     }
 
   return fstatus;

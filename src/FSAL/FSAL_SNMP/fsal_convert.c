@@ -166,7 +166,7 @@ int snmp_object2handle(netsnmp_variable_list * p_in_var, fsal_handle_t * p_out_h
  * else, it returns the string representation of the object subid.
  */
 int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
-		     fsal_handle_t * p_handle, fsal_name_t * p_out_name)
+                     fsal_handle_t * p_handle, fsal_name_t * p_out_name)
 {
   fsal_status_t st;
 
@@ -181,10 +181,10 @@ int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu", p_in_node->subid);
   else if (p_in_var && p_in_var->name && p_in_var->name_length > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
-	     p_in_var->name[p_in_var->name_length - 1]);
+             p_in_var->name[p_in_var->name_length - 1]);
   else if (p_handle && p_handle->oid_len > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
-	     p_handle->oid_tab[p_handle->oid_len - 1]);
+             p_handle->oid_tab[p_handle->oid_len - 1]);
     else
     return ERR_FSAL_SERVERFAULT;
 
@@ -213,12 +213,12 @@ static size_t Timeticks2Str(long timetick, char *out_str, size_t buflen)
   hseconds = tt;
 
   return snprintf(out_str, buflen, "%lu days, %02lu:%02lu:%02lu.%02lu", days, hours,
-		  minutes, seconds, hseconds);
+                  minutes, seconds, hseconds);
 }
 
 /* print the object value to a string, and return its length (the buffer ends with '\n\0', like /proc files)  */
 int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
-		    size_t * in_out_len)
+                    size_t * in_out_len)
 {
   size_t written = 0;
   char tmp_buf[FSALSNMP_MAX_FILESIZE];
@@ -236,25 +236,25 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
     case ASN_GAUGE:
     case ASN_UINTEGER:
       if (p_in_var->val.integer)
-	written = snprintf(p_out_string, *in_out_len, "%ld\n", *p_in_var->val.integer);
-	else
-	written = snprintf(p_out_string, *in_out_len, "(null int pointer)\n");
+        written = snprintf(p_out_string, *in_out_len, "%ld\n", *p_in_var->val.integer);
+        else
+        written = snprintf(p_out_string, *in_out_len, "(null int pointer)\n");
       break;
 
     case ASN_OCTET_STR:
       if (p_in_var->val.string)
-	written = snprintf(p_out_string, *in_out_len, "%.*s\n",
-			   p_in_var->val_len, p_in_var->val.string);
-	else
-	written = snprintf(p_out_string, *in_out_len, "(null string pointer)\n");
+        written = snprintf(p_out_string, *in_out_len, "%.*s\n",
+                           p_in_var->val_len, p_in_var->val.string);
+        else
+        written = snprintf(p_out_string, *in_out_len, "(null string pointer)\n");
       break;
 
     case ASN_OBJECT_ID:
       if (p_in_var->val.objid)
-	snprint_objid(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.objid,
-		      p_in_var->val_len / sizeof(oid));
-	else
-	strcpy(tmp_buf, "(null oid pointer)");
+        snprint_objid(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.objid,
+                      p_in_var->val_len / sizeof(oid));
+        else
+        strcpy(tmp_buf, "(null oid pointer)");
 
       written = snprintf(p_out_string, *in_out_len, "%s\n", tmp_buf);
 
@@ -262,52 +262,51 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
 
     case ASN_IPADDRESS:
       if (p_in_var->val.string)
-	written = snprintf(p_out_string, *in_out_len, "%d.%d.%d.%d\n",
-			   (p_in_var->val.string)[0], (p_in_var->val.string)[1],
-			   (p_in_var->val.string)[2], (p_in_var->val.string)[3]);
-	else
-	written = snprintf(p_out_string, *in_out_len, "(null IP address pointer)\n");
+        written = snprintf(p_out_string, *in_out_len, "%d.%d.%d.%d\n",
+                           (p_in_var->val.string)[0], (p_in_var->val.string)[1],
+                           (p_in_var->val.string)[2], (p_in_var->val.string)[3]);
+        else
+        written = snprintf(p_out_string, *in_out_len, "(null IP address pointer)\n");
       break;
 
     case ASN_TIMETICKS:
       if (p_in_var->val.integer)
-	/* print the exact field value (then the humain readeable translation)  */
-	Timeticks2Str(*p_in_var->val.integer, tmp_buf, FSALSNMP_MAX_FILESIZE);
-	else
-	strcpy(tmp_buf, "(null timeticks pointer)");
+        /* print the exact field value (then the humain readeable translation)  */
+        Timeticks2Str(*p_in_var->val.integer, tmp_buf, FSALSNMP_MAX_FILESIZE);
+        else
+        strcpy(tmp_buf, "(null timeticks pointer)");
 
       written =
-	  snprintf(p_out_string, *in_out_len, "%ld (%s)\n", *p_in_var->val.integer,
-		   tmp_buf);
+          snprintf(p_out_string, *in_out_len, "%ld (%s)\n", *p_in_var->val.integer,
+                   tmp_buf);
       break;
 
     case ASN_OPAQUE:
       if (p_in_var->val.string)
-	snprintmem(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.string,
-		   p_in_var->val_len);
-	else
-	strcpy(tmp_buf, "(null opaque pointer)");
+        snprintmem(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.string,
+                   p_in_var->val_len);
+        else
+        strcpy(tmp_buf, "(null opaque pointer)");
 
       written = snprintf(p_out_string, *in_out_len, "%s\n", tmp_buf);
       break;
 
     case ASN_COUNTER64:
       if (p_in_var->val.counter64)
-	{
-	  int64 =
-	      (((unsigned long long)p_in_var->val.
-		counter64->high) << 32) | (unsigned long long)p_in_var->val.counter64->
-	      low;
-	  written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
-	} else
-	written = snprintf(p_out_string, *in_out_len, "(null counter64 pointer)\n");
+        {
+          int64 =
+              (((unsigned long long)p_in_var->val.counter64->
+                high) << 32) | (unsigned long long)p_in_var->val.counter64->low;
+          written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
+        } else
+        written = snprintf(p_out_string, *in_out_len, "(null counter64 pointer)\n");
       break;
 
     case ASN_OPAQUE_FLOAT:
       if (p_in_var->val.floatVal)
-	written = snprintf(p_out_string, *in_out_len, "%f\n", *p_in_var->val.floatVal);
-	else
-	written = snprintf(p_out_string, *in_out_len, "(null opaque float pointer)\n");
+        written = snprintf(p_out_string, *in_out_len, "%f\n", *p_in_var->val.floatVal);
+        else
+        written = snprintf(p_out_string, *in_out_len, "(null opaque float pointer)\n");
       break;
 
     case ASN_NULL:
@@ -316,8 +315,8 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
 
     default:
       written =
-	  snprintf(p_out_string, *in_out_len, "(unsupported object type %#X)\n",
-		   p_in_var->type);
+          snprintf(p_out_string, *in_out_len, "(unsupported object type %#X)\n",
+                   p_in_var->type);
 
     }
 
@@ -325,8 +324,8 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
   if (written > *in_out_len)
     {
       DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-			"Warning: actual datasize is over client buffer limit (%llu > %llu)",
-			written, *in_out_len);
+                        "Warning: actual datasize is over client buffer limit (%llu > %llu)",
+                        written, *in_out_len);
       written = *in_out_len;
     }
 
@@ -354,36 +353,36 @@ fsal_accessmode_t snmp_object2access_mode(nodetype_t obj_type, struct tree * p_i
   if (obj_type != FSAL_NODETYPE_LEAF)
     {
       mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
-	  | FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH;
+          | FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH;
   } else if (p_in_node)
     {
       switch (p_in_node->access)
-	{
-	case MIB_ACCESS_READONLY:
-	  /* mode read pour tous  */
-	  mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH;
-	  break;
+        {
+        case MIB_ACCESS_READONLY:
+          /* mode read pour tous  */
+          mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH;
+          break;
 
-	case MIB_ACCESS_READWRITE:
-	  /* mode read et write pour tous  */
-	  mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
-	      | FSAL_MODE_WUSR | FSAL_MODE_WGRP | FSAL_MODE_WOTH;
-	  break;
+        case MIB_ACCESS_READWRITE:
+          /* mode read et write pour tous  */
+          mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
+              | FSAL_MODE_WUSR | FSAL_MODE_WGRP | FSAL_MODE_WOTH;
+          break;
 
-	case MIB_ACCESS_NOACCESS:
-	  mode = 0;
-	  break;
+        case MIB_ACCESS_NOACCESS:
+          mode = 0;
+          break;
 
-	default:
-	  mode = 0;
-	  DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Warning: unsupported access mode %#X",
-			    p_in_node->access);
-	}
+        default:
+          mode = 0;
+          DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Warning: unsupported access mode %#X",
+                            p_in_node->access);
+        }
     } else
     {
       /* set a default mode for files */
       mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
-	  | FSAL_MODE_WUSR | FSAL_MODE_WGRP | FSAL_MODE_WOTH;
+          | FSAL_MODE_WUSR | FSAL_MODE_WGRP | FSAL_MODE_WOTH;
     }
 
   return mode;
@@ -404,7 +403,7 @@ fsal_nodetype_t intern2extern_type(nodetype_t internal_type)
 
     default:
       DisplayLogJdLevel(fsal_log, NIV_CRIT, "Error: unexpected internal type %d",
-			internal_type);
+                        internal_type);
       return 0;
 
     }
@@ -427,13 +426,13 @@ fsal_u64_t build_object_id(fsal_handle_t * p_in_handle)
 
   return hash;
 
-}				/* build_object_id */
+}                               /* build_object_id */
 
 /* fill the p_fsalattr_out structure depending on the given information
  * /!\ the p_in_node is the PARENT NODE (access right are stored in the parent node)
  */
 int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var,
-			 struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out)
+                         struct tree *p_in_node, fsal_attrib_list_t * p_fsalattr_out)
 {
   fsal_attrib_mask_t supp_attr, unsupp_attr;
   int rc;
@@ -447,8 +446,8 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
       DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-			"Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
-			__LINE__, __FILE__);
+                        "Error: p_fsalattr_out->asked_attributes was set to 0 in snmp2fsal_attributes line %d, file %s: retrieving all supported attributes",
+                        __LINE__, __FILE__);
     }
 
   /* check that asked attributes are supported */
@@ -458,10 +457,10 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
   if (unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-			"Unsupported attributes: %#llX removing it from asked attributes ",
-			unsupp_attr);
+                        "Unsupported attributes: %#llX removing it from asked attributes ",
+                        unsupp_attr);
       p_fsalattr_out->asked_attributes =
-	  p_fsalattr_out->asked_attributes & (~unsupp_attr);
+          p_fsalattr_out->asked_attributes & (~unsupp_attr);
     }
 
   /* Fills the output struct */
@@ -475,31 +474,31 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
       FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
     {
       if (p_handle->object_type_reminder == FSAL_NODETYPE_LEAF)
-	{
-	  char object_val_buf[FSALSNMP_MAX_FILESIZE];
-	  size_t buf_sz = FSALSNMP_MAX_FILESIZE;
+        {
+          char object_val_buf[FSALSNMP_MAX_FILESIZE];
+          size_t buf_sz = FSALSNMP_MAX_FILESIZE;
 
-	  /* first, build an object data representation for estimating size  */
-	  rc = snmp_object2str(p_var, object_val_buf, &buf_sz);
+          /* first, build an object data representation for estimating size  */
+          rc = snmp_object2str(p_var, object_val_buf, &buf_sz);
 
-	  if (rc != 0)
-	    {
-	      DisplayLogJdLevel(fsal_log, NIV_CRIT,
-				"Error %d converting object data to string", rc);
-	      return rc;
-	    }
+          if (rc != 0)
+            {
+              DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                                "Error %d converting object data to string", rc);
+              return rc;
+            }
 
-	  p_fsalattr_out->asked_attributes |= FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
+          p_fsalattr_out->asked_attributes |= FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
 
-	  p_fsalattr_out->filesize = buf_sz;
-	  p_fsalattr_out->spaceused = buf_sz;
-	} else			/* this is a directory */
-	{
-	  p_fsalattr_out->asked_attributes |= FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
+          p_fsalattr_out->filesize = buf_sz;
+          p_fsalattr_out->spaceused = buf_sz;
+        } else                  /* this is a directory */
+        {
+          p_fsalattr_out->asked_attributes |= FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
 
-	  p_fsalattr_out->filesize = 0;
-	  p_fsalattr_out->spaceused = 0;
-	}
+          p_fsalattr_out->filesize = 0;
+          p_fsalattr_out->spaceused = 0;
+        }
     }
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
@@ -515,16 +514,16 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
     p_fsalattr_out->mode =
-	snmp_object2access_mode(p_handle->object_type_reminder, p_in_node);
+        snmp_object2access_mode(p_handle->object_type_reminder, p_in_node);
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
-    p_fsalattr_out->numlinks = 1;	/* @todo */
+    p_fsalattr_out->numlinks = 1;       /* @todo */
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
-    p_fsalattr_out->owner = 0;	/* @todo */
+    p_fsalattr_out->owner = 0;  /* @todo */
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
-    p_fsalattr_out->group = 0;	/* @todo */
+    p_fsalattr_out->group = 0;  /* @todo */
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME) ||
       FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME) ||
@@ -540,11 +539,11 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
       curr_time.nseconds = now.tv_usec * 1000;
 
       p_fsalattr_out->mtime =
-	  p_fsalattr_out->ctime =
-	  p_fsalattr_out->atime = p_fsalattr_out->chgtime = curr_time;
+          p_fsalattr_out->ctime =
+          p_fsalattr_out->atime = p_fsalattr_out->chgtime = curr_time;
 
       p_fsalattr_out->asked_attributes |= FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
-	  | FSAL_ATTR_CTIME | FSAL_ATTR_CHGTIME;
+          | FSAL_ATTR_CTIME | FSAL_ATTR_CHGTIME;
 
     }
 

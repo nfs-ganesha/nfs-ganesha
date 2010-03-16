@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -184,8 +184,8 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   for (ptr = local_part; *ptr != '\0'; ptr++)
     if (*ptr == '/')
       {
-	local_comp[nb_comp_local] = ptr + 1;
-	nb_comp_local += 1;
+        local_comp[nb_comp_local] = ptr + 1;
+        nb_comp_local += 1;
       }
   for (tmp_int = 0; tmp_int < nb_comp_local; tmp_int++)
     {
@@ -197,8 +197,8 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   for (ptr = remote_part; *ptr != '\0'; ptr++)
     if (*ptr == '/')
       {
-	remote_comp[nb_comp_remote] = ptr + 1;
-	nb_comp_remote += 1;
+        remote_comp[nb_comp_remote] = ptr + 1;
+        nb_comp_remote += 1;
       }
   for (tmp_int = 0; tmp_int < nb_comp_remote; tmp_int++)
     {
@@ -242,13 +242,13 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
       if ((strlen(local_comp[i]) % 4) == 0)
-	delta_xdr = 0;
-	else
-	{
-	  delta_xdr = 4 - (strlen(local_comp[i]) % 4);
-	  memset((char *)(buff + lastoff), 0, delta_xdr);
-	  lastoff += delta_xdr;
-	}
+        delta_xdr = 0;
+        else
+        {
+          delta_xdr = 4 - (strlen(local_comp[i]) % 4);
+          memset((char *)(buff + lastoff), 0, delta_xdr);
+          lastoff += delta_xdr;
+        }
     }
 
   /* 3- there is only one fs_location in the fs_locations array */
@@ -299,17 +299,17 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
       /* The XDR padding  : strings must be aligned to 32bits fields */
       if ((strlen(remote_comp[i]) % 4) == 0)
-	delta_xdr = 0;
-	else
-	{
-	  delta_xdr = 4 - (strlen(remote_comp[i]) % 4);
-	  memset((char *)(buff + lastoff), 0, delta_xdr);
-	  lastoff += delta_xdr;
-	}
+        delta_xdr = 0;
+        else
+        {
+          delta_xdr = 4 - (strlen(remote_comp[i]) % 4);
+          memset((char *)(buff + lastoff), 0, delta_xdr);
+          lastoff += delta_xdr;
+        }
     }
 
   /* Set the len then return */
   *plen = lastoff;
 
   return 1;
-}				/* nfs4_referral_str_To_Fattr_fs_location */
+}                               /* nfs4_referral_str_To_Fattr_fs_location */

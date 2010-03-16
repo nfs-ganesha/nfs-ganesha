@@ -134,43 +134,43 @@ int Getopt(int argc, char *argv[], char *opts)
   if (sp == 1)
     {
       if (Optind >= argc || argv[Optind][0] != '-' || argv[Optind][1] == '\0')
-	return (EOF);
+        return (EOF);
       else if (strcmp(argv[Optind], "--") == 0)
-	{
-	  Optind++;
-	  return (EOF);
-	}
+        {
+          Optind++;
+          return (EOF);
+        }
     }
   Optopt = c = argv[Optind][sp];
   if (c == ':' || (cp = index(opts, c)) == NULL)
     {
       ERR(": illegal option -- ", c);
       if (argv[Optind][++sp] == '\0')
-	{
-	  Optind++;
-	  sp = 1;
-	}
+        {
+          Optind++;
+          sp = 1;
+        }
       return ('?');
     }
   if (*++cp == ':')
     {
       if (argv[Optind][sp + 1] != '\0')
-	Optarg = &argv[Optind++][sp + 1];
+        Optarg = &argv[Optind++][sp + 1];
       else if (++Optind >= argc)
-	{
-	  ERR(": option requires an argument -- ", c);
-	  sp = 1;
-	  return ('?');
-	} else
-	Optarg = argv[Optind++];
+        {
+          ERR(": option requires an argument -- ", c);
+          sp = 1;
+          return ('?');
+        } else
+        Optarg = argv[Optind++];
       sp = 1;
     } else
     {
       if (argv[Optind][++sp] == '\0')
-	{
-	  sp = 1;
-	  Optind++;
-	}
+        {
+          sp = 1;
+          Optind++;
+        }
       Optarg = NULL;
     }
   return (c);

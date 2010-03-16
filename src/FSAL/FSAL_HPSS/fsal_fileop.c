@@ -59,12 +59,12 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,	/* IN */
-				fsal_name_t * filename,	/* IN */
-				fsal_op_context_t * p_context,	/* IN */
-				fsal_openflags_t openflags,	/* IN */
-				fsal_file_t * file_descriptor,	/* OUT */
-				fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
+                                fsal_name_t * filename, /* IN */
+                                fsal_op_context_t * p_context,  /* IN */
+                                fsal_openflags_t openflags,     /* IN */
+                                fsal_file_t * file_descriptor,  /* OUT */
+                                fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
   fsal_handle_t filehandle;
@@ -115,11 +115,11 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
-			fsal_op_context_t * p_context,	/* IN */
-			fsal_openflags_t openflags,	/* IN */
-			fsal_file_t * file_descriptor,	/* OUT */
-			fsal_attrib_list_t * file_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
+                        fsal_openflags_t openflags,     /* IN */
+                        fsal_file_t * file_descriptor,  /* OUT */
+                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -150,22 +150,22 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
   if (rc)
     {
       DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			"Invalid/conflicting flags : %#X", openflags);
+                        "Invalid/conflicting flags : %#X", openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_OpenHandle(&filehandle->ns_handle,	/* IN - object handle */
-			   NULL, hpss_flags,	/* IN - Type of file access */
-			   (mode_t) 0644,	/* IN - Desired file perms if create */
-			   &p_context->credential.hpss_usercred,	/* IN - User credentials */
-			   NULL,	/* IN - Desired class of service */
-			   NULL,	/* IN - Priorities of hint struct */
-			   NULL,	/* OUT - Granted class of service */
-			   (file_attributes ? &hpss_attributes : NULL),	/* OUT - returned attributes */
-			   NULL,	/* OUT - returned handle */
-			   &hpss_authz	/* OUT - Client authorization */
+  rc = HPSSFSAL_OpenHandle(&filehandle->ns_handle,      /* IN - object handle */
+                           NULL, hpss_flags,    /* IN - Type of file access */
+                           (mode_t) 0644,       /* IN - Desired file perms if create */
+                           &p_context->credential.hpss_usercred,        /* IN - User credentials */
+                           NULL,        /* IN - Desired class of service */
+                           NULL,        /* IN - Priorities of hint struct */
+                           NULL,        /* OUT - Granted class of service */
+                           (file_attributes ? &hpss_attributes : NULL), /* OUT - returned attributes */
+                           NULL,        /* OUT - returned handle */
+                           &hpss_authz  /* OUT - Client authorization */
       );
 
   ReleaseTokenFSCall();
@@ -193,13 +193,13 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
       fsal_status_t status;
 
       status = hpss2fsal_attributes(&(filehandle->ns_handle),
-				    &hpss_attributes, file_attributes);
+                                    &hpss_attributes, file_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(file_attributes->asked_attributes);
-	  FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(file_attributes->asked_attributes);
+          FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
@@ -234,12 +234,12 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
-			fsal_seek_t * seek_descriptor,	/* [IN] */
-			fsal_size_t buffer_size,	/* IN */
-			caddr_t buffer,	/* OUT */
-			fsal_size_t * read_amount,	/* OUT */
-			fsal_boolean_t * end_of_file	/* OUT */
+fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
+                        fsal_seek_t * seek_descriptor,  /* [IN] */
+                        fsal_size_t buffer_size,        /* IN */
+                        caddr_t buffer, /* OUT */
+                        fsal_size_t * read_amount,      /* OUT */
+                        fsal_boolean_t * end_of_file    /* OUT */
     )
 {
 
@@ -261,58 +261,58 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
     {
 
       switch (seek_descriptor->whence)
-	{
-	case FSAL_SEEK_CUR:
-	  /* set position plus offset */
+        {
+        case FSAL_SEEK_CUR:
+          /* set position plus offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
+          break;
 
-	case FSAL_SEEK_SET:
-	  /* set absolute position to offset */
+        case FSAL_SEEK_SET:
+          /* set absolute position to offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
+          break;
 
-	case FSAL_SEEK_END:
-	  /* set end of file plus offset */
+        case FSAL_SEEK_END:
+          /* set end of file plus offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
-	}
+          break;
+        }
 
       if (seekoffset < 0)
-	{
-	  error = (int)seekoffset;
+        {
+          error = (int)seekoffset;
 
-	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			    "Error in hpss_Lseek operation (whence=%s, offset=%lld)",
-			    (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-			     (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-			      (seek_descriptor->whence ==
-			       FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-			    seek_descriptor->offset);
+          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+                            "Error in hpss_Lseek operation (whence=%s, offset=%lld)",
+                            (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                             (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                              (seek_descriptor->whence ==
+                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                            seek_descriptor->offset);
 
-	  Return(hpss2fsal_error(error), -error, INDEX_FSAL_read);
-	}
+          Return(hpss2fsal_error(error), -error, INDEX_FSAL_read);
+        }
 
     }
 
@@ -320,9 +320,9 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
 
   TakeTokenFSCall();
 
-  nb_read = hpss_Read(file_descriptor->filedes,	/* IN - ID of object to be read  */
-		      (void *)buffer,	/* IN - Buffer in which to receive data */
-		      i_size);	/* IN - number of bytes to read         */
+  nb_read = hpss_Read(file_descriptor->filedes, /* IN - ID of object to be read  */
+                      (void *)buffer,   /* IN - Buffer in which to receive data */
+                      i_size);  /* IN - number of bytes to read         */
 
   ReleaseTokenFSCall();
 
@@ -368,11 +368,11 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
-			 fsal_seek_t * seek_descriptor,	/* IN */
-			 fsal_size_t buffer_size,	/* IN */
-			 caddr_t buffer,	/* IN */
-			 fsal_size_t * write_amount	/* OUT */
+fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
+                         fsal_seek_t * seek_descriptor, /* IN */
+                         fsal_size_t buffer_size,       /* IN */
+                         caddr_t buffer,        /* IN */
+                         fsal_size_t * write_amount     /* OUT */
     )
 {
 
@@ -394,58 +394,58 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
     {
 
       switch (seek_descriptor->whence)
-	{
-	case FSAL_SEEK_CUR:
-	  /* set position plus offset */
+        {
+        case FSAL_SEEK_CUR:
+          /* set position plus offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_CUR);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
+          break;
 
-	case FSAL_SEEK_SET:
-	  /* set absolute position to offset */
+        case FSAL_SEEK_SET:
+          /* set absolute position to offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_SET);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
+          break;
 
-	case FSAL_SEEK_END:
-	  /* set end of file plus offset */
+        case FSAL_SEEK_END:
+          /* set end of file plus offset */
 
-	  TakeTokenFSCall();
+          TakeTokenFSCall();
 
-	  seekoffset =
-	      hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
+          seekoffset =
+              hpss_Lseek(file_descriptor->filedes, seek_descriptor->offset, SEEK_END);
 
-	  ReleaseTokenFSCall();
+          ReleaseTokenFSCall();
 
-	  break;
-	}
+          break;
+        }
 
       if (seekoffset < 0)
-	{
-	  error = (int)seekoffset;
+        {
+          error = (int)seekoffset;
 
-	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			    "FSAL_write: Error in hpss_Lseek operation (whence=%s, offset=%lld)",
-			    (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-			     (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-			      (seek_descriptor->whence ==
-			       FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-			    seek_descriptor->offset);
+          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+                            "FSAL_write: Error in hpss_Lseek operation (whence=%s, offset=%lld)",
+                            (seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
+                             (seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
+                              (seek_descriptor->whence ==
+                               FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+                            seek_descriptor->offset);
 
-	  Return(hpss2fsal_error(error), -error, INDEX_FSAL_write);
-	}
+          Return(hpss2fsal_error(error), -error, INDEX_FSAL_write);
+        }
 
     }
 
@@ -453,9 +453,9 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
 
   TakeTokenFSCall();
 
-  nb_written = hpss_Write(file_descriptor->filedes,	/* IN - ID of object to be read  */
-			  (void *)buffer,	/* IN - Buffer in which to receive data */
-			  i_size);	/* IN - number of bytes to read         */
+  nb_written = hpss_Write(file_descriptor->filedes,     /* IN - ID of object to be read  */
+                          (void *)buffer,       /* IN - Buffer in which to receive data */
+                          i_size);      /* IN - number of bytes to read         */
 
   ReleaseTokenFSCall();
 
@@ -489,7 +489,7 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor,	/* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_close(fsal_file_t * file_descriptor	/* IN */
+fsal_status_t FSAL_close(fsal_file_t * file_descriptor  /* IN */
     )
 {
 
@@ -515,18 +515,18 @@ fsal_status_t FSAL_close(fsal_file_t * file_descriptor	/* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,	/* IN */
-				  fsal_u64_t fileid,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_openflags_t openflags,	/* IN */
-				  fsal_file_t * file_descriptor,	/* OUT */
-				  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_u64_t fileid,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_openflags_t openflags,   /* IN */
+                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
 fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-				   fsal_u64_t fileid)
+                                   fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }

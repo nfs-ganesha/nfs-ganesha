@@ -91,7 +91,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -145,9 +145,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
-			       fsal_accessflags_t access_type,	/* IN */
-			       fsal_attrib_list_t * object_attributes	/* IN */
+fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
+                               fsal_accessflags_t access_type,  /* IN */
+                               fsal_attrib_list_t * object_attributes   /* IN */
     )
 {
   fsal_accessflags_t missing_access;
@@ -180,18 +180,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
     {
 
       if (object_attributes->mode & FSAL_MODE_RUSR)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (object_attributes->mode & FSAL_MODE_WUSR)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (object_attributes->mode & FSAL_MODE_XUSR)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-	else
-	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+        Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+        else
+        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
 
@@ -209,18 +209,18 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
   if (is_grp)
     {
       if (object_attributes->mode & FSAL_MODE_RGRP)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (object_attributes->mode & FSAL_MODE_WGRP)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (object_attributes->mode & FSAL_MODE_XGRP)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-	else
-	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
+        Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
+        else
+        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
 
@@ -268,9 +268,9 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,	/* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,	/* IN */
-				  fsal_attrib_list_t * pcandidate_attributes,	/* IN */
-				  fsal_attrib_list_t * pobject_attributes	/* IN */
+fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
+                                  fsal_attrib_list_t * pcandidate_attributes,   /* IN */
+                                  fsal_attrib_list_t * pobject_attributes       /* IN */
     )
 {
   fsal_status_t fsal_status;
@@ -297,7 +297,7 @@ fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,	/* IN */
   /* If this point is reached, then access is granted */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattr_access);
 
-}				/* FSAL_test_setattr_access */
+}                               /* FSAL_test_setattr_access */
 
 /**
  * FSAL_rename_access :
@@ -316,9 +316,9 @@ fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,	/* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,	/* IN */
-				 fsal_attrib_list_t * pattrsrc,	/* IN */
-				 fsal_attrib_list_t * pattrdest)	/* IN */
+fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattrsrc, /* IN */
+                                 fsal_attrib_list_t * pattrdest)        /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -332,7 +332,7 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,	/* IN */
 
   /* If this point is reached, then access is granted */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_rename_access);
-}				/* FSAL_rename_access */
+}                               /* FSAL_rename_access */
 
 /**
  * FSAL_create_access :
@@ -348,8 +348,8 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,	/* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,	/* IN */
-				 fsal_attrib_list_t * pattr)	/* IN */
+fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -359,7 +359,7 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,	/* IN */
 
   /* If this point is reached, then access is granted */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_create_access);
-}				/* FSAL_create_access */
+}                               /* FSAL_create_access */
 
 /**
  * FSAL_unlink_access :
@@ -375,8 +375,8 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,	/* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,	/* IN */
-				 fsal_attrib_list_t * pattr)	/* IN */
+fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
+                                 fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -387,7 +387,7 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,	/* IN */
   /* If this point is reached, then access is granted */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink_access);
 
-}				/* FSAL_unlink_access */
+}                               /* FSAL_unlink_access */
 
 /**
  * FSAL_link_access :
@@ -404,8 +404,8 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,	/* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,	/* IN */
-			       fsal_attrib_list_t * pattr)	/* IN */
+fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
+                               fsal_attrib_list_t * pattr)      /* IN */
 {
   fsal_status_t fsal_status;
 
@@ -415,7 +415,7 @@ fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,	/* IN */
 
   /* If this point is reached, then access is granted */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link_access);
-}				/* FSAL_link_access */
+}                               /* FSAL_link_access */
 
 /**
  * FSAL_merge_attrs: merge to attributes structure.
@@ -433,8 +433,8 @@ fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,	/* IN */
  */
 
 fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-			       fsal_attrib_list_t * pnew_attr,
-			       fsal_attrib_list_t * presult_attr)
+                               fsal_attrib_list_t * pnew_attr,
+                               fsal_attrib_list_t * presult_attr)
 {
   if (pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);
@@ -477,4 +477,4 @@ fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
 
   /* Regular exit */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_merge_attrs);
-}				/* FSAL_merge_attrs */
+}                               /* FSAL_merge_attrs */

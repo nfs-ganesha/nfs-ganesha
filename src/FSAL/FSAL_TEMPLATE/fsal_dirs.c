@@ -44,10 +44,10 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_dir_t * dir_descriptor,	/* OUT */
-			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_descriptor, /* OUT */
+                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -101,14 +101,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
-			   fsal_cookie_t start_position,	/* IN */
-			   fsal_attrib_mask_t get_attr_mask,	/* IN */
-			   fsal_mdsize_t buffersize,	/* IN */
-			   fsal_dirent_t * pdirent,	/* OUT */
-			   fsal_cookie_t * end_position,	/* OUT */
-			   fsal_count_t * nb_entries,	/* OUT */
-			   fsal_boolean_t * end_of_dir	/* OUT */
+fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_cookie_t start_position,        /* IN */
+                           fsal_attrib_mask_t get_attr_mask,    /* IN */
+                           fsal_mdsize_t buffersize,    /* IN */
+                           fsal_dirent_t * pdirent,     /* OUT */
+                           fsal_cookie_t * end_position,        /* OUT */
+                           fsal_count_t * nb_entries,   /* OUT */
+                           fsal_boolean_t * end_of_dir  /* OUT */
     )
 {
 
@@ -150,7 +150,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     )
 {
 

@@ -123,12 +123,12 @@ LRU_entry_t *tabentry[MAXTEST];
 static int print_entry(LRU_data_t data, char *str)
 {
   return snprintf(str, LRU_DISPLAY_STRLEN, "%s, len=%d", (char *)data.pdata, data.len);
-}				/* print_entry */
+}                               /* print_entry */
 
 static int clean_entry(LRU_entry_t * pentry, void *addparam)
 {
   return 0;
-}				/* cleanentry */
+}                               /* cleanentry */
 
 int do_invalidate(LRU_list_t * plru, int key)
 {
@@ -219,85 +219,85 @@ int main(int argc, char *argv[])
       /* Code interactif, pompe sur le test rbt de Jacques */
       fputs("> ", stdout);
       if ((p = fgets(buf, LENBUF, stdin)) == NULL)
-	{
-	  printf("fin des commandes\n");
-	  ok = 0;
-	  continue;
-	}
+        {
+          printf("fin des commandes\n");
+          ok = 0;
+          continue;
+        }
       if ((p = strchr(buf, '\n')) != NULL)
-	*p = '\0';
+        *p = '\0';
 
       rc = sscanf(buf, "%c %d %d", &c, &key, &expected_rc);
       if (c == '#')
-	{
-	  /* # indique un commentaire */
-	  continue;
+        {
+          /* # indique un commentaire */
+          continue;
       } else if (c == ' ' || c == '\t' || rc == -1)
-	{
-	  /* Cas d'une ligne vide */
-	  if (rc > 1)
-	    printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
+        {
+          /* Cas d'une ligne vide */
+          if (rc > 1)
+            printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
-	  continue;
-	} else
-	{
-	  if (rc != 3)
-	    {
-	      printf("Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc);
-	      continue;
-	    }
-	  printf("---> %c %d %d\n", c, key, expected_rc);
-	}
+          continue;
+        } else
+        {
+          if (rc != 3)
+            {
+              printf("Erreur de syntaxe : sscanf retourne %d au lieu de 3\n", rc);
+              continue;
+            }
+          printf("---> %c %d %d\n", c, key, expected_rc);
+        }
 
       switch (c)
-	{
-	case 'i':
-	  /* set overwrite */
-	  printf("invalidate  %d  --> %d ?\n", key, expected_rc);
+        {
+        case 'i':
+          /* set overwrite */
+          printf("invalidate  %d  --> %d ?\n", key, expected_rc);
 
-	  hrc = do_invalidate(plru, key);
+          hrc = do_invalidate(plru, key);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
-		   expected_rc);
-	    else
-	    printf(">>>> OK invalidate %d\n", key);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
+                   expected_rc);
+            else
+            printf(">>>> OK invalidate %d\n", key);
+          break;
 
-	case 'n':
-	  /* test */
-	  printf("new %d --> %d ?\n", key, expected_rc);
+        case 'n':
+          /* test */
+          printf("new %d --> %d ?\n", key, expected_rc);
 
-	  hrc = do_new(plru, key);
+          hrc = do_new(plru, key);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
-	    else
-	    printf(">>>> OK new %d\n", key);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
+            else
+            printf(">>>> OK new %d\n", key);
+          break;
 
-	case 'g':
-	  /* set no overwrite */
-	  printf("gc  %d --> %d ?\n", key, expected_rc);
+        case 'g':
+          /* set no overwrite */
+          printf("gc  %d --> %d ?\n", key, expected_rc);
 
-	  hrc = do_gc(plru);
+          hrc = do_gc(plru);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
-	    else
-	    printf(">>>> OK new  %d\n", key);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
+            else
+            printf(">>>> OK new  %d\n", key);
+          break;
 
-	case 'p':
-	  /* Print */
-	  LRU_Print(plru);
-	  break;
+        case 'p':
+          /* Print */
+          LRU_Print(plru);
+          break;
 
-	default:
-	  /* syntaxe error */
-	  printf("ordre '%c' non-reconnu\n", c);
-	  break;
-	}
+        default:
+          /* syntaxe error */
+          printf("ordre '%c' non-reconnu\n", c);
+          break;
+        }
 
       fflush(stdin);
     }
@@ -306,4 +306,4 @@ int main(int argc, char *argv[])
   printf("Test reussi : tous les tests sont passes avec succes\n");
   exit(0);
   return;
-}				/* main */
+}                               /* main */

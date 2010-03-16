@@ -181,7 +181,7 @@ static GHOSTFS_item_t *create_new_ghostfs_entry(GHOSTFS_typeitem_t type)
  * does NOT verify if it already exists.
  */
 static int Add_Dir_Entry(GHOSTFS_item_t * dir_item,
-			 GHOSTFS_handle_t object_handle, char *object_name)
+                         GHOSTFS_handle_t object_handle, char *object_name)
 {
   GHOSTFS_dirlist_t *p_entry;
 
@@ -221,7 +221,7 @@ static int Add_Dir_Entry(GHOSTFS_item_t * dir_item,
  */
 
 static int Find_Entry(GHOSTFS_item_t * p_parent,
-		      char *entry_name, GHOSTFS_handle_t * p_found_hdl)
+                      char *entry_name, GHOSTFS_handle_t * p_found_hdl)
 {
   GHOSTFS_dirlist_t *dirl;
 
@@ -230,12 +230,12 @@ static int Find_Entry(GHOSTFS_item_t * p_parent,
   while (dirl)
     {
       if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
-	{
-	  *p_found_hdl = dirl->handle;
+        {
+          *p_found_hdl = dirl->handle;
 
-	  /* item found */
-	  return ERR_GHOSTFS_NO_ERROR;
-	}
+          /* item found */
+          return ERR_GHOSTFS_NO_ERROR;
+        }
       dirl = dirl->next;
     }
 
@@ -250,7 +250,7 @@ static int Find_Entry(GHOSTFS_item_t * p_parent,
  */
 
 static int Rename_Entry(GHOSTFS_item_t * p_parent,
-			char *entry_old_name, char *entry_new_name)
+                        char *entry_old_name, char *entry_new_name)
 {
   GHOSTFS_dirlist_t *dirl;
 
@@ -259,12 +259,12 @@ static int Rename_Entry(GHOSTFS_item_t * p_parent,
   while (dirl)
     {
       if (!strncmp(dirl->name, entry_old_name, GHOSTFS_MAX_FILENAME))
-	{
-	  strncpy(dirl->name, entry_new_name, GHOSTFS_MAX_FILENAME);
+        {
+          strncpy(dirl->name, entry_new_name, GHOSTFS_MAX_FILENAME);
 
-	  /* item found */
-	  return ERR_GHOSTFS_NO_ERROR;
-	}
+          /* item found */
+          return ERR_GHOSTFS_NO_ERROR;
+        }
       dirl = dirl->next;
     }
 
@@ -279,7 +279,7 @@ static int Rename_Entry(GHOSTFS_item_t * p_parent,
  */
 
 static int Change_Entry_Handle(GHOSTFS_item_t * p_parent,
-			       char *entry_name, GHOSTFS_handle_t entry_handle)
+                               char *entry_name, GHOSTFS_handle_t entry_handle)
 {
   GHOSTFS_dirlist_t *dirl;
 
@@ -288,12 +288,12 @@ static int Change_Entry_Handle(GHOSTFS_item_t * p_parent,
   while (dirl)
     {
       if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
-	{
-	  dirl->handle = entry_handle;
+        {
+          dirl->handle = entry_handle;
 
-	  /* item found */
-	  return ERR_GHOSTFS_NO_ERROR;
-	}
+          /* item found */
+          return ERR_GHOSTFS_NO_ERROR;
+        }
       dirl = dirl->next;
     }
 
@@ -318,21 +318,21 @@ static int Remove_Entry(GHOSTFS_item_t * p_parent, char *entry_name)
   while (dirl)
     {
       if (!strncmp(dirl->name, entry_name, GHOSTFS_MAX_FILENAME))
-	{
-	  /* item found */
+        {
+          /* item found */
 
-	  /* if it was the first entry */
-	  if (last == NULL)
-	    p_parent->ITEM_DIR.direntries = dirl->next;
-	    else
-	    last->next = dirl->next;
+          /* if it was the first entry */
+          if (last == NULL)
+            p_parent->ITEM_DIR.direntries = dirl->next;
+            else
+            last->next = dirl->next;
 
-	  /* if it was the last entry */
-	  if (dirl == p_parent->ITEM_DIR.lastentry)
-	    p_parent->ITEM_DIR.lastentry = last;
+          /* if it was the last entry */
+          if (dirl == p_parent->ITEM_DIR.lastentry)
+            p_parent->ITEM_DIR.lastentry = last;
 
-	  return ERR_GHOSTFS_NO_ERROR;
-	}
+          return ERR_GHOSTFS_NO_ERROR;
+        }
       last = dirl;
       dirl = dirl->next;
     }
@@ -366,11 +366,11 @@ static int is_empty_dir(GHOSTFS_item_t * p_dir)
   while (dirl)
     {
       if (strncmp(dirl->name, ".", GHOSTFS_MAX_FILENAME) &&
-	  strncmp(dirl->name, "..", GHOSTFS_MAX_FILENAME))
-	{
-	  /* not empty */
-	  return FALSE;
-	}
+          strncmp(dirl->name, "..", GHOSTFS_MAX_FILENAME))
+        {
+          /* not empty */
+          return FALSE;
+        }
       dirl = dirl->next;
     }
 
@@ -453,10 +453,10 @@ int GHOSTFS_Init(GHOSTFS_parameter_t init_cfg)
     {
       rc = Add_Dir_Entry(p_root, roothandle, "..");
       if (rc)
-	{
-	  V_w(&p_root->entry_lock);
-	  return rc;
-	}
+        {
+          V_w(&p_root->entry_lock);
+          return rc;
+        }
       p_root->linkcount++;
     }
 
@@ -493,7 +493,7 @@ int GHOSTFS_GetRoot(GHOSTFS_handle_t * root_handle)
 
 /** Find a named object in the filesystem. */
 int GHOSTFS_Lookup(GHOSTFS_handle_t handle_parent,
-		   char *ghostfs_name, GHOSTFS_handle_t * p_handle)
+                   char *ghostfs_name, GHOSTFS_handle_t * p_handle)
 {
   int rc;
   GHOSTFS_item_t *p_parent;
@@ -569,8 +569,8 @@ int GHOSTFS_GetAttrs(GHOSTFS_handle_t handle, GHOSTFS_Attrs_t * object_attribute
 
 /** Tests whether a user can access an object */
 int GHOSTFS_Access(GHOSTFS_handle_t handle,
-		   GHOSTFS_testperm_t test_set,
-		   GHOSTFS_user_t userid, GHOSTFS_group_t groupid)
+                   GHOSTFS_testperm_t test_set,
+                   GHOSTFS_user_t userid, GHOSTFS_group_t groupid)
 {
   int is_owner = FALSE;
   int is_grp = FALSE;
@@ -618,7 +618,7 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
 
 #ifdef _DEBUG_GHOST_FS
   printf("GHOSTFS_Access : mask=%#o : perms=%#o owner=%s group=%s => result_mask=%#o\n",
-	 mask, test_set, (is_owner ? "yes" : "no"), (is_grp ? "yes" : "no"), result_mask);
+         mask, test_set, (is_owner ? "yes" : "no"), (is_grp ? "yes" : "no"), result_mask);
 #endif
 
   if (result_mask)
@@ -827,7 +827,7 @@ int GHOSTFS_Closedir(dir_descriptor_t * dir)
 
 /* set file attributes */
 int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
-		     GHOSTFS_setattr_mask_t setattr_mask, GHOSTFS_Attrs_t attrs_values)
+                     GHOSTFS_setattr_mask_t setattr_mask, GHOSTFS_Attrs_t attrs_values)
 {
   GHOSTFS_item_t *p_item;
   GHOSTFS_setattr_mask_t editable;
@@ -847,8 +847,8 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
 
   if (p_item->type == GHOSTFS_FILE)
     editable =
-	(SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME |
-	 SETATTR_SIZE);
+        (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME |
+         SETATTR_SIZE);
     else
     editable = (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME);
 
@@ -881,14 +881,14 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
   V_w(&p_item->entry_lock);
   return ERR_GHOSTFS_NO_ERROR;
 
-}				/* GHOSTFS_SetAttrs */
+}                               /* GHOSTFS_SetAttrs */
 
 int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
-		  char *new_dir_name,
-		  GHOSTFS_user_t owner,
-		  GHOSTFS_group_t group,
-		  GHOSTFS_perm_t mode,
-		  GHOSTFS_handle_t * p_new_dir_handle, GHOSTFS_Attrs_t * p_new_dir_attrs)
+                  char *new_dir_name,
+                  GHOSTFS_user_t owner,
+                  GHOSTFS_group_t group,
+                  GHOSTFS_perm_t mode,
+                  GHOSTFS_handle_t * p_new_dir_handle, GHOSTFS_Attrs_t * p_new_dir_attrs)
 {
   int rc;
   GHOSTFS_handle_t newhandle, tmphandle;
@@ -1015,15 +1015,15 @@ int GHOSTFS_MkDir(GHOSTFS_handle_t parent_handle,
 
   return ERR_GHOSTFS_NO_ERROR;
 
-}				/* GHOSTFS_MkDir */
+}                               /* GHOSTFS_MkDir */
 
 int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
-		   char *new_file_name,
-		   GHOSTFS_user_t owner,
-		   GHOSTFS_group_t group,
-		   GHOSTFS_perm_t mode,
-		   GHOSTFS_handle_t * p_new_file_handle,
-		   GHOSTFS_Attrs_t * p_new_file_attrs)
+                   char *new_file_name,
+                   GHOSTFS_user_t owner,
+                   GHOSTFS_group_t group,
+                   GHOSTFS_perm_t mode,
+                   GHOSTFS_handle_t * p_new_file_handle,
+                   GHOSTFS_Attrs_t * p_new_file_attrs)
 {
   int rc;
   GHOSTFS_handle_t newhandle, tmphandle;
@@ -1124,11 +1124,11 @@ int GHOSTFS_Create(GHOSTFS_handle_t parent_handle,
 
   return ERR_GHOSTFS_NO_ERROR;
 
-}				/* GHOSTFS_Create */
+}                               /* GHOSTFS_Create */
 
 int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
-		 char *new_link_name,
-		 GHOSTFS_handle_t target_handle, GHOSTFS_Attrs_t * p_link_attrs)
+                 char *new_link_name,
+                 GHOSTFS_handle_t target_handle, GHOSTFS_Attrs_t * p_link_attrs)
 {
   int rc;
   GHOSTFS_handle_t tmphandle;
@@ -1220,16 +1220,16 @@ int GHOSTFS_Link(GHOSTFS_handle_t parent_handle,
 
   return ERR_GHOSTFS_NO_ERROR;
 
-}				/* GHOSTFS_Create */
+}                               /* GHOSTFS_Create */
 
 int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
-		    char *new_symlink_name,
-		    char *symlink_content,
-		    GHOSTFS_user_t owner,
-		    GHOSTFS_group_t group,
-		    GHOSTFS_perm_t mode,
-		    GHOSTFS_handle_t * p_new_symlink_handle,
-		    GHOSTFS_Attrs_t * p_new_symlink_attrs)
+                    char *new_symlink_name,
+                    char *symlink_content,
+                    GHOSTFS_user_t owner,
+                    GHOSTFS_group_t group,
+                    GHOSTFS_perm_t mode,
+                    GHOSTFS_handle_t * p_new_symlink_handle,
+                    GHOSTFS_Attrs_t * p_new_symlink_attrs)
 {
   int rc;
   GHOSTFS_handle_t newhandle, tmphandle;
@@ -1330,12 +1330,12 @@ int GHOSTFS_Symlink(GHOSTFS_handle_t parent_handle,
 
   return ERR_GHOSTFS_NO_ERROR;
 
-}				/* GHOSTFS_Symlink */
+}                               /* GHOSTFS_Symlink */
 
 /* removes a filesystem entry */
-int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,	/* IN */
-		   char *object_name,	/* IN */
-		   GHOSTFS_Attrs_t * p_parent_attrs)	/* [IN/OUT ] */
+int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
+                   char *object_name,   /* IN */
+                   GHOSTFS_Attrs_t * p_parent_attrs)    /* [IN/OUT ] */
 {
   GHOSTFS_item_t *p_parent;
   GHOSTFS_item_t *p_object;
@@ -1422,11 +1422,11 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,	/* IN */
       dirl = p_object->ITEM_DIR.direntries;
 
       while (dirl)
-	{
-	  next = dirl->next;
-	  Mem_Free(dirl);
-	  dirl = next;
-	}
+        {
+          next = dirl->next;
+          Mem_Free(dirl);
+          dirl = next;
+        }
 
       p_parent->linkcount--;
 
@@ -1445,17 +1445,17 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,	/* IN */
       p_object->linkcount--;
 
       if (p_object->linkcount == 0)
-	{
-	  /* destroy the entry */
-	  rw_lock_destroy(&p_object->entry_lock);
-	  Mem_Free(p_object);
-	} else
-	{
-	  /* unlock the object */
-	  V_w(&p_object->entry_lock);
-	}
+        {
+          /* destroy the entry */
+          rw_lock_destroy(&p_object->entry_lock);
+          Mem_Free(p_object);
+        } else
+        {
+          /* unlock the object */
+          V_w(&p_object->entry_lock);
+        }
 
-    }				/* file or symlink */
+    }                           /* file or symlink */
 
   /* at this point, the object is unlocked or destroyed
    * no need to unlock it there.
@@ -1476,10 +1476,10 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,	/* IN */
 /* The most complex call */
 
 int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
-		   GHOSTFS_handle_t tgt_dir_handle,
-		   char *src_name,
-		   char *tgt_name,
-		   GHOSTFS_Attrs_t * p_src_dir_attrs, GHOSTFS_Attrs_t * p_tgt_dir_attrs)
+                   GHOSTFS_handle_t tgt_dir_handle,
+                   char *src_name,
+                   char *tgt_name,
+                   GHOSTFS_Attrs_t * p_src_dir_attrs, GHOSTFS_Attrs_t * p_tgt_dir_attrs)
 {
   GHOSTFS_item_t *p_parent1;
   GHOSTFS_item_t *p_parent2;
@@ -1490,7 +1490,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
   int rc;
 
   int src_eq_tgt = ((src_dir_handle.inode == tgt_dir_handle.inode) &&
-		    (src_dir_handle.magic == tgt_dir_handle.magic));
+                    (src_dir_handle.magic == tgt_dir_handle.magic));
 
   int target_exists;
 
@@ -1515,11 +1515,11 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
 
       p_parent1 = GetEntry_From_Handle(src_dir_handle);
       if (p_parent1 == NULL)
-	return ERR_GHOSTFS_STALE;
+        return ERR_GHOSTFS_STALE;
 
       /* check type */
       if (p_parent1->type != GHOSTFS_DIR)
-	return ERR_GHOSTFS_NOTDIR;
+        return ERR_GHOSTFS_NOTDIR;
 
       P_w(&p_parent1->entry_lock);
 
@@ -1532,22 +1532,22 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       p_parent2 = GetEntry_From_Handle(tgt_dir_handle);
 
       if (p_parent1 == NULL || p_parent2 == NULL)
-	return ERR_GHOSTFS_STALE;
+        return ERR_GHOSTFS_STALE;
 
       /* check type */
       if (p_parent1->type != GHOSTFS_DIR || p_parent2->type != GHOSTFS_DIR)
-	return ERR_GHOSTFS_NOTDIR;
+        return ERR_GHOSTFS_NOTDIR;
 
       /* always lock dirs in the same order for avoiding deadlocks */
       if (src_dir_handle.inode > tgt_dir_handle.inode)
-	{
-	  P_w(&p_parent1->entry_lock);
-	  P_w(&p_parent2->entry_lock);
-	} else
-	{
-	  P_w(&p_parent2->entry_lock);
-	  P_w(&p_parent1->entry_lock);
-	}
+        {
+          P_w(&p_parent1->entry_lock);
+          P_w(&p_parent2->entry_lock);
+        } else
+        {
+          P_w(&p_parent2->entry_lock);
+          P_w(&p_parent1->entry_lock);
+        }
     }
 
   /* 1- First try looking up the source entry (check if it exists) */
@@ -1558,7 +1558,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
     {
       V_w(&p_parent1->entry_lock);
       if (!src_eq_tgt)
-	V_w(&p_parent2->entry_lock);
+        V_w(&p_parent2->entry_lock);
       return rc;
     }
 
@@ -1568,7 +1568,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
     {
       V_w(&p_parent1->entry_lock);
       if (!src_eq_tgt)
-	V_w(&p_parent2->entry_lock);
+        V_w(&p_parent2->entry_lock);
       return ERR_GHOSTFS_STALE;
     }
 
@@ -1583,7 +1583,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
     {
       V_w(&p_parent1->entry_lock);
       if (!src_eq_tgt)
-	V_w(&p_parent2->entry_lock);
+        V_w(&p_parent2->entry_lock);
       return rc;
     }
 
@@ -1593,9 +1593,9 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
   if ((srchandle.inode == tmphandle.inode) && (tmphandle.magic == tgt_dir_handle.magic))
     {
       if (p_src_dir_attrs)
-	fill_attributes(p_parent1, p_src_dir_attrs);
+        fill_attributes(p_parent1, p_src_dir_attrs);
       if (p_tgt_dir_attrs)
-	fill_attributes(p_parent2, p_tgt_dir_attrs);
+        fill_attributes(p_parent2, p_tgt_dir_attrs);
 #ifdef _DEBUG_GHOST_FS
       printf("src=tgt\n");
 #endif
@@ -1611,12 +1611,12 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       p_object2 = GetEntry_From_Handle(tmphandle);
 
       if (p_object2 == NULL)
-	{
-	  V_w(&p_parent1->entry_lock);
-	  if (!src_eq_tgt)
-	    V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_STALE;
-	}
+        {
+          V_w(&p_parent1->entry_lock);
+          if (!src_eq_tgt)
+            V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_STALE;
+        }
 
       /* lock the target before removal */
 
@@ -1625,107 +1625,107 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* check compatibility */
 #ifdef _DEBUG_GHOST_FS
       printf("type1=%d, type2=%d, dir=%d\n", p_object1->type, p_object2->type,
-	     GHOSTFS_DIR);
+             GHOSTFS_DIR);
       if (p_object2->type == GHOSTFS_DIR)
-	printf("2 empty : %d\n", is_empty_dir(p_object2));
+        printf("2 empty : %d\n", is_empty_dir(p_object2));
 #endif
 
       if ((p_object1->type == GHOSTFS_DIR) && (p_object2->type == GHOSTFS_DIR))
-	{
+        {
 
-	  if (!is_empty_dir(p_object2))
-	    {
-	      V_w(&p_object2->entry_lock);
-	      V_w(&p_parent1->entry_lock);
-	      if (!src_eq_tgt)
-		V_w(&p_parent2->entry_lock);
-	      return ERR_GHOSTFS_NOTEMPTY;
-	    }
+          if (!is_empty_dir(p_object2))
+            {
+              V_w(&p_object2->entry_lock);
+              V_w(&p_parent1->entry_lock);
+              if (!src_eq_tgt)
+                V_w(&p_parent2->entry_lock);
+              return ERR_GHOSTFS_NOTEMPTY;
+            }
 
-	  /* compatible types, we remove the target directory */
+          /* compatible types, we remove the target directory */
 
-	  GHOSTFS_dirlist_t *dirl;
-	  GHOSTFS_dirlist_t *next;
+          GHOSTFS_dirlist_t *dirl;
+          GHOSTFS_dirlist_t *next;
 
-	  /* removes the object from the directory */
+          /* removes the object from the directory */
 
-	  if ((rc = Remove_Entry(p_parent2, tgt_name)))
-	    {
-	      V_w(&p_object2->entry_lock);
-	      V_w(&p_parent1->entry_lock);
-	      if (!src_eq_tgt)
-		V_w(&p_parent2->entry_lock);
-	      return rc;
-	    }
+          if ((rc = Remove_Entry(p_parent2, tgt_name)))
+            {
+              V_w(&p_object2->entry_lock);
+              V_w(&p_parent1->entry_lock);
+              if (!src_eq_tgt)
+                V_w(&p_parent2->entry_lock);
+              return rc;
+            }
 
-	  /* update parent mtime and ctime */
-	  p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
+          /* update parent mtime and ctime */
+          p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
 
-	  /* destroy '.' and '..' from the list
-	   * and then the directory itself.
-	   * update parent's linkcount.
-	   */
+          /* destroy '.' and '..' from the list
+           * and then the directory itself.
+           * update parent's linkcount.
+           */
 
-	  dirl = p_object2->ITEM_DIR.direntries;
+          dirl = p_object2->ITEM_DIR.direntries;
 
-	  while (dirl)
-	    {
-	      next = dirl->next;
-	      Mem_Free(dirl);
-	      dirl = next;
-	    }
+          while (dirl)
+            {
+              next = dirl->next;
+              Mem_Free(dirl);
+              dirl = next;
+            }
 
-	  p_parent2->linkcount--;
+          p_parent2->linkcount--;
 
-	  /* destroy the entry */
+          /* destroy the entry */
 
-	  rw_lock_destroy(&p_object2->entry_lock);
-	  Mem_Free(p_object2);
+          rw_lock_destroy(&p_object2->entry_lock);
+          Mem_Free(p_object2);
 
       } else if ((p_object1->type != GHOSTFS_DIR) && (p_object2->type != GHOSTFS_DIR))
-	{
-	  /* compatible types, we remove the target file/link */
+        {
+          /* compatible types, we remove the target file/link */
 
-	  /* removes the object from the directory */
+          /* removes the object from the directory */
 
-	  if ((rc = Remove_Entry(p_parent2, tgt_name)))
-	    {
-	      V_w(&p_object2->entry_lock);
-	      V_w(&p_parent1->entry_lock);
-	      if (!src_eq_tgt)
-		V_w(&p_parent2->entry_lock);
-	      return rc;
-	    }
+          if ((rc = Remove_Entry(p_parent2, tgt_name)))
+            {
+              V_w(&p_object2->entry_lock);
+              V_w(&p_parent1->entry_lock);
+              if (!src_eq_tgt)
+                V_w(&p_parent2->entry_lock);
+              return rc;
+            }
 
-	  /* update parent mtime and ctime */
-	  p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
+          /* update parent mtime and ctime */
+          p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
 
-	  /* If it is a file or symlink, decrease its linkcount,
-	   * if it is null, we can destroy the objet.
-	   */
+          /* If it is a file or symlink, decrease its linkcount,
+           * if it is null, we can destroy the objet.
+           */
 
-	  p_object2->linkcount--;
+          p_object2->linkcount--;
 
-	  if (p_object2->linkcount == 0)
-	    {
-	      /* destroy the entry */
-	      rw_lock_destroy(&p_object2->entry_lock);
-	      Mem_Free(p_object2);
-	    } else
-	    {
-	      /* unlock the object */
-	      V_w(&p_object2->entry_lock);
-	    }
+          if (p_object2->linkcount == 0)
+            {
+              /* destroy the entry */
+              rw_lock_destroy(&p_object2->entry_lock);
+              Mem_Free(p_object2);
+            } else
+            {
+              /* unlock the object */
+              V_w(&p_object2->entry_lock);
+            }
 
-	} else
-	{
-	  /* incompatible types or non empty target dir, return an error */
-	  V_w(&p_object2->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  if (!src_eq_tgt)
-	    V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_EXIST;
-	}
+        } else
+        {
+          /* incompatible types or non empty target dir, return an error */
+          V_w(&p_object2->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          if (!src_eq_tgt)
+            V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_EXIST;
+        }
 
     }
 
@@ -1738,11 +1738,11 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       rc = Rename_Entry(p_parent1, src_name, tgt_name);
 
       if (rc != 0)
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_parent1->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_parent1->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
     } /* end if srcpath = tgtpath */
   else if (p_object1->type == GHOSTFS_DIR)
@@ -1759,13 +1759,13 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* removes the dir from the parent */
 
       if ((rc = Remove_Entry(p_parent1, src_name)))
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_object1->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_object1->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
       /* update parent mtime and ctime */
       p_parent1->attributes.mtime = p_parent1->attributes.ctime = time(NULL);
@@ -1774,13 +1774,13 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       rc = Change_Entry_Handle(p_object1, "..", tgt_dir_handle);
 
       if (rc != 0)
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_object1->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_object1->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
       /* decrease old parent linkcount and increase new parent linkcount,
        * related to their numer of '..' entries pointing on them.
@@ -1791,13 +1791,13 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* insert the directory into the target dir */
 
       if ((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_object1->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_object1->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
       /* update new parent mtime and ctime */
       p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
@@ -1809,20 +1809,20 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       V_w(&p_object1->entry_lock);
 
     } /* end if dir */
-    else			/* file and symlinks */
+    else                        /* file and symlinks */
     {
       /* we must remove the object from the source dir */
 
       /* removes the object from the parent */
 
       if ((rc = Remove_Entry(p_parent1, src_name)))
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_object1->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_object1->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
       /* update parent mtime and ctime */
       p_parent1->attributes.mtime = p_parent1->attributes.ctime = time(NULL);
@@ -1830,18 +1830,18 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* insert the object into the target dir */
 
       if ((rc = Add_Dir_Entry(p_parent2, srchandle, tgt_name)))
-	{
-	  /* unexpected error !!! */
-	  V_w(&p_object1->entry_lock);
-	  V_w(&p_parent1->entry_lock);
-	  V_w(&p_parent2->entry_lock);
-	  return ERR_GHOSTFS_INTERNAL;
-	}
+        {
+          /* unexpected error !!! */
+          V_w(&p_object1->entry_lock);
+          V_w(&p_parent1->entry_lock);
+          V_w(&p_parent2->entry_lock);
+          return ERR_GHOSTFS_INTERNAL;
+        }
 
       /* update new parent mtime and ctime */
       p_parent2->attributes.mtime = p_parent2->attributes.ctime = time(NULL);
 
-    }				/* end if file and symlinks */
+    }                           /* end if file and symlinks */
 
   /* copy attributes if needed, and return */
 

@@ -114,7 +114,7 @@
 #include "external_tools.h"
 
 #ifndef _NO_BUDDY_SYSTEM
-#include "BuddyMalloc.h"	/* for stats */
+#include "BuddyMalloc.h"        /* for stats */
 #endif
 
 #include "nfs23.h"
@@ -142,15 +142,15 @@
 #define NB_MAX_PENDING_REQUEST 30
 #define NB_PREALLOC_LRU_WORKER 100
 #define NB_REQUEST_BEFORE_GC 50
-#define PRIME_DUPREQ 17		/* has to be a prime number */
-#define PRIME_ID_MAPPER 17	/* has to be a prime number */
+#define PRIME_DUPREQ 17         /* has to be a prime number */
+#define PRIME_ID_MAPPER 17      /* has to be a prime number */
 #define DUPREQ_EXPIRATION 180
 #define NB_PREALLOC_HASH_DUPREQ 100
 #define NB_PREALLOC_LRU_DUPREQ 100
 #define NB_PREALLOC_GC_DUPREQ 100
 #define NB_PREALLOC_ID_MAPPER 200
 
-#define PRIME_CACHE_INODE 29	/* has to be a prime number */
+#define PRIME_CACHE_INODE 29    /* has to be a prime number */
 #define NB_PREALLOC_HASH_CACHE_INODE 1000
 #define NB_PREALLOC_LRU_CACHE_INODE 1000
 
@@ -190,7 +190,7 @@
 
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
-#define	RQCRED_SIZE	     400	/* this size is excessive */
+#define	RQCRED_SIZE	     400        /* this size is excessive */
 #define NFS_SEND_BUFFER_SIZE 32768
 #define NFS_RECV_BUFFER_SIZE 32768
 
@@ -201,7 +201,7 @@
 /* Other #define */
 #define TMP_STR_LEN 256
 #define AUTH_STR_LEN 30
-#define  PWENT_MAX_LEN 81	/* MUST be a multiple of 9 */
+#define  PWENT_MAX_LEN 81       /* MUST be a multiple of 9 */
 
 /* IP/name cache error */
 #define CLIENT_ID_SUCCESS             0
@@ -216,13 +216,13 @@
 #define ID_MAPPER_INVALID_ARGUMENT    3
 
 /* Hard and soft limit for nfsv4 quotas */
-#define NFS_V4_MAX_QUOTA_SOFT 4294967296LL	/*  4 GB */
-#define NFS_V4_MAX_QUOTA_HARD 17179869184LL	/* 16 GB */
-#define NFS_V4_MAX_QUOTA      34359738368LL	/* 32 GB */
+#define NFS_V4_MAX_QUOTA_SOFT 4294967296LL      /*  4 GB */
+#define NFS_V4_MAX_QUOTA_HARD 17179869184LL     /* 16 GB */
+#define NFS_V4_MAX_QUOTA      34359738368LL     /* 32 GB */
 
 /* Things related to xattr ghost directory */
 #define XATTRD_NAME ".xattr.d."
-#define XATTRD_NAME_LEN 9	/* MUST be equal to strlen( XATTRD_NAME ) */
+#define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
 #define XATTR_BUFFERSIZE 4096
 
 typedef enum nfs_clientid_confirm_state__ { CONFIRMED_CLIENT_ID = 1,
@@ -231,7 +231,7 @@ typedef enum nfs_clientid_confirm_state__ { CONFIRMED_CLIENT_ID = 1,
   CB_RECONFIGURED_CLIENT_ID = 4
 } nfs_clientid_confirm_state_t;
 
-#define CLIENT_ID_MAX_LEN             72	/* MUST be a multiple of 9 */
+#define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
 
 #ifndef P
 #define P( sem ) pthread_mutex_lock( &sem )
@@ -520,7 +520,7 @@ void constructor_nfs_request_data_t(void *ptr);
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam);
 int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * pparam);
 int nfs_read_dupreq_hash_conf(config_file_t in_config,
-			      nfs_rpc_dupreq_parameter_t * pparam);
+                              nfs_rpc_dupreq_parameter_t * pparam);
 int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * pparam);
 int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * pparam);
 int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t * pparam);
@@ -530,7 +530,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * pparam);
 #ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config,
-			     nfs_session_id_parameter_t * pparam);
+                             nfs_session_id_parameter_t * pparam);
 int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
 #endif
 
@@ -570,12 +570,12 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res);
 int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res);
 
 int nfs_client_id_add(clientid4 clientid,
-		      nfs_client_id_t client_record,
-		      nfs_client_id_t * nfs_client_id_pool);
+                      nfs_client_id_t client_record,
+                      nfs_client_id_t * nfs_client_id_pool);
 
 int nfs_client_id_set(clientid4 clientid,
-		      nfs_client_id_t client_record,
-		      nfs_client_id_t * nfs_client_id_pool);
+                      nfs_client_id_t client_record,
+                      nfs_client_id_t * nfs_client_id_pool);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
@@ -584,9 +584,9 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str);
 int display_open_owner_key(hash_buffer_t * pbuff, char *str);
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
 unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef);
+                                         hash_buffer_t * buffclef);
 unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef);
+                                       hash_buffer_t * buffclef);
 
 int display_client_id(hash_buffer_t * pbuff, char *str);
 int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
@@ -596,42 +596,42 @@ int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 unsigned long client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				      hash_buffer_t * buffclef);
+                                      hash_buffer_t * buffclef);
 unsigned long client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
-					      hash_buffer_t * buffclef);
+                                              hash_buffer_t * buffclef);
 
 unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef);
+                                       hash_buffer_t * buffclef);
 unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				     hash_buffer_t * buffclef);
+                                     hash_buffer_t * buffclef);
 
 unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
-					hash_buffer_t * buffclef);
+                                        hash_buffer_t * buffclef);
 unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-						hash_buffer_t * buffclef);
+                                                hash_buffer_t * buffclef);
 
 unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-				     hash_buffer_t * buffclef);
+                                     hash_buffer_t * buffclef);
 unsigned long int namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-					   hash_buffer_t * buffclef);
+                                           hash_buffer_t * buffclef);
 
 unsigned long int namemapper_value_hash_func(hash_parameter_t * p_hparam,
-					     hash_buffer_t * buffclef);
+                                             hash_buffer_t * buffclef);
 unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef);
+                                       hash_buffer_t * buffclef);
 
 int nfs_convert_open_owner(open_owner4 * pnfsowoner,
-			   cache_inode_open_owner_name_t * pname_owner);
+                           cache_inode_open_owner_name_t * pname_owner);
 void nfs_open_owner_PrintAll(void);
 int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname);
 int nfs_open_owner_Update(cache_inode_open_owner_name_t * pname,
-			  cache_inode_open_owner_t * popen_owner);
+                          cache_inode_open_owner_t * popen_owner);
 int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
-			       cache_inode_open_owner_t * *popen_owner);
+                               cache_inode_open_owner_t * *popen_owner);
 int nfs_open_owner_Get(cache_inode_open_owner_name_t * pname,
-		       cache_inode_open_owner_t * popen_owner);
+                       cache_inode_open_owner_t * popen_owner);
 int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
-		       cache_inode_open_owner_t * popen_owner);
+                       cache_inode_open_owner_t * popen_owner);
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
 
 int idmap_populate(char *path, idmap_type_t maptype);
@@ -682,13 +682,13 @@ int gnamemap_remove(unsigned int key);
 int uidgidmap_remove(unsigned int key);
 
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
-		     hash_stat_t * phstat_reverse);
+                     hash_stat_t * phstat_reverse);
 
 int nfs4_BuildStateId_Other(cache_entry_t * pentry,
-			    fsal_op_context_t * pcontext,
-			    cache_inode_open_owner_t * popen_owner, char *other);
+                            fsal_op_context_t * pcontext,
+                            cache_inode_open_owner_t * popen_owner, char *other);
 int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
-		       clientid4 clientid);
+                       clientid4 clientid);
 int nfs4_is_lease_expired(cache_entry_t * pentry);
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data);
@@ -703,18 +703,18 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str);
 int display_session_id_val(hash_buffer_t * pbuff, char *str);
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
 unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef);
+                                         hash_buffer_t * buffclef);
 unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef);
+                                       hash_buffer_t * buffclef);
 int nfs41_Init_session_id(nfs_session_id_parameter_t param);
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
-		      nfs41_session_t * psession_data);
+                      nfs41_session_t * psession_data);
 int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
-		      nfs41_session_t * psession_data);
+                      nfs41_session_t * psession_data);
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
-			      nfs41_session_t * *psession_data);
+                              nfs41_session_t * *psession_data);
 int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
-			 nfs41_session_t * psession_data);
+                         nfs41_session_t * psession_data);
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
 int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE]);
 void nfs41_Session_PrintAll(void);
@@ -729,11 +729,11 @@ void socket_setoptions(int socketFd);
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
-				    hash_buffer_t * buffclef);
+                                    hash_buffer_t * buffclef);
 int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
-#endif				/* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
 
-#endif				/* _NFS_CORE_H */
+#endif                          /* _NFS_CORE_H */

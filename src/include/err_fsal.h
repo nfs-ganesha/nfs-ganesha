@@ -180,7 +180,7 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =
 #define ERR_FSAL_SYMLINK          10029
   {
   ERR_FSAL_SYMLINK, "ERR_FSAL_SYMLINK",
-	"This is a symbolic link, should be file/directory"},
+        "This is a symbolic link, should be file/directory"},
 #define ERR_FSAL_ATTRNOTSUPP      10032
   {
   ERR_FSAL_ATTRNOTSUPP, "ERR_FSAL_ATTRNOTSUPP", "Attribute not supported"},

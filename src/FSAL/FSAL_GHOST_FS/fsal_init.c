@@ -47,20 +47,20 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
       rc = GHOSTFS_Lookup(handle, cur_str, &next_handle);
 
       if (rc == ERR_GHOSTFS_NOENT)
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			    "FSAL: Creating predefined directory '%s'", cur_str);
+        {
+          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+                            "FSAL: Creating predefined directory '%s'", cur_str);
 
-	  /* create the entry */
+          /* create the entry */
 
-	  rc = GHOSTFS_MkDir(handle, cur_str,
-			     p_dir->dir_owner,
-			     p_dir->dir_group,
-			     fsal2ghost_mode(p_dir->dir_mode), &next_handle, NULL);
-	}
+          rc = GHOSTFS_MkDir(handle, cur_str,
+                             p_dir->dir_owner,
+                             p_dir->dir_group,
+                             fsal2ghost_mode(p_dir->dir_mode), &next_handle, NULL);
+        }
 
       if (rc != 0)
-	return -1;
+        return -1;
 
       handle = next_handle;
       cur_str = strtok(NULL, "/");
@@ -92,7 +92,7 @@ static int CreateInitDir(ghostfs_dir_def_t * p_dir)
  *                                minor error code gives the reason
  *                                for this error.)
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
 
@@ -118,7 +118,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
 
 #ifdef _DEBUG_GHOST_FS
   printf("init_info->fs_specific_info.root_owner = %d\n",
-	 init_info->fs_specific_info.root_owner);
+         init_info->fs_specific_info.root_owner);
   printf("param.root_owner = %d\n", param.root_owner);
 #endif
 
@@ -129,8 +129,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
 
   /* proceeds FSAL initialization */
   switch ((status =
-	   fsal_internal_init_global(&(init_info->fsal_info),
-				     &(init_info->fs_common_info))).major)
+           fsal_internal_init_global(&(init_info->fsal_info),
+                                     &(init_info->fs_common_info))).major)
     {
     case ERR_FSAL_NO_ERROR:
       /*continue */
@@ -152,9 +152,9 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
     {
       rc = CreateInitDir(p_cur);
       if (rc)
-	DisplayLogJdLevel(fsal_log, NIV_CRIT,
-			  "FSAL: /!\\ WARNING /!\\ Could not create init dir '%s'",
-			  p_cur->path);
+        DisplayLogJdLevel(fsal_log, NIV_CRIT,
+                          "FSAL: /!\\ WARNING /!\\ Could not create init dir '%s'",
+                          p_cur->path);
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);

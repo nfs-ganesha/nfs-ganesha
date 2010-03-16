@@ -93,11 +93,11 @@ static struct xp_ops Svcudp_op = {
  * kept in xprt->xp_p2
  */
 struct svcudp_data {
-  u_int su_iosz;		/* byte size of send.recv buffer */
-  uint32_t su_xid;		/* transaction id */
-  XDR su_xdrs;			/* XDR handle */
-  char su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
-  void *su_cache;		/* cached data, NULL if no cache */
+  u_int su_iosz;                /* byte size of send.recv buffer */
+  uint32_t su_xid;              /* transaction id */
+  XDR su_xdrs;                  /* XDR handle */
+  char su_verfbody[MAX_AUTH_BYTES];     /* verifier body */
+  void *su_cache;               /* cached data, NULL if no cache */
 };
 #define	su_data(xprt)	((struct svcudp_data *)(xprt->xp_p2))
 
@@ -125,10 +125,10 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   if (sock == RPC_ANYSOCK)
     {
       if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-	{
-	  perror("svcudp_create: socket creation problem");
-	  return ((SVCXPRT *) NULL);
-	}
+        {
+          perror("svcudp_create: socket creation problem");
+          return ((SVCXPRT *) NULL);
+        }
       madesock = TRUE;
     }
   memset((char *)&addr, 0, sizeof(addr));
@@ -145,7 +145,7 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
     {
       perror("svcudp_create - cannot getsockname");
       if (madesock)
-	(void)close(sock);
+        (void)close(sock);
       return ((SVCXPRT *) NULL);
     }
   xprt = (SVCXPRT *) mem_alloc(sizeof(SVCXPRT));
@@ -212,14 +212,14 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
   if (rlen == -1)
     {
       if (errno == EINTR)
-	goto again;
-	else
-	return (FALSE);
+        goto again;
+        else
+        return (FALSE);
     }
 
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
   rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
-		  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
+                  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
   if (rlen == -1 && errno == EINTR)
     goto again;
   if (rlen < (int)4 * sizeof(uint32_t))
@@ -263,10 +263,10 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
     {
       slen = (int)XDR_GETPOS(xdrs);
       if (sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
-		 (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) == slen)
-	{
-	  stat = TRUE;
-	}
+                 (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) == slen)
+        {
+          stat = TRUE;
+        }
     }
   return (stat);
 }

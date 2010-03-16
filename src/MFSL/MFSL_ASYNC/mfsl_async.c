@@ -105,7 +105,7 @@ extern mfsl_parameter_t mfsl_param;
 
 fsal_handle_t dir_handle_precreate;
 unsigned int dir_handle_set = 0;
-log_t log_outputs = LOG_INITIALIZER;		     /**< Log descriptor   */
+log_t log_outputs = LOG_INITIALIZER;                 /**< Log descriptor   */
 unsigned int end_of_mfsl = FALSE;
 
 void constructor_preacreated_entries(void *ptr)
@@ -115,7 +115,7 @@ void constructor_preacreated_entries(void *ptr)
   mfsl_precreated_object_t *pobject = (mfsl_precreated_object_t *) ptr;
 
   pobject->inited = 0;
-}				/* constructor_preacreated_entries */
+}                               /* constructor_preacreated_entries */
 
 /**
  * 
@@ -147,11 +147,11 @@ fsal_status_t mfsl_async_init_symlinkdir(fsal_op_context_t * pcontext)
   if (FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
-	  ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
-	   mfsl_param.tmp_symlink_dir, fsal_status.major, fsal_status.minor);
+          ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+           mfsl_param.tmp_symlink_dir, fsal_status.major, fsal_status.minor);
       exit(1);
     }
-}				/* mfsl_async_init_symlinkdir */
+}                               /* mfsl_async_init_symlinkdir */
 
 /**
  * 
@@ -198,8 +198,8 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
   if (FSAL_IS_ERROR(fsal_status))
     {
       DisplayLog
-	  ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
-	   mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+           mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
       exit(1);
     }
 
@@ -207,129 +207,129 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
     {
       fsal_status = FSAL_opendir(&dir_handle, pcontext, &dir_descriptor, &dir_attr);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog
-	      ("Impossible to opendir directory %s to be used to store precreated objects: status=(%u,%u)",
-	       mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog
+              ("Impossible to opendir directory %s to be used to store precreated objects: status=(%u,%u)",
+               mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          exit(1);
+        }
 
       fsal_status = FSAL_readdir(&dir_descriptor,
-				 FSAL_READDIR_FROM_BEGINNING,
-				 FSAL_ATTRS_MANDATORY,
-				 NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
-				 dirent, &end_cookie, &nb_entries, &eod);
+                                 FSAL_READDIR_FROM_BEGINNING,
+                                 FSAL_ATTRS_MANDATORY,
+                                 NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
+                                 dirent, &end_cookie, &nb_entries, &eod);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog
-	      ("Impossible to readdir directory %s to be used to store precreated objects: status=(%u,%u)",
-	       mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog
+              ("Impossible to readdir directory %s to be used to store precreated objects: status=(%u,%u)",
+               mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          exit(1);
+        }
 
       fsal_status = FSAL_closedir(&dir_descriptor);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog
-	      ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
-	       mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog
+              ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
+               mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          exit(1);
+        }
 
       for (nb_count = 0; nb_count < nb_entries; nb_count++)
-	{
-	  fsal_status = FSAL_unlink(&dir_handle,
-				    &dirent[nb_count].name, pcontext, &dir_attr);
-	  if (FSAL_IS_ERROR(fsal_status))
-	    {
-	      if (fsal_status.major != ERR_FSAL_NOTEMPTY)
-		{
+        {
+          fsal_status = FSAL_unlink(&dir_handle,
+                                    &dirent[nb_count].name, pcontext, &dir_attr);
+          if (FSAL_IS_ERROR(fsal_status))
+            {
+              if (fsal_status.major != ERR_FSAL_NOTEMPTY)
+                {
 #ifdef _USE_PROXY
-		  if (fsal_status.minor == NFS4ERR_GRACE)
-		    DisplayLog
-			("The remote server is within grace period. Wait for grace period to end and retry");
-		    else
+                  if (fsal_status.minor == NFS4ERR_GRACE)
+                    DisplayLog
+                        ("The remote server is within grace period. Wait for grace period to end and retry");
+                    else
 #endif
-		    DisplayLog("Impossible to unlink %s/%s status=(%u,%u)",
-			       mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
-			       fsal_status.major, fsal_status.minor);
-		  exit(1);
-		} else
-		{
-		  while (subeod == FALSE)
-		    {
-		      /* non empty directory, cleanup it too.. */
-		      fsal_status = FSAL_opendir(&dirent[nb_count].handle,
-						 pcontext, &subdir_descriptor, &dir_attr);
-		      if (FSAL_IS_ERROR(fsal_status))
-			{
-			  DisplayLog
-			      ("Impossible to opendir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
-			       mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
-			       fsal_status.major, fsal_status.minor);
-			  exit(1);
-			}
+                    DisplayLog("Impossible to unlink %s/%s status=(%u,%u)",
+                               mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
+                               fsal_status.major, fsal_status.minor);
+                  exit(1);
+                } else
+                {
+                  while (subeod == FALSE)
+                    {
+                      /* non empty directory, cleanup it too.. */
+                      fsal_status = FSAL_opendir(&dirent[nb_count].handle,
+                                                 pcontext, &subdir_descriptor, &dir_attr);
+                      if (FSAL_IS_ERROR(fsal_status))
+                        {
+                          DisplayLog
+                              ("Impossible to opendir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
+                               mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
+                               fsal_status.major, fsal_status.minor);
+                          exit(1);
+                        }
 
-		      fsal_status = FSAL_readdir(&subdir_descriptor,
-						 FSAL_READDIR_FROM_BEGINNING,
-						 FSAL_ATTRS_MANDATORY,
-						 NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
-						 subdirent,
-						 &subend_cookie, &subnb_entries, &subeod);
-		      if (FSAL_IS_ERROR(fsal_status))
-			{
-			  DisplayLog
-			      ("Impossible to readdir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
-			       mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
-			       fsal_status.major, fsal_status.minor);
-			  exit(1);
-			}
+                      fsal_status = FSAL_readdir(&subdir_descriptor,
+                                                 FSAL_READDIR_FROM_BEGINNING,
+                                                 FSAL_ATTRS_MANDATORY,
+                                                 NB_DIRENT_CLEAN * sizeof(fsal_dirent_t),
+                                                 subdirent,
+                                                 &subend_cookie, &subnb_entries, &subeod);
+                      if (FSAL_IS_ERROR(fsal_status))
+                        {
+                          DisplayLog
+                              ("Impossible to readdir directory %s/%s to be used to store precreated objects: status=(%u,%u)",
+                               mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
+                               fsal_status.major, fsal_status.minor);
+                          exit(1);
+                        }
 
-		      fsal_status = FSAL_closedir(&subdir_descriptor);
-		      if (FSAL_IS_ERROR(fsal_status))
-			{
-			  DisplayLog
-			      ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
-			       mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
-			       fsal_status.major, fsal_status.minor);
-			  exit(1);
-			}
+                      fsal_status = FSAL_closedir(&subdir_descriptor);
+                      if (FSAL_IS_ERROR(fsal_status))
+                        {
+                          DisplayLog
+                              ("Impossible to closedir directory %s to be used to store precreated objects: status=(%u,%u)",
+                               mfsl_param.pre_create_obj_dir, dirent[nb_count].name.name,
+                               fsal_status.major, fsal_status.minor);
+                          exit(1);
+                        }
 
-		      for (subnb_count = 0; subnb_count < subnb_entries; subnb_count++)
-			{
-			  fsal_status = FSAL_unlink(&dirent[nb_count].handle,
-						    &subdirent[subnb_count].name,
-						    pcontext, &dir_attr);
-			  if (FSAL_IS_ERROR(fsal_status))
-			    {
-			      if (fsal_status.major != ERR_FSAL_NOTEMPTY)
-				{
+                      for (subnb_count = 0; subnb_count < subnb_entries; subnb_count++)
+                        {
+                          fsal_status = FSAL_unlink(&dirent[nb_count].handle,
+                                                    &subdirent[subnb_count].name,
+                                                    pcontext, &dir_attr);
+                          if (FSAL_IS_ERROR(fsal_status))
+                            {
+                              if (fsal_status.major != ERR_FSAL_NOTEMPTY)
+                                {
 #ifdef _USE_PROXY
-				  if (fsal_status.minor == NFS4ERR_GRACE)
-				    DisplayLog
-					("The remote server is within grace period. Wait for grace period to end and retry");
-				    else
+                                  if (fsal_status.minor == NFS4ERR_GRACE)
+                                    DisplayLog
+                                        ("The remote server is within grace period. Wait for grace period to end and retry");
+                                    else
 #endif
-				    DisplayLog
-					("Impossible to unlink %s/%s/%s status=(%u,%u)",
-					 mfsl_param.pre_create_obj_dir,
-					 dirent[nb_count].name.name,
-					 subdirent[subnb_count], fsal_status.major,
-					 fsal_status.minor);
-				  exit(1);
-				}
-			    }
-			}	/* for */
-		    }		/* while (subeod ) */
-		  subeod = FALSE;
-		}		/* else */
-	    }			/* if */
-	}			/* for */
+                                    DisplayLog
+                                        ("Impossible to unlink %s/%s/%s status=(%u,%u)",
+                                         mfsl_param.pre_create_obj_dir,
+                                         dirent[nb_count].name.name,
+                                         subdirent[subnb_count], fsal_status.major,
+                                         fsal_status.minor);
+                                  exit(1);
+                                }
+                            }
+                        }       /* for */
+                    }           /* while (subeod ) */
+                  subeod = FALSE;
+                }               /* else */
+            }                   /* if */
+        }                       /* for */
 
-    }				/* while( eod ) */
+    }                           /* while( eod ) */
 
   return fsal_status;
-}				/* mfsl_async_init_clean_precreated_object */
+}                               /* mfsl_async_init_clean_precreated_object */
 
 /**
  * 
@@ -344,7 +344,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
  *
  */
 fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontext,
-						     mfsl_precreated_object_t * pool_dirs)
+                                                     mfsl_precreated_object_t * pool_dirs)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -374,14 +374,14 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
   if (dir_handle_set == 0)
     {
       fsal_status =
-	  FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
+          FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog
-	      ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
-	       mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog
+              ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+               mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          exit(1);
+        }
 
       dir_handle_set = 1;
     }
@@ -389,15 +389,15 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
   for (piter = pool_dirs; piter != NULL; piter = piter->next_alloc)
     {
       if (piter->inited != 0)
-	continue;
+        continue;
 
       snprintf(newdirpath, MAXNAMLEN, "dir.%u.%lu.%u", pid, me, counter++);
       fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog("Impossible to convert name %s", newdirpath);
-	  exit(1);
-	}
+        {
+          DisplayLog("Impossible to convert name %s", newdirpath);
+          exit(1);
+        }
 
       pprecreated = piter;
       pprecreated->name = fsal_name;
@@ -408,21 +408,21 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
       piter->inited = 1;
 
       fsal_status = FSAL_mkdir(&dir_handle_precreate,
-			       &fsal_name,
-			       pcontext,
-			       0777,
-			       &(pprecreated->mobject.handle), &(pprecreated->attr));
+                               &fsal_name,
+                               pcontext,
+                               0777,
+                               &(pprecreated->mobject.handle), &(pprecreated->attr));
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog("Impossible to mkdir %s/%s, status=(%u,%u)",
-		     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
-		     fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog("Impossible to mkdir %s/%s, status=(%u,%u)",
+                     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
+                     fsal_status.minor);
+          exit(1);
+        }
     }
 
   return fsal_status;
-}				/* mfsl_async_init_precreated_directories */
+}                               /* mfsl_async_init_precreated_directories */
 
 /**
  * 
@@ -437,7 +437,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t * pcontex
  *
  */
 fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
-					       mfsl_precreated_object_t * pool_files)
+                                               mfsl_precreated_object_t * pool_files)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -467,14 +467,14 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
   if (dir_handle_set == 0)
     {
       fsal_status =
-	  FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
+          FSAL_lookupPath(&fsal_path, pcontext, &dir_handle_precreate, &dir_attr);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog
-	      ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
-	       mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
-	  exit(1);
-	}
+        {
+          DisplayLog
+              ("Impossible to lookup directory %s to be used to store precreated objects: status=(%u,%u)",
+               mfsl_param.pre_create_obj_dir, fsal_status.major, fsal_status.minor);
+          exit(1);
+        }
 
       dir_handle_set = 1;
     }
@@ -482,15 +482,15 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
   for (piter = pool_files; piter != NULL; piter = piter->next_alloc)
     {
       if (piter->inited != 0)
-	continue;
+        continue;
 
       snprintf(newdirpath, MAXNAMLEN, "file.%u.%lu.%u", pid, me, counter++);
       fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog("Impossible to convert name %s", newdirpath);
-	  exit(1);
-	}
+        {
+          DisplayLog("Impossible to convert name %s", newdirpath);
+          exit(1);
+        }
 
       pprecreated = piter;
       pprecreated->name = fsal_name;
@@ -501,21 +501,21 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
       piter->inited = 1;
 
       fsal_status = FSAL_create(&dir_handle_precreate,
-				&fsal_name,
-				pcontext,
-				0777,
-				&(pprecreated->mobject.handle), &(pprecreated->attr));
+                                &fsal_name,
+                                pcontext,
+                                0777,
+                                &(pprecreated->mobject.handle), &(pprecreated->attr));
       if (FSAL_IS_ERROR(fsal_status))
-	{
-	  DisplayLog("Impossible to create %s/%s, status=(%u,%u)",
-		     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
-		     fsal_status.minor);
-	  /* exit( 1 ) ;  */
-	}
+        {
+          DisplayLog("Impossible to create %s/%s, status=(%u,%u)",
+                     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
+                     fsal_status.minor);
+          /* exit( 1 ) ;  */
+        }
     }
 
   return fsal_status;
-}				/* mfsl_async_init_precreated_files */
+}                               /* mfsl_async_init_precreated_files */
 
 /**
  * 
@@ -531,7 +531,7 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t * pcontext,
 fsal_status_t MFSL_PrepareContext(fsal_op_context_t * pcontext)
 {
   return mfsl_async_init_clean_precreated_objects(pcontext);
-}				/* MFSL_PrepareContext */
+}                               /* MFSL_PrepareContext */
 
 /**
  * 
@@ -546,7 +546,7 @@ fsal_status_t MFSL_PrepareContext(fsal_op_context_t * pcontext)
  *
  */
 fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
-			      fsal_op_context_t * pfsal_context)
+                              fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -556,14 +556,14 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
   if (pthread_mutex_init(&pcontext->lock, NULL) != 0)
     MFSL_return(ERR_FSAL_SERVERFAULT, errno);
 
-  pcontext->synclet_index = 0;	/* only one synclet for now */
+  pcontext->synclet_index = 0;  /* only one synclet for now */
 
   STUFF_PREALLOC(pcontext->pool_async_op,
-		 mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+                 mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   STUFF_PREALLOC(pcontext->pool_spec_data,
-		 mfsl_param.nb_pre_async_op_desc,
-		 mfsl_object_specific_data_t, next_alloc);
+                 mfsl_param.nb_pre_async_op_desc,
+                 mfsl_object_specific_data_t, next_alloc);
 
   pcontext->log_outputs = log_outputs;
 
@@ -573,7 +573,7 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
   V(pcontext->lock);
 
   return status;
-}				/* MFSL_GetContext */
+}                               /* MFSL_GetContext */
 
  /**
  * 
@@ -588,7 +588,7 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
  *
  */
 fsal_status_t MFSL_ASYNC_GetSyncletContext(mfsl_synclet_context_t * pcontext,
-					   fsal_op_context_t * pfsal_context)
+                                           fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -614,7 +614,7 @@ fsal_status_t MFSL_ASYNC_GetSyncletContext(mfsl_synclet_context_t * pcontext,
  *
  */
 fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
-					    fsal_op_context_t * pfsal_context)
+                                            fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -624,18 +624,18 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
   if (pcontext->pool_dirs == NULL)
     {
       STUFF_PREALLOC_CONSTRUCT(pcontext->pool_dirs,
-			       mfsl_param.nb_pre_create_dirs,
-			       mfsl_precreated_object_t,
-			       next_alloc, constructor_preacreated_entries);
+                               mfsl_param.nb_pre_create_dirs,
+                               mfsl_precreated_object_t,
+                               next_alloc, constructor_preacreated_entries);
       pcontext->avail_pool_dirs = mfsl_param.nb_pre_create_dirs;
 
       status = mfsl_async_init_precreated_directories(pfsal_context, pcontext->pool_dirs);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
     }
 
   return status;
-}				/* MFSL_ASYNC_RefreshContextDirs */
+}                               /* MFSL_ASYNC_RefreshContextDirs */
 
 /**
  * 
@@ -652,7 +652,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
  *
  */
 fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
-					     fsal_op_context_t * pfsal_context)
+                                             fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -662,18 +662,18 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
   if (pcontext->pool_files == NULL)
     {
       STUFF_PREALLOC_CONSTRUCT(pcontext->pool_files,
-			       mfsl_param.nb_pre_create_files,
-			       mfsl_precreated_object_t,
-			       next_alloc, constructor_preacreated_entries);
+                               mfsl_param.nb_pre_create_files,
+                               mfsl_precreated_object_t,
+                               next_alloc, constructor_preacreated_entries);
       pcontext->avail_pool_files = mfsl_param.nb_pre_create_files;
 
       status = mfsl_async_init_precreated_files(pfsal_context, pcontext->pool_files);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
     }
 
   return status;
-}				/* MFSL_ASYNC_RefreshtContextFiles */
+}                               /* MFSL_ASYNC_RefreshtContextFiles */
 
 /**
  * 
@@ -688,7 +688,7 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
  *
  */
 fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
-				  fsal_op_context_t * pfsal_context)
+                                  fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
   fsal_export_context_t fsal_export_context;
@@ -701,11 +701,11 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
     {
       status = FSAL_BuildExportContext(&fsal_export_context, NULL, NULL);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
 
       status = FSAL_GetClientContext(pfsal_context, &fsal_export_context, 0, 0, NULL, 0);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
     }
 
   /*  if( !pcontext->pool_dirs || !pcontext->pool_files ) */
@@ -713,18 +713,18 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
     {
       status = MFSL_ASYNC_RefreshContextDirs(pcontext, pfsal_context);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
     }
 
   if (pcontext->pool_files == NULL)
     {
       status = MFSL_ASYNC_RefreshContextFiles(pcontext, pfsal_context);
       if (FSAL_IS_ERROR(status))
-	return status;
+        return status;
     }
 
   return status;
-}				/* MFSL_ASYNC_RefreshContext */
+}                               /* MFSL_ASYNC_RefreshContext */
 
 /**
  * 
@@ -739,7 +739,7 @@ fsal_status_t MFSL_RefreshContext(mfsl_context_t * pcontext,
  *
  */
 fsal_status_t MFSL_ASYNC_RefreshSyncletContext(mfsl_synclet_context_t * pcontext,
-					       fsal_op_context_t * pfsal_context)
+                                               fsal_op_context_t * pfsal_context)
 {
   fsal_status_t status;
 
@@ -747,7 +747,7 @@ fsal_status_t MFSL_ASYNC_RefreshSyncletContext(mfsl_synclet_context_t * pcontext
   status.minor = 0;
 
   return status;
-}				/* MFSL_ASYNC_RefreshSyncletContext */
+}                               /* MFSL_ASYNC_RefreshSyncletContext */
 
 /**
  * 
@@ -770,207 +770,207 @@ int MFSL_ASYNC_is_synced(mfsl_object_t * mobject)
 
   /* in all other case, returns FALSE */
   return FALSE;
-}				/*  MFSL_ASYNC_is_synced */
+}                               /*  MFSL_ASYNC_is_synced */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */
 
 /******************************************************
  *              Common Filesystem calls.
  ******************************************************/
 
-fsal_status_t MFSL_lookupPath(fsal_path_t * p_path,	/* IN */
-			      fsal_op_context_t * p_context,	/* IN */
-			      mfsl_context_t * p_mfsl_context,	/* IN */
-			      mfsl_object_t * object_handle,	/* OUT */
-			      fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
+                              mfsl_context_t * p_mfsl_context,  /* IN */
+                              mfsl_object_t * object_handle,    /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_lookupPath(p_path,
-				p_context, &object_handle->handle, object_attributes);
+                                p_context, &object_handle->handle, object_attributes);
   return fsal_status;
-}				/* MFSL_lookupPath */
+}                               /* MFSL_lookupPath */
 
-fsal_status_t MFSL_lookupJunction(mfsl_object_t * p_junction_handle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  mfsl_context_t * p_mfsl_context,	/* IN */
-				  mfsl_object_t * p_fsoot_handle,	/* OUT */
-				  fsal_attrib_list_t * p_fsroot_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_lookupJunction(mfsl_object_t * p_junction_handle,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  mfsl_context_t * p_mfsl_context,      /* IN */
+                                  mfsl_object_t * p_fsoot_handle,       /* OUT */
+                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
   return FSAL_lookupJunction(&p_junction_handle->handle,
-			     p_context, &p_fsoot_handle->handle, p_fsroot_attributes);
-}				/* MFSL_lookupJunction */
+                             p_context, &p_fsoot_handle->handle, p_fsroot_attributes);
+}                               /* MFSL_lookupJunction */
 
-fsal_status_t MFSL_access(mfsl_object_t * object_handle,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  mfsl_context_t * p_mfsl_context,	/* IN */
-			  fsal_accessflags_t access_type,	/* IN */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_access(mfsl_object_t * object_handle,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          mfsl_context_t * p_mfsl_context,      /* IN */
+                          fsal_accessflags_t access_type,       /* IN */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
 
   P(object_handle->lock);
   fsal_status = FSAL_access(&object_handle->handle,
-			    p_context, access_type, object_attributes);
+                            p_context, access_type, object_attributes);
   V(object_handle->lock);
 
   return fsal_status;
-}				/* MFSL_access */
+}                               /* MFSL_access */
 
-fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   mfsl_context_t * p_mfsl_context,	/* IN */
-			   fsal_dir_t * dir_descriptor,	/* OUT */
-			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_opendir(mfsl_object_t * dir_handle,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           mfsl_context_t * p_mfsl_context,     /* IN */
+                           fsal_dir_t * dir_descriptor, /* OUT */
+                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
 
   P(dir_handle->lock);
   fsal_status = FSAL_opendir(&dir_handle->handle,
-			     p_context, dir_descriptor, dir_attributes);
+                             p_context, dir_descriptor, dir_attributes);
   V(dir_handle->lock);
 
   return fsal_status;
-}				/* MFSL_opendir */
+}                               /* MFSL_opendir */
 
-fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
-			   fsal_cookie_t start_position,	/* IN */
-			   fsal_attrib_mask_t get_attr_mask,	/* IN */
-			   fsal_mdsize_t buffersize,	/* IN */
-			   fsal_dirent_t * pdirent,	/* OUT */
-			   fsal_cookie_t * end_position,	/* OUT */
-			   fsal_count_t * nb_entries,	/* OUT */
-			   fsal_boolean_t * end_of_dir,	/* OUT */
-			   mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_cookie_t start_position,        /* IN */
+                           fsal_attrib_mask_t get_attr_mask,    /* IN */
+                           fsal_mdsize_t buffersize,    /* IN */
+                           fsal_dirent_t * pdirent,     /* OUT */
+                           fsal_cookie_t * end_position,        /* OUT */
+                           fsal_count_t * nb_entries,   /* OUT */
+                           fsal_boolean_t * end_of_dir, /* OUT */
+                           mfsl_context_t * p_mfsl_context      /* IN */
     )
 {
   fsal_status_t fsal_status;
 
   return FSAL_readdir(dir_descriptor,
-		      start_position,
-		      get_attr_mask,
-		      buffersize, pdirent, end_position, nb_entries, end_of_dir);
+                      start_position,
+                      get_attr_mask,
+                      buffersize, pdirent, end_position, nb_entries, end_of_dir);
 
-}				/* MFSL_readdir */
+}                               /* MFSL_readdir */
 
-fsal_status_t MFSL_closedir(fsal_dir_t * dir_descriptor,	/* IN */
-			    mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_closedir(fsal_dir_t * dir_descriptor,        /* IN */
+                            mfsl_context_t * p_mfsl_context     /* IN */
     )
 {
   fsal_status_t fsal_status;
 
   return FSAL_closedir(dir_descriptor);
-}				/* FSAL_closedir */
+}                               /* FSAL_closedir */
 
-fsal_status_t MFSL_open(mfsl_object_t * filehandle,	/* IN */
-			fsal_op_context_t * p_context,	/* IN */
-			mfsl_context_t * p_mfsl_context,	/* IN */
-			fsal_openflags_t openflags,	/* IN */
-			fsal_file_t * file_descriptor,	/* OUT */
-			fsal_attrib_list_t * file_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_open(mfsl_object_t * filehandle,     /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
+                        mfsl_context_t * p_mfsl_context,        /* IN */
+                        fsal_openflags_t openflags,     /* IN */
+                        fsal_file_t * file_descriptor,  /* OUT */
+                        fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_open(&filehandle->handle,
-			  p_context, openflags, file_descriptor, file_attributes);
+                          p_context, openflags, file_descriptor, file_attributes);
   return fsal_status;
-}				/* MFSL_open */
+}                               /* MFSL_open */
 
-fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,	/* IN */
-				  fsal_u64_t fileid,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  mfsl_context_t * p_mfsl_context,	/* IN */
-				  fsal_openflags_t openflags,	/* IN */
-				  fsal_file_t * file_descriptor,	/* OUT */
-				  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+fsal_status_t MFSL_open_by_fileid(mfsl_object_t * filehandle,   /* IN */
+                                  fsal_u64_t fileid,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  mfsl_context_t * p_mfsl_context,      /* IN */
+                                  fsal_openflags_t openflags,   /* IN */
+                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   return FSAL_open_by_fileid(&filehandle->handle,
-			     fileid,
-			     p_context, openflags, file_descriptor, file_attributes);
-}				/* MFSL_open_by_fileid */
+                             fileid,
+                             p_context, openflags, file_descriptor, file_attributes);
+}                               /* MFSL_open_by_fileid */
 
-fsal_status_t MFSL_read(fsal_file_t * file_descriptor,	/*  IN  */
-			fsal_seek_t * seek_descriptor,	/* [IN] */
-			fsal_size_t buffer_size,	/*  IN  */
-			caddr_t buffer,	/* OUT  */
-			fsal_size_t * read_amount,	/* OUT  */
-			fsal_boolean_t * end_of_file,	/* OUT  */
-			mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_read(fsal_file_t * file_descriptor,  /*  IN  */
+                        fsal_seek_t * seek_descriptor,  /* [IN] */
+                        fsal_size_t buffer_size,        /*  IN  */
+                        caddr_t buffer, /* OUT  */
+                        fsal_size_t * read_amount,      /* OUT  */
+                        fsal_boolean_t * end_of_file,   /* OUT  */
+                        mfsl_context_t * p_mfsl_context /* IN */
     )
 {
   return FSAL_read(file_descriptor,
-		   seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
-}				/* MFSL_read */
+                   seek_descriptor, buffer_size, buffer, read_amount, end_of_file);
+}                               /* MFSL_read */
 
-fsal_status_t MFSL_write(fsal_file_t * file_descriptor,	/* IN */
-			 fsal_seek_t * seek_descriptor,	/* IN */
-			 fsal_size_t buffer_size,	/* IN */
-			 caddr_t buffer,	/* IN */
-			 fsal_size_t * write_amount,	/* OUT */
-			 mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_write(fsal_file_t * file_descriptor, /* IN */
+                         fsal_seek_t * seek_descriptor, /* IN */
+                         fsal_size_t buffer_size,       /* IN */
+                         caddr_t buffer,        /* IN */
+                         fsal_size_t * write_amount,    /* OUT */
+                         mfsl_context_t * p_mfsl_context        /* IN */
     )
 {
   return FSAL_write(file_descriptor, seek_descriptor, buffer_size, buffer, write_amount);
-}				/* MFSL_write */
+}                               /* MFSL_write */
 
-fsal_status_t MFSL_close(fsal_file_t * file_descriptor,	/* IN */
-			 mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_close(fsal_file_t * file_descriptor, /* IN */
+                         mfsl_context_t * p_mfsl_context        /* IN */
     )
 {
   return FSAL_close(file_descriptor);
-}				/* MFSL_close */
+}                               /* MFSL_close */
 
 fsal_status_t MFSL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-				   fsal_u64_t fileid, mfsl_context_t * p_mfsl_context)	/* IN */
+                                   fsal_u64_t fileid, mfsl_context_t * p_mfsl_context)  /* IN */
 {
   return FSAL_close_by_fileid(file_descriptor, fileid);
-}				/* MFSL_close_by_fileid */
+}                               /* MFSL_close_by_fileid */
 
-fsal_status_t MFSL_readlink(mfsl_object_t * linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    mfsl_context_t * p_mfsl_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_readlink(mfsl_object_t * linkhandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            mfsl_context_t * p_mfsl_context,    /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
 
   P(linkhandle->lock);
   fsal_status = FSAL_readlink(&linkhandle->handle,
-			      p_context, p_link_content, link_attributes);
+                              p_context, p_link_content, link_attributes);
   V(linkhandle->lock);
 
   return fsal_status;
-}				/* MFSL_readlink */
+}                               /* MFSL_readlink */
 
-fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,	/* IN */
-			  fsal_name_t * p_node_name,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  mfsl_context_t * p_mfsl_context,	/* IN */
-			  fsal_accessmode_t accessmode,	/* IN */
-			  fsal_nodetype_t nodetype,	/* IN */
-			  fsal_dev_t * dev,	/* IN */
-			  mfsl_object_t * p_object_handle,	/* OUT */
-			  fsal_attrib_list_t * node_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_mknode(mfsl_object_t * parentdir_handle,     /* IN */
+                          fsal_name_t * p_node_name,    /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          mfsl_context_t * p_mfsl_context,      /* IN */
+                          fsal_accessmode_t accessmode, /* IN */
+                          fsal_nodetype_t nodetype,     /* IN */
+                          fsal_dev_t * dev,     /* IN */
+                          mfsl_object_t * p_object_handle,      /* OUT */
+                          fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {
   return FSAL_mknode(&parentdir_handle->handle,
-		     p_node_name,
-		     p_context,
-		     accessmode,
-		     nodetype, dev, &p_object_handle->handle, node_attributes);
-}				/* MFSL_mknode */
+                     p_node_name,
+                     p_context,
+                     accessmode,
+                     nodetype, dev, &p_object_handle->handle, node_attributes);
+}                               /* MFSL_mknode */
 
-fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,	/* IN */
-		       fsal_op_context_t * p_context,	/* IN */
-		       mfsl_context_t * p_mfsl_context,	/* IN */
-		       fsal_path_t * p_local_path,	/* IN */
-		       fsal_rcpflag_t transfer_opt	/* IN */
+fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
+                       fsal_op_context_t * p_context,   /* IN */
+                       mfsl_context_t * p_mfsl_context, /* IN */
+                       fsal_path_t * p_local_path,      /* IN */
+                       fsal_rcpflag_t transfer_opt      /* IN */
     )
 {
   fsal_status_t fsal_status;
@@ -980,25 +980,25 @@ fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,	/* IN */
   V(filehandle->lock);
 
   return fsal_status;
-}				/* MFSL_rcp */
+}                               /* MFSL_rcp */
 
-fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,	/* IN */
-				 fsal_u64_t fileid,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 mfsl_context_t * p_mfsl_context,	/* IN */
-				 fsal_path_t * p_local_path,	/* IN */
-				 fsal_rcpflag_t transfer_opt	/* IN */
+fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
+                                 fsal_u64_t fileid,     /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 mfsl_context_t * p_mfsl_context,       /* IN */
+                                 fsal_path_t * p_local_path,    /* IN */
+                                 fsal_rcpflag_t transfer_opt    /* IN */
     )
 {
   fsal_status_t fsal_status;
 
   P(filehandle->lock);
   fsal_status = FSAL_rcp_by_fileid(&filehandle->handle,
-				   fileid, p_context, p_local_path, transfer_opt);
+                                   fileid, p_context, p_local_path, transfer_opt);
   V(filehandle->lock);
 
   return fsal_status;
-}				/* MFSL_rcp_by_fileid */
+}                               /* MFSL_rcp_by_fileid */
 
 /* To be called before exiting */
 fsal_status_t MFSL_terminate(void)
@@ -1012,7 +1012,7 @@ fsal_status_t MFSL_terminate(void)
 
   return status;
 
-}				/* MFSL_terminate */
+}                               /* MFSL_terminate */
 
 #ifndef _USE_SWIG
 
@@ -1020,29 +1020,29 @@ fsal_status_t MFSL_terminate(void)
  *                FSAL locks management.
  ******************************************************/
 
-fsal_status_t MFSL_lock(mfsl_object_t * objecthandle,	/* IN */
-			fsal_op_context_t * p_context,	/* IN */
-			mfsl_context_t * p_mfsl_context,	/* IN */
-			fsal_lockparam_t * lock_info,	/* IN */
-			fsal_lockdesc_t * lock_descriptor	/* OUT */
+fsal_status_t MFSL_lock(mfsl_object_t * objecthandle,   /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
+                        mfsl_context_t * p_mfsl_context,        /* IN */
+                        fsal_lockparam_t * lock_info,   /* IN */
+                        fsal_lockdesc_t * lock_descriptor       /* OUT */
     )
 {
   return FSAL_lock(&objecthandle->handle, p_context, lock_info, lock_descriptor);
-}				/* MFSL_lock */
+}                               /* MFSL_lock */
 
-fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
-			      fsal_lockparam_t * lock_info,	/* IN */
-			      mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                              fsal_lockparam_t * lock_info,     /* IN */
+                              mfsl_context_t * p_mfsl_context   /* IN */
     )
 {
   return FSAL_changelock(lock_descriptor, lock_info);
-}				/* MFSL_changelock */
+}                               /* MFSL_changelock */
 
-fsal_status_t MFSL_unlock(fsal_lockdesc_t * lock_descriptor,	/* IN/OUT */
-			  mfsl_context_t * p_mfsl_context	/* IN */
+fsal_status_t MFSL_unlock(fsal_lockdesc_t * lock_descriptor,    /* IN/OUT */
+                          mfsl_context_t * p_mfsl_context       /* IN */
     )
 {
   return FSAL_unlock(lock_descriptor);
-}				/* MFSL_unlock */
+}                               /* MFSL_unlock */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

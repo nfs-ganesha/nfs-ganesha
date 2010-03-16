@@ -16,8 +16,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "aglae.h"		/* Mes routines de gestion des logs */
-#include <dce/gssapi.h>		/* Header de la gssapi */
+#include "aglae.h"              /* Mes routines de gestion des logs */
+#include <dce/gssapi.h>         /* Header de la gssapi */
 
 #define TOKEN_NOOP              (1<<0)
 #define TOKEN_CONTEXT           (1<<1)

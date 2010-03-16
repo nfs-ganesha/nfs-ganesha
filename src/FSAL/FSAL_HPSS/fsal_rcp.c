@@ -53,10 +53,10 @@
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
-		       fsal_op_context_t * p_context,	/* IN */
-		       fsal_path_t * p_local_path,	/* IN */
-		       fsal_rcpflag_t transfer_opt	/* IN */
+fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
+                       fsal_op_context_t * p_context,   /* IN */
+                       fsal_path_t * p_local_path,      /* IN */
+                       fsal_rcpflag_t transfer_opt      /* IN */
     )
 {
 
@@ -91,11 +91,11 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
 #ifdef  _DEBUG_FSAL
   if (to_local)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		      "FSAL_rcp: FSAL -> local file (%s)", p_local_path->path);
+                      "FSAL_rcp: FSAL -> local file (%s)", p_local_path->path);
 
   if (to_fs)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		      "FSAL_rcp: local file -> FSAL (%s)", p_local_path->path);
+                      "FSAL_rcp: local file -> FSAL (%s)", p_local_path->path);
 #endif
 
   /* must give the sens of transfert (exactly one) */
@@ -113,10 +113,10 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
       local_flags = O_WRONLY | O_TRUNC;
 
       if ((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
-	local_flags |= O_CREAT;
+        local_flags |= O_CREAT;
 
       if ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL)
-	local_flags |= O_EXCL;
+        local_flags |= O_EXCL;
 
     }
 
@@ -143,7 +143,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
       strcat(msg, "O_EXCL ");
 
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Openning local file %s with flags: %s",
-		      p_local_path->path, msg);
+                      p_local_path->path, msg);
 
   }
 #endif
@@ -164,12 +164,12 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
       /* invalid flags for local to filesystem */
 
       if (((transfer_opt & FSAL_RCP_LOCAL_CREAT) == FSAL_RCP_LOCAL_CREAT)
-	  || ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL))
-	{
-	  /* clean & return */
-	  close(local_fd);
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_rcp);
-	}
+          || ((transfer_opt & FSAL_RCP_LOCAL_EXCL) == FSAL_RCP_LOCAL_EXCL))
+        {
+          /* clean & return */
+          close(local_fd);
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_rcp);
+        }
     } else
     {
       fs_flags = FSAL_O_RDONLY;
@@ -206,8 +206,8 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
     }
 #ifdef  _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		    "Allocating IO buffer of size %llu",
-		    (unsigned long long)RCP_BUFFER_SIZE);
+                    "Allocating IO buffer of size %llu",
+                    (unsigned long long)RCP_BUFFER_SIZE);
 #endif
 
   /* Allocates buffer */
@@ -235,67 +235,67 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
 
       /* read */
 
-      if (to_fs)		/* from local filesystem */
-	{
-	  local_size = read(local_fd, IObuffer, RCP_BUFFER_SIZE);
+      if (to_fs)                /* from local filesystem */
+        {
+          local_size = read(local_fd, IObuffer, RCP_BUFFER_SIZE);
 
-	  if (local_size == -1)
-	    {
-	      st.major = ERR_FSAL_IO;
-	      st.minor = errno;
-	      break;		/* exit loop */
-	    }
+          if (local_size == -1)
+            {
+              st.major = ERR_FSAL_IO;
+              st.minor = errno;
+              break;            /* exit loop */
+            }
 
-	  eof = (local_size == 0);
+          eof = (local_size == 0);
 
-	} else			/* from FSAL filesystem */
-	{
-	  fs_size = 0;
-	  st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
+        } else                  /* from FSAL filesystem */
+        {
+          fs_size = 0;
+          st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
-	  if (FSAL_IS_ERROR(st))
-	    break;		/* exit loop */
+          if (FSAL_IS_ERROR(st))
+            break;              /* exit loop */
 
-	}
+        }
 
       /* write (if not eof) */
 
       if (!eof || ((!to_fs) && (fs_size > 0)))
-	{
+        {
 
 #ifdef  _DEBUG_FSAL
-	  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Write a block to destination");
+          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Write a block to destination");
 #endif
 
-	  if (to_fs)		/* to FSAL filesystem */
-	    {
+          if (to_fs)            /* to FSAL filesystem */
+            {
 
-	      st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
 
-	      if (FSAL_IS_ERROR(st))
-		break;		/* exit loop */
+              if (FSAL_IS_ERROR(st))
+                break;          /* exit loop */
 
-	    } else		/* to local filesystem */
-	    {
+            } else              /* to local filesystem */
+            {
 
-	      local_size = write(local_fd, IObuffer, fs_size);
+              local_size = write(local_fd, IObuffer, fs_size);
 
-	      if (local_size == -1)
-		{
-		  st.major = ERR_FSAL_IO;
-		  st.minor = errno;
-		  break;	/* exit loop */
-		}
+              if (local_size == -1)
+                {
+                  st.major = ERR_FSAL_IO;
+                  st.minor = errno;
+                  break;        /* exit loop */
+                }
 
-	    }			/* if to_fs */
+            }                   /* if to_fs */
 
-	}			/* if eof */
+        }                       /* if eof */
 #ifdef  _DEBUG_FSAL
-	else
-	DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "End of source file reached");
+        else
+        DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "End of source file reached");
 #endif
 
-    }				/* while !eof */
+    }                           /* while !eof */
 
   /* Clean */
 
@@ -308,11 +308,11 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,	/* IN */
   Return(st.major, st.minor, INDEX_FSAL_rcp);
 }
 
-fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,	/* IN */
-				 fsal_u64_t fileid,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 fsal_path_t * p_local_path,	/* IN */
-				 fsal_rcpflag_t transfer_opt /* IN */ )
+fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_u64_t fileid,     /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_path_t * p_local_path,    /* IN */
+                                 fsal_rcpflag_t transfer_opt /* IN */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }

@@ -68,10 +68,10 @@ extern int gssrpc_svc_fdset_init;
 #endif
 
 SVCXPRT *Xports[NOFILE];
-#endif				/* def FD_SETSIZE */
+#endif                          /* def FD_SETSIZE */
 
 #define NULL_SVC ((struct svc_callout *)0)
-#define	RQCRED_SIZE	1024	/* this size is excessive */
+#define	RQCRED_SIZE	1024    /* this size is excessive */
 
 fd_set Svc_fdset;
 
@@ -123,7 +123,7 @@ void Xprt_register(SVCXPRT * xprt)
       Xports[sock] = xprt;
       svc_fds |= (1 << sock);
     }
-#endif				/* def FD_SETSIZE */
+#endif                          /* def FD_SETSIZE */
   if (sock > svc_maxfd)
     svc_maxfd = sock;
 }
@@ -147,11 +147,11 @@ void Xprt_unregister(SVCXPRT * xprt)
       Xports[sock] = (SVCXPRT *) 0;
       svc_fds &= ~(1 << sock);
     }
-#endif				/* def FD_SETSIZE */
+#endif                          /* def FD_SETSIZE */
   if (svc_maxfd <= sock)
     {
       while ((svc_maxfd > 0) && Xports[svc_maxfd] == 0)
-	svc_maxfd--;
+        svc_maxfd--;
     }
 }
 
@@ -164,7 +164,7 @@ void Xprt_unregister(SVCXPRT * xprt)
  */
 bool_t
 Svc_register(SVCXPRT * xprt,
-	     rpcprog_t prog, rpcvers_t vers, void (*dispatch) (), int protocol)
+             rpcprog_t prog, rpcvers_t vers, void (*dispatch) (), int protocol)
 {
   struct svc_callout *prev;
   register struct svc_callout *s;
@@ -172,7 +172,7 @@ Svc_register(SVCXPRT * xprt,
   if ((s = Svc_find(prog, vers, &prev)) != NULL_SVC)
     {
       if (s->sc_dispatch == dispatch)
-	goto pmap_it;		/* he is registering another xptr */
+        goto pmap_it;           /* he is registering another xptr */
       return (FALSE);
     }
   s = (struct svc_callout *)mem_alloc(sizeof(struct svc_callout));
@@ -222,7 +222,7 @@ void Svc_unregister(rpcprog_t prog, rpcvers_t vers)
  * struct.
  */
 static struct svc_callout *Svc_find(rpcprog_t prog,
-				    rpcvers_t vers, struct svc_callout **prev)
+                                    rpcvers_t vers, struct svc_callout **prev)
 {
   register struct svc_callout *s, *p;
 
@@ -230,7 +230,7 @@ static struct svc_callout *Svc_find(rpcprog_t prog,
   for (s = svc_head; s != NULL_SVC; s = s->sc_next)
     {
       if ((s->sc_prog == prog) && (s->sc_vers == vers))
-	goto done;
+        goto done;
       p = s;
     }
  done:

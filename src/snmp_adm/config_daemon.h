@@ -11,6 +11,6 @@
  * The oid where all value will be recorded if SNMP_ADM_ROOT is not def in environment.
  * 
  */
-#define DEFAULT_ROOT_OID       1,3,6,1,4,1,12384,999	/* $(CEA_ROOT).999 */
+#define DEFAULT_ROOT_OID       1,3,6,1,4,1,12384,999    /* $(CEA_ROOT).999 */
 
-#endif				/* __CONFIG_H__ */
+#endif                          /* __CONFIG_H__ */

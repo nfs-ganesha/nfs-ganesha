@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -145,10 +145,10 @@
  */
 
 int nfs_Setattr(nfs_arg_t * parg,
-		exportlist_t * pexport,
-		fsal_op_context_t * pcontext,
-		cache_inode_client_t * pclient,
-		hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                exportlist_t * pexport,
+                fsal_op_context_t * pcontext,
+                cache_inode_client_t * pclient,
+                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Setattr";
 
@@ -173,12 +173,12 @@ int nfs_Setattr(nfs_arg_t * parg,
 
   /* Convert file handle into a vnode */
   if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-				   &(parg->arg_setattr2.file),
-				   &(parg->arg_setattr3.object),
-				   NULL,
-				   &(pres->res_attr2.status),
-				   &(pres->res_setattr3.status),
-				   NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+                                   &(parg->arg_setattr2.file),
+                                   &(parg->arg_setattr3.object),
+                                   NULL,
+                                   &(pres->res_attr2.status),
+                                   &(pres->res_setattr3.status),
+                                   NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -188,9 +188,9 @@ int nfs_Setattr(nfs_arg_t * parg,
     {
       /* do nothing */
       nfs_SetWccData(pcontext, pexport,
-		     pentry,
-		     &pre_attr,
-		     &pre_attr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
+                     pentry,
+                     &pre_attr,
+                     &pre_attr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 
       pres->res_setattr3.status = NFS3_OK;
       return NFS_REQ_OK;
@@ -208,27 +208,27 @@ int nfs_Setattr(nfs_arg_t * parg,
        * Check for 2Gb limit in V2 
        */
       if ((parg->arg_setattr2.attributes.size != (u_int) - 1) &&
-	  (pre_attr.filesize > NFS2_MAX_FILESIZE))
-	{
-	  /*
-	   *  They are trying to set the size, the
-	   *  file is >= 2GB and V2 clients don't
-	   *  understand filesizes >= 2GB, so we
-	   *  don't allow them to alter them in any
-	   *  way.
-	   */
-	  pres->res_attr2.status = NFSERR_FBIG;
-	  return NFS_REQ_OK;
-	}
+          (pre_attr.filesize > NFS2_MAX_FILESIZE))
+        {
+          /*
+           *  They are trying to set the size, the
+           *  file is >= 2GB and V2 clients don't
+           *  understand filesizes >= 2GB, so we
+           *  don't allow them to alter them in any
+           *  way.
+           */
+          pres->res_attr2.status = NFSERR_FBIG;
+          return NFS_REQ_OK;
+        }
 
       if (nfs2_Sattr_To_FSALattr(&setattr, &new_attributes2) == 0)
-	{
-	  pres->res_attr2.status = NFSERR_IO;
-	  return NFS_REQ_OK;
-	}
+        {
+          pres->res_attr2.status = NFSERR_IO;
+          return NFS_REQ_OK;
+        }
 
       if (new_attributes2.size != (u_int) - 1)
-	do_trunc = TRUE;
+        do_trunc = TRUE;
 
       break;
 
@@ -236,47 +236,47 @@ int nfs_Setattr(nfs_arg_t * parg,
       new_attributes3 = parg->arg_setattr3.new_attributes;
 
       if (parg->arg_setattr3.guard.check == TRUE)
-	{
-	  /* This pack of lines implements the "guard check" setattr.
-	   * This feature of nfsv3 is used to avoid several setattr 
-	   * to occur concurently on the same object, from different clients */
-	  fattr3 attributes;
+        {
+          /* This pack of lines implements the "guard check" setattr.
+           * This feature of nfsv3 is used to avoid several setattr 
+           * to occur concurently on the same object, from different clients */
+          fattr3 attributes;
 
-	  if (nfs3_FSALattr_To_Fattr(pexport, ppre_attr, &attributes) == 0)
-	    {
-	      pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
-	      return NFS_REQ_OK;
-	    }
+          if (nfs3_FSALattr_To_Fattr(pexport, ppre_attr, &attributes) == 0)
+            {
+              pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
+              return NFS_REQ_OK;
+            }
 #ifdef _DEBUG_NFSPROTO
-	  printf("css=%d acs=%d    csn=%d acn=%d\n",
-		 parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
-		 attributes.ctime.seconds,
-		 parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
-		 attributes.ctime.nseconds);
+          printf("css=%d acs=%d    csn=%d acn=%d\n",
+                 parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds,
+                 attributes.ctime.seconds,
+                 parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds,
+                 attributes.ctime.nseconds);
 #endif
-	  if ((parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
-	       attributes.ctime.seconds)
-	      || (parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
-		  attributes.ctime.nseconds))
-	    {
-	      pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
-	      return NFS_REQ_OK;
-	    }
-	}
+          if ((parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.seconds !=
+               attributes.ctime.seconds)
+              || (parg->arg_setattr3.guard.sattrguard3_u.obj_ctime.nseconds !=
+                  attributes.ctime.nseconds))
+            {
+              pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
+              return NFS_REQ_OK;
+            }
+        }
 
       /* 
        * Conversion to FSAL attributes 
        */
       if (nfs3_Sattr_To_FSALattr(&setattr, &new_attributes3) == 0)
-	{
-	  pres->res_setattr3.status = NFS3ERR_INVAL;
-	  return NFS_REQ_OK;
-	}
+        {
+          pres->res_setattr3.status = NFS3ERR_INVAL;
+          return NFS_REQ_OK;
+        }
 
       if (new_attributes3.size.set_it)
-	{
-	  do_trunc = TRUE;
-	}
+        {
+          do_trunc = TRUE;
+        }
 
       break;
     }
@@ -289,17 +289,17 @@ int nfs_Setattr(nfs_arg_t * parg,
     {
       /* Should not be done on a directory */
       if (pentry->internal_md.type == DIR_BEGINNING
-	  || pentry->internal_md.type == DIR_CONTINUE)
-	cache_status = CACHE_INODE_IS_A_DIRECTORY;
-	else
-	{
-	  cache_status = cache_inode_truncate(pentry,
-					      setattr.filesize,
-					      &parent_attr,
-					      ht, pclient, pcontext, &cache_status);
-	  setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-	  setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
-	}
+          || pentry->internal_md.type == DIR_CONTINUE)
+        cache_status = CACHE_INODE_IS_A_DIRECTORY;
+        else
+        {
+          cache_status = cache_inode_truncate(pentry,
+                                              setattr.filesize,
+                                              &parent_attr,
+                                              ht, pclient, pcontext, &cache_status);
+          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
+          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+        }
     } else
     cache_status = CACHE_INODE_SUCCESS;
 
@@ -307,47 +307,47 @@ int nfs_Setattr(nfs_arg_t * parg,
     {
       /* Add code to support partially completed setattr */
       if (do_trunc)
-	{
-	  if (setattr.asked_attributes != 0)
-	    {
-	      cache_status = cache_inode_setattr(pentry,
-						 &setattr,
-						 ht, pclient, pcontext, &cache_status);
-	    } else
-	    cache_status = CACHE_INODE_SUCCESS;
+        {
+          if (setattr.asked_attributes != 0)
+            {
+              cache_status = cache_inode_setattr(pentry,
+                                                 &setattr,
+                                                 ht, pclient, pcontext, &cache_status);
+            } else
+            cache_status = CACHE_INODE_SUCCESS;
 
-	  setattr.asked_attributes |= FSAL_ATTR_SPACEUSED;
-	  setattr.asked_attributes |= FSAL_ATTR_SIZE;
-	} else
-	cache_status = cache_inode_setattr(pentry,
-					   &setattr,
-					   ht, pclient, pcontext, &cache_status);
+          setattr.asked_attributes |= FSAL_ATTR_SPACEUSED;
+          setattr.asked_attributes |= FSAL_ATTR_SIZE;
+        } else
+        cache_status = cache_inode_setattr(pentry,
+                                           &setattr,
+                                           ht, pclient, pcontext, &cache_status);
     }
 
   if (cache_status == CACHE_INODE_SUCCESS)
     {
       /* Set the NFS return */
       switch (preq->rq_vers)
-	{
-	case NFS_V2:
-	  /* Copy data from vattr to Attributes */
-	  if (nfs2_FSALattr_To_Fattr
-	      (pexport, &setattr, &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
-	    pres->res_attr2.status = NFSERR_IO;
-	    else
-	    pres->res_attr2.status = NFS_OK;
-	  break;
+        {
+        case NFS_V2:
+          /* Copy data from vattr to Attributes */
+          if (nfs2_FSALattr_To_Fattr
+              (pexport, &setattr, &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
+            pres->res_attr2.status = NFSERR_IO;
+            else
+            pres->res_attr2.status = NFS_OK;
+          break;
 
-	case NFS_V3:
-	  /* Build Weak Cache Coherency data */
-	  nfs_SetWccData(pcontext, pexport,
-			 pentry,
-			 ppre_attr,
-			 &setattr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
+        case NFS_V3:
+          /* Build Weak Cache Coherency data */
+          nfs_SetWccData(pcontext, pexport,
+                         pentry,
+                         ppre_attr,
+                         &setattr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 
-	  pres->res_setattr3.status = NFS3_OK;
-	  break;
-	}
+          pres->res_setattr3.status = NFS3_OK;
+          break;
+        }
 
       return NFS_REQ_OK;
     }
@@ -360,18 +360,18 @@ int nfs_Setattr(nfs_arg_t * parg,
     return NFS_REQ_DROP;
 
   nfs_SetFailedStatus(pcontext, pexport,
-		      preq->rq_vers,
-		      cache_status,
-		      &pres->res_attr2.status,
-		      &pres->res_setattr3.status,
-		      NULL, NULL,
-		      pentry,
-		      ppre_attr,
-		      &(pres->res_setattr3.SETATTR3res_u.resfail.obj_wcc),
-		      NULL, NULL, NULL);
+                      preq->rq_vers,
+                      cache_status,
+                      &pres->res_attr2.status,
+                      &pres->res_setattr3.status,
+                      NULL, NULL,
+                      pentry,
+                      ppre_attr,
+                      &(pres->res_setattr3.SETATTR3res_u.resfail.obj_wcc),
+                      NULL, NULL, NULL);
 
   return NFS_REQ_OK;
-}				/* nfs_Setattr */
+}                               /* nfs_Setattr */
 
 /**
  * nfs_Setattr_Free: Frees the result structure allocated for nfs_Setattr.
@@ -385,4 +385,4 @@ void nfs_Setattr_Free(nfs_res_t * resp)
 {
   /* Nothing to do here */
   return;
-}				/* nfs_Setattr_Free */
+}                               /* nfs_Setattr_Free */

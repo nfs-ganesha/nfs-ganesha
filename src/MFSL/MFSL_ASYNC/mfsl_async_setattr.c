@@ -114,17 +114,17 @@ fsal_status_t MFSL_setattr_async_op(mfsl_async_op_desc_t * popasyncdesc)
   fsal_status_t fsal_status;
 
   DisplayLogLevel(NIV_DEBUG, "Making asynchronous FSAL_setattrs for async op %p",
-		  popasyncdesc);
+                  popasyncdesc);
 
   P(popasyncdesc->op_args.setattr.pmobject->lock);
   fsal_status = FSAL_setattrs(&(popasyncdesc->op_args.setattr.pmobject->handle),
-			      &popasyncdesc->fsal_op_context,
-			      &popasyncdesc->op_args.setattr.attr,
-			      &popasyncdesc->op_res.setattr.attr);
+                              &popasyncdesc->fsal_op_context,
+                              &popasyncdesc->op_args.setattr.attr,
+                              &popasyncdesc->op_res.setattr.attr);
   V(popasyncdesc->op_args.setattr.pmobject->lock);
 
   return fsal_status;
-}				/* MFSL_setattr_async_op */
+}                               /* MFSL_setattr_async_op */
 
 /**
  *
@@ -140,11 +140,11 @@ fsal_status_t MFSL_setattr_async_op(mfsl_async_op_desc_t * popasyncdesc)
  *
  * @return always FSAL_NO_ERROR (not yet implemented 
  */
-fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,	/* IN */
-					mfsl_object_specific_data_t * pspecdata,	/* IN */
-					fsal_op_context_t * p_context,	/* IN */
-					mfsl_context_t * p_mfsl_context,	/* IN */
-					fsal_attrib_list_t * attrib_set /* IN */ )
+fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,     /* IN */
+                                        mfsl_object_specific_data_t * pspecdata,        /* IN */
+                                        fsal_op_context_t * p_context,  /* IN */
+                                        mfsl_context_t * p_mfsl_context,        /* IN */
+                                        fsal_attrib_list_t * attrib_set /* IN */ )
 {
   fsal_status_t fsal_status;
 
@@ -152,7 +152,7 @@ fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,	/* IN */
   if (attrib_set->asked_attributes & (FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
       if (p_context->user_credential.user != 0)
-	MFSL_return(ERR_FSAL_ACCESS, 0);
+        MFSL_return(ERR_FSAL_ACCESS, 0);
     }
 
   fsal_status = FSAL_setattr_access(p_context, attrib_set, &pspecdata->async_attr);
@@ -161,7 +161,7 @@ fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,	/* IN */
     return fsal_status;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_setattr_check_perms */
+}                               /* MFSL_setattr_check_perms */
 
 /**
  *
@@ -178,11 +178,11 @@ fsal_status_t MFSL_setattrs_check_perms(mfsl_object_t * filehandle,	/* IN */
  *
  * @return the same as FSAL_setattrs
  */
-fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    mfsl_context_t * p_mfsl_context,	/* IN */
-			    fsal_attrib_list_t * attrib_set,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            mfsl_context_t * p_mfsl_context,    /* IN */
+                            fsal_attrib_list_t * attrib_set,    /* IN */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   fsal_status_t fsal_status;
@@ -192,8 +192,8 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
   P(p_mfsl_context->lock);
 
   GET_PREALLOC(pasyncopdesc,
-	       p_mfsl_context->pool_async_op,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+               p_mfsl_context->pool_async_op,
+               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   V(p_mfsl_context->lock);
 
@@ -214,9 +214,9 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
       P(p_mfsl_context->lock);
 
       GET_PREALLOC(pasyncdata,
-		   p_mfsl_context->pool_spec_data,
-		   mfsl_param.nb_pre_async_op_desc,
-		   mfsl_object_specific_data_t, next_alloc);
+                   p_mfsl_context->pool_spec_data,
+                   mfsl_param.nb_pre_async_op_desc,
+                   mfsl_object_specific_data_t, next_alloc);
 
       V(p_mfsl_context->lock);
 
@@ -226,13 +226,13 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
 
   fsal_status =
       MFSL_setattrs_check_perms(filehandle, pasyncdata, p_context, p_mfsl_context,
-				attrib_set);
+                                attrib_set);
 
   if (FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
-		    pasyncopdesc);
+                    pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_SETATTR;
   pasyncopdesc->op_mobject = filehandle;
@@ -266,22 +266,22 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
   if (attrib_set->asked_attributes & (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
       if (attrib_set->asked_attributes & FSAL_ATTR_MODE)
-	pasyncdata->async_attr.mode = attrib_set->mode;
+        pasyncdata->async_attr.mode = attrib_set->mode;
 
       if (attrib_set->asked_attributes & FSAL_ATTR_OWNER)
-	pasyncdata->async_attr.owner = attrib_set->owner;
+        pasyncdata->async_attr.owner = attrib_set->owner;
 
       if (attrib_set->asked_attributes & FSAL_ATTR_GROUP)
-	pasyncdata->async_attr.group = attrib_set->group;
+        pasyncdata->async_attr.group = attrib_set->group;
     }
 
   if (attrib_set->asked_attributes & (FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
       if (attrib_set->asked_attributes & FSAL_ATTR_ATIME)
-	pasyncdata->async_attr.atime = attrib_set->atime;
+        pasyncdata->async_attr.atime = attrib_set->atime;
 
       if (attrib_set->asked_attributes & FSAL_ATTR_MTIME)
-	pasyncdata->async_attr.mtime = attrib_set->mtime;
+        pasyncdata->async_attr.mtime = attrib_set->mtime;
     }
 
   /* Set output attributes */
@@ -291,6 +291,6 @@ fsal_status_t MFSL_setattrs(mfsl_object_t * filehandle,	/* IN */
     MFSL_return(ERR_FSAL_SERVERFAULT, 0);
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_setattr */
+}                               /* MFSL_setattr */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

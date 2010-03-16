@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -161,7 +161,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if (nfs_client_id_get(arg_RENEW4.clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
     {
       nfs_clientid.last_renew = time(NULL);
-      res_RENEW4.status = NFS4_OK;	/* Regular exit */
+      res_RENEW4.status = NFS4_OK;      /* Regular exit */
     } else
     {
       /* Unknown client id */
@@ -170,7 +170,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* If you reach this point, then an error occured */
   return res_RENEW4.status;
-}				/* nfs4_op_renew */
+}                               /* nfs4_op_renew */
 
 /**
  * nfs4_op_renew_Free: frees what was allocared to handle nfs4_op_renew.
@@ -186,4 +186,4 @@ void nfs4_op_renew_Free(RENEW4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_renew_Free */
+}                               /* nfs4_op_renew_Free */

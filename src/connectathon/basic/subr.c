@@ -73,44 +73,44 @@ int *totdirs;
   for (f = 0; f < files; f++)
     {
       if (Dflag == 0)
-	sprintf(name, "%s%d", fname, f);
-	else
-	sprintf(name, "%s%d.%d", fname, lev, f);
+        sprintf(name, "%s%d", fname, f);
+        else
+        sprintf(name, "%s%d.%d", fname, lev, f);
       if ((fd = creat(name, CHMOD_RW)) < 0)
-	{
-	  error("creat %s failed", name);
-	  exit(1);
-	}
+        {
+          error("creat %s failed", name);
+          exit(1);
+        }
       (*totfiles)++;
       if (close(fd) < 0)
-	{
-	  error("close %d failed", fd);
-	  exit(1);
-	}
+        {
+          error("close %d failed", fd);
+          exit(1);
+        }
     }
   for (d = 0; d < dirs; d++)
     {
       if (Dflag == 0)
-	sprintf(name, "%s%d", dname, d);
-	else
-	sprintf(name, "%s%d.%d", dname, lev, d);
+        sprintf(name, "%s%d", dname, d);
+        else
+        sprintf(name, "%s%d.%d", dname, lev, d);
       if (unix_mkdir(name, 0777) < 0)
-	{
-	  error("mkdir %s failed", name);
-	  exit(1);
-	}
+        {
+          error("mkdir %s failed", name);
+          exit(1);
+        }
       (*totdirs)++;
       if (unix_chdir(name) < 0)
-	{
-	  error("chdir %s failed", name);
-	  exit(1);
-	}
+        {
+          error("chdir %s failed", name);
+          exit(1);
+        }
       dirtree(lev, files, dirs, fname, dname, totfiles, totdirs);
       if (unix_chdir("..") < 0)
-	{
-	  error("chdir .. failed");
-	  exit(1);
-	}
+        {
+          error("chdir .. failed");
+          exit(1);
+        }
     }
 }
 
@@ -132,8 +132,8 @@ int files;
 int dirs;
 char *fname;
 char *dname;
-int *totfiles;			/* total removed */
-int *totdirs;			/* total removed */
+int *totfiles;                  /* total removed */
+int *totdirs;                   /* total removed */
 int ignore;
 {
   int f, d;
@@ -146,40 +146,40 @@ int ignore;
   for (f = 0; f < files; f++)
     {
       if (Dflag == 0)
-	sprintf(name, "%s%d", fname, f);
-	else
-	sprintf(name, "%s%d.%d", fname, lev, f);
+        sprintf(name, "%s%d", fname, f);
+        else
+        sprintf(name, "%s%d.%d", fname, lev, f);
       if (unlink(name) < 0 && !ignore)
-	{
-	  error("unlink %s failed", name);
-	  exit(1);
-	}
+        {
+          error("unlink %s failed", name);
+          exit(1);
+        }
       (*totfiles)++;
     }
   for (d = 0; d < dirs; d++)
     {
       if (Dflag == 0)
-	sprintf(name, "%s%d", dname, d);
-	else
-	sprintf(name, "%s%d.%d", dname, lev, d);
+        sprintf(name, "%s%d", dname, d);
+        else
+        sprintf(name, "%s%d.%d", dname, lev, d);
       if (unix_chdir(name) < 0)
-	{
-	  if (ignore)
-	    continue;
-	  error("chdir %s failed", name);
-	  exit(1);
-	}
+        {
+          if (ignore)
+            continue;
+          error("chdir %s failed", name);
+          exit(1);
+        }
       rmdirtree(lev, files, dirs, fname, dname, totfiles, totdirs, ignore);
       if (unix_chdir("..") < 0)
-	{
-	  error("chdir .. failed");
-	  exit(1);
-	}
+        {
+          error("chdir .. failed");
+          exit(1);
+        }
       if (rmdir(name) < 0)
-	{
-	  error("rmdir %s failed", name);
-	  exit(1);
-	}
+        {
+          error("rmdir %s failed", name);
+          exit(1);
+        }
       (*totdirs)++;
     }
 }
@@ -242,7 +242,7 @@ char *str;
   if (ret == NULL)
     exit(1);
 }
-#endif				/* STDARG */
+#endif                          /* STDARG */
 
 static struct timeval ts, te;
 
@@ -306,14 +306,14 @@ char *dir;
       sprintf(str, "rm -r %s", dir);
 #ifdef WIN16
       if (rmdir(dir) < 0)
-	{
+        {
 #else
       if (system(str) != 0)
-	{
+        {
 #endif
-	  error("can't remove old test directory %s", dir);
-	  exit(1);
-	}
+          error("can't remove old test directory %s", dir);
+          exit(1);
+        }
     }
 
   if (unix_mkdir(dir, 0777) < 0)
@@ -408,7 +408,7 @@ mode_t mode;
   return mkdir(path, mode);
 }
 
-#endif				/* DOSorWIN32 */
+#endif                          /* DOSorWIN32 */
 
 #ifdef NEED_STRERROR
 /*
@@ -416,14 +416,14 @@ mode_t mode;
  * error strings, but it will do for the time being.
  */
 char *strerror(errval)
-int errval;			/* errno value */
+int errval;                     /* errno value */
 {
   static char buf[1024];
 
   sprintf(buf, "error %d", errval);
   return (buf);
 }
-#endif				/* NEED_STRERROR */
+#endif                          /* NEED_STRERROR */
 
 /***********************************************************/
 /* The following routines were ADDED specifically for      */
@@ -443,11 +443,11 @@ int lstat(char *path, struct stat *buf)
 
 int unix_mkdir(const char *path, int mode)
 {
-  mode = mode;			/* keep lint, compiler happy */
+  mode = mode;                  /* keep lint, compiler happy */
   return mkdir(path);
 }
 
-#endif				/* DOSorWIN32 */
+#endif                          /* DOSorWIN32 */
 
 /************************************************************/
 /* The following routines were ADDED specifically for WIN32.*/
@@ -466,10 +466,10 @@ static void chdrive(char *path)
     {
       desireddrive = toupper(path[0]) - ('A' - 1);
       if (_chdrive(desireddrive))
-	{
-	  error("can't change to drive %c:", path[0]);
-	  exit(1);
-	}
+        {
+          error("can't change to drive %c:", path[0]);
+          exit(1);
+        }
     }
 }
 
@@ -480,7 +480,7 @@ void gettimeofday(struct timeval *TV, struct timezone *TimeZone)
   _ftime(&dostime);
   TV->tv_sec = dostime.time;
   TV->tv_usec = dostime.millitm * 1000L;
-  TimeZone = TimeZone;		/* shut up compiler/lint */
+  TimeZone = TimeZone;          /* shut up compiler/lint */
 }
 
 int statfs(char *path, struct statfs *buf)
@@ -497,7 +497,7 @@ int statfs(char *path, struct statfs *buf)
 
   for (i = 0; i < sizeof(*buf); i++)
     *p++ = (char)-1;
-  buf->f_type = 0;		/* that's what the man page says */
+  buf->f_type = 0;              /* that's what the man page says */
   if (path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
     else
@@ -587,7 +587,7 @@ void rewinddir(DIR * dirp)
   int i;
   unsigned int attributes = _A_NORMAL | _A_RDONLY | _A_HIDDEN | _A_SUBDIR;
 
-  dirp = dirp;			/* shut up compiler */
+  dirp = dirp;                  /* shut up compiler */
 
   if (win32_findfirst(pattern))
     {
@@ -607,13 +607,13 @@ void rewinddir(DIR * dirp)
 
 long telldir(DIR * dirp)
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   return (long)currententry;
 }
 
 void seekdir(DIR * dirp, long loc)
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   if (loc <= (long)maxentry)
     currententry = (int)loc;
   /* else seekdir silently fails */
@@ -621,7 +621,7 @@ void seekdir(DIR * dirp, long loc)
 
 struct dirent *readdir(DIR * dirp)
 {
-  dirp = dirp;			/* shut up compiler */
+  dirp = dirp;                  /* shut up compiler */
   if (currententry > maxentry)
     return (struct dirent *)NULL;
     else
@@ -646,11 +646,11 @@ static void copynametolower(char *dest, char *src)
 
 void closedir(DIR * dirp)
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   diropen = 0;
 }
 
-#endif				/* WIN32 */
+#endif                          /* WIN32 */
 
 /***********************************************************/
 /* The following routines were ADDED specifically for DOS  */
@@ -672,10 +672,10 @@ char *path;
       _dos_setdrive(desireddrive, &drive);
       _dos_getdrive(&drive);
       if (drive != desireddrive)
-	{
-	  error("can't change to drive %c:", path[0]);
-	  exit(1);
-	}
+        {
+          error("can't change to drive %c:", path[0]);
+          exit(1);
+        }
     }
 }
 
@@ -686,7 +686,7 @@ void gettimeofday(struct timeval *TV, struct timezone *TimeZone)
   _dos_gettime(&dostime);
   TV->tv_sec = dostime.hour * 3600L + dostime.minute * 60L + dostime.second;
   TV->tv_usec = dostime.hsecond * 10000L;
-  TimeZone = TimeZone;		/* shut up compiler/lint */
+  TimeZone = TimeZone;          /* shut up compiler/lint */
 }
 
 int statfs(path, buf)
@@ -700,7 +700,7 @@ struct statfs *buf;
 
   for (i = 0; i < sizeof(*buf); i++)
     *p++ = (char)-1;
-  buf->f_type = 0;		/* that's what the man page says */
+  buf->f_type = 0;              /* that's what the man page says */
   if (path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
     else
@@ -760,7 +760,7 @@ DIR *dirp;
   int i;
   unsigned int attributes = _A_NORMAL | _A_RDONLY | _A_HIDDEN | _A_SUBDIR;
 
-  dirp = dirp;			/* shut up compiler */
+  dirp = dirp;                  /* shut up compiler */
   if (_dos_findfirst(pattern, attributes, &findtst))
     {
       error("rewind failed");
@@ -778,7 +778,7 @@ DIR *dirp;
 long telldir(dirp)
 DIR *dirp;
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   return (long)currententry;
 }
 
@@ -786,7 +786,7 @@ void seekdir(dirp, loc)
 DIR *dirp;
 long loc;
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   if (loc <= (long)maxentry)
     currententry = (int)loc;
   /* else seekdir silently fails */
@@ -795,7 +795,7 @@ long loc;
 struct dirent *readdir(dirp)
 DIR *dirp;
 {
-  dirp = dirp;			/* shut up compiler */
+  dirp = dirp;                  /* shut up compiler */
   if (currententry > maxentry)
     return (struct dirent *)NULL;
     else
@@ -825,8 +825,8 @@ char *src;
 void closedir(dirp)
 DIR *dirp;
 {
-  dirp = dirp;			/* keep compiler happy */
+  dirp = dirp;                  /* keep compiler happy */
   diropen = 0;
 }
 
-#endif				/* DOS */
+#endif                          /* DOS */

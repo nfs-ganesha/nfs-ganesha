@@ -97,8 +97,8 @@
 #define NAME_MAX  255
 #define HOST_NAME_MAX 64
 #define LOGIN_NAME_MAX 256
-#endif				/* _USE_POSIX */
-#endif				/* _SOLARIS */
+#endif                          /* _USE_POSIX */
+#endif                          /* _SOLARIS */
 
 /*
  * FS relative includes
@@ -174,8 +174,8 @@ static fsal_name_t __attribute__ ((__unused__)) FSAL_DOT_DOT =
 
 typedef struct {
   fsal_u64_t id;
-  int ts;			/* timestamp */
-  fsal_posixdb_fileinfo_t info;	/* info from the database, related to the object on the FS */
+  int ts;                       /* timestamp */
+  fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
 } fsal_handle_t;  /**< FS object handle.            */
 
 /** Authentification context.    */
@@ -224,19 +224,19 @@ typedef struct fsal_lockdesc__ {
 
 typedef struct fsal_dir__ {
   DIR *p_dir;
-  fsal_op_context_t context;	/* credential for accessing the directory */
+  fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   fsal_handle_t handle;
 #ifdef _USE_POSIXDB_READDIR_BLOCK
   fsal_posixdb_child *p_dbentries;
-  int dbentries_count;	      /**< if -1 then do not try to fill p_dbentries */
+  int dbentries_count;        /**< if -1 then do not try to fill p_dbentries */
 #endif
 } fsal_dir_t;
 
 #ifdef _FSAL_POSIX_USE_STREAM
 typedef struct fsal_file__ {
   FILE *p_file;
-  int ro;			/* read only file ? */
+  int ro;                       /* read only file ? */
 } fsal_file_t;
 
 #define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
@@ -244,11 +244,11 @@ typedef struct fsal_file__ {
 #else
 typedef struct fsal_file__ {
   int filefd;
-  int ro;			/* read only file ? */
+  int ro;                       /* read only file ? */
 } fsal_file_t;
 
 #define FSAL_FILENO(p_fsal_file)  ((p_fsal_file)->filefd )
 
-#endif				/* _FSAL_POSIX_USE_STREAM */
+#endif                          /* _FSAL_POSIX_USE_STREAM */
 
-#endif				/* _FSAL_TYPES__SPECIFIC_H */
+#endif                          /* _FSAL_TYPES__SPECIFIC_H */

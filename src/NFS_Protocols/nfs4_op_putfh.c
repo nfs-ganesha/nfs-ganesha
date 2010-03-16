@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -182,20 +182,20 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if (data->currentFH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
-	{
-	  res_PUTFH4.status = error;
-	  return res_PUTFH4.status;
-	}
+        {
+          res_PUTFH4.status = error;
+          return res_PUTFH4.status;
+        }
     }
 
   /* The same is to be done with mounted_on_FH */
   if (data->mounted_on_FH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
-	{
-	  res_PUTFH4.status = error;
-	  return res_PUTFH4.status;
-	}
+        {
+          res_PUTFH4.status = error;
+          return res_PUTFH4.status;
+        }
     }
 
   /* Copy the filehandle from the reply structure */
@@ -204,9 +204,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Put the data in place */
   memcpy(data->currentFH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
-	 arg_PUTFH4.object.nfs_fh4_len);
+         arg_PUTFH4.object.nfs_fh4_len);
   memcpy(data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
-	 arg_PUTFH4.object.nfs_fh4_len);
+         arg_PUTFH4.object.nfs_fh4_len);
 
 #ifdef _DEBUG_NFS_V4
   nfs4_sprint_fhandle(&arg_PUTFH4.object, outstr);
@@ -217,35 +217,35 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       data->current_entry = NULL;
       data->current_filetype = DIR_BEGINNING;
-      data->pexport = NULL;	/* No exportlist is related to pseudo fs */
+      data->pexport = NULL;     /* No exportlist is related to pseudo fs */
     } else
     {
       /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
       if (data->pexport == NULL)
-	{
-	  if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-	    {
-	      res_PUTFH4.status = error;
-	      return res_PUTFH4.status;
-	    }
-	}
+        {
+          if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+            {
+              res_PUTFH4.status = error;
+              return res_PUTFH4.status;
+            }
+        }
 
       /* Build the pentry */
       if ((data->current_entry = nfs_FhandleToCache(NFS_V4,
-						    NULL,
-						    NULL,
-						    &(data->currentFH),
-						    NULL,
-						    NULL,
-						    &(res_PUTFH4.status),
-						    &attr,
-						    data->pcontext,
-						    data->pclient,
-						    data->ht, &rc)) == NULL)
-	{
-	  res_PUTFH4.status = NFS4ERR_BADHANDLE;
-	  return res_PUTFH4.status;
-	}
+                                                    NULL,
+                                                    NULL,
+                                                    &(data->currentFH),
+                                                    NULL,
+                                                    NULL,
+                                                    &(res_PUTFH4.status),
+                                                    &attr,
+                                                    data->pcontext,
+                                                    data->pclient,
+                                                    data->ht, &rc)) == NULL)
+        {
+          res_PUTFH4.status = NFS4ERR_BADHANDLE;
+          return res_PUTFH4.status;
+        }
 
       /* Extract the filetype */
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
@@ -255,7 +255,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Trace */
 
   return NFS4_OK;
-}				/* nfs4_op_putfh */
+}                               /* nfs4_op_putfh */
 
 /**
  * nfs4_op_create_Free: frees what was allocared to handle nfs4_op_create.
@@ -271,4 +271,4 @@ void nfs4_op_putfh_Free(PUTFH4res * resp)
 {
   /* Nothing to be freed */
   return;
-}				/* nfs4_op_create_Free */
+}                               /* nfs4_op_create_Free */

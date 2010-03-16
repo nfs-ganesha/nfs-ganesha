@@ -27,13 +27,13 @@
 #ifdef _USE_FUSE
 #include <sys/time_impl.h>
 #define INT_MAX 2147483647
-#define S_BLKSIZE      512	/* Block size for `st_blocks'.  */
+#define S_BLKSIZE      512      /* Block size for `st_blocks'.  */
 
-#endif				/* _USE_FUSE */
+#endif                          /* _USE_FUSE */
 
 #ifdef _USE_POSIX
 #include <sys/time_impl.h>
-#define S_BLKSIZE      512	/* Block size for `st_blocks'.  */
+#define S_BLKSIZE      512      /* Block size for `st_blocks'.  */
 #endif
 
 #ifdef _USE_SNMP

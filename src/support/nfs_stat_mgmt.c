@@ -111,7 +111,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -156,83 +156,83 @@ extern nfs_parameter_t nfs_param;
  *
  */
 void nfs_stat_update(nfs_stat_type_t type,
-		     nfs_request_stat_t * pstat_req, struct svc_req *preq)
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq)
 {
   nfs_request_stat_item_t *pitem = NULL;
 
   if (preq->rq_prog == nfs_param.core_param.nfs_program)
     {
       switch (preq->rq_vers)
-	{
-	case NFS_V2:
-	  pitem = &pstat_req->stat_req_nfs2[preq->rq_proc];
-	  pstat_req->nb_nfs2_req += 1;
-	  break;
+        {
+        case NFS_V2:
+          pitem = &pstat_req->stat_req_nfs2[preq->rq_proc];
+          pstat_req->nb_nfs2_req += 1;
+          break;
 
-	case NFS_V3:
-	  pitem = &pstat_req->stat_req_nfs3[preq->rq_proc];
-	  pstat_req->nb_nfs3_req += 1;
-	  break;
+        case NFS_V3:
+          pitem = &pstat_req->stat_req_nfs3[preq->rq_proc];
+          pstat_req->nb_nfs3_req += 1;
+          break;
 
-	case NFS_V4:
-	  pitem = &pstat_req->stat_req_nfs4[preq->rq_proc];
-	  pstat_req->nb_nfs4_req += 1;
-	  break;
+        case NFS_V4:
+          pitem = &pstat_req->stat_req_nfs4[preq->rq_proc];
+          pstat_req->nb_nfs4_req += 1;
+          break;
 
-	default:
-	  /* Bad vers ? */
-	  DisplayLog
-	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
-	       __FILE__, __LINE__);
-	  return;
-	  break;
-	}
+        default:
+          /* Bad vers ? */
+          DisplayLog
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+               __FILE__, __LINE__);
+          return;
+          break;
+        }
   } else if (preq->rq_prog == nfs_param.core_param.mnt_program)
     {
       switch (preq->rq_vers)
-	{
-	case MOUNT_V1:
-	  pitem = &pstat_req->stat_req_mnt1[preq->rq_proc];
-	  pstat_req->nb_mnt1_req += 1;
-	  break;
+        {
+        case MOUNT_V1:
+          pitem = &pstat_req->stat_req_mnt1[preq->rq_proc];
+          pstat_req->nb_mnt1_req += 1;
+          break;
 
-	case MOUNT_V3:
-	  pitem = &pstat_req->stat_req_mnt3[preq->rq_proc];
-	  pstat_req->nb_mnt3_req += 1;
-	  break;
+        case MOUNT_V3:
+          pitem = &pstat_req->stat_req_mnt3[preq->rq_proc];
+          pstat_req->nb_mnt3_req += 1;
+          break;
 
-	default:
-	  /* Bad vers ? */
-	  DisplayLog
-	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
-	       __FILE__, __LINE__);
-	  return;
-	  break;
-	}
+        default:
+          /* Bad vers ? */
+          DisplayLog
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+               __FILE__, __LINE__);
+          return;
+          break;
+        }
   } else if (preq->rq_prog == nfs_param.core_param.nlm_program)
     {
       switch (preq->rq_vers)
-	{
-	case NLM4_VERS:
-	  pitem = &pstat_req->stat_req_nlm4[preq->rq_proc];
-	  pstat_req->nb_nlm4_req += 1;
-	  break;
-	default:
-	  /* Bad vers ? */
-	  DisplayLog
-	      ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s",
-	       __FILE__, __LINE__);
-	  return;
-	  break;
-	}
+        {
+        case NLM4_VERS:
+          pitem = &pstat_req->stat_req_nlm4[preq->rq_proc];
+          pstat_req->nb_nlm4_req += 1;
+          break;
+        default:
+          /* Bad vers ? */
+          DisplayLog
+              ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %s",
+               __FILE__, __LINE__);
+          return;
+          break;
+        }
     }
 
     else
     {
       /* Bad program ? */
       DisplayLog
-	  ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
-	   __FILE__, __LINE__);
+          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+           __FILE__, __LINE__);
       return;
     }
 
@@ -251,11 +251,11 @@ void nfs_stat_update(nfs_stat_type_t type,
     default:
       /* Bad type ? */
       DisplayLog
-	  ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
-	   __FILE__, __LINE__);
+          ("IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %",
+           __FILE__, __LINE__);
       break;
     }
 
   return;
 
-}				/* nfs_stat_update */
+}                               /* nfs_stat_update */

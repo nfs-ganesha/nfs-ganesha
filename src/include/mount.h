@@ -18,7 +18,7 @@
 #include <rpc/rpc.h>
 #endif
 
-#endif				/* ifndef _USE_SWIG */
+#endif                          /* ifndef _USE_SWIG */
 
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
@@ -128,6 +128,6 @@ extern bool_t xdr_mountbody(XDR *, mountbody *);
 extern bool_t xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool_t xdr_mountres3(XDR *, mountres3 *);
 
-#endif				/* ifndef _USE_SWIG */
+#endif                          /* ifndef _USE_SWIG */
 
-#endif				/* !_MOUNT_H_RPCGEN */
+#endif                          /* !_MOUNT_H_RPCGEN */

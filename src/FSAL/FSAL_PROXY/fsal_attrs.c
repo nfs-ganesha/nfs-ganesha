@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -62,9 +62,9 @@ extern fsal_staticfsinfo_t default_proxy_info;
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
 
@@ -117,16 +117,16 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
@@ -147,9 +147,9 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
 
   /* Use NFSv4 service function to build the FSAL_attr */
   if (nfs4_Fattr_To_FSAL_attr(object_attributes,
-			      &resnfs4.resarray.
-			      resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-			      opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                              &resnfs4.resarray.resarray_val[FSAL_GETATTR_IDX_OP_GETATTR].
+                              nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                              obj_attributes) != 1)
     {
       FSAL_CLEAR_MASK(object_attributes->asked_attributes);
       FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -196,10 +196,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * attrib_set,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * attrib_set,    /* IN */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -274,12 +274,12 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
     {
 
       if (attrs.asked_attributes
-	  & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
-	{
+          & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+        {
 
-	  /* handled as an unsettable attribute. */
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
-	}
+          /* handled as an unsettable attribute. */
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
+        }
 
     }
 
@@ -298,10 +298,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
 
   /* Create the fattr4 for the request */
   /* We use the function that is used to convert NFSv4 read attributes, only a subset of it will be used */
-  if (nfs4_FSALattr_To_Fattr(NULL,	/* no exportlist required here */
-			     attrib_set, &input_attr, NULL,	/* no compound data required here */
-			     NULL,	/* No fh here, filehandle is not a settable attribute */
-			     &convert_bitmap) == -1)
+  if (nfs4_FSALattr_To_Fattr(NULL,      /* no exportlist required here */
+                             attrib_set, &input_attr, NULL,     /* no compound data required here */
+                             NULL,      /* No fh here, filehandle is not a settable attribute */
+                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_setattrs);
 
 #define FSAL_SETATTR_IDX_OP_PUTFH     0
@@ -311,22 +311,21 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
   COMPOUNDV4_ARG_ADD_OP_SETATTR(argnfs4, input_attr);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, output_bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_val = bitmap_res_getattr;
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_val = bitmap_res_getattr;
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
-      bitmap_res_getattr;
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res_getattr;
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal_getattr;
-  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal_getattr);
 
   /* Call to the server for which we act as a proxy */
@@ -354,16 +353,15 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
 
       /* Use NFSv4 service function to build the FSAL_attr */
       if (nfs4_Fattr_To_FSAL_attr(object_attributes,
-				  &resnfs4.
-				  resarray.resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].
-				  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-				  obj_attributes) != 1)
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+                                  &resnfs4.resarray.
+                                  resarray_val[FSAL_SETATTR_IDX_OP_GETATTR].nfs_resop4_u.
+                                  opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
-	}
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
+        }
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);

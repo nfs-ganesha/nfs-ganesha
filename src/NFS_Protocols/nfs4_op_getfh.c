@@ -81,7 +81,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -186,7 +186,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
       data->currentFH.nfs_fh4_len;
   memcpy(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val,
-	 data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
+         data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
   /* Test */
 #ifdef _DEBUG_NFS_V4
@@ -195,7 +195,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #endif
 
   return NFS4_OK;
-}				/* nfs4_op_getfh */
+}                               /* nfs4_op_getfh */
 
 /**
  * nfs4_op_getfh_Free: frees what was allocared to handle nfs4_op_getfh.
@@ -212,4 +212,4 @@ void nfs4_op_getfh_Free(GETFH4res * resp)
   if (resp->status == NFS4_OK)
     Mem_Free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
   return;
-}				/* nfs4_op_getfh_Free */
+}                               /* nfs4_op_getfh_Free */

@@ -16,8 +16,8 @@
 #include <rpc/svc.h>
 #endif
 
-#include <dirent.h>		/* for having MAXNAMLEN */
-#include <netdb.h>		/* for having MAXHOSTNAMELEN */
+#include <dirent.h>             /* for having MAXNAMLEN */
+#include <netdb.h>              /* for having MAXHOSTNAMELEN */
 #include "HashData.h"
 #include "HashTable.h"
 
@@ -63,20 +63,20 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname);
 int nfs_ip_name_remove(int ipaddr);
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-		     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
+                     unsigned int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
 
 int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
-		      unsigned int ipaddr,
-		      unsigned int nfs_prog,
-		      unsigned int mnt_prog, struct svc_req *ptr_req);
+                      unsigned int ipaddr,
+                      unsigned int nfs_prog,
+                      unsigned int mnt_prog, struct svc_req *ptr_req);
 
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
-		     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
+                     unsigned int ipaddr, nfs_ip_stats_t ** pnfs_ip_stats);
 
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-			int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
+                        int ipaddr, nfs_ip_stats_t * nfs_ip_stats_pool);
 void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
-		       unsigned int nb_worker, char *path_stat);
+                       unsigned int nb_worker, char *path_stat);
 
 void nfs_ip_name_get_stats(hash_stat_t * phstat);
 int nfs_ip_name_populate(char *path);
@@ -85,15 +85,15 @@ int display_ip_name(hash_buffer_t * pbuff, char *str);
 int display_ip_value(hash_buffer_t * pbuff, char *str);
 int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2);
 unsigned long int ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
-					hash_buffer_t * buffclef);
+                                        hash_buffer_t * buffclef);
 unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
-					  hash_buffer_t * buffclef);
+                                          hash_buffer_t * buffclef);
 
 int display_ip_stats(hash_buffer_t * pbuff, char *str);
 int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2);
 unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef);
+                                         hash_buffer_t * buffclef);
 unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
-					   hash_buffer_t * buffclef);
+                                           hash_buffer_t * buffclef);
 
 #endif

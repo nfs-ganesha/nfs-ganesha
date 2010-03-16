@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,7 +143,7 @@
 #define res_NVERIFY4 resp->nfs_resop4_u.opnverify
 
 int nfs4_op_nverify(struct nfs_argop4 *op,
-		    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_attrib_list_t file_attr;
   cache_inode_status_t cache_status;
@@ -199,22 +199,22 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
 
   /* Get the cache inode attribute */
   if ((cache_status = cache_inode_getattr(data->current_entry,
-					  &file_attr,
-					  data->ht,
-					  data->pclient,
-					  data->pcontext,
-					  &cache_status)) != CACHE_INODE_SUCCESS)
+                                          &file_attr,
+                                          data->ht,
+                                          data->pclient,
+                                          data->pcontext,
+                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_NVERIFY4.status = NFS4ERR_INVAL;
       return res_NVERIFY4.status;
     }
 
   if (nfs4_FSALattr_To_Fattr(data->pexport,
-			     &file_attr,
-			     &file_attr4,
-			     data,
-			     &(data->currentFH),
-			     &(arg_NVERIFY4.obj_attributes.attrmask)) != 0)
+                             &file_attr,
+                             &file_attr4,
+                             data,
+                             &(data->currentFH),
+                             &(arg_NVERIFY4.obj_attributes.attrmask)) != 0)
     {
       res_NVERIFY4.status = NFS4ERR_SERVERFAULT;
       return res_NVERIFY4.status;
@@ -225,13 +225,13 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
     else
     {
       if (rc == -1)
-	res_NVERIFY4.status = NFS4ERR_INVAL;
-	else
-	res_NVERIFY4.status = NFS4ERR_SAME;
+        res_NVERIFY4.status = NFS4ERR_INVAL;
+        else
+        res_NVERIFY4.status = NFS4ERR_SAME;
     }
 
   return res_NVERIFY4.status;
-}				/* nfs4_op_nverify */
+}                               /* nfs4_op_nverify */
 
 /**
  * nfs4_op_nverify_Free: frees what was allocared to handle nfs4_op_nverify.
@@ -247,4 +247,4 @@ void nfs4_op_nverify_Free(NVERIFY4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_nverify_Free */
+}                               /* nfs4_op_nverify_Free */

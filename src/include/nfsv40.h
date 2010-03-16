@@ -20,7 +20,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #define	NFS4_FHSIZE 128
 #define	NFS4_VERIFIER_SIZE 8
@@ -1358,7 +1358,7 @@ struct nfs_argop4 {
     VERIFY4args opverify;
     WRITE4args opwrite;
     RELEASE_LOCKOWNER4args oprelease_lockowner;
-    char padding[1024];		     /** @todo: BUGAZOMEU: why do we need this ?? */
+    char padding[1024];              /** @todo: BUGAZOMEU: why do we need this ?? */
   } nfs_argop4_u;
 };
 typedef struct nfs_argop4 nfs_argop4;
@@ -1754,6 +1754,6 @@ extern bool_t xdr_nfs_cb_argop4();
 extern bool_t xdr_nfs_cb_resop4();
 extern bool_t xdr_CB_COMPOUND4args();
 extern bool_t xdr_CB_COMPOUND4res();
-#endif				/* SWIG */
+#endif                          /* SWIG */
 
-#endif				/* !_NFS4_H_RPCGEN */
+#endif                          /* !_NFS4_H_RPCGEN */

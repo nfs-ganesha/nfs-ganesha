@@ -51,15 +51,15 @@
 #include <rpc/rpc.h>
 #ifdef PORTMAP
 #include <rpc/pmap_clnt.h>
-#endif				/* PORTMAP */
+#endif                          /* PORTMAP */
 
 #include <Rpc_com_tirpc.h>
 #include "stuff_alloc.h"
 #include "RW_Lock.h"
 
-#define	RQCRED_SIZE	400	/* this size is excessive */
+#define	RQCRED_SIZE	400     /* this size is excessive */
 
-#define SVC_VERSQUIET 0x0001	/* keep quiet about vers mismatch */
+#define SVC_VERSQUIET 0x0001    /* keep quiet about vers mismatch */
 #define version_keepquiet(xp) ((u_long)(xp)->xp_p3 & SVC_VERSQUIET)
 
 #define max(a, b) (a > b ? a : b)
@@ -106,7 +106,7 @@ SVCXPRT *xprt;
     {
       Xports = (SVCXPRT **) Mem_Alloc(FD_SETSIZE * sizeof(SVCXPRT *));
       if (Xports == NULL)
-	return;
+        return;
       memset(Xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
     }
   if (sock < FD_SETSIZE)
@@ -149,11 +149,11 @@ bool_t dolock;
       Xports[sock] = NULL;
       FD_CLR(sock, &Svc_fdset);
       if (sock >= svc_maxfd)
-	{
-	  for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
-	    if (Xports[svc_maxfd])
-	      break;
-	}
+        {
+          for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
+            if (Xports[svc_maxfd])
+              break;
+        }
     }
 
   if (dolock)
@@ -184,7 +184,7 @@ int protocol;
   if ((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) != NULL)
     {
       if (s->sc_dispatch == dispatch)
-	goto pmap_it;		/* he is registering another xptr */
+        goto pmap_it;           /* he is registering another xptr */
       return (FALSE);
     }
   s = Mem_Alloc(sizeof(struct svc_callout));
@@ -230,7 +230,7 @@ u_long vers;
   /* now unregister the information with the local binder service */
   (void)pmap_unset(prog, vers);
 }
-#endif				/* PORTMAP */
+#endif                          /* PORTMAP */
 
 /*
  * Search the callout list for a program number, return the callout
@@ -250,8 +250,8 @@ char *netid;
   for (s = svc_head; s != NULL; s = s->sc_next)
     {
       if (((s->sc_prog == prog) && (s->sc_vers == vers)) &&
-	  ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
-	break;
+          ((netid == NULL) || (s->sc_netid == NULL) || (strcmp(netid, s->sc_netid) == 0)))
+        break;
       p = s;
     }
   *prev = p;

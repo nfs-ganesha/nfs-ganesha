@@ -167,7 +167,7 @@ u_int recvsize;
   if (xprt)
     {
       if (su)
-	(void)Mem_Free(su);
+        (void)Mem_Free(su);
       (void)Mem_Free(xprt);
     }
   return (NULL);
@@ -194,7 +194,7 @@ struct rpc_msg *msg;
  again:
   alen = sizeof(struct sockaddr_storage);
   rlen = recvfrom(xprt->xp_fd, rpc_buffer(xprt), su->su_iosz, 0,
-		  (struct sockaddr *)(void *)&ss, &alen);
+                  (struct sockaddr *)(void *)&ss, &alen);
   if (rlen == -1 && errno == EINTR)
     goto again;
   if (rlen == -1 || (rlen < (ssize_t) (4 * sizeof(u_int32_t))))
@@ -202,7 +202,7 @@ struct rpc_msg *msg;
   if (xprt->xp_rtaddr.len < alen)
     {
       if (xprt->xp_rtaddr.len != 0)
-	Mem_Free(xprt->xp_rtaddr.buf);
+        Mem_Free(xprt->xp_rtaddr.buf);
       xprt->xp_rtaddr.buf = Mem_Alloc(alen);
       xprt->xp_rtaddr.len = alen;
     }
@@ -213,7 +213,7 @@ struct rpc_msg *msg;
       xprt->xp_raddr = *(struct sockaddr_in6 *)xprt->xp_rtaddr.buf;
       xprt->xp_addrlen = sizeof(struct sockaddr_in6);
     }
-#endif				/* PORTMAP */
+#endif                          /* PORTMAP */
   xdrs->x_op = XDR_DECODE;
   XDR_SETPOS(xdrs, 0);
   if (!xdr_callmsg(xdrs, msg))
@@ -224,11 +224,11 @@ struct rpc_msg *msg;
   if (su->su_cache != NULL)
     {
       if (cache_get(xprt, msg, &reply, &replylen))
-	{
-	  (void)sendto(xprt->xp_fd, reply, replylen, 0,
-		       (struct sockaddr *)(void *)&ss, alen);
-	  return (FALSE);
-	}
+        {
+          (void)sendto(xprt->xp_fd, reply, replylen, 0,
+                       (struct sockaddr *)(void *)&ss, alen);
+          return (FALSE);
+        }
     }
   return (TRUE);
 }
@@ -249,13 +249,13 @@ struct rpc_msg *msg;
     {
       slen = XDR_GETPOS(xdrs);
       if (sendto(xprt->xp_fd, rpc_buffer(xprt), slen, 0,
-		 (struct sockaddr *)xprt->xp_rtaddr.buf,
-		 (socklen_t) xprt->xp_rtaddr.len) == (ssize_t) slen)
-	{
-	  stat = TRUE;
-	  if (su->su_cache)
-	    cache_set(xprt, slen);
-	}
+                 (struct sockaddr *)xprt->xp_rtaddr.buf,
+                 (socklen_t) xprt->xp_rtaddr.len) == (ssize_t) slen)
+        {
+          stat = TRUE;
+          if (su->su_cache)
+            cache_set(xprt, slen);
+        }
     }
   return (stat);
 }
@@ -343,7 +343,7 @@ SVCXPRT *xprt;
  * Buffers are sent again if retransmissions are detected.
  */
 
-#define	SPARSENESS 4		/* 75% sparse */
+#define	SPARSENESS 4            /* 75% sparse */
 
 #define	ALLOC(type, size)	\
 	(type *) Mem_Alloc((sizeof (type) * (size)))
@@ -382,13 +382,13 @@ struct cache_node {
  * The entire cache
  */
 struct cl_cache {
-  u_int uc_size;		/* size of cache */
-  cache_ptr *uc_entries;	/* hash table of entries in cache */
-  cache_ptr *uc_fifo;		/* fifo list of entries in cache */
-  u_int uc_nextvictim;		/* points to next victim in fifo list */
-  rpcprog_t uc_prog;		/* saved program number */
-  rpcvers_t uc_vers;		/* saved version number */
-  rpcproc_t uc_proc;		/* saved procedure number */
+  u_int uc_size;                /* size of cache */
+  cache_ptr *uc_entries;        /* hash table of entries in cache */
+  cache_ptr *uc_fifo;           /* fifo list of entries in cache */
+  u_int uc_nextvictim;          /* points to next victim in fifo list */
+  rpcprog_t uc_prog;            /* saved program number */
+  rpcvers_t uc_vers;            /* saved version number */
+  rpcproc_t uc_proc;            /* saved procedure number */
 };
 
 /*
@@ -493,33 +493,33 @@ size_t replylen;
     {
       loc = CACHE_LOC(xprt, victim->cache_xid);
       for (vicp = &uc->uc_entries[loc];
-	   *vicp != NULL && *vicp != victim; vicp = &(*vicp)->cache_next)
-	;
+           *vicp != NULL && *vicp != victim; vicp = &(*vicp)->cache_next)
+        ;
       if (*vicp == NULL)
-	{
-	  warnx(cache_set_str, cache_set_err1);
-	  V(dupreq_lock);
-	  return;
-	}
-      *vicp = victim->cache_next;	/* remove from cache */
+        {
+          warnx(cache_set_str, cache_set_err1);
+          V(dupreq_lock);
+          return;
+        }
+      *vicp = victim->cache_next;       /* remove from cache */
       newbuf = victim->cache_reply;
     } else
     {
       victim = ALLOC(struct cache_node, 1);
       if (victim == NULL)
-	{
-	  warnx(cache_set_str, cache_set_err2);
-	  V(dupreq_lock);
-	  return;
-	}
+        {
+          warnx(cache_set_str, cache_set_err2);
+          V(dupreq_lock);
+          return;
+        }
       newbuf = Mem_Alloc(su->su_iosz);
       if (newbuf == NULL)
-	{
-	  warnx(cache_set_str, cache_set_err3);
-	  FREE(victim, struct cache_node, 1);
-	  V(dupreq_lock);
-	  return;
-	}
+        {
+          warnx(cache_set_str, cache_set_err3);
+          FREE(victim, struct cache_node, 1);
+          V(dupreq_lock);
+          return;
+        }
     }
 
   /*
@@ -531,7 +531,7 @@ size_t replylen;
       uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
       freenetconfigent(nconf);
       printf("cache set for xid= %x prog=%d vers=%d proc=%d for rmtaddr=%s\n",
-	     su->su_xid, uc->uc_prog, uc->uc_vers, uc->uc_proc, uaddr);
+             su->su_xid, uc->uc_prog, uc->uc_vers, uc->uc_proc, uaddr);
       free(uaddr);
     }
 #endif
@@ -578,29 +578,29 @@ size_t *replylenp;
   for (ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next)
     {
       if (ent->cache_xid == su->su_xid &&
-	  ent->cache_proc == msg->rm_call.cb_proc &&
-	  ent->cache_vers == msg->rm_call.cb_vers &&
-	  ent->cache_prog == msg->rm_call.cb_prog &&
-	  ent->cache_addr.len == xprt->xp_rtaddr.len &&
-	  (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
-	{
+          ent->cache_proc == msg->rm_call.cb_proc &&
+          ent->cache_vers == msg->rm_call.cb_vers &&
+          ent->cache_prog == msg->rm_call.cb_prog &&
+          ent->cache_addr.len == xprt->xp_rtaddr.len &&
+          (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
+        {
 #ifdef RPC_CACHE_DEBUG
-	  if (nconf = getnetconfigent(xprt->xp_netid))
-	    {
-	      uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
-	      freenetconfigent(nconf);
-	      printf
-		  ("cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s\n",
-		   su->su_xid, msg->rm_call.cb_prog, msg->rm_call.cb_vers,
-		   msg->rm_call.cb_proc, uaddr);
-	      free(uaddr);
-	    }
+          if (nconf = getnetconfigent(xprt->xp_netid))
+            {
+              uaddr = taddr2uaddr(nconf, &xprt->xp_rtaddr);
+              freenetconfigent(nconf);
+              printf
+                  ("cache entry found for xid=%x prog=%d vers=%d proc=%d for rmtaddr=%s\n",
+                   su->su_xid, msg->rm_call.cb_prog, msg->rm_call.cb_vers,
+                   msg->rm_call.cb_proc, uaddr);
+              free(uaddr);
+            }
 #endif
-	  *replyp = ent->cache_reply;
-	  *replylenp = ent->cache_replylen;
-	  V(dupreq_lock);
-	  return (1);
-	}
+          *replyp = ent->cache_reply;
+          *replylenp = ent->cache_replylen;
+          V(dupreq_lock);
+          return (1);
+        }
     }
   /*
    * Failed to find entry

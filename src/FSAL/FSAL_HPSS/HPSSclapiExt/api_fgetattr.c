@@ -27,18 +27,18 @@
  * Local function definition
  */
 
-static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* IN - thread context */
-					     ns_ObjHandle_t * ObjHandle,	/* IN - parent object handle */
-					     char *Path,	/* IN - path to the object */
-					     api_cwd_stack_t * CwdStack,	/* IN - cwd stack */
-					     hpss_reqid_t RequestID,	/* IN - request id */
-					     unsigned32 Flags,	/* IN - flags for storage attrs */
-					     unsigned32 ChaseFlags,	/* IN - whether to chase symlinks/junctions */
-					     unsigned32 StorageLevel,	/* IN - storage level to query  */
-					     TYPE_CRED_HPSS * Ucred,	/* IN - user credentials */
-					     TYPE_TOKEN_HPSS * AuthzTicket,	/* OUT - authorization ticket */
-					     hpss_fileattr_t * AttrOut,	/* OUT - attributes after query */
-					     hpss_xfileattr_t * XAttrOut);	/* OUT - xattributes after query */
+static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    /* IN - thread context */
+                                             ns_ObjHandle_t * ObjHandle,        /* IN - parent object handle */
+                                             char *Path,        /* IN - path to the object */
+                                             api_cwd_stack_t * CwdStack,        /* IN - cwd stack */
+                                             hpss_reqid_t RequestID,    /* IN - request id */
+                                             unsigned32 Flags,  /* IN - flags for storage attrs */
+                                             unsigned32 ChaseFlags,     /* IN - whether to chase symlinks/junctions */
+                                             unsigned32 StorageLevel,   /* IN - storage level to query  */
+                                             TYPE_CRED_HPSS * Ucred,    /* IN - user credentials */
+                                             TYPE_TOKEN_HPSS * AuthzTicket,     /* OUT - authorization ticket */
+                                             hpss_fileattr_t * AttrOut, /* OUT - attributes after query */
+                                             hpss_xfileattr_t * XAttrOut);      /* OUT - xattributes after query */
 
 /*============================================================================
  *
@@ -82,21 +82,21 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* 
  *
  *-------------------------------------------------------------------------*/
 
-int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,	/* IN - parent object handle */
-			      char *Path,	/* IN - path of junction to get attributes */
-			      TYPE_CRED_HPSS * Ucred,	/* IN - user credentials */
-			      int traverse_junction,
-				   /** IN - boolean for junction traversal*/
-			      ns_ObjHandle_t * HandleOut,	/* OUT - returned object handle */
-			      TYPE_TOKEN_HPSS * AuthzTicket,	/* OUT - returned authorization */
-			      hpss_Attrs_t * AttrsOut)	/* OUT - returned attributes */
+int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,       /* IN - parent object handle */
+                              char *Path,       /* IN - path of junction to get attributes */
+                              TYPE_CRED_HPSS * Ucred,   /* IN - user credentials */
+                              int traverse_junction,
+                                   /** IN - boolean for junction traversal*/
+                              ns_ObjHandle_t * HandleOut,       /* OUT - returned object handle */
+                              TYPE_TOKEN_HPSS * AuthzTicket,    /* OUT - returned authorization */
+                              hpss_Attrs_t * AttrsOut)  /* OUT - returned attributes */
 {
   static char function_name[] = "hpss_GetRawAttrHandle";
-  long error = 0;		/* return error */
-  apithrdstate_t *threadcontext;	/* thread context */
-  TYPE_CRED_HPSS *ucred_ptr;	/* user credentials */
-  hpss_fileattr_t file_attrs_out;	/* file attributes out */
-  hpss_reqid_t rqstid;		/* request id */
+  long error = 0;               /* return error */
+  apithrdstate_t *threadcontext;        /* thread context */
+  TYPE_CRED_HPSS *ucred_ptr;    /* user credentials */
+  hpss_fileattr_t file_attrs_out;       /* file attributes out */
+  hpss_reqid_t rqstid;          /* request id */
 
   API_ENTER(function_name);
 
@@ -145,14 +145,14 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,	/* IN - parent object 
    */
 
   error = HPSSFSAL_Common_FileGetAttributes(threadcontext,
-					    ObjHandle,
-					    Path,
-					    API_NULL_CWD_STACK,
-					    rqstid,
-					    0,
-					    (traverse_junction ? API_CHASE_JUNCTION :
-					     API_CHASE_NONE), 0, ucred_ptr, AuthzTicket,
-					    &file_attrs_out, (hpss_xfileattr_t *) NULL);
+                                            ObjHandle,
+                                            Path,
+                                            API_NULL_CWD_STACK,
+                                            rqstid,
+                                            0,
+                                            (traverse_junction ? API_CHASE_JUNCTION :
+                                             API_CHASE_NONE), 0, ucred_ptr, AuthzTicket,
+                                            &file_attrs_out, (hpss_xfileattr_t *) NULL);
 
   /*
    * WE DON'T WANT TO Convert the HPSS attributes to HPSS VFS attributes !!!
@@ -217,33 +217,33 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,	/* IN - parent object 
  *
  *-------------------------------------------------------------------------*/
 
-static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* IN - thread context */
-					     ns_ObjHandle_t * ObjHandle,	/* IN - parent object handle */
-					     char *Path,	/* IN - path to the object */
-					     api_cwd_stack_t * CwdStack,	/* IN - cwd stack */
-					     hpss_reqid_t RequestID,	/* IN - request id */
-					     unsigned32 Flags,	/* IN - flags for storage attrs */
-					     unsigned32 ChaseFlags,	/* IN - chase symlinks/junctions ? */
-					     unsigned32 StorageLevel,	/* IN - storage level to query  */
-					     TYPE_CRED_HPSS * Ucred,	/* IN - user credentials */
-					     TYPE_TOKEN_HPSS * AuthzTicket,	/* OUT - authorization ticket */
-					     hpss_fileattr_t * AttrOut,	/* OUT - attributes after query */
-					     hpss_xfileattr_t * XAttrOut)	/* OUT - xattributes after query */
+static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    /* IN - thread context */
+                                             ns_ObjHandle_t * ObjHandle,        /* IN - parent object handle */
+                                             char *Path,        /* IN - path to the object */
+                                             api_cwd_stack_t * CwdStack,        /* IN - cwd stack */
+                                             hpss_reqid_t RequestID,    /* IN - request id */
+                                             unsigned32 Flags,  /* IN - flags for storage attrs */
+                                             unsigned32 ChaseFlags,     /* IN - chase symlinks/junctions ? */
+                                             unsigned32 StorageLevel,   /* IN - storage level to query  */
+                                             TYPE_CRED_HPSS * Ucred,    /* IN - user credentials */
+                                             TYPE_TOKEN_HPSS * AuthzTicket,     /* OUT - authorization ticket */
+                                             hpss_fileattr_t * AttrOut, /* OUT - attributes after query */
+                                             hpss_xfileattr_t * XAttrOut)       /* OUT - xattributes after query */
 {
   static char function_name[] = "HPSSFSAL_Common_FileGetAttributes";
 #if (HPSS_MAJOR_VERSION == 5) || (HPSS_MAJOR_VERSION == 7)
-  volatile long error = 0;	/* return error */
+  volatile long error = 0;      /* return error */
 #elif (HPSS_MAJOR_VERSION == 6)
-  signed32 error = 0;		/* return error */
+  signed32 error = 0;           /* return error */
 #else
 #error "Unexpected HPSS VERSION MAJOR"
 #endif
-  hpss_AttrBits_t select_flags;	/* attribute select bits */
-  hpss_AttrBits_t parent_flags;	/* attribute select bits */
-  TYPE_TOKEN_HPSS ta;		/* security token */
-  unsigned32 xattr_options;	/* xattribute option flags */
-  unsigned32 xattr_options_cnt;	/* options specified */
-  bf_sc_attrib_t *xattr_ptr;	/* extended information */
+  hpss_AttrBits_t select_flags; /* attribute select bits */
+  hpss_AttrBits_t parent_flags; /* attribute select bits */
+  TYPE_TOKEN_HPSS ta;           /* security token */
+  unsigned32 xattr_options;     /* xattribute option flags */
+  unsigned32 xattr_options_cnt; /* options specified */
+  bf_sc_attrib_t *xattr_ptr;    /* extended information */
 
   API_ENTER(function_name);
 
@@ -256,32 +256,32 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* 
       xattr_options_cnt = 0;
       xattr_ptr = XAttrOut->SCAttrib;
       if ((Flags & API_GET_STATS_FOR_LEVEL) != 0)
-	{
-	  xattr_options_cnt++;
-	  xattr_options |= CORE_GETATTRS_STATS_FOR_LEVEL;
-	}
+        {
+          xattr_options_cnt++;
+          xattr_options |= CORE_GETATTRS_STATS_FOR_LEVEL;
+        }
       if ((Flags & API_GET_STATS_FOR_1STLEVEL) != 0)
-	{
-	  xattr_options_cnt++;
-	  xattr_options |= CORE_GETATTRS_STATS_1ST_LEVEL;
-	}
+        {
+          xattr_options_cnt++;
+          xattr_options |= CORE_GETATTRS_STATS_1ST_LEVEL;
+        }
       if ((Flags & API_GET_STATS_OPTIMIZE) != 0)
-	{
-	  xattr_options_cnt++;
-	  xattr_options |= CORE_GETATTRS_STATS_OPTIMIZE;
-	}
+        {
+          xattr_options_cnt++;
+          xattr_options |= CORE_GETATTRS_STATS_OPTIMIZE;
+        }
       if ((Flags & API_GET_STATS_FOR_ALL_LEVELS) != 0)
-	{
-	  xattr_options_cnt++;
-	  xattr_options |= CORE_GETATTRS_STATS_ALL_LEVELS;
-	}
+        {
+          xattr_options_cnt++;
+          xattr_options |= CORE_GETATTRS_STATS_ALL_LEVELS;
+        }
       if (xattr_options_cnt > 1)
-	{
-	  return (-EINVAL);
-	}
+        {
+          return (-EINVAL);
+        }
 #if ( HPSS_LEVEL >= 622 )
       if ((Flags & API_GET_XATTRS_NO_BLOCK) != 0)
-	xattr_options |= CORE_GETATTRS_NO_BLOCK;
+        xattr_options |= CORE_GETATTRS_NO_BLOCK;
 #endif
     }
 
@@ -297,27 +297,27 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* 
   select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
 
   error = API_TraversePath(ThreadContext,
-			   RequestID,
-			   Ucred,
-			   ObjHandle,
-			   Path,
-			   CwdStack,
-			   ChaseFlags,
-			   xattr_options,
-			   StorageLevel,
-			   select_flags,
-			   parent_flags,
-			   API_NULL_CWD_STACK,
-			   &AttrOut->ObjectHandle, &AttrOut->Attrs, NULL, NULL,
+                           RequestID,
+                           Ucred,
+                           ObjHandle,
+                           Path,
+                           CwdStack,
+                           ChaseFlags,
+                           xattr_options,
+                           StorageLevel,
+                           select_flags,
+                           parent_flags,
+                           API_NULL_CWD_STACK,
+                           &AttrOut->ObjectHandle, &AttrOut->Attrs, NULL, NULL,
 #if ( HPSS_MAJOR_VERSION < 7 )
-			   &ta,
+                           &ta,
 #endif
-			   NULL, xattr_ptr);
+                           NULL, xattr_ptr);
 
   if (error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
-			"%s: Could not get attributes, error=%d\n", function_name, error);
+                        "%s: Could not get attributes, error=%d\n", function_name, error);
   } else if (XAttrOut != NULL)
     {
       XAttrOut->ObjectHandle = AttrOut->ObjectHandle;
@@ -377,18 +377,18 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,	/* 
 
 /* This function is provided from HPSS 6.2.2 */
 #if ( HPSS_LEVEL < 622 )
-int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,	/* IN - object handle */
-				      unsigned32 Flags,	/* IN - flags for storage attrs */
-				      unsigned32 StorageLevel,	/* IN - level to query     */
-				      hpss_xfileattr_t * AttrOut)	/* OUT - attributes after query */
+int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,       /* IN - object handle */
+                                      unsigned32 Flags, /* IN - flags for storage attrs */
+                                      unsigned32 StorageLevel,  /* IN - level to query     */
+                                      hpss_xfileattr_t * AttrOut)       /* OUT - attributes after query */
 {
   static char function_name[] = "hpss_FileGetXAttributes";
-  volatile long error = 0;	/* return error */
-  hpss_reqid_t rqstid;		/* request id */
-  int i, j;			/* array indices */
-  char *newpath;		/* new path */
-  hpss_fileattr_t file_attrs;	/* NS object attributes */
-  apithrdstate_t *threadcontext;	/* thread context */
+  volatile long error = 0;      /* return error */
+  hpss_reqid_t rqstid;          /* request id */
+  int i, j;                     /* array indices */
+  char *newpath;                /* new path */
+  hpss_fileattr_t file_attrs;   /* NS object attributes */
+  apithrdstate_t *threadcontext;        /* thread context */
 
   API_ENTER(function_name);
 
@@ -421,24 +421,24 @@ int HPSSFSAL_FileGetXAttributesHandle(ns_ObjHandle_t * ObjHandle,	/* IN - object
 
   error = HPSSFSAL_Common_FileGetAttributes(threadcontext, ObjHandle, NULL,
 #if ( HPSS_MAJOR_VERSION < 7 )
-					    threadcontext->CwdStackPtr,
+                                            threadcontext->CwdStackPtr,
 #else
-					    API_NULL_CWD_STACK,
+                                            API_NULL_CWD_STACK,
 #endif
-					    rqstid,
-					    Flags,
-					    API_CHASE_ALL,
-					    StorageLevel,
-					    &threadcontext->UserCred,
-					    NULL, &file_attrs, AttrOut);
+                                            rqstid,
+                                            Flags,
+                                            API_CHASE_ALL,
+                                            StorageLevel,
+                                            &threadcontext->UserCred,
+                                            NULL, &file_attrs, AttrOut);
   error = Common_FileGetAttributes(threadcontext,
-				   ObjHandle,
-				   Path,
-				   API_NULL_CWD_STACK,
-				   rqstid,
-				   Flags,
-				   API_CHASE_ALL,
-				   StorageLevel, ucred_ptr, &file_attrs, AttrOut);
+                                   ObjHandle,
+                                   Path,
+                                   API_NULL_CWD_STACK,
+                                   rqstid,
+                                   Flags,
+                                   API_CHASE_ALL,
+                                   StorageLevel, ucred_ptr, &file_attrs, AttrOut);
 
   if (error != 0)
     xdr_free((xdrproc_t) xdr_bf_sc_attrib_t, (void *)AttrOut->SCAttrib);

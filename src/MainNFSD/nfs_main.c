@@ -95,7 +95,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <signal.h>		/* for sigaction */
+#include <signal.h>             /* for sigaction */
 #include <errno.h>
 
 /* parameters for NFSd startup and default values */
@@ -158,7 +158,7 @@ static void action_sigusr1(int sig)
       DisplayLog("SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
     }
-}				/* action_sigusr1 */
+}                               /* action_sigusr1 */
 
 /**
  *
@@ -175,7 +175,7 @@ static void action_sigterm(int sig)
 
   nfs_stop();
 
-}				/* action_sigterm */
+}                               /* action_sigterm */
 
 /**
  * main: simply the main function.
@@ -221,100 +221,100 @@ int main(int argc, char *argv[])
   while ((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
-	{
-	case '@':
-	  /* A litlle backdoor to keep track of binary versions */
-	  printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
-	  printf("Release = %s\n", VERSION);
-	  printf("Release comment = %s\n", VERSION_COMMENT);
-	  exit(0);
-	  break;
+        {
+        case '@':
+          /* A litlle backdoor to keep track of binary versions */
+          printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
+          printf("Release = %s\n", VERSION);
+          printf("Release comment = %s\n", VERSION_COMMENT);
+          exit(0);
+          break;
 
-	case 'L':
-	  /* Default Log */
-	  strncpy(log_path, optarg, MAXPATHLEN);
-	  break;
+        case 'L':
+          /* Default Log */
+          strncpy(log_path, optarg, MAXPATHLEN);
+          break;
 
-	case 'N':
-	  /* debug level */
-	  debug_level = ReturnLevelAscii(optarg);
-	  if (debug_level == -1)
-	    {
-	      fprintf(stderr,
-		      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
-	      exit(1);
-	    }
-	  break;
+        case 'N':
+          /* debug level */
+          debug_level = ReturnLevelAscii(optarg);
+          if (debug_level == -1)
+            {
+              fprintf(stderr,
+                      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
+              exit(1);
+            }
+          break;
 
-	case 'f':
-	  /* config file */
-	  strncpy(my_config_path, optarg, MAXPATHLEN);
-	  break;
+        case 'f':
+          /* config file */
+          strncpy(my_config_path, optarg, MAXPATHLEN);
+          break;
 
-	case 'd':
-	  /* Detach or not detach ? */
-	  detach_flag = TRUE;
-	  break;
+        case 'd':
+          /* Detach or not detach ? */
+          detach_flag = TRUE;
+          break;
 
-	case 'R':
-	  /* Shall we manage  RPCSEC_GSS ? */
-	  fprintf(stderr,
-		  "\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
-	  fprintf(stderr, "NFS_KRB5\n");
-	  fprintf(stderr, "{\n");
-	  fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
-	  fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
-	  fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
-	  fprintf(stderr, "}\n\n\n");
-	  exit(1);
-	  break;
+        case 'R':
+          /* Shall we manage  RPCSEC_GSS ? */
+          fprintf(stderr,
+                  "\n\nThe -R flag is deprecated, use this syntax in the configuration file instead:\n\n");
+          fprintf(stderr, "NFS_KRB5\n");
+          fprintf(stderr, "{\n");
+          fprintf(stderr, "\tPrincipalName = nfs@<your_host> ;\n");
+          fprintf(stderr, "\tKeytabPath = /etc/krb5.keytab ;\n");
+          fprintf(stderr, "\tActive_krb5 = TRUE ;\n");
+          fprintf(stderr, "}\n\n\n");
+          exit(1);
+          break;
 
-	case 'T':
-	  /* Dump the default configuration on stdout */
-	  my_nfs_start_info.dump_default_config = TRUE;
-	  break;
+        case 'T':
+          /* Dump the default configuration on stdout */
+          my_nfs_start_info.dump_default_config = TRUE;
+          break;
 
-	case 'F':
-	  /* Flushes the data cache to the FSAL and purges the cache */
-	  my_nfs_start_info.flush_datacache_mode = TRUE;
-	  my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-	  my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-	  my_nfs_start_info.lw_mark_trigger = FALSE;
+        case 'F':
+          /* Flushes the data cache to the FSAL and purges the cache */
+          my_nfs_start_info.flush_datacache_mode = TRUE;
+          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
+          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
+          my_nfs_start_info.lw_mark_trigger = FALSE;
 
-	  if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-	    my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-	  break;
+          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
+          break;
 
-	case 'S':
-	  /* Flushes the data cache to the FSAL, without purging the cache */
-	  my_nfs_start_info.flush_datacache_mode = TRUE;
-	  my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
-	  my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-	  my_nfs_start_info.lw_mark_trigger = FALSE;
+        case 'S':
+          /* Flushes the data cache to the FSAL, without purging the cache */
+          my_nfs_start_info.flush_datacache_mode = TRUE;
+          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
+          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
+          my_nfs_start_info.lw_mark_trigger = FALSE;
 
-	  if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-	    my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-	  break;
+          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
+          break;
 
-	case 'P':
-	  /* Flushes the data like '-F' until low water mark is reached, then just sync */
-	  my_nfs_start_info.flush_datacache_mode = TRUE;
-	  my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-	  my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-	  my_nfs_start_info.lw_mark_trigger = TRUE;
+        case 'P':
+          /* Flushes the data like '-F' until low water mark is reached, then just sync */
+          my_nfs_start_info.flush_datacache_mode = TRUE;
+          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
+          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
+          my_nfs_start_info.lw_mark_trigger = TRUE;
 
-	  if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-	    my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-	  break;
+          if (my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
+            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
+          break;
 
-	case '?':
-	case 'h':
-	default:
-	  /* display the help */
-	  fprintf(stderr, usage, exec_name);
-	  exit(0);
-	  break;
-	}
+        case '?':
+        case 'h':
+        default:
+          /* display the help */
+          fprintf(stderr, usage, exec_name);
+          exit(0);
+          break;
+        }
     }
 
   /* initialize memory and logging */
@@ -330,34 +330,34 @@ int main(int argc, char *argv[])
     {
       /* Step 1: forking a service process */
       switch (son_pid = fork())
-	{
-	case -1:
-	  /* Fork failed */
-	  DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
-	  DisplayLog("Could nout start nfs daemon, exiting...");
-	  exit(1);
+        {
+        case -1:
+          /* Fork failed */
+          DisplayErrorLog(ERR_SYS, ERR_FORK, errno);
+          DisplayLog("Could nout start nfs daemon, exiting...");
+          exit(1);
 
-	case 0:
-	  /* This code is within the son (that will actually work)
-	   * Let's make it the leader of its group of process */
-	  if (setsid() == -1)
-	    {
-	      DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
-	      DisplayLog("Could nout start nfs daemon, exiting...");
-	      exit(1);
-	    }
-	  break;
+        case 0:
+          /* This code is within the son (that will actually work)
+           * Let's make it the leader of its group of process */
+          if (setsid() == -1)
+            {
+              DisplayErrorLog(ERR_SYS, ERR_SETSID, errno);
+              DisplayLog("Could nout start nfs daemon, exiting...");
+              exit(1);
+            }
+          break;
 
-	default:
-	  /* This code is within the father, it is useless, it must die */
-	  DisplayLog("Starting a son of pid %d\n", son_pid);
-	  exit(0);
-	  break;
-	}
+        default:
+          /* This code is within the father, it is useless, it must die */
+          DisplayLog("Starting a son of pid %d\n", son_pid);
+          exit(0);
+          break;
+        }
     }
 
   DisplayLog(">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-	     FSAL_GetFSName());
+             FSAL_GetFSName());
 
   /* Set the signal handler */
   memset(&act_sigusr1, 0, sizeof(act_sigusr1));
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
       exit(1);
     } else
     DisplayLogLevel(NIV_EVENT,
-		    "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
+                    "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
 
   /* initialize default parameters */
 
@@ -405,7 +405,7 @@ int main(int argc, char *argv[])
     {
       DisplayLog("NFS MAIN: Inconsistent parameters found");
       DisplayLog
-	  ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
+          ("MAJOR WARNING: /!\\ | Bad Parameters could have significant impact on the daemon behavior");
       exit(1);
     }
 

@@ -82,7 +82,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -125,15 +125,15 @@
  */
 
 int nlm_Null(nfs_arg_t * parg /* IN     */ ,
-	     exportlist_t * pexport /* IN     */ ,
-	     fsal_op_context_t * pcontext /* IN     */ ,
-	     cache_inode_client_t * pclient /* INOUT  */ ,
-	     hash_table_t * ht /* INOUT  */ ,
-	     struct svc_req *preq /* IN     */ ,
-	     nfs_res_t * pres /* OUT    */ )
+             exportlist_t * pexport /* IN     */ ,
+             fsal_op_context_t * pcontext /* IN     */ ,
+             cache_inode_client_t * pclient /* INOUT  */ ,
+             hash_table_t * ht /* INOUT  */ ,
+             struct svc_req *preq /* IN     */ ,
+             nfs_res_t * pres /* OUT    */ )
 {
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "REQUEST PROCESSING: Calling nlm_Null");
+                    "REQUEST PROCESSING: Calling nlm_Null");
   /* 0 is success */
   return 0;
 }

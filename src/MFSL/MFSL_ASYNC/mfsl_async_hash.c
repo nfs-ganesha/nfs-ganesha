@@ -89,7 +89,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "log_functions.h"
 #include "fsal_types.h"
@@ -99,8 +99,8 @@
 #include "common_utils.h"
 #include "stuff_alloc.h"
 
-#include <unistd.h>		/* for using gethostname */
-#include <stdlib.h>		/* for using exit */
+#include <unistd.h>             /* for using gethostname */
+#include <stdlib.h>             /* for using exit */
 #include <string.h>
 #include <sys/types.h>
 
@@ -128,7 +128,7 @@ unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
   mfsl_object_t *mobject = (mfsl_object_t *) (buffclef->pdata);
 
   h = FSAL_Handle_to_HashIndex(&mobject->handle, 0, mfsl_hparam.alphabet_length,
-			       mfsl_hparam.index_size);
+                               mfsl_hparam.index_size);
 
 #ifdef _DEBUG_HASHTABLE
   snprintHandle(printbuf, 128, &mobject->handle);
@@ -136,7 +136,7 @@ unsigned long mfsl_async_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 #endif
 
   return h;
-}				/* mfsl_async_hash_func */
+}                               /* mfsl_async_hash_func */
 
 /**
  *
@@ -167,7 +167,7 @@ unsigned long mfsl_async_rbt_func(hash_parameter_t * p_hparam, hash_buffer_t * b
   printf("hash_func rbt: buff =(Handle=%s), value=%lu\n", printbuf, h);
 #endif
   return h;
-}				/* mfsl_async_rbt_func */
+}                               /* mfsl_async_rbt_func */
 
 int mfsl_async_display_key(hash_buffer_t * pbuff, char *str)
 {
@@ -179,7 +179,7 @@ int mfsl_async_display_key(hash_buffer_t * pbuff, char *str)
   snprintHandle(buffer, 128, &(pfsdata->handle));
 
   return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "(Handle=%s)", buffer);
-}				/* mfsl_async_display_key */
+}                               /* mfsl_async_display_key */
 
 int mfsl_async_display_not_implemented(hash_buffer_t * pbuff, char *str)
 {
@@ -211,21 +211,21 @@ int mfsl_async_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
     else
     {
       if (buff2->pdata == NULL)
-	return -1;		/* left member is the greater one */
-	else
-	{
-	  int rc;
-	  mobject1 = (mfsl_object_t *) (buff1->pdata);
-	  mobject2 = (mfsl_object_t *) (buff2->pdata);
+        return -1;              /* left member is the greater one */
+        else
+        {
+          int rc;
+          mobject1 = (mfsl_object_t *) (buff1->pdata);
+          mobject2 = (mfsl_object_t *) (buff2->pdata);
 
-	  rc = FSAL_handlecmp(&mobject1->handle, &mobject2->handle, &status);
+          rc = FSAL_handlecmp(&mobject1->handle, &mobject2->handle, &status);
 
-	  return rc;
-	}
+          return rc;
+        }
 
     }
   /* This line should never be reached */
-}				/* mfsl_async_compare_key */
+}                               /* mfsl_async_compare_key */
 
 int mfsl_async_hash_init(void)
 {
@@ -243,7 +243,7 @@ int mfsl_async_hash_init(void)
     return 0;
 
   return 1;
-}				/* mfsl_async_hash_init */
+}                               /* mfsl_async_hash_init */
 
 int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * value)
 {
@@ -260,7 +260,7 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
   buffdata.len = sizeof(mfsl_object_specific_data_t);
 
   rc = HashTable_Test_And_Set(mfsl_ht, &buffkey, &buffdata,
-			      HASHTABLE_SET_HOW_SET_OVERWRITE);
+                              HASHTABLE_SET_HOW_SET_OVERWRITE);
 
   if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return 0;
@@ -270,7 +270,7 @@ int mfsl_async_set_specdata(mfsl_object_t * key, mfsl_object_specific_data_t * v
 #endif
 
   return 1;
-}				/* mfsl_async_set_specdata */
+}                               /* mfsl_async_set_specdata */
 
 int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** ppvalue)
 {
@@ -300,7 +300,7 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
     }
 
   return status;
-}				/* mfslasync_get_specdata */
+}                               /* mfslasync_get_specdata */
 
 int mfsl_async_remove_specdata(mfsl_object_t * key)
 {
@@ -316,7 +316,7 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
   if (HashTable_Del(mfsl_ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
       status = 1;
-	/** @todo release previously allocated specdata */
+        /** @todo release previously allocated specdata */
       // Mem_Free( old_key.pdata ) ;
     } else
     {
@@ -324,7 +324,7 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
     }
 
   return status;
-}				/* mfsl_async_remove_specdata */
+}                               /* mfsl_async_remove_specdata */
 
 int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
 {
@@ -350,4 +350,4 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
     status = 0;
 
   return status;
-}				/* mfsl_async_is_object_asynchronous */
+}                               /* mfsl_async_is_object_asynchronous */

@@ -37,10 +37,10 @@
  *         May be NULL.
  * 
  */
-fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_dir_t * dir_descriptor,	/* OUT */
-			   fsal_attrib_list_t * dir_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_descriptor, /* OUT */
+                           fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -59,8 +59,8 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
    * this is done by the FS itself.
    */
   rc = GHOSTFS_Access((GHOSTFS_handle_t) (*dir_handle),
-		      GHOSTFS_TEST_READ,
-		      p_context->credential.user, p_context->credential.group);
+                      GHOSTFS_TEST_READ,
+                      p_context->credential.user, p_context->credential.group);
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_opendir);
@@ -84,18 +84,18 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
       fsal_status_t status;
 
       switch ((status = FSAL_getattrs(dir_handle, p_context, dir_attributes)).major)
-	{
-	  /* change the FAULT error to appears as an internal error.
-	   * indeed, parameters should be null. */
-	case ERR_FSAL_FAULT:
-	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_opendir);
-	  break;
-	case ERR_FSAL_NO_ERROR:
-	  /* continue */
-	  break;
-	default:
-	  Return(status.major, status.minor, INDEX_FSAL_opendir);
-	}
+        {
+          /* change the FAULT error to appears as an internal error.
+           * indeed, parameters should be null. */
+        case ERR_FSAL_FAULT:
+          Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_opendir);
+          break;
+        case ERR_FSAL_NO_ERROR:
+          /* continue */
+          break;
+        default:
+          Return(status.major, status.minor, INDEX_FSAL_opendir);
+        }
 
     }
 
@@ -103,14 +103,14 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,	/* IN */
 
 }
 
-fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
-			   fsal_cookie_t start_position,	/* IN */
-			   fsal_attrib_mask_t get_attr_mask,	/* IN */
-			   fsal_mdsize_t buffersize,	/* IN */
-			   fsal_dirent_t * pdirent,	/* OUT */
-			   fsal_cookie_t * end_position,	/* OUT */
-			   fsal_count_t * nb_entries,	/* OUT */
-			   fsal_boolean_t * end_of_dir	/* OUT */
+fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
+                           fsal_cookie_t start_position,        /* IN */
+                           fsal_attrib_mask_t get_attr_mask,    /* IN */
+                           fsal_mdsize_t buffersize,    /* IN */
+                           fsal_dirent_t * pdirent,     /* OUT */
+                           fsal_cookie_t * end_position,        /* OUT */
+                           fsal_count_t * nb_entries,   /* OUT */
+                           fsal_boolean_t * end_of_dir  /* OUT */
     )
 {
   int rc;
@@ -155,21 +155,21 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
       rc = GHOSTFS_Readdir(&(dir_descriptor->dir_descriptor), &entry);
 
       if (rc == ERR_GHOSTFS_ENDOFDIR)
-	{
-	  /* updates ouputs and return */
-	  if (last_ent)
-	    last_ent->nextentry = NULL;
-	  (*end_of_dir) = TRUE;
-	  end_position->cookie = last_cookie;
-	  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
+        {
+          /* updates ouputs and return */
+          if (last_ent)
+            last_ent->nextentry = NULL;
+          (*end_of_dir) = TRUE;
+          end_position->cookie = last_cookie;
+          Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
       } else if (rc != 0)
-	{
-	  Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readdir);
-	}
+        {
+          Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readdir);
+        }
 
       /* we have just read an entry */
       if (last_ent)
-	last_ent->nextentry = curr_ent;
+        last_ent->nextentry = curr_ent;
       curr_ent->handle = (fsal_handle_t) entry.handle;
       strncpy(curr_ent->name.name, entry.name, FSAL_MAX_NAME_LEN);
       curr_ent->name.len = strlen(curr_ent->name.name);
@@ -182,25 +182,25 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
 
       curr_ent->attributes.asked_attributes = get_attr_mask;
       switch ((status = FSAL_getattrs(&curr_ent->handle,
-				      &dir_descriptor->context,
-				      &curr_ent->attributes)).major)
-	{
-	  /* change the FAULT error to appears as an internal error.
-	   * indeed, parameters should not be null. */
-	case ERR_FSAL_FAULT:
-	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_readdir);
-	  break;
-	case ERR_FSAL_NO_ERROR:
-	  /* ok, continue */
-	  break;
-	default:
-	  Return(status.major, status.minor, INDEX_FSAL_readdir);
-	}
+                                      &dir_descriptor->context,
+                                      &curr_ent->attributes)).major)
+        {
+          /* change the FAULT error to appears as an internal error.
+           * indeed, parameters should not be null. */
+        case ERR_FSAL_FAULT:
+          Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_readdir);
+          break;
+        case ERR_FSAL_NO_ERROR:
+          /* ok, continue */
+          break;
+        default:
+          Return(status.major, status.minor, INDEX_FSAL_readdir);
+        }
 
-      last_cookie = entry.cookie;	/* the cookie for the current entry */
-      last_ent = curr_ent;	/* remembers last entry */
-      curr_ent++;		/* the next entry to be filled */
-      (*nb_entries)++;		/* numbers of entries we've read */
+      last_cookie = entry.cookie;       /* the cookie for the current entry */
+      last_ent = curr_ent;      /* remembers last entry */
+      curr_ent++;               /* the next entry to be filled */
+      (*nb_entries)++;          /* numbers of entries we've read */
 
     }
   /* update outputs and return */
@@ -211,7 +211,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor,	/* IN */
 
 }
 
-fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor	/* IN */
+fsal_status_t FSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     )
 {
 

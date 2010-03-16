@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,7 +141,7 @@
  */
 
 int nfs41_op_getdevicelist(struct nfs_argop4 *op,
-			   compound_data_t * data, struct nfs_resop4 *resp)
+                           compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
 
@@ -152,7 +152,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
   res_GETDEVICELIST4.gdlr_status = NFS4_OK;
 
   return res_GETDEVICELIST4.gdlr_status;
-}				/* nfs41_op_exchange_id */
+}                               /* nfs41_op_exchange_id */
 
 /**
  * nfs4_op_getdevicelist_Free: frees what was allocared to handle nfs4_op_getdevicelist.
@@ -167,4 +167,4 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 void nfs41_op_getdevicelist_Free(GETDEVICELIST4res * resp)
 {
   return;
-}				/* nfs41_op_exchange_id_Free */
+}                               /* nfs41_op_exchange_id_Free */

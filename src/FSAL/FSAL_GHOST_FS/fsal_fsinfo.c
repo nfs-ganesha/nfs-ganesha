@@ -18,9 +18,9 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
     )
 {
 
@@ -38,9 +38,9 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
 }
 
-fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
     )
 {
 

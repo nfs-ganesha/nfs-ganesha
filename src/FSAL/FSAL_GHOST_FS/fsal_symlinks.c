@@ -20,10 +20,10 @@
 #include "fsal_convertions.h"
 #include <string.h>
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -39,7 +39,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
   rc = GHOSTFS_ReadLink((GHOSTFS_handle_t) (*linkhandle),
-			p_link_content->path, FSAL_MAX_PATH_LEN);
+                        p_link_content->path, FSAL_MAX_PATH_LEN);
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readlink);
 
@@ -50,18 +50,18 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
       fsal_status_t status;
 
       switch ((status = FSAL_getattrs(linkhandle, p_context, link_attributes)).major)
-	{
-	  /* change the FAULT error to appears as an internal error.
-	   * indeed, parameters should be null. */
-	case ERR_FSAL_FAULT:
-	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_readlink);
-	  break;
-	case ERR_FSAL_NO_ERROR:
-	  /* continue */
-	  break;
-	default:
-	  Return(status.major, status.minor, INDEX_FSAL_readlink);
-	}
+        {
+          /* change the FAULT error to appears as an internal error.
+           * indeed, parameters should be null. */
+        case ERR_FSAL_FAULT:
+          Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_readlink);
+          break;
+        case ERR_FSAL_NO_ERROR:
+          /* continue */
+          break;
+        default:
+          Return(status.major, status.minor, INDEX_FSAL_readlink);
+        }
 
     }
 
@@ -69,13 +69,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
 
 }
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN  */
-			   fsal_handle_t * link_handle,	/* OUT */
-			   fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN  */
+                           fsal_handle_t * link_handle, /* OUT */
+                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -97,18 +97,18 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
    * by the FS itself.
    */
   rc = GHOSTFS_Access((GHOSTFS_handle_t) (*parent_directory_handle),
-		      GHOSTFS_TEST_WRITE,
-		      p_context->credential.user, p_context->credential.group);
+                      GHOSTFS_TEST_WRITE,
+                      p_context->credential.user, p_context->credential.group);
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_symlink);
 
   rc = GHOSTFS_Symlink((GHOSTFS_handle_t) * parent_directory_handle,
-		       p_linkname->name,
-		       p_linkcontent->path,
-		       p_context->credential.user,
-		       p_context->credential.group,
-		       fsal2ghost_mode(accessmode), &new_handle, &ghost_attrs);
+                       p_linkname->name,
+                       p_linkcontent->path,
+                       p_context->credential.user,
+                       p_context->credential.group,
+                       fsal2ghost_mode(accessmode), &new_handle, &ghost_attrs);
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_symlink);

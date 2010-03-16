@@ -126,7 +126,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
-					hash_buffer_t * buffclef)
+                                        hash_buffer_t * buffclef)
 {
   unsigned long hash_func;
   clientid4 clientid;
@@ -135,10 +135,10 @@ unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
 
   /* Sum upper and lower 32bits fields to build the key */
   hash_func = ((unsigned long)(clientid & 0x00000000FFFFFFFFLL) +
-	       (unsigned long)(clientid >> 32));
+               (unsigned long)(clientid >> 32));
 
   return hash_func % p_hparam->index_size;
-}				/*  client_id_value_hash_func */
+}                               /*  client_id_value_hash_func */
 
 /**
  *
@@ -156,7 +156,7 @@ unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-						hash_buffer_t * buffclef)
+                                                hash_buffer_t * buffclef)
 {
   unsigned long sum = 0;
   unsigned int i = 0;
@@ -167,7 +167,7 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
        c = ((char *)buffclef->pdata)[++i], sum += c) ;
 
   return (unsigned long)(sum % p_hparam->index_size);
-}				/*  client_id_reverse_value_hash_func */
+}                               /*  client_id_reverse_value_hash_func */
 
 /**
  *
@@ -186,7 +186,7 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
  *
  */
 unsigned long client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				      hash_buffer_t * buffclef)
+                                      hash_buffer_t * buffclef)
 {
   unsigned long hash_func;
   clientid4 clientid;
@@ -195,13 +195,13 @@ unsigned long client_id_rbt_hash_func(hash_parameter_t * p_hparam,
 
   /* Xor upper and lower 32bits fields to build the key */
   hash_func = ((unsigned long)(clientid & 0x00000000FFFFFFFFLL) ^
-	       (unsigned long)(clientid >> 32));
+               (unsigned long)(clientid >> 32));
 
   return hash_func;
-}				/* client_id_rbt_hash_func */
+}                               /* client_id_rbt_hash_func */
 
 unsigned long client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
-					      hash_buffer_t * buffclef)
+                                              hash_buffer_t * buffclef)
 {
   clientid4 result;
 
@@ -209,7 +209,7 @@ unsigned long client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
     return 0;
 
   return ((unsigned long)(result & 0x00000000FFFFFFFFLL));
-}				/* ip_name_rbt_hash_func */
+}                               /* ip_name_rbt_hash_func */
 
 /**
  *
@@ -229,14 +229,14 @@ int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
   clientid4 cl1 = *((clientid4 *) (buff1->pdata));
   clientid4 cl2 = *((clientid4 *) (buff2->pdata));
   return (cl1 == cl2) ? 0 : 1;
-}				/* compare_xid */
+}                               /* compare_xid */
 
 int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   char *cl1 = (char *)(buff1->pdata);
   char *cl2 = (char *)(buff2->pdata);
   return strncmp(cl1, cl2, MAXNAMLEN);
-}				/* compare_xid */
+}                               /* compare_xid */
 
 /**
  *
@@ -258,12 +258,12 @@ int display_client_id(hash_buffer_t * pbuff, char *str)
   clientid = *((clientid4 *) (pbuff->pdata));
 
   return sprintf(str, "%llu", (unsigned long long)clientid);
-}				/* display_client_id */
+}                               /* display_client_id */
 
 int display_client_id_reverse(hash_buffer_t * pbuff, char *str)
 {
   return sprintf(str, "%s", (char *)(pbuff->pdata));
-}				/* display_client_id_reverse */
+}                               /* display_client_id_reverse */
 
 int display_client_id_val(hash_buffer_t * pbuff, char *str)
 {
@@ -272,10 +272,10 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
   precord = (nfs_client_id_t *) (pbuff->pdata);
 
   return sprintf(str, "#%s#=>%llu cb_prog=%u r_addr=%s r_netid=%s",
-		 precord->client_name,
-		 (unsigned long long)precord->clientid,
-		 precord->cb_program, precord->client_r_addr, precord->client_r_netid);
-}				/* display_client_id_val */
+                 precord->client_name,
+                 (unsigned long long)precord->clientid,
+                 precord->cb_program, precord->client_r_addr, precord->client_r_netid);
+}                               /* display_client_id_val */
 
 /**
  *
@@ -294,7 +294,7 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_client_id_add(clientid4 clientid,
-		      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -310,8 +310,8 @@ int nfs_client_id_add(clientid4 clientid,
 
   /* Entry to be cached */
   GET_PREALLOC(pnfs_client_id,
-	       nfs_client_id_pool,
-	       nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
+               nfs_client_id_pool,
+               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -362,7 +362,7 @@ int nfs_client_id_add(clientid4 clientid,
 #endif
 
   return CLIENT_ID_SUCCESS;
-}				/* nfs_client_id_add */
+}                               /* nfs_client_id_add */
 
 /**
  *
@@ -381,7 +381,7 @@ int nfs_client_id_add(clientid4 clientid,
  */
 
 int nfs_client_id_set(clientid4 clientid,
-		      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
+                      nfs_client_id_t client_record, nfs_client_id_t * nfs_client_id_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -397,8 +397,8 @@ int nfs_client_id_set(clientid4 clientid,
 
   /* Entry to be cached */
   GET_PREALLOC(pnfs_client_id,
-	       nfs_client_id_pool,
-	       nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
+               nfs_client_id_pool,
+               nfs_param.worker_param.nb_client_id_prealloc, nfs_client_id_t, next_alloc);
 
 #ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -442,7 +442,7 @@ int nfs_client_id_set(clientid4 clientid,
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   return CLIENT_ID_SUCCESS;
-}				/* nfs_client_id_set */
+}                               /* nfs_client_id_set */
 
 /**
  *
@@ -496,7 +496,7 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
   Mem_Free(pclientid);
 
   return status;
-}				/* nfs_client_id_get */
+}                               /* nfs_client_id_get */
 
 int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res)
 {
@@ -536,7 +536,7 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
   Mem_Free(pclientid);
 
   return status;
-}				/* nfs_client_id_Get_Pointer */
+}                               /* nfs_client_id_Get_Pointer */
 
 int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
 {
@@ -563,7 +563,7 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
     }
 
   return status;
-}				/* nfs_client_id_get_reverse */
+}                               /* nfs_client_id_get_reverse */
 
 /**
  *
@@ -620,7 +620,7 @@ int nfs_client_id_remove(clientid4 clientid, nfs_client_id_t * nfs_client_id_poo
 
   return CLIENT_ID_SUCCESS;
 
-}				/* nfs_client_id_remove */
+}                               /* nfs_client_id_remove */
 
 /**
  *
@@ -642,7 +642,7 @@ int nfs_Init_client_id(nfs_client_id_parameter_t param)
     }
 
   return CLIENT_ID_SUCCESS;
-}				/* nfs_Init_client_id */
+}                               /* nfs_Init_client_id */
 
 /**
  *
@@ -664,7 +664,7 @@ int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param)
     }
 
   return CLIENT_ID_SUCCESS;
-}				/* nfs_Init_client_id */
+}                               /* nfs_Init_client_id */
 
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid)
 {
@@ -684,7 +684,7 @@ int nfs_client_id_basic_compute(char *name, clientid4 * pclientid)
   *pclientid = (clientid4) sum;
 
   return CLIENT_ID_SUCCESS;
-}				/* nfs_client_id_basic_compute */
+}                               /* nfs_client_id_basic_compute */
 
 /** 
  * 
@@ -746,29 +746,29 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
       i9 = (uint64_t) (padded_name[offset + 8] & 0x7F) << 56;
 
       sum = (uint64_t) padded_name[offset + 0] +
-	  (uint64_t) padded_name[offset + 1] +
-	  (uint64_t) padded_name[offset + 2] +
-	  (uint64_t) padded_name[offset + 3] +
-	  (uint64_t) padded_name[offset + 4] +
-	  (uint64_t) padded_name[offset + 5] +
-	  (uint64_t) padded_name[offset + 6] +
-	  (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
+          (uint64_t) padded_name[offset + 1] +
+          (uint64_t) padded_name[offset + 2] +
+          (uint64_t) padded_name[offset + 3] +
+          (uint64_t) padded_name[offset + 4] +
+          (uint64_t) padded_name[offset + 5] +
+          (uint64_t) padded_name[offset + 6] +
+          (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
 
 #ifdef WITH_PRINTF_DEBUG_CLIENT_ID_COMPUTE
       printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-	     i1, i2, i3, i4, i5, i6, i7, i8, i9);
+             i1, i2, i3, i4, i5, i6, i7, i8, i9);
 #endif
 
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0] & 0x80) ^
-	  (padded_name[offset + 1] & 0x80) ^
-	  (padded_name[offset + 2] & 0x80) ^
-	  (padded_name[offset + 3] & 0x80) ^
-	  (padded_name[offset + 4] & 0x80) ^
-	  (padded_name[offset + 5] & 0x80) ^
-	  (padded_name[offset + 6] & 0x80) ^
-	  (padded_name[offset + 7] & 0x80) ^
-	  (padded_name[offset + 8] & 0x80) ^ (padded_name[offset + 9] & 0x80);
+          (padded_name[offset + 1] & 0x80) ^
+          (padded_name[offset + 2] & 0x80) ^
+          (padded_name[offset + 3] & 0x80) ^
+          (padded_name[offset + 4] & 0x80) ^
+          (padded_name[offset + 5] & 0x80) ^
+          (padded_name[offset + 6] & 0x80) ^
+          (padded_name[offset + 7] & 0x80) ^
+          (padded_name[offset + 8] & 0x80) ^ (padded_name[offset + 9] & 0x80);
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
 
@@ -787,4 +787,4 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
 
   *pclientid = computed_value;
   return CLIENT_ID_SUCCESS;
-}				/* nfs_client_id_compute */
+}                               /* nfs_client_id_compute */

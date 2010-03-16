@@ -327,7 +327,7 @@ do                                                                        \
   pool = entry ;                                                          \
 } while( 0 )
 
-#else				/* no block preallocation */
+#else                           /* no block preallocation */
 
 #define STUFF_PREALLOC( pool, nb, type, name_next )                       \
               do {                                                        \
@@ -365,6 +365,6 @@ do                                                                        \
   Mem_Free( entry );                                                      \
 } while( 0 )
 
-#endif				/* no block preallocation */
+#endif                          /* no block preallocation */
 
-#endif				/* _STUFF_ALLOC_H */
+#endif                          /* _STUFF_ALLOC_H */

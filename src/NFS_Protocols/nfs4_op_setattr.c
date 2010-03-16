@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -142,7 +142,7 @@
 #define res_SETATTR4 resp->nfs_resop4_u.opsetattr
 
 int nfs4_op_setattr(struct nfs_argop4 *op,
-		    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_attrib_list_t sattr;
   fsal_attrib_list_t parent_attr;
@@ -218,23 +218,23 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
     {
       /* Setting the size of a directory is prohibited */
       if (data->current_filetype == DIR_BEGINNING
-	  || data->current_filetype == DIR_CONTINUE)
-	{
-	  res_SETATTR4.status = NFS4ERR_ISDIR;
-	  return res_SETATTR4.status;
-	}
+          || data->current_filetype == DIR_CONTINUE)
+        {
+          res_SETATTR4.status = NFS4ERR_ISDIR;
+          return res_SETATTR4.status;
+        }
 
       if ((cache_status = cache_inode_truncate(data->current_entry,
-					       sattr.filesize,
-					       &parent_attr,
-					       data->ht,
-					       data->pclient,
-					       data->pcontext,
-					       &cache_status)) != CACHE_INODE_SUCCESS)
-	{
-	  res_SETATTR4.status = nfs4_Errno(cache_status);
-	  return res_SETATTR4.status;
-	}
+                                               sattr.filesize,
+                                               &parent_attr,
+                                               data->ht,
+                                               data->pclient,
+                                               data->pcontext,
+                                               &cache_status)) != CACHE_INODE_SUCCESS)
+        {
+          res_SETATTR4.status = nfs4_Errno(cache_status);
+          return res_SETATTR4.status;
+        }
     }
 
   /* Now, we set the mode */
@@ -246,17 +246,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
     {
       /* Check for root access when using chmod */
       if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))
-	{
-	  if (((sattr.mode & 0x800) &&
-	       ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
-	      || ((sattr.mode & 0x400)
-		  && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
-		      EXPORT_OPTION_NOSGID)))
-	    {
-	      res_SETATTR4.status = NFS4ERR_PERM;
-	      return res_SETATTR4.status;
-	    }
-	}
+        {
+          if (((sattr.mode & 0x800) &&
+               ((data->pexport->options & EXPORT_OPTION_NOSUID) == EXPORT_OPTION_NOSUID))
+              || ((sattr.mode & 0x400)
+                  && ((data->pexport->options & EXPORT_OPTION_NOSGID) ==
+                      EXPORT_OPTION_NOSGID)))
+            {
+              res_SETATTR4.status = NFS4ERR_PERM;
+              return res_SETATTR4.status;
+            }
+        }
 #ifdef _TOTO
       /* get the current time */
       gettimeofday(&t, NULL);
@@ -264,29 +264,29 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       /* Set the atime and mtime (ctime is not setable) */
       /** @todo : check correctness of this block... looks suspicious */
       if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) == SET_TO_SERVER_TIME4)
-	{
-	  sattr.atime.seconds = t.tv_sec;
-	  sattr.atime.nseconds = t.tv_usec;
-	}
+        {
+          sattr.atime.seconds = t.tv_sec;
+          sattr.atime.nseconds = t.tv_usec;
+        }
 
       /* Should we use the time from the client handside or from the server handside ? */
       /** @todo : check correctness of this block... looks suspicious */
       if (FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) == SET_TO_SERVER_TIME4)
-	{
-	  sattr.mtime.seconds = t.tv_sec;
-	  sattr.mtime.nseconds = t.tv_usec;
-	}
+        {
+          sattr.mtime.seconds = t.tv_sec;
+          sattr.mtime.nseconds = t.tv_usec;
+        }
 #endif
 
       if (cache_inode_setattr(data->current_entry,
-			      &sattr,
-			      data->ht,
-			      data->pclient,
-			      data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-	{
-	  res_SETATTR4.status = nfs4_Errno(cache_status);
-	  return res_SETATTR4.status;
-	}
+                              &sattr,
+                              data->ht,
+                              data->pclient,
+                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          res_SETATTR4.status = nfs4_Errno(cache_status);
+          return res_SETATTR4.status;
+        }
     }
 
   /* Set the replyed structure */
@@ -299,17 +299,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       return res_SETATTR4.status;
     }
   memset((char *)res_SETATTR4.attrsset.bitmap4_val, 0,
-	 res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
+         res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
 
   memcpy(res_SETATTR4.attrsset.bitmap4_val,
-	 arg_SETATTR4.obj_attributes.attrmask.bitmap4_val,
-	 res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
+         arg_SETATTR4.obj_attributes.attrmask.bitmap4_val,
+         res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
 
   /* Exit with no error */
   res_SETATTR4.status = NFS4_OK;
 
   return res_SETATTR4.status;
-}				/* nfs4_op_setattr */
+}                               /* nfs4_op_setattr */
 
 /**
  * nfs4_op_setattr_Free: frees what was allocated to handle nfs4_op_setattr.
@@ -326,4 +326,4 @@ void nfs4_op_setattr_Free(SETATTR4res * resp)
   if (resp->status == NFS4_OK)
     Mem_Free(resp->attrsset.bitmap4_val);
   return;
-}				/* nfs4_op_setattr_Free */
+}                               /* nfs4_op_setattr_Free */

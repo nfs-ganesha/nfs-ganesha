@@ -137,7 +137,7 @@
 #include "HashTable.h"
 #include "MesureTemps.h"
 
-#define MAXTEST 10000		/* Plus grand que MAXDESTROY !! */
+#define MAXTEST 10000           /* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 50
 #define MAXGET 30
 #define NB_PREALLOC 10000
@@ -206,9 +206,9 @@ int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
     else
     {
       if (buff2->pdata == NULL)
-	return -1;		/* left member is the greater one */
-	else
-	return strcmp(buff1->pdata, buff2->pdata);
+        return -1;              /* left member is the greater one */
+        else
+        return strcmp(buff1->pdata, buff2->pdata);
     }
   /* This line should never be reached */
 }
@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 
   MesureTemps(&fin, &debut);
   printf("Duree de l'insertion de %d entrees: %s\n", MAXTEST,
-	 ConvertiTempsChaine(fin, NULL));
+         ConvertiTempsChaine(fin, NULL));
 #ifdef _DEBUG_HASHTABLE
   printf("-----------------------------------------\n");
   HashTable_Print(ht);
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
   MesureTemps(&fin, &debut);
 
   printf("Maintenant, j'essaye de recuperer %d entrees (prises au hasard, ou presque) \n",
-	 MAXGET);
+         MAXGET);
   MesureTemps(&debut, NULL);
   for (i = 0; i < MAXGET; i++)
     {
@@ -315,15 +315,15 @@ int main(int argc, char *argv[])
       printf("\tLecture  de key = %s  --> %s\n", buffkey2.pdata, buffval2.pdata);
 #endif
       if (rc != HASHTABLE_SUCCESS)
-	{
-	  printf("Erreur lors de la lecture de %d = %d\n", i, rc);
-	  printf("Test ECHOUE : la valeur lue est incorrecte\n");
-	  exit(1);
-	}
+        {
+          printf("Erreur lors de la lecture de %d = %d\n", i, rc);
+          printf("Test ECHOUE : la valeur lue est incorrecte\n");
+          exit(1);
+        }
     }
   MesureTemps(&fin, &debut);
   printf("Duree de lecture de %d elements = %s\n", MAXGET,
-	 ConvertiTempsChaine(fin, NULL));
+         ConvertiTempsChaine(fin, NULL));
 
   printf("-----------------------------------------\n");
 
@@ -350,25 +350,25 @@ int main(int argc, char *argv[])
       buffkey.len = strlen(tmpstr);
       buffkey.pdata = tmpstr;
       printf("\t J'efface %d -> %d | %d\n",
-	     random_val,
-	     simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
+             random_val,
+             simple_hash_func(&hparam, &buffkey), rbt_hash_func(&hparam, &buffkey));
 
       rc = HashTable_Del(ht, &buffkey, NULL, NULL);
       if (rc != HASHTABLE_SUCCESS)
-	{
-	  printf("Erreur lors de la destruction de %d = %d\n", random_val, rc);
-	  printf("Test ECHOUE : effacement incorrect\n");
-	  exit(1);
-	}
+        {
+          printf("Erreur lors de la destruction de %d = %d\n", random_val, rc);
+          printf("Test ECHOUE : effacement incorrect\n");
+          exit(1);
+        }
     }
   MesureTemps(&fin, &debut);
   printf("Duree de la destruction de %d elements = %s\n", MAXDESTROY,
-	 ConvertiTempsChaine(fin, NULL));
+         ConvertiTempsChaine(fin, NULL));
 
   printf("-----------------------------------------\n");
 
   printf("Maintenant, j'essaye de recuperer %d entrees (eventuellement detruites) \n",
-	 MAXGET);
+         MAXGET);
   MesureTemps(&debut, NULL);
   for (i = 0; i < MAXGET; i++)
     {
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
     }
   MesureTemps(&fin, &debut);
   printf("Duree de lecture de %d elements = %s\n", MAXGET,
-	 ConvertiTempsChaine(fin, NULL));
+         ConvertiTempsChaine(fin, NULL));
 
   printf("-----------------------------------------\n");
   printf("Ecriture d'une clef en double \n");
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
   buffkey.pdata = tmpstr;
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffval, HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
   printf("La valeur doit etre HASHTABLE_ERROR_KEY_ALREADY_EXISTS  = %d --> %d\n",
-	 HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
+         HASHTABLE_ERROR_KEY_ALREADY_EXISTS, rc);
   if (rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     {
       printf("Test ECHOUE : Clef redondante\n");
@@ -408,16 +408,16 @@ int main(int argc, char *argv[])
   printf(" Nombre d'entrees = %d\n", statistiques.dynamic.nb_entries);
 
   printf("   Operations reussies  : Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
-	 statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
-	 statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
+         statistiques.dynamic.ok.nb_set, statistiques.dynamic.ok.nb_get,
+         statistiques.dynamic.ok.nb_del, statistiques.dynamic.ok.nb_test);
 
   printf("   Operations en erreur : Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
-	 statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
-	 statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
+         statistiques.dynamic.err.nb_set, statistiques.dynamic.err.nb_get,
+         statistiques.dynamic.err.nb_del, statistiques.dynamic.err.nb_test);
 
   printf("   Operations 'NotFound': Set = %d,  Get = %d,  Del = %d,  Test = %d\n",
-	 statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
-	 statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
+         statistiques.dynamic.notfound.nb_set, statistiques.dynamic.notfound.nb_get,
+         statistiques.dynamic.notfound.nb_del, statistiques.dynamic.notfound.nb_test);
 
   printf
       ("  Statistiques calculees: min_rbt_node = %d,  max_rbt_node = %d,  average_rbt_node = %d\n",

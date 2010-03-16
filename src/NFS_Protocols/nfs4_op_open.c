@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -218,20 +218,20 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if (data->current_entry == NULL)
     {
       if ((data->current_entry = nfs_FhandleToCache(NFS_V4,
-						    NULL,
-						    NULL,
-						    &(data->currentFH),
-						    NULL,
-						    NULL,
-						    &(res_OPEN4.status),
-						    &attr,
-						    data->pcontext,
-						    data->pclient,
-						    data->ht, &retval)) == NULL)
-	{
-	  res_OPEN4.status = NFS4ERR_SERVERFAULT;
-	  return res_OPEN4.status;
-	}
+                                                    NULL,
+                                                    NULL,
+                                                    &(data->currentFH),
+                                                    NULL,
+                                                    NULL,
+                                                    &(res_OPEN4.status),
+                                                    &attr,
+                                                    data->pcontext,
+                                                    data->pclient,
+                                                    data->ht, &retval)) == NULL)
+        {
+          res_OPEN4.status = NFS4ERR_SERVERFAULT;
+          return res_OPEN4.status;
+        }
     }
 
   /* Set parent */
@@ -244,17 +244,17 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     case CLAIM_DELEGATE_PREV:
       /* Check for name length */
       if (arg_OPEN4.claim.open_claim4_u.file.utf8string_len > FSAL_MAX_NAME_LEN)
-	{
-	  res_OPEN4.status = NFS4ERR_NAMETOOLONG;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_NAMETOOLONG;
+          return res_OPEN4.status;
+        }
 
       /* get the filename from the argument, it should not be empty */
       if (arg_OPEN4.claim.open_claim4_u.file.utf8string_len == 0)
-	{
-	  res_OPEN4.status = NFS4ERR_INVAL;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_INVAL;
+          return res_OPEN4.status;
+        }
 
       res_OPEN4.status = NFS4ERR_NOTSUPP;
       return res_OPEN4.status;
@@ -263,72 +263,71 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     case CLAIM_NULL:
       /* Check for name length */
       if (arg_OPEN4.claim.open_claim4_u.file.utf8string_len > FSAL_MAX_NAME_LEN)
-	{
-	  res_OPEN4.status = NFS4ERR_NAMETOOLONG;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_NAMETOOLONG;
+          return res_OPEN4.status;
+        }
 
       /* get the filename from the argument, it should not be empty */
       if (arg_OPEN4.claim.open_claim4_u.file.utf8string_len == 0)
-	{
-	  res_OPEN4.status = NFS4ERR_INVAL;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_INVAL;
+          return res_OPEN4.status;
+        }
 
       /* Check if asked attributes are correct */
       if (arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
-	  arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
-	{
-	  if (!nfs4_Fattr_Supported
-	      (&arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs))
-	    {
-	      res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
-	      return res_OPEN4.status;
-	    }
+          arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
+        {
+          if (!nfs4_Fattr_Supported
+              (&arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs))
+            {
+              res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
+              return res_OPEN4.status;
+            }
 
-	  /* Do not use READ attr, use WRITE attr */
-	  if (!nfs4_Fattr_Check_Access
-	      (&arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs,
-	       FATTR4_ATTR_WRITE))
-	    {
-	      res_OPEN4.status = NFS4ERR_INVAL;
-	      return res_OPEN4.status;
-	    }
-	}
+          /* Do not use READ attr, use WRITE attr */
+          if (!nfs4_Fattr_Check_Access
+              (&arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs,
+               FATTR4_ATTR_WRITE))
+            {
+              res_OPEN4.status = NFS4ERR_INVAL;
+              return res_OPEN4.status;
+            }
+        }
 
       /* Check if filename is correct */
       if ((cache_status =
-	   cache_inode_error_convert(FSAL_buffdesc2name
-				     ((fsal_buffdesc_t *) & arg_OPEN4.claim.
-				      open_claim4_u.file,
-				      &filename))) != CACHE_INODE_SUCCESS)
-	{
-	  res_OPEN4.status = nfs4_Errno(cache_status);
-	  return res_OPEN4.status;
-	}
+           cache_inode_error_convert(FSAL_buffdesc2name
+                                     ((fsal_buffdesc_t *) & arg_OPEN4.claim.open_claim4_u.
+                                      file, &filename))) != CACHE_INODE_SUCCESS)
+        {
+          res_OPEN4.status = nfs4_Errno(cache_status);
+          return res_OPEN4.status;
+        }
 
       /* Check parent */
       pentry_parent = data->current_entry;
 
       /* Parent must be a directory */
       if ((pentry_parent->internal_md.type != DIR_BEGINNING) &&
-	  (pentry_parent->internal_md.type != DIR_CONTINUE))
-	{
-	  /* Parent object is not a directory... */
-	  if (pentry_parent->internal_md.type == SYMBOLIC_LINK)
-	    res_OPEN4.status = NFS4ERR_SYMLINK;
-	    else
-	    res_OPEN4.status = NFS4ERR_NOTDIR;
+          (pentry_parent->internal_md.type != DIR_CONTINUE))
+        {
+          /* Parent object is not a directory... */
+          if (pentry_parent->internal_md.type == SYMBOLIC_LINK)
+            res_OPEN4.status = NFS4ERR_SYMLINK;
+            else
+            res_OPEN4.status = NFS4ERR_NOTDIR;
 
-	  return res_OPEN4.status;
-	}
+          return res_OPEN4.status;
+        }
 
       /* What kind of open is it ? */
 #ifdef _DEBUG_NFS_V4
       printf
-	  ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
-	   arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
-	   arg_OPEN4.share_access);
+          ("     OPEN: Claim type = %d   Open Type = %d  Share Deny = %d   Share Access = %d \n",
+           arg_OPEN4.claim.claim, arg_OPEN4.openhow.opentype, arg_OPEN4.share_deny,
+           arg_OPEN4.share_access);
 #endif
 
       /* It this a known client id ? */
@@ -336,840 +335,838 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       DisplayLogLevel(NIV_DEBUG, "OPEN Client id = %llx", arg_OPEN4.owner.clientid);
 #endif
       if (nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
-	{
-	  res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
+          return res_OPEN4.status;
+        }
 
       /* The client id should be confirmed */
       if (nfs_clientid.confirmed != CONFIRMED_CLIENT_ID)
-	{
-	  res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
+          return res_OPEN4.status;
+        }
 
       /* Is this open_owner known ? */
       if (!nfs_convert_open_owner(&arg_OPEN4.owner, &owner_name))
-	{
-	  res_OPEN4.status = NFS4ERR_SERVERFAULT;
-	  return res_OPEN4.status;
-	}
+        {
+          res_OPEN4.status = NFS4ERR_SERVERFAULT;
+          return res_OPEN4.status;
+        }
 
       if (!nfs_open_owner_Get_Pointer(&owner_name, &powner))
-	{
-	  /* This open owner is not known yet, allocated and set up a new one */
-	  GET_PREALLOC(powner,
-		       data->pclient->pool_open_owner,
-		       data->pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
+        {
+          /* This open owner is not known yet, allocated and set up a new one */
+          GET_PREALLOC(powner,
+                       data->pclient->pool_open_owner,
+                       data->pclient->nb_pre_state_v4, cache_inode_open_owner_t, next);
 
-	  GET_PREALLOC(powner_name,
-		       data->pclient->pool_open_owner_name,
-		       data->pclient->nb_pre_state_v4,
-		       cache_inode_open_owner_name_t, next);
+          GET_PREALLOC(powner_name,
+                       data->pclient->pool_open_owner_name,
+                       data->pclient->nb_pre_state_v4,
+                       cache_inode_open_owner_name_t, next);
 
-	  if (powner == NULL || powner_name == NULL)
-	    {
-	      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-	      return res_OPEN4.status;
-	    }
+          if (powner == NULL || powner_name == NULL)
+            {
+              res_OPEN4.status = NFS4ERR_SERVERFAULT;
+              return res_OPEN4.status;
+            }
 
-	  memcpy((char *)powner_name, (char *)&owner_name,
-		 sizeof(cache_inode_open_owner_name_t));
+          memcpy((char *)powner_name, (char *)&owner_name,
+                 sizeof(cache_inode_open_owner_name_t));
 
-	  /* set up the content of the open_owner */
-	  powner->confirmed = FALSE;
-	  powner->seqid = 0;
-	  powner->related_owner = NULL;
-	  powner->next = NULL;
-	  powner->clientid = arg_OPEN4.owner.clientid;
-	  powner->owner_len = arg_OPEN4.owner.owner.owner_len;
-	  memcpy((char *)powner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val,
-		 arg_OPEN4.owner.owner.owner_len);
-	  powner->owner_val[powner->owner_len] = '\0';
+          /* set up the content of the open_owner */
+          powner->confirmed = FALSE;
+          powner->seqid = 0;
+          powner->related_owner = NULL;
+          powner->next = NULL;
+          powner->clientid = arg_OPEN4.owner.clientid;
+          powner->owner_len = arg_OPEN4.owner.owner.owner_len;
+          memcpy((char *)powner->owner_val, (char *)arg_OPEN4.owner.owner.owner_val,
+                 arg_OPEN4.owner.owner.owner_len);
+          powner->owner_val[powner->owner_len] = '\0';
 
-	  pthread_mutex_init(&powner->lock, NULL);
+          pthread_mutex_init(&powner->lock, NULL);
 
-	  if (!nfs_open_owner_Set(powner_name, powner))
-	    {
-	      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-	      return res_OPEN4.status;
-	    }
+          if (!nfs_open_owner_Set(powner_name, powner))
+            {
+              res_OPEN4.status = NFS4ERR_SERVERFAULT;
+              return res_OPEN4.status;
+            }
 
-	} else
-	{
+        } else
+        {
 #ifdef _FULL_DEBUG
-	  DisplayLogLevel(NIV_FULL_DEBUG,
-			  "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
-			  powner->owner_val, powner->seqid, arg_OPEN4.seqid);
+          DisplayLogLevel(NIV_FULL_DEBUG,
+                          "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
+                          powner->owner_val, powner->seqid, arg_OPEN4.seqid);
 #endif
 
-	  //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
-	  //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
+          //printf( "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u\n", 
+          //               powner->owner_val, powner->seqid, arg_OPEN4.seqid ) ;
 
-	  if (arg_OPEN4.seqid == 0)
-	    {
-	      DisplayLogLevel(NIV_DEBUG,
-			      "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
-	      powner->seqid = 0;
-	      powner->confirmed = FALSE;
-	    }
-	}
+          if (arg_OPEN4.seqid == 0)
+            {
+              DisplayLogLevel(NIV_DEBUG,
+                              "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
+              powner->seqid = 0;
+              powner->confirmed = FALSE;
+            }
+        }
 
       /* Status of parent directory before the operation */
       if ((cache_status = cache_inode_getattr(pentry_parent,
-					      &attr_parent,
-					      data->ht,
-					      data->pclient,
-					      data->pcontext,
-					      &cache_status)) != CACHE_INODE_SUCCESS)
-	{
-	  res_OPEN4.status = nfs4_Errno(cache_status);
-	  return res_OPEN4.status;
-	}
+                                              &attr_parent,
+                                              data->ht,
+                                              data->pclient,
+                                              data->pcontext,
+                                              &cache_status)) != CACHE_INODE_SUCCESS)
+        {
+          res_OPEN4.status = nfs4_Errno(cache_status);
+          return res_OPEN4.status;
+        }
       memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
       res_OPEN4.OPEN4res_u.resok4.cinfo.before =
-	  (changeid4) pentry_parent->internal_md.mod_time;
+          (changeid4) pentry_parent->internal_md.mod_time;
 
       /* CLient may have provided fattr4 to set attributes at creation time */
       if (arg_OPEN4.openhow.openflag4_u.how.mode == GUARDED4 ||
-	  arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
-	{
-	  if (arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
-	      attrmask.bitmap4_len != 0)
-	    {
-	      /* Convert fattr4 so nfs4_sattr */
-	      convrc =
-		  nfs4_Fattr_To_FSAL_attr(&sattr,
-					  &(arg_OPEN4.openhow.openflag4_u.
-					    how.createhow4_u.createattrs));
+          arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4)
+        {
+          if (arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.attrmask.
+              bitmap4_len != 0)
+            {
+              /* Convert fattr4 so nfs4_sattr */
+              convrc =
+                  nfs4_Fattr_To_FSAL_attr(&sattr,
+                                          &(arg_OPEN4.openhow.openflag4_u.how.
+                                            createhow4_u.createattrs));
 
-	      if (convrc == 0)
-		{
-		  res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
-		  return res_OPEN4.status;
-		}
+              if (convrc == 0)
+                {
+                  res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
+                  return res_OPEN4.status;
+                }
 
-	      if (convrc == -1)
-		{
-		  res_OPEN4.status = NFS4ERR_BADXDR;
-		  return res_OPEN4.status;
-		}
+              if (convrc == -1)
+                {
+                  res_OPEN4.status = NFS4ERR_BADXDR;
+                  return res_OPEN4.status;
+                }
 
-	      AttrProvided = TRUE;
-	    }
+              AttrProvided = TRUE;
+            }
 
-	}
+        }
 
       /* Second switch is based upon "openhow" */
       switch (arg_OPEN4.openhow.opentype)
-	{
-	case OPEN4_CREATE:
-	  /* a new file is to be created */
+        {
+        case OPEN4_CREATE:
+          /* a new file is to be created */
 
-	  /* Does a file with this name already exist ? */
-	  pentry_lookup = cache_inode_lookup(pentry_parent,
-					     &filename,
-					     &attr_newfile,
-					     data->ht,
-					     data->pclient,
-					     data->pcontext, &cache_status);
+          /* Does a file with this name already exist ? */
+          pentry_lookup = cache_inode_lookup(pentry_parent,
+                                             &filename,
+                                             &attr_newfile,
+                                             data->ht,
+                                             data->pclient,
+                                             data->pcontext, &cache_status);
 
-	  if (cache_status != CACHE_INODE_NOT_FOUND)
-	    {
-	      /* if open is UNCHECKED, return NFS4_OK (RFC3530 page 172) */
-	      if (arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4
-		  && (cache_status == CACHE_INODE_SUCCESS))
-		{
-		  /* If the file is opened for write, OPEN4 while deny share write access,
-		   * in this case, check caller has write access to the file */
-		  if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
-		    {
-		      if (cache_inode_access(pentry_lookup,
-					     FSAL_W_OK,
-					     data->ht,
-					     data->pclient,
-					     data->pcontext,
-					     &cache_status) != CACHE_INODE_SUCCESS)
-			{
-			  res_OPEN4.status = NFS4ERR_ACCESS;
-			  return res_OPEN4.status;
-			}
-		      openflags = FSAL_O_WRONLY;
-		    }
+          if (cache_status != CACHE_INODE_NOT_FOUND)
+            {
+              /* if open is UNCHECKED, return NFS4_OK (RFC3530 page 172) */
+              if (arg_OPEN4.openhow.openflag4_u.how.mode == UNCHECKED4
+                  && (cache_status == CACHE_INODE_SUCCESS))
+                {
+                  /* If the file is opened for write, OPEN4 while deny share write access,
+                   * in this case, check caller has write access to the file */
+                  if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
+                    {
+                      if (cache_inode_access(pentry_lookup,
+                                             FSAL_W_OK,
+                                             data->ht,
+                                             data->pclient,
+                                             data->pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
+                        {
+                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          return res_OPEN4.status;
+                        }
+                      openflags = FSAL_O_WRONLY;
+                    }
 
-		  /* Same check on read: check for readability of a file before opening it for read */
-		  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
-		    {
-		      if (cache_inode_access(pentry_lookup,
-					     FSAL_R_OK,
-					     data->ht,
-					     data->pclient,
-					     data->pcontext,
-					     &cache_status) != CACHE_INODE_SUCCESS)
-			{
-			  res_OPEN4.status = NFS4ERR_ACCESS;
-			  return res_OPEN4.status;
-			}
-		      openflags = FSAL_O_RDONLY;
-		    }
+                  /* Same check on read: check for readability of a file before opening it for read */
+                  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
+                    {
+                      if (cache_inode_access(pentry_lookup,
+                                             FSAL_R_OK,
+                                             data->ht,
+                                             data->pclient,
+                                             data->pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
+                        {
+                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          return res_OPEN4.status;
+                        }
+                      openflags = FSAL_O_RDONLY;
+                    }
 
-		  if (AttrProvided == TRUE)	/* Set the attribute if provided */
-		    {
-		      if ((cache_status = cache_inode_setattr(pentry_lookup,
-							      &sattr,
-							      data->ht,
-							      data->pclient,
-							      data->pcontext,
-							      &cache_status)) !=
-			  CACHE_INODE_SUCCESS)
-			{
-			  res_OPEN4.status = nfs4_Errno(cache_status);
-			  return res_OPEN4.status;
-			}
+                  if (AttrProvided == TRUE)     /* Set the attribute if provided */
+                    {
+                      if ((cache_status = cache_inode_setattr(pentry_lookup,
+                                                              &sattr,
+                                                              data->ht,
+                                                              data->pclient,
+                                                              data->pcontext,
+                                                              &cache_status)) !=
+                          CACHE_INODE_SUCCESS)
+                        {
+                          res_OPEN4.status = nfs4_Errno(cache_status);
+                          return res_OPEN4.status;
+                        }
 
-		      res_OPEN4.OPEN4res_u.resok4.attrset =
-			  arg_OPEN4.openhow.openflag4_u.how.createhow4_u.
-			  createattrs.attrmask;
-		    } else
-		    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
+                      res_OPEN4.OPEN4res_u.resok4.attrset =
+                          arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createattrs.
+                          attrmask;
+                    } else
+                    res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 
-		  /* Same check on write */
-		  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-		    {
-		      if (cache_inode_access(pentry_lookup,
-					     FSAL_W_OK,
-					     data->ht,
-					     data->pclient,
-					     data->pcontext,
-					     &cache_status) != CACHE_INODE_SUCCESS)
-			{
-			  res_OPEN4.status = NFS4ERR_ACCESS;
-			  return res_OPEN4.status;
-			}
-		      openflags = FSAL_O_RDWR;
-		    }
+                  /* Same check on write */
+                  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
+                    {
+                      if (cache_inode_access(pentry_lookup,
+                                             FSAL_W_OK,
+                                             data->ht,
+                                             data->pclient,
+                                             data->pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
+                        {
+                          res_OPEN4.status = NFS4ERR_ACCESS;
+                          return res_OPEN4.status;
+                        }
+                      openflags = FSAL_O_RDWR;
+                    }
 
-		  /* Set the state for the related file */
+                  /* Set the state for the related file */
 
-		  /* Prepare state management structure */
-		  candidate_type = CACHE_INODE_STATE_SHARE;
-		  candidate_data.share.share_deny = arg_OPEN4.share_deny;
-		  candidate_data.share.share_access = arg_OPEN4.share_access;
-		  candidate_data.share.lockheld = 0;
+                  /* Prepare state management structure */
+                  candidate_type = CACHE_INODE_STATE_SHARE;
+                  candidate_data.share.share_deny = arg_OPEN4.share_deny;
+                  candidate_data.share.share_access = arg_OPEN4.share_access;
+                  candidate_data.share.lockheld = 0;
 
-		  if (cache_inode_add_state(pentry_lookup,
-					    candidate_type,
-					    &candidate_data,
-					    powner,
-					    data->pclient,
-					    data->pcontext,
-					    &pfile_state,
-					    &cache_status) != CACHE_INODE_SUCCESS)
-		    {
-		      /* Seqid has to be incremented even in this case */
-		      P(powner->lock);
-		      powner->seqid += 1;
-		      V(powner->lock);
+                  if (cache_inode_add_state(pentry_lookup,
+                                            candidate_type,
+                                            &candidate_data,
+                                            powner,
+                                            data->pclient,
+                                            data->pcontext,
+                                            &pfile_state,
+                                            &cache_status) != CACHE_INODE_SUCCESS)
+                    {
+                      /* Seqid has to be incremented even in this case */
+                      P(powner->lock);
+                      powner->seqid += 1;
+                      V(powner->lock);
 
-		      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-		      return res_OPEN4.status;
-		    }
+                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                      return res_OPEN4.status;
+                    }
 
-		  /* Open the file */
-		  if (cache_inode_open_by_name(pentry_parent,
-					       &filename,
-					       pentry_lookup,
-					       data->pclient,
-					       openflags,
-					       data->pcontext,
-					       &cache_status) != CACHE_INODE_SUCCESS)
-		    {
-		      /* Seqid has to be incremented even in this case */
-		      P(powner->lock);
-		      powner->seqid += 1;
-		      V(powner->lock);
+                  /* Open the file */
+                  if (cache_inode_open_by_name(pentry_parent,
+                                               &filename,
+                                               pentry_lookup,
+                                               data->pclient,
+                                               openflags,
+                                               data->pcontext,
+                                               &cache_status) != CACHE_INODE_SUCCESS)
+                    {
+                      /* Seqid has to be incremented even in this case */
+                      P(powner->lock);
+                      powner->seqid += 1;
+                      V(powner->lock);
 
-		      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-		      res_OPEN4.status = NFS4ERR_ACCESS;
-		      return res_OPEN4.status;
-		    }
+                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                      res_OPEN4.status = NFS4ERR_ACCESS;
+                      return res_OPEN4.status;
+                    }
 
-		  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
-		  if ((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-		       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.
-					      attrset.bitmap4_len * sizeof(uint32_t))) ==
-		      NULL)
-		    {
-		      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-		      return res_OPEN4.status;
-		    }
+                  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+                  if ((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
+                       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                              bitmap4_len * sizeof(uint32_t))) == NULL)
+                    {
+                      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                      return res_OPEN4.status;
+                    }
 
-		  memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
-			 sizeof(changeid4));
-		  res_OPEN4.OPEN4res_u.resok4.cinfo.after =
-		      (changeid4) pentry_parent->internal_md.mod_time;
-		  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+                  memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
+                         sizeof(changeid4));
+                  res_OPEN4.OPEN4res_u.resok4.cinfo.after =
+                      (changeid4) pentry_parent->internal_md.mod_time;
+                  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
 
-		  res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->seqid;
-		  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
-			 pfile_state->stateid_other, 12);
+                  res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->seqid;
+                  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
+                         pfile_state->stateid_other, 12);
 
-		  /* No delegation */
-		  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
-		      OPEN_DELEGATE_NONE;
+                  /* No delegation */
+                  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
+                      OPEN_DELEGATE_NONE;
 
-		  /* If server use OPEN_CONFIRM4, set the correct flag */
-		  P(powner->lock);
-		  if (powner->confirmed == FALSE)
-		    {
-		      if (nfs_param.nfsv4_param.use_open_confirm == TRUE)
-			res_OPEN4.OPEN4res_u.resok4.rflags =
-			    OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
-			else
-			res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
-		    }
-		  V(powner->lock);
+                  /* If server use OPEN_CONFIRM4, set the correct flag */
+                  P(powner->lock);
+                  if (powner->confirmed == FALSE)
+                    {
+                      if (nfs_param.nfsv4_param.use_open_confirm == TRUE)
+                        res_OPEN4.OPEN4res_u.resok4.rflags =
+                            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+                        else
+                        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+                    }
+                  V(powner->lock);
 
 #ifdef _DEBUG_STATES
-		  nfs_State_PrintAll();
+                  nfs_State_PrintAll();
 #endif
 
-		  /* Now produce the filehandle to this file */
-		  if ((pnewfsal_handle =
-		       cache_inode_get_fsal_handle(pentry_lookup, &cache_status)) == NULL)
-		    {
-		      res_OPEN4.status = nfs4_Errno(cache_status);
-		      return res_OPEN4.status;
-		    }
+                  /* Now produce the filehandle to this file */
+                  if ((pnewfsal_handle =
+                       cache_inode_get_fsal_handle(pentry_lookup, &cache_status)) == NULL)
+                    {
+                      res_OPEN4.status = nfs4_Errno(cache_status);
+                      return res_OPEN4.status;
+                    }
 
-		  /* Allocation of a new file handle */
-		  if ((rc = nfs4_AllocateFH(&newfh4)) != NFS4_OK)
-		    {
-		      res_OPEN4.status = rc;
-		      return res_OPEN4.status;
-		    }
+                  /* Allocation of a new file handle */
+                  if ((rc = nfs4_AllocateFH(&newfh4)) != NFS4_OK)
+                    {
+                      res_OPEN4.status = rc;
+                      return res_OPEN4.status;
+                    }
 
-		  /* Building a new fh */
-		  if (!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
-		    {
-		      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-		      return res_OPEN4.status;
-		    }
+                  /* Building a new fh */
+                  if (!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
+                    {
+                      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                      return res_OPEN4.status;
+                    }
 
-		  /* This new fh replaces the current FH */
-		  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
-		  memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
-			 newfh4.nfs_fh4_len);
+                  /* This new fh replaces the current FH */
+                  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
+                  memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
+                         newfh4.nfs_fh4_len);
 
-		  data->current_entry = pentry_lookup;
-		  data->current_filetype = REGULAR_FILE;
+                  data->current_entry = pentry_lookup;
+                  data->current_filetype = REGULAR_FILE;
 
-		  res_OPEN4.status = NFS4_OK;
-		  return res_OPEN4.status;
-		}
+                  res_OPEN4.status = NFS4_OK;
+                  return res_OPEN4.status;
+                }
 
-	      /* if open is EXCLUSIVE, but verifier is the same, return NFS4_OK (RFC3530 page 173) */
-	      if (arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
-		{
-		  if ((pentry_lookup != NULL)
-		      && (pentry_lookup->internal_md.type == REGULAR_FILE))
-		    {
-		      pstate_found_iterate = NULL;
-		      pstate_previous_iterate = NULL;
+              /* if open is EXCLUSIVE, but verifier is the same, return NFS4_OK (RFC3530 page 173) */
+              if (arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
+                {
+                  if ((pentry_lookup != NULL)
+                      && (pentry_lookup->internal_md.type == REGULAR_FILE))
+                    {
+                      pstate_found_iterate = NULL;
+                      pstate_previous_iterate = NULL;
 
-		      do
-			{
-			  cache_inode_state_iterate(pentry_lookup,
-						    &pstate_found_iterate,
-						    pstate_previous_iterate,
-						    data->pclient,
-						    data->pcontext, &cache_status);
-			  if (cache_status == CACHE_INODE_STATE_ERROR)
-			    break;
+                      do
+                        {
+                          cache_inode_state_iterate(pentry_lookup,
+                                                    &pstate_found_iterate,
+                                                    pstate_previous_iterate,
+                                                    data->pclient,
+                                                    data->pcontext, &cache_status);
+                          if (cache_status == CACHE_INODE_STATE_ERROR)
+                            break;
 
-			  if (cache_status == CACHE_INODE_INVALID_ARGUMENT)
-			    {
-			      /* Seqid has to be incremented even in this case */
-			      P(powner->lock);
-			      powner->seqid += 1;
-			      V(powner->lock);
+                          if (cache_status == CACHE_INODE_INVALID_ARGUMENT)
+                            {
+                              /* Seqid has to be incremented even in this case */
+                              P(powner->lock);
+                              powner->seqid += 1;
+                              V(powner->lock);
 
-			      res_OPEN4.status = NFS4ERR_INVAL;
-			      return res_OPEN4.status;
-			    }
+                              res_OPEN4.status = NFS4ERR_INVAL;
+                              return res_OPEN4.status;
+                            }
 
-			  /* Check is open_owner is the same */
-			  if (pstate_found_iterate != NULL)
-			    {
-			      if ((pstate_found_iterate->state_type ==
-				   CACHE_INODE_STATE_SHARE)
-				  && !memcmp(arg_OPEN4.owner.owner.owner_val,
-					     pstate_found_iterate->powner->owner_val,
-					     pstate_found_iterate->powner->owner_len)
-				  && !memcmp(pstate_found_iterate->state_data.
-					     share.oexcl_verifier,
-					     arg_OPEN4.openhow.openflag4_u.
-					     how.createhow4_u.createverf,
-					     NFS4_VERIFIER_SIZE))
-				{
+                          /* Check is open_owner is the same */
+                          if (pstate_found_iterate != NULL)
+                            {
+                              if ((pstate_found_iterate->state_type ==
+                                   CACHE_INODE_STATE_SHARE)
+                                  && !memcmp(arg_OPEN4.owner.owner.owner_val,
+                                             pstate_found_iterate->powner->owner_val,
+                                             pstate_found_iterate->powner->owner_len)
+                                  && !memcmp(pstate_found_iterate->state_data.share.
+                                             oexcl_verifier,
+                                             arg_OPEN4.openhow.openflag4_u.how.
+                                             createhow4_u.createverf, NFS4_VERIFIER_SIZE))
+                                {
 
-				  /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
-				  res_OPEN4.OPEN4res_u.resok4.stateid.seqid =
-				      pstate_found_iterate->seqid;
-				  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
-					 pstate_found_iterate->stateid_other, 12);
+                                  /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
+                                  res_OPEN4.OPEN4res_u.resok4.stateid.seqid =
+                                      pstate_found_iterate->seqid;
+                                  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
+                                         pstate_found_iterate->stateid_other, 12);
 
-				  // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
-				  //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
-				  //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
-				  // {
-				  //          res_OPEN4.status = NFS4ERR_SERVERFAULT ;
-				  //          return res_OPEN4.status ;
-				  //       }
+                                  // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
+                                  //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
+                                  //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
+                                  // {
+                                  //          res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+                                  //          return res_OPEN4.status ;
+                                  //       }
 
-				  memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
-					 sizeof(changeid4));
-				  res_OPEN4.OPEN4res_u.resok4.cinfo.after =
-				      (changeid4) pentry_parent->internal_md.mod_time;
-				  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+                                  memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
+                                         sizeof(changeid4));
+                                  res_OPEN4.OPEN4res_u.resok4.cinfo.after =
+                                      (changeid4) pentry_parent->internal_md.mod_time;
+                                  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
 
-				  /* No delegation */
-				  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
-				      OPEN_DELEGATE_NONE;
+                                  /* No delegation */
+                                  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
+                                      OPEN_DELEGATE_NONE;
 
-				  /* If server use OPEN_CONFIRM4, set the correct flag */
-				  P(powner->lock);
-				  if (powner->confirmed == FALSE)
-				    {
-				      if (nfs_param.nfsv4_param.use_open_confirm == TRUE)
-					res_OPEN4.OPEN4res_u.resok4.rflags =
-					    OPEN4_RESULT_CONFIRM +
-					    OPEN4_RESULT_LOCKTYPE_POSIX;
-					else
-					res_OPEN4.OPEN4res_u.resok4.rflags =
-					    OPEN4_RESULT_LOCKTYPE_POSIX;
-				    }
-				  V(powner->lock);
+                                  /* If server use OPEN_CONFIRM4, set the correct flag */
+                                  P(powner->lock);
+                                  if (powner->confirmed == FALSE)
+                                    {
+                                      if (nfs_param.nfsv4_param.use_open_confirm == TRUE)
+                                        res_OPEN4.OPEN4res_u.resok4.rflags =
+                                            OPEN4_RESULT_CONFIRM +
+                                            OPEN4_RESULT_LOCKTYPE_POSIX;
+                                        else
+                                        res_OPEN4.OPEN4res_u.resok4.rflags =
+                                            OPEN4_RESULT_LOCKTYPE_POSIX;
+                                    }
+                                  V(powner->lock);
 
-				  /* Now produce the filehandle to this file */
-				  if ((pnewfsal_handle =
-				       cache_inode_get_fsal_handle(pentry_lookup,
-								   &cache_status)) ==
-				      NULL)
-				    {
-				      res_OPEN4.status = nfs4_Errno(cache_status);
-				      return res_OPEN4.status;
-				    }
+                                  /* Now produce the filehandle to this file */
+                                  if ((pnewfsal_handle =
+                                       cache_inode_get_fsal_handle(pentry_lookup,
+                                                                   &cache_status)) ==
+                                      NULL)
+                                    {
+                                      res_OPEN4.status = nfs4_Errno(cache_status);
+                                      return res_OPEN4.status;
+                                    }
 
-				  /* Allocation of a new file handle */
-				  if ((rc = nfs4_AllocateFH(&newfh4)) != NFS4_OK)
-				    {
-				      res_OPEN4.status = rc;
-				      return res_OPEN4.status;
-				    }
+                                  /* Allocation of a new file handle */
+                                  if ((rc = nfs4_AllocateFH(&newfh4)) != NFS4_OK)
+                                    {
+                                      res_OPEN4.status = rc;
+                                      return res_OPEN4.status;
+                                    }
 
-				  /* Building a new fh */
-				  if (!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
-				    {
-				      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-				      return res_OPEN4.status;
-				    }
+                                  /* Building a new fh */
+                                  if (!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
+                                    {
+                                      res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                                      return res_OPEN4.status;
+                                    }
 
-				  /* This new fh replaces the current FH */
-				  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
-				  memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
-					 newfh4.nfs_fh4_len);
+                                  /* This new fh replaces the current FH */
+                                  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
+                                  memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
+                                         newfh4.nfs_fh4_len);
 
-				  data->current_entry = pentry_lookup;
-				  data->current_filetype = REGULAR_FILE;
+                                  data->current_entry = pentry_lookup;
+                                  data->current_filetype = REGULAR_FILE;
 
-				  /* regular exit */
-				  res_OPEN4.status = NFS4_OK;
-				  return res_OPEN4.status;
-				}
+                                  /* regular exit */
+                                  res_OPEN4.status = NFS4_OK;
+                                  return res_OPEN4.status;
+                                }
 
-			    }
-			  /* if( pstate_found_iterate != NULL ) */
-			  pstate_previous_iterate = pstate_found_iterate;
-			}
-		      while (pstate_found_iterate != NULL);
-		    }
-		}
+                            }
+                          /* if( pstate_found_iterate != NULL ) */
+                          pstate_previous_iterate = pstate_found_iterate;
+                        }
+                      while (pstate_found_iterate != NULL);
+                    }
+                }
 
-	      /* Managing GUARDED4 mode */
-	      if (cache_status != CACHE_INODE_SUCCESS)
-		res_OPEN4.status = nfs4_Errno(cache_status);
-		else
-		res_OPEN4.status = NFS4ERR_EXIST;	/* File already exists */
-	      return res_OPEN4.status;
-	    }
+              /* Managing GUARDED4 mode */
+              if (cache_status != CACHE_INODE_SUCCESS)
+                res_OPEN4.status = nfs4_Errno(cache_status);
+                else
+                res_OPEN4.status = NFS4ERR_EXIST;       /* File already exists */
+              return res_OPEN4.status;
+            }
 
-	  /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
+          /*  if( cache_status != CACHE_INODE_NOT_FOUND ), if file already exists basically */
 #ifdef _DEBUG_NFS_V4
-	  printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
+          printf("    OPEN open.how = %d\n", arg_OPEN4.openhow.openflag4_u.how.mode);
 #endif
 
-	  /* Create the file, if we reach this point, it does not exist, we can create it */
-	  if ((pentry_newfile = cache_inode_create(pentry_parent,
-						   &filename,
-						   REGULAR_FILE,
-						   mode,
-						   NULL,
-						   &attr_newfile,
-						   data->ht,
-						   data->pclient,
-						   data->pcontext,
-						   &cache_status)) == NULL)
-	    {
-	      /* If the file already exists, this is not an error if open mode is UNCHECKED */
-	      if (cache_status != CACHE_INODE_ENTRY_EXISTS)
-		{
-		  res_OPEN4.status = nfs4_Errno(cache_status);
-		  return res_OPEN4.status;
-		} else
-		{
-		  /* If this point is reached, then the file already exists, cache_status == CACHE_INODE_ENTRY_EXISTS and pentry_newfile == NULL 
-		     This probably means EXCLUSIVE4 mode is used and verifier matches. pentry_newfile is then set to pentry_lookup */
-		  pentry_newfile = pentry_lookup;
-		}
-	    }
+          /* Create the file, if we reach this point, it does not exist, we can create it */
+          if ((pentry_newfile = cache_inode_create(pentry_parent,
+                                                   &filename,
+                                                   REGULAR_FILE,
+                                                   mode,
+                                                   NULL,
+                                                   &attr_newfile,
+                                                   data->ht,
+                                                   data->pclient,
+                                                   data->pcontext,
+                                                   &cache_status)) == NULL)
+            {
+              /* If the file already exists, this is not an error if open mode is UNCHECKED */
+              if (cache_status != CACHE_INODE_ENTRY_EXISTS)
+                {
+                  res_OPEN4.status = nfs4_Errno(cache_status);
+                  return res_OPEN4.status;
+                } else
+                {
+                  /* If this point is reached, then the file already exists, cache_status == CACHE_INODE_ENTRY_EXISTS and pentry_newfile == NULL 
+                     This probably means EXCLUSIVE4 mode is used and verifier matches. pentry_newfile is then set to pentry_lookup */
+                  pentry_newfile = pentry_lookup;
+                }
+            }
 
-	  /* Prepare state management structure */
-	  candidate_type = CACHE_INODE_STATE_SHARE;
-	  candidate_data.share.share_deny = arg_OPEN4.share_deny;
-	  candidate_data.share.share_access = arg_OPEN4.share_access;
-	  candidate_data.share.lockheld = 0;
+          /* Prepare state management structure */
+          candidate_type = CACHE_INODE_STATE_SHARE;
+          candidate_data.share.share_deny = arg_OPEN4.share_deny;
+          candidate_data.share.share_access = arg_OPEN4.share_access;
+          candidate_data.share.lockheld = 0;
 
-	  /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
-	  if (arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
-	    {
-	      strncpy(candidate_data.share.oexcl_verifier,
-		      arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf,
-		      NFS4_VERIFIER_SIZE);
-	    }
+          /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
+          if (arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
+            {
+              strncpy(candidate_data.share.oexcl_verifier,
+                      arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf,
+                      NFS4_VERIFIER_SIZE);
+            }
 
-	  if (cache_inode_add_state(pentry_newfile,
-				    candidate_type,
-				    &candidate_data,
-				    powner,
-				    data->pclient,
-				    data->pcontext,
-				    &pfile_state, &cache_status) != CACHE_INODE_SUCCESS)
-	    {
-	      /* Seqid has to be incremented even in this case */
-	      P(powner->lock);
-	      powner->seqid += 1;
-	      V(powner->lock);
+          if (cache_inode_add_state(pentry_newfile,
+                                    candidate_type,
+                                    &candidate_data,
+                                    powner,
+                                    data->pclient,
+                                    data->pcontext,
+                                    &pfile_state, &cache_status) != CACHE_INODE_SUCCESS)
+            {
+              /* Seqid has to be incremented even in this case */
+              P(powner->lock);
+              powner->seqid += 1;
+              V(powner->lock);
 
-	      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-	      return res_OPEN4.status;
-	    }
+              res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+              return res_OPEN4.status;
+            }
 
-	  if (AttrProvided == TRUE)	/* Set the attribute if provided */
-	    {
-	      if ((cache_status = cache_inode_setattr(pentry_newfile,
-						      &sattr,
-						      data->ht,
-						      data->pclient,
-						      data->pcontext,
-						      &cache_status)) !=
-		  CACHE_INODE_SUCCESS)
-		{
-		  res_OPEN4.status = nfs4_Errno(cache_status);
-		  return res_OPEN4.status;
-		}
+          if (AttrProvided == TRUE)     /* Set the attribute if provided */
+            {
+              if ((cache_status = cache_inode_setattr(pentry_newfile,
+                                                      &sattr,
+                                                      data->ht,
+                                                      data->pclient,
+                                                      data->pcontext,
+                                                      &cache_status)) !=
+                  CACHE_INODE_SUCCESS)
+                {
+                  res_OPEN4.status = nfs4_Errno(cache_status);
+                  return res_OPEN4.status;
+                }
 
-	    }
+            }
 
-	  /* Set the openflags variable */
-	  if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
-	    openflags |= FSAL_O_RDONLY;
-	  if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_READ)
-	    openflags |= FSAL_O_WRONLY;
-	  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-	    openflags = FSAL_O_RDWR;
-	  if (arg_OPEN4.share_access != 0)
-	    openflags = FSAL_O_RDWR;	/* @todo : BUGAZOMEU : Something better later */
+          /* Set the openflags variable */
+          if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
+            openflags |= FSAL_O_RDONLY;
+          if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_READ)
+            openflags |= FSAL_O_WRONLY;
+          if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
+            openflags = FSAL_O_RDWR;
+          if (arg_OPEN4.share_access != 0)
+            openflags = FSAL_O_RDWR;    /* @todo : BUGAZOMEU : Something better later */
 
-	  /* Open the file */
-	  if (cache_inode_open_by_name(pentry_parent,
-				       &filename,
-				       pentry_newfile,
-				       data->pclient,
-				       openflags,
-				       data->pcontext,
-				       &cache_status) != CACHE_INODE_SUCCESS)
-	    {
-	      /* Seqid has to be incremented even in this case */
-	      P(powner->lock);
-	      powner->seqid += 1;
-	      V(powner->lock);
+          /* Open the file */
+          if (cache_inode_open_by_name(pentry_parent,
+                                       &filename,
+                                       pentry_newfile,
+                                       data->pclient,
+                                       openflags,
+                                       data->pcontext,
+                                       &cache_status) != CACHE_INODE_SUCCESS)
+            {
+              /* Seqid has to be incremented even in this case */
+              P(powner->lock);
+              powner->seqid += 1;
+              V(powner->lock);
 
-	      res_OPEN4.status = NFS4ERR_ACCESS;
-	      return res_OPEN4.status;
-	    }
+              res_OPEN4.status = NFS4ERR_ACCESS;
+              return res_OPEN4.status;
+            }
 
-	  break;
+          break;
 
-	case OPEN4_NOCREATE:
-	  /* It was not a creation, but a regular open */
-	  /* The filehandle to the new file replaces the current filehandle */
-	  if (pentry_newfile == NULL)
-	    {
-	      if ((pentry_newfile = cache_inode_lookup(pentry_parent,
-						       &filename,
-						       &attr_newfile,
-						       data->ht,
-						       data->pclient,
-						       data->pcontext,
-						       &cache_status)) == NULL)
-		{
-		  res_OPEN4.status = nfs4_Errno(cache_status);
-		  return res_OPEN4.status;
-		}
-	    }
+        case OPEN4_NOCREATE:
+          /* It was not a creation, but a regular open */
+          /* The filehandle to the new file replaces the current filehandle */
+          if (pentry_newfile == NULL)
+            {
+              if ((pentry_newfile = cache_inode_lookup(pentry_parent,
+                                                       &filename,
+                                                       &attr_newfile,
+                                                       data->ht,
+                                                       data->pclient,
+                                                       data->pcontext,
+                                                       &cache_status)) == NULL)
+                {
+                  res_OPEN4.status = nfs4_Errno(cache_status);
+                  return res_OPEN4.status;
+                }
+            }
 
-	  /* OPEN4 is to be done on a file */
-	  if (pentry_newfile->internal_md.type != REGULAR_FILE)
-	    {
-	      if (pentry_newfile->internal_md.type == DIR_BEGINNING
-		  || pentry_newfile->internal_md.type == DIR_CONTINUE)
-		{
-		  res_OPEN4.status = NFS4ERR_ISDIR;
-		  return res_OPEN4.status;
-	      } else if (pentry_newfile->internal_md.type == SYMBOLIC_LINK)
-		{
-		  res_OPEN4.status = NFS4ERR_SYMLINK;
-		  return res_OPEN4.status;
-		} else
-		{
-		  res_OPEN4.status = NFS4ERR_INVAL;
-		  return res_OPEN4.status;
-		}
-	    }
+          /* OPEN4 is to be done on a file */
+          if (pentry_newfile->internal_md.type != REGULAR_FILE)
+            {
+              if (pentry_newfile->internal_md.type == DIR_BEGINNING
+                  || pentry_newfile->internal_md.type == DIR_CONTINUE)
+                {
+                  res_OPEN4.status = NFS4ERR_ISDIR;
+                  return res_OPEN4.status;
+              } else if (pentry_newfile->internal_md.type == SYMBOLIC_LINK)
+                {
+                  res_OPEN4.status = NFS4ERR_SYMLINK;
+                  return res_OPEN4.status;
+                } else
+                {
+                  res_OPEN4.status = NFS4ERR_INVAL;
+                  return res_OPEN4.status;
+                }
+            }
 
-	  /* If the file is opened for write, OPEN4 while deny share write access,
-	   * in this case, check caller has write access to the file */
-	  if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
-	    {
-	      if (cache_inode_access(pentry_newfile,
-				     FSAL_W_OK,
-				     data->ht,
-				     data->pclient,
-				     data->pcontext,
-				     &cache_status) != CACHE_INODE_SUCCESS)
-		{
-		  res_OPEN4.status = NFS4ERR_ACCESS;
-		  return res_OPEN4.status;
-		}
-	      openflags = FSAL_O_WRONLY;
-	    }
+          /* If the file is opened for write, OPEN4 while deny share write access,
+           * in this case, check caller has write access to the file */
+          if (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
+            {
+              if (cache_inode_access(pentry_newfile,
+                                     FSAL_W_OK,
+                                     data->ht,
+                                     data->pclient,
+                                     data->pcontext,
+                                     &cache_status) != CACHE_INODE_SUCCESS)
+                {
+                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  return res_OPEN4.status;
+                }
+              openflags = FSAL_O_WRONLY;
+            }
 
-	  /* Same check on read: check for readability of a file before opening it for read */
-	  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
-	    {
-	      if (cache_inode_access(pentry_newfile,
-				     FSAL_R_OK,
-				     data->ht,
-				     data->pclient,
-				     data->pcontext,
-				     &cache_status) != CACHE_INODE_SUCCESS)
-		{
-		  res_OPEN4.status = NFS4ERR_ACCESS;
-		  return res_OPEN4.status;
-		}
-	      openflags = FSAL_O_RDONLY;
-	    }
+          /* Same check on read: check for readability of a file before opening it for read */
+          if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
+            {
+              if (cache_inode_access(pentry_newfile,
+                                     FSAL_R_OK,
+                                     data->ht,
+                                     data->pclient,
+                                     data->pcontext,
+                                     &cache_status) != CACHE_INODE_SUCCESS)
+                {
+                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  return res_OPEN4.status;
+                }
+              openflags = FSAL_O_RDONLY;
+            }
 
-	  /* Same check on write */
-	  if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-	    {
-	      if (cache_inode_access(pentry_newfile,
-				     FSAL_W_OK,
-				     data->ht,
-				     data->pclient,
-				     data->pcontext,
-				     &cache_status) != CACHE_INODE_SUCCESS)
-		{
-		  res_OPEN4.status = NFS4ERR_ACCESS;
-		  return res_OPEN4.status;
-		}
-	      openflags = FSAL_O_RDWR;
-	    }
+          /* Same check on write */
+          if (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
+            {
+              if (cache_inode_access(pentry_newfile,
+                                     FSAL_W_OK,
+                                     data->ht,
+                                     data->pclient,
+                                     data->pcontext,
+                                     &cache_status) != CACHE_INODE_SUCCESS)
+                {
+                  res_OPEN4.status = NFS4ERR_ACCESS;
+                  return res_OPEN4.status;
+                }
+              openflags = FSAL_O_RDWR;
+            }
 #ifdef WITH_MODE_0_CHECK
-	  /* If file mode is 000 then NFS4ERR_ACCESS should be returned for all cases and users */
-	  if (attr_newfile.mode == 0)
-	    {
-	      res_OPEN4.status = NFS4ERR_ACCESS;
-	      return res_OPEN4.status;
-	    }
+          /* If file mode is 000 then NFS4ERR_ACCESS should be returned for all cases and users */
+          if (attr_newfile.mode == 0)
+            {
+              res_OPEN4.status = NFS4ERR_ACCESS;
+              return res_OPEN4.status;
+            }
 #endif
 
-	  /* Try to find if the same open_owner already has acquired a stateid for this file */
-	  pstate_found_iterate = NULL;
-	  pstate_previous_iterate = NULL;
-	  do
-	    {
-	      cache_inode_state_iterate(pentry_newfile,
-					&pstate_found_iterate,
-					pstate_previous_iterate,
-					data->pclient, data->pcontext, &cache_status);
-	      if (cache_status == CACHE_INODE_STATE_ERROR)
-		break;		/* Get out of the loop */
+          /* Try to find if the same open_owner already has acquired a stateid for this file */
+          pstate_found_iterate = NULL;
+          pstate_previous_iterate = NULL;
+          do
+            {
+              cache_inode_state_iterate(pentry_newfile,
+                                        &pstate_found_iterate,
+                                        pstate_previous_iterate,
+                                        data->pclient, data->pcontext, &cache_status);
+              if (cache_status == CACHE_INODE_STATE_ERROR)
+                break;          /* Get out of the loop */
 
-	      if (cache_status == CACHE_INODE_INVALID_ARGUMENT)
-		{
-		  res_OPEN4.status = NFS4ERR_INVAL;
-		  return res_OPEN4.status;
-		}
+              if (cache_status == CACHE_INODE_INVALID_ARGUMENT)
+                {
+                  res_OPEN4.status = NFS4ERR_INVAL;
+                  return res_OPEN4.status;
+                }
 
-	      /* Check is open_owner is the same */
-	      if (pstate_found_iterate != NULL)
-		{
-		  if ((pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE) &&
-		      (pstate_found_iterate->powner->clientid == arg_OPEN4.owner.clientid)
-		      &&
-		      ((pstate_found_iterate->powner->owner_len ==
-			arg_OPEN4.owner.owner.owner_len)
-		       &&
-		       (!memcmp
-			(arg_OPEN4.owner.owner.owner_val,
-			 pstate_found_iterate->powner->owner_val,
-			 pstate_found_iterate->powner->owner_len))))
-		    {
-		      /* We'll be re-using the found state */
-		      pstate_found_same_owner = pstate_found_iterate;
-		    } else
-		    {
+              /* Check is open_owner is the same */
+              if (pstate_found_iterate != NULL)
+                {
+                  if ((pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE) &&
+                      (pstate_found_iterate->powner->clientid == arg_OPEN4.owner.clientid)
+                      &&
+                      ((pstate_found_iterate->powner->owner_len ==
+                        arg_OPEN4.owner.owner.owner_len)
+                       &&
+                       (!memcmp
+                        (arg_OPEN4.owner.owner.owner_val,
+                         pstate_found_iterate->powner->owner_val,
+                         pstate_found_iterate->powner->owner_len))))
+                    {
+                      /* We'll be re-using the found state */
+                      pstate_found_same_owner = pstate_found_iterate;
+                    } else
+                    {
 
-		      /* This is a different owner, check for possible conflicts */
+                      /* This is a different owner, check for possible conflicts */
 
-		      if (memcmp(arg_OPEN4.owner.owner.owner_val,
-				 pstate_found_iterate->powner->owner_val,
-				 pstate_found_iterate->powner->owner_len))
-			{
-			  switch (pstate_found_iterate->state_type)
-			    {
-			    case CACHE_INODE_STATE_SHARE:
-			      if ((pstate_found_iterate->state_data.
-				   share.share_access & OPEN4_SHARE_ACCESS_WRITE)
-				  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
-				{
-				  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-				  return res_OPEN4.status;
-				}
+                      if (memcmp(arg_OPEN4.owner.owner.owner_val,
+                                 pstate_found_iterate->powner->owner_val,
+                                 pstate_found_iterate->powner->owner_len))
+                        {
+                          switch (pstate_found_iterate->state_type)
+                            {
+                            case CACHE_INODE_STATE_SHARE:
+                              if ((pstate_found_iterate->state_data.share.
+                                   share_access & OPEN4_SHARE_ACCESS_WRITE)
+                                  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
+                                {
+                                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                                  return res_OPEN4.status;
+                                }
 
-			      break;
-			    }
-			}
+                              break;
+                            }
+                        }
 
-		    }
+                    }
 
-		  /* In all cases opening in read access a read denied file or write access to a write denied file 
-		   * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9 */
-		  if (pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
-		    {
-		      /* deny read access on read denied file */
-		      if ((pstate_found_iterate->state_data.
-			   share.share_deny & OPEN4_SHARE_DENY_READ)
-			  && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
-			{
-			  /* Seqid has to be incremented even in this case */
-			  P(powner->lock);
-			  powner->seqid += 1;
-			  V(powner->lock);
+                  /* In all cases opening in read access a read denied file or write access to a write denied file 
+                   * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9 */
+                  if (pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
+                    {
+                      /* deny read access on read denied file */
+                      if ((pstate_found_iterate->state_data.share.
+                           share_deny & OPEN4_SHARE_DENY_READ)
+                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
+                        {
+                          /* Seqid has to be incremented even in this case */
+                          P(powner->lock);
+                          powner->seqid += 1;
+                          V(powner->lock);
 
-			  powner->seqid += 1;
-			  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-			  return res_OPEN4.status;
-			}
+                          powner->seqid += 1;
+                          res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                          return res_OPEN4.status;
+                        }
 
-		      /* deny write access on write denied file */
-		      if ((pstate_found_iterate->state_data.
-			   share.share_deny & OPEN4_SHARE_DENY_WRITE)
-			  && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
-			{
-			  /* Seqid has to be incremented even in this case */
-			  P(powner->lock);
-			  powner->seqid += 1;
-			  V(powner->lock);
+                      /* deny write access on write denied file */
+                      if ((pstate_found_iterate->state_data.share.
+                           share_deny & OPEN4_SHARE_DENY_WRITE)
+                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
+                        {
+                          /* Seqid has to be incremented even in this case */
+                          P(powner->lock);
+                          powner->seqid += 1;
+                          V(powner->lock);
 
-			  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-			  return res_OPEN4.status;
-			}
+                          res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                          return res_OPEN4.status;
+                        }
 
-		    }
+                    }
 
-		}
-	      /*  if( pstate_found_iterate != NULL ) */
-	      pstate_previous_iterate = pstate_found_iterate;
-	    }
-	  while (pstate_found_iterate != NULL);
+                }
+              /*  if( pstate_found_iterate != NULL ) */
+              pstate_previous_iterate = pstate_found_iterate;
+            }
+          while (pstate_found_iterate != NULL);
 
-	  if (pstate_found_same_owner != NULL)
-	    {
-	      pfile_state = pstate_found_same_owner;
-	      pfile_state->seqid += 1;
-	    } else
-	    {
-	      /* Set the state for the related file */
-	      /* Prepare state management structure */
-	      candidate_type = CACHE_INODE_STATE_SHARE;
-	      candidate_data.share.share_deny = arg_OPEN4.share_deny;
-	      candidate_data.share.share_access = arg_OPEN4.share_access;
-	      candidate_data.share.lockheld = 0;
+          if (pstate_found_same_owner != NULL)
+            {
+              pfile_state = pstate_found_same_owner;
+              pfile_state->seqid += 1;
+            } else
+            {
+              /* Set the state for the related file */
+              /* Prepare state management structure */
+              candidate_type = CACHE_INODE_STATE_SHARE;
+              candidate_data.share.share_deny = arg_OPEN4.share_deny;
+              candidate_data.share.share_access = arg_OPEN4.share_access;
+              candidate_data.share.lockheld = 0;
 
-	      if (cache_inode_add_state(pentry_newfile,
-					candidate_type,
-					&candidate_data,
-					powner,
-					data->pclient,
-					data->pcontext,
-					&pfile_state,
-					&cache_status) != CACHE_INODE_SUCCESS)
-		{
-		  /* Seqid has to be incremented even in this case */
-		  P(powner->lock);
-		  powner->seqid += 1;
-		  V(powner->lock);
+              if (cache_inode_add_state(pentry_newfile,
+                                        candidate_type,
+                                        &candidate_data,
+                                        powner,
+                                        data->pclient,
+                                        data->pcontext,
+                                        &pfile_state,
+                                        &cache_status) != CACHE_INODE_SUCCESS)
+                {
+                  /* Seqid has to be incremented even in this case */
+                  P(powner->lock);
+                  powner->seqid += 1;
+                  V(powner->lock);
 
-		  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-		  return res_OPEN4.status;
-		}
-	    }
+                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                  return res_OPEN4.status;
+                }
+            }
 
-	  /* Open the file */
-	  if (cache_inode_open_by_name(pentry_parent,
-				       &filename,
-				       pentry_newfile,
-				       data->pclient,
-				       openflags,
-				       data->pcontext,
-				       &cache_status) != CACHE_INODE_SUCCESS)
-	    {
-	      /* Seqid has to be incremented even in this case */
-	      P(powner->lock);
-	      powner->seqid += 1;
-	      V(powner->lock);
+          /* Open the file */
+          if (cache_inode_open_by_name(pentry_parent,
+                                       &filename,
+                                       pentry_newfile,
+                                       data->pclient,
+                                       openflags,
+                                       data->pcontext,
+                                       &cache_status) != CACHE_INODE_SUCCESS)
+            {
+              /* Seqid has to be incremented even in this case */
+              P(powner->lock);
+              powner->seqid += 1;
+              V(powner->lock);
 
-	      res_OPEN4.status = NFS4ERR_ACCESS;
-	      return res_OPEN4.status;
-	    }
-	  break;
+              res_OPEN4.status = NFS4ERR_ACCESS;
+              return res_OPEN4.status;
+            }
+          break;
 
-	default:
-	  /* Seqid has to be incremented even in this case */
-	  if (powner != NULL)
-	    {
-	      P(powner->lock);
-	      powner->seqid += 1;
-	      V(powner->lock);
-	    }
+        default:
+          /* Seqid has to be incremented even in this case */
+          if (powner != NULL)
+            {
+              P(powner->lock);
+              powner->seqid += 1;
+              V(powner->lock);
+            }
 
-	  res_OPEN4.status = NFS4ERR_INVAL;
-	  return res_OPEN4.status;
-	  break;
-	}			/* switch( arg_OPEN4.openhow.opentype ) */
+          res_OPEN4.status = NFS4ERR_INVAL;
+          return res_OPEN4.status;
+          break;
+        }                       /* switch( arg_OPEN4.openhow.opentype ) */
 
       break;
 
@@ -1179,16 +1176,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     default:
       /* Seqid has to be incremented even in this case */
       if (powner != NULL)
-	{
-	  P(powner->lock);
-	  powner->seqid += 1;
-	  V(powner->lock);
-	}
+        {
+          P(powner->lock);
+          powner->seqid += 1;
+          V(powner->lock);
+        }
 
       res_OPEN4.status = NFS4ERR_INVAL;
       return res_OPEN4.status;
       break;
-    }				/*  switch(  arg_OPEN4.claim.claim ) */
+    }                           /*  switch(  arg_OPEN4.claim.claim ) */
 
   /* Now produce the filehandle to this file */
   if ((pnewfsal_handle =
@@ -1224,11 +1221,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* Status of parent directory after the operation */
   if ((cache_status = cache_inode_getattr(pentry_parent,
-					  &attr_parent,
-					  data->ht,
-					  data->pclient,
-					  data->pcontext,
-					  &cache_status)) != CACHE_INODE_SUCCESS)
+                                          &attr_parent,
+                                          data->ht,
+                                          data->pclient,
+                                          data->pcontext,
+                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_OPEN4.status = nfs4_Errno(cache_status);
       return res_OPEN4.status;
@@ -1237,13 +1234,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
   if ((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
        (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len *
-			      sizeof(uint32_t))) == NULL)
+                              sizeof(uint32_t))) == NULL)
     {
       res_OPEN4.status = NFS4ERR_SERVERFAULT;
       return res_OPEN4.status;
     }
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0;	/* No Attributes set */
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1] = 0;	/* No Attributes set */
+  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0;       /* No Attributes set */
+  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1] = 0;       /* No Attributes set */
 
   if (arg_OPEN4.openhow.opentype == OPEN4_CREATE)
     {
@@ -1268,10 +1265,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if (powner->confirmed == FALSE)
     {
       if (nfs_param.nfsv4_param.use_open_confirm == TRUE)
-	res_OPEN4.OPEN4res_u.resok4.rflags =
-	    OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
-	else
-	res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+        res_OPEN4.OPEN4res_u.resok4.rflags =
+            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+        else
+        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
     }
 #ifdef _DEBUG_STATES
   nfs_State_PrintAll();
@@ -1280,7 +1277,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* regular exit */
   res_OPEN4.status = NFS4_OK;
   return res_OPEN4.status;
-}				/* nfs4_op_open */
+}                               /* nfs4_op_open */
 
 /**
  * nfs4_op_open_Free: frees what was allocared to handle nfs4_op_open.
@@ -1298,4 +1295,4 @@ void nfs4_op_open_Free(OPEN4res * resp)
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 
   return;
-}				/* nfs4_op_open_Free */
+}                               /* nfs4_op_open_Free */

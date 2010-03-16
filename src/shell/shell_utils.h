@@ -32,48 +32,48 @@
 
 /** Timer management. */
 
-int util_timer(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_timer(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** System utils. */
 
-int util_sleep(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_sleep(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
-int util_shell(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_shell(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
-int util_meminfo(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int util_meminfo(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** String utils */
 
-int util_cmp(int argc,		/* IN : number of args in argv */
-	     char **argv,	/* IN : arg list               */
-	     FILE * output	/* IN : output stream          */
+int util_cmp(int argc,          /* IN : number of args in argv */
+             char **argv,       /* IN : arg list               */
+             FILE * output      /* IN : output stream          */
     );
 
-int util_diff(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output	/* IN : output stream          */
+int util_diff(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output     /* IN : output stream          */
     );
 
-int util_wc(int argc,		/* IN : number of args in argv */
-	    char **argv,	/* IN : arg list               */
-	    FILE * output	/* IN : output stream          */
+int util_wc(int argc,           /* IN : number of args in argv */
+            char **argv,        /* IN : arg list               */
+            FILE * output       /* IN : output stream          */
     );
 
-int util_chomp(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_chomp(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /*----------------------------------*

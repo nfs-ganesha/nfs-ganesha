@@ -19,10 +19,10 @@
 #include "fsal_internal.h"
 #include "fsal_convertions.h"
 
-fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,	/* IN */
-			  fsal_name_t * p_object_name,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_attrib_list_t * parentdir_attributes	/* [IN/OUT ] */
+fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
+                          fsal_name_t * p_object_name,  /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
     )
 {
   int rc;
@@ -43,17 +43,17 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,	/* IN */
    * by the FS itself.
    */
   rc = GHOSTFS_Access((GHOSTFS_handle_t) (*parentdir_handle),
-		      GHOSTFS_TEST_WRITE,
-		      p_context->credential.user, p_context->credential.group);
+                      GHOSTFS_TEST_WRITE,
+                      p_context->credential.user, p_context->credential.group);
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_unlink);
 
   /* @todo : check if the user is the owner of the file */
 
-  rc = GHOSTFS_Unlink((GHOSTFS_handle_t) (*parentdir_handle),	/* IN */
-		      p_object_name->name,	/* IN */
-		      &ghost_attrs);	/* [IN/OUT ] */
+  rc = GHOSTFS_Unlink((GHOSTFS_handle_t) (*parentdir_handle),   /* IN */
+                      p_object_name->name,      /* IN */
+                      &ghost_attrs);    /* [IN/OUT ] */
 
   if (rc)
     Return(ghost2fsal_error(rc), rc, INDEX_FSAL_unlink);

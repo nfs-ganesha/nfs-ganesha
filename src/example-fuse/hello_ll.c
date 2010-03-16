@@ -94,7 +94,7 @@ static void dirbuf_add(fuse_req_t req, struct dirbuf *b, const char *name, fuse_
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
-			     off_t off, size_t maxsize)
+                             off_t off, size_t maxsize)
 {
   if (off < bufsize)
     return fuse_reply_buf(req, buf + off, min(bufsize - off, maxsize));
@@ -103,7 +103,7 @@ static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
 }
 
 static void hello_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-			     off_t off, struct fuse_file_info *fi)
+                             off_t off, struct fuse_file_info *fi)
 {
   (void)fi;
 
@@ -133,7 +133,7 @@ static void hello_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info 
 }
 
 static void hello_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off_t off, struct fuse_file_info *fi)
+                          off_t off, struct fuse_file_info *fi)
 {
   (void)fi;
 
@@ -163,16 +163,16 @@ int main(int argc, char *argv[])
 
       se = fuse_lowlevel_new(&args, &hello_ll_oper, sizeof(hello_ll_oper), NULL);
       if (se != NULL)
-	{
-	  if (fuse_set_signal_handlers(se) != -1)
-	    {
-	      fuse_session_add_chan(se, ch);
-	      err = fuse_session_loop(se);
-	      fuse_remove_signal_handlers(se);
-	      fuse_session_remove_chan(ch);
-	    }
-	  fuse_session_destroy(se);
-	}
+        {
+          if (fuse_set_signal_handlers(se) != -1)
+            {
+              fuse_session_add_chan(se, ch);
+              err = fuse_session_loop(se);
+              fuse_remove_signal_handlers(se);
+              fuse_session_remove_chan(ch);
+            }
+          fuse_session_destroy(se);
+        }
       fuse_unmount(mountpoint, ch);
     }
   fuse_opt_free_args(&args);

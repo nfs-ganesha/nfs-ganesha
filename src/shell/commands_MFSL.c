@@ -111,12 +111,12 @@ static desc_log_stream_t voie;
 static int log_level = -1;
 static log_t log_desc = LOG_INITIALIZER;
 
-static int is_loaded = FALSE;	/* filsystem initialization status */
+static int is_loaded = FALSE;   /* filsystem initialization status */
 
 typedef struct cmdmfsl_thr_info__ {
-  int is_thread_ok;		/* per thread initialization status */
-  mfsl_object_t current_dir;	/* current directory handle */
-  char current_path[FSAL_MAX_PATH_LEN];	/* current path */
+  int is_thread_ok;             /* per thread initialization status */
+  mfsl_object_t current_dir;    /* current directory handle */
+  char current_path[FSAL_MAX_PATH_LEN]; /* current path */
 
   /* thread's context */
   fsal_op_context_t context;
@@ -127,8 +127,8 @@ typedef struct cmdmfsl_thr_info__ {
    * to access different filesets.
    */
   fsal_export_context_t exp_context;
-  int opened;			/* is file opened ? */
-  fsal_file_t current_fd;	/* current file descriptor */
+  int opened;                   /* is file opened ? */
+  fsal_file_t current_fd;       /* current file descriptor */
 
 } cmdmfsl_thr_info_t;
 
@@ -143,10 +143,10 @@ static void init_keys(void)
 {
   if (pthread_key_create(&thread_key, NULL) == -1)
     printf("Error %d creating pthread key for thread %p : %s\n",
-	   errno, (caddr_t) pthread_self(), strerror(errno));
+           errno, (caddr_t) pthread_self(), strerror(errno));
 
   return;
-}				/* init_keys */
+}                               /* init_keys */
 
 /**
  * GetMFSLCmdContext :
@@ -161,7 +161,7 @@ cmdmfsl_thr_info_t *GetMFSLCmdContext()
   if (pthread_once(&once_key, init_keys) != 0)
     {
       printf("Error %d calling pthread_once for thread %p : %s\n",
-	     errno, (caddr_t) pthread_self(), strerror(errno));
+             errno, (caddr_t) pthread_self(), strerror(errno));
       return NULL;
     }
 
@@ -173,14 +173,14 @@ cmdmfsl_thr_info_t *GetMFSLCmdContext()
 
       /* allocates thread structure */
       p_current_thread_vars =
-	  (cmdmfsl_thr_info_t *) Mem_Alloc(sizeof(cmdmfsl_thr_info_t));
+          (cmdmfsl_thr_info_t *) Mem_Alloc(sizeof(cmdmfsl_thr_info_t));
 
       /* panic !!! */
       if (p_current_thread_vars == NULL)
-	{
-	  printf("%p:commands_FSAL: Not enough memory\n", (caddr_t) pthread_self());
-	  return NULL;
-	}
+        {
+          printf("%p:commands_FSAL: Not enough memory\n", (caddr_t) pthread_self());
+          return NULL;
+        }
 
       /* Clean thread context */
 
@@ -197,7 +197,7 @@ cmdmfsl_thr_info_t *GetMFSLCmdContext()
 
   return p_current_thread_vars;
 
-}				/* GetMFSLCmdContext */
+}                               /* GetMFSLCmdContext */
 
 /**
  *  Initialize thread specific FSAL environment.
@@ -244,7 +244,7 @@ int Init_Thread_MFSL(FILE * output, cmdmfsl_thr_info_t * context, int flag_v)
     }
 
   st = FSAL_GetClientContext(&context->context, &context->exp_context,
-			     uid, pw_struct->pw_gid, NULL, 0);
+                             uid, pw_struct->pw_gid, NULL, 0);
 
   if (FSAL_IS_ERROR(st))
     {
@@ -316,10 +316,10 @@ void mfsl_layer_SetLogLevel(int log_lvl)
       /* changing log level */
       curr = log_desc.liste_voies;
       while (curr)
-	{
-	  curr->niveau = log_level;
-	  curr = curr->suivante;
-	}
+        {
+          curr->niveau = log_level;
+          curr = curr->suivante;
+        }
     }
 
   pthread_mutex_unlock(&mutex_log);
@@ -328,7 +328,7 @@ void mfsl_layer_SetLogLevel(int log_lvl)
 
 static void getopt_init()
 {
-  Opterr = 0;			/* disables Getopt error message */
+  Opterr = 0;                   /* disables Getopt error message */
   /* reinits Getopt processing */
   Optind = 1;
 }
@@ -371,21 +371,21 @@ int mfsl_init(char *filename, int flag_v, FILE * output)
   if (FSAL_IS_ERROR(st))
     {
       if (st.major == ERR_FSAL_NOENT)
-	{
+        {
 #if defined( _USE_MFSL_ASYNC )
-	  fprintf(output, "Missing MFSL_Async stanza in config file\n");
+          fprintf(output, "Missing MFSL_Async stanza in config file\n");
 #elif defined( _USE_MFSL_PROXY_RPCSECGSS )
-	  fprintf(output, "Missing MFSL_Proxy_RrpSeGss  stanza in config file\n");
+          fprintf(output, "Missing MFSL_Proxy_RrpSeGss  stanza in config file\n");
 #else
-	  fprintf(output, "Missing MFSL stanza in config file\n");
+          fprintf(output, "Missing MFSL stanza in config file\n");
 #endif
-	} else
-	{
-	  fprintf(output, "Error executing MFSL_load_FSAL_parameter_from_conf:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
-	}
+        } else
+        {
+          fprintf(output, "Error executing MFSL_load_FSAL_parameter_from_conf:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
+        }
     }
 
   /* Free config struct */
@@ -419,16 +419,16 @@ int mfsl_init(char *filename, int flag_v, FILE * output)
       int rc;
       rc = Init_Thread_MFSL(output, context, flag_v);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   return 0;
 }
 
 /** proceed an init_fs command. */
-int fn_mfsl_init(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output)	/* IN : output stream          */
+int fn_mfsl_init(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output) /* IN : output stream          */
 {
   int rc;
 
@@ -449,26 +449,26 @@ int fn_mfsl_init(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "init_fs: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "init_fs: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "init_fs: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "init_fs: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "init_fs: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "init_fs: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -501,9 +501,9 @@ int fn_mfsl_init(int argc,	/* IN : number of args in argv */
 
 /** prints current path */
 
-int fn_mfsl_pwd(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_mfsl_pwd(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     )
 {
 
@@ -525,7 +525,7 @@ int fn_mfsl_pwd(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   {
@@ -542,11 +542,11 @@ int fn_mfsl_pwd(int argc,	/* IN : number of args in argv */
 
 /* solves a relative or absolute path */
 
-int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] global path     */
-		   char *i_spec_path,	/* [IN] user specified path */
-		   mfsl_object_t i_current_handle,	/* [IN] current directory handle   */
-		   mfsl_object_t * new_handle,	/* [OUT] target object handle      */
-		   FILE * output)
+int msfl_solvepath(char *io_global_path, int size_global_path,  /* [IN-OUT] global path     */
+                   char *i_spec_path,   /* [IN] user specified path */
+                   mfsl_object_t i_current_handle,      /* [IN] current directory handle   */
+                   mfsl_object_t * new_handle,  /* [OUT] target object handle      */
+                   FILE * output)
 {
 
   char str_path[FSAL_MAX_PATH_LEN];
@@ -559,7 +559,7 @@ int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] globa
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* local copy */
@@ -573,16 +573,16 @@ int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] globa
       rc = sscanHandle(new_handle, str_path + 1);
 
       if (rc <= 0)
-	{
-	  fprintf(output, "Invalid FileHandle: %s\n", str_path);
-	  return -1;
-	}
+        {
+          fprintf(output, "Invalid FileHandle: %s\n", str_path);
+          return -1;
+        }
 
       if (str_path[rc + 1] != '\0')
-	{
-	  fprintf(output, "Invalid FileHandle: %s\n", str_path);
-	  return -1;
-	}
+        {
+          fprintf(output, "Invalid FileHandle: %s\n", str_path);
+          return -1;
+        }
 
       strncpy(io_global_path, str_path, size_global_path);
 
@@ -596,22 +596,22 @@ int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] globa
       mfsl_object_t tmp_hdl;
 
       if (FSAL_IS_ERROR(st = FSAL_str2path(str_path, FSAL_MAX_PATH_LEN, &path)))
-	{
-	  fprintf(output, "Error executing FSAL_str2path:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
-	}
+        {
+          fprintf(output, "Error executing FSAL_str2path:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
+        }
 
       if (FSAL_IS_ERROR(st = MFSL_lookupPath(&path,
-					     &context->context,
-					     &context->mcontext, &tmp_hdl, NULL)))
-	{
-	  fprintf(output, "Error executing MFSL_lookupPath:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
-	}
+                                             &context->context,
+                                             &context->mcontext, &tmp_hdl, NULL)))
+        {
+          fprintf(output, "Error executing MFSL_lookupPath:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
+        }
 
       /* cleans path */
       clean_path(str_path, FSAL_MAX_PATH_LEN);
@@ -633,70 +633,70 @@ int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] globa
       char *curr = str_path;
       int last = 0;
 
-      tmp_path[0] = '\0';	/* empty string */
+      tmp_path[0] = '\0';       /* empty string */
 
       do
-	{
+        {
 
-	  /* tokenize to the next '/' */
-	  while ((*curr != '\0') && (*curr != '/'))
-	    curr++;
+          /* tokenize to the next '/' */
+          while ((*curr != '\0') && (*curr != '/'))
+            curr++;
 
-	  if (!(*curr))
-	    last = 1;		/* remembers if it was the last dir */
-	  *curr = '\0';
+          if (!(*curr))
+            last = 1;           /* remembers if it was the last dir */
+          *curr = '\0';
 
-	  /* build the name */
-	  if (FSAL_IS_ERROR(st = FSAL_str2name(next_name, FSAL_MAX_PATH_LEN, &name)))
-	    {
-	      fprintf(output, "Error executing FSAL_str2name:");
-	      print_fsal_status(output, st);
-	      fprintf(output, "\n");
-	      return st.major;
-	    }
+          /* build the name */
+          if (FSAL_IS_ERROR(st = FSAL_str2name(next_name, FSAL_MAX_PATH_LEN, &name)))
+            {
+              fprintf(output, "Error executing FSAL_str2name:");
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+            }
 
-	  /* lookup this name */
-	  if (FSAL_IS_ERROR(st = MFSL_lookup(&old_hdl,
-					     &name,
-					     &context->context,
-					     &context->mcontext, &tmp_hdl, NULL)))
-	    {
-	      fprintf(output, "Error executing MFSL_lookup:");
-	      print_fsal_status(output, st);
-	      fprintf(output, "\n");
-	      return st.major;
-	    }
+          /* lookup this name */
+          if (FSAL_IS_ERROR(st = MFSL_lookup(&old_hdl,
+                                             &name,
+                                             &context->context,
+                                             &context->mcontext, &tmp_hdl, NULL)))
+            {
+              fprintf(output, "Error executing MFSL_lookup:");
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+            }
 
-	  /* if handles are the same, we are at fileset root,
-	   * so, don't modify the path.
-	   * Else, we contatenate them.
-	   */
-	  if (FSAL_handlecmp(&old_hdl.handle, &tmp_hdl.handle, &st) != 0)
-	    {
-	      /* updates current handle */
-	      old_hdl = tmp_hdl;
+          /* if handles are the same, we are at fileset root,
+           * so, don't modify the path.
+           * Else, we contatenate them.
+           */
+          if (FSAL_handlecmp(&old_hdl.handle, &tmp_hdl.handle, &st) != 0)
+            {
+              /* updates current handle */
+              old_hdl = tmp_hdl;
 
-	      /* adds /name at the end of the path */
-	      strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
-	      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
-	    }
+              /* adds /name at the end of the path */
+              strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
+              strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
+            }
 
-	  /* updates cursors */
-	  if (!last)
-	    {
-	      curr++;
-	      next_name = curr;
-	      /* ignore successive slashes */
-	      while ((*curr != '\0') && (*curr == '/'))
-		{
-		  curr++;
-		  next_name = curr;
-		}
-	      if (!(*curr))
-		last = 1;	/* it is the last dir */
-	    }
+          /* updates cursors */
+          if (!last)
+            {
+              curr++;
+              next_name = curr;
+              /* ignore successive slashes */
+              while ((*curr != '\0') && (*curr == '/'))
+                {
+                  curr++;
+                  next_name = curr;
+                }
+              if (!(*curr))
+                last = 1;       /* it is the last dir */
+            }
 
-	}
+        }
       while (!last);
 
       /* everything is OK, apply changes */
@@ -713,9 +713,9 @@ int msfl_solvepath(char *io_global_path, int size_global_path,	/* [IN-OUT] globa
 }
 
 /** change current path */
-int fn_mfsl_cd(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_cd(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -745,7 +745,7 @@ int fn_mfsl_cd(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* Exactly one arg expected */
@@ -760,16 +760,16 @@ int fn_mfsl_cd(int argc,	/* IN : number of args in argv */
 
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     argv[1], context->current_dir, &new_hdl, output))
+                     argv[1], context->current_dir, &new_hdl, output))
     return rc;
 
   /* verify if the object is a directory */
   FSAL_CLEAR_MASK(attrs.asked_attributes);
   FSAL_SET_MASK(attrs.asked_attributes,
-		FSAL_ATTR_TYPE | FSAL_ATTR_MODE | FSAL_ATTR_GROUP | FSAL_ATTR_OWNER);
+                FSAL_ATTR_TYPE | FSAL_ATTR_MODE | FSAL_ATTR_GROUP | FSAL_ATTR_OWNER);
 
   if (FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-				       &context->context, &context->mcontext, &attrs)))
+                                       &context->context, &context->mcontext, &attrs)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -810,9 +810,9 @@ int fn_mfsl_cd(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed a stat command. */
-int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_stat(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     )
 {
 
@@ -848,7 +848,7 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -856,26 +856,26 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "stat: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "stat: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "stat: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "stat: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "stat: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "stat: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -905,7 +905,7 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
   /* retrieves object handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     file, context->current_dir, &new_hdl, output))
+                     file, context->current_dir, &new_hdl, output))
     return rc;
 
   /* retrieve supported attributes */
@@ -913,7 +913,7 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
   FSAL_SET_MASK(attrs.asked_attributes, FSAL_ATTR_SUPPATTR);
 
   if (FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-				       &context->context, &context->mcontext, &attrs)))
+                                       &context->context, &context->mcontext, &attrs)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -933,7 +933,7 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
   attrs.asked_attributes = attrs.supported_attributes;
 
   if (FSAL_IS_ERROR(st = MFSL_getattrs(&new_hdl,
-				       &context->context, &context->mcontext, &attrs)))
+                                       &context->context, &context->mcontext, &attrs)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -949,9 +949,9 @@ int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed an ls command. */
-int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output)	/* IN : output stream          */
+int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output)   /* IN : output stream          */
 {
 
   static char format[] = "hvdlS";
@@ -997,47 +997,47 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
     {
 
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "ls: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "ls: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case 'd':
-	  if (flag_d)
-	    fprintf(output,
-		    "ls: warning: option 'd' has been specified more than once.\n");
-	    else
-	    flag_d++;
-	  break;
-	case 'l':
-	  if (flag_l)
-	    fprintf(output,
-		    "ls: warning: option 'l' has been specified more than once.\n");
-	    else
-	    flag_l++;
-	  break;
-	case 'S':
-	  if (flag_S)
-	    fprintf(output,
-		    "ls: warning: option 'S' has been specified more than once.\n");
-	    else
-	    flag_S++;
-	  break;
-	case '?':
-	  fprintf(output, "ls: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "ls: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "ls: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case 'd':
+          if (flag_d)
+            fprintf(output,
+                    "ls: warning: option 'd' has been specified more than once.\n");
+            else
+            flag_d++;
+          break;
+        case 'l':
+          if (flag_l)
+            fprintf(output,
+                    "ls: warning: option 'l' has been specified more than once.\n");
+            else
+            flag_l++;
+          break;
+        case 'S':
+          if (flag_S)
+            fprintf(output,
+                    "ls: warning: option 'S' has been specified more than once.\n");
+            else
+            flag_S++;
+          break;
+        case '?':
+          fprintf(output, "ls: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
 
     }
 
@@ -1074,7 +1074,7 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* prepare needed attributes mask */
@@ -1095,9 +1095,9 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
 
       /* retrieving handle */
       if (rc =
-	  msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-			 str_name, context->current_dir, &obj_hdl, output))
-	return rc;
+          msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
+                         str_name, context->current_dir, &obj_hdl, output))
+        return rc;
 
     } else
     {
@@ -1112,7 +1112,7 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
   FSAL_SET_MASK(attrs.asked_attributes, FSAL_ATTR_SUPPATTR);
 
   if (FSAL_IS_ERROR(st = MFSL_getattrs(&obj_hdl,
-				       &context->context, &context->mcontext, &attrs)))
+                                       &context->context, &context->mcontext, &attrs)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -1124,7 +1124,7 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
   attrs.asked_attributes = (attrs.supported_attributes & mask_needed);
 
   if (FSAL_IS_ERROR(st = MFSL_getattrs(&obj_hdl,
-				       &context->context, &context->mcontext, &attrs)))
+                                       &context->context, &context->mcontext, &attrs)))
     {
       fprintf(output, "Error executing MFSL_getattrs:");
       print_fsal_status(output, st);
@@ -1140,34 +1140,34 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
     {
 
       if ((attrs.type == FSAL_TYPE_LNK) && (flag_l))
-	{
+        {
 
-	  if (FSAL_IS_ERROR
-	      (st =
-	       MFSL_readlink(&obj_hdl, &context->context, &context->mcontext,
-			     &symlink_path, NULL)))
-	    {
-	      fprintf(output, "Error executing FSAL_readlink:");
-	      print_fsal_status(output, st);
-	      fprintf(output, "\n");
-	      return st.major;
-	    }
+          if (FSAL_IS_ERROR
+              (st =
+               MFSL_readlink(&obj_hdl, &context->context, &context->mcontext,
+                             &symlink_path, NULL)))
+            {
+              fprintf(output, "Error executing FSAL_readlink:");
+              print_fsal_status(output, st);
+              fprintf(output, "\n");
+              return st.major;
+            }
 
-	}
+        }
 
       if (flag_l)
-	print_item_line(output, &attrs, str_name, symlink_path.path);
+        print_item_line(output, &attrs, str_name, symlink_path.path);
 
       else if (flag_S)
-	{
+        {
 
-	  char tracebuff[2 * sizeof(fsal_handle_t) + 1];
-	  snprintHandle(tracebuff, 2 * sizeof(fsal_handle_t) + 1, &obj_hdl.handle);
-	  fprintf(output, "%s (@%s):\n", str_name, tracebuff);
-	  print_fsal_attributes(attrs, output);
+          char tracebuff[2 * sizeof(fsal_handle_t) + 1];
+          snprintHandle(tracebuff, 2 * sizeof(fsal_handle_t) + 1, &obj_hdl.handle);
+          fprintf(output, "%s (@%s):\n", str_name, tracebuff);
+          print_fsal_attributes(attrs, output);
 
-	} else			/* only prints the name */
-	fprintf(output, "%s\n", str_name);
+        } else                  /* only prints the name */
+        fprintf(output, "%s\n", str_name);
 
       return 0;
     }
@@ -1176,7 +1176,7 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
    * the current object is a directory, we have to list its element
    */
   if (FSAL_IS_ERROR(st = MFSL_opendir(&obj_hdl,
-				      &context->context, &context->mcontext, &dir, NULL)))
+                                      &context->context, &context->mcontext, &dir, NULL)))
     {
       fprintf(output, "Error executing MFSL_opendir:");
       print_fsal_status(output, st);
@@ -1192,75 +1192,75 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
       char item_path[FSAL_MAX_PATH_LEN];
 
       if (FSAL_IS_ERROR(st = MFSL_readdir(&dir,
-					  from, attrs.supported_attributes & mask_needed,
-					  READDIR_SIZE * sizeof(fsal_dirent_t),
-					  entries,
-					  &to, &number, &eod, &context->mcontext)))
-	{
-	  fprintf(output, "Error executing MFSL_readdir:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  error = st.major;
-	  number = 0;
-	}
+                                          from, attrs.supported_attributes & mask_needed,
+                                          READDIR_SIZE * sizeof(fsal_dirent_t),
+                                          entries,
+                                          &to, &number, &eod, &context->mcontext)))
+        {
+          fprintf(output, "Error executing MFSL_readdir:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          error = st.major;
+          number = 0;
+        }
 
       if (flag_v)
-	fprintf(output, "MFSL_readdir returned %u entries\n", (unsigned int)number);
+        fprintf(output, "MFSL_readdir returned %u entries\n", (unsigned int)number);
 
       if (number > 0)
-	{
-	  curr = entries;
-	  do
-	    {
-	      int len;
-	      len = strlen(str_name);
-	      if (!strcmp(str_name, "."))
-		strncpy(item_path, curr->name.name, FSAL_MAX_PATH_LEN);
-	      else if (str_name[len - 1] == '/')
-		snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name, curr->name.name);
-		else
-		snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
-			 curr->name.name);
+        {
+          curr = entries;
+          do
+            {
+              int len;
+              len = strlen(str_name);
+              if (!strcmp(str_name, "."))
+                strncpy(item_path, curr->name.name, FSAL_MAX_PATH_LEN);
+              else if (str_name[len - 1] == '/')
+                snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name, curr->name.name);
+                else
+                snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
+                         curr->name.name);
 
-	      if ((curr->attributes.type == FSAL_TYPE_LNK) && (flag_l))
-		{
+              if ((curr->attributes.type == FSAL_TYPE_LNK) && (flag_l))
+                {
 
-		  mfsl_object_t tmp_mfsl;
+                  mfsl_object_t tmp_mfsl;
 
-		  tmp_mfsl.handle = curr->handle;
+                  tmp_mfsl.handle = curr->handle;
 
-		  if (FSAL_IS_ERROR
-		      (st =
-		       MFSL_readlink(&tmp_mfsl, &context->context, &context->mcontext,
-				     &symlink_path, NULL)))
-		    {
-		      fprintf(output, "Error executing FSAL_readlink:");
-		      print_fsal_status(output, st);
-		      fprintf(output, "\n");
-		      return st.major;
-		    }
+                  if (FSAL_IS_ERROR
+                      (st =
+                       MFSL_readlink(&tmp_mfsl, &context->context, &context->mcontext,
+                                     &symlink_path, NULL)))
+                    {
+                      fprintf(output, "Error executing FSAL_readlink:");
+                      print_fsal_status(output, st);
+                      fprintf(output, "\n");
+                      return st.major;
+                    }
 
-		}
+                }
 
-	      if (flag_l)
-		print_item_line(output, &(curr->attributes), item_path,
-				symlink_path.path);
+              if (flag_l)
+                print_item_line(output, &(curr->attributes), item_path,
+                                symlink_path.path);
 
-	      else if (flag_S)
-		{
+              else if (flag_S)
+                {
 
-		  char tracebuff[2 * sizeof(fsal_handle_t) + 1];
-		  snprintHandle(tracebuff, 2 * sizeof(fsal_handle_t) + 1, &curr->handle);
+                  char tracebuff[2 * sizeof(fsal_handle_t) + 1];
+                  snprintHandle(tracebuff, 2 * sizeof(fsal_handle_t) + 1, &curr->handle);
 
-		  fprintf(output, "%s (@%s):\n", item_path, tracebuff);
-		  print_fsal_attributes(curr->attributes, output);
+                  fprintf(output, "%s (@%s):\n", item_path, tracebuff);
+                  print_fsal_attributes(curr->attributes, output);
 
-		} else		/* only prints the name */
-		fprintf(output, "%s\n", item_path);
+                } else          /* only prints the name */
+                fprintf(output, "%s\n", item_path);
 
-	    }
-	  while (curr = curr->nextentry);
-	}
+            }
+          while (curr = curr->nextentry);
+        }
       /* preparing next call */
       from = to;
 
@@ -1270,12 +1270,12 @@ int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
 
   return error;
 
-}				/* fn_mfsl_ls */
+}                               /* fn_mfsl_ls */
 
 /** change thread contexte. */
-int fn_mfsl_su(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_su(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -1309,7 +1309,7 @@ int fn_mfsl_su(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* UID arg expected */
@@ -1325,10 +1325,10 @@ int fn_mfsl_su(int argc,	/* IN : number of args in argv */
   if (isdigit(str_uid[0]))
     {
       if ((uid = my_atoi(str_uid)) == (uid_t) - 1)
-	{
-	  fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
-	  return -1;
-	}
+        {
+          fprintf(output, "Error: invalid uid \"%s\"\n", str_uid);
+          return -1;
+        }
       pw_struct = getpwuid(uid);
     } else
     {
@@ -1344,23 +1344,23 @@ int fn_mfsl_su(int argc,	/* IN : number of args in argv */
   nb_grp = getugroups(MAX_GRPS, groups_tab, pw_struct->pw_name, pw_struct->pw_gid);
 
   fprintf(output, "Changing user to : %s ( uid = %d, gid = %d )\n",
-	  pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
+          pw_struct->pw_name, pw_struct->pw_uid, pw_struct->pw_gid);
 
   if (nb_grp > 1)
     {
       fprintf(output, "altgroups = ");
       for (i = 1; i < nb_grp; i++)
-	{
-	  if (i == 1)
-	    fprintf(output, "%d", groups_tab[i]);
-	    else
-	    fprintf(output, ", %d", groups_tab[i]);
-	}
+        {
+          if (i == 1)
+            fprintf(output, "%d", groups_tab[i]);
+            else
+            fprintf(output, ", %d", groups_tab[i]);
+        }
       fprintf(output, "\n");
     }
 
   st = FSAL_GetClientContext(&context->context, &context->exp_context,
-			     pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
+                             pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
 
   if (FSAL_IS_ERROR(st))
     {
@@ -1377,9 +1377,9 @@ int fn_mfsl_su(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed an unlink command. */
-int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_unlink(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     )
 {
 
@@ -1419,7 +1419,7 @@ int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -1427,26 +1427,26 @@ int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "unlink: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "unlink: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "unlink: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "unlink: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "unlink: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "unlink: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -1477,7 +1477,7 @@ int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
   /* retrieves path handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     path, context->current_dir, &new_hdl, output))
+                     path, context->current_dir, &new_hdl, output))
     return rc;
 
   /* create fsal_name_t */
@@ -1490,8 +1490,8 @@ int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
       return st.major;
     }
 
-  if (FSAL_IS_ERROR(st = MFSL_unlink(&new_hdl, &objname, NULL,	/* Bad idea, will probably segfault */
-				     &context->context, &context->mcontext, NULL)))
+  if (FSAL_IS_ERROR(st = MFSL_unlink(&new_hdl, &objname, NULL,  /* Bad idea, will probably segfault */
+                                     &context->context, &context->mcontext, NULL)))
     {
       fprintf(output, "Error executing MFSL_unlink:");
       print_fsal_status(output, st);
@@ -1507,9 +1507,9 @@ int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed an mkdir command. */
-int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_mkdir(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     )
 {
 
@@ -1555,7 +1555,7 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -1563,26 +1563,26 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "mkdir: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "mkdir: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "mkdir: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "mkdir: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "mkdir: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "mkdir: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -1606,39 +1606,39 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
       /* converting mode string to FSAL mode string */
       mode = atomode(strmode);
       if (mode < 0)
-	err_flag++;
-	else
-	{
+        err_flag++;
+        else
+        {
 
-	  fsalmode = 0;
+          fsalmode = 0;
 
-	  if (mode & S_ISUID)
-	    fsalmode |= FSAL_MODE_SUID;
-	  if (mode & S_ISGID)
-	    fsalmode |= FSAL_MODE_SGID;
+          if (mode & S_ISUID)
+            fsalmode |= FSAL_MODE_SUID;
+          if (mode & S_ISGID)
+            fsalmode |= FSAL_MODE_SGID;
 
-	  if (mode & S_IRUSR)
-	    fsalmode |= FSAL_MODE_RUSR;
-	  if (mode & S_IWUSR)
-	    fsalmode |= FSAL_MODE_WUSR;
-	  if (mode & S_IXUSR)
-	    fsalmode |= FSAL_MODE_XUSR;
+          if (mode & S_IRUSR)
+            fsalmode |= FSAL_MODE_RUSR;
+          if (mode & S_IWUSR)
+            fsalmode |= FSAL_MODE_WUSR;
+          if (mode & S_IXUSR)
+            fsalmode |= FSAL_MODE_XUSR;
 
-	  if (mode & S_IRGRP)
-	    fsalmode |= FSAL_MODE_RGRP;
-	  if (mode & S_IWGRP)
-	    fsalmode |= FSAL_MODE_WGRP;
-	  if (mode & S_IXGRP)
-	    fsalmode |= FSAL_MODE_XGRP;
+          if (mode & S_IRGRP)
+            fsalmode |= FSAL_MODE_RGRP;
+          if (mode & S_IWGRP)
+            fsalmode |= FSAL_MODE_WGRP;
+          if (mode & S_IXGRP)
+            fsalmode |= FSAL_MODE_XGRP;
 
-	  if (mode & S_IROTH)
-	    fsalmode |= FSAL_MODE_ROTH;
-	  if (mode & S_IWOTH)
-	    fsalmode |= FSAL_MODE_WOTH;
-	  if (mode & S_IXOTH)
-	    fsalmode |= FSAL_MODE_XOTH;
+          if (mode & S_IROTH)
+            fsalmode |= FSAL_MODE_ROTH;
+          if (mode & S_IWOTH)
+            fsalmode |= FSAL_MODE_WOTH;
+          if (mode & S_IXOTH)
+            fsalmode |= FSAL_MODE_XOTH;
 
-	}
+        }
 
     }
 
@@ -1654,7 +1654,7 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
   /* retrieves path handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     path, context->current_dir, &new_hdl, output))
+                     path, context->current_dir, &new_hdl, output))
     return rc;
 
   /* create fsal_name_t */
@@ -1668,11 +1668,11 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
     }
 
   if (FSAL_IS_ERROR(st = MFSL_mkdir(&new_hdl,
-				    &objname,
-				    &context->context,
-				    &context->mcontext,
-				    fsalmode, &subdir_hdl, NULL, NULL)))
-    {				/* Will probably segfault */
+                                    &objname,
+                                    &context->context,
+                                    &context->mcontext,
+                                    fsalmode, &subdir_hdl, NULL, NULL)))
+    {                           /* Will probably segfault */
       fprintf(output, "Error executing MFSL_mkdir:");
       print_fsal_status(output, st);
       fprintf(output, "\n");
@@ -1693,9 +1693,9 @@ int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed a rename command. */
-int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_rename(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     )
 {
 
@@ -1740,7 +1740,7 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -1748,26 +1748,26 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "rename: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "rename: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "rename: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "rename: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "rename: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "rename: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -1799,7 +1799,7 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
 
   if (flag_v)
     fprintf(output, "Renaming %s (dir %s) to %s (dir %s)\n",
-	    src_file, src_path, tgt_file, tgt_path);
+            src_file, src_path, tgt_file, tgt_path);
 
   /* copy current path. */
   strncpy(src_glob_path, context->current_path, FSAL_MAX_PATH_LEN);
@@ -1808,12 +1808,12 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
   /* retrieves paths handles */
   if (rc =
       msfl_solvepath(src_glob_path, FSAL_MAX_PATH_LEN,
-		     src_path, context->current_dir, &src_path_handle, output))
+                     src_path, context->current_dir, &src_path_handle, output))
     return rc;
 
   if (rc =
       msfl_solvepath(tgt_glob_path, FSAL_MAX_PATH_LEN,
-		     tgt_path, context->current_dir, &tgt_path_handle, output))
+                     tgt_path, context->current_dir, &tgt_path_handle, output))
     return rc;
 
   /* create fsal_name_t */
@@ -1844,13 +1844,13 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
 
   /* Rename operation */
 
-  st = MFSL_rename(&src_path_handle,	/* IN */
-		   &src_name,	/* IN */
-		   &tgt_path_handle,	/* IN */
-		   &tgt_name,	/* IN */
-		   &context->context,	/* IN */
-		   &context->mcontext,	/* IN */
-		   NULL, NULL);
+  st = MFSL_rename(&src_path_handle,    /* IN */
+                   &src_name,   /* IN */
+                   &tgt_path_handle,    /* IN */
+                   &tgt_name,   /* IN */
+                   &context->context,   /* IN */
+                   &context->mcontext,  /* IN */
+                   NULL, NULL);
 
   if (FSAL_IS_ERROR(st))
     {
@@ -1864,16 +1864,16 @@ int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
 
   if (flag_v)
     fprintf(output, "%s/%s successfully renamed to %s/%s\n",
-	    src_glob_path, src_file, tgt_glob_path, tgt_file);
+            src_glob_path, src_file, tgt_glob_path, tgt_file);
 
   return 0;
 
 }
 
 /** proceed an ln command. */
-int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_ln(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -1919,7 +1919,7 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -1927,26 +1927,26 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "ln: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "ln: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "ln: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "ln: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "ln: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "ln: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -1982,7 +1982,7 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
   /* retrieves path handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     path, context->current_dir, &path_hdl, output))
+                     path, context->current_dir, &path_hdl, output))
     return rc;
 
   /* create fsal_name_t */
@@ -2007,14 +2007,14 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
       return st.major;
     }
 
-  st = MFSL_symlink(&path_hdl,	/* IN - parent dir handle */
-		    &objname,	/* IN - link name */
-		    &objcontent,	/* IN - link content */
-		    &context->context,	/* IN - user contexte */
-		    &context->mcontext,	/* IN - user contexte */
-		    0777,	/* IN (ignored) */
-		    &link_hdl,	/* OUT - link handle */
-		    NULL);	/* OUT - link attributes */
+  st = MFSL_symlink(&path_hdl,  /* IN - parent dir handle */
+                    &objname,   /* IN - link name */
+                    &objcontent,        /* IN - link content */
+                    &context->context,  /* IN - user contexte */
+                    &context->mcontext, /* IN - user contexte */
+                    0777,       /* IN (ignored) */
+                    &link_hdl,  /* OUT - link handle */
+                    NULL);      /* OUT - link attributes */
 
   if (FSAL_IS_ERROR(st))
     {
@@ -2030,7 +2030,7 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
       snprintHandle(buff, 2 * sizeof(fsal_handle_t) + 1, &link_hdl.handle);
 
       fprintf(output, "%s/%s -> %s successfully created (@%s) \n", path, name, content,
-	      buff);
+              buff);
 
     }
 
@@ -2039,9 +2039,9 @@ int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed a hardlink command. */
-int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_mfsl_hardlink(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     )
 {
 
@@ -2089,7 +2089,7 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -2097,26 +2097,26 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "hardlink: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "hardlink: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "hardlink: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "hardlink: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "hardlink: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "hardlink: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2153,13 +2153,13 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
   /* retrieves path handle for target */
   if (rc =
       msfl_solvepath(glob_path_target, FSAL_MAX_PATH_LEN,
-		     target, context->current_dir, &target_hdl, output))
+                     target, context->current_dir, &target_hdl, output))
     return rc;
 
   /* retrieves path handle for parent dir */
   if (rc =
       msfl_solvepath(glob_path_link, FSAL_MAX_PATH_LEN,
-		     path, context->current_dir, &dir_hdl, output))
+                     path, context->current_dir, &dir_hdl, output))
     return rc;
 
   /* create fsal_name_t */
@@ -2173,12 +2173,12 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
       return st.major;
     }
 
-  st = MFSL_link(&target_hdl,	/* IN - target file */
-		 &dir_hdl,	/* IN - parent dir handle */
-		 &link_name,	/* IN - link name */
-		 &context->context,	/* IN - user contexte */
-		 &context->mcontext,	/* IN - user contexte */
-		 NULL, NULL);	/* OUT - new attributes */
+  st = MFSL_link(&target_hdl,   /* IN - target file */
+                 &dir_hdl,      /* IN - parent dir handle */
+                 &link_name,    /* IN - link name */
+                 &context->context,     /* IN - user contexte */
+                 &context->mcontext,    /* IN - user contexte */
+                 NULL, NULL);   /* OUT - new attributes */
 
   if (FSAL_IS_ERROR(st))
     {
@@ -2191,7 +2191,7 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
   if (flag_v)
     {
       fprintf(output, "%s/%s <=> %s successfully created\n", path, name,
-	      glob_path_target);
+              glob_path_target);
 
     }
 
@@ -2200,9 +2200,9 @@ int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
 }
 
 /** proceed an create command. */
-int fn_mfsl_create(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_create(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     )
 {
 
@@ -2249,7 +2249,7 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -2257,26 +2257,26 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "create: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "create: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "create: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "create: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "create: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "create: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2300,39 +2300,39 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
       /* converting mode string to FSAL mode string */
       mode = atomode(strmode);
       if (mode < 0)
-	err_flag++;
-	else
-	{
+        err_flag++;
+        else
+        {
 
-	  fsalmode = 0;
+          fsalmode = 0;
 
-	  if (mode & S_ISUID)
-	    fsalmode |= FSAL_MODE_SUID;
-	  if (mode & S_ISGID)
-	    fsalmode |= FSAL_MODE_SGID;
+          if (mode & S_ISUID)
+            fsalmode |= FSAL_MODE_SUID;
+          if (mode & S_ISGID)
+            fsalmode |= FSAL_MODE_SGID;
 
-	  if (mode & S_IRUSR)
-	    fsalmode |= FSAL_MODE_RUSR;
-	  if (mode & S_IWUSR)
-	    fsalmode |= FSAL_MODE_WUSR;
-	  if (mode & S_IXUSR)
-	    fsalmode |= FSAL_MODE_XUSR;
+          if (mode & S_IRUSR)
+            fsalmode |= FSAL_MODE_RUSR;
+          if (mode & S_IWUSR)
+            fsalmode |= FSAL_MODE_WUSR;
+          if (mode & S_IXUSR)
+            fsalmode |= FSAL_MODE_XUSR;
 
-	  if (mode & S_IRGRP)
-	    fsalmode |= FSAL_MODE_RGRP;
-	  if (mode & S_IWGRP)
-	    fsalmode |= FSAL_MODE_WGRP;
-	  if (mode & S_IXGRP)
-	    fsalmode |= FSAL_MODE_XGRP;
+          if (mode & S_IRGRP)
+            fsalmode |= FSAL_MODE_RGRP;
+          if (mode & S_IWGRP)
+            fsalmode |= FSAL_MODE_WGRP;
+          if (mode & S_IXGRP)
+            fsalmode |= FSAL_MODE_XGRP;
 
-	  if (mode & S_IROTH)
-	    fsalmode |= FSAL_MODE_ROTH;
-	  if (mode & S_IWOTH)
-	    fsalmode |= FSAL_MODE_WOTH;
-	  if (mode & S_IXOTH)
-	    fsalmode |= FSAL_MODE_XOTH;
+          if (mode & S_IROTH)
+            fsalmode |= FSAL_MODE_ROTH;
+          if (mode & S_IWOTH)
+            fsalmode |= FSAL_MODE_WOTH;
+          if (mode & S_IXOTH)
+            fsalmode |= FSAL_MODE_XOTH;
 
-	}
+        }
 
     }
 
@@ -2348,7 +2348,7 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
   /* retrieves path handle */
   if (rc =
       msfl_solvepath(glob_path_dir, FSAL_MAX_PATH_LEN,
-		     path, context->current_dir, &dir_hdl, output))
+                     path, context->current_dir, &dir_hdl, output))
     return rc;
 
   /* create fsal_name_t */
@@ -2361,15 +2361,15 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
       return st.major;
     }
 
-  st = MFSL_create(&dir_hdl,	/* IN */
-		   &objname,	/* IN */
-		   &context->context,	/* IN */
-		   &context->mcontext,	/* IN */
-		   fsalmode,	/* IN */
-		   &file_hdl,	/* OUT */
-		   /*&context->current_fd, *//* OUT */
-		   NULL /* [ IN/OUT ] */ ,
-		   NULL		/* will probably segfault */
+  st = MFSL_create(&dir_hdl,    /* IN */
+                   &objname,    /* IN */
+                   &context->context,   /* IN */
+                   &context->mcontext,  /* IN */
+                   fsalmode,    /* IN */
+                   &file_hdl,   /* OUT */
+                   /*&context->current_fd, *//* OUT */
+                   NULL /* [ IN/OUT ] */ ,
+                   NULL         /* will probably segfault */
       );
 
   if (FSAL_IS_ERROR(st))
@@ -2399,9 +2399,9 @@ int fn_mfsl_create(int argc,	/* IN : number of args in argv */
  * setattr file_path  attribute_name  attribute_value
  *
  */
-int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_mfsl_setattr(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     )
 {
 
@@ -2410,18 +2410,18 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
   static char help_setattr[] =
       "usage: setattr [-h][-v] <path> <attr>=<value>,<attr>=<value>,...\n";
 
-  char glob_path[FSAL_MAX_PATH_LEN];	/* absolute path of the object */
-  mfsl_object_t obj_hdl;	/* handle of the object */
-  fsal_attrib_list_t set_attrs;	/* attributes to be setted */
-  fsal_status_t st;		/* FSAL return status */
+  char glob_path[FSAL_MAX_PATH_LEN];    /* absolute path of the object */
+  mfsl_object_t obj_hdl;        /* handle of the object */
+  fsal_attrib_list_t set_attrs; /* attributes to be setted */
+  fsal_status_t st;             /* FSAL return status */
 
   int rc, option;
   int flag_v = 0;
   int flag_h = 0;
   int err_flag = 0;
 
-  char *file = NULL;		/* the relative path to the object */
-  char *attr_list = NULL;	/* attribute list */
+  char *file = NULL;            /* the relative path to the object */
+  char *attr_list = NULL;       /* attribute list */
 
   cmdmfsl_thr_info_t *context;
 
@@ -2441,7 +2441,7 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -2450,29 +2450,29 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
+        {
 
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "setattr: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "setattr: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "setattr: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "setattr: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case '?':
-	  fprintf(output, "setattr: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "setattr: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2488,24 +2488,24 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
       /* print attribute list */
 
       for (curr_attr = shell_attr_list; curr_attr->attr_type != ATTR_NONE; curr_attr++)
-	{
-	  switch (curr_attr->attr_type)
-	    {
-	    case ATTR_32:
-	      fprintf(output, "\t %s \t:\t 32 bits integer\n", curr_attr->attr_name);
-	      break;
-	    case ATTR_64:
-	      fprintf(output, "\t %s \t:\t 64 bits integer\n", curr_attr->attr_name);
-	      break;
-	    case ATTR_OCTAL:
-	      fprintf(output, "\t %s \t:\t octal\n", curr_attr->attr_name);
-	      break;
-	    case ATTR_TIME:
-	      fprintf(output, "\t %s \t:\t time (format: YYYYMMDDhhmmss)\n",
-		      curr_attr->attr_name);
-	      break;
-	    }
-	}
+        {
+          switch (curr_attr->attr_type)
+            {
+            case ATTR_32:
+              fprintf(output, "\t %s \t:\t 32 bits integer\n", curr_attr->attr_name);
+              break;
+            case ATTR_64:
+              fprintf(output, "\t %s \t:\t 64 bits integer\n", curr_attr->attr_name);
+              break;
+            case ATTR_OCTAL:
+              fprintf(output, "\t %s \t:\t octal\n", curr_attr->attr_name);
+              break;
+            case ATTR_TIME:
+              fprintf(output, "\t %s \t:\t time (format: YYYYMMDDhhmmss)\n",
+                      curr_attr->attr_name);
+              break;
+            }
+        }
 
       return 0;
     }
@@ -2534,7 +2534,7 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
   /* retrieve handle to the file whose attributes are to be changed */
 
   rc = msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->current_dir,
-		      &obj_hdl, output);
+                      &obj_hdl, output);
   if (rc)
     return rc;
 
@@ -2593,9 +2593,9 @@ int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
  * example: access toto FRX
  */
 
-int fn_mfsl_access(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_access(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     )
 {
 
@@ -2619,10 +2619,10 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
       "test read and exec rights for directory \"my_dir\"\n"
       "by doing a getattr and a test_access call.\n\n";
 
-  char glob_path[FSAL_MAX_PATH_LEN];	/* absolute path of the object */
-  mfsl_object_t obj_hdl;	/* handle of the object */
-  fsal_accessflags_t test_perms;	/* permissions to be tested */
-  fsal_status_t st;		/* FSAL return status */
+  char glob_path[FSAL_MAX_PATH_LEN];    /* absolute path of the object */
+  mfsl_object_t obj_hdl;        /* handle of the object */
+  fsal_accessflags_t test_perms;        /* permissions to be tested */
+  fsal_status_t st;             /* FSAL return status */
 
   int rc, option;
   unsigned int i;
@@ -2631,8 +2631,8 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
   int flag_A = 0;
   int err_flag = 0;
 
-  char *file = NULL;		/* the relative path to the object */
-  char *str_perms = NULL;	/* string that represents the permissions to be tested */
+  char *file = NULL;            /* the relative path to the object */
+  char *str_perms = NULL;       /* string that represents the permissions to be tested */
 
   cmdmfsl_thr_info_t *context;
 
@@ -2652,7 +2652,7 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -2661,37 +2661,37 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
+        {
 
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "access: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "access: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "access: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "access: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case 'A':
-	  if (flag_A)
-	    fprintf(output,
-		    "access: warning: option 'A' has been specified more than once.\n");
-	    else
-	    flag_A++;
-	  break;
+        case 'A':
+          if (flag_A)
+            fprintf(output,
+                    "access: warning: option 'A' has been specified more than once.\n");
+            else
+            flag_A++;
+          break;
 
-	case '?':
-	  fprintf(output, "access: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "access: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2727,7 +2727,7 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
   /* retrieve handle to the file whose permissions are to be tested */
 
   rc = msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->current_dir, &obj_hdl,
-		      output);
+                      output);
   if (rc)
     return rc;
 
@@ -2738,36 +2738,36 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
   for (i = 0; i < strlen(str_perms); i++)
     {
       switch (str_perms[i])
-	{
-	case 'F':
-	  if (flag_v)
-	    fprintf(output, "F_OK flag\n");
-	  test_perms |= FSAL_F_OK;
-	  break;
+        {
+        case 'F':
+          if (flag_v)
+            fprintf(output, "F_OK flag\n");
+          test_perms |= FSAL_F_OK;
+          break;
 
-	case 'R':
-	  if (flag_v)
-	    fprintf(output, "R_OK flag\n");
-	  test_perms |= FSAL_R_OK;
-	  break;
+        case 'R':
+          if (flag_v)
+            fprintf(output, "R_OK flag\n");
+          test_perms |= FSAL_R_OK;
+          break;
 
-	case 'W':
-	  if (flag_v)
-	    fprintf(output, "W_OK flag\n");
-	  test_perms |= FSAL_W_OK;
-	  break;
+        case 'W':
+          if (flag_v)
+            fprintf(output, "W_OK flag\n");
+          test_perms |= FSAL_W_OK;
+          break;
 
-	case 'X':
-	  if (flag_v)
-	    fprintf(output, "X_OK flag\n");
-	  test_perms |= FSAL_X_OK;
-	  break;
+        case 'X':
+          if (flag_v)
+            fprintf(output, "X_OK flag\n");
+          test_perms |= FSAL_X_OK;
+          break;
 
-	default:
-	  fprintf(output, "**** Invalid test: %c ****\n", str_perms[i]);
-	  fprintf(output, help_access);
-	  return -1;
-	}
+        default:
+          fprintf(output, "**** Invalid test: %c ****\n", str_perms[i]);
+          fprintf(output, help_access);
+          return -1;
+        }
     }
 
   /* Call to FSAL */
@@ -2780,79 +2780,79 @@ int fn_mfsl_access(int argc,	/* IN : number of args in argv */
 
       FSAL_CLEAR_MASK(attributes.asked_attributes);
       FSAL_SET_MASK(attributes.asked_attributes,
-		    FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL);
+                    FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL);
 
       if (flag_v)
-	fprintf(output, "Getting file attributes...\n");
+        fprintf(output, "Getting file attributes...\n");
 
       st = MFSL_getattrs(&obj_hdl, &context->context, &context->mcontext, &attributes);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  fprintf(output, "Error executing MFSL_getattrs:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
-	}
+        {
+          fprintf(output, "Error executing MFSL_getattrs:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
+        }
 
       if (flag_v)
-	{
-	  print_fsal_attributes(attributes, output);
-	}
+        {
+          print_fsal_attributes(attributes, output);
+        }
 
       if (flag_v)
-	fprintf(output, "Testing access rights...\n");
+        fprintf(output, "Testing access rights...\n");
 
       st = FSAL_test_access(&context->context, test_perms, &attributes);
 
       if (FSAL_IS_ERROR(st))
-	{
+        {
 
-	  fprintf(output, "Error executing FSAL_test_access:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
+          fprintf(output, "Error executing FSAL_test_access:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
 
-	} else
-	{
+        } else
+        {
 
-	  fprintf(output, "access: Access granted.\n");
-	  return 0;
+          fprintf(output, "access: Access granted.\n");
+          return 0;
 
-	}
+        }
 
     } else
     {
       /* 2nd method: simply calling access */
 
       if (flag_v)
-	fprintf(output, "Calling access\n");
+        fprintf(output, "Calling access\n");
 
       st = MFSL_access(&obj_hdl, &context->context, &context->mcontext, test_perms, NULL);
 
       if (FSAL_IS_ERROR(st))
-	{
+        {
 
-	  fprintf(output, "Error executing FSAL_access:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
-	  return st.major;
+          fprintf(output, "Error executing FSAL_access:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
+          return st.major;
 
-	} else
-	{
+        } else
+        {
 
-	  fprintf(output, "access: Access granted.\n");
-	  return 0;
-	}
+          fprintf(output, "access: Access granted.\n");
+          return 0;
+        }
 
     }
 
 }
 
 /** proceed a truncate command. */
-int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_mfsl_truncate(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     )
 {
 
@@ -2892,7 +2892,7 @@ int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -2900,26 +2900,26 @@ int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "truncate: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "truncate: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "truncate: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "truncate: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "truncate: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "truncate: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -2939,10 +2939,10 @@ int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
 
       rc = ato64(str_size, &trunc_size);
       if (rc == -1)
-	{
-	  fprintf(output, "truncate: error: invalid trunc size \"%s\"\n", str_size);
-	  err_flag++;
-	}
+        {
+          fprintf(output, "truncate: error: invalid trunc size \"%s\"\n", str_size);
+          err_flag++;
+        }
 
     }
 
@@ -2958,14 +2958,14 @@ int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
   /* retrieves object handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     file, context->current_dir, &filehdl, output))
+                     file, context->current_dir, &filehdl, output))
     return rc;
 
   if (flag_v)
     fprintf(output, "Truncating \"%s\" to %llu bytes.\n", glob_path, trunc_size);
 
-  st = MFSL_truncate(&filehdl, &context->context, &context->mcontext, trunc_size, NULL,	/* Will fail with FSAL_PROXY */
-		     NULL);
+  st = MFSL_truncate(&filehdl, &context->context, &context->mcontext, trunc_size, NULL, /* Will fail with FSAL_PROXY */
+                     NULL);
 
   if (FSAL_IS_ERROR(st))
     {
@@ -2986,9 +2986,9 @@ int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
  *  Command that opens a file using specific flags.
  *  open <path> [ rwat ]
  */
-int fn_mfsl_open(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_open(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     )
 {
 
@@ -3037,7 +3037,7 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* is a file already opened ? */
@@ -3053,26 +3053,26 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "open: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "open: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "open: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "open: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "open: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "open: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3092,43 +3092,43 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
 
       /* optional flags */
       while (Optind < argc)
-	{
-	  /* test flags */
-	  opt_str = argv[Optind];
+        {
+          /* test flags */
+          opt_str = argv[Optind];
 
-	  while (*opt_str)
-	    {
-	      switch (*opt_str)
-		{
-		case 'r':
-		case 'R':
-		  flag_r++;
-		  break;
+          while (*opt_str)
+            {
+              switch (*opt_str)
+                {
+                case 'r':
+                case 'R':
+                  flag_r++;
+                  break;
 
-		case 'w':
-		case 'W':
-		  flag_w++;
-		  break;
+                case 'w':
+                case 'W':
+                  flag_w++;
+                  break;
 
-		case 'a':
-		case 'A':
-		  flag_a++;
-		  break;
+                case 'a':
+                case 'A':
+                  flag_a++;
+                  break;
 
-		case 't':
-		case 'T':
-		  flag_t++;
-		  break;
+                case 't':
+                case 'T':
+                  flag_t++;
+                  break;
 
-		default:
-		  fprintf(output, "open: unknown open flag : '%c'\n", *opt_str);
-		  err_flag++;
-		}
-	      opt_str++;
-	    }
+                default:
+                  fprintf(output, "open: unknown open flag : '%c'\n", *opt_str);
+                  err_flag++;
+                }
+              opt_str++;
+            }
 
-	  Optind++;
-	}
+          Optind++;
+        }
 
     }
 
@@ -3144,7 +3144,7 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
   /* retrieves object handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     file, context->current_dir, &filehdl, output))
+                     file, context->current_dir, &filehdl, output))
     return rc;
 
   /* make open flags */
@@ -3167,8 +3167,8 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
     fprintf(output, "Open operation on %s with flags %#X.\n", glob_path, o_flags);
 
   st = MFSL_open(&filehdl,
-		 &context->context,
-		 &context->mcontext, o_flags, &context->current_fd, NULL);
+                 &context->context,
+                 &context->mcontext, o_flags, &context->current_fd, NULL);
 
   if (FSAL_IS_ERROR(st))
     {
@@ -3183,7 +3183,7 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
 
   if (flag_v)
     fprintf(output, "Open operation completed sucessfully : fd = %d.\n",
-	    FSAL_FILENO(&(context->current_fd)));
+            FSAL_FILENO(&(context->current_fd)));
 
   return 0;
 
@@ -3192,9 +3192,9 @@ int fn_mfsl_open(int argc,	/* IN : number of args in argv */
 /**
  *  Command that reads data from an opened file.
  */
-int fn_mfsl_read(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_read(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     )
 {
 
@@ -3239,9 +3239,9 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
   char *str_seek_offset = NULL;
   char *str_total_bytes = NULL;
 
-  fsal_size_t block_size = 1024;	/* default: 1ko */
-  fsal_size_t total_bytes = 0;	/* 0 == read all */
-  fsal_seek_t seek_desc = { FSAL_SEEK_CUR, 0 };	/* default: read current position */
+  fsal_size_t block_size = 1024;        /* default: 1ko */
+  fsal_size_t total_bytes = 0;  /* 0 == read all */
+  fsal_seek_t seek_desc = { FSAL_SEEK_CUR, 0 }; /* default: read current position */
 
   fsal_seek_t *p_seek_desc = NULL;
 
@@ -3276,7 +3276,7 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* is a file opened ? */
@@ -3292,76 +3292,76 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
+        {
 
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "read: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "read: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "read: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "read: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case 'A':
-	  if (flag_A)
-	    fprintf(output,
-		    "read: warning: option 'A' has been specified more than once.\n");
-	  else if (flag_X)
-	    {
-	      fprintf(output, "read: option 'A' conflicts with option 'X'.\n");
-	      err_flag++;
-	    } else
-	    flag_A++;
-	  break;
+        case 'A':
+          if (flag_A)
+            fprintf(output,
+                    "read: warning: option 'A' has been specified more than once.\n");
+          else if (flag_X)
+            {
+              fprintf(output, "read: option 'A' conflicts with option 'X'.\n");
+              err_flag++;
+            } else
+            flag_A++;
+          break;
 
-	case 'X':
-	  if (flag_X)
-	    fprintf(output,
-		    "read: warning: option 'X' has been specified more than once.\n");
-	  else if (flag_A)
-	    {
-	      fprintf(output, "read: option 'X' conflicts with option 'A'.\n");
-	      err_flag++;
-	    } else
-	    flag_X++;
-	  break;
+        case 'X':
+          if (flag_X)
+            fprintf(output,
+                    "read: warning: option 'X' has been specified more than once.\n");
+          else if (flag_A)
+            {
+              fprintf(output, "read: option 'X' conflicts with option 'A'.\n");
+              err_flag++;
+            } else
+            flag_X++;
+          break;
 
-	case 'B':
-	  if (flag_B)
-	    fprintf(output,
-		    "read: warning: option 'B' has been specified more than once.\n");
-	    else
-	    {
-	      flag_B++;
-	      str_block_size = Optarg;
-	    }
-	  break;
+        case 'B':
+          if (flag_B)
+            fprintf(output,
+                    "read: warning: option 'B' has been specified more than once.\n");
+            else
+            {
+              flag_B++;
+              str_block_size = Optarg;
+            }
+          break;
 
-	case 's':
-	  if (flag_s)
-	    fprintf(output,
-		    "read: warning: option 's' has been specified more than once.\n");
-	    else
-	    {
-	      flag_s++;
-	      strncpy(str_seek_buff, Optarg, 256);
-	      str_seek_type = str_seek_buff;
-	    }
-	  break;
+        case 's':
+          if (flag_s)
+            fprintf(output,
+                    "read: warning: option 's' has been specified more than once.\n");
+            else
+            {
+              flag_s++;
+              strncpy(str_seek_buff, Optarg, 256);
+              str_seek_type = str_seek_buff;
+            }
+          break;
 
-	case '?':
-	  fprintf(output, "read: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "read: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3392,10 +3392,10 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
       rc = ato64(str_block_size, &block_size);
 
       if (rc == -1)
-	{
-	  fprintf(output, "read: error: invalid block size \"%s\"\n", str_block_size);
-	  err_flag++;
-	}
+        {
+          fprintf(output, "read: error: invalid block size \"%s\"\n", str_block_size);
+          err_flag++;
+        }
 
     }
 
@@ -3406,67 +3406,67 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
       str_seek_offset = strchr(str_seek_type, ',');
 
       if (str_seek_offset == NULL)
-	{
-	  fprintf(output,
-		  "read: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
-		  str_seek_type);
-	  err_flag++;
-	}
+        {
+          fprintf(output,
+                  "read: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
+                  str_seek_type);
+          err_flag++;
+        }
 
       if (!err_flag)
-	{
-	  int sign = 1;
+        {
+          int sign = 1;
 
-	  *str_seek_offset = '\0';
-	  str_seek_offset++;	/* the first char after the "," */
+          *str_seek_offset = '\0';
+          str_seek_offset++;    /* the first char after the "," */
 
-	  /* Check seek type */
+          /* Check seek type */
 
-	  if (!strncmp(str_seek_type, "CUR", 256))
-	    seek_desc.whence = FSAL_SEEK_CUR;
-	  else if (!strncmp(str_seek_type, "SET", 256))
-	    seek_desc.whence = FSAL_SEEK_SET;
-	  else if (!strncmp(str_seek_type, "END", 256))
-	    seek_desc.whence = FSAL_SEEK_END;
-	    else
-	    {
-	      fprintf(output,
-		      "read: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
-		      str_seek_type);
-	      err_flag++;
-	    }
+          if (!strncmp(str_seek_type, "CUR", 256))
+            seek_desc.whence = FSAL_SEEK_CUR;
+          else if (!strncmp(str_seek_type, "SET", 256))
+            seek_desc.whence = FSAL_SEEK_SET;
+          else if (!strncmp(str_seek_type, "END", 256))
+            seek_desc.whence = FSAL_SEEK_END;
+            else
+            {
+              fprintf(output,
+                      "read: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
+                      str_seek_type);
+              err_flag++;
+            }
 
-	  /* Try to convert str_seek_offset to fsal_off_t */
+          /* Try to convert str_seek_offset to fsal_off_t */
 
-	  switch (str_seek_offset[0])
-	    {
-	    case '+':
-	      sign = 1;
-	      str_seek_offset++;
-	      break;
+          switch (str_seek_offset[0])
+            {
+            case '+':
+              sign = 1;
+              str_seek_offset++;
+              break;
 
-	    case '-':
-	      sign = -1;
-	      str_seek_offset++;
-	      break;
-	    }
+            case '-':
+              sign = -1;
+              str_seek_offset++;
+              break;
+            }
 
-	  rc = ato64(str_seek_offset, (unsigned long long *)&seek_desc.offset);
+          rc = ato64(str_seek_offset, (unsigned long long *)&seek_desc.offset);
 
-	  if (rc == -1)
-	    {
-	      fprintf(output, "read: error: invalid offset \"%s\".\n", str_seek_offset);
-	      err_flag++;
-	  } else if (sign < 0)
-	    seek_desc.offset = -seek_desc.offset;
+          if (rc == -1)
+            {
+              fprintf(output, "read: error: invalid offset \"%s\".\n", str_seek_offset);
+              err_flag++;
+          } else if (sign < 0)
+            seek_desc.offset = -seek_desc.offset;
 
-	}
+        }
 
       p_seek_desc = &seek_desc;
 
     } else
     {
-      p_seek_desc = NULL;	/* default seeking */
+      p_seek_desc = NULL;       /* default seeking */
     }
 
   if (!strcasecmp(str_total_bytes, "all"))
@@ -3477,12 +3477,12 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
       rc = ato64(str_total_bytes, &total_bytes);
 
       if (rc == -1)
-	{
-	  fprintf(output,
-		  "read: error: invalid read size \"%s\". \"all\" or <nb_bytes> expected.\n",
-		  str_total_bytes);
-	  err_flag++;
-	}
+        {
+          fprintf(output,
+                  "read: error: invalid read size \"%s\". \"all\" or <nb_bytes> expected.\n",
+                  str_total_bytes);
+          err_flag++;
+        }
     }
 
   if (err_flag)
@@ -3496,12 +3496,12 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
 
       /* print a sum-up of read parameters */
       fprintf(output,
-	      "Read options: Block size: %llu Bytes, Seek: %s%+lld, Read limit: %llu Bytes\n",
-	      block_size,
-	      (p_seek_desc
-	       ? (seek_desc.whence == FSAL_SEEK_SET ? "SET" : seek_desc.whence ==
-		  FSAL_SEEK_CUR ? "CUR" : "END") : "DEFAULT"),
-	      (p_seek_desc ? seek_desc.offset : 0LL), total_bytes);
+              "Read options: Block size: %llu Bytes, Seek: %s%+lld, Read limit: %llu Bytes\n",
+              block_size,
+              (p_seek_desc
+               ? (seek_desc.whence == FSAL_SEEK_SET ? "SET" : seek_desc.whence ==
+                  FSAL_SEEK_CUR ? "CUR" : "END") : "DEFAULT"),
+              (p_seek_desc ? seek_desc.offset : 0LL), total_bytes);
     }
 
   /* Now all arguments have been parsed, let's act ! */
@@ -3512,8 +3512,8 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
   if (p_read_buff == NULL)
     {
       fprintf(output,
-	      "read: error: Not enough memory to allocate read buffer (%llu Bytes).\n",
-	      block_size);
+              "read: error: Not enough memory to allocate read buffer (%llu Bytes).\n",
+              block_size);
       return ENOMEM;
     }
 
@@ -3524,52 +3524,52 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
     {
 
       st = MFSL_read(&context->current_fd,
-		     p_seek_desc,
-		     block_size,
-		     (caddr_t) p_read_buff, &once_nb_read, &is_eof, &context->mcontext);
+                     p_seek_desc,
+                     block_size,
+                     (caddr_t) p_read_buff, &once_nb_read, &is_eof, &context->mcontext);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  fprintf(output, "Error executing FSAL_read:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
+        {
+          fprintf(output, "Error executing FSAL_read:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
 
-	  /* exit only if it is not retryable */
-	  if (fsal_is_retryable(st))
-	    {
-	      sleep(1);
-	      continue;
-	    } else
-	    {
-	      Mem_Free(p_read_buff);
-	      return st.major;
-	    }
-	}
+          /* exit only if it is not retryable */
+          if (fsal_is_retryable(st))
+            {
+              sleep(1);
+              continue;
+            } else
+            {
+              Mem_Free(p_read_buff);
+              return st.major;
+            }
+        }
 
       /* print what was read. */
       if (flag_A)
-	{
-	  fsal_size_t index;
-	  for (index = 0; index < once_nb_read; index++)
-	    fprintf(output, "%c.", p_read_buff[index]);
+        {
+          fsal_size_t index;
+          for (index = 0; index < once_nb_read; index++)
+            fprintf(output, "%c.", p_read_buff[index]);
       } else if (flag_X)
-	{
-	  fsal_size_t index;
-	  for (index = 0; index < once_nb_read; index++)
-	    fprintf(output, "%.2X ", p_read_buff[index]);
-	} else
-	fprintf(output, ".");
+        {
+          fsal_size_t index;
+          for (index = 0; index < once_nb_read; index++)
+            fprintf(output, "%.2X ", p_read_buff[index]);
+        } else
+        fprintf(output, ".");
 
       /* update stats */
 
       if (once_nb_read > 0)
-	nb_block_read++;
+        nb_block_read++;
 
       total_nb_read += once_nb_read;
 
       /* flush */
       if (nb_block_read % 10)
-	fflush(output);
+        fflush(output);
 
       /* what ever seek type was, we continue reading from current position */
       p_seek_desc = NULL;
@@ -3594,8 +3594,8 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
       print_timeval(output, timer_diff);
 
       bandwidth =
-	  total_nb_read / (1024 * 1024 *
-			   (timer_diff.tv_sec + 0.000001 * timer_diff.tv_usec));
+          total_nb_read / (1024 * 1024 *
+                           (timer_diff.tv_sec + 0.000001 * timer_diff.tv_usec));
 
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
@@ -3634,9 +3634,9 @@ int fn_mfsl_read(int argc,	/* IN : number of args in argv */
  *          write -s SET,0 -N 2 -X "A1267AEF31254ADE"
  */
 
-int fn_mfsl_write(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_write(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     )
 {
 
@@ -3692,15 +3692,15 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
   size_t datasize = 0;
   char *databuff = NULL;
 
-  unsigned long long nb_times = 1;	/* default = 1 */
+  unsigned long long nb_times = 1;      /* default = 1 */
 
-  fsal_size_t block_size;	/* the length of the data block to be written */
+  fsal_size_t block_size;       /* the length of the data block to be written */
 
   fsal_u64_t nb_block_written = 0;
   fsal_size_t size_written = 0;
   fsal_size_t size_written_once = 0;
 
-  fsal_seek_t seek_desc = { FSAL_SEEK_CUR, 0 };	/* default: write to current position */
+  fsal_seek_t seek_desc = { FSAL_SEEK_CUR, 0 }; /* default: write to current position */
 
   fsal_seek_t *p_seek_desc = NULL;
 
@@ -3726,7 +3726,7 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* is a file opened ? */
@@ -3742,82 +3742,82 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
+        {
 
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "write: warning: option 'v' has been specified more than once.\n");
-	    else
-	    flag_v++;
-	  break;
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "write: warning: option 'v' has been specified more than once.\n");
+            else
+            flag_v++;
+          break;
 
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "write: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "write: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
 
-	case 'N':
-	  if (flag_N)
-	    fprintf(output,
-		    "write: warning: option 'N' has been specified more than once.\n");
-	    else
-	    {
-	      flag_N++;
-	      str_times = Optarg;
-	    }
-	  break;
+        case 'N':
+          if (flag_N)
+            fprintf(output,
+                    "write: warning: option 'N' has been specified more than once.\n");
+            else
+            {
+              flag_N++;
+              str_times = Optarg;
+            }
+          break;
 
-	case 's':
-	  if (flag_s)
-	    fprintf(output,
-		    "write: warning: option 's' has been specified more than once.\n");
-	    else
-	    {
-	      flag_s++;
-	      strncpy(str_seek_buff, Optarg, 256);
-	      str_seek_type = str_seek_buff;
-	    }
-	  break;
+        case 's':
+          if (flag_s)
+            fprintf(output,
+                    "write: warning: option 's' has been specified more than once.\n");
+            else
+            {
+              flag_s++;
+              strncpy(str_seek_buff, Optarg, 256);
+              str_seek_type = str_seek_buff;
+            }
+          break;
 
-	case 'A':
-	  if (flag_A)
-	    fprintf(output,
-		    "write: warning: option 'A' has been specified more than once.\n");
-	  else if (flag_X)
-	    {
-	      fprintf(output, "write: option 'A' conflicts with option 'X'.\n");
-	      err_flag++;
-	    } else
-	    {
-	      flag_A++;
-	      str_ascii = Optarg;
-	    }
-	  break;
+        case 'A':
+          if (flag_A)
+            fprintf(output,
+                    "write: warning: option 'A' has been specified more than once.\n");
+          else if (flag_X)
+            {
+              fprintf(output, "write: option 'A' conflicts with option 'X'.\n");
+              err_flag++;
+            } else
+            {
+              flag_A++;
+              str_ascii = Optarg;
+            }
+          break;
 
-	case 'X':
-	  if (flag_X)
-	    fprintf(output,
-		    "write: warning: option 'X' has been specified more than once.\n");
-	  else if (flag_A)
-	    {
-	      fprintf(output, "write: option 'X' conflicts with option 'A'.\n");
-	      err_flag++;
-	    } else
-	    {
-	      flag_X++;
-	      str_hexa = Optarg;
-	    }
-	  break;
+        case 'X':
+          if (flag_X)
+            fprintf(output,
+                    "write: warning: option 'X' has been specified more than once.\n");
+          else if (flag_A)
+            {
+              fprintf(output, "write: option 'X' conflicts with option 'A'.\n");
+              err_flag++;
+            } else
+            {
+              flag_X++;
+              str_hexa = Optarg;
+            }
+          break;
 
-	case '?':
-	  fprintf(output, "write: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "write: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -3852,10 +3852,10 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       rc = ato64(str_times, &nb_times);
 
       if (rc == -1)
-	{
-	  fprintf(output, "write: error: invalid number \"%s\"\n", str_times);
-	  return EINVAL;
-	}
+        {
+          fprintf(output, "write: error: invalid number \"%s\"\n", str_times);
+          return EINVAL;
+        }
 
     }
 
@@ -3868,66 +3868,66 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       str_seek_offset = strchr(str_seek_type, ',');
 
       if (str_seek_offset == NULL)
-	{
-	  fprintf(output,
-		  "write: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
-		  str_seek_type);
-	  return EINVAL;
-	}
+        {
+          fprintf(output,
+                  "write: error: invalid seek specifier \"%s\". <seek_type>,<offset> expected.\n",
+                  str_seek_type);
+          return EINVAL;
+        }
 
       *str_seek_offset = '\0';
-      str_seek_offset++;	/* the first char after the "," */
+      str_seek_offset++;        /* the first char after the "," */
 
       /* Check seek type */
 
       if (!strncmp(str_seek_type, "CUR", 256))
-	seek_desc.whence = FSAL_SEEK_CUR;
+        seek_desc.whence = FSAL_SEEK_CUR;
       else if (!strncmp(str_seek_type, "SET", 256))
-	seek_desc.whence = FSAL_SEEK_SET;
+        seek_desc.whence = FSAL_SEEK_SET;
       else if (!strncmp(str_seek_type, "END", 256))
-	seek_desc.whence = FSAL_SEEK_END;
-	else
-	{
-	  fprintf(output,
-		  "write: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
-		  str_seek_type);
-	  return EINVAL;
-	}
+        seek_desc.whence = FSAL_SEEK_END;
+        else
+        {
+          fprintf(output,
+                  "write: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
+                  str_seek_type);
+          return EINVAL;
+        }
 
       /* Try to convert str_seek_offset to fsal_off_t */
 
       switch (str_seek_offset[0])
-	{
-	case '+':
-	  sign = 1;
-	  str_seek_offset++;
-	  break;
+        {
+        case '+':
+          sign = 1;
+          str_seek_offset++;
+          break;
 
-	case '-':
-	  sign = -1;
-	  str_seek_offset++;
-	  break;
-	}
+        case '-':
+          sign = -1;
+          str_seek_offset++;
+          break;
+        }
 
       rc = ato64(str_seek_offset, (unsigned long long *)&seek_desc.offset);
 
       if (rc == -1)
-	{
-	  fprintf(output, "write: error: invalid offset \"%s\".\n", str_seek_offset);
-	  return EINVAL;
+        {
+          fprintf(output, "write: error: invalid offset \"%s\".\n", str_seek_offset);
+          return EINVAL;
       } else if (sign < 0)
-	seek_desc.offset = -seek_desc.offset;
+        seek_desc.offset = -seek_desc.offset;
 
       p_seek_desc = &seek_desc;
 
     } else
     {
-      p_seek_desc = NULL;	/* default seeking */
+      p_seek_desc = NULL;       /* default seeking */
     }
 
   if (flag_A)
     {
-      datasize = strlen(str_ascii) + 1;	/* Include null termination char. */
+      datasize = strlen(str_ascii) + 1; /* Include null termination char. */
       databuff = str_ascii;
     }
 
@@ -3938,24 +3938,24 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       datasize = (length >> 1);
 
       if (length % 2)
-	{
+        {
 
-	  /* if it is not odd: error */
-	  fprintf(output,
-		  "write: error: in \"%s\", data length is not a multiple of 8 bits.\n",
-		  str_hexa);
+          /* if it is not odd: error */
+          fprintf(output,
+                  "write: error: in \"%s\", data length is not a multiple of 8 bits.\n",
+                  str_hexa);
 
-	  return EINVAL;
-	}
+          return EINVAL;
+        }
 
       databuff = Mem_Alloc(datasize + 1);
 
       if (databuff == NULL)
-	{
-	  fprintf(output, "write: error: Not enough memory to allocate %llu Bytes.\n",
-		  (unsigned long long)datasize);
-	  return ENOMEM;
-	}
+        {
+          fprintf(output, "write: error: Not enough memory to allocate %llu Bytes.\n",
+                  (unsigned long long)datasize);
+          return ENOMEM;
+        }
 
       memset(databuff, 0, datasize + 1);
 
@@ -3963,14 +3963,14 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       rc = sscanmem(databuff, datasize, str_hexa);
 
       if (rc != (int)(2 * datasize))
-	{
-	  /* if it is not odd: error */
-	  fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
+        {
+          /* if it is not odd: error */
+          fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
 
-	  Mem_Free(str_hexa);
+          Mem_Free(str_hexa);
 
-	  return EINVAL;
-	}
+          return EINVAL;
+        }
 
     }
 
@@ -3978,12 +3978,12 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
     {
       /* print a sum-up of write parameters */
       fprintf(output, "Write options: Data length: %llu x %llu Bytes, Seek: %s%+lld\n",
-	      (unsigned long long)nb_times,
-	      (unsigned long long)datasize,
-	      (p_seek_desc ? (seek_desc.whence == FSAL_SEEK_SET ? "SET" :
-			      seek_desc.whence == FSAL_SEEK_CUR ? "CUR" :
-			      "END") : "DEFAULT"),
-	      (p_seek_desc ? seek_desc.offset : 0LL));
+              (unsigned long long)nb_times,
+              (unsigned long long)datasize,
+              (p_seek_desc ? (seek_desc.whence == FSAL_SEEK_SET ? "SET" :
+                              seek_desc.whence == FSAL_SEEK_CUR ? "CUR" :
+                              "END") : "DEFAULT"),
+              (p_seek_desc ? seek_desc.offset : 0LL));
     }
 
   /* variables initialisation */
@@ -4001,41 +4001,41 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
     {
 
       st = MFSL_write(&context->current_fd,
-		      p_seek_desc,
-		      block_size,
-		      (caddr_t) databuff, &size_written_once, &context->mcontext);
+                      p_seek_desc,
+                      block_size,
+                      (caddr_t) databuff, &size_written_once, &context->mcontext);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  fprintf(output, "Error executing FSAL_write:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
+        {
+          fprintf(output, "Error executing FSAL_write:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
 
-	  /* exit only if it is not retryable */
-	  if (fsal_is_retryable(st))
-	    {
-	      sleep(1);
-	      continue;
-	    } else
-	    {
-	      if (flag_X)
-		Mem_Free(databuff);
-	      return st.major;
-	    }
-	}
+          /* exit only if it is not retryable */
+          if (fsal_is_retryable(st))
+            {
+              sleep(1);
+              continue;
+            } else
+            {
+              if (flag_X)
+                Mem_Free(databuff);
+              return st.major;
+            }
+        }
 
       fprintf(output, ".");
 
       /* update stats */
 
       if (size_written_once > 0)
-	nb_block_written++;
+        nb_block_written++;
 
       size_written += size_written_once;
 
       /* flush */
       if (nb_block_written % 10)
-	fflush(output);
+        fflush(output);
 
       /* what ever seek type was, we continue writting to the current position */
       p_seek_desc = NULL;
@@ -4060,8 +4060,8 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
       print_timeval(output, timer_diff);
 
       bandwidth =
-	  size_written / (1024 * 1024 *
-			  (timer_diff.tv_sec + 0.000001 * timer_diff.tv_usec));
+          size_written / (1024 * 1024 *
+                          (timer_diff.tv_sec + 0.000001 * timer_diff.tv_usec));
 
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
@@ -4078,9 +4078,9 @@ int fn_mfsl_write(int argc,	/* IN : number of args in argv */
  *  Command that closes a file.
  *  close
  */
-int fn_mfsl_close(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_close(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     )
 {
 
@@ -4106,7 +4106,7 @@ int fn_mfsl_close(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* is a file already opened ? */
@@ -4143,9 +4143,9 @@ int fn_mfsl_close(int argc,	/* IN : number of args in argv */
  *  Command that prints a file to screen.
  *  cat [-f] <path>
  */
-int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     )
 {
 
@@ -4196,7 +4196,7 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* analysing options */
@@ -4205,26 +4205,26 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'f':
-	  if (flag_f)
-	    fprintf(output,
-		    "cat: warning: option 'f' has been specified more than once.\n");
-	    else
-	    flag_f++;
-	  break;
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "cat: warning: option 'h' has been specified more than once.\n");
-	    else
-	    flag_h++;
-	  break;
-	case '?':
-	  fprintf(output, "cat: unknown option : %c\n", Optopt);
-	  err_flag++;
-	  break;
-	}
+        {
+        case 'f':
+          if (flag_f)
+            fprintf(output,
+                    "cat: warning: option 'f' has been specified more than once.\n");
+            else
+            flag_f++;
+          break;
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "cat: warning: option 'h' has been specified more than once.\n");
+            else
+            flag_h++;
+          break;
+        case '?':
+          fprintf(output, "cat: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   if (flag_h)
@@ -4251,7 +4251,7 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
   /* retrieves object handle */
   if (rc =
       msfl_solvepath(glob_path, FSAL_MAX_PATH_LEN,
-		     file, context->current_dir, &filehdl, output))
+                     file, context->current_dir, &filehdl, output))
     return rc;
 
   /* make open flags */
@@ -4275,22 +4275,22 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
       fsal_size_t nb_read_once;
 
       st = MFSL_read(&cat_fd, NULL, buffsize, (caddr_t) readbuff,
-		     &nb_read_once, &is_eof, &context->mcontext);
+                     &nb_read_once, &is_eof, &context->mcontext);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  fprintf(output, "Error executing FSAL_read:");
-	  print_fsal_status(output, st);
-	  fprintf(output, "\n");
+        {
+          fprintf(output, "Error executing FSAL_read:");
+          print_fsal_status(output, st);
+          fprintf(output, "\n");
 
-	  /* exit only if it is not retryable */
-	  if (fsal_is_retryable(st))
-	    {
-	      sleep(1);
-	      continue;
-	    } else
-	    return st.major;
-	}
+          /* exit only if it is not retryable */
+          if (fsal_is_retryable(st))
+            {
+              sleep(1);
+              continue;
+            } else
+            return st.major;
+        }
 
       fwrite((caddr_t) readbuff, (size_t) nb_read_once, 1, output);
 
@@ -4304,7 +4304,7 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
   if (!is_eof)
     {
       fprintf(output,
-	      "\n----------------- File is larger than 1MB (use -f option to display all) -----------------\n");
+              "\n----------------- File is larger than 1MB (use -f option to display all) -----------------\n");
       return EPERM;
     }
 
@@ -4313,9 +4313,9 @@ int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
 }
 
 /** compare 2 handles. */
-int fn_mfsl_handlecmp(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list   */
-		      FILE * output	/* IN : output stream */
+int fn_mfsl_handlecmp(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list   */
+                      FILE * output     /* IN : output stream */
     )
 {
   static char help_handlecmp[] = "usage: handlecmp <obj1> <obj2>\n";
@@ -4346,7 +4346,7 @@ int fn_mfsl_handlecmp(int argc,	/* IN : number of args in argv */
       int rc;
       rc = Init_Thread_MFSL(output, context, 0);
       if (rc != 0)
-	return rc;
+        return rc;
     }
 
   /* Exactly 2 args expected */
@@ -4361,12 +4361,12 @@ int fn_mfsl_handlecmp(int argc,	/* IN : number of args in argv */
 
   if (rc =
       msfl_solvepath(glob_path1, FSAL_MAX_PATH_LEN,
-		     argv[1], context->current_dir, &hdl1, output))
+                     argv[1], context->current_dir, &hdl1, output))
     return rc;
 
   if (rc =
       msfl_solvepath(glob_path2, FSAL_MAX_PATH_LEN,
-		     argv[2], context->current_dir, &hdl2, output))
+                     argv[2], context->current_dir, &hdl2, output))
     return rc;
 
   /* it should return :

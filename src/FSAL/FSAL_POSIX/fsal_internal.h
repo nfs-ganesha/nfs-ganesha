@@ -39,8 +39,8 @@ extern log_t fsal_log;
  *  This function initializes shared variables of the FSAL.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info,
-					fs_specific_initinfo_t * fs_specific_info);
+                                        fs_common_initinfo_t * fs_common_info,
+                                        fs_specific_initinfo_t * fs_specific_info);
 
 /**
  *  Increments the number of calls for a function.
@@ -89,39 +89,39 @@ void ReleaseTokenFSCall();
               } while(0)
 
 fsal_status_t fsal_internal_posix2posixdb_fileinfo(struct stat *buffstat,
-						   fsal_posixdb_fileinfo_t * info);
+                                                   fsal_posixdb_fileinfo_t * info);
 
 /**
  *  Check if 2 fsal_posixdb_fileinfo_t are consistent
  */
 fsal_status_t fsal_internal_posixdb_checkConsistency(fsal_posixdb_fileinfo_t * p_info_fs,
-						     fsal_posixdb_fileinfo_t * p_info_db,
-						     int *p_result);
+                                                     fsal_posixdb_fileinfo_t * p_info_db,
+                                                     int *p_result);
 
 /**
  * Add a new entry to the database. Remove an already existing handle if it's not consistent
  */
 fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
-					      fsal_name_t * p_filename,
-					      fsal_posixdb_fileinfo_t * p_info,
-					      fsal_handle_t * p_dir_handle,
-					      fsal_handle_t * p_new_handle);
+                                              fsal_name_t * p_filename,
+                                              fsal_posixdb_fileinfo_t * p_info,
+                                              fsal_handle_t * p_dir_handle,
+                                              fsal_handle_t * p_new_handle);
 
 /**
  * Append a fsal_name to an fsal_path to have the full path of a file from its name and its parent path
  */
 fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
-						     fsal_name_t * p_name);
+                                                     fsal_name_t * p_name);
 
 /**
  * Get a valid path associated to an handle.
  * The function selects many paths from the DB and return the first valid one. If is_dir is set, then only 1 path will be constructed from the database.
  */
-fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* IN */
-					      fsal_handle_t * p_handle,	/* IN */
-					      int is_dir,	/* IN */
-					      fsal_path_t * p_fsalpath,	/* OUT */
-					      struct stat *p_buffstat /* OUT */ );
+fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    /* IN */
+                                              fsal_handle_t * p_handle, /* IN */
+                                              int is_dir,       /* IN */
+                                              fsal_path_t * p_fsalpath, /* OUT */
+                                              struct stat *p_buffstat /* OUT */ );
 
 /** 
  * @brief Get the handle of a file, knowing its name and its parent dir
@@ -140,26 +140,26 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,	/* 
  *    ERR_FSAL_NOERR, if no error
  *    Anothere error code else.
  */
-fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,	/* IN */
-					    fsal_handle_t * p_parent_dir_handle,	/* IN */
-					    fsal_name_t * p_fsalname,	/* IN */
-					    fsal_posixdb_fileinfo_t * p_infofs,	/* IN */
-					    fsal_handle_t * p_object_handle);	/* OUT */
+fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      /* IN */
+                                            fsal_handle_t * p_parent_dir_handle,        /* IN */
+                                            fsal_name_t * p_fsalname,   /* IN */
+                                            fsal_posixdb_fileinfo_t * p_infofs, /* IN */
+                                            fsal_handle_t * p_object_handle);   /* OUT */
 
-fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_context,	/* IN */
-						    fsal_handle_t * p_parent_dir_handle,	/* IN */
-						    fsal_name_t * p_fsalname,	/* IN */
-						    fsal_posixdb_fileinfo_t * p_infofs,	/* IN */
-						    fsal_posixdb_child * p_children,	/* IN */
-						    unsigned int children_count,	/* IN */
-						    fsal_handle_t * p_object_handle);	/* OUT */
+fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_context,      /* IN */
+                                                    fsal_handle_t * p_parent_dir_handle,        /* IN */
+                                                    fsal_name_t * p_fsalname,   /* IN */
+                                                    fsal_posixdb_fileinfo_t * p_infofs, /* IN */
+                                                    fsal_posixdb_child * p_children,    /* IN */
+                                                    unsigned int children_count,        /* IN */
+                                                    fsal_handle_t * p_object_handle);   /* OUT */
 
 /**
  *  test the access to a file knowing its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
  *
  */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
-				       fsal_accessflags_t access_type,	/* IN */
-				       struct stat *p_buffstat,	/* IN */
-				       fsal_attrib_list_t *
-				       p_object_attributes /* IN */ );
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+                                       fsal_accessflags_t access_type,  /* IN */
+                                       struct stat *p_buffstat, /* IN */
+                                       fsal_attrib_list_t *
+                                       p_object_attributes /* IN */ );

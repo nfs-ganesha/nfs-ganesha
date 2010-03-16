@@ -104,7 +104,7 @@
 #ifndef _USE_SNMP
 typedef unsigned long u_long;
 #endif
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "HashData.h"
 #include "HashTable.h"
@@ -117,8 +117,8 @@ typedef unsigned long u_long;
 typedef struct dupreq_entry__ {
   long xid;
   nfs_res_t res_nfs;
-  u_long rq_prog;		/* service program number        */
-  u_long rq_vers;		/* service protocol version      */
+  u_long rq_prog;               /* service program number        */
+  u_long rq_vers;               /* service protocol version      */
   u_long rq_proc;
   time_t timestamp;
   struct dupreq_entry__ *next_alloc;
@@ -134,12 +134,12 @@ int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam);
 nfs_res_t nfs_dupreq_get(long xid, int *pstatus);
 
 int nfs_dupreq_add(long xid,
-		   struct svc_req *ptr_req,
-		   nfs_res_t * p_res_nfs,
-		   LRU_list_t * lru_dupreq, dupreq_entry_t ** dupreq_pool);
+                   struct svc_req *ptr_req,
+                   nfs_res_t * p_res_nfs,
+                   LRU_list_t * lru_dupreq, dupreq_entry_t ** dupreq_pool);
 
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
-				     hash_buffer_t * buffclef);
+                                     hash_buffer_t * buffclef);
 unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 void nfs_dupreq_get_stats(hash_stat_t * phstat);
 
@@ -147,4 +147,4 @@ void nfs_dupreq_get_stats(hash_stat_t * phstat);
 #define DUPREQ_INSERT_MALLOC_ERROR 1
 #define DUPREQ_NOT_FOUND           2
 
-#endif				/* _NFS_DUPREQ_H */
+#endif                          /* _NFS_DUPREQ_H */

@@ -32,9 +32,9 @@
  *        - ERR_FSAL_NOT_INIT     (ghostfs not initialize)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
 
@@ -69,10 +69,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
   if (unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_MAJOR,
-			"Unsupported attributes: %#llX removing it from asked attributes ",
-			unsupp_attr);
+                        "Unsupported attributes: %#llX removing it from asked attributes ",
+                        unsupp_attr);
       object_attributes->asked_attributes =
-	  object_attributes->asked_attributes & (~unsupp_attr);
+          object_attributes->asked_attributes & (~unsupp_attr);
     }
 
   /* Fills the output struct */
@@ -84,10 +84,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
 
 }
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * attrib_set,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * attrib_set,    /* IN */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   GHOSTFS_setattr_mask_t set_mask = 0;
@@ -131,7 +131,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
     {
 
       if (p_context->credential.user != 0)
-	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+        Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
 
       set_mask |= SETATTR_UID;
       ghost_attrs.uid = attrib_set->owner;
@@ -140,7 +140,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
   if (FSAL_TEST_MASK(attrib_set->asked_attributes, FSAL_ATTR_GROUP))
     {
       if (p_context->credential.user != 0)
-	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+        Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
 
       set_mask |= SETATTR_GID;
       ghost_attrs.gid = attrib_set->group;
@@ -160,8 +160,8 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
   if (attrib_set->asked_attributes & ~SETTABLE_ATTRIBUTES)
     {
       printf("FSAL: To be set %llX, Settable %llX\n",
-	     (unsigned long long)object_attributes->asked_attributes,
-	     (unsigned long long)SETTABLE_ATTRIBUTES);
+             (unsigned long long)object_attributes->asked_attributes,
+             (unsigned long long)SETTABLE_ATTRIBUTES);
 
       Return(ERR_FSAL_ATTRNOTSUPP, 0, INDEX_FSAL_setattrs);
     }
@@ -178,10 +178,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

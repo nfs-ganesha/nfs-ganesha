@@ -61,7 +61,7 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
   if (blk_index < 0)
     {
       DisplayLog("SNMP_ADM: Cannot read item \"%s\" from configuration file",
-		 CONF_SNMP_ADM_LABEL);
+                 CONF_SNMP_ADM_LABEL);
       return ENOENT;
     }
 
@@ -74,101 +74,101 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
       /* retrieve key's name */
       err = config_GetKeyValue(in_config, blk_index, var_index, &key_name, &key_value);
       if (err)
-	{
-	  DisplayLog
-	      ("SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
-	       var_index, CONF_LABEL_FS_SPECIFIC);
-	  return err;
-	}
+        {
+          DisplayLog
+              ("SNMP_ADM: ERROR reading key[%d] from section \"%s\" of configuration file.",
+               var_index, CONF_LABEL_FS_SPECIFIC);
+          return err;
+        }
 
       /* what parameter is it ? */
 
       if (!STRCMP(key_name, "Snmp_Agentx_Socket"))
-	{
-	  strncpy(out_parameter->snmp_adm.snmp_agentx_socket, key_value, MAXPATHLEN);
+        {
+          strncpy(out_parameter->snmp_adm.snmp_agentx_socket, key_value, MAXPATHLEN);
       } else if (!STRCMP(key_name, "Product_Id"))
-	{
-	  out_parameter->snmp_adm.product_id = atoi(key_value);
+        {
+          out_parameter->snmp_adm.product_id = atoi(key_value);
       } else if (!STRCMP(key_name, "Snmp_adm_log"))
-	{
-	  strncpy(out_parameter->snmp_adm.snmp_log_file, key_value, MAXPATHLEN);
+        {
+          strncpy(out_parameter->snmp_adm.snmp_log_file, key_value, MAXPATHLEN);
       } else if (!STRCMP(key_name, "Export_cache_stats"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_cache_stats = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_cache_stats = bool;
       } else if (!STRCMP(key_name, "Export_requests_stats"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_requests_stats = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_requests_stats = bool;
       } else if (!STRCMP(key_name, "Export_maps_stats"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_maps_stats = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_maps_stats = bool;
       } else if (!STRCMP(key_name, "Export_buddy_stats"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_buddy_stats = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_buddy_stats = bool;
       } else if (!STRCMP(key_name, "Export_nfs_calls_detail"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_nfs_calls_detail = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_nfs_calls_detail = bool;
       } else if (!STRCMP(key_name, "Export_cache_inode_calls_detail"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_cache_inode_calls_detail = bool;
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_cache_inode_calls_detail = bool;
       } else if (!STRCMP(key_name, "Export_FSAL_calls_detail"))
-	{
-	  int bool = StrToBoolean(key_value);
-	  if (bool == -1)
-	    {
-	      DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-			 key_name);
-	      return EINVAL;
-	    }
-	  out_parameter->snmp_adm.export_fsal_calls_detail = bool;
-	} else
-	{
-	  DisplayLog
-	      ("SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-	       key_name, CONF_LABEL_FS_SPECIFIC);
-	  return EINVAL;
-	}
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              DisplayLog("SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
+                         key_name);
+              return EINVAL;
+            }
+          out_parameter->snmp_adm.export_fsal_calls_detail = bool;
+        } else
+        {
+          DisplayLog
+              ("SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
+               key_name, CONF_LABEL_FS_SPECIFIC);
+          return EINVAL;
+        }
     }
   config_ok = 1;
   return 0;
@@ -192,15 +192,15 @@ static int get_inode_stat_nb(snmp_adm_type_union * param, void *opt)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_active;
+        param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_active;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_total;
+        param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_total;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].cache_inode_client.stat.nb_call_total;
+        param->integer += workers_data[i].cache_inode_client.stat.nb_call_total;
       break;
     default:
       return 1;
@@ -222,22 +222,22 @@ static int get_inode_stat_func_stat(snmp_adm_type_union * param, void *opt)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer +=
-	    workers_data[i].cache_inode_client.stat.func_stats.nb_success[j];
+        param->integer +=
+            workers_data[i].cache_inode_client.stat.func_stats.nb_success[j];
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
+        param->integer += workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer +=
-	    workers_data[i].cache_inode_client.stat.func_stats.nb_err_retryable[j];
+        param->integer +=
+            workers_data[i].cache_inode_client.stat.func_stats.nb_err_retryable[j];
       break;
     case 3:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer +=
-	    workers_data[i].cache_inode_client.stat.func_stats.nb_err_unrecover[j];
+        param->integer +=
+            workers_data[i].cache_inode_client.stat.func_stats.nb_err_unrecover[j];
       break;
     default:
       return 1;
@@ -350,35 +350,35 @@ static int get_workerstat(snmp_adm_type_union * param, void *opt)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.nb_total_req;
+        param->integer += workers_data[i].stats.nb_total_req;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.nb_udp_req;
+        param->integer += workers_data[i].stats.nb_udp_req;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.nb_tcp_req;
+        param->integer += workers_data[i].stats.nb_tcp_req;
       break;
     case 3:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.nb_mnt1_req;
+        param->integer += workers_data[i].stats.stat_req.nb_mnt1_req;
       break;
     case 4:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.nb_mnt3_req;
+        param->integer += workers_data[i].stats.stat_req.nb_mnt3_req;
       break;
     case 5:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.nb_nfs2_req;
+        param->integer += workers_data[i].stats.stat_req.nb_nfs2_req;
       break;
     case 6:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.nb_nfs3_req;
+        param->integer += workers_data[i].stats.stat_req.nb_nfs3_req;
       break;
     case 7:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.nb_nfs4_req;
+        param->integer += workers_data[i].stats.stat_req.nb_nfs4_req;
       break;
     default:
       return 1;
@@ -401,15 +401,15 @@ static int get_pending(snmp_adm_type_union * param, void *opt_arg)
   for (i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
       len_pending_request =
-	  workers_data[i].pending_request->nb_entry -
-	  workers_data[i].pending_request->nb_invalid;
+          workers_data[i].pending_request->nb_entry -
+          workers_data[i].pending_request->nb_invalid;
 
       if ((len_pending_request < min_pending_request)
-	  || (min_pending_request == MIN_NOT_SET))
-	min_pending_request = len_pending_request;
+          || (min_pending_request == MIN_NOT_SET))
+        min_pending_request = len_pending_request;
 
       if (len_pending_request > max_pending_request)
-	max_pending_request = len_pending_request;
+        max_pending_request = len_pending_request;
 
       total_pending_request += len_pending_request;
     }
@@ -447,15 +447,15 @@ static int get_mnt1(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].total;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].total;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].success;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].success;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].dropped;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt1[cmd].dropped;
       break;
     default:
       return 1;
@@ -476,15 +476,15 @@ static int get_mnt3(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].total;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].total;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].success;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].success;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].dropped;
+        param->integer += workers_data[i].stats.stat_req.stat_req_mnt3[cmd].dropped;
       break;
     default:
       return 1;
@@ -505,15 +505,15 @@ static int get_nfs2(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].total;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].total;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].success;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].success;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].dropped;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs2[cmd].dropped;
       break;
     default:
       return 1;
@@ -534,15 +534,15 @@ static int get_nfs3(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].total;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].total;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].success;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].success;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].dropped;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs3[cmd].dropped;
       break;
     default:
       return 1;
@@ -563,15 +563,15 @@ static int get_nfs4(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].total;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].total;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].success;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].success;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].dropped;
+        param->integer += workers_data[i].stats.stat_req.stat_req_nfs4[cmd].dropped;
       break;
     default:
       return 1;
@@ -592,21 +592,21 @@ static int get_fsal(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.fsal_stats.func_stats.nb_call[cmd];
+        param->integer += workers_data[i].stats.fsal_stats.func_stats.nb_call[cmd];
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer += workers_data[i].stats.fsal_stats.func_stats.nb_success[cmd];
+        param->integer += workers_data[i].stats.fsal_stats.func_stats.nb_success[cmd];
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer +=
-	    workers_data[i].stats.fsal_stats.func_stats.nb_err_retryable[cmd];
+        param->integer +=
+            workers_data[i].stats.fsal_stats.func_stats.nb_err_retryable[cmd];
       break;
     case 3:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->integer +=
-	    workers_data[i].stats.fsal_stats.func_stats.nb_err_unrecover[cmd];
+        param->integer +=
+            workers_data[i].stats.fsal_stats.func_stats.nb_err_unrecover[cmd];
       break;
     default:
       return 1;
@@ -626,51 +626,51 @@ static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
     {
     case 0:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.TotalMemSpace;
+        param->bigint += workers_data[i].stats.buddy_stats.TotalMemSpace;
       break;
     case 1:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.StdMemSpace;
+        param->bigint += workers_data[i].stats.buddy_stats.StdMemSpace;
       break;
     case 2:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.ExtraMemSpace;
+        param->bigint += workers_data[i].stats.buddy_stats.ExtraMemSpace;
       break;
     case 3:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
+        param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
       break;
     case 4:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
+        param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
 
       param->bigint /= nfs_param.core_param.nb_worker;
 
       break;
     case 5:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	if (workers_data[i].stats.buddy_stats.StdUsedSpace > param->bigint)
-	  param->bigint = workers_data[i].stats.buddy_stats.StdUsedSpace;
+        if (workers_data[i].stats.buddy_stats.StdUsedSpace > param->bigint)
+          param->bigint = workers_data[i].stats.buddy_stats.StdUsedSpace;
       break;
     case 6:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.NbStdPages;
+        param->bigint += workers_data[i].stats.buddy_stats.NbStdPages;
       break;
     case 7:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
+        param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
       break;
     case 8:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
+        param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
 
       param->bigint /= nfs_param.core_param.nb_worker;
 
       break;
     case 9:
       for (i = 0; i < nfs_param.core_param.nb_worker; i++)
-	if (workers_data[i].stats.buddy_stats.NbStdUsed > param->bigint)
-	  param->bigint = workers_data[i].stats.buddy_stats.NbStdUsed;
+        if (workers_data[i].stats.buddy_stats.NbStdUsed > param->bigint)
+          param->bigint = workers_data[i].stats.buddy_stats.NbStdUsed;
       break;
     default:
       return 1;
@@ -992,7 +992,7 @@ static register_get_set snmp_export_stat_buddy[] =
 
 #define SNMPADM_STAT_BUDDY_COUNT 10
 
-#endif				/* _NO_BUDDY_SYSTEM */
+#endif                          /* _NO_BUDDY_SYSTEM */
 
 static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
@@ -1002,13 +1002,13 @@ static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   *p_dyn_gs_count = 4 * CACHE_INODE_NB_COMMAND;
   *p_dyn_gs =
       (register_get_set *) Mem_Alloc(4 * CACHE_INODE_NB_COMMAND *
-				     sizeof(register_get_set));
+                                     sizeof(register_get_set));
 
   for (j = 0; j < 4 * CACHE_INODE_NB_COMMAND; j += 4)
     {
       (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_nb_success",
-	       cache_inode_function_names[j / 4]);
+               cache_inode_function_names[j / 4]);
       (*p_dyn_gs)[j + 0].desc = "Number of success calls to inode cache for this command";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
       (*p_dyn_gs)[j + 0].access = SNMP_ADM_ACCESS_RO;
@@ -1018,7 +1018,7 @@ static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
 
       (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_nb_call",
-	       cache_inode_function_names[j / 4]);
+               cache_inode_function_names[j / 4]);
       (*p_dyn_gs)[j + 1].desc = "Number of calls to inode cache for this command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
       (*p_dyn_gs)[j + 1].access = SNMP_ADM_ACCESS_RO;
@@ -1028,9 +1028,9 @@ static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
 
       (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_nb_retryable",
-	       cache_inode_function_names[j / 4]);
+               cache_inode_function_names[j / 4]);
       (*p_dyn_gs)[j + 2].desc =
-	  "Number of retryable calls to inode cache for this command";
+          "Number of retryable calls to inode cache for this command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
       (*p_dyn_gs)[j + 2].access = SNMP_ADM_ACCESS_RO;
       (*p_dyn_gs)[j + 2].getter = get_inode_stat_func_stat;
@@ -1039,9 +1039,9 @@ static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
 
       (*p_dyn_gs)[j + 3].label = Mem_Alloc(256 * sizeof(char));
       snprintf((*p_dyn_gs)[j + 3].label, 256, "%s_nb_unrecover",
-	       cache_inode_function_names[j / 4]);
+               cache_inode_function_names[j / 4]);
       (*p_dyn_gs)[j + 3].desc =
-	  "Number of unrecover calls to inode cache for this command";
+          "Number of unrecover calls to inode cache for this command";
       (*p_dyn_gs)[j + 3].type = SNMP_ADM_INTEGER;
       (*p_dyn_gs)[j + 3].access = SNMP_ADM_ACCESS_RO;
       (*p_dyn_gs)[j + 3].getter = get_inode_stat_func_stat;
@@ -1271,7 +1271,7 @@ static int create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_coun
 
       (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_nb_success",
-	       fsal_function_names[j / 4]);
+               fsal_function_names[j / 4]);
       (*p_dyn_gs)[j + 1].desc = "Number of success calls to FSAL for this function";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
       (*p_dyn_gs)[j + 1].access = SNMP_ADM_ACCESS_RO;
@@ -1330,8 +1330,8 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
 
   /* set SNMP admin library's configuration  */
   if ((rc = snmp_adm_config_daemon(nfs_param.extern_param.snmp_adm.snmp_agentx_socket,
-				   nfs_param.extern_param.snmp_adm.snmp_log_file,
-				   nfs_param.extern_param.snmp_adm.product_id)))
+                                   nfs_param.extern_param.snmp_adm.snmp_log_file,
+                                   nfs_param.extern_param.snmp_adm.product_id)))
     {
       DisplayLog("Error setting SNMP admin interface configuration");
       return 1;
@@ -1340,7 +1340,7 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
   /* always register general statistics */
   if ((rc =
        snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_general,
-					  SNMPADM_STAT_GENERAL_COUNT)))
+                                          SNMPADM_STAT_GENERAL_COUNT)))
     {
       DisplayLog("Error registering statistic variables to SNMP");
       return 2;
@@ -1349,57 +1349,57 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
   if (nfs_param.extern_param.snmp_adm.export_cache_stats)
     {
       if ((rc =
-	   snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_cache,
-					      SNMPADM_STAT_CACHE_COUNT)))
-	{
-	  DisplayLog("Error registering statistic variables to SNMP");
-	  return 2;
-	}
+           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_cache,
+                                              SNMPADM_STAT_CACHE_COUNT)))
+        {
+          DisplayLog("Error registering statistic variables to SNMP");
+          return 2;
+        }
     }
 
   if (nfs_param.extern_param.snmp_adm.export_requests_stats)
     {
       if ((rc =
-	   snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_req,
-					      SNMPADM_STAT_REQ_COUNT)))
-	{
-	  DisplayLog("Error registering statistic variables to SNMP");
-	  return 2;
-	}
+           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_req,
+                                              SNMPADM_STAT_REQ_COUNT)))
+        {
+          DisplayLog("Error registering statistic variables to SNMP");
+          return 2;
+        }
     }
 
   if (nfs_param.extern_param.snmp_adm.export_maps_stats)
     {
       if ((rc =
-	   snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_maps,
-					      SNMPADM_STAT_MAPS_COUNT)))
-	{
-	  DisplayLog("Error registering statistic variables to SNMP");
-	  return 2;
-	}
+           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_maps,
+                                              SNMPADM_STAT_MAPS_COUNT)))
+        {
+          DisplayLog("Error registering statistic variables to SNMP");
+          return 2;
+        }
     }
 #ifndef _NO_BUDDY_SYSTEM
   if (nfs_param.extern_param.snmp_adm.export_buddy_stats)
     {
       if ((rc =
-	   snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_buddy,
-					      SNMPADM_STAT_BUDDY_COUNT)))
-	{
-	  DisplayLog("Error registering statistic variables to SNMP");
-	  return 2;
-	}
+           snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_buddy,
+                                              SNMPADM_STAT_BUDDY_COUNT)))
+        {
+          DisplayLog("Error registering statistic variables to SNMP");
+          return 2;
+        }
     }
-#endif				/* _NO_BUDDY_SYSTEM */
+#endif                          /* _NO_BUDDY_SYSTEM */
 
   if (nfs_param.extern_param.snmp_adm.export_cache_inode_calls_detail)
     {
       create_dyn_cache_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering dynamic cache statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering dynamic cache statistic variables to SNMP");
+          return 2;
+        }
       free_dyn(dyn_gs, dyn_gs_count);
     }
 
@@ -1408,50 +1408,50 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
       create_dyn_mntv1_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering mntv1 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering mntv1 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
 
       create_dyn_mntv3_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering mntv3 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering mntv3 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
 
       create_dyn_nfsv2_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering nfsv2 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering nfsv2 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
 
       create_dyn_nfsv3_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering nfsv3 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering nfsv3 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
 
       create_dyn_nfsv4_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering nfsv4 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering nfsv4 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
     }
@@ -1461,10 +1461,10 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
       create_dyn_fsal_stat(&dyn_gs, &dyn_gs_count);
 
       if ((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-	{
-	  DisplayLog("Error registering nfsv4 statistic variables to SNMP");
-	  return 2;
-	}
+        {
+          DisplayLog("Error registering nfsv4 statistic variables to SNMP");
+          return 2;
+        }
 
       free_dyn(dyn_gs, dyn_gs_count);
     }

@@ -41,9 +41,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
 
@@ -68,35 +68,35 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
 
       /* call to snmpget */
       rc = IssueSNMPQuery(p_context, filehandle->oid_tab, filehandle->oid_len,
-			  &query_desc);
+                          &query_desc);
 
       ReleaseTokenFSCall();
 
       /* convert error code in case of error */
       if (rc != SNMPERR_SUCCESS && snmp2fsal_error(rc) != ERR_FSAL_NOENT)
-	Return(snmp2fsal_error(rc), rc, INDEX_FSAL_getattrs);
+        Return(snmp2fsal_error(rc), rc, INDEX_FSAL_getattrs);
 
       if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
-	Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
+        Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
 
       p_convert_var = p_context->snmp_response->variables;
 
       /* check no such object, etc... */
       if (p_convert_var->type == SNMP_NOSUCHOBJECT
-	  || p_convert_var->type == SNMP_NOSUCHINSTANCE
-	  || p_convert_var->type == SNMP_ENDOFMIBVIEW)
-	Return(ERR_FSAL_STALE, p_convert_var->type, INDEX_FSAL_getattrs);
+          || p_convert_var->type == SNMP_NOSUCHINSTANCE
+          || p_convert_var->type == SNMP_ENDOFMIBVIEW)
+        Return(ERR_FSAL_STALE, p_convert_var->type, INDEX_FSAL_getattrs);
 
       /* retrieve the associated MIB node (can be null) */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);
 
     } /* endif not root  */
   else if (filehandle->object_type_reminder != FSAL_NODETYPE_ROOT
-	     && filehandle->oid_len != 0)
+             && filehandle->oid_len != 0)
     {
       /* retrieve the associated MIB node (can be null) */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);
-    } else			/* root  */
+    } else                      /* root  */
     mib_node = NULL;
 
   /* @todo check no such object, etc... */
@@ -141,10 +141,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * attrib_set,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * attrib_set,    /* IN */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -171,10 +171,10 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

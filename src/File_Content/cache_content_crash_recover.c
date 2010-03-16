@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -120,13 +120,13 @@
  *
  */
 cache_content_status_t cache_content_crash_recover(unsigned short exportid,
-						   unsigned int index,
-						   unsigned int mod,
-						   cache_content_client_t * pclient_data,
-						   cache_inode_client_t * pclient_inode,
-						   hash_table_t * ht,
-						   fsal_op_context_t * pcontext,
-						   cache_content_status_t * pstatus)
+                                                   unsigned int index,
+                                                   unsigned int mod,
+                                                   cache_content_client_t * pclient_data,
+                                                   cache_inode_client_t * pclient_inode,
+                                                   hash_table_t * ht,
+                                                   fsal_op_context_t * pcontext,
+                                                   cache_content_status_t * pstatus)
 {
   DIR *cache_directory;
   cache_content_dirinfo_t export_directory;
@@ -165,122 +165,122 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
 
       /* . and .. are of no interest */
       if (!strcmp(direntp->d_name, ".") || !strcmp(direntp->d_name, ".."))
-	continue;
+        continue;
 
       if ((found_export_id = cache_content_get_export_id(direntp->d_name)) >= 0)
-	{
-	  DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
-			    "Directory cache for Export ID %d has been found",
-			    found_export_id);
-	  snprintf(cache_exportdir, MAXPATHLEN, "%s/%s", pclient_data->cache_dir,
-		   direntp->d_name);
+        {
+          DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
+                            "Directory cache for Export ID %d has been found",
+                            found_export_id);
+          snprintf(cache_exportdir, MAXPATHLEN, "%s/%s", pclient_data->cache_dir,
+                   direntp->d_name);
 
-	  if (cache_content_local_cache_opendir(cache_exportdir, &(export_directory)) ==
-	      FALSE)
-	    {
-	      *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
-	      closedir(cache_directory);
-	      return *pstatus;
-	    }
+          if (cache_content_local_cache_opendir(cache_exportdir, &(export_directory)) ==
+              FALSE)
+            {
+              *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
+              closedir(cache_directory);
+              return *pstatus;
+            }
 
-	  /* Reads the directory content (a single thread for the moment) */
+          /* Reads the directory content (a single thread for the moment) */
 
-	  while (cache_content_local_cache_dir_iter
-		 (&export_directory, &dirent_export, index, mod))
-	    {
-	      /* . and .. are of no interest */
-	      if (!strcmp(dirent_export.d_name, ".")
-		  || !strcmp(dirent_export.d_name, ".."))
-		continue;
+          while (cache_content_local_cache_dir_iter
+                 (&export_directory, &dirent_export, index, mod))
+            {
+              /* . and .. are of no interest */
+              if (!strcmp(dirent_export.d_name, ".")
+                  || !strcmp(dirent_export.d_name, ".."))
+                continue;
 
-	      if ((inum = cache_content_get_inum(dirent_export.d_name)) > 0)
-		{
-		  DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
-				    "Cache entry for File ID %llx has been found", inum);
+              if ((inum = cache_content_get_inum(dirent_export.d_name)) > 0)
+                {
+                  DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
+                                    "Cache entry for File ID %llx has been found", inum);
 
-		  /* Get the content of the file */
-		  sprintf(fullpath, "%s/%s/%s", pclient_data->cache_dir, direntp->d_name,
-			  dirent_export.d_name);
+                  /* Get the content of the file */
+                  sprintf(fullpath, "%s/%s/%s", pclient_data->cache_dir, direntp->d_name,
+                          dirent_export.d_name);
 
-		  if ((cache_inode_status = cache_inode_reload_content(fullpath,
-								       &inode_entry)) !=
-		      CACHE_INODE_SUCCESS)
-		    {
-		      DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
-					"File Content Cache record for File ID %llx is unreadable",
-					inum);
-		      continue;
-		    } else
-		    DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
-				      "File Content Cache record for File ID %llx : READ OK",
-				      inum);
+                  if ((cache_inode_status = cache_inode_reload_content(fullpath,
+                                                                       &inode_entry)) !=
+                      CACHE_INODE_SUCCESS)
+                    {
+                      DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
+                                        "File Content Cache record for File ID %llx is unreadable",
+                                        inum);
+                      continue;
+                    } else
+                    DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
+                                      "File Content Cache record for File ID %llx : READ OK",
+                                      inum);
 
-		  /* Populating the cache_inode... */
-		  fsal_data.handle = inode_entry.object.file.handle;
-		  fsal_data.cookie = 0;
+                  /* Populating the cache_inode... */
+                  fsal_data.handle = inode_entry.object.file.handle;
+                  fsal_data.cookie = 0;
 
-		  if ((pentry = cache_inode_get(&fsal_data,
-						&fsal_attr,
-						ht,
-						pclient_inode,
-						pcontext, &cache_inode_status)) == NULL)
-		    {
-		      DisplayLogJd(pclient_inode->log_outputs,
-				   "Error adding cached inode for file ID %llx, error=%d",
-				   inum, cache_inode_status);
-		      continue;
-		    } else
-		    DisplayLogJdLevel(pclient_inode->log_outputs, NIV_EVENT,
-				      "Cached inode added successfully for file ID %llx",
-				      inum);
+                  if ((pentry = cache_inode_get(&fsal_data,
+                                                &fsal_attr,
+                                                ht,
+                                                pclient_inode,
+                                                pcontext, &cache_inode_status)) == NULL)
+                    {
+                      DisplayLogJd(pclient_inode->log_outputs,
+                                   "Error adding cached inode for file ID %llx, error=%d",
+                                   inum, cache_inode_status);
+                      continue;
+                    } else
+                    DisplayLogJdLevel(pclient_inode->log_outputs, NIV_EVENT,
+                                      "Cached inode added successfully for file ID %llx",
+                                      inum);
 
-		  /* Get the size from the cache */
-		  if ((size_in_cache =
-		       cache_content_recover_size(cache_exportdir, inum)) == -1)
-		    {
-		      DisplayLogJd(pclient_inode->log_outputs,
-				   "Error when recovering size for file ID %llx", inum);
-		    } else
-		    pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
+                  /* Get the size from the cache */
+                  if ((size_in_cache =
+                       cache_content_recover_size(cache_exportdir, inum)) == -1)
+                    {
+                      DisplayLogJd(pclient_inode->log_outputs,
+                                   "Error when recovering size for file ID %llx", inum);
+                    } else
+                    pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
 
-		  /* Adding the cached entry to the data cache */
-		  if ((pentry_content = cache_content_new_entry(pentry,
-								NULL,
-								pclient_data,
-								RECOVER_ENTRY,
-								pcontext,
-								&cache_content_status)) ==
-		      NULL)
-		    {
-		      DisplayLogJd(pclient_data->log_outputs,
-				   "Error adding cached data for file ID %llx, error=%d",
-				   inum, cache_inode_status);
-		      continue;
-		    } else
-		    DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
-				      "Cached data added successfully for file ID %llx",
-				      inum);
+                  /* Adding the cached entry to the data cache */
+                  if ((pentry_content = cache_content_new_entry(pentry,
+                                                                NULL,
+                                                                pclient_data,
+                                                                RECOVER_ENTRY,
+                                                                pcontext,
+                                                                &cache_content_status)) ==
+                      NULL)
+                    {
+                      DisplayLogJd(pclient_data->log_outputs,
+                                   "Error adding cached data for file ID %llx, error=%d",
+                                   inum, cache_inode_status);
+                      continue;
+                    } else
+                    DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
+                                      "Cached data added successfully for file ID %llx",
+                                      inum);
 
-		  if ((cache_content_status =
-		       cache_content_valid(pentry_content, CACHE_CONTENT_OP_GET,
-					   pclient_data)) != CACHE_CONTENT_SUCCESS)
-		    {
-		      *pstatus = cache_content_status;
-		      return *pstatus;
-		    }
+                  if ((cache_content_status =
+                       cache_content_valid(pentry_content, CACHE_CONTENT_OP_GET,
+                                           pclient_data)) != CACHE_CONTENT_SUCCESS)
+                    {
+                      *pstatus = cache_content_status;
+                      return *pstatus;
+                    }
 
-		}
+                }
 
-	    }			/*  while( ( dirent_export = readdir( export_directory ) ) != NULL ) */
+            }                   /*  while( ( dirent_export = readdir( export_directory ) ) != NULL ) */
 
-	  /* Close the export cache directory */
-	  cache_content_local_cache_closedir(&export_directory);
+          /* Close the export cache directory */
+          cache_content_local_cache_closedir(&export_directory);
 
-	}			/* if( ( found_export_id = cache_content_get_export_id( direntp->d_name ) ) > 0 ) */
-    }				/* while( ( direntp = readdir( cache_directory ) ) != NULL ) */
+        }                       /* if( ( found_export_id = cache_content_get_export_id( direntp->d_name ) ) > 0 ) */
+    }                           /* while( ( direntp = readdir( cache_directory ) ) != NULL ) */
 
   /* Close the cache directory */
   closedir(cache_directory);
 
   return *pstatus;
-}				/* cache_content_crash_recover */
+}                               /* cache_content_crash_recover */

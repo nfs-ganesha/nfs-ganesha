@@ -135,7 +135,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef)
+                                       hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -146,10 +146,10 @@ unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
        c = ((char *)buffclef->pdata)[++i], sum += c) ;
 
   return (unsigned long)(sum % p_hparam->index_size);
-}				/*  ip_name_value_hash_func */
+}                               /*  ip_name_value_hash_func */
 
 unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef)
+                                         hash_buffer_t * buffclef)
 {
   return ((unsigned long)(buffclef->pdata) % p_hparam->index_size);
 }
@@ -169,19 +169,19 @@ unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
  *
  */
 unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-				     hash_buffer_t * buffclef)
+                                     hash_buffer_t * buffclef)
 {
   unsigned int result;
 
   if (idmap_compute_hash_value((char *)buffclef->pdata,
-			       (uint32_t *) & result) != ID_MAPPER_SUCCESS)
+                               (uint32_t *) & result) != ID_MAPPER_SUCCESS)
     return 0;
 
   return (unsigned long)result;
-}				/* ip_name_rbt_hash_func */
+}                               /* ip_name_rbt_hash_func */
 
 unsigned long namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef)
+                                       hash_buffer_t * buffclef)
 {
   return (unsigned long)(buffclef->pdata);
 }
@@ -202,7 +202,7 @@ unsigned long namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
 int compare_idmapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   return strncmp((char *)(buff1->pdata), (char *)(buff2->pdata), PWENT_MAX_LEN);
-}				/* compare_xid */
+}                               /* compare_xid */
 
 int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
@@ -210,7 +210,7 @@ int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
   unsigned long xid2 = (unsigned long)(buff2->pdata);
 
   return (xid1 == xid2) ? 0 : 1;
-}				/* compare_xid */
+}                               /* compare_xid */
 
 /**
  *
@@ -228,7 +228,7 @@ int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2)
 int display_idmapper_key(hash_buffer_t * pbuff, char *str)
 {
   return sprintf(str, "%s", (char *)(pbuff->pdata));
-}				/* display_idmapper */
+}                               /* display_idmapper */
 
 /**
  *
@@ -246,7 +246,7 @@ int display_idmapper_key(hash_buffer_t * pbuff, char *str)
 int display_idmapper_val(hash_buffer_t * pbuff, char *str)
 {
   return sprintf(str, "%lu", (unsigned long)(pbuff->pdata));
-}				/* display_idmapper_val */
+}                               /* display_idmapper_val */
 
 /**
  *
@@ -268,7 +268,7 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_uid_init */
+}                               /* idmap_uid_init */
 
 int uidgidmap_init(nfs_idmap_cache_parameter_t param)
 {
@@ -279,7 +279,7 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_uid_init */
+}                               /* idmap_uid_init */
 
 int idmap_uname_init(nfs_idmap_cache_parameter_t param)
 {
@@ -290,7 +290,7 @@ int idmap_uname_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_uid_init */
+}                               /* idmap_uid_init */
 
 /**
  *
@@ -312,7 +312,7 @@ int idmap_gid_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_uid_init */
+}                               /* idmap_uid_init */
 
 int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 {
@@ -323,7 +323,7 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
     }
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_uid_init */
+}                               /* idmap_uid_init */
 
 /** 
  * 
@@ -385,28 +385,28 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval)
       i9 = (uint64_t) (padded_name[offset + 8] & 0x7F) << 56;
 
       sum = (uint64_t) padded_name[offset + 0] +
-	  (uint64_t) padded_name[offset + 1] +
-	  (uint64_t) padded_name[offset + 2] +
-	  (uint64_t) padded_name[offset + 3] +
-	  (uint64_t) padded_name[offset + 4] +
-	  (uint64_t) padded_name[offset + 5] +
-	  (uint64_t) padded_name[offset + 6] +
-	  (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
+          (uint64_t) padded_name[offset + 1] +
+          (uint64_t) padded_name[offset + 2] +
+          (uint64_t) padded_name[offset + 3] +
+          (uint64_t) padded_name[offset + 4] +
+          (uint64_t) padded_name[offset + 5] +
+          (uint64_t) padded_name[offset + 6] +
+          (uint64_t) padded_name[offset + 7] + (uint64_t) padded_name[offset + 8];
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
       printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-	     i1, i2, i3, i4, i5, i6, i7, i8, i9);
+             i1, i2, i3, i4, i5, i6, i7, i8, i9);
 #endif
 
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0] & 0x80) ^
-	  (padded_name[offset + 1] & 0x80) ^
-	  (padded_name[offset + 2] & 0x80) ^
-	  (padded_name[offset + 3] & 0x80) ^
-	  (padded_name[offset + 4] & 0x80) ^
-	  (padded_name[offset + 5] & 0x80) ^
-	  (padded_name[offset + 6] & 0x80) ^
-	  (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
+          (padded_name[offset + 1] & 0x80) ^
+          (padded_name[offset + 2] & 0x80) ^
+          (padded_name[offset + 3] & 0x80) ^
+          (padded_name[offset + 4] & 0x80) ^
+          (padded_name[offset + 5] & 0x80) ^
+          (padded_name[offset + 6] & 0x80) ^
+          (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
 
@@ -426,7 +426,7 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval)
   *phashval = (uint32_t) computed_value;
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_compute_hash_value */
+}                               /* idmap_compute_hash_value */
 
 /**
  * 
@@ -463,13 +463,13 @@ int idmap_add(hash_table_t * ht, char *key, unsigned int val)
   buffdata.len = sizeof(unsigned long);
 
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
-			      HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_add */
+}                               /* idmap_add */
 
 int namemap_add(hash_table_t * ht, unsigned int key, char *val)
 {
@@ -493,13 +493,13 @@ int namemap_add(hash_table_t * ht, unsigned int key, char *val)
   buffkey.len = sizeof(unsigned int);
 
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
-			      HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
   if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_add */
+}                               /* idmap_add */
 
 int uidgidmap_add(unsigned int key, unsigned int value)
 {
@@ -517,14 +517,14 @@ int uidgidmap_add(unsigned int key, unsigned int value)
   buffdata.len = sizeof(unsigned int);
 
   rc = HashTable_Test_And_Set(ht_uidgid, &buffkey, &buffdata,
-			      HASHTABLE_SET_HOW_SET_OVERWRITE);
+                              HASHTABLE_SET_HOW_SET_OVERWRITE);
 
   if (rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   return ID_MAPPER_SUCCESS;
 
-}				/* uidgidmap_add */
+}                               /* uidgidmap_add */
 
 int uidmap_add(char *key, unsigned int val)
 {
@@ -540,7 +540,7 @@ int uidmap_add(char *key, unsigned int val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}				/* uidmap_add */
+}                               /* uidmap_add */
 
 int unamemap_add(unsigned int key, char *val)
 {
@@ -556,7 +556,7 @@ int unamemap_add(unsigned int key, char *val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}				/* unamemap_add */
+}                               /* unamemap_add */
 
 int gidmap_add(char *key, unsigned int val)
 {
@@ -572,7 +572,7 @@ int gidmap_add(char *key, unsigned int val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}				/* gidmap_add */
+}                               /* gidmap_add */
 
 int gnamemap_add(unsigned int key, char *val)
 {
@@ -588,7 +588,7 @@ int gnamemap_add(unsigned int key, char *val)
     return rc2;
 
   return ID_MAPPER_SUCCESS;
-}				/* gnamemap_add */
+}                               /* gnamemap_add */
 
 /**
  * 
@@ -626,7 +626,7 @@ int idmap_get(hash_table_t * ht, char *key, unsigned long *pval)
     }
 
   return status;
-}				/* idmap_get */
+}                               /* idmap_get */
 
 int namemap_get(hash_table_t * ht, unsigned int key, char *pval)
 {
@@ -652,7 +652,7 @@ int namemap_get(hash_table_t * ht, unsigned int key, char *pval)
     }
 
   return status;
-}				/* idmap_get */
+}                               /* idmap_get */
 
 int uidgidmap_get(unsigned int key, unsigned int *pval)
 {
@@ -675,16 +675,16 @@ int uidgidmap_get(unsigned int key, unsigned int *pval)
     {
       /* WIth RPCSEC_GSS, it may be possible that 0 is not mapped to root */
       if (key == 0)
-	{
-	  *pval = 0;
-	  status = ID_MAPPER_SUCCESS;
-	} else
-	status = ID_MAPPER_NOT_FOUND;
+        {
+          *pval = 0;
+          status = ID_MAPPER_SUCCESS;
+        } else
+        status = ID_MAPPER_NOT_FOUND;
     }
 
   return status;
 
-}				/* uidgidmap_get */
+}                               /* uidgidmap_get */
 
 int uidmap_get(char *key, unsigned long *pval)
 {
@@ -739,7 +739,7 @@ int idmap_remove(hash_table_t * ht, char *key)
     }
 
   return status;
-}				/* idmap_remove */
+}                               /* idmap_remove */
 
 int namemap_remove(hash_table_t * ht, unsigned int key)
 {
@@ -763,7 +763,7 @@ int namemap_remove(hash_table_t * ht, unsigned int key)
     }
 
   return status;
-}				/* idmap_remove */
+}                               /* idmap_remove */
 
 int uidgidmap_remove(unsigned int key)
 {
@@ -783,7 +783,7 @@ int uidgidmap_remove(unsigned int key)
     }
 
   return status;
-}				/* uidgidmap_remove */
+}                               /* uidgidmap_remove */
 
 int uidmap_remove(char *key)
 {
@@ -879,20 +879,20 @@ int idmap_populate(char *path, idmap_type_t maptype)
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, label);
-	  return ID_MAPPER_INVALID_ARGUMENT;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, label);
+          return ID_MAPPER_INVALID_ARGUMENT;
+        }
 
       value = atoi(key_value);
 
       if ((rc = idmap_add(ht, key_name, value)) != ID_MAPPER_SUCCESS)
-	return rc;
+        return rc;
 
       if ((rc = namemap_add(ht_reverse, value, key_name)) != ID_MAPPER_SUCCESS)
-	return rc;
+        return rc;
 
     }
 
@@ -900,7 +900,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
   /* HashTable_Print( ht_reverse ) ; */
 
   return ID_MAPPER_SUCCESS;
-}				/* idmap_populate_by_conf */
+}                               /* idmap_populate_by_conf */
 
 /**
  *
@@ -918,7 +918,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
  *
  */
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
-		     hash_stat_t * phstat_reverse)
+                     hash_stat_t * phstat_reverse)
 {
   hash_table_t *ht = NULL;
   hash_table_t *ht_reverse = NULL;
@@ -944,4 +944,4 @@ void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
   HashTable_GetStats(ht, phstat);
   HashTable_GetStats(ht_reverse, phstat_reverse);
 
-}				/* idmap_get_stats */
+}                               /* idmap_get_stats */

@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   struct Temps debut, fin;
 
   printf("J'attends volontairement %d secondes pour verifier la routine de mesure\n",
-	 DUREE);
+         DUREE);
 
   MesureTemps(&debut, NULL);
   sleep(DUREE);

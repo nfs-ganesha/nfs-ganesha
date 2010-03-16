@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -170,7 +170,7 @@
 #define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
 
 int nfs4_op_lookupp(struct nfs_argop4 *op,
-		    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_name_t name;
   cache_entry_t *dir_pentry = NULL;
@@ -209,7 +209,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   /* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
   if (data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len
       && memcmp(data->currentFH.nfs_fh4_val, data->rootFH.nfs_fh4_val,
-		data->currentFH.nfs_fh4_len) == 0)
+                data->currentFH.nfs_fh4_len) == 0)
     {
       /* Nothing to do, just reply with success */
       res_LOOKUPP4.status = NFS4ERR_NOENT;
@@ -228,10 +228,10 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if (data->pexport == NULL)
     {
       if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-	{
-	  res_LOOKUPP4.status = error;
-	  return res_LOOKUPP4.status;
-	}
+        {
+          res_LOOKUPP4.status = error;
+          return res_LOOKUPP4.status;
+        }
     }
 
   /* Preparying for cache_inode_lookup ".." */
@@ -241,30 +241,30 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
 
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
   if ((file_pentry = cache_inode_lookup(dir_pentry,
-					&name,
-					&attrlookup,
-					data->ht,
-					data->pclient,
-					data->pcontext, &cache_status)) != NULL)
+                                        &name,
+                                        &attrlookup,
+                                        data->ht,
+                                        data->pclient,
+                                        data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
       pfsal_handle = cache_inode_get_fsal_handle(file_pentry, &cache_status);
       if (cache_status != CACHE_INODE_SUCCESS)
-	{
-	  res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-	  return res_LOOKUPP4.status;
-	}
+        {
+          res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
+          return res_LOOKUPP4.status;
+        }
 
       /* Convert it to a file handle */
       if (!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
-	{
-	  res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-	  return res_LOOKUPP4.status;
-	}
+        {
+          res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
+          return res_LOOKUPP4.status;
+        }
 
       /* Copy this to the mounted on FH (if no junction is traversed */
       memcpy((char *)(data->mounted_on_FH.nfs_fh4_val),
-	     (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
+             (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Keep the pointer within the compound data */
@@ -288,7 +288,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
     res_LOOKUPP4.status = nfs4_Errno(cache_status);
 
   return res_LOOKUPP4.status;
-}				/* nfs4_op_lookupp */
+}                               /* nfs4_op_lookupp */
 
 /**
  * nfs4_op_lookupp_Free: frees what was allocared to handle nfs4_op_lookupp.
@@ -304,4 +304,4 @@ void nfs4_op_lookupp_Free(LOOKUPP4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_lookupp_Free */
+}                               /* nfs4_op_lookupp_Free */

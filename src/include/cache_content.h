@@ -156,13 +156,13 @@ typedef enum cache_content_flush_behaviour__ { CACHE_CONTENT_FLUSH_AND_DELETE = 
   CACHE_CONTENT_FLUSH_SYNC_ONLY = 2
 } cache_content_flush_behaviour_t;
 typedef struct cache_content_client_parameter__ {
-  unsigned int nb_prealloc_entry;	      /**< number of preallocated pentries */
-  log_t log_outputs;			      /**< Log descriptor                     */
-  char cache_dir[MAXPATHLEN];		      /**< Path to the directory where data are cached */
-  unsigned int flush_force_fsal;	      /**< Should the flush force the write to FSAL    */
-  unsigned int max_fd_per_thread;	      /**< Max fd open per client */
-  time_t retention;			      /**< Fd retention duration */
-  unsigned int use_cache;		      /** Do we cache fd or not ? */
+  unsigned int nb_prealloc_entry;             /**< number of preallocated pentries */
+  log_t log_outputs;                          /**< Log descriptor                     */
+  char cache_dir[MAXPATHLEN];                 /**< Path to the directory where data are cached */
+  unsigned int flush_force_fsal;              /**< Should the flush force the write to FSAL    */
+  unsigned int max_fd_per_thread;             /**< Max fd open per client */
+  time_t retention;                           /**< Fd retention duration */
+  unsigned int use_cache;                     /** Do we cache fd or not ? */
 
 } cache_content_client_parameter_t;
 
@@ -170,56 +170,56 @@ typedef struct cache_content_client_parameter__ {
 typedef char cache_content_spec_data_t[CACHE_CONTENT_SPEC_DATA_SIZE];
 
 typedef struct cache_content_internal_md__ {
-  time_t read_time;					  /**< Epoch time of the last read operation on the entry   */
-  time_t mod_time;					  /**< Epoch time of the last change operation on the entry */
-  time_t refresh_time;					  /**< Epoch time of the last update operation on the entry */
-  time_t alloc_time;					  /**< Epoch time of the allocation for this entry          */
-  time_t last_flush_time;				  /**< Epoch time of the last flush                         */
-  time_t last_refresh_time;				  /**< Epoch time of the last refresh                       */
-  cache_content_entry_valid_state_t valid_state;	  /**< Is this entry valid or invalid ?                     */
-  cache_content_spec_data_t *pspecdata;			  /**< Pointer to the entry's specific data                 */
+  time_t read_time;                                       /**< Epoch time of the last read operation on the entry   */
+  time_t mod_time;                                        /**< Epoch time of the last change operation on the entry */
+  time_t refresh_time;                                    /**< Epoch time of the last update operation on the entry */
+  time_t alloc_time;                                      /**< Epoch time of the allocation for this entry          */
+  time_t last_flush_time;                                 /**< Epoch time of the last flush                         */
+  time_t last_refresh_time;                               /**< Epoch time of the last refresh                       */
+  cache_content_entry_valid_state_t valid_state;          /**< Is this entry valid or invalid ?                     */
+  cache_content_spec_data_t *pspecdata;                   /**< Pointer to the entry's specific data                 */
 
 } cache_content_internal_md_t;
 
 typedef struct cache_content_local_entry__ {
-  char cache_path_data[MAXPATHLEN];				   /**< Path of the cached content                  */
-  char cache_path_index[MAXPATHLEN];				   /**< Path to the index file (for crash recovery) */
-  cache_content_opened_file_t opened_file;			   /**< Opened file descriptor related to the entry */
-  cache_content_sync_state_t sync_state;			   /**< Is this entry synchronized ?                */
+  char cache_path_data[MAXPATHLEN];                                /**< Path of the cached content                  */
+  char cache_path_index[MAXPATHLEN];                               /**< Path to the index file (for crash recovery) */
+  cache_content_opened_file_t opened_file;                         /**< Opened file descriptor related to the entry */
+  cache_content_sync_state_t sync_state;                           /**< Is this entry synchronized ?                */
 } cache_content_local_entry_t;
 
 typedef struct cache_content_entry__ {
-  cache_content_internal_md_t internal_md;		/**< Metadata for this data cache entry                   */
-  cache_content_local_entry_t local_fs_entry;		/**< Handle to the data cached in local fs                */
-  cache_entry_t *pentry_inode;				/**< The related cache inode entry                        */
-  struct cache_content_entry__ *next_alloc;		/**< Required for STUFF ALLOCATOR                         */
+  cache_content_internal_md_t internal_md;              /**< Metadata for this data cache entry                   */
+  cache_content_local_entry_t local_fs_entry;           /**< Handle to the data cached in local fs                */
+  cache_entry_t *pentry_inode;                          /**< The related cache inode entry                        */
+  struct cache_content_entry__ *next_alloc;             /**< Required for STUFF ALLOCATOR                         */
 } cache_content_entry_t;
 
 typedef struct cache_content_stat__ {
   unsigned int nb_gc_lru_active;  /**< Number of active entries in Garbagge collecting list */
-  unsigned int nb_gc_lru_total;	  /**< Total mumber of entries in Garbagge collecting list  */
+  unsigned int nb_gc_lru_total;   /**< Total mumber of entries in Garbagge collecting list  */
 
   struct func_inode_stats {
-    unsigned int nb_call[CACHE_CONTENT_NB_COMMAND];		/**< total number of calls per functions     */
-    unsigned int nb_success[CACHE_CONTENT_NB_COMMAND];		/**< succesfull calls per function           */
-    unsigned int nb_err_retryable[CACHE_CONTENT_NB_COMMAND];	/**< failed/retryable calls per function     */
-    unsigned int nb_err_unrecover[CACHE_CONTENT_NB_COMMAND];	/**< failed/unrecoverable calls per function */
+    unsigned int nb_call[CACHE_CONTENT_NB_COMMAND];             /**< total number of calls per functions     */
+    unsigned int nb_success[CACHE_CONTENT_NB_COMMAND];          /**< succesfull calls per function           */
+    unsigned int nb_err_retryable[CACHE_CONTENT_NB_COMMAND];    /**< failed/retryable calls per function     */
+    unsigned int nb_err_unrecover[CACHE_CONTENT_NB_COMMAND];    /**< failed/unrecoverable calls per function */
   } func_stats;
 
-  unsigned int nb_call_total;					/**< Total number of calls */
+  unsigned int nb_call_total;                                   /**< Total number of calls */
 } cache_content_stat_t;
 
 typedef struct cache_content_client__ {
-  cache_content_entry_t *pool_entry;		    /**< Worker's preallocad cache entries pool                   */
-  unsigned int nb_prealloc;			    /**< Size of the preallocated pool                            */
-  cache_content_stat_t stat;			    /**< File content statistics for this client                  */
-  log_t log_outputs;				    /**< Log descriptor for cache layers                          */
-  char cache_dir[MAXPATHLEN];			    /**< Path to the directory where data are cached              */
-  unsigned int flush_force_fsal;		    /**< Should the flush force the write to FSAL                 */
-  unsigned int max_fd_per_thread;		    /**< Max fd open per client                                   */
-  time_t retention;				    /**< Fd retention duration                                    */
-  unsigned int use_cache;			    /**< Do we cache fd or not ?                                  */
-  int fd_gc_needed;				    /**< Should we perform fd gc ?                                */
+  cache_content_entry_t *pool_entry;                /**< Worker's preallocad cache entries pool                   */
+  unsigned int nb_prealloc;                         /**< Size of the preallocated pool                            */
+  cache_content_stat_t stat;                        /**< File content statistics for this client                  */
+  log_t log_outputs;                                /**< Log descriptor for cache layers                          */
+  char cache_dir[MAXPATHLEN];                       /**< Path to the directory where data are cached              */
+  unsigned int flush_force_fsal;                    /**< Should the flush force the write to FSAL                 */
+  unsigned int max_fd_per_thread;                   /**< Max fd open per client                                   */
+  time_t retention;                                 /**< Fd retention duration                                    */
+  unsigned int use_cache;                           /**< Do we cache fd or not ?                                  */
+  int fd_gc_needed;                                 /**< Should we perform fd gc ?                                */
 } cache_content_client_t;
 
 typedef enum cache_content_op__ { CACHE_CONTENT_OP_GET = 1,
@@ -287,97 +287,97 @@ typedef struct cache_content_flush_thread_data__ {
 } cache_content_flush_thread_data_t;
 
 int cache_content_client_init(cache_content_client_t * pclient,
-			      cache_content_client_parameter_t param);
+                              cache_content_client_parameter_t param);
 
 cache_content_status_t cache_content_create_name(char *path,
-						 cache_content_nametype_t type,
-						 fsal_op_context_t * pcontext,
-						 cache_entry_t * pentry_inode,
-						 cache_content_client_t * pclient);
+                                                 cache_content_nametype_t type,
+                                                 fsal_op_context_t * pcontext,
+                                                 cache_entry_t * pentry_inode,
+                                                 cache_content_client_t * pclient);
 
 int cache_content_init(cache_content_client_parameter_t param,
-		       cache_content_status_t * pstatus);
+                       cache_content_status_t * pstatus);
 
 int cache_content_client_init(cache_content_client_t * pclient,
-			      cache_content_client_parameter_t param);
+                              cache_content_client_parameter_t param);
 
 int cache_content_init_dir(cache_content_client_parameter_t param,
-			   unsigned short export_id);
+                           unsigned short export_id);
 
 cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
-					       cache_content_spec_data_t * pspecdata,
-					       cache_content_client_t * pclient,
-					       cache_content_add_behaviour_t how,
-					       fsal_op_context_t * pcontext,
-					       cache_content_status_t * pstatus);
+                                               cache_content_spec_data_t * pspecdata,
+                                               cache_content_client_t * pclient,
+                                               cache_content_add_behaviour_t how,
+                                               fsal_op_context_t * pcontext,
+                                               cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentry,
-						   cache_content_client_t * pclient,
-						   cache_content_status_t * pstatus);
+                                                   cache_content_client_t * pclient,
+                                                   cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
-					  cache_content_client_t * pclient,
-					  cache_content_status_t * pstatus);
+                                          cache_content_client_t * pclient,
+                                          cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
-					   cache_content_client_t * pclient,
-					   cache_content_status_t * pstatus);
+                                           cache_content_client_t * pclient,
+                                           cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
-					  cache_content_io_direction_t read_or_write,
-					  fsal_seek_t * seek_descriptor,
-					  fsal_size_t * pio_size_in,
-					  fsal_size_t * pio_size_out,
-					  caddr_t buffer,
-					  fsal_boolean_t * p_fsal_eof,
-					  struct stat *pbuffstat,
-					  cache_content_client_t * pclient,
-					  fsal_op_context_t * pcontext,
-					  cache_content_status_t * pstatus);
+                                          cache_content_io_direction_t read_or_write,
+                                          fsal_seek_t * seek_descriptor,
+                                          fsal_size_t * pio_size_in,
+                                          fsal_size_t * pio_size_out,
+                                          caddr_t buffer,
+                                          fsal_boolean_t * p_fsal_eof,
+                                          struct stat *pbuffstat,
+                                          cache_content_client_t * pclient,
+                                          fsal_op_context_t * pcontext,
+                                          cache_content_status_t * pstatus);
 
 #define cache_content_read( a, b, c, d, e, f, g, h, i ) cache_content_rdwr( a, CACHE_CONTENT_READ, b, c, d, e, f, g, h, i )
 #define cache_content_write( a, b, c, d, e, f, g, h, i ) cache_content_rdwr( a, CACHE_CONTENT_WRITE, b, c, d, e, f, g, h, i )
 
 cache_content_status_t cache_content_truncate(cache_content_entry_t * pentry,
-					      fsal_size_t length,
-					      cache_content_client_t * pclient,
-					      cache_content_status_t * pstatus);
+                                              fsal_size_t length,
+                                              cache_content_client_t * pclient,
+                                              cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
-					   cache_content_flush_behaviour_t flushhow,
-					   cache_content_client_t * pclient,
-					   fsal_op_context_t * pcontext,
-					   cache_content_status_t * pstatus);
+                                           cache_content_flush_behaviour_t flushhow,
+                                           cache_content_client_t * pclient,
+                                           fsal_op_context_t * pcontext,
+                                           cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
-					     cache_content_client_t * pclient,
-					     fsal_op_context_t * pcontext,
-					     cache_content_refresh_how_t how,
-					     cache_content_status_t * pstatus);
+                                             cache_content_client_t * pclient,
+                                             fsal_op_context_t * pcontext,
+                                             cache_content_refresh_how_t how,
+                                             cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_sync_all(cache_content_client_t * pclient,
-					      fsal_op_context_t * pcontext,
-					      cache_content_status_t * pstatus);
+                                              fsal_op_context_t * pcontext,
+                                              cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in_config,
-								cache_content_client_parameter_t
-								* pparam);
+                                                                cache_content_client_parameter_t
+                                                                * pparam);
 
 void cache_content_print_conf_client_parameter(FILE * output,
-					       cache_content_client_parameter_t param);
+                                               cache_content_client_parameter_t param);
 
 off_t cache_content_fsal_seek_convert(fsal_seek_t seek, cache_content_status_t * pstatus);
 size_t cache_content_fsal_size_convert(fsal_size_t size,
-				       cache_content_status_t * pstatus);
+                                       cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_crash_recover(unsigned short exportid,
-						   unsigned int index,
-						   unsigned int mod,
-						   cache_content_client_t * pclient_data,
-						   cache_inode_client_t * pclient_inode,
-						   hash_table_t * ht,
-						   fsal_op_context_t * pcontext,
-						   cache_content_status_t * pstatus);
+                                                   unsigned int index,
+                                                   unsigned int mod,
+                                                   cache_content_client_t * pclient_data,
+                                                   cache_inode_client_t * pclient_inode,
+                                                   hash_table_t * ht,
+                                                   fsal_op_context_t * pcontext,
+                                                   cache_content_status_t * pstatus);
 
 int cache_content_get_export_id(char *dirname);
 u_int64_t cache_content_get_inum(char *filename);
@@ -387,56 +387,56 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum);
 cache_inode_status_t cache_content_error_convert(cache_content_status_t status);
 
 cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-					   cache_inode_op_t op,
-					   cache_content_client_t * pclient);
+                                           cache_inode_op_t op,
+                                           cache_content_client_t * pclient);
 
 cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config,
-							 cache_content_gc_policy_t *
-							 ppolicy);
+                                                         cache_content_gc_policy_t *
+                                                         ppolicy);
 
 void cache_content_print_conf_gc_policy(FILE * output,
-					cache_content_gc_policy_t gcpolicy);
+                                        cache_content_gc_policy_t gcpolicy);
 
 void cache_content_set_gc_policy(cache_content_gc_policy_t policy);
 
 cache_content_gc_policy_t cache_content_get_gc_policy(void);
 
 cache_content_status_t cache_content_gc(cache_content_client_t * pclient,
-					cache_content_status_t * pstatus);
+                                        cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_emergency_flush(char *cachedir,
-						     cache_content_flush_behaviour_t
-						     flushhow,
-						     unsigned int lw_mark_trigger_flag,
-						     time_t grace_period,
-						     unsigned int index, unsigned int mod,
-						     unsigned int *p_nb_flushed,
-						     unsigned int *p_nb_too_young,
-						     unsigned int *p_nb_errors,
-						     unsigned int *p_nb_orphans,
-						     fsal_op_context_t * pcontext,
-						     cache_content_status_t * pstatus);
+                                                     cache_content_flush_behaviour_t
+                                                     flushhow,
+                                                     unsigned int lw_mark_trigger_flag,
+                                                     time_t grace_period,
+                                                     unsigned int index, unsigned int mod,
+                                                     unsigned int *p_nb_flushed,
+                                                     unsigned int *p_nb_too_young,
+                                                     unsigned int *p_nb_errors,
+                                                     unsigned int *p_nb_orphans,
+                                                     fsal_op_context_t * pcontext,
+                                                     cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_check_threshold(char *datacache_path,
-						     unsigned int threshold_min,
-						     unsigned int threshold_max,
-						     int *p_bool_overflow,
-						     unsigned long *p_blocks_to_lwm);
+                                                     unsigned int threshold_min,
+                                                     unsigned int threshold_max,
+                                                     int *p_bool_overflow,
+                                                     unsigned long *p_blocks_to_lwm);
 
 int cache_content_local_cache_opendir(char *cache_dir,
-				      cache_content_dirinfo_t * pdirectory);
+                                      cache_content_dirinfo_t * pdirectory);
 
 int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
-				       struct dirent *dir_entry,
-				       unsigned int index, unsigned int mod);
+                                       struct dirent *dir_entry,
+                                       unsigned int index, unsigned int mod);
 
 void cache_content_local_cache_closedir(cache_content_dirinfo_t * directory);
 
 int cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam);
 cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
-						 cache_content_client_t * pclient,
-						 fsal_op_context_t * pcontext,
-						 cache_content_status_t * pstatus);
+                                                 cache_content_client_t * pclient,
+                                                 fsal_op_context_t * pcontext,
+                                                 cache_content_status_t * pstatus);
 off_t cache_content_get_cached_size(cache_content_entry_t * pentry);
 
-#endif				/* _CACHE_CONTENT_H */
+#endif                          /* _CACHE_CONTENT_H */

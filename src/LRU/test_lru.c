@@ -124,12 +124,12 @@
 int print_entry(LRU_data_t data, char *str)
 {
   return snprintf(str, LRU_DISPLAY_STRLEN, "%s", (char *)data.pdata);
-}				/* print_entry */
+}                               /* print_entry */
 
 int clean_entry(LRU_entry_t * pentry, void *addparam)
 {
   return 0;
-}				/* cleanentry */
+}                               /* cleanentry */
 
 int main(int argc, char *argv[])
 {
@@ -160,17 +160,17 @@ int main(int argc, char *argv[])
 #endif
       sprintf(strtab[i], "%d", i);
       if ((entry = LRU_new_entry(plru, &status)) == NULL)
-	{
+        {
 
-	  printf("Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status);
-	  exit(1);
-	}
+          printf("Test ECHOUE : Mauvais ajout d'entree, status = %d\n", status);
+          exit(1);
+        }
 
       entry->buffdata.pdata = strtab[i];
       entry->buffdata.len = strlen(strtab[i]);
 
       if (i == KEPT_ENTRY)
-	kept_entry = entry;
+        kept_entry = entry;
     }
 
   /* printing the table */
@@ -198,4 +198,4 @@ int main(int argc, char *argv[])
   printf("Test reussi : tous les tests sont passes avec succes\n");
 
   exit(0);
-}				/* main */
+}                               /* main */

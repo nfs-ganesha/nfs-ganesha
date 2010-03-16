@@ -21,14 +21,14 @@
  * @return MIB_REGISTERED_OK on success.
  */
 int register_ro_string(oid * myoid, int oid_len, char *string,
-		       netsnmp_handler_registration ** phandler)
+                       netsnmp_handler_registration ** phandler)
 {
   netsnmp_handler_registration *myreg;
 
   myreg =
       netsnmp_create_handler_registration("libdemon",
-					  instance_string_handler,
-					  myoid, oid_len, HANDLER_CAN_RONLY);
+                                          instance_string_handler,
+                                          myoid, oid_len, HANDLER_CAN_RONLY);
   myreg->handler->myvoid = (void *)string;
 
   *phandler = myreg;
@@ -48,10 +48,10 @@ int register_ro_string(oid * myoid, int oid_len, char *string,
  * @return MIB_REGISTERED_OK on success.
  */
 int reg_scal(oid * myoid, size_t oid_len, void *value, unsigned char type, int access,
-	     netsnmp_handler_registration * phandler_tab[2])
+             netsnmp_handler_registration * phandler_tab[2])
 {
   netsnmp_handler_registration *myreg_type, *myreg_val;
-	/**
+        /**
 	 * myoid has enough memory
 	 */
   oid_len++;
@@ -59,15 +59,15 @@ int reg_scal(oid * myoid, size_t oid_len, void *value, unsigned char type, int a
 
   /* register type */
   myreg_type = netsnmp_create_handler_registration("libdemon",
-						   instance_string_handler,
-						   myoid, oid_len, HANDLER_CAN_RONLY);
+                                                   instance_string_handler,
+                                                   myoid, oid_len, HANDLER_CAN_RONLY);
   /* register value and set type */
   switch (type)
     {
     case SNMP_ADM_STRING:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_string_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"STRING";
 
       break;
@@ -75,33 +75,33 @@ int reg_scal(oid * myoid, size_t oid_len, void *value, unsigned char type, int a
     case SNMP_ADM_INTEGER:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_int_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"INTEGER";
 
       break;
     case SNMP_ADM_REAL:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_real_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"REAL";
 
       break;
     case SNMP_ADM_BIGINT:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_bigint_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"BIGINT";
       break;
     case SNMP_ADM_TIMETICKS:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_time_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"TIMETICKS";
       break;
     case SNMP_ADM_IP:
       myoid[oid_len - 1] = VAL_OID;
       myreg_val = netsnmp_create_handler_registration("libdemon", instance_ip_handler,
-						      myoid, oid_len, access);
+                                                      myoid, oid_len, access);
       myreg_type->handler->myvoid = (void *)"IP";
       break;
 
@@ -132,7 +132,7 @@ int reg_scal(oid * myoid, size_t oid_len, void *value, unsigned char type, int a
  * @return MIB_REGISTERED_OK on success.
  */
 int reg_get_set(oid * myoid, size_t oid_len, unsigned char type, int access,
-		netsnmp_handler_registration * phandler_tab[2])
+                netsnmp_handler_registration * phandler_tab[2])
 {
   netsnmp_handler_registration *myreg_val, *myreg_type;
 
@@ -142,8 +142,8 @@ int reg_get_set(oid * myoid, size_t oid_len, unsigned char type, int access,
 
   /* register type */
   myreg_type = netsnmp_create_handler_registration("libdemon",
-						   instance_string_handler,
-						   myoid, oid_len, HANDLER_CAN_RONLY);
+                                                   instance_string_handler,
+                                                   myoid, oid_len, HANDLER_CAN_RONLY);
   switch (type)
     {
     case SNMP_ADM_STRING:
@@ -175,8 +175,8 @@ int reg_get_set(oid * myoid, size_t oid_len, unsigned char type, int access,
      instance_get_set_handler */
   myoid[oid_len - 1] = VAL_OID;
   myreg_val = netsnmp_create_handler_registration("libdemon",
-						  instance_get_set_handler,
-						  myoid, oid_len, access);
+                                                  instance_get_set_handler,
+                                                  myoid, oid_len, access);
 
   /* give netsnmp handlers to the calling function */
   phandler_tab[0] = myreg_type;
@@ -197,7 +197,7 @@ int reg_proc(oid * myoid, size_t oid_len, netsnmp_handler_registration ** phandl
   netsnmp_handler_registration *myreg;
 
   myreg = netsnmp_create_handler_registration("libdemon", instance_proc_handler,
-					      myoid, oid_len, SNMP_ADM_ACCESS_RW);
+                                              myoid, oid_len, SNMP_ADM_ACCESS_RW);
   *phandler = myreg;
   return netsnmp_register_handler(myreg);
 }

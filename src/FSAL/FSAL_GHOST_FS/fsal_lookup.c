@@ -19,10 +19,10 @@
 #include "fsal_internal.h"
 #include "fsal_convertions.h"
 
-fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_handle_t * p_fsoot_handle,	/* OUT */
-				  fsal_attrib_list_t * p_fsroot_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
+                                  fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
   /* no junctions in ghostfs */
@@ -56,11 +56,11 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,	/* IN */
  *          
  */
 
-fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
-			  fsal_name_t * p_filename,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_handle_t * object_handle,	/* OUT */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
+                          fsal_name_t * p_filename,     /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_handle_t * object_handle,        /* OUT */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -86,12 +86,12 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
        * be NULL.
        */
       if (p_filename != NULL)
-	Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookup);
+        Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookup);
 
       /* get the FS root */
       rc = GHOSTFS_GetRoot(&handle);
       if (rc)
-	Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
+        Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
     } else
     {
@@ -101,18 +101,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
        * by the FS itself.
        */
       rc = GHOSTFS_Access((GHOSTFS_handle_t) (*parent_directory_handle),
-			  GHOSTFS_TEST_EXEC,
-			  p_context->credential.user, p_context->credential.group);
+                          GHOSTFS_TEST_EXEC,
+                          p_context->credential.user, p_context->credential.group);
 
       if (rc)
-	Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
+        Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
       /* proceed the lookup */
       rc = GHOSTFS_Lookup((GHOSTFS_handle_t) (*parent_directory_handle),
-			  p_filename->name, &handle);
+                          p_filename->name, &handle);
 
       if (rc)
-	Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
+        Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
     }
 
@@ -128,18 +128,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
     {
 
       switch ((status = FSAL_getattrs(&handle, p_context, object_attributes)).major)
-	{
-	  /* change the FAULT error to appears as an internal error.
-	   * indeed, parameters should be null. */
-	case ERR_FSAL_FAULT:
-	  Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_lookup);
-	  break;
-	case ERR_FSAL_NO_ERROR:
-	  /* continue */
-	  break;
-	default:
-	  Return(status.major, status.minor, INDEX_FSAL_lookup);
-	}
+        {
+          /* change the FAULT error to appears as an internal error.
+           * indeed, parameters should be null. */
+        case ERR_FSAL_FAULT:
+          Return(ERR_FSAL_SERVERFAULT, ERR_FSAL_FAULT, INDEX_FSAL_lookup);
+          break;
+        case ERR_FSAL_NO_ERROR:
+          /* continue */
+          break;
+        default:
+          Return(status.major, status.minor, INDEX_FSAL_lookup);
+        }
 
     }
 
@@ -169,18 +169,18 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,	/* IN */
  *        It can be NULL (increases performances).
  */
 
-fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
-			      fsal_op_context_t * p_context,	/* IN */
-			      fsal_handle_t * object_handle,	/* OUT */
-			      fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
+                              fsal_handle_t * object_handle,    /* OUT */
+                              fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
-  fsal_name_t obj_name = FSAL_NAME_INITIALIZER;	/* empty string */
+  fsal_name_t obj_name = FSAL_NAME_INITIALIZER; /* empty string */
   char *ptr_str;
   fsal_handle_t out_hdl;
   fsal_status_t status;
-  int b_is_last = FALSE;	/* is it the last lookup ? */
+  int b_is_last = FALSE;        /* is it the last lookup ? */
 
   /* for logging */
   SetFuncID(INDEX_FSAL_lookupPath);
@@ -208,12 +208,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
 
   /* retrieves root directory */
 
-  if (FSAL_IS_ERROR(status = FSAL_lookup(NULL,	/* looking up for root */
-					 NULL,	/* NULL to get root handle */
-					 p_context,	/* user's credentials */
-					 &out_hdl,	/* output root handle */
-					 /* retrieves attributes if this is the last lookup : */
-					 (b_is_last ? object_attributes : NULL))))
+  if (FSAL_IS_ERROR(status = FSAL_lookup(NULL,  /* looking up for root */
+                                         NULL,  /* NULL to get root handle */
+                                         p_context,     /* user's credentials */
+                                         &out_hdl,      /* output root handle */
+                                         /* retrieves attributes if this is the last lookup : */
+                                         (b_is_last ? object_attributes : NULL))))
     {
 
       Return(status.major, status.minor, INDEX_FSAL_lookupPath);
@@ -239,32 +239,32 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,	/* IN */
       /* compute next name */
       dest_ptr = obj_name.name;
       while (ptr_str[0] != '\0' && ptr_str[0] != '/')
-	{
-	  dest_ptr[0] = ptr_str[0];
-	  dest_ptr++;
-	  ptr_str++;
-	}
+        {
+          dest_ptr[0] = ptr_str[0];
+          dest_ptr++;
+          ptr_str++;
+        }
       /* final null char */
       dest_ptr[0] = '\0';
 
       /* skip multiple slashes */
       while (ptr_str[0] == '/')
-	ptr_str++;
+        ptr_str++;
 
       /* is the next name empty ? */
       if (ptr_str[0] == '\0')
-	b_is_last = TRUE;
+        b_is_last = TRUE;
 
       /*call to FSAL_lookup */
-      if (FSAL_IS_ERROR(status = FSAL_lookup(&in_hdl,	/* parent directory handle */
-					     &obj_name,	/* object name */
-					     p_context,	/* user's credentials */
-					     &out_hdl,	/* output root handle */
-					     /* retrieves attributes if this is the last lookup : */
-					     (b_is_last ? object_attributes : NULL))))
-	{
-	  Return(status.major, status.minor, INDEX_FSAL_lookupPath);
-	}
+      if (FSAL_IS_ERROR(status = FSAL_lookup(&in_hdl,   /* parent directory handle */
+                                             &obj_name, /* object name */
+                                             p_context, /* user's credentials */
+                                             &out_hdl,  /* output root handle */
+                                             /* retrieves attributes if this is the last lookup : */
+                                             (b_is_last ? object_attributes : NULL))))
+        {
+          Return(status.major, status.minor, INDEX_FSAL_lookupPath);
+        }
 
       /* ptr_str is ok, we are ready for next loop */
     }

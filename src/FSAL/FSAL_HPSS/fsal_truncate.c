@@ -48,11 +48,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_size_t length,	/* IN */
-			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_size_t length, /* IN */
+                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -80,10 +80,10 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_TruncateHandle(&(filehandle->ns_handle),	/* IN - handle of file or parent */
-			   NULL,	/* IN (handle addressing) */
-			   trunc_size,	/* IN - new file length */
-			   &(p_context->credential.hpss_usercred)	/* IN - pointer to user's credentials */
+  rc = hpss_TruncateHandle(&(filehandle->ns_handle),    /* IN - handle of file or parent */
+                           NULL,        /* IN (handle addressing) */
+                           trunc_size,  /* IN - new file length */
+                           &(p_context->credential.hpss_usercred)       /* IN - pointer to user's credentials */
       );
 
   ReleaseTokenFSCall();
@@ -103,10 +103,10 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
       st = FSAL_getattrs(filehandle, p_context, object_attributes);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

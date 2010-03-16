@@ -43,10 +43,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * p_link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -94,10 +94,10 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
       /* On error, we set a flag in the returned attributes */
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
+          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
@@ -134,13 +134,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,	/* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored) */
-			   fsal_handle_t * p_link_handle,	/* OUT */
-			   fsal_attrib_list_t * p_link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored) */
+                           fsal_handle_t * p_link_handle,       /* OUT */
+                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
     )
 {
 
@@ -176,9 +176,9 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   if (rc)
     {
       if (errsv == ENOENT)
-	Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_symlink);
-	else
-	Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
+        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_symlink);
+        else
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
     }
 
   if (buffstat.st_mode & S_ISGID)
@@ -215,7 +215,7 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
 
   TakeTokenFSCall();
   rc = lchown(fsalpath.path, p_context->credential.user,
-	      setgid_bit ? -1 : p_context->credential.group);
+              setgid_bit ? -1 : p_context->credential.group);
   errsv = errno;
   ReleaseTokenFSCall();
 
@@ -232,10 +232,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
       /* On error, we set a flag in the returned attributes */
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);
+          FSAL_SET_MASK(p_link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

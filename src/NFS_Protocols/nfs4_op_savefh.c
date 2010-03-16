@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -182,15 +182,15 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if (data->savedFH.nfs_fh4_len == 0)
     {
       if ((error = nfs4_AllocateFH(&(data->savedFH))) != NFS4_OK)
-	{
-	  resp->nfs_resop4_u.opsavefh.status = error;
-	  return error;
-	}
+        {
+          resp->nfs_resop4_u.opsavefh.status = error;
+          return error;
+        }
     }
 
   /* Copy the data from current FH to saved FH */
   memcpy((char *)(data->savedFH.nfs_fh4_val), (char *)(data->currentFH.nfs_fh4_val),
-	 data->currentFH.nfs_fh4_len);
+         data->currentFH.nfs_fh4_len);
 
   /* Keep the vnodep in mind */
   data->saved_entry = data->current_entry;
@@ -204,7 +204,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
 
   return NFS4_OK;
-}				/* nfs4_op_savefh */
+}                               /* nfs4_op_savefh */
 
 /**
  * nfs4_op_savefh_Free: frees what was allocared to handle nfs4_op_savefh.
@@ -220,4 +220,4 @@ void nfs4_op_savefh_Free(SAVEFH4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_savefh_Free */
+}                               /* nfs4_op_savefh_Free */

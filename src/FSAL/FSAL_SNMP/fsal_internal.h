@@ -38,7 +38,7 @@ void set_snmp_global_config(fs_specific_initinfo_t * p_config);
  *  This function initializes shared variables of the FSAL.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info);
+                                        fs_common_initinfo_t * fs_common_info);
 
 /**
  *  Increments the number of calls for a function.

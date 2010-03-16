@@ -55,11 +55,11 @@
 
 #define	BUFSZ	8192
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
 #ifdef O_SYNC
-static int Sflag = 0;		/* use synchronous writes */
+static int Sflag = 0;           /* use synchronous writes */
 #endif
 
 static void usage()
@@ -76,15 +76,15 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-  int count;			/* times to do each file */
+  int count;                    /* times to do each file */
   int ct;
   off_t size;
   off_t si;
   int i;
   int fd;
   off_t bytes = 0;
-  int roflags;			/* open read-only flags */
-  int woflags;			/* write-only create flags */
+  int roflags;                  /* open read-only flags */
+  int woflags;                  /* write-only create flags */
   char *bigfile;
   struct timeval time;
   struct stat statb;
@@ -108,38 +108,38 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* No Test Directory create */
-	      Nflag++;
-	      break;
+            case 'n':          /* No Test Directory create */
+              Nflag++;
+              break;
 
 #ifdef O_SYNC
-	    case 's':		/* synchronous writes */
-	      Sflag++;
-	      break;
+            case 's':          /* synchronous writes */
+              Sflag++;
+              break;
 #endif
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 5 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -181,16 +181,16 @@ int main(int argc, char *argv[])
   if (b->count == -1)
     {
       fprintf(stderr,
-	      "Missing 'count' parameter in the config file '%s' for the basic test number 5\n",
-	      config_file);
+              "Missing 'count' parameter in the config file '%s' for the basic test number 5\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->size == -1)
     {
       fprintf(stderr,
-	      "Missing 'size' parameter in the config file '%s' for the basic test number 5\n",
-	      config_file);
+              "Missing 'size' parameter in the config file '%s' for the basic test number 5\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
     }
 #endif
 #ifdef DOSorWIN32
-  woflags |= O_BINARY | O_RDWR;	/* create and open file */
+  woflags |= O_BINARY | O_RDWR; /* create and open file */
   roflags |= O_BINARY;
 #endif
 
@@ -238,49 +238,49 @@ int main(int argc, char *argv[])
     {
 #ifdef USE_OPEN
       if ((fd = open(bigfile, woflags, CHMOD_RW)) < 0)
-	{
+        {
 #else
       if ((fd = creat(bigfile, CHMOD_RW)) < 0)
-	{
+        {
 #endif
-	  error("can't create '%s'", bigfile);
-	  exit(1);
-	}
+          error("can't create '%s'", bigfile);
+          exit(1);
+        }
       if (stat(bigfile, &statb) < 0)
-	{
-	  error("can't stat '%s'", bigfile);
-	  exit(1);
-	}
+        {
+          error("can't stat '%s'", bigfile);
+          exit(1);
+        }
       if (statb.st_size != 0)
-	{
-	  error("'%s' has size %ld, should be 0", bigfile, (long)statb.st_size);
-	  exit(1);
-	}
+        {
+          error("'%s' has size %ld, should be 0", bigfile, (long)statb.st_size);
+          exit(1);
+        }
       for (si = size; si > 0; si -= bytes)
-	{
-	  bytes = MIN(BUFSZ, si);
-	  if (write(fd, buf, bytes) != bytes)
-	    {
-	      error("'%s' write failed", bigfile);
-	      exit(1);
-	    }
-	}
+        {
+          bytes = MIN(BUFSZ, si);
+          if (write(fd, buf, bytes) != bytes)
+            {
+              error("'%s' write failed", bigfile);
+              exit(1);
+            }
+        }
       if (close(fd) < 0)
-	{
-	  error("can't close %s", bigfile);
-	  exit(1);
-	}
+        {
+          error("can't close %s", bigfile);
+          exit(1);
+        }
       if (stat(bigfile, &statb) < 0)
-	{
-	  error("can't stat '%s'", bigfile);
-	  exit(1);
-	}
+        {
+          error("can't stat '%s'", bigfile);
+          exit(1);
+        }
       if (statb.st_size != size)
-	{
-	  error("'%s' has size %ld, should be %ld",
-		bigfile, (long)(statb.st_size), (long)size);
-	  exit(1);
-	}
+        {
+          error("'%s' has size %ld, should be %ld",
+                bigfile, (long)(statb.st_size), (long)size);
+          exit(1);
+        }
     }
   endtime(&time);
 
@@ -311,18 +311,18 @@ int main(int argc, char *argv[])
     {
       bytes = MIN(BUFSZ, si);
       if (read(fd, buf, bytes) != bytes)
-	{
-	  error("'%s' read failed", bigfile);
-	  exit(1);
-	}
+        {
+          error("'%s' read failed", bigfile);
+          exit(1);
+        }
       for (i = 0; i < bytes / sizeof(int); i++)
-	{
-	  if (((int *)buf)[i] != i)
-	    {
-	      error("bad data in '%s'", bigfile);
-	      exit(1);
-	    }
-	}
+        {
+          if (((int *)buf)[i] != i)
+            {
+              error("bad data in '%s'", bigfile);
+              exit(1);
+            }
+        }
     }
   close(fd);
 
@@ -332,15 +332,15 @@ int main(int argc, char *argv[])
     {
       etime = (double)time.tv_sec + (double)time.tv_usec / 1000000.0;
       if (etime != 0.0)
-	{
-	  fprintf(stdout, " in %ld.%02ld seconds (%ld bytes/sec)",
-		  (long)time.tv_sec, (long)time.tv_usec / 10000,
-		  (long)((double)size * ((double)count / etime)));
-	} else
-	{
-	  fprintf(stdout, " in %ld.%02ld seconds (> %ld bytes/sec)",
-		  (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count);
-	}
+        {
+          fprintf(stdout, " in %ld.%02ld seconds (%ld bytes/sec)",
+                  (long)time.tv_sec, (long)time.tv_usec / 10000,
+                  (long)((double)size * ((double)count / etime)));
+        } else
+        {
+          fprintf(stdout, " in %ld.%02ld seconds (> %ld bytes/sec)",
+                  (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count);
+        }
     }
   fprintf(stdout, "\n");
 
@@ -353,11 +353,11 @@ int main(int argc, char *argv[])
   if (etime != 0.0)
     {
       fprintf(log, "b5a\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
-	      (long)time.tv_usec / 10000, (long)((double)size * ((double)count / etime)));
+              (long)time.tv_usec / 10000, (long)((double)size * ((double)count / etime)));
     } else
     {
       fprintf(log, "b5a\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
-	      (long)time.tv_usec / 10000, (long)size * count);
+              (long)time.tv_usec / 10000, (long)size * count);
     }
 #endif
   fclose(log);

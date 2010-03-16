@@ -126,18 +126,18 @@ static family_error_t __attribute((__unused__)) tab_errstatus_GHOSTFS[] =
 #define ERR_GHOSTFS_WRITE    1005
   {
   ERR_GHOSTFS_WRITE, "ERR_GHOSTFS_WRITE",
-	"Error while dumping filesytem definition file"},
+        "Error while dumping filesytem definition file"},
 #define ERR_GHOSTFS_SYNTAX   1006
   {
   ERR_GHOSTFS_SYNTAX, "ERR_GHOSTFS_SYNTAX",
-	"Syntax error into filesytem definition file"},
+        "Syntax error into filesytem definition file"},
 #define ERR_GHOSTFS_ARGS     1007
   {
   ERR_GHOSTFS_ARGS, "ERR_GHOSTFS_ARGS", "Invalid argument"},
 #define ERR_GHOSTFS_ALREADYINIT     1008
   {
   ERR_GHOSTFS_ALREADYINIT, "ERR_GHOSTFS_ALREADYINIT",
-	"The filesystem has already been loaded"},
+        "The filesystem has already been loaded"},
 #define ERR_GHOSTFS_NOTINIT     1009
   {
   ERR_GHOSTFS_NOTINIT, "ERR_GHOSTFS_NOTINIT", "No filesystem has been loaded"},
@@ -162,7 +162,7 @@ static family_error_t __attribute((__unused__)) tab_errstatus_GHOSTFS[] =
 #define ERR_GHOSTFS_ATTR_NOT_SUPP   1016
   {
   ERR_GHOSTFS_ATTR_NOT_SUPP, "ERR_GHOSTFS_ATTR_NOT_SUPP",
-	"Unsupported or read-only attribute"},
+        "Unsupported or read-only attribute"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };

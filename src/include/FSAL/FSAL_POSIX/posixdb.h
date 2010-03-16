@@ -136,16 +136,16 @@ typedef struct {
  */
 
 typedef enum fsal_posixdb_errorcode {
-  ERR_FSAL_POSIXDB_NOERR = 0,	/* no error */
-  ERR_FSAL_POSIXDB_BADCONN,	/* not connected to the database */
-  ERR_FSAL_POSIXDB_NOENT,	/* no such object in the database */
-  ERR_FSAL_POSIXDB_CMDFAILED,	/* a command failed */
-  ERR_FSAL_POSIXDB_FAULT,	/* sanity check failed, ... */
+  ERR_FSAL_POSIXDB_NOERR = 0,   /* no error */
+  ERR_FSAL_POSIXDB_BADCONN,     /* not connected to the database */
+  ERR_FSAL_POSIXDB_NOENT,       /* no such object in the database */
+  ERR_FSAL_POSIXDB_CMDFAILED,   /* a command failed */
+  ERR_FSAL_POSIXDB_FAULT,       /* sanity check failed, ... */
   ERR_FSAL_POSIXDB_NOPATH,
   ERR_FSAL_POSIXDB_TOOMANYPATHS,
   ERR_FSAL_POSIXDB_PATHTOOLONG,
-  ERR_FSAL_POSIXDB_CONSISTENCY,	/* entry is not consistent */
-  ERR_FSAL_POSIXDB_NO_MEM	/* allocation error */
+  ERR_FSAL_POSIXDB_CONSISTENCY, /* entry is not consistent */
+  ERR_FSAL_POSIXDB_NO_MEM       /* allocation error */
 } fsal_posixdb_errorcode;
 
 typedef struct fsal_posixdb_status_t {
@@ -173,8 +173,8 @@ int fsal_posixdb_cache_init();
  * \return - FSAL_POSIXDB_NOERR, if no error.
              Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * p_params,	/* IN */
-					   fsal_posixdb_conn ** p_conn /* OUT */ );
+fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * p_params,       /* IN */
+                                           fsal_posixdb_conn ** p_conn /* OUT */ );
 
 /**
  * fsal_posixdb_disconnect:
@@ -204,11 +204,11 @@ fsal_posixdb_status_t fsal_posixdb_disconnect(fsal_posixdb_conn * p_conn);
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - FSAL_POSIXDB_NOENT, if directory unknown, or no object named 'object_name' in that directory.
  */
-fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/* IN */
-						   fsal_handle_t * p_parent_directory_handle,	/* IN */
-						   fsal_name_t * p_objectname,	/* IN */
-						   fsal_path_t * p_path,	/* OUT */
-						   fsal_handle_t * p_handle /* OUT */ );
+fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
+                                                   fsal_handle_t * p_parent_directory_handle,   /* IN */
+                                                   fsal_name_t * p_objectname,  /* IN */
+                                                   fsal_path_t * p_path,        /* OUT */
+                                                   fsal_handle_t * p_handle /* OUT */ );
 
 /**
  * fsal_posixdb_getInfoFromHandle:
@@ -229,11 +229,11 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - FSAL_POSIXDB_UNKNOWHANDLE, if object_handle is unknown.
  */
-fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,	/* IN */
-						     fsal_handle_t * p_object_handle,	/* IN */
-						     fsal_path_t * p_paths,	/* OUT */
-						     int paths_size,	/* IN */
-						     int *p_count /* OUT */ );
+fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,        /* IN */
+                                                     fsal_handle_t * p_object_handle,   /* IN */
+                                                     fsal_path_t * p_paths,     /* OUT */
+                                                     int paths_size,    /* IN */
+                                                     int *p_count /* OUT */ );
 
 /**
  * fsal_posixdb_add:
@@ -253,11 +253,11 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,	/* IN */
-				       fsal_posixdb_fileinfo_t * p_object_info,	/* IN */
-				       fsal_handle_t * p_parent_directory_handle,	/* IN */
-				       fsal_name_t * p_filename,	/* IN */
-				       fsal_handle_t * p_object_handle /* OUT */ );
+fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
+                                       fsal_posixdb_fileinfo_t * p_object_info, /* IN */
+                                       fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                       fsal_name_t * p_filename,        /* IN */
+                                       fsal_handle_t * p_object_handle /* OUT */ );
 
 /**
  * fsal_posixdb_replace:
@@ -279,12 +279,12 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,	/* IN */
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - Another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
-					   fsal_posixdb_fileinfo_t * p_object_info,	/* IN */
-					   fsal_handle_t * p_parent_directory_handle_old,	/* IN */
-					   fsal_name_t * p_filename_old,	/* IN */
-					   fsal_handle_t * p_parent_directory_handle_new,	/* IN */
-					   fsal_name_t * p_filename_new /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
+                                           fsal_posixdb_fileinfo_t * p_object_info,     /* IN */
+                                           fsal_handle_t * p_parent_directory_handle_old,       /* IN */
+                                           fsal_name_t * p_filename_old,        /* IN */
+                                           fsal_handle_t * p_parent_directory_handle_new,       /* IN */
+                                           fsal_name_t * p_filename_new /* IN */ );
 
 /**
  * fsal_posixdb_delete:
@@ -301,11 +301,11 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,	/* IN */
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - FSAL_POSIXDB_NOENT, if parent_directory_handle does not exist.
  */
-fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,	/* IN */
-					  fsal_handle_t * p_parent_directory_handle,	/* IN */
-					  fsal_name_t * p_filename,	/* IN */
-					  fsal_posixdb_fileinfo_t *
-					  p_object_info /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,   /* IN */
+                                          fsal_handle_t * p_parent_directory_handle,    /* IN */
+                                          fsal_name_t * p_filename,     /* IN */
+                                          fsal_posixdb_fileinfo_t *
+                                          p_object_info /* IN */ );
 
 /**
  * fsal_posixdb_deleteHandle:
@@ -318,8 +318,8 @@ fsal_posixdb_status_t fsal_posixdb_delete(fsal_posixdb_conn * p_conn,	/* IN */
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - FSAL_POSIXDB_NOENT, if p_handle does not exist.
  */
-fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,	/* IN */
-						fsal_handle_t * p_handle /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,     /* IN */
+                                                fsal_handle_t * p_handle /* IN */ );
 
 /**
  * fsal_posixdb_getChildren:
@@ -338,10 +338,10 @@ fsal_posixdb_status_t fsal_posixdb_deleteHandle(fsal_posixdb_conn * p_conn,	/* I
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN */
-					       fsal_handle_t * p_parent_directory_handle,	/* IN */
-					       unsigned int max_count, fsal_posixdb_child ** p_children,	/* OUT */
-					       unsigned int *p_count /* OUT */ );
+fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      /* IN */
+                                               fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                               unsigned int max_count, fsal_posixdb_child ** p_children,        /* OUT */
+                                               unsigned int *p_count /* OUT */ );
 
 /**
  * fsal_posixdb_export:
@@ -352,8 +352,8 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
  * \param out (input):
  *        POSIX file descriptor
  */
-fsal_posixdb_status_t fsal_posixdb_export(fsal_posixdb_conn * p_conn,	/* IN */
-					  FILE * out /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_export(fsal_posixdb_conn * p_conn,   /* IN */
+                                          FILE * out /* IN */ );
 
 /**
  * fsal_posixdb_import:
@@ -364,8 +364,8 @@ fsal_posixdb_status_t fsal_posixdb_export(fsal_posixdb_conn * p_conn,	/* IN */
  * \param in (input):
  *        POSIX file descriptor
  */
-fsal_posixdb_status_t fsal_posixdb_import(fsal_posixdb_conn * p_conn,	/* IN */
-					  FILE * in /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_import(fsal_posixdb_conn * p_conn,   /* IN */
+                                          FILE * in /* IN */ );
 
 /**
  * fsal_posixdb_flush:
@@ -387,9 +387,9 @@ fsal_posixdb_status_t fsal_posixdb_flush(fsal_posixdb_conn * p_conn /* IN */ );
  * \param p_parent_directory_handle (output):
  *        Parent directory handle ( corresponding to <path to p_object_handle>/.. )
  */
-fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,	/* IN */
-						      fsal_handle_t * p_object_handle,	/* IN */
-						      fsal_handle_t * p_parent_directory_handle	/* OUT */
+fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,       /* IN */
+                                                      fsal_handle_t * p_object_handle,  /* IN */
+                                                      fsal_handle_t * p_parent_directory_handle /* OUT */
     );
 
 /** 
@@ -403,9 +403,9 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
  * @return ERR_FSAL_POSIXDB_NOERR if no error,
  *         another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_conn,	/* IN */
-						       fsal_posixdb_fileinfo_t *
-						       p_info /* IN */ );
+fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_conn,      /* IN */
+                                                       fsal_posixdb_fileinfo_t *
+                                                       p_info /* IN */ );
 
 /** 
  * @brief Unlock the Handle line previously locked by fsal_posixdb_lockHandleForUpdate

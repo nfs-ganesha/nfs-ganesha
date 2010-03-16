@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #include <signal.h>
@@ -182,7 +182,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
       rc = HandleMap_Init(&param);
 
       if (rc)
-	return rc;
+        return rc;
     }
 #endif
   /* Init the thread in charge of renewing the client id */
@@ -193,8 +193,8 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
 
   if ((rc = pthread_create(&thrid_clientid_renewer,
-			   &attr_thr,
-			   FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
+                           &attr_thr,
+                           FSAL_proxy_clientid_renewer_thread, (void *)NULL) != 0))
     {
       DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
       exit(1);
@@ -224,7 +224,7 @@ static int FS_Specific_Init(fs_specific_initinfo_t * fs_init_info)
  *                                for this error.)
  *         ERR_FSAL_SEC_INIT     (Security context init error).
  */
-fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
+fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     )
 {
 
@@ -242,13 +242,13 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info	/* IN */
     {
       /* issue a warning on stderr */
       DisplayLog
-	  ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
+          ("FSAL INIT: *** WARNING: No logging file specified for FileSystem Abstraction Layer.");
     }
 
   /* proceeds FSAL internal status initialization */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
-				     &(init_info->fs_common_info));
+                                     &(init_info->fs_common_info));
 
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);
@@ -275,7 +275,7 @@ fsal_status_t FSAL_terminate()
       rc = HandleMap_Flush();
 
       if (rc)
-	ReturnCode(ERR_FSAL_SERVERFAULT, rc);
+        ReturnCode(ERR_FSAL_SERVERFAULT, rc);
     }
 #endif
 

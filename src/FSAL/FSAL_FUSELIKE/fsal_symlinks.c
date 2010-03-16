@@ -49,10 +49,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -69,7 +69,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
 
   /* get the full path for this inode */
   rc = NamespacePath(linkhandle->inode, linkhandle->device, linkhandle->validator,
-		     object_path);
+                     object_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_readlink);
 
@@ -85,7 +85,7 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readlink);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readlink);
 
     } else
     /* return empty link */
@@ -110,10 +110,10 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
       /* On error, we set a flag in the returned attributes */
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
-	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+          FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
@@ -155,13 +155,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored) */
-			   fsal_handle_t * link_handle,	/* OUT */
-			   fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored) */
+                           fsal_handle_t * link_handle, /* OUT */
+                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -184,8 +184,8 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
 
   /* get the full path for parent inode */
   rc = NamespacePath(parent_directory_handle->inode,
-		     parent_directory_handle->device,
-		     parent_directory_handle->validator, parent_path);
+                     parent_directory_handle->device,
+                     parent_directory_handle->validator, parent_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_symlink);
 
@@ -210,14 +210,14 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
     {
       TakeTokenFSCall();
       rc = p_fs_ops->chown(child_path, p_context->credential.user,
-			   p_context->credential.group);
+                           p_context->credential.group);
       ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
       printf("chown: status = %d\n", rc);
 #endif
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_symlink);
     }
 
   /* get info about this symlink */
@@ -233,10 +233,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
 
   /* add handle to namespace */
   NamespaceAdd(parent_directory_handle->inode,
-	       parent_directory_handle->device,
-	       parent_directory_handle->validator,
-	       p_linkname->name,
-	       buffstat.st_ino, buffstat.st_dev, &link_handle->validator);
+               parent_directory_handle->device,
+               parent_directory_handle->validator,
+               p_linkname->name,
+               buffstat.st_ino, buffstat.st_dev, &link_handle->validator);
 
   /* set output handle */
   link_handle->inode = buffstat.st_ino;
@@ -247,10 +247,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
       fsal_status_t status = posix2fsal_attributes(&buffstat, link_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
-	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+          FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

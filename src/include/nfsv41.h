@@ -14,13 +14,13 @@
 #else
 #include <rpc/rpc.h>
 #include <rpc/types.h>
-#endif				/* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
 
-#endif				/* _USE_SWIG */
+#endif                          /* _USE_SWIG */
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,10 +36,10 @@ extern "C" {
 #else
 /* #include <rpc/auth_sys.h> */
 #include <rpc/auth_unix.h>
-#endif				/* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
 
   typedef struct authsys_parms authsys_parms;
-#endif				/* _AUTH_SYS_DEFINE_FOR_NFSv41 */
+#endif                          /* _AUTH_SYS_DEFINE_FOR_NFSv41 */
 
 #define NFS4_FHSIZE 128
 #define NFS4_VERIFIER_SIZE 8
@@ -3073,7 +3073,7 @@ extern "C" {
   extern COMPOUND4res *nfsproc4_compound_4_svc(COMPOUND4args *, struct svc_req *);
   extern int nfs4_program_4_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
 
-#else				/* K&R C */
+#else                           /* K&R C */
 #define NFSPROC4_NULL 0
   extern void *nfsproc4_null_4();
   extern void *nfsproc4_null_4_svc();
@@ -3081,7 +3081,7 @@ extern "C" {
   extern COMPOUND4res *nfsproc4_compound_4();
   extern COMPOUND4res *nfsproc4_compound_4_svc();
   extern int nfs4_program_4_freeresult();
-#endif				/* K&R C */
+#endif                          /* K&R C */
 
 #define NFS4_CALLBACK 0x40000000
 #define NFS_CB 1
@@ -3095,7 +3095,7 @@ extern "C" {
   extern CB_COMPOUND4res *cb_compound_1_svc(CB_COMPOUND4args *, struct svc_req *);
   extern int nfs4_callback_1_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
 
-#else				/* K&R C */
+#else                           /* K&R C */
 #define CB_NULL 0
   extern void *cb_null_1();
   extern void *cb_null_1_svc();
@@ -3103,7 +3103,7 @@ extern "C" {
   extern CB_COMPOUND4res *cb_compound_1();
   extern CB_COMPOUND4res *cb_compound_1_svc();
   extern int nfs4_callback_1_freeresult();
-#endif				/* K&R C */
+#endif                          /* K&R C */
 
 /* the xdr functions */
 
@@ -3423,7 +3423,7 @@ extern "C" {
   extern bool_t xdr_GET_DIR_DELEGATION4resok(XDR *, GET_DIR_DELEGATION4resok *);
   extern bool_t xdr_gddrnf4_status(XDR *, gddrnf4_status *);
   extern bool_t xdr_GET_DIR_DELEGATION4res_non_fatal(XDR *,
-						     GET_DIR_DELEGATION4res_non_fatal *);
+                                                     GET_DIR_DELEGATION4res_non_fatal *);
   extern bool_t xdr_GET_DIR_DELEGATION4res(XDR *, GET_DIR_DELEGATION4res *);
   extern bool_t xdr_GETDEVICEINFO4args(XDR *, GETDEVICEINFO4args *);
   extern bool_t xdr_GETDEVICEINFO4resok(XDR *, GETDEVICEINFO4resok *);
@@ -3520,7 +3520,7 @@ extern "C" {
   extern bool_t xdr_CB_COMPOUND4args(XDR *, CB_COMPOUND4args *);
   extern bool_t xdr_CB_COMPOUND4res(XDR *, CB_COMPOUND4res *);
 
-#else				/* K&R C */
+#else                           /* K&R C */
   extern bool_t xdr_nfs_ftype4();
   extern bool_t xdr_nfsstat4();
   extern bool_t xdr_attrlist4();
@@ -3932,9 +3932,9 @@ extern "C" {
   extern bool_t xdr_CB_COMPOUND4args();
   extern bool_t xdr_CB_COMPOUND4res();
 
-#endif				/* K&R C */
+#endif                          /* K&R C */
 
 #ifdef __cplusplus
 }
 #endif
-#endif				/* !_NFSV41_H_RPCGEN */
+#endif                          /* !_NFSV41_H_RPCGEN */

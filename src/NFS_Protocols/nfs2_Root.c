@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -141,16 +141,16 @@
  *
  */
 int nfs2_Root(nfs_arg_t * parg,
-	      exportlist_t * pexport,
-	      fsal_op_context_t * pcontext,
-	      cache_inode_client_t * pclient,
-	      hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+              exportlist_t * pexport,
+              fsal_op_context_t * pcontext,
+              cache_inode_client_t * pclient,
+              hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   /* This is an unsupported function, it is never used */
   DisplayLogJdLevel(pclient->log_outputs, NIV_CRIT,
-		    "NFS2_ROOT:  /!\\ | Received unexpected call to deprecated function NFS2PROC_ROOT");
+                    "NFS2_ROOT:  /!\\ | Received unexpected call to deprecated function NFS2PROC_ROOT");
   return NFS_REQ_OK;
-}				/* nfs2_Root */
+}                               /* nfs2_Root */
 
 /**
  * nfs2_Root_Free: Frees the result structure allocated for nfs2_Root.
@@ -164,4 +164,4 @@ void nfs2_Root_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
   return;
-}				/* nfs2_Root_Free */
+}                               /* nfs2_Root_Free */

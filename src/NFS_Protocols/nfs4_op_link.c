@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -209,10 +209,10 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if (data->pexport == NULL)
     {
       if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-	{
-	  res_LINK4.status = error;
-	  return res_LINK4.status;
-	}
+        {
+          res_LINK4.status = error;
+          return res_LINK4.status;
+        }
     }
 
   /*
@@ -245,8 +245,8 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* Convert the UFT8 objname to a regular string */
   if ((cache_status =
        cache_inode_error_convert(FSAL_buffdesc2name
-				 ((fsal_buffdesc_t *) & arg_LINK4.newname,
-				  &newname))) != CACHE_INODE_SUCCESS)
+                                 ((fsal_buffdesc_t *) & arg_LINK4.newname,
+                                  &newname))) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
@@ -278,11 +278,11 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* We have to keep track of the 'change' file attribute for reply structure */
   if ((cache_status = cache_inode_getattr(dir_pentry,
-					  &attr,
-					  data->ht,
-					  data->pclient,
-					  data->pcontext,
-					  &cache_status)) != CACHE_INODE_SUCCESS)
+                                          &attr,
+                                          data->ht,
+                                          data->pclient,
+                                          data->pcontext,
+                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
@@ -295,12 +295,12 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* make the link */
   if (cache_inode_link(file_pentry,
-		       dir_pentry,
-		       &newname,
-		       &attr,
-		       data->ht,
-		       data->pclient,
-		       data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                       dir_pentry,
+                       &newname,
+                       &attr,
+                       data->ht,
+                       data->pclient,
+                       data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;
@@ -312,7 +312,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   res_LINK4.status = NFS4_OK;
   return NFS4_OK;
-}				/* nfs4_op_link */
+}                               /* nfs4_op_link */
 
 /**
  * nfs4_op_link_Free: frees what was allocared to handle nfs4_op_link.
@@ -328,4 +328,4 @@ void nfs4_op_link_Free(LINK4res * resp)
 {
   /* Nothing to Mem_Free */
   return;
-}				/* nfs4_op_link_Free */
+}                               /* nfs4_op_link_Free */

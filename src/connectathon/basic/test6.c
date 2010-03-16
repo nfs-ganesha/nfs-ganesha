@@ -27,7 +27,7 @@
 #else
 #include <dirent.h>
 #endif
-#endif				/* DOSorWIN32 */
+#endif                          /* DOSorWIN32 */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -42,13 +42,13 @@
 #include "tests.h"
 #include "Connectathon_config_parsing.h"
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
-static int Iflag = 0;		/* Ignore non-test files dir entries */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
+static int Iflag = 0;           /* Ignore non-test files dir entries */
 
-#define MAXFILES 512		/* maximum files allowed for this test */
-#define BITMOD	 8		/* bits per u_char */
+#define MAXFILES 512            /* maximum files allowed for this test */
+#define BITMOD	 8              /* bits per u_char */
 static unsigned char bitmap[MAXFILES / BITMOD];
 
 #define BIT(x)    (bitmap[(x) / BITMOD] &   (1 << ((x) % BITMOD)) )
@@ -74,9 +74,9 @@ int main(int argc, char *argv[])
 #endif
   char *fname;
   char *dname;
-  int files;			/* number of files in each dir */
+  int files;                    /* number of files in each dir */
   int fi;
-  int count;			/* times to read dir */
+  int count;                    /* times to read dir */
   int ct;
   int entries = 0;
   int totfiles = 0;
@@ -102,36 +102,36 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* No Test Directory create */
-	      Nflag++;
-	      break;
+            case 'n':          /* No Test Directory create */
+              Nflag++;
+              break;
 
-	    case 'i':		/* ignore spurious files */
-	      Iflag++;
-	      break;
+            case 'i':          /* ignore spurious files */
+              Iflag++;
+              break;
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 6 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -173,16 +173,16 @@ int main(int argc, char *argv[])
   if (b->files == -1)
     {
       fprintf(stderr,
-	      "Missing 'files' parameter in the config file '%s' for the basic test number 6\n",
-	      config_file);
+              "Missing 'files' parameter in the config file '%s' for the basic test number 6\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->count == -1)
     {
       fprintf(stderr,
-	      "Missing 'count' parameter in the config file '%s' for the basic test number 6\n",
-	      config_file);
+              "Missing 'count' parameter in the config file '%s' for the basic test number 6\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -238,104 +238,104 @@ int main(int argc, char *argv[])
       dotdot = 0;
       err = 0;
       for (i = 0; i < sizeof(bitmap); i++)
-	bitmap[i] = 0;
+        bitmap[i] = 0;
       while ((dp = readdir(dir)) != NULL)
-	{
-	  entries++;
-	  if (strcmp(".", dp->d_name) == 0)
-	    {
-	      if (dot)
-		{
-		  /* already read dot */
-		  error("'.' dir entry read twice");
-		  exit(1);
-		}
-	      dot++;
-	      continue;
-	  } else if (strcmp("..", dp->d_name) == 0)
-	    {
-	      if (dotdot)
-		{
-		  /* already read dotdot */
-		  error("'..' dir entry read twice");
-		  exit(1);
-		}
-	      dotdot++;
-	      continue;
-	    }
+        {
+          entries++;
+          if (strcmp(".", dp->d_name) == 0)
+            {
+              if (dot)
+                {
+                  /* already read dot */
+                  error("'.' dir entry read twice");
+                  exit(1);
+                }
+              dot++;
+              continue;
+          } else if (strcmp("..", dp->d_name) == 0)
+            {
+              if (dotdot)
+                {
+                  /* already read dotdot */
+                  error("'..' dir entry read twice");
+                  exit(1);
+                }
+              dotdot++;
+              continue;
+            }
 
-	  /*
-	   * at this point, should have entry of the form
-	   *  fname%d
-	   */
-	  /* If we don't have our own directory, ignore
-	     such errors (if Iflag set). */
-	  if (strncmp(dp->d_name, fname, nmoffset))
-	    {
-	      if (Iflag)
-		continue;
-		else
-		{
-		  error("unexpected dir entry '%s'", dp->d_name);
-		  exit(1);
-		}
-	    }
+          /*
+           * at this point, should have entry of the form
+           *  fname%d
+           */
+          /* If we don't have our own directory, ignore
+             such errors (if Iflag set). */
+          if (strncmp(dp->d_name, fname, nmoffset))
+            {
+              if (Iflag)
+                continue;
+                else
+                {
+                  error("unexpected dir entry '%s'", dp->d_name);
+                  exit(1);
+                }
+            }
 
-	  /* get ptr to numeric part of name */
-	  p = dp->d_name + nmoffset;
-	  fi = atoi(p);
-	  if (fi < 0 || fi >= MAXFILES)
-	    {
-	      error("unexpected dir entry '%s'", dp->d_name);
-	      exit(1);
-	    }
-	  if (BIT(fi))
-	    {
-	      error("duplicate '%s' dir entry read", dp->d_name);
-	      err++;
-	    } else
-	    SETBIT(fi);
-	}			/* end readdir loop */
+          /* get ptr to numeric part of name */
+          p = dp->d_name + nmoffset;
+          fi = atoi(p);
+          if (fi < 0 || fi >= MAXFILES)
+            {
+              error("unexpected dir entry '%s'", dp->d_name);
+              exit(1);
+            }
+          if (BIT(fi))
+            {
+              error("duplicate '%s' dir entry read", dp->d_name);
+              err++;
+            } else
+            SETBIT(fi);
+        }                       /* end readdir loop */
       if (!dot)
-	{
-	  error("didn't read '.' dir entry, pass %d", ct);
-	  err++;
-	}
+        {
+          error("didn't read '.' dir entry, pass %d", ct);
+          err++;
+        }
       if (!dotdot)
-	{
-	  error("didn't read '..' dir entry, pass %d", ct);
-	  err++;
-	}
+        {
+          error("didn't read '..' dir entry, pass %d", ct);
+          err++;
+        }
       for (fi = 0; fi < ct; fi++)
-	{
-	  if (BIT(fi))
-	    {
-	      sprintf(str, "%s%d", fname, fi);
-	      error("unlinked '%s' dir entry read pass %d", str, ct);
-	      err++;
-	    }
-	}
+        {
+          if (BIT(fi))
+            {
+              sprintf(str, "%s%d", fname, fi);
+              error("unlinked '%s' dir entry read pass %d", str, ct);
+              err++;
+            }
+        }
       for (fi = ct; fi < files; fi++)
-	{
-	  if (!BIT(fi))
-	    {
-	      sprintf(str, "%s%d", fname, fi);
-	      error("\
+        {
+          if (!BIT(fi))
+            {
+              sprintf(str, "%s%d", fname, fi);
+              error("\
 didn't read expected '%s' dir entry, pass %d", str, ct);
-	      err++;
-	    }
-	}
+              err++;
+            }
+        }
       if (err)
-	{
-	  error("Test failed with %d errors", err);
-	  exit(1);
-	}
+        {
+          error("Test failed with %d errors", err);
+          exit(1);
+        }
       sprintf(str, "%s%d", fname, ct);
       if (unlink(str) < 0)
-	{
-	  error("can't unlink %s", str);
-	  exit(1);
-	}
+        {
+          error("can't unlink %s", str);
+          exit(1);
+        }
     }
 
   closedir(dir);
@@ -345,7 +345,7 @@ didn't read expected '%s' dir entry, pass %d", str, ct);
   if (Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
-	      (long)time.tv_sec, (long)time.tv_usec / 10000);
+              (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
@@ -357,7 +357,7 @@ didn't read expected '%s' dir entry, pass %d", str, ct);
       complete();
     }
   fprintf(log, "b6\t%d\t%d\t%ld.%02ld\n", entries, files, (long)time.tv_sec,
-	  (long)time.tv_usec / 10000);
+          (long)time.tv_usec / 10000);
   fclose(log);
 
   complete();

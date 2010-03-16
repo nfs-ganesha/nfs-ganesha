@@ -126,9 +126,9 @@ static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 typedef struct fsal_handle__ {
   ino_t inode;
   dev_t device;
-  unsigned int validator;	/* because fuse filesystem
-				   can reuse their old inode numbers,
-				   which is not NFS compliant. */
+  unsigned int validator;       /* because fuse filesystem
+                                   can reuse their old inode numbers,
+                                   which is not NFS compliant. */
 } fsal_handle_t;
 
 typedef struct fsal_cred__ {
@@ -138,7 +138,7 @@ typedef struct fsal_cred__ {
 
 typedef struct fsal_export_context__ {
   fsal_handle_t root_handle;
-  fsal_path_t root_full_path;	/* not expected to change when filesystem is mounted ! */
+  fsal_path_t root_full_path;   /* not expected to change when filesystem is mounted ! */
   struct ganefuse *ganefuse;
 } fsal_export_context_t;
 
@@ -183,4 +183,4 @@ typedef struct fsal_lockdesc__ {
   struct flock file_lock;
 } fsal_lockdesc_t;
 
-#endif				/* _FSAL_TYPES_SPECIFIC_H */
+#endif                          /* _FSAL_TYPES_SPECIFIC_H */
