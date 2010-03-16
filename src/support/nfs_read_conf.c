@@ -132,7 +132,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #ifdef _USE_GSSRPC
 #include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
@@ -206,49 +206,49 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_WORKER);
-	  return CACHE_INODE_INVALID_ARGUMENT;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_WORKER);
+          return CACHE_INODE_INVALID_ARGUMENT;
+        }
 
       if (!strcasecmp(key_name, "Pending_Job_Prealloc"))
-	{
-	  pparam->nb_pending_prealloc = atoi(key_value);
+        {
+          pparam->nb_pending_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_Before_GC"))
-	{
-	  pparam->nb_before_gc = atoi(key_value);
+        {
+          pparam->nb_before_gc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_DupReq_Prealloc"))
-	{
-	  pparam->nb_dupreq_prealloc = atoi(key_value);
+        {
+          pparam->nb_dupreq_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
-	{
-	  pparam->nb_dupreq_before_gc = atoi(key_value);
+        {
+          pparam->nb_dupreq_before_gc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
-	{
-	  pparam->nb_client_id_prealloc = atoi(key_value);
+        {
+          pparam->nb_client_id_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_IP_Stats_Prealloc"))
-	{
-	  pparam->nb_ip_stats_prealloc = atoi(key_value);
+        {
+          pparam->nb_ip_stats_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
-	{
-	  pparam->lru_param.nb_entry_prealloc = atoi(key_value);
+        {
+          pparam->lru_param.nb_entry_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
-	{
-	  pparam->lru_dupreq.nb_entry_prealloc = atoi(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_WORKER);
-	  return -1;
-	}
+        {
+          pparam->lru_dupreq.nb_entry_prealloc = atoi(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_WORKER);
+          return -1;
+        }
 
     }
 
   return 0;
-}				/* nfs_read_worker_conf */
+}                               /* nfs_read_worker_conf */
 
 /**
  *
@@ -296,76 +296,76 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_CORE);
-	  return CACHE_INODE_INVALID_ARGUMENT;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_CORE);
+          return CACHE_INODE_INVALID_ARGUMENT;
+        }
 
       if (!strcasecmp(key_name, "Nb_Worker"))
-	{
-	  pparam->nb_worker = atoi(key_value);
+        {
+          pparam->nb_worker = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
-	{
-	  pparam->nb_max_concurrent_gc = atoi(key_value);
+        {
+          pparam->nb_max_concurrent_gc = atoi(key_value);
       } else if (!strcasecmp(key_name, "DupReq_Expiration"))
-	{
-	  pparam->expiration_dupreq = atoi(key_value);
+        {
+          pparam->expiration_dupreq = atoi(key_value);
       } else if (!strcasecmp(key_name, "Use_NFS_Commit"))
-	{
-	  pparam->use_nfs_commit = StrToBoolean(key_value);
+        {
+          pparam->use_nfs_commit = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "NFS_Port"))
-	{
-	  pparam->nfs_port = (unsigned short)atoi(key_value);
+        {
+          pparam->nfs_port = (unsigned short)atoi(key_value);
       } else if (!strcasecmp(key_name, "Drop_IO_Errors"))
-	{
-	  pparam->drop_io_errors = StrToBoolean(key_value);
+        {
+          pparam->drop_io_errors = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "Drop_Inval_Errors"))
-	{
-	  pparam->drop_inval_errors = StrToBoolean(key_value);
+        {
+          pparam->drop_inval_errors = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "MNT_Port"))
-	{
-	  pparam->mnt_port = (unsigned short)atoi(key_value);
+        {
+          pparam->mnt_port = (unsigned short)atoi(key_value);
       } else if (!strcasecmp(key_name, "NFS_Program"))
-	{
-	  pparam->nfs_program = atoi(key_value);
+        {
+          pparam->nfs_program = atoi(key_value);
       } else if (!strcasecmp(key_name, "MNT_Program"))
-	{
-	  pparam->mnt_program = atoi(key_value);
+        {
+          pparam->mnt_program = atoi(key_value);
       } else if (!strcasecmp(key_name, "NLM_Program"))
-	{
-	  pparam->nlm_program = atoi(key_value);
+        {
+          pparam->nlm_program = atoi(key_value);
       } else if (!strcasecmp(key_name, "Core_Dump_Size"))
-	{
-	  pparam->core_dump_size = atol(key_value);
+        {
+          pparam->core_dump_size = atol(key_value);
       } else if (!strcasecmp(key_name, "Nb_Max_Fd"))
-	{
-	  pparam->nb_max_fd = atoi(key_value);
+        {
+          pparam->nb_max_fd = atoi(key_value);
       } else if (!strcasecmp(key_name, "Stats_File_Path"))
-	{
-	  strncpy(pparam->stats_file_path, key_value, MAXPATHLEN);
+        {
+          strncpy(pparam->stats_file_path, key_value, MAXPATHLEN);
       } else if (!strcasecmp(key_name, "Stats_Update_Delay"))
-	{
-	  pparam->stats_update_delay = atoi(key_value);
+        {
+          pparam->stats_update_delay = atoi(key_value);
       } else if (!strcasecmp(key_name, "Dump_Stats_Per_Client"))
-	{
-	  pparam->dump_stats_per_client = StrToBoolean(key_value);
+        {
+          pparam->dump_stats_per_client = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "Stats_Per_Client_Directory"))
-	{
-	  strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_CORE);
-	  return -1;
-	}
+        {
+          strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_CORE);
+          return -1;
+        }
 
     }
 
   return 0;
-}				/* nfs_read_core_conf */
+}                               /* nfs_read_core_conf */
 
 /**
  *
@@ -380,7 +380,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
  *
  */
 int nfs_read_dupreq_hash_conf(config_file_t in_config,
-			      nfs_rpc_dupreq_parameter_t * pparam)
+                              nfs_rpc_dupreq_parameter_t * pparam)
 {
   int var_max;
   int var_index;
@@ -414,33 +414,33 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_DUPREQ);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_DUPREQ);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_DUPREQ);
-	  return -1;
-	}
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_DUPREQ);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_dupreq_hash_conf */
+}                               /* nfs_read_dupreq_hash_conf */
 
 /**
  *
@@ -488,39 +488,39 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_IP_NAME);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_IP_NAME);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Expiration_Time"))
-	{
-	  pparam->expiration_time = atoi(key_value);
+        {
+          pparam->expiration_time = atoi(key_value);
       } else if (!strcasecmp(key_name, "Map"))
-	{
-	  strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_IP_NAME);
-	  return -1;
-	}
+        {
+          strncpy(pparam->mapfile, key_value, MAXPATHLEN);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_IP_NAME);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_ip_name_conf */
+}                               /* nfs_read_ip_name_conf */
 
 /**
  *
@@ -564,33 +564,33 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_CLIENT_ID);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_CLIENT_ID);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_CLIENT_ID);
-	  return -1;
-	}
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_CLIENT_ID);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_client_id_conf */
+}                               /* nfs_client_id_conf */
 
 /**
  *
@@ -634,33 +634,33 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_STATE_ID);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_STATE_ID);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_STATE_ID);
-	  return -1;
-	}
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_STATE_ID);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_state_id_conf */
+}                               /* nfs_state_id_conf */
 
 #ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t * pparam)
@@ -680,7 +680,7 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   if ((block = config_FindItemByName(in_config, CONF_LABEL_SESSION_ID)) == NULL)
     {
       fprintf(stderr, "Cannot read item \"%s\" from configuration file\n",
-	      CONF_LABEL_STATE_ID);
+              CONF_LABEL_STATE_ID);
       return 1;
     }
 
@@ -694,33 +694,33 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_SESSION_ID);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_SESSION_ID);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_SESSION_ID);
-	  return -1;
-	}
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_SESSION_ID);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_session_id_conf */
+}                               /* nfs_session_id_conf */
 
 int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 {
@@ -739,7 +739,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   if ((block = config_FindItemByName(in_config, CONF_LABEL_PNFS)) == NULL)
     {
       fprintf(stderr, "Cannot read item \"%s\" from configuration file\n",
-	      CONF_LABEL_PNFS);
+              CONF_LABEL_PNFS);
       return 1;
   } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
@@ -757,22 +757,22 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_PNFS);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_PNFS);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Use_pNFS"))
-	{
-	  pparam->use_pnfs = StrToBoolean(key_value);
-	}
+        {
+          pparam->use_pnfs = StrToBoolean(key_value);
+        }
 
     }
 
   return 0;
-}				/* nfs_read_pnfs_conf */
+}                               /* nfs_read_pnfs_conf */
 
 #endif
 
@@ -822,36 +822,36 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_UID_MAPPER);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_UID_MAPPER);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Map"))
-	{
-	  strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_UID_MAPPER);
-	  return -1;
-	}
+        {
+          strncpy(pparam->mapfile, key_value, MAXPATHLEN);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_UID_MAPPER);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_uidmap_conf */
+}                               /* nfs_read_uidmap_conf */
 
 /**
  *
@@ -899,36 +899,36 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_GID_MAPPER);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_GID_MAPPER);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Index_Size"))
-	{
-	  pparam->hash_param.index_size = atoi(key_value);
+        {
+          pparam->hash_param.index_size = atoi(key_value);
       } else if (!strcasecmp(key_name, "Alphabet_Length"))
-	{
-	  pparam->hash_param.alphabet_length = atoi(key_value);
+        {
+          pparam->hash_param.alphabet_length = atoi(key_value);
       } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-	{
-	  pparam->hash_param.nb_node_prealloc = atoi(key_value);
+        {
+          pparam->hash_param.nb_node_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "Map"))
-	{
-	  strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_GID_MAPPER);
-	  return -1;
-	}
+        {
+          strncpy(pparam->mapfile, key_value, MAXPATHLEN);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_GID_MAPPER);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_gidmap_conf */
+}                               /* nfs_read_gidmap_conf */
 
 /**
  *
@@ -976,33 +976,33 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_KRB5);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_KRB5);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "PrincipalName"))
-	{
-	  strncpy(pparam->principal, key_value, MAXNAMLEN);
+        {
+          strncpy(pparam->principal, key_value, MAXNAMLEN);
       } else if (!strcasecmp(key_name, "KeytabPath"))
-	{
-	  strncpy(pparam->keytab, key_value, MAXPATHLEN);
+        {
+          strncpy(pparam->keytab, key_value, MAXPATHLEN);
       } else if (!strcasecmp(key_name, "Active_krb5"))
-	{
-	  pparam->active_krb5 = StrToBoolean(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_KRB5);
-	  return -1;
-	}
+        {
+          pparam->active_krb5 = StrToBoolean(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_KRB5);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_krb5_conf */
+}                               /* nfs_read_krb5_conf */
 
 /**
  *
@@ -1050,42 +1050,42 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
 
       /* Get key's name */
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
-	{
-	  fprintf(stderr,
-		  "Error reading key[%d] from section \"%s\" of configuration file.\n",
-		  var_index, CONF_LABEL_NFS_VERSION4);
-	  return -1;
-	}
+        {
+          fprintf(stderr,
+                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+                  var_index, CONF_LABEL_NFS_VERSION4);
+          return -1;
+        }
 
       if (!strcasecmp(key_name, "Lease_Lifetime"))
-	{
-	  pparam->lease_lifetime = atoi(key_value);
+        {
+          pparam->lease_lifetime = atoi(key_value);
       } else if (!strcasecmp(key_name, "DomainName"))
-	{
-	  strncpy(pparam->domainname, key_value, MAXNAMLEN);
+        {
+          strncpy(pparam->domainname, key_value, MAXNAMLEN);
       } else if (!strcasecmp(key_name, "IdmapConf"))
-	{
-	  strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
+        {
+          strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
       } else if (!strcasecmp(key_name, "FH_Expire"))
-	{
-	  pparam->fh_expire = StrToBoolean(key_value);
+        {
+          pparam->fh_expire = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
-	{
-	  pparam->returns_err_fh_expired = StrToBoolean(key_value);
+        {
+          pparam->returns_err_fh_expired = StrToBoolean(key_value);
       } else if (!strcasecmp(key_name, "Use_OPEN_CONFIRM"))
-	{
-	  pparam->use_open_confirm = StrToBoolean(key_value);
-	} else
-	{
-	  fprintf(stderr,
-		  "Unknown or unsettable key: %s (item %s)\n",
-		  key_name, CONF_LABEL_NFS_VERSION4);
-	  return -1;
-	}
+        {
+          pparam->use_open_confirm = StrToBoolean(key_value);
+        } else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n",
+                  key_name, CONF_LABEL_NFS_VERSION4);
+          return -1;
+        }
     }
 
   return 0;
-}				/* nfs_read_version4_conf */
+}                               /* nfs_read_version4_conf */
 
 /**
  *
@@ -1101,11 +1101,11 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
 {
   DisplayLog("NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
-	     pparam->lru_param.nb_entry_prealloc);
+             pparam->lru_param.nb_entry_prealloc);
   DisplayLog("NFS PARAM : worker_param.nb_pending_prealloc = %d",
-	     pparam->nb_pending_prealloc);
+             pparam->nb_pending_prealloc);
   DisplayLog("NFS PARAM : worker_param.nb_before_gc = %d", pparam->nb_before_gc);
-}				/* Print_param_worker_in_log */
+}                               /* Print_param_worker_in_log */
 
 /**
  *
@@ -1122,4 +1122,4 @@ void Print_param_in_log(nfs_parameter_t * pparam)
 {
   DisplayLog("NFS PARAM : core_param.nb_worker = %d", pparam->core_param.nb_worker);
   Print_param_worker_in_log(&(pparam->worker_param));
-}				/* Print_param_in_log */
+}                               /* Print_param_in_log */

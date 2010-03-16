@@ -36,12 +36,12 @@ int s_read_int(char *str)
     {
 
       if ((str[i] < '0') || (str[i] > '9'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 10;
-	  out += (int)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 10;
+          out += (int)(str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -69,12 +69,12 @@ int s_read_octal(char *str)
     {
 
       if ((str[i] < '0') || (str[i] > '7'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 8;
-	  out += (int)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 8;
+          out += (int)(str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -105,12 +105,12 @@ int s_read_int64(char *str, unsigned long long *out64)
     {
 
       if ((str[i] < '0') || (str[i] > '9'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 10;
-	  out += (unsigned long long)(str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 10;
+          out += (unsigned long long)(str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -133,12 +133,12 @@ int s_read_size(char *str, size_t * p_size)
     {
 
       if ((str[i] < '0') || (str[i] > '9'))
-	return -1;		/* error */
-	else
-	{
-	  out *= 10;
-	  out += (size_t) (str[i] - '0');
-	}
+        return -1;              /* error */
+        else
+        {
+          out *= 10;
+          out += (size_t) (str[i] - '0');
+        }
     }
 
   if (i == 0)
@@ -187,8 +187,8 @@ int StrToBoolean(char *str)
 int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
 {
 
-  unsigned char *c;		/* the current char to be printed */
-  char *str = target;		/* the current position in target buffer */
+  unsigned char *c;             /* the current char to be printed */
+  char *str = target;           /* the current position in target buffer */
   int wrote = 0;
 
   for (c = (unsigned char *)source; c < ((unsigned char *)source + mem_size); c++)
@@ -196,10 +196,10 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
       int tmp_wrote;
 
       if (wrote >= tgt_size)
-	{
-	  target[tgt_size - 1] = '\0';
-	  break;
-	}
+        {
+          target[tgt_size - 1] = '\0';
+          break;
+        }
 
       tmp_wrote = snprintf(str, tgt_size - wrote, "%.2X", (unsigned char)*c);
       str += tmp_wrote;
@@ -237,9 +237,9 @@ int snprintmem(char *target, int tgt_size, caddr_t source, int mem_size)
 int sscanmem(caddr_t target, int tgt_size, const char *str_source)
 {
 
-  unsigned char *p_mem;		/* the current byte to be set */
+  unsigned char *p_mem;         /* the current byte to be set */
 
-  const char *p_src;		/* pointer to the current char to be read. */
+  const char *p_src;            /* pointer to the current char to be read. */
 
   int read = 0;
 
@@ -253,16 +253,16 @@ int sscanmem(caddr_t target, int tgt_size, const char *str_source)
 
       /* we must read 2 bytes (written in hexa) to have 1 target byte value. */
       if ((*p_src == '\0') || (*(p_src + 1) == '\0'))
-	{
-	  /* error, the source string is too small */
-	  return -1;
-	}
+        {
+          /* error, the source string is too small */
+          return -1;
+        }
 
       /* they must be hexa values */
       if (!IS_HEXA(*p_src) || !IS_HEXA(*(p_src + 1)))
-	{
-	  return -1;
-	}
+        {
+          return -1;
+        }
 
       /* we read hexa values. */
       tmp_val = (HEXA2BYTE(*p_src) << 4) + HEXA2BYTE(*(p_src + 1));
@@ -293,7 +293,7 @@ int sscanmem(caddr_t target, int tgt_size, const char *str_source)
 int find_space(char c)
 {
   return isspace(c);
-}				/* find_space */
+}                               /* find_space */
 
 /**
  * 
@@ -309,7 +309,7 @@ int find_space(char c)
 int find_comma(char c)
 {
   return (c == ',') ? 1 : 0;
-}				/* find_comma */
+}                               /* find_comma */
 
 /**
  * 
@@ -325,7 +325,7 @@ int find_comma(char c)
 int find_colon(char c)
 {
   return (c == ':') ? 1 : 0;
-}				/* find_colon */
+}                               /* find_colon */
 
 /**
  * 
@@ -341,7 +341,7 @@ int find_colon(char c)
 int find_endLine(char c)
 {
   return (c == '\0' || c == '\n') ? 1 : 0;
-}				/* find_endLine */
+}                               /* find_endLine */
 
 /**
  * 
@@ -357,4 +357,4 @@ int find_endLine(char c)
 int find_slash(char c)
 {
   return (c == '/') ? 1 : 0;
-}				/* find_slash */
+}                               /* find_slash */

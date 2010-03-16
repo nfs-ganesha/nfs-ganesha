@@ -101,7 +101,7 @@
 
 #ifndef _USE_SWIG
 
-log_t log_outputs;			      /**< Log descriptor                                   */
+log_t log_outputs;                            /**< Log descriptor                                   */
 
 /******************************************************
  *            Attribute mask management.
@@ -128,7 +128,7 @@ int mfsl_async_clean_pending_request(LRU_entry_t * pentry, void *addparam)
   //RELEASE_PREALLOC( preqnfs, *preqnfspool, next_alloc ) ;
 
   return 0;
-}				/* mfsl_async_clean_pending_request */
+}                               /* mfsl_async_clean_pending_request */
 
 /**
  *
@@ -145,7 +145,7 @@ int mfsl_async_clean_pending_request(LRU_entry_t * pentry, void *addparam)
 int mfsl_async_print_pending_request(LRU_data_t data, char *str)
 {
   return snprintf(str, LRU_DISPLAY_STRLEN, "not implemented for now");
-}				/* print_pending_request */
+}                               /* print_pending_request */
 
 /**
  * Those routines set the default parameters
@@ -172,7 +172,7 @@ fsal_status_t MFSL_SetDefault_parameter(mfsl_parameter_t * out_parameter)
   out_parameter->lru_param.entry_to_str = mfsl_async_print_pending_request;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_SetDefault_parameter */
+}                               /* MFSL_SetDefault_parameter */
 
 /**
  * MFSL_load_FSAL_parameter_from_conf,
@@ -193,7 +193,7 @@ fsal_status_t MFSL_SetDefault_parameter(mfsl_parameter_t * out_parameter)
  *         ERR_FSAL_FAULT (null pointer given as parameter),
  */
 fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
-					    mfsl_parameter_t * pparam)
+                                            mfsl_parameter_t * pparam)
 {
   int err;
   int var_max, var_index;
@@ -212,7 +212,7 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
   if ((block = config_FindItemByName(in_config, CONF_LABEL_MFSL_ASYNC)) == NULL)
     {
       DisplayLog("/!\\ Cannot read item \"%s\" from configuration file\n",
-		 CONF_LABEL_MFSL_ASYNC);
+                 CONF_LABEL_MFSL_ASYNC);
       MFSL_return(ERR_FSAL_NOENT, 0);
     }
   var_max = config_GetNbItems(block);
@@ -224,74 +224,74 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
       item = config_GetItemByIndex(block, var_index);
 
       if ((err = config_GetKeyValue(item, &key_name, &key_value)) > 0)
-	{
-	  DisplayLog
-	      ("MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-	       var_index, CONF_LABEL_MFSL_ASYNC);
-	  MFSL_return(ERR_FSAL_SERVERFAULT, err);
-	}
+        {
+          DisplayLog
+              ("MFSL ASYNC LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
+               var_index, CONF_LABEL_MFSL_ASYNC);
+          MFSL_return(ERR_FSAL_SERVERFAULT, err);
+        }
 
       if (!strcasecmp(key_name, "Nb_Synclet"))
-	{
-	  DisplayLog
-	      ("MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
-	  DisplayLog
-	      ("MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
-	       key_value);
-	  //pparam->nb_synclet = atoi( key_value ) ;
-	  pparam->nb_synclet = 1;
+        {
+          DisplayLog
+              ("MFSL ASYNC LOAD PARAMETER: the asyncop scheduler is not yet implemented. Only one synclet managed");
+          DisplayLog
+              ("MFSL ASYNC LOAD PARAMETER: Parameter Nb_Synclet = %s will be ignored",
+               key_value);
+          //pparam->nb_synclet = atoi( key_value ) ;
+          pparam->nb_synclet = 1;
       } else if (!strcasecmp(key_name, "Async_Window_sec"))
-	{
-	  pparam->async_window_sec = atoi(key_value);	/* Asynchronous Task Dispatcher sleeping time */
+        {
+          pparam->async_window_sec = atoi(key_value);   /* Asynchronous Task Dispatcher sleeping time */
       } else if (!strcasecmp(key_name, "Async_Window_usec"))
-	{
-	  pparam->async_window_usec = atoi(key_value);	/* Asynchronous Task Dispatcher sleeping time */
+        {
+          pparam->async_window_usec = atoi(key_value);  /* Asynchronous Task Dispatcher sleeping time */
       } else if (!strcasecmp(key_name, "Nb_Sync_Before_GC"))
-	{
-	  pparam->nb_before_gc = atoi(key_value);
+        {
+          pparam->nb_before_gc = atoi(key_value);
       } else if (!strcasecmp(key_name, "PreCreatedObject_Directory"))
-	{
-	  strncpy(pparam->pre_create_obj_dir, key_value, MAXPATHLEN);
+        {
+          strncpy(pparam->pre_create_obj_dir, key_value, MAXPATHLEN);
       } else if (!strcasecmp(key_name, "Tmp_Symlink_Directory"))
-	{
-	  strncpy(pparam->tmp_symlink_dir, key_value, MAXPATHLEN);
+        {
+          strncpy(pparam->tmp_symlink_dir, key_value, MAXPATHLEN);
       } else if (!strcasecmp(key_name, "Nb_PreCreated_Directories"))
-	{
-	  pparam->nb_pre_create_dirs = atoi(key_value);
+        {
+          pparam->nb_pre_create_dirs = atoi(key_value);
       } else if (!strcasecmp(key_name, "Nb_PreCreated_Files"))
-	{
-	  pparam->nb_pre_create_files = atoi(key_value);
+        {
+          pparam->nb_pre_create_files = atoi(key_value);
       } else if (!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
-	{
-	  pparam->lru_param.nb_entry_prealloc = atoi(key_value);
+        {
+          pparam->lru_param.nb_entry_prealloc = atoi(key_value);
       } else if (!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
-	{
-	  pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
+        {
+          pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
       } else if (!strcasecmp(key_name, "DebugLevel"))
-	{
-	  DebugLevel = ReturnLevelAscii(key_value);
+        {
+          DebugLevel = ReturnLevelAscii(key_value);
 
-	  if (DebugLevel == -1)
-	    {
-	      DisplayLog
-		  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
-		   key_value);
-	      MFSL_return(ERR_FSAL_INVAL, 0);
-	    }
+          if (DebugLevel == -1)
+            {
+              DisplayLog
+                  ("cache_content_read_conf: ERROR: Invalid debug level name: \"%s\".",
+                   key_value);
+              MFSL_return(ERR_FSAL_INVAL, 0);
+            }
       } else if (!strcasecmp(key_name, "LogFile"))
-	{
-	  LogFile = key_value;
-	}
+        {
+          LogFile = key_value;
+        }
 
-	else
-	{
-	  DisplayLog
-	      ("MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
-	       key_name, CONF_LABEL_MFSL_ASYNC);
-	  MFSL_return(ERR_FSAL_INVAL, 0);
-	}
+        else
+        {
+          DisplayLog
+              ("MFSL ASYNC LOAD PARAMETER: Unknown or unsettable key %s from section \"%s\" of configuration file.",
+               key_name, CONF_LABEL_MFSL_ASYNC);
+          MFSL_return(ERR_FSAL_INVAL, 0);
+        }
 
-    }				/* for */
+    }                           /* for */
 
   if (LogFile)
     {
@@ -302,13 +302,13 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
       /* Default : NIV_CRIT */
 
       if (DebugLevel == -1)
-	AddLogStreamJd(&log_outputs, V_FILE, log_stream, NIV_CRIT, SUP);
-	else
-	AddLogStreamJd(&log_outputs, V_FILE, log_stream, DebugLevel, SUP);
+        AddLogStreamJd(&log_outputs, V_FILE, log_stream, NIV_CRIT, SUP);
+        else
+        AddLogStreamJd(&log_outputs, V_FILE, log_stream, DebugLevel, SUP);
 
     }
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_load_parameter_from_conf */
+}                               /* MFSL_load_parameter_from_conf */
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

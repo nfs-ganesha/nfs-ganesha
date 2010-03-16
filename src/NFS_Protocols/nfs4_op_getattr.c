@@ -94,7 +94,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -142,7 +142,7 @@
  * 
  */
 int nfs4_op_getattr(struct nfs_argop4 *op,
-		    compound_data_t * data, struct nfs_resop4 *resp)
+                    compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_attrib_list_t attr;
   cache_inode_status_t cache_status;
@@ -183,7 +183,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
 
 #ifdef _DEBUG_NFS_V4
   printf("CURRENT FH: NFS4_OP_GETATTR = { Length = %d  Val = ",
-	 data->currentFH.nfs_fh4_len);
+         data->currentFH.nfs_fh4_len);
   for (cpt = 0; cpt < data->currentFH.nfs_fh4_len; cpt++)
     printf("%02X", data->currentFH.nfs_fh4_val[cpt]);
   printf(" } \n");
@@ -215,26 +215,26 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
    * Get attributes.
    */
   if (cache_inode_getattr(data->current_entry,
-			  &attr,
-			  data->ht,
-			  data->pclient,
-			  data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                          &attr,
+                          data->ht,
+                          data->pclient,
+                          data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       if (nfs4_FSALattr_To_Fattr(data->pexport,
-				 &attr,
-				 &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-				 data,
-				 &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
-	res_GETATTR4.status = NFS4ERR_SERVERFAULT;
-	else
-	res_GETATTR4.status = NFS4_OK;
+                                 &attr,
+                                 &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
+                                 data,
+                                 &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+        res_GETATTR4.status = NFS4ERR_SERVERFAULT;
+        else
+        res_GETATTR4.status = NFS4_OK;
 
       return res_GETATTR4.status;
     }
   res_GETATTR4.status = nfs4_Errno(cache_status);
 
   return res_GETATTR4.status;
-}				/* nfs4_op_getattr */
+}                               /* nfs4_op_getattr */
 
 /**
  * nfs4_op_getattr_Free: frees what was allocared to handle nfs4_op_getattr.
@@ -251,11 +251,11 @@ void nfs4_op_getattr_Free(GETATTR4res * resp)
   if (resp->status == NFS4_OK)
     {
       if (resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val != NULL)
-	Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val);
+        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val);
 
       if (resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val != NULL)
-	Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.
-		 attr_vals.attrlist4_val);
+        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.
+                 attrlist4_val);
     }
   return;
-}				/* nfs4_op_getattr_Free */
+}                               /* nfs4_op_getattr_Free */

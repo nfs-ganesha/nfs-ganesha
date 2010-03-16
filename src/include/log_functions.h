@@ -194,7 +194,7 @@ static errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
 #define ERR_PTHREAD_KEY_CREATE    3
   {
   ERR_PTHREAD_KEY_CREATE, "ERR_PTHREAD_KEY_CREATE",
-	"Error a la creation des pthread_keys"},
+        "Error a la creation des pthread_keys"},
 #define ERR_MALLOC                4
   {
   ERR_MALLOC, "ERR_MALLOC", "malloc impossible"},
@@ -500,16 +500,16 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 int SetNamePgm(char *nom);
 int SetNameHost(char *nom);
 int SetNameFileLog(char *nom);
-int SetNameFunction(char *nom);	/* thread safe */
+int SetNameFunction(char *nom); /* thread safe */
 char *ReturnNamePgm();
 char *ReturnNameHost();
 char *ReturnNameFileLog();
-char *ReturnNameFunction();	/* thread safe */
+char *ReturnNameFunction();     /* thread safe */
 
 int DisplayErrorStringLine(char *tampon, int num_family, int num_error, int status,
-			   int ma_ligne);
+                           int ma_ligne);
 int DisplayErrorFluxLine(FILE * flux, int num_family, int num_error, int status,
-			 int ma_ligne);
+                         int ma_ligne);
 int DisplayErrorFdLine(int fd, int num_family, int num_error, int status, int ma_ligne);
 int DisplayErrorLogLine(int num_family, int num_error, int status, int ma_ligne);
 
@@ -540,9 +540,9 @@ int RemoveFamilyError(int num_family);
 
 char *ReturnNameFamilyError(int num_family);
 
-int InitDebug(int niveau_debug);	/* not thread safe */
+int InitDebug(int niveau_debug);        /* not thread safe */
 
-int SetLevelDebug(int level_to_set);	/* not thread safe */
+int SetLevelDebug(int level_to_set);    /* not thread safe */
 
 int ReturnLevelDebug();
 int ReturnLevelAscii(char *LevelEnAscii);
@@ -588,8 +588,8 @@ int DisplayErrorJdLine(log_t jd, int num_family, int num_error, int status, int 
 #define DisplayErrorJd(a, b, c, d ) DisplayErrorJdLine( a, b, c, d, __LINE__ )
 
 int AddLogStreamJd(log_t * pjd,
-		   type_log_stream_t type,
-		   desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
+                   type_log_stream_t type,
+                   desc_log_stream_t desc_voie, niveau_t niveau, aiguillage_t aiguillage);
 
 int log_vsnprintf(char *out, size_t n, char *format, va_list arguments);
 #define log_vsprintf( out, format, arguments ) log_vsnprintf( out, (size_t)LOG_MAX_STRLEN, format, arguments )

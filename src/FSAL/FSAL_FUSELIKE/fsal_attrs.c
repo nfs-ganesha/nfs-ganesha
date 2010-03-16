@@ -45,9 +45,9 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* IN/OUT */
+fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * object_attributes      /* IN/OUT */
     )
 {
 
@@ -64,7 +64,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
 
   /* get the full path for the object */
   rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
-		     object_path);
+                     object_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
 
@@ -80,7 +80,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
       ReleaseTokenFSCall();
 
       if (rc)
-	Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_getattrs);
+        Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_getattrs);
     } else
     {
       /* return void attributes...
@@ -89,7 +89,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
        */
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL_getattr WARNING: getattr is not implemented on this filesystem! Returning dummy values.");
+                        "FSAL_getattr WARNING: getattr is not implemented on this filesystem! Returning dummy values.");
 
       obj_stat.st_dev = filehandle->device;
       obj_stat.st_ino = filehandle->inode;
@@ -154,10 +154,10 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle,	/* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_attrib_list_t * attrib_set,	/* IN */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_attrib_list_t * attrib_set,    /* IN */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -184,12 +184,12 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
     {
 
       if (attrs.asked_attributes
-	  & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
-	{
+          & (FSAL_ATTR_ATIME | FSAL_ATTR_CREATION | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
+        {
 
-	  /* handled as an unsettable attribute. */
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
-	}
+          /* handled as an unsettable attribute. */
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_setattrs);
+        }
 
     }
 
@@ -203,7 +203,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
   /* get the path for this entry */
 
   rc = NamespacePath(filehandle->inode, filehandle->device, filehandle->validator,
-		     object_path);
+                     object_path);
   if (rc)
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_setattrs);
 
@@ -226,20 +226,20 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
       status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_setattrs);
+        Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
       if ((tmp_attrs.type != FSAL_TYPE_LNK) && (p_fs_ops->chmod != NULL))
-	{
-	  TakeTokenFSCall();
-	  rc = p_fs_ops->chmod(object_path, fsal2unix_mode(attrs.mode));
-	  ReleaseTokenFSCall();
+        {
+          TakeTokenFSCall();
+          rc = p_fs_ops->chmod(object_path, fsal2unix_mode(attrs.mode));
+          ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
-	  printf("chmod: status = %d\n", rc);
+          printf("chmod: status = %d\n", rc);
 #endif
-	  if (rc)
-	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
-	}
+          if (rc)
+            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+        }
       /* else : ignored */
 
     }
@@ -251,17 +251,17 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
     {
 
       if (p_fs_ops->truncate)
-	{
-	  TakeTokenFSCall();
-	  rc = p_fs_ops->truncate(object_path, (off_t) attrs.filesize);
-	  ReleaseTokenFSCall();
+        {
+          TakeTokenFSCall();
+          rc = p_fs_ops->truncate(object_path, (off_t) attrs.filesize);
+          ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
-	  printf("truncate: status = %d\n", rc);
+          printf("truncate: status = %d\n", rc);
 #endif
-	  if (rc)
-	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
-	}
+          if (rc)
+            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+        }
       /* else : ignored */
 
     }
@@ -272,47 +272,47 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
   if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER))
     {
       if ((p_context->credential.user != 0)
-	  && (p_context->credential.user != attrs.owner))
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			    "FSAL_setattr: Denied user %d to change object's owner to %d",
-			    p_context->credential.user, attrs.owner);
-	  Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
-	}
+          && (p_context->credential.user != attrs.owner))
+        {
+          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+                            "FSAL_setattr: Denied user %d to change object's owner to %d",
+                            p_context->credential.user, attrs.owner);
+          Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+        }
     }
 
   if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_GROUP))
     {
       if ((p_context->credential.user != 0)
-	  && (p_context->credential.group != attrs.group))
-	{
-	  DisplayLogJdLevel(fsal_log, NIV_EVENT,
-			    "FSAL_setattr: Denied user %d (group %d) to change object's group to %d",
-			    p_context->credential.user, p_context->credential.group,
-			    attrs.group);
-	  Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
-	}
+          && (p_context->credential.group != attrs.group))
+        {
+          DisplayLogJdLevel(fsal_log, NIV_EVENT,
+                            "FSAL_setattr: Denied user %d (group %d) to change object's group to %d",
+                            p_context->credential.user, p_context->credential.group,
+                            attrs.group);
+          Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+        }
     }
 
   if (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
       if (p_fs_ops->chown)
-	{
-	  TakeTokenFSCall();
-	  rc = p_fs_ops->chown(object_path,
-			       FSAL_TEST_MASK(attrs.asked_attributes,
-					      FSAL_ATTR_OWNER) ? (uid_t) attrs.owner : -1,
-			       FSAL_TEST_MASK(attrs.asked_attributes,
-					      FSAL_ATTR_GROUP) ? (gid_t) attrs.group :
-			       -1);
-	  ReleaseTokenFSCall();
+        {
+          TakeTokenFSCall();
+          rc = p_fs_ops->chown(object_path,
+                               FSAL_TEST_MASK(attrs.asked_attributes,
+                                              FSAL_ATTR_OWNER) ? (uid_t) attrs.owner : -1,
+                               FSAL_TEST_MASK(attrs.asked_attributes,
+                                              FSAL_ATTR_GROUP) ? (gid_t) attrs.group :
+                               -1);
+          ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
-	  printf("chown: status = %d\n", rc);
+          printf("chown: status = %d\n", rc);
 #endif
-	  if (rc)
-	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
-	}
+          if (rc)
+            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+        }
       /* else : ignored */
     }
 
@@ -333,59 +333,59 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
       status = FSAL_getattrs(filehandle, p_context, &tmp_attrs);
 
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_setattrs);
+        Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
       /* utimens is provided */
 
       if (p_fs_ops->utimens)
-	{
-	  struct timespec tv[2];
+        {
+          struct timespec tv[2];
 
-	  tv[0].tv_sec =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
-	       attrs.atime.seconds : tmp_attrs.atime.seconds);
-	  tv[0].tv_nsec =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
-	       attrs.atime.nseconds : tmp_attrs.atime.nseconds);
+          tv[0].tv_sec =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
+               attrs.atime.seconds : tmp_attrs.atime.seconds);
+          tv[0].tv_nsec =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
+               attrs.atime.nseconds : tmp_attrs.atime.nseconds);
 
-	  tv[1].tv_sec =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
-	       attrs.mtime.seconds : tmp_attrs.mtime.seconds);
-	  tv[1].tv_nsec =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
-	       attrs.mtime.nseconds : tmp_attrs.mtime.nseconds);
+          tv[1].tv_sec =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
+               attrs.mtime.seconds : tmp_attrs.mtime.seconds);
+          tv[1].tv_nsec =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
+               attrs.mtime.nseconds : tmp_attrs.mtime.nseconds);
 
-	  TakeTokenFSCall();
-	  rc = p_fs_ops->utimens(object_path, tv);
-	  ReleaseTokenFSCall();
+          TakeTokenFSCall();
+          rc = p_fs_ops->utimens(object_path, tv);
+          ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
-	  printf("utimens: status = %d\n", rc);
+          printf("utimens: status = %d\n", rc);
 #endif
-	  if (rc)
-	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+          if (rc)
+            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
       } else if (p_fs_ops->utime)
-	{
-	  /* utime is provided */
-	  struct utimbuf utb;
+        {
+          /* utime is provided */
+          struct utimbuf utb;
 
-	  utb.actime =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
-	       attrs.atime.seconds : tmp_attrs.atime.seconds);
-	  utb.modtime =
-	      (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
-	       attrs.mtime.seconds : tmp_attrs.mtime.seconds);
+          utb.actime =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t)
+               attrs.atime.seconds : tmp_attrs.atime.seconds);
+          utb.modtime =
+              (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t)
+               attrs.mtime.seconds : tmp_attrs.mtime.seconds);
 
-	  TakeTokenFSCall();
-	  rc = p_fs_ops->utime(object_path, &utb);
-	  ReleaseTokenFSCall();
+          TakeTokenFSCall();
+          rc = p_fs_ops->utime(object_path, &utb);
+          ReleaseTokenFSCall();
 
 #ifdef _DEBUG_FSAL
-	  printf("utime: status = %d\n", rc);
+          printf("utime: status = %d\n", rc);
 #endif
-	  if (rc)
-	    Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
-	}
+          if (rc)
+            Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
+        }
       /* else : ignored */
 
     }
@@ -399,13 +399,13 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
 
-}				/* FSAL_setattrs */
+}                               /* FSAL_setattrs */

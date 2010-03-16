@@ -139,16 +139,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #ifdef _USE_GSSRPC
@@ -181,16 +181,16 @@
         (*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
 
 struct svc_rpc_gss_data {
-  bool_t established;		/* context established */
-  gss_ctx_id_t ctx;		/* context id */
-  struct rpc_gss_sec sec;	/* security triple */
-  gss_buffer_desc cname;	/* GSS client name */
-  u_int seq;			/* sequence number */
-  u_int win;			/* sequence window */
-  u_int seqlast;		/* last sequence number */
-  uint32_t seqmask;		/* bitmask of seqnums */
-  gss_name_t client_name;	/* unparsed name string */
-  gss_buffer_desc checksum;	/* so we can free it */
+  bool_t established;           /* context established */
+  gss_ctx_id_t ctx;             /* context id */
+  struct rpc_gss_sec sec;       /* security triple */
+  gss_buffer_desc cname;        /* GSS client name */
+  u_int seq;                    /* sequence number */
+  u_int win;                    /* sequence window */
+  u_int seqlast;                /* last sequence number */
+  uint32_t seqmask;             /* bitmask of seqnums */
+  gss_name_t client_name;       /* unparsed name string */
+  gss_buffer_desc checksum;     /* so we can free it */
 };
 
 #endif
@@ -213,13 +213,13 @@ static void split_credname(gss_buffer_desc credname, char *username, char *domai
   for (pos = 0; pos < credname.length; pos++)
     {
       if (ptr[pos] == '@' && pos + 1 < credname.length)
-	{
-	  strncpy(username, ptr, pos);
-	  username[pos] = '\0';
-	  strncpy(domainname, ptr + pos + 1, credname.length - pos - 1);
-	  domainname[credname.length - pos - 1] = '\0';
-	  break;
-	}
+        {
+          strncpy(username, ptr, pos);
+          username[pos] = '\0';
+          strncpy(domainname, ptr + pos + 1, credname.length - pos - 1);
+          domainname[credname.length - pos - 1] = '\0';
+          break;
+        }
     }
 }
 #endif
@@ -253,7 +253,7 @@ static void convert_gss_status2str(char *str, OM_uint32 maj_stat, OM_uint32 min_
   gss_display_status(&min, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID, &msg_ctx, &msg);
   sprintf(str, "MECH_CODE=%s\n", (char *)msg.value);
   gss_release_buffer(&min, &msg);
-}				/* convert_gss_status2str */
+}                               /* convert_gss_status2str */
 #endif
 
 /**
@@ -276,17 +276,17 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
   for (piter = exportroot; piter != NULL; piter = piter->next)
     {
       if (piter->id == exportid)
-	{
-	  found = 1;
-	  break;
-	}
-    }				/* for */
+        {
+          found = 1;
+          break;
+        }
+    }                           /* for */
 
   if (found == 0)
     return NULL;
     else
     return piter;
-}				/* nfs_Get_export_by_id */
+}                               /* nfs_Get_export_by_id */
 
 /**
  *
@@ -303,8 +303,8 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  *
  */
 int nfs_build_fsal_context(struct svc_req *ptr_req,
-			   exportlist_client_entry_t * pexport_client,
-			   exportlist_t * pexport, fsal_op_context_t * pcontext)
+                           exportlist_client_entry_t * pexport_client,
+                           exportlist_t * pexport, fsal_op_context_t * pcontext)
 {
   struct authunix_parms *punix_creds = NULL;
 #ifdef _USE_GSSRPC
@@ -332,16 +332,16 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       /* Nothing to be done here... */
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG,
-		      "NFS DISPATCH: Request xid=%u has authentication AUTH_NONE",
-		      rpcxid);
+                      "NFS DISPATCH: Request xid=%u has authentication AUTH_NONE",
+                      rpcxid);
 #endif
       break;
 
     case AUTH_UNIX:
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG,
-		      "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX",
-		      rpcxid);
+                      "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX",
+                      rpcxid);
 #endif
       /* We map the rq_cred to Authunix_parms */
       punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
@@ -358,30 +358,30 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
     case RPCSEC_GSS:
 #ifndef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG,
-		      "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
-		      rpcxid);
+                      "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
+                      rpcxid);
 #endif
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
 
 #ifdef _DEBUG_RPCSEC_GSS
       printf
-	  ("----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u\n",
-	   gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
-	   RPCSEC_GSS_SVC_PRIVACY);
+          ("----> RPCSEC_GSS svc=%u RPCSEC_GSS_SVC_NONE=%u RPCSEC_GSS_SVC_INTEGRITY=%u RPCSEC_GSS_SVC_PRIVACY=%u\n",
+           gd->sec.svc, RPCSEC_GSS_SVC_NONE, RPCSEC_GSS_SVC_INTEGRITY,
+           RPCSEC_GSS_SVC_PRIVACY);
 
       memcpy(&ptr, (void *)gd->ctx + 4, 4);
       printf("----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p\n",
-	     (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
-	     gd->ctx, ptr);
+             (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
+             gd->ctx, ptr);
 #endif
 
       if ((maj_stat = gss_oid_to_str(&min_stat,
-				     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
-	{
-	  fprintf(stderr, "Erreur de gss_oid_to_str: %u|%u\n", maj_stat, min_stat);
-	  exit(1);
-	}
+                                     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+        {
+          fprintf(stderr, "Erreur de gss_oid_to_str: %u|%u\n", maj_stat, min_stat);
+          exit(1);
+        }
 #ifdef _DEBUG_RPCSEC_GSS
       printf("----> Client mech=%s len=%u\n", (char *)oidbuff.value, oidbuff.length);
 #endif
@@ -397,15 +397,15 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
       /* Convert to uid */
       if (!name2uid(username, &caller_uid))
-	return FALSE;
+        return FALSE;
 
       if (uidgidmap_get(caller_uid, &caller_gid) != ID_MAPPER_SUCCESS)
-	{
-	  DisplayLogLevel(NIV_MAJOR,
-			  "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
-			  caller_uid);
-	  caller_gid = -1;
-	}
+        {
+          DisplayLogLevel(NIV_MAJOR,
+                          "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
+                          caller_uid);
+          caller_gid = -1;
+        }
 #ifdef _DEBUG_RPCSEC_GSS
       printf("----> Uid=%u Gid=%u\n", (unsigned int)caller_uid, (unsigned int)caller_gid);
 #endif
@@ -413,19 +413,19 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       caller_garray = 0;
 
       break;
-#endif				/* _USE_GSSRPC */
+#endif                          /* _USE_GSSRPC */
 
     default:
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG,
-		      "NFS DISPATCH: FAILURE : Request xid=%u, has unsupported authentication %d",
-		      rpcxid, ptr_req->rq_cred.oa_flavor);
+                      "NFS DISPATCH: FAILURE : Request xid=%u, has unsupported authentication %d",
+                      rpcxid, ptr_req->rq_cred.oa_flavor);
 #endif
       /* Reject the request for weak authentication and return to worker */
       return FALSE;
 
       break;
-    }				/* switch( ptr_req->rq_cred.oa_flavor ) */
+    }                           /* switch( ptr_req->rq_cred.oa_flavor ) */
 
   /* Do we have root access ? */
   if ((caller_uid == 0) && !(pexport_client->options & EXPORT_OPTION_ROOT))
@@ -437,24 +437,24 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,
-				      &pexport->FS_export_context,
-				      caller_uid, caller_gid, caller_garray, caller_glen);
+                                      &pexport->FS_export_context,
+                                      caller_uid, caller_gid, caller_garray, caller_glen);
 
   if (FSAL_IS_ERROR(fsal_status))
     {
       DisplayLogLevel(NIV_EVENT,
-		      "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-		      caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
+                      "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
+                      caller_uid, caller_gid, fsal_status.major, fsal_status.minor);
       return FALSE;
     }
 #ifdef _DEBUG_DISPATCH
     else
     DisplayLogLevel(NIV_DEBUG, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
-		    caller_uid, caller_gid);
+                    caller_uid, caller_gid);
 #endif
 
   return TRUE;
-}				/* nfs_build_fsal_context */
+}                               /* nfs_build_fsal_context */
 
 /**
  *
@@ -483,22 +483,22 @@ int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred
     {
     case AUTH_UNIX:
       if (pcred1->auth_union.auth_unix.aup_uid != pcred2->auth_union.auth_unix.aup_uid)
-	return FALSE;
+        return FALSE;
       if (pcred1->auth_union.auth_unix.aup_gid != pcred2->auth_union.auth_unix.aup_gid)
-	return FALSE;
+        return FALSE;
       if (pcred1->auth_union.auth_unix.aup_time != pcred2->auth_union.auth_unix.aup_time)
-	return FALSE;
+        return FALSE;
       break;
 
     default:
       if (memcmp(&pcred1->auth_union, &pcred2->auth_union, pcred1->length))
-	return FALSE;
+        return FALSE;
       break;
     }
 
   /* If this point is reach, structures are the same */
   return TRUE;
-}				/* nfs_compare_clientcred */
+}                               /* nfs_compare_clientcred */
 
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 {
@@ -550,12 +550,12 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
       strncpy(pcred->auth_union.auth_gss.cname, gd->cname.value, NFS_CLIENT_NAME_LEN);
 
       if ((maj_stat = gss_oid_to_str(&min_stat,
-				     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
-	{
-	  convert_gss_status2str(errbuff, maj_stat, min_stat);
-	  DisplayLog("GSSAPI ERROR: %u|%u = %s", maj_stat, min_stat, errbuff);
-	  return -1;
-	}
+                                     gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
+        {
+          convert_gss_status2str(errbuff, maj_stat, min_stat);
+          DisplayLog("GSSAPI ERROR: %u|%u = %s", maj_stat, min_stat, errbuff);
+          return -1;
+        }
       strncpy(pcred->auth_union.auth_gss.stroid, oidbuff.value, NFS_CLIENT_NAME_LEN);
 
       /* Je fais le menage derriere moi */
@@ -570,4 +570,4 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
     }
 
   return 1;
-}				/* nfs_rpc_req2client_cred */
+}                               /* nfs_rpc_req2client_cred */

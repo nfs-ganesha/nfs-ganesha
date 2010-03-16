@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,7 +143,7 @@
  *
  */
 int nfs4_op_restorefh(struct nfs_argop4 *op,
-		      compound_data_t * data, struct nfs_resop4 *resp)
+                      compound_data_t * data, struct nfs_resop4 *resp)
 {
 #ifdef _DEBUG_NFS_V4
   int i;
@@ -182,16 +182,16 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   if (data->pexport == NULL)
     {
       if ((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-	{
-	  printf("Erreur %d dans nfs4_SetCompoundExport\n", error);
-	  resp->nfs_resop4_u.opgetfh.status = error;
-	  return resp->nfs_resop4_u.opgetfh.status;
-	}
+        {
+          printf("Erreur %d dans nfs4_SetCompoundExport\n", error);
+          resp->nfs_resop4_u.opgetfh.status = error;
+          return resp->nfs_resop4_u.opgetfh.status;
+        }
     }
 
   /* Copy the data from current FH to saved FH */
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->savedFH.nfs_fh4_val),
-	 data->savedFH.nfs_fh4_len);
+         data->savedFH.nfs_fh4_len);
 
   data->current_entry = data->saved_entry;
   data->current_filetype = data->saved_filetype;
@@ -203,7 +203,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   printf(" }\n");
 #endif
   return NFS4_OK;
-}				/* nfs4_op_restorefh */
+}                               /* nfs4_op_restorefh */
 
 /**
  * nfs4_op_restorefh_Free: frees what was allocared to handle nfs4_op_restorefh.
@@ -219,4 +219,4 @@ void nfs4_op_restorefh_Free(RESTOREFH4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_restorefh_Free */
+}                               /* nfs4_op_restorefh_Free */

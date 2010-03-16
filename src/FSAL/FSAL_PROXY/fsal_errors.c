@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "fsal.h"
 

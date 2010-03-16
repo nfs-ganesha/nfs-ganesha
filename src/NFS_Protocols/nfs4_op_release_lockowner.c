@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -140,7 +140,7 @@
 #define res_RELEASE_LOCKOWNER4 resp->nfs_resop4_u.oplock
 
 int nfs4_op_release_lockowner(struct nfs_argop4 *op,
-			      compound_data_t * data, struct nfs_resop4 *resp)
+                              compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
 
@@ -149,7 +149,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op,
   res_RELEASE_LOCKOWNER4.status = NFS4_OK;
 
   return res_RELEASE_LOCKOWNER4.status;
-}				/* nfs4_op_lock */
+}                               /* nfs4_op_lock */
 
 /**
  * nfs4_op_release_lockowner_Free: frees what was allocared to handle nfs4_op_release_lockowner.
@@ -165,4 +165,4 @@ void nfs4_op_release_lockowner_Free(RELEASE_LOCKOWNER4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_release_lockowner_Free */
+}                               /* nfs4_op_release_lockowner_Free */

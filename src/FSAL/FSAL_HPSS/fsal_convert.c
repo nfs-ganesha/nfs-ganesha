@@ -185,20 +185,20 @@ int hpss2fsal_error(int hpss_errorcode)
 
       /* hsec error code regarding security (-3000...) */
       if ((hpss_errorcode <= -3000) && (hpss_errorcode > -4000))
-	return ERR_FSAL_SEC;
+        return ERR_FSAL_SEC;
 
 #elif HPSS_MAJOR_VERSION == 6
 
       /* hsec error code regarding security (-11000...) */
       if ((hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED)
-	  && (hpss_errorcode >= HPSS_SEC_LDAP_ERROR))
-	return ERR_FSAL_SEC;
+          && (hpss_errorcode >= HPSS_SEC_LDAP_ERROR))
+        return ERR_FSAL_SEC;
 #elif HPSS_MAJOR_VERSION == 7
 
       /* hsec error code regarding security (-11000...) */
       if ((hpss_errorcode <= HPSS_SEC_ENOT_AUTHORIZED)
-	  && (hpss_errorcode >= HPSS_SEC_LDAP_RETRY))
-	return ERR_FSAL_SEC;
+          && (hpss_errorcode >= HPSS_SEC_LDAP_RETRY))
+        return ERR_FSAL_SEC;
 
 #endif
 
@@ -523,10 +523,10 @@ fsal_fsid_t hpss2fsal_fsid(u_signed64 hpss_fsid_in)
  * \return The FSAL mode associated to input parameters.
  */
 fsal_accessmode_t hpss2fsal_mode(unsigned32 uid_bit,
-				 unsigned32 gid_bit,
-				 unsigned32 sticky_bit,
-				 unsigned32 user_perms,
-				 unsigned32 group_perms, unsigned32 other_perms)
+                                 unsigned32 gid_bit,
+                                 unsigned32 sticky_bit,
+                                 unsigned32 user_perms,
+                                 unsigned32 group_perms, unsigned32 other_perms)
 {
 
   fsal_accessmode_t out_mode = 0;
@@ -590,12 +590,12 @@ fsal_accessmode_t hpss2fsal_mode(unsigned32 uid_bit,
  */
 void fsal2hpss_mode(fsal_accessmode_t fsal_mode,
 #if HPSS_MAJOR_VERSION < 7
-		    unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit,
+                    unsigned32 * uid_bit, unsigned32 * gid_bit, unsigned32 * sticky_bit,
 #else
-		    unsigned32 * mode_perms,
+                    unsigned32 * mode_perms,
 #endif
-		    unsigned32 * user_perms,
-		    unsigned32 * group_perms, unsigned32 * other_perms)
+                    unsigned32 * user_perms,
+                    unsigned32 * group_perms, unsigned32 * other_perms)
 {
 
   /* init outputs */
@@ -686,8 +686,8 @@ void fsal2hpss_mode(fsal_accessmode_t fsal_mode,
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
 fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
-				   hpss_Attrs_t * p_hpss_attr_in,
-				   fsal_attrib_list_t * p_fsalattr_out)
+                                   hpss_Attrs_t * p_hpss_attr_in,
+                                   fsal_attrib_list_t * p_fsalattr_out)
 {
 
   fsal_attrib_mask_t supp_attr, unsupp_attr;
@@ -701,8 +701,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
       p_fsalattr_out->asked_attributes = global_fs_info.supported_attrs;
 
       DisplayLog
-	  ("Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
-	   __LINE__, __FILE__);
+          ("Error: p_fsalattr_out->asked_attributes  valait 0 dans hpss2fsal_attributes line %d, fichier %s",
+           __LINE__, __FILE__);
     }
 
   /* check that asked attributes are supported */
@@ -713,11 +713,11 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
   if (unsupp_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			"Unsupported attributes: %#llX    removing it from asked attributes ",
-			unsupp_attr);
+                        "Unsupported attributes: %#llX    removing it from asked attributes ",
+                        unsupp_attr);
 
       p_fsalattr_out->asked_attributes =
-	  p_fsalattr_out->asked_attributes & (~unsupp_attr);
+          p_fsalattr_out->asked_attributes & (~unsupp_attr);
 
       /* ReturnCode( ERR_FSAL_ATTRNOTSUPP, 0 ); */
     }
@@ -743,18 +743,18 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
     {
 
       if (p_hpss_attr_in->ExtendedACLs == 0)
-	{
-	  int i;
-	  for (i = 0; i < FSAL_MAX_ACL; i++)
-	    {
-	      p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;	/* empty ACL slot */
-	    }
-	} else
-	{
+        {
+          int i;
+          for (i = 0; i < FSAL_MAX_ACL; i++)
+            {
+              p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;    /* empty ACL slot */
+            }
+        } else
+        {
 
       /** @todo : This doesn't convert ACLs for the moment. */
 
-	}
+        }
 
     }
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
@@ -766,17 +766,17 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
     {
       p_fsalattr_out->mode = hpss2fsal_mode(
 #if HPSS_MAJOR_VERSION < 7
-					     p_hpss_attr_in->SetUIDBit,
-					     p_hpss_attr_in->SetGIDBit,
-					     p_hpss_attr_in->SetStickyBit,
+                                             p_hpss_attr_in->SetUIDBit,
+                                             p_hpss_attr_in->SetGIDBit,
+                                             p_hpss_attr_in->SetStickyBit,
 #else
-					     p_hpss_attr_in->ModePerms & NS_PERMS_RD,
-					     p_hpss_attr_in->ModePerms & NS_PERMS_WR,
-					     p_hpss_attr_in->ModePerms & NS_PERMS_XS,
+                                             p_hpss_attr_in->ModePerms & NS_PERMS_RD,
+                                             p_hpss_attr_in->ModePerms & NS_PERMS_WR,
+                                             p_hpss_attr_in->ModePerms & NS_PERMS_XS,
 #endif
-					     p_hpss_attr_in->UserPerms,
-					     p_hpss_attr_in->GroupPerms,
-					     p_hpss_attr_in->OtherPerms);
+                                             p_hpss_attr_in->UserPerms,
+                                             p_hpss_attr_in->GroupPerms,
+                                             p_hpss_attr_in->OtherPerms);
     }
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
     {
@@ -796,15 +796,15 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 #ifdef _DEBUG_FSAL
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting ATIME:");
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
-			p_hpss_attr_in->TimeLastRead);
+                        p_hpss_attr_in->TimeLastRead);
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
-			p_hpss_attr_in->TimeCreated);
+                        p_hpss_attr_in->TimeCreated);
 #endif
 
       if (p_hpss_attr_in->TimeLastRead != 0)
-	p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeLastRead);
-	else
-	p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
+        p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeLastRead);
+        else
+        p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
 
     }
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CREATION))
@@ -822,49 +822,49 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 #ifdef _DEBUG_FSAL
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting MTIME:");
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tType = %d",
-			hpss2fsal_type(p_hpss_handle_in->Type));
+                        hpss2fsal_type(p_hpss_handle_in->Type));
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
-			p_hpss_attr_in->TimeLastWritten);
+                        p_hpss_attr_in->TimeLastWritten);
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
-			p_hpss_attr_in->TimeModified);
+                        p_hpss_attr_in->TimeModified);
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeCreated = %d",
-			p_hpss_attr_in->TimeCreated);
+                        p_hpss_attr_in->TimeCreated);
 #endif
 
       switch (hpss2fsal_type(p_hpss_handle_in->Type))
-	{
+        {
 
-	case FSAL_TYPE_FILE:
-	case FSAL_TYPE_LNK:
+        case FSAL_TYPE_FILE:
+        case FSAL_TYPE_LNK:
 
-	  if (p_hpss_attr_in->TimeLastWritten != 0)
-	    p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeLastWritten);
-	    else
-	    p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
-	  break;
+          if (p_hpss_attr_in->TimeLastWritten != 0)
+            p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeLastWritten);
+            else
+            p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
+          break;
 
-	case FSAL_TYPE_DIR:
-	case FSAL_TYPE_JUNCTION:
+        case FSAL_TYPE_DIR:
+        case FSAL_TYPE_JUNCTION:
 
-	  if (p_hpss_attr_in->TimeModified != 0)
-	    p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeModified);
-	    else
-	    p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
-	  break;
+          if (p_hpss_attr_in->TimeModified != 0)
+            p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeModified);
+            else
+            p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
+          break;
 
-	default:
-	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+        default:
+          ReturnCode(ERR_FSAL_SERVERFAULT, 0);
 
-	}
+        }
     }
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
-	  =
-	  hpss2fsal_time(MAX_3
-			 (p_hpss_attr_in->TimeModified, p_hpss_attr_in->TimeCreated,
-			  p_hpss_attr_in->TimeLastWritten));
+          =
+          hpss2fsal_time(MAX_3
+                         (p_hpss_attr_in->TimeModified, p_hpss_attr_in->TimeCreated,
+                          p_hpss_attr_in->TimeLastWritten));
     }
 
   if (FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -903,7 +903,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
 fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
-					fsal_attrib_list_t * p_fsalattr_out)
+                                        fsal_attrib_list_t * p_fsalattr_out)
 {
 
   fsal_attrib_mask_t avail_attr, unavail_attr;
@@ -919,7 +919,7 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
   if (unavail_attr)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			"Attributes not available: %#llX", unavail_attr);
+                        "Attributes not available: %#llX", unavail_attr);
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
@@ -969,9 +969,9 @@ fsal_status_t hpssHandle2fsalAttributes(ns_ObjHandle_t * p_hpsshandle_in,
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
 fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
-				  fsal_attrib_list_t * p_attrib_set,
-				  hpss_fileattrbits_t * p_hpss_attrmask,
-				  hpss_Attrs_t * p_hpss_attrs)
+                                  fsal_attrib_list_t * p_attrib_set,
+                                  hpss_fileattrbits_t * p_hpss_attrmask,
+                                  hpss_Attrs_t * p_hpss_attrs)
 {
 
   fsal_attrib_mask_t settable_attrs, supp_attrs, unavail_attrs, unsettable_attrs;
@@ -995,9 +995,9 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
   /* Settable attrs. */
 
   settable_attrs = (FSAL_ATTR_SIZE | FSAL_ATTR_ACL |
-		    FSAL_ATTR_MODE | FSAL_ATTR_OWNER |
-		    FSAL_ATTR_GROUP | FSAL_ATTR_ATIME |
-		    FSAL_ATTR_CTIME | FSAL_ATTR_MTIME);
+                    FSAL_ATTR_MODE | FSAL_ATTR_OWNER |
+                    FSAL_ATTR_GROUP | FSAL_ATTR_ATIME |
+                    FSAL_ATTR_CTIME | FSAL_ATTR_MTIME);
 
   /* If there are unsupported attributes, return ERR_FSAL_ATTRNOTSUPP */
 
@@ -1006,7 +1006,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
   if (unavail_attrs)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			"Attributes not supported: %#llX", unavail_attrs);
+                        "Attributes not supported: %#llX", unavail_attrs);
 
       /* Error : unsupported attribute. */
 
@@ -1020,7 +1020,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
   if (unsettable_attrs)
     {
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			"Read-Only Attributes: %#llX", unsettable_attrs);
+                        "Read-Only Attributes: %#llX", unsettable_attrs);
 
       /* Error : unsettable attribute. */
 
@@ -1033,7 +1033,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
     {
 
       (*p_hpss_attrmask) =
-	  API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_DATA_LENGTH, -1);
+          API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_DATA_LENGTH, -1);
 
       p_hpss_attrs->DataLength = fsal2hpss_64(p_attrib_set->filesize);
 
@@ -1045,27 +1045,27 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
     {
 
       (*p_hpss_attrmask) =
-	  API_AddRegisterValues(*p_hpss_attrmask,
-				CORE_ATTR_USER_PERMS,
-				CORE_ATTR_GROUP_PERMS, CORE_ATTR_OTHER_PERMS,
+          API_AddRegisterValues(*p_hpss_attrmask,
+                                CORE_ATTR_USER_PERMS,
+                                CORE_ATTR_GROUP_PERMS, CORE_ATTR_OTHER_PERMS,
 #if HPSS_MAJOR_VERSION < 7
-				CORE_ATTR_SET_GID,
-				CORE_ATTR_SET_UID, CORE_ATTR_SET_STICKY,
+                                CORE_ATTR_SET_GID,
+                                CORE_ATTR_SET_UID, CORE_ATTR_SET_STICKY,
 #else
-				CORE_ATTR_MODE_PERMS,
+                                CORE_ATTR_MODE_PERMS,
 #endif
-				-1);
+                                -1);
 
       /* convert mode and set output structure. */
       fsal2hpss_mode(p_attrib_set->mode,
 #if HPSS_MAJOR_VERSION < 7
-		     &(p_hpss_attrs->SetUIDBit),
-		     &(p_hpss_attrs->SetGIDBit), &(p_hpss_attrs->SetStickyBit),
+                     &(p_hpss_attrs->SetUIDBit),
+                     &(p_hpss_attrs->SetGIDBit), &(p_hpss_attrs->SetStickyBit),
 #else
-		     &(p_hpss_attrs->ModePerms),
+                     &(p_hpss_attrs->ModePerms),
 #endif
-		     &(p_hpss_attrs->UserPerms),
-		     &(p_hpss_attrs->GroupPerms), &(p_hpss_attrs->OtherPerms));
+                     &(p_hpss_attrs->UserPerms),
+                     &(p_hpss_attrs->GroupPerms), &(p_hpss_attrs->OtherPerms));
 
     }
 
@@ -1078,7 +1078,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 
 #ifdef _DEBUG_FSAL
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting Owner = : %d ",
-			p_attrib_set->owner);
+                        p_attrib_set->owner);
 #endif
     }
 
@@ -1095,14 +1095,14 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
     {
 
       (*p_hpss_attrmask) =
-	  API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_READ, -1);
+          API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_READ, -1);
 
       p_hpss_attrs->TimeLastRead = fsal2hpss_time(p_attrib_set->atime);
 
 #ifdef _DEBUG_FSAL
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Setting ATIME:");
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastRead = %d",
-			p_hpss_attrs->TimeLastRead);
+                        p_hpss_attrs->TimeLastRead);
 #endif
 
     }
@@ -1116,39 +1116,39 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
 #endif
 
       switch (p_fsal_handle->obj_type)
-	{
-	case FSAL_TYPE_FILE:
-	case FSAL_TYPE_LNK:
+        {
+        case FSAL_TYPE_FILE:
+        case FSAL_TYPE_LNK:
 
-	  (*p_hpss_attrmask) =
-	      API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_WRITTEN, -1);
-	  p_hpss_attrs->TimeLastWritten = fsal2hpss_time(p_attrib_set->mtime);
-
-#ifdef _DEBUG_FSAL
-	  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
-			    p_hpss_attrs->TimeLastWritten);
-#endif
-
-	  break;
-
-	case FSAL_TYPE_DIR:
-	case FSAL_TYPE_JUNCTION:
-
-	  (*p_hpss_attrmask) =
-	      API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
-	  p_hpss_attrs->TimeModified = fsal2hpss_time(p_attrib_set->mtime);
+          (*p_hpss_attrmask) =
+              API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_LAST_WRITTEN, -1);
+          p_hpss_attrs->TimeLastWritten = fsal2hpss_time(p_attrib_set->mtime);
 
 #ifdef _DEBUG_FSAL
-	  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
-			    p_hpss_attrs->TimeModified);
+          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeLastWritten = %d",
+                            p_hpss_attrs->TimeLastWritten);
 #endif
 
-	  break;
+          break;
 
-	default:
-	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+        case FSAL_TYPE_DIR:
+        case FSAL_TYPE_JUNCTION:
 
-	}			/* end switch */
+          (*p_hpss_attrmask) =
+              API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
+          p_hpss_attrs->TimeModified = fsal2hpss_time(p_attrib_set->mtime);
+
+#ifdef _DEBUG_FSAL
+          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tTimeModified = %d",
+                            p_hpss_attrs->TimeModified);
+#endif
+
+          break;
+
+        default:
+          ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+
+        }                       /* end switch */
 
     }
   /* end testmask FSAL_ATTR_MTIME */
@@ -1156,7 +1156,7 @@ fsal_status_t fsal2hpss_attribset(fsal_handle_t * p_fsal_handle,
     {
 
       (*p_hpss_attrmask) =
-	  API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
+          API_AddRegisterValues(*p_hpss_attrmask, CORE_ATTR_TIME_MODIFIED, -1);
 
       p_hpss_attrs->TimeModified = fsal2hpss_time(p_attrib_set->ctime);
 

@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <gssapi/gssapi.h>
 #include <sys/select.h>
 #include "HashData.h"
@@ -137,11 +137,11 @@ extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
 extern exportlist_t *pexportlist;
-extern SVCXPRT **Xports;	/* The one from RPCSEC_GSS library */
+extern SVCXPRT **Xports;        /* The one from RPCSEC_GSS library */
 #ifdef _RPCSEC_GS_64_INSTALLED
 struct svc_rpc_gss_data **TabGssData;
 #endif
-extern hash_table_t *ht_dupreq;	/* duplicate request hash */
+extern hash_table_t *ht_dupreq; /* duplicate request hash */
 extern int rpcsec_gss_flag;
 
 #ifndef _NO_BUDDY_SYSTEM
@@ -185,8 +185,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
   /* Calling dispatcher main loop */
   DisplayLogLevel(NIV_DEBUG,
-		  "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
-		  tcp_sock, Arg, (caddr_t) pthread_self());
+                  "TCP SOCKET MANAGER Sock=%ld(%p): Starting with pthread id #%p",
+                  tcp_sock, Arg, (caddr_t) pthread_self());
 
 #ifndef _NO_BUDDY_SYSTEM
 
@@ -202,10 +202,10 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
     {
       /* Get a worker to do the job */
       if ((worker_index = nfs_rpc_get_worker_index(FALSE)) < 0)
-	{
-	  DisplayLog("CRITICAL ERROR: Couldn't choose a worker !!");
-	  return NULL;
-	}
+        {
+          DisplayLog("CRITICAL ERROR: Couldn't choose a worker !!");
+          return NULL;
+        }
 
       /* Get a pnfsreq from the worker's pool */
       P(workers_data[worker_index].request_pool_mutex);
@@ -216,10 +216,10 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif
 
       GET_PREALLOC_CONSTRUCT(pnfsreq,
-			     workers_data[worker_index].request_pool,
-			     nfs_param.worker_param.nb_pending_prealloc,
-			     nfs_request_data_t,
-			     next_alloc, constructor_nfs_request_data_t);
+                             workers_data[worker_index].request_pool,
+                             nfs_param.worker_param.nb_pending_prealloc,
+                             nfs_request_data_t,
+                             next_alloc, constructor_nfs_request_data_t);
 
 #ifdef _DEBUG_MEMLEAKS
       /* For debugging memory leaks */
@@ -229,31 +229,31 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       V(workers_data[worker_index].request_pool_mutex);
 
       if (pnfsreq == NULL)
-	{
-	  DisplayLogLevel(NIV_CRIT,
-			  "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
-	  exit(0);
-	}
+        {
+          DisplayLogLevel(NIV_CRIT,
+                          "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
+          exit(0);
+        }
 
       xprt = Xports[tcp_sock];
       if (xprt == NULL)
-	{
-	  /* But do we control sock? */
-	  DisplayLogLevel(NIV_CRIT,
-			  "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
-			  tcp_sock);
-	  return NULL;
-	}
+        {
+          /* But do we control sock? */
+          DisplayLogLevel(NIV_CRIT,
+                          "CRITICAL ERROR: Incoherency found in Xports array, sock=%d",
+                          tcp_sock);
+          return NULL;
+        }
 #ifdef _DEBUG_DISPATCH
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
       DisplayLogLevel(NIV_FULL_DEBUG, "Use request from spool #%d, xprt->xp_fd=%d",
-		      worker_index, xprt->xp_fd);
+                      worker_index, xprt->xp_fd);
 #else
       DisplayLogLevel(NIV_FULL_DEBUG, "Use request from spool #%d, xprt->xp_sock=%d",
-		      worker_index, xprt->xp_sock);
+                      worker_index, xprt->xp_sock);
 #endif
       DisplayLogLevel(NIV_FULL_DEBUG, "Thread #%d has now %d pending requests",
-		      worker_index, workers_data[worker_index].pending_request->nb_entry);
+                      worker_index, workers_data[worker_index].pending_request->nb_entry);
 #endif
 
       /* Set up pointers */
@@ -284,7 +284,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG,
-		      "TCP SOCKET MANAGER : A NFS TCP request from an already connected client");
+                      "TCP SOCKET MANAGER : A NFS TCP request from an already connected client");
 #endif
       pnfsreq->tcp_xprt = xprt;
       pnfsreq->xprt = pnfsreq->tcp_xprt;
@@ -295,9 +295,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #else
       if (pnfsreq->xprt->xp_sock != tcp_sock)
 #endif
-	DisplayLog
-	    ("TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
-	     __FILE__, __LINE__);
+        DisplayLog
+            ("TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%s",
+             __FILE__, __LINE__);
 
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG, "Before waiting on select for socket %d", tcp_sock);
@@ -311,106 +311,106 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       pnfsreq->status = SVC_RECV(pnfsreq->xprt, pmsg);
 #ifdef _DEBUG_DISPATCH
       DisplayLogLevel(NIV_FULL_DEBUG, "Status for SVC_RECV on socket %d is %d", tcp_sock,
-		      pnfsreq->status);
+                      pnfsreq->status);
 #endif
 
       /* If status is ok, the request will be processed by the related
        * worker, otherwise, it should be released by being tagged as invalid*/
       if (!pnfsreq->status)
-	{
-	  /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
-	   * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
-	   * the peer's socket. We have to cope with this aspect in the next lines */
+        {
+          /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
+           * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
+           * the peer's socket. We have to cope with this aspect in the next lines */
 
-	  stat = SVC_STAT(pnfsreq->xprt);
+          stat = SVC_STAT(pnfsreq->xprt);
 
-	  if (stat == XPRT_DIED)
-	    {
-	      DisplayLogLevel(NIV_DEBUG,
-			      "TCP SOCKET MANAGER Sock=%d: the client disappeared... Stopping thread ",
-			      tcp_sock);
+          if (stat == XPRT_DIED)
+            {
+              DisplayLogLevel(NIV_DEBUG,
+                              "TCP SOCKET MANAGER Sock=%d: the client disappeared... Stopping thread ",
+                              tcp_sock);
 
-	      if (Xports[tcp_sock] != NULL)
-		SVC_DESTROY(Xports[tcp_sock]);
-		else
-		DisplayLog
-		    ("TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
+              if (Xports[tcp_sock] != NULL)
+                SVC_DESTROY(Xports[tcp_sock]);
+                else
+                DisplayLog
+                    ("TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
-	      P(workers_data[worker_index].request_pool_mutex);
-	      RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
-			       next_alloc);
-	      V(workers_data[worker_index].request_pool_mutex);
+              P(workers_data[worker_index].request_pool_mutex);
+              RELEASE_PREALLOC(pnfsreq, workers_data[worker_index].request_pool,
+                               next_alloc);
+              V(workers_data[worker_index].request_pool_mutex);
 
-	      return NULL;
-	  } else if (stat == XPRT_MOREREQS)
-	    {
-	      DisplayLogLevel(NIV_DEBUG,
-			      "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
-			      tcp_sock);
-	    }
+              return NULL;
+          } else if (stat == XPRT_MOREREQS)
+            {
+              DisplayLogLevel(NIV_DEBUG,
+                              "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
+                              tcp_sock);
+            }
 
-	  /* Release the entry */
+          /* Release the entry */
 #ifdef _DEBUG_DISPATCH
-	  DisplayLogLevel(NIV_FULL_DEBUG,
-			  "TCP SOCKET MANAGER Sock=%d: Invalidating entry with xprt_stat=%d",
-			  tcp_sock, stat);
+          DisplayLogLevel(NIV_FULL_DEBUG,
+                          "TCP SOCKET MANAGER Sock=%d: Invalidating entry with xprt_stat=%d",
+                          tcp_sock, stat);
 #endif
-	  workers_data[worker_index].passcounter += 1;
-	} else
-	{
-	  /* Regular management of the request (UDP request or TCP request on connected handler */
+          workers_data[worker_index].passcounter += 1;
+        } else
+        {
+          /* Regular management of the request (UDP request or TCP request on connected handler */
 #ifdef _DEBUG_DISPATCH
-	  DisplayLogLevel(NIV_FULL_DEBUG, "Awaking thread #%d Xprt=%p", worker_index,
-			  pnfsreq->xprt);
+          DisplayLogLevel(NIV_FULL_DEBUG, "Awaking thread #%d Xprt=%p", worker_index,
+                          pnfsreq->xprt);
 #endif
-	  P(workers_data[worker_index].mutex_req_condvar);
-	  P(workers_data[worker_index].request_pool_mutex);
+          P(workers_data[worker_index].mutex_req_condvar);
+          P(workers_data[worker_index].request_pool_mutex);
 
-	  if ((pentry =
-	       LRU_new_entry(workers_data[worker_index].pending_request,
-			     &status)) == NULL)
-	    {
-	      V(workers_data[worker_index].mutex_req_condvar);
-	      V(workers_data[worker_index].request_pool_mutex);
-	      DisplayLogLevel(NIV_MAJOR,
-			      "Error while inserting pending request to Thread #%d",
-			      worker_index);
-	      return NULL;
-	    }
-	  pentry->buffdata.pdata = (caddr_t) pnfsreq;
-	  pentry->buffdata.len = sizeof(*pnfsreq);
+          if ((pentry =
+               LRU_new_entry(workers_data[worker_index].pending_request,
+                             &status)) == NULL)
+            {
+              V(workers_data[worker_index].mutex_req_condvar);
+              V(workers_data[worker_index].request_pool_mutex);
+              DisplayLogLevel(NIV_MAJOR,
+                              "Error while inserting pending request to Thread #%d",
+                              worker_index);
+              return NULL;
+            }
+          pentry->buffdata.pdata = (caddr_t) pnfsreq;
+          pentry->buffdata.len = sizeof(*pnfsreq);
 
-	  if (pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
-	    {
-	      V(workers_data[worker_index].mutex_req_condvar);
-	      V(workers_data[worker_index].request_pool_mutex);
-	      DisplayLog
-		  ("TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
-		   tcp_sock, worker_index, errno);
-	    }
-	  V(workers_data[worker_index].mutex_req_condvar);
-	  V(workers_data[worker_index].request_pool_mutex);
+          if (pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+            {
+              V(workers_data[worker_index].mutex_req_condvar);
+              V(workers_data[worker_index].request_pool_mutex);
+              DisplayLog
+                  ("TCP SOCKET MANAGER Sock=%d: Cond signal failed for thr#%d , errno = %d",
+                   tcp_sock, worker_index, errno);
+            }
+          V(workers_data[worker_index].mutex_req_condvar);
+          V(workers_data[worker_index].request_pool_mutex);
 #ifdef _DEBUG_DISPATCH
-	  DisplayLogLevel(NIV_FULL_DEBUG, "Waiting for commit from thread #%d",
-			  worker_index);
+          DisplayLogLevel(NIV_FULL_DEBUG, "Waiting for commit from thread #%d",
+                          worker_index);
 #endif
 
-	  P(mutex_cond_xprt[tcp_sock]);
-	  while (etat_xprt[tcp_sock] != 1)
-	    {
-	      pthread_cond_wait(&(condvar_xprt[tcp_sock]), &(mutex_cond_xprt[tcp_sock]));
-	    }
-	  etat_xprt[tcp_sock] = 0;
-	  V(mutex_cond_xprt[tcp_sock]);
+          P(mutex_cond_xprt[tcp_sock]);
+          while (etat_xprt[tcp_sock] != 1)
+            {
+              pthread_cond_wait(&(condvar_xprt[tcp_sock]), &(mutex_cond_xprt[tcp_sock]));
+            }
+          etat_xprt[tcp_sock] = 0;
+          V(mutex_cond_xprt[tcp_sock]);
 
 #ifdef _DEBUG_DISPATCH
-	  DisplayLogLevel(NIV_FULL_DEBUG, "Thread #%d has committed the operation",
-			  worker_index);
+          DisplayLogLevel(NIV_FULL_DEBUG, "Thread #%d has committed the operation",
+                          worker_index);
 #endif
-	}
+        }
     }
 
   DisplayLogLevel(NIV_DEBUG, "TCP SOCKET MANAGER Sock=%d: Stopping", tcp_sock);
 
   return NULL;
-}				/* rpc_tcp_socket_manager_thread */
+}                               /* rpc_tcp_socket_manager_thread */

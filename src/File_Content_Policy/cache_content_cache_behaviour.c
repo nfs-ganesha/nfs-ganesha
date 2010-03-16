@@ -56,12 +56,12 @@
  */
 
 cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentry_inode,
-							   cache_content_policy_data_t *
-							   ppolicy_data,
-							   cache_content_client_t *
-							   pclient,
-							   cache_content_status_t *
-							   pstatus)
+                                                           cache_content_policy_data_t *
+                                                           ppolicy_data,
+                                                           cache_content_client_t *
+                                                           pclient,
+                                                           cache_content_status_t *
+                                                           pstatus)
 {
   *pstatus = CACHE_CONTENT_FULLY_CACHED;
 
@@ -74,8 +74,8 @@ cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentr
   if (ppolicy_data->UseMaxCacheSize)
     {
       if (pentry_inode->object.file.attributes.filesize > ppolicy_data->MaxCacheSize)
-	*pstatus = CACHE_CONTENT_TOO_LARGE_FOR_CACHE;
+        *pstatus = CACHE_CONTENT_TOO_LARGE_FOR_CACHE;
     }
 
   return *pstatus;
-}				/* cache_content_cache_behaviour */
+}                               /* cache_content_cache_behaviour */

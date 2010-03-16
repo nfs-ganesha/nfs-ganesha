@@ -103,7 +103,7 @@
 #define ERR_LRU_LIST_INVALIDATE 3
   {
   ERR_LRU_LIST_INVALIDATE, "ERR_LRU_LIST_INVALIDATE",
-	"Invalidation impossible de l'entree"},
+        "Invalidation impossible de l'entree"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };
@@ -120,4 +120,4 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_LRU[] =
   ERR_NULL, "ERR_NULL", ""}
 };
 
-#endif				/* _ERR_LRU_H */
+#endif                          /* _ERR_LRU_H */

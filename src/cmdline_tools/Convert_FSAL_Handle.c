@@ -131,22 +131,22 @@ int main(int argc, char *argv[])
   while ((c = getopt(argc, argv, options)) != EOF)
     {
       switch (c)
-	{
-	case '@':
-	  printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
-	  exit(0);
-	  break;
+        {
+        case '@':
+          printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
+          exit(0);
+          break;
 
-	case 'h':
-	  printf(usage, exec_name);
-	  exit(0);
-	  break;
+        case 'h':
+          printf(usage, exec_name);
+          exit(0);
+          break;
 
-	case '?':
-	  printf("Unknown option: %c\n", optopt);
-	  printf(usage, exec_name);
-	  exit(1);
-	}
+        case '?':
+          printf("Unknown option: %c\n", optopt);
+          printf(usage, exec_name);
+          exit(1);
+        }
     }
 
   if (optind != argc - 1)
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
   sscanHandle(&fsal_handle, argv[optind]);
 
   snprintmem((caddr_t) str, 2 * CMD_BUFFER_SIZE, (caddr_t) & fsal_handle.ns_handle,
-	     sizeof(ns_ObjHandle_t));
+             sizeof(ns_ObjHandle_t));
   printf("NS Handle = %s\n", str);
 
   objid = hpss_GetObjId(&(fsal_handle.ns_handle));

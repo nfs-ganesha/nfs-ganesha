@@ -124,15 +124,15 @@ fsal_status_t MFSL_symlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
   attrsrc = attrdest = popasyncdesc->op_res.mkdir.attr;
 
   DisplayLogLevel(NIV_DEBUG,
-		  "Renaming file to complete asynchronous FSAL_symlink for async op %p",
-		  popasyncdesc);
+                  "Renaming file to complete asynchronous FSAL_symlink for async op %p",
+                  popasyncdesc);
 
   P(popasyncdesc->op_args.symlink.pmobject_dirdest->lock);
   fsal_status = FSAL_rename(&tmp_symlink_dirhandle,
-			    &popasyncdesc->op_args.symlink.precreate_name,
-			    &(popasyncdesc->op_args.symlink.pmobject_dirdest->handle),
-			    &popasyncdesc->op_args.symlink.linkname,
-			    &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
+                            &popasyncdesc->op_args.symlink.precreate_name,
+                            &(popasyncdesc->op_args.symlink.pmobject_dirdest->handle),
+                            &popasyncdesc->op_args.symlink.linkname,
+                            &popasyncdesc->fsal_op_context, &attrsrc, &attrdest);
   if (FSAL_IS_ERROR(fsal_status))
     {
       V(popasyncdesc->op_args.symlink.pmobject_dirdest->lock);
@@ -143,7 +143,7 @@ fsal_status_t MFSL_symlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
   V(popasyncdesc->op_args.symlink.pmobject_dirdest->lock);
 
   return fsal_status;
-}				/* MFSL_symlink_async_op */
+}                               /* MFSL_symlink_async_op */
 
 /**
  *
@@ -159,10 +159,10 @@ fsal_status_t MFSL_symlink_async_op(mfsl_async_op_desc_t * popasyncdesc)
  *
  */
 fsal_status_t MFSAL_symlink_check_perms(mfsl_object_t * target_handle,
-					fsal_name_t * p_dirname,
-					fsal_op_context_t * p_context,
-					mfsl_context_t * p_mfsl_context,
-					fsal_attrib_list_t * object_attributes)
+                                        fsal_name_t * p_dirname,
+                                        fsal_op_context_t * p_context,
+                                        mfsl_context_t * p_mfsl_context,
+                                        fsal_attrib_list_t * object_attributes)
 {
   fsal_status_t fsal_status;
 
@@ -173,7 +173,7 @@ fsal_status_t MFSAL_symlink_check_perms(mfsl_object_t * target_handle,
 
   /** @todo : put some stuff in this function */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_symlink_check_perms */
+}                               /* MFSL_symlink_check_perms */
 
 /**
  *
@@ -194,14 +194,14 @@ fsal_status_t MFSAL_symlink_check_perms(mfsl_object_t * target_handle,
  */
 extern fsal_handle_t tmp_symlink_dirhandle;  /**< Global variable that will contain the handle to the symlinks's nursery */
 
-fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   mfsl_context_t * p_mfsl_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored); */
-			   mfsl_object_t * link_handle,	/* OUT */
-			   fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */ )
+fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           mfsl_context_t * p_mfsl_context,     /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored); */
+                           mfsl_object_t * link_handle, /* OUT */
+                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
   mfsl_async_op_desc_t *pasyncopdesc = NULL;
@@ -218,29 +218,29 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
     return fsal_status;
 
   fsal_status = MFSAL_symlink_check_perms(parent_directory_handle,
-					  p_linkname,
-					  p_context, p_mfsl_context, link_attributes);
+                                          p_linkname,
+                                          p_context, p_mfsl_context, link_attributes);
 
   if (FSAL_IS_ERROR(fsal_status))
     return fsal_status;
 
   P(parent_directory_handle->lock);
   fsal_status = FSAL_symlink(&tmp_symlink_dirhandle,
-			     &tmp_fsal_name,
-			     p_linkcontent,
-			     p_context,
-			     accessmode, &link_handle->handle, link_attributes);
+                             &tmp_fsal_name,
+                             p_linkcontent,
+                             p_context,
+                             accessmode, &link_handle->handle, link_attributes);
   V(parent_directory_handle->lock);
 
   P(p_mfsl_context->lock);
 
   GET_PREALLOC(pasyncopdesc,
-	       p_mfsl_context->pool_async_op,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
+               p_mfsl_context->pool_async_op,
+               mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, next_alloc);
 
   GET_PREALLOC(symlink_pasyncdata,
-	       p_mfsl_context->pool_spec_data,
-	       mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
+               p_mfsl_context->pool_spec_data,
+               mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, next_alloc);
 
   V(p_mfsl_context->lock);
 
@@ -255,7 +255,7 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
     }
 
   DisplayLogJdLevel(p_mfsl_context->log_outputs, NIV_DEBUG, "Creating asyncop %p",
-		    pasyncopdesc);
+                    pasyncopdesc);
 
   pasyncopdesc->op_type = MFSL_ASYNC_OP_SYMLINK;
 
@@ -295,26 +295,26 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
   parent_directory_handle->health = MFSL_ASYNC_ASYNCHRONOUS;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_symlink */
+}                               /* MFSL_symlink */
 
 #ifdef _HAVE_SYNCHRONOUS_SYMLINK
-fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   mfsl_context_t * p_mfsl_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored); */
-			   mfsl_object_t * link_handle,	/* OUT */
-			   fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           mfsl_context_t * p_mfsl_context,     /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored); */
+                           mfsl_object_t * link_handle, /* OUT */
+                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     ) {
   fsal_status_t fsal_status;
 
   P(parent_directory_handle->lock);
   fsal_status = FSAL_symlink(&parent_directory_handle->handle,
-			     p_linkname,
-			     p_linkcontent,
-			     p_context,
-			     accessmode, &link_handle->handle, link_attributes);
+                             p_linkname,
+                             p_linkcontent,
+                             p_context,
+                             accessmode, &link_handle->handle, link_attributes);
   V(parent_directory_handle->lock);
 
   if (FSAL_IS_ERROR(fsal_status))
@@ -325,7 +325,7 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,	/* IN */
   link_handle->health = MFSL_ASYNC_IS_SYMLINK;
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
-}				/* MFSL_symlink */
+}                               /* MFSL_symlink */
 #endif
 
-#endif				/* ! _USE_SWIG */
+#endif                          /* ! _USE_SWIG */

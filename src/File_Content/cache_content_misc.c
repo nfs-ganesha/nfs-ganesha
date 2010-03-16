@@ -92,8 +92,8 @@
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #define NAME_MAX         255
-#include <sys/statvfs.h>	/* For statfs */
-#endif				/* _SOLARIS */
+#include <sys/statvfs.h>        /* For statfs */
+#endif                          /* _SOLARIS */
 
 #include "fsal.h"
 #include "LRU_List.h"
@@ -114,11 +114,11 @@
 #include <libgen.h>
 
 #ifdef _LINUX
-#include <sys/vfs.h>		/* For statfs */
+#include <sys/vfs.h>            /* For statfs */
 #endif
 
 #ifdef _APPLE
-#include <sys/param.h>		/* For Statfs */
+#include <sys/param.h>          /* For Statfs */
 #include <sys/mount.h>
 #endif
 
@@ -160,13 +160,13 @@ short HashFileID4(u_int64_t fileid4)
  *
  */
 cache_content_status_t cache_content_create_name(char *path,
-						 cache_content_nametype_t type,
-						 fsal_op_context_t * pcontext,
-						 cache_entry_t * pentry_inode,
-						 cache_content_client_t * pclient)
+                                                 cache_content_nametype_t type,
+                                                 fsal_op_context_t * pcontext,
+                                                 cache_entry_t * pentry_inode,
+                                                 cache_content_client_t * pclient)
 {
   fsal_status_t fsal_status;
-  u_int64_t fileid4;		/* Don't want to include nfs_prot.h at this level */
+  u_int64_t fileid4;            /* Don't want to include nfs_prot.h at this level */
   fsal_handle_t *pfsal_handle = NULL;
   cache_inode_status_t cache_status;
   char entrydir[MAXPATHLEN];
@@ -183,7 +183,7 @@ cache_content_status_t cache_content_create_name(char *path,
 
   /* Get the digest for the handle, for computing an entry name */
   fsal_status = FSAL_DigestHandle(pcontext->export_context,
-				  FSAL_DIGEST_FILEID4, pfsal_handle, (caddr_t) & fileid4);
+                                  FSAL_DIGEST_FILEID4, pfsal_handle, (caddr_t) & fileid4);
 
   if (FSAL_IS_ERROR(fsal_status))
     return CACHE_CONTENT_FSAL_ERROR;
@@ -200,13 +200,13 @@ cache_content_status_t cache_content_create_name(char *path,
     {
       /* concatenation of hashval */
       nb_char += snprintf((char *)(entrydir + nb_char), MAXPATHLEN - nb_char,
-			  "/%02hhX", (char)((hash_val >> i) & 0xFF));
+                          "/%02hhX", (char)((hash_val >> i) & 0xFF));
 
       /* creating the directory if necessary */
       if ((mkdir(entrydir, 0750) != 0) && (errno != EEXIST))
-	{
-	  return CACHE_CONTENT_LOCAL_CACHE_ERROR;
-	}
+        {
+          return CACHE_CONTENT_LOCAL_CACHE_ERROR;
+        }
     }
 
   /* Create files for caching the entry: index file */
@@ -214,12 +214,12 @@ cache_content_status_t cache_content_create_name(char *path,
     {
     case CACHE_CONTENT_DATA_FILE:
       snprintf(path, MAXPATHLEN, "%s/node=%llx.data", entrydir,
-	       (unsigned long long)fileid4);
+               (unsigned long long)fileid4);
       break;
 
     case CACHE_CONTENT_INDEX_FILE:
       snprintf(path, MAXPATHLEN, "%s/node=%llx.index", entrydir,
-	       (unsigned long long)fileid4);
+               (unsigned long long)fileid4);
       break;
 
     case CACHE_CONTENT_DIR:
@@ -231,7 +231,7 @@ cache_content_status_t cache_content_create_name(char *path,
     }
 
   return CACHE_CONTENT_SUCCESS;
-}				/* cache_content_create_name */
+}                               /* cache_content_create_name */
 
 /**
  *
@@ -255,7 +255,7 @@ int cache_content_get_export_id(char *dirname)
     return -1;
     else
     return exportid;
-}				/* cache_content_get_export_id */
+}                               /* cache_content_get_export_id */
 
 /**
  *
@@ -288,7 +288,7 @@ u_int64_t cache_content_get_inum(char *filename)
     return 0;
     else
     return (u_int64_t) inum;
-}				/* cache_content_get_inum */
+}                               /* cache_content_get_inum */
 
 /**
  *
@@ -310,16 +310,16 @@ int cache_content_get_datapath(char *basepath, u_int64_t inum, char *datapath)
   hash_val = HashFileID4(inum);
 
   snprintf(datapath, MAXPATHLEN, "%s/%02hhX/%02hhX/node=%llx.data", basepath,
-	   (char)((hash_val) & 0xFF),
-	   (char)((hash_val >> 8) & 0xFF), (unsigned long long)inum);
+           (char)((hash_val) & 0xFF),
+           (char)((hash_val >> 8) & 0xFF), (unsigned long long)inum);
 #ifdef _DEBUG_CACHE_CONTENT
   DisplayLogLevel(NIV_FULL_DEBUG, "cache_content_get_datapath : datapath ----> %s",
-		  datapath);
+                  datapath);
 #endif
 
   /* it is ok, we now return 0 */
   return 0;
-}				/* cache_content_get_datapath */
+}                               /* cache_content_get_datapath */
 
 /**
  *
@@ -344,8 +344,8 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum)
   if (stat(path, &buffstat) != 0)
     {
       DisplayLog
-	  ("Failure in cache_content_recover_size while stat on local cache: path=%s errno = %u",
-	   path, errno);
+          ("Failure in cache_content_recover_size while stat on local cache: path=%s errno = %u",
+           path, errno);
 
       return -1;
     }
@@ -355,7 +355,7 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum)
 
   /* Stat is ok, we now return the size */
   return buffstat.st_size;
-}				/* cache_content_recover_size */
+}                               /* cache_content_recover_size */
 
 /**
  *
@@ -375,8 +375,8 @@ off_t cache_content_get_cached_size(cache_content_entry_t * pentry)
   if (stat(pentry->local_fs_entry.cache_path_data, &buffstat) != 0)
     {
       DisplayLog
-	  ("Failure in cache_content_get_cached_size while stat on local cache: path=%s errno = %u",
-	   pentry->local_fs_entry.cache_path_index, errno);
+          ("Failure in cache_content_get_cached_size while stat on local cache: path=%s errno = %u",
+           pentry->local_fs_entry.cache_path_index, errno);
 
       return -1;
     }
@@ -385,7 +385,7 @@ off_t cache_content_get_cached_size(cache_content_entry_t * pentry)
 
   return buffstat.st_size;
 
-}				/* cache_content_get_cached_size */
+}                               /* cache_content_get_cached_size */
 
 /**
  *
@@ -442,7 +442,7 @@ cache_inode_status_t cache_content_error_convert(cache_content_status_t status)
     }
 
   return converted_status;
-}				/* cache_content_error_convert */
+}                               /* cache_content_error_convert */
 
 /**
  *
@@ -469,7 +469,7 @@ off_t cache_content_fsal_seek_convert(fsal_seek_t seek, cache_content_status_t *
     }
 
   return offset;
-}				/* cache_content_fsal_seek_convert */
+}                               /* cache_content_fsal_seek_convert */
 
 /**
  *
@@ -491,7 +491,7 @@ size_t cache_content_fsal_size_convert(fsal_size_t size, cache_content_status_t 
   taille = (size_t) size;
 
   return taille;
-}				/* cache_content_fsal_size_convert */
+}                               /* cache_content_fsal_size_convert */
 
 /**
  *
@@ -506,8 +506,8 @@ size_t cache_content_fsal_size_convert(fsal_size_t size, cache_content_status_t 
  * 
  */
 cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportlist,
-							 char *cache_dir,
-							 cache_content_status_t * pstatus)
+                                                         char *cache_dir,
+                                                         cache_content_status_t * pstatus)
 {
   exportlist_t *pexport = NULL;
   char cache_sub_dir[MAXPATHLEN];
@@ -517,7 +517,7 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
     {
       /* Create the cache root directory */
       if (mkdir(cache_dir, 0750) == -1)
-	return CACHE_CONTENT_LOCAL_CACHE_ERROR;
+        return CACHE_CONTENT_LOCAL_CACHE_ERROR;
     }
 
   /* Create the sub directories if needed */
@@ -525,21 +525,21 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
     {
       /* Create a directory only if the export entry is to be datya cached */
       if (pexport->options & EXPORT_OPTION_USE_DATACACHE)
-	{
-	  snprintf(cache_sub_dir, MAXPATHLEN, "%s/export_id=%d", cache_dir, 0);
+        {
+          snprintf(cache_sub_dir, MAXPATHLEN, "%s/export_id=%d", cache_dir, 0);
 
-	  if (access(cache_sub_dir, F_OK) == -1)
-	    {
-	      /* Create the cache  directory */
-	      if (mkdir(cache_sub_dir, 0750) == -1)
-		return CACHE_CONTENT_LOCAL_CACHE_ERROR;
-	    }
-	}
+          if (access(cache_sub_dir, F_OK) == -1)
+            {
+              /* Create the cache  directory */
+              if (mkdir(cache_sub_dir, 0750) == -1)
+                return CACHE_CONTENT_LOCAL_CACHE_ERROR;
+            }
+        }
     }
 
   /* If this point is reached, everything went ok */
   return CACHE_CONTENT_SUCCESS;
-}				/* cache_content_prepare_directories */
+}                               /* cache_content_prepare_directories */
 
 /**
  *
@@ -557,8 +557,8 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
  *
  */
 cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-					   cache_inode_op_t op,
-					   cache_content_client_t * pclient)
+                                           cache_inode_op_t op,
+                                           cache_content_client_t * pclient)
 {
   /* /!\ NOTE THIS CAREFULLY: entry is supposed to be locked when this function is called !! */
 
@@ -592,7 +592,7 @@ cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
     }
 
   return CACHE_CONTENT_SUCCESS;
-}				/* cache_content_valid */
+}                               /* cache_content_valid */
 
 /**
  *
@@ -614,10 +614,10 @@ cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
  */
 
 cache_content_status_t cache_content_check_threshold(char *datacache_path,
-						     unsigned int threshold_min,
-						     unsigned int threshold_max,
-						     int *p_bool_overflow,
-						     unsigned long *p_blocks_to_lwm)
+                                                     unsigned int threshold_min,
+                                                     unsigned int threshold_max,
+                                                     int *p_bool_overflow,
+                                                     unsigned long *p_blocks_to_lwm)
 {
   char fspath[MAXPATHLEN];
 #ifdef _SOLARIS
@@ -643,7 +643,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
   if (statfs(fspath, &info_fs) != 0)
     {
       DisplayLog("Error getting local filesystem info: path=%s errno=%u\n", fspath,
-		 errno);
+                 errno);
       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
     }
 
@@ -654,8 +654,8 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
    * total = used + available
    *       = f_blocks - f_bfree + f_bavail
    */
-  hw = (double)threshold_max;	/* cast to double */
-  lw = (double)threshold_min;	/* cast to double */
+  hw = (double)threshold_max;   /* cast to double */
+  lw = (double)threshold_min;   /* cast to double */
 
   total_user_blocs = (info_fs.f_blocks + info_fs.f_bavail - info_fs.f_bfree);
   dispo_hw = (unsigned long)(((100.0 - hw) * total_user_blocs) / 100.0);
@@ -665,8 +665,8 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
       ((double)info_fs.f_blocks + (double)info_fs.f_bavail - (double)info_fs.f_bfree);
 
   DisplayLogLevel(NIV_EVENT,
-		  "Datacache: %s: %.2f%% used, low_wm = %.2f%%, high_wm = %.2f%%",
-		  datacache_path, tx_used, lw, hw);
+                  "Datacache: %s: %.2f%% used, low_wm = %.2f%%, high_wm = %.2f%%",
+                  datacache_path, tx_used, lw, hw);
 
   /* threshold test */
 
@@ -682,8 +682,8 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
       *p_bool_overflow = TRUE;
       *p_blocks_to_lwm = dispo_lw - info_fs.f_bavail;
       DisplayLogLevel(NIV_EVENT,
-		      "Datacache: need to purge %lu blocks for reaching low WM",
-		      *p_blocks_to_lwm);
+                      "Datacache: need to purge %lu blocks for reaching low WM",
+                      *p_blocks_to_lwm);
     }
 
   return CACHE_CONTENT_SUCCESS;
@@ -700,7 +700,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
  * @return the handle to the directory or NULL is failed
  */
 int cache_content_local_cache_opendir(char *cache_dir,
-				      cache_content_dirinfo_t * pdirectory)
+                                      cache_content_dirinfo_t * pdirectory)
 {
   pdirectory->level0_dir = NULL;
   pdirectory->level1_dir = NULL;
@@ -726,7 +726,7 @@ int cache_content_local_cache_opendir(char *cache_dir,
 
   pdirectory->level1_cnt = 0;
   return TRUE;
-}				/* cache_content_local_cache_opendir */
+}                               /* cache_content_local_cache_opendir */
 
 /**
  *
@@ -743,9 +743,9 @@ int cache_content_local_cache_opendir(char *cache_dir,
  * @return CACHE_CONTENT_SUCCESS if entry is found, CACHE_CONTENT_NOT_FOUND if not found
  */
 cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
-						 cache_content_client_t * pclient,
-						 fsal_op_context_t * pcontext,
-						 cache_content_status_t * pstatus)
+                                                 cache_content_client_t * pclient,
+                                                 fsal_op_context_t * pcontext,
+                                                 cache_content_status_t * pstatus)
 {
   char cache_path_index[MAXPATHLEN];
 
@@ -760,10 +760,10 @@ cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
 
   /* Build the cache index path */
   if ((*pstatus = cache_content_create_name(cache_path_index,
-					    CACHE_CONTENT_INDEX_FILE,
-					    pcontext,
-					    pentry_inode,
-					    pclient)) != CACHE_CONTENT_SUCCESS)
+                                            CACHE_CONTENT_INDEX_FILE,
+                                            pcontext,
+                                            pentry_inode,
+                                            pclient)) != CACHE_CONTENT_SUCCESS)
     {
       return *pstatus;
     }
@@ -780,7 +780,7 @@ cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
   *pstatus = CACHE_CONTENT_NOT_FOUND;
   return CACHE_CONTENT_NOT_FOUND;
 
-}				/* cache_content_test_cached */
+}                               /* cache_content_test_cached */
 
 /**
  *
@@ -794,8 +794,8 @@ cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
  * @return TRUE if OK, FALSE if NOK.
  */
 int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
-				       struct dirent *pdir_entry,
-				       unsigned int index, unsigned int mod)
+                                       struct dirent *pdir_entry,
+                                       unsigned int index, unsigned int mod)
 {
   int rc_readdir = 0;
 
@@ -816,164 +816,164 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
        * and so on.
        */
       if (directory->level2_dir != NULL)
-	{
-	  rc_readdir =
-	      readdir_r(directory->level2_dir, pdir_entry, &(directory->cookie2));
+        {
+          rc_readdir =
+              readdir_r(directory->level2_dir, pdir_entry, &(directory->cookie2));
 
-	  if (rc_readdir == 0 && directory->cookie2 != NULL)
-	    {
-	      char d_name_save[MAXNAMLEN];
+          if (rc_readdir == 0 && directory->cookie2 != NULL)
+            {
+              char d_name_save[MAXNAMLEN];
 
-	      /* go to the next loop if the entry is . or .. */
-	      if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
-		continue;
+              /* go to the next loop if the entry is . or .. */
+              if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
+                continue;
 
 #ifdef _DEBUG_CACHE_CONTENT
-	      printf("iterator --> %s/%s/%s/%s\n", directory->level0_path,
-		     directory->level1_name, directory->level2_name, pdir_entry->d_name);
+              printf("iterator --> %s/%s/%s/%s\n", directory->level0_path,
+                     directory->level1_name, directory->level2_name, pdir_entry->d_name);
 #endif
 
-	      /* the d_name must actually be the relative path from
-	       * the cache directory path, so that a file can be
-	       * accessed using <rootpath>/<d_name> path.
-	       */
-	      strncpy(d_name_save, pdir_entry->d_name, MAXNAMLEN);
-	      snprintf(pdir_entry->d_name, MAXNAMLEN, "%s/%s/%s",
-		       directory->level1_name, directory->level2_name, d_name_save);
+              /* the d_name must actually be the relative path from
+               * the cache directory path, so that a file can be
+               * accessed using <rootpath>/<d_name> path.
+               */
+              strncpy(d_name_save, pdir_entry->d_name, MAXNAMLEN);
+              snprintf(pdir_entry->d_name, MAXNAMLEN, "%s/%s/%s",
+                       directory->level1_name, directory->level2_name, d_name_save);
 
-	      return TRUE;
-	    } else
-	    {
-	      /* test if it is an error or an end of dir */
-	      if (errno != 0)
-		{
-		  cache_content_dir_errno = errno;
-		  return TRUE;
-		} else
-		{
-		  /* the lowest level entry dir is finished,
-		   * must proceed a readdir on the topper level
-		   */
-		  closedir(directory->level2_dir);
-		  directory->level2_dir = NULL;
-		  /* go to next loop */
-		}
-	    }
-	}
+              return TRUE;
+            } else
+            {
+              /* test if it is an error or an end of dir */
+              if (errno != 0)
+                {
+                  cache_content_dir_errno = errno;
+                  return TRUE;
+                } else
+                {
+                  /* the lowest level entry dir is finished,
+                   * must proceed a readdir on the topper level
+                   */
+                  closedir(directory->level2_dir);
+                  directory->level2_dir = NULL;
+                  /* go to next loop */
+                }
+            }
+        }
       /* continue directory at level 1 */
       else if (directory->level1_dir != NULL)
-	{
-	  if (mod <= 1)
-	    {
-	      /* list all dirs */
-	      rc_readdir =
-		  readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
-	      directory->level1_cnt += 1;
-	    } else
-	    {
-	      rc_readdir =
-		  readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
-	      directory->level1_cnt++;
+        {
+          if (mod <= 1)
+            {
+              /* list all dirs */
+              rc_readdir =
+                  readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
+              directory->level1_cnt += 1;
+            } else
+            {
+              rc_readdir =
+                  readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
+              directory->level1_cnt++;
 
 #ifdef _DEBUG_CACHE_CONTENT
-	      printf
-		  ("---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s\n",
-		   directory->level1_cnt, mod, index, directory->level1_cnt % mod,
-		   pdir_entry->d_name);
+              printf
+                  ("---> directory->level1_cnt=%u mod=%u index=%u modulocalcule=%u name=%s\n",
+                   directory->level1_cnt, mod, index, directory->level1_cnt % mod,
+                   pdir_entry->d_name);
 #endif
 
-	      /* skip entry if  cnt % mod == index */
-	      if ((directory->level1_cnt % mod != index))
-		continue;
-	    }
+              /* skip entry if  cnt % mod == index */
+              if ((directory->level1_cnt % mod != index))
+                continue;
+            }
 
-	  if (rc_readdir == 0 && directory->cookie1 != NULL)
-	    {
-	      char dirpath[MAXPATHLEN];
+          if (rc_readdir == 0 && directory->cookie1 != NULL)
+            {
+              char dirpath[MAXPATHLEN];
 
-	      /* go to the next loop if this is the . or .. entry */
-	      if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
-		continue;
+              /* go to the next loop if this is the . or .. entry */
+              if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
+                continue;
 
-	      strncpy(directory->level2_name, pdir_entry->d_name, MAXNAMLEN);
+              strncpy(directory->level2_name, pdir_entry->d_name, MAXNAMLEN);
 
-	      /* must now open the entry as the level2 directory */
-	      snprintf(dirpath, MAXPATHLEN, "%s/%s/%s",
-		       directory->level0_path,
-		       directory->level1_name, directory->level2_name);
+              /* must now open the entry as the level2 directory */
+              snprintf(dirpath, MAXPATHLEN, "%s/%s/%s",
+                       directory->level0_path,
+                       directory->level1_name, directory->level2_name);
 
-	      if ((directory->level2_dir = opendir(dirpath)) == NULL)
-		{
-		  cache_content_dir_errno = errno;
-		  return FALSE;
-		}
-	    } else
-	    {
-	      /* test if it is an error or an end of dir */
-	      if (errno != 0)
-		{
-		  cache_content_dir_errno = errno;
-		  return TRUE;
-		} else
-		{
-		  /* the lowest level entry dir is finished,
-		   * must proceed a readdir on the topper level
-		   */
-		  closedir(directory->level1_dir);
-		  directory->level1_dir = NULL;
-		}
-	    }
-	}
+              if ((directory->level2_dir = opendir(dirpath)) == NULL)
+                {
+                  cache_content_dir_errno = errno;
+                  return FALSE;
+                }
+            } else
+            {
+              /* test if it is an error or an end of dir */
+              if (errno != 0)
+                {
+                  cache_content_dir_errno = errno;
+                  return TRUE;
+                } else
+                {
+                  /* the lowest level entry dir is finished,
+                   * must proceed a readdir on the topper level
+                   */
+                  closedir(directory->level1_dir);
+                  directory->level1_dir = NULL;
+                }
+            }
+        }
       /* continue directory at level 0 */
       else if (directory->level0_dir != NULL)
-	{
+        {
 
-	  rc_readdir =
-	      readdir_r(directory->level0_dir, pdir_entry, &(directory->cookie0));
+          rc_readdir =
+              readdir_r(directory->level0_dir, pdir_entry, &(directory->cookie0));
 
-	  if (rc_readdir == 0 && directory->cookie0 != NULL)
-	    {
-	      char dirpath[MAXPATHLEN];
+          if (rc_readdir == 0 && directory->cookie0 != NULL)
+            {
+              char dirpath[MAXPATHLEN];
 
-	      /* go to the next loop if this is the . or .. entry */
-	      if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
-		continue;
+              /* go to the next loop if this is the . or .. entry */
+              if (!strcmp(".", pdir_entry->d_name) || !strcmp("..", pdir_entry->d_name))
+                continue;
 
-	      strncpy(directory->level1_name, pdir_entry->d_name, MAXNAMLEN);
+              strncpy(directory->level1_name, pdir_entry->d_name, MAXNAMLEN);
 
-	      /* must now open the entry as the level1 directory */
-	      snprintf(dirpath, MAXPATHLEN, "%s/%s",
-		       directory->level0_path, directory->level1_name);
+              /* must now open the entry as the level1 directory */
+              snprintf(dirpath, MAXPATHLEN, "%s/%s",
+                       directory->level0_path, directory->level1_name);
 
-	      directory->level1_cnt = 0;
+              directory->level1_cnt = 0;
 
-	      if ((directory->level1_dir = opendir(dirpath)) == NULL)
-		{
-		  cache_content_dir_errno = errno;
-		  return TRUE;
-		}
-	    } else
-	    {
-	      /* test if it is an error or an end of dir */
-	      if (errno != 0)
-		{
-		  cache_content_dir_errno = errno;
-		  return TRUE;
-		} else
-		{
-		  /* we are at the end of the level directory
-		   * return End of Dir
-		   */
-		  cache_content_dir_errno = 0;
-		  return FALSE;
-		}
-	    }
-	} else
-	{
-	  /* invalid base directory descriptor */
-	  cache_content_dir_errno = EINVAL;
-	  return TRUE;
-	}
+              if ((directory->level1_dir = opendir(dirpath)) == NULL)
+                {
+                  cache_content_dir_errno = errno;
+                  return TRUE;
+                }
+            } else
+            {
+              /* test if it is an error or an end of dir */
+              if (errno != 0)
+                {
+                  cache_content_dir_errno = errno;
+                  return TRUE;
+                } else
+                {
+                  /* we are at the end of the level directory
+                   * return End of Dir
+                   */
+                  cache_content_dir_errno = 0;
+                  return FALSE;
+                }
+            }
+        } else
+        {
+          /* invalid base directory descriptor */
+          cache_content_dir_errno = EINVAL;
+          return TRUE;
+        }
 
     }
   while (1);
@@ -982,7 +982,7 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
   /* should never happen */
   return TRUE;
 
-}				/* cache_content_local_cache_dir_iter */
+}                               /* cache_content_local_cache_dir_iter */
 
 /**
  *
@@ -998,21 +998,21 @@ void cache_content_local_cache_closedir(cache_content_dirinfo_t * directory)
   if (directory != NULL)
     {
       if (directory->level2_dir != NULL)
-	{
-	  closedir(directory->level2_dir);
-	  directory->level2_dir = NULL;
-	}
+        {
+          closedir(directory->level2_dir);
+          directory->level2_dir = NULL;
+        }
 
       if (directory->level1_dir != NULL)
-	{
-	  closedir(directory->level1_dir);
-	  directory->level1_dir = NULL;
-	}
+        {
+          closedir(directory->level1_dir);
+          directory->level1_dir = NULL;
+        }
 
       if (directory->level0_dir != NULL)
-	{
-	  closedir(directory->level0_dir);
-	  directory->level0_dir = NULL;
-	}
+        {
+          closedir(directory->level0_dir);
+          directory->level0_dir = NULL;
+        }
     }
-}				/* cache_content_local_cache_closedir */
+}                               /* cache_content_local_cache_closedir */

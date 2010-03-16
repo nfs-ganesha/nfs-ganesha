@@ -74,7 +74,7 @@ struct btest *get_btest_args(struct testparam *param, enum test_number k)
   while (it)
     {
       if (it->num == k || it->num2 == k)
-	return it;
+        return it;
       it = it->nextbtest;
     }
 

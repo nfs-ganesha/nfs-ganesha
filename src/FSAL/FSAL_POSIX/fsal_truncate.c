@@ -42,11 +42,11 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_size_t length,	/* IN */
-			    fsal_file_t * file_descriptor,	/* Unused in this FSAL */
-			    fsal_attrib_list_t * p_object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_size_t length, /* IN */
+                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
 
@@ -92,10 +92,10 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,	/* IN */
       st = FSAL_getattrs(p_filehandle, p_context, p_object_attributes);
 
       if (FSAL_IS_ERROR(st))
-	{
-	  FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+          FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

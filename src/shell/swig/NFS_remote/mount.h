@@ -108,4 +108,4 @@ extern bool_t xdr_mountbody(XDR *, mountbody *);
 extern bool_t xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool_t xdr_mountres3(XDR *, mountres3 *);
 
-#endif				/* !_MOUNT_H_RPCGEN */
+#endif                          /* !_MOUNT_H_RPCGEN */

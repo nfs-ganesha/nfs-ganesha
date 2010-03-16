@@ -98,7 +98,7 @@ static inline DIR *get_dirp(struct fuse_file_info *fi)
 }
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi)
+                       off_t offset, struct fuse_file_info *fi)
 {
   DIR *dp = get_dirp(fi);
   struct dirent *de;
@@ -112,7 +112,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
          st.st_ino = de->d_ino;
          st.st_mode = de->d_type << 12; */
       if (filler(buf, de->d_name, NULL, telldir(dp)))
-	break;
+        break;
     }
 
   return 0;
@@ -294,7 +294,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 }
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
-		    struct fuse_file_info *fi)
+                    struct fuse_file_info *fi)
 {
   int res;
 
@@ -307,7 +307,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+                     off_t offset, struct fuse_file_info *fi)
 {
   int res;
 
@@ -377,7 +377,7 @@ static int xmp_fsync(const char *path, int isdatasync, struct fuse_file_info *fi
 #ifdef HAVE_SETXATTR
 /* xattr operations are optional and can safely be left unimplemented */
 static int xmp_setxattr(const char *path, const char *name, const char *value,
-			size_t size, int flags)
+                        size_t size, int flags)
 {
   int res = lsetxattr(path, name, value, size, flags);
   if (res == -1)
@@ -408,10 +408,10 @@ static int xmp_removexattr(const char *path, const char *name)
     return -errno;
   return 0;
 }
-#endif				/* HAVE_SETXATTR */
+#endif                          /* HAVE_SETXATTR */
 
 static int xmp_lock(const char *path, struct fuse_file_info *fi, int cmd,
-		    struct flock *lock)
+                    struct flock *lock)
 {
   (void)path;
 

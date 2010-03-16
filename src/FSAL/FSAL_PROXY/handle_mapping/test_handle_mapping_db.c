@@ -82,7 +82,7 @@ int main(int argc, char **argv)
 
       rc = handlemap_db_insert(&nfs23_digest, &handle);
       if (rc)
-	exit(rc);
+        exit(rc);
     }
 
   gettimeofday(&tv2, NULL);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   timersub(&tv2, &tv1, &tvdiff);
 
   printf("%u threads inserted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-	 (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_usec);
 
   rc = handlemap_db_flush();
 
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
   timersub(&tv3, &tv1, &tvdiff);
   printf("Total time with %u threads (including flush): %d.%06ds\n", count,
-	 (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   printf("Now, delete operations\n");
 
@@ -111,21 +111,21 @@ int main(int argc, char **argv)
 
       rc = handlemap_db_delete(&nfs23_digest);
       if (rc)
-	exit(rc);
+        exit(rc);
     }
 
   gettimeofday(&tv2, NULL);
   timersub(&tv2, &tv3, &tvdiff);
 
   printf("%u threads deleted 10000 handles in %d.%06ds\n", count, (int)tvdiff.tv_sec,
-	 (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_usec);
 
   rc = handlemap_db_flush();
 
   gettimeofday(&tv1, NULL);
   timersub(&tv1, &tv3, &tvdiff);
   printf("Delete time with %u threads (including flush): %d.%06ds\n", count,
-	 (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
+         (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
   exit(0);
 

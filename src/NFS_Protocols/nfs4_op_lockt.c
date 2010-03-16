@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -189,15 +189,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
-	{
-	case DIR_BEGINNING:
-	case DIR_CONTINUE:
-	  res_LOCKT4.status = NFS4ERR_ISDIR;
-	  break;
-	default:
-	  res_LOCKT4.status = NFS4ERR_INVAL;
-	  break;
-	}
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_LOCKT4.status = NFS4ERR_ISDIR;
+          break;
+        default:
+          res_LOCKT4.status = NFS4ERR_INVAL;
+          break;
+        }
       return res_LOCKT4.status;
     }
 
@@ -215,10 +215,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Comparing beyond 2^64 is not possible int 64 bits precision, 
        * but off+len > 2^64 is equivalent to len > 2^64 - off */
       if (arg_LOCKT4.length > (0xffffffffffffffffLL - arg_LOCKT4.offset))
-	{
-	  res_LOCKT4.status = NFS4ERR_INVAL;
-	  return res_LOCKT4.status;
-	}
+        {
+          res_LOCKT4.status = NFS4ERR_INVAL;
+          return res_LOCKT4.status;
+        }
     }
 
   /* Check clientid */
@@ -233,79 +233,79 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   do
     {
       cache_inode_state_iterate(data->current_entry,
-				&pstate_found,
-				pstate_found,
-				data->pclient, data->pcontext, &cache_status);
+                                &pstate_found,
+                                pstate_found,
+                                data->pclient, data->pcontext, &cache_status);
       if ((cache_status == CACHE_INODE_STATE_ERROR)
-	  || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
-	{
-	  res_LOCKT4.status = NFS4ERR_INVAL;
-	  return res_LOCKT4.status;
-	}
+          || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
+        {
+          res_LOCKT4.status = NFS4ERR_INVAL;
+          return res_LOCKT4.status;
+        }
 
       if (pstate_found != NULL)
-	{
-	  if (pstate_found->state_type == CACHE_INODE_STATE_LOCK)
-	    {
+        {
+          if (pstate_found->state_type == CACHE_INODE_STATE_LOCK)
+            {
 
-	      /* We found a lock, check is they overlap */
-	      a = pstate_found->state_data.lock.offset;
-	      b = pstate_found->state_data.lock.offset +
-		  pstate_found->state_data.lock.length;
-	      a1 = arg_LOCKT4.offset;
-	      b1 = arg_LOCKT4.offset + arg_LOCKT4.length;
+              /* We found a lock, check is they overlap */
+              a = pstate_found->state_data.lock.offset;
+              b = pstate_found->state_data.lock.offset +
+                  pstate_found->state_data.lock.length;
+              a1 = arg_LOCKT4.offset;
+              b1 = arg_LOCKT4.offset + arg_LOCKT4.length;
 
-	      /* Locks overlap is a <= a1 < b or a < b1 <= b */
-	      overlap = FALSE;
-	      if (a <= a1)
-		{
-		  if (a1 < b)
-		    overlap = TRUE;
-		} else
-		{
-		  if (a < b1)
-		    {
-		      if (b1 <= b)
-			overlap = TRUE;
-		    }
-		}
+              /* Locks overlap is a <= a1 < b or a < b1 <= b */
+              overlap = FALSE;
+              if (a <= a1)
+                {
+                  if (a1 < b)
+                    overlap = TRUE;
+                } else
+                {
+                  if (a < b1)
+                    {
+                      if (b1 <= b)
+                        overlap = TRUE;
+                    }
+                }
 
-	      if (overlap == TRUE)
-		{
-		  if ((arg_LOCKT4.locktype != READ_LT)
-		      || (pstate_found->state_data.lock.lock_type != READ_LT))
-		    {
-		      /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-		      if ((arg_LOCKT4.owner.owner.owner_len ==
-			   pstate_found->powner->owner_len)
-			  &&
-			  (!memcmp
-			   (arg_LOCKT4.owner.owner.owner_val,
-			    pstate_found->powner->owner_val,
-			    pstate_found->powner->owner_len)))
-			{
-			  /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
-			   * lock and continue iterating on the other states */
-			} else
-			{
-			  /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-			  res_LOCKT4.LOCKT4res_u.denied.offset =
-			      pstate_found->state_data.lock.offset;
-			  res_LOCKT4.LOCKT4res_u.denied.length =
-			      pstate_found->state_data.lock.length;
-			  res_LOCKT4.LOCKT4res_u.denied.locktype =
-			      pstate_found->state_data.lock.lock_type;
-			  res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len =
-			      pstate_found->powner->owner_len;
-			  res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val =
-			      pstate_found->powner->owner_val;
-			  res_LOCKT4.status = NFS4ERR_DENIED;
-			  return res_LOCKT4.status;
-			}
-		    }
-		}
-	    }
-	}
+              if (overlap == TRUE)
+                {
+                  if ((arg_LOCKT4.locktype != READ_LT)
+                      || (pstate_found->state_data.lock.lock_type != READ_LT))
+                    {
+                      /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
+                      if ((arg_LOCKT4.owner.owner.owner_len ==
+                           pstate_found->powner->owner_len)
+                          &&
+                          (!memcmp
+                           (arg_LOCKT4.owner.owner.owner_val,
+                            pstate_found->powner->owner_val,
+                            pstate_found->powner->owner_len)))
+                        {
+                          /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
+                           * lock and continue iterating on the other states */
+                        } else
+                        {
+                          /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
+                          res_LOCKT4.LOCKT4res_u.denied.offset =
+                              pstate_found->state_data.lock.offset;
+                          res_LOCKT4.LOCKT4res_u.denied.length =
+                              pstate_found->state_data.lock.length;
+                          res_LOCKT4.LOCKT4res_u.denied.locktype =
+                              pstate_found->state_data.lock.lock_type;
+                          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len =
+                              pstate_found->powner->owner_len;
+                          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val =
+                              pstate_found->powner->owner_val;
+                          res_LOCKT4.status = NFS4ERR_DENIED;
+                          return res_LOCKT4.status;
+                        }
+                    }
+                }
+            }
+        }
     }
   while (pstate_found != NULL);
 
@@ -314,7 +314,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   return res_LOCKT4.status;
 
 #endif
-}				/* nfs4_op_lockt */
+}                               /* nfs4_op_lockt */
 
 /**
  * nfs4_op_lockt_Free: frees what was allocared to handle nfs4_op_lockt.
@@ -330,4 +330,4 @@ void nfs4_op_lockt_Free(LOCKT4res * resp)
 {
   /* Nothing to Mem_Free */
   return;
-}				/* nfs4_op_lockt_Free */
+}                               /* nfs4_op_lockt_Free */

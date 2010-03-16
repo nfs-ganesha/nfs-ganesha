@@ -26,10 +26,10 @@
  * \return - FSAL_POSIXDB_NOERR, if no error.
  *         - another error code else.
  */
-fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN */
-					       fsal_handle_t * p_parent_directory_handle,	/* IN */
-					       unsigned int max_count, fsal_posixdb_child ** p_children,	/* OUT */
-					       unsigned int *p_count /* OUT */ )
+fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      /* IN */
+                                               fsal_handle_t * p_parent_directory_handle,       /* IN */
+                                               unsigned int max_count, fsal_posixdb_child ** p_children,        /* OUT */
+                                               unsigned int *p_count /* OUT */ )
 {
   unsigned int i;
   char query[2048];
@@ -41,11 +41,11 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
     ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
 
   snprintf(query, 2048, "SELECT Handle.handleid, Handle.handlets, Parent.name, "
-	   "Handle.inode, Handle.deviceid, Handle.nlink, Handle.ctime, Handle.ftype "
-	   "FROM Parent INNER JOIN Handle ON Handle.handleid=Parent.handleid AND Handle.handlets=Parent.handlets "
-	   "WHERE Parent.handleidparent=%llu AND Parent.handletsparent=%u "
-	   "AND NOT (Parent.handleidparent = Parent.handleid AND Parent.handletsparent = Parent.handlets)",
-	   p_parent_directory_handle->id, p_parent_directory_handle->ts);
+           "Handle.inode, Handle.deviceid, Handle.nlink, Handle.ctime, Handle.ftype "
+           "FROM Parent INNER JOIN Handle ON Handle.handleid=Parent.handleid AND Handle.handlets=Parent.handlets "
+           "WHERE Parent.handleidparent=%llu AND Parent.handletsparent=%u "
+           "AND NOT (Parent.handleidparent = Parent.handleid AND Parent.handletsparent = Parent.handlets)",
+           p_parent_directory_handle->id, p_parent_directory_handle->ts);
 
   st = db_exec_sql(p_conn, query, &res);
   if (FSAL_POSIXDB_IS_ERROR(st))
@@ -65,7 +65,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
       *p_children = NULL;
       mysql_free_result(res);
       DisplayLog("Children count %u exceed max_count %u in fsal_posixdb_getChildren",
-		 *p_count, max_count);
+                 *p_count, max_count);
       ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
     }
 
@@ -82,18 +82,18 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,	/* IN
 
       row = mysql_fetch_row(res);
       if (!row)
-	{
-	  /* Error */
-	  mysql_free_result(res);
-	  ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
-	}
+        {
+          /* Error */
+          mysql_free_result(res);
+          ReturnCode(ERR_FSAL_POSIXDB_FAULT, 0);
+        }
 
       FSAL_str2name(row[2], FSAL_MAX_NAME_LEN, &((*p_children)[i].name));
 
       (*p_children)[i].handle.id = atoll(row[0]);
       (*p_children)[i].handle.ts = atoi(row[1]);
       posixdb_internal_fillFileinfoFromStrValues(&((*p_children)[i].handle.info),
-						 row[4], row[3], row[5], row[6], row[7]);
+                                                 row[4], row[3], row[5], row[6], row[7]);
     }
 
   mysql_free_result(res);

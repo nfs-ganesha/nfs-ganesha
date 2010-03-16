@@ -31,10 +31,10 @@
  * \param lock_descriptor (output):
  *        The returned lock descriptor
  */
-fsal_status_t FSAL_lock(fsal_handle_t * objecthandle,	/* IN */
-			fsal_op_context_t * p_context,	/* IN */
-			fsal_lockparam_t * lock_info,	/* IN */
-			fsal_lockdesc_t * lock_descriptor	/* OUT */
+fsal_status_t FSAL_lock(fsal_handle_t * objecthandle,   /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
+                        fsal_lockparam_t * lock_info,   /* IN */
+                        fsal_lockdesc_t * lock_descriptor       /* OUT */
     )
 {
 
@@ -49,8 +49,8 @@ fsal_status_t FSAL_lock(fsal_handle_t * objecthandle,	/* IN */
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
-			      fsal_lockparam_t * lock_info	/* IN */
+fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+                              fsal_lockparam_t * lock_info      /* IN */
     )
 {
 
@@ -66,7 +66,7 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,	/* IN / OUT */
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t FSAL_unlock(fsal_lockdesc_t * lock_descriptor	/* IN/OUT */
+fsal_status_t FSAL_unlock(fsal_lockdesc_t * lock_descriptor     /* IN/OUT */
     )
 {
 

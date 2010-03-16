@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -139,7 +139,7 @@
  * 
  */
 
-extern verifier4 NFS4_write_verifier;	/* NFS V4 write verifier */
+extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier */
 
 #define arg_COMMIT4 op->nfs_argop4_u.opcommit
 #define res_COMMIT4 resp->nfs_resop4_u.opcommit
@@ -157,7 +157,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 #ifdef _DEBUG_NFS_V4
   printf("      COMMIT4: Demande de commit sur offset = %llu, size = %llu\n",
-	 arg_COMMIT4.offset, arg_COMMIT4.count);
+         arg_COMMIT4.offset, arg_COMMIT4.count);
 #endif
 
   /* If there is no FH */
@@ -186,39 +186,39 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* Type of the entry is not correct */
       switch (data->current_filetype)
-	{
-	case DIR_BEGINNING:
-	case DIR_CONTINUE:
-	  res_COMMIT4.status = NFS4ERR_ISDIR;
-	  break;
-	default:
-	  res_COMMIT4.status = NFS4ERR_INVAL;
-	  break;
-	}
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_COMMIT4.status = NFS4ERR_ISDIR;
+          break;
+        default:
+          res_COMMIT4.status = NFS4ERR_INVAL;
+          break;
+        }
 
       /* Exit with an error */
       return res_COMMIT4.status;
     }
 
   if (cache_inode_commit(data->current_entry,
-			 arg_COMMIT4.offset,
-			 arg_COMMIT4.count,
-			 &attr,
-			 data->ht,
-			 data->pclient,
-			 data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                         arg_COMMIT4.offset,
+                         arg_COMMIT4.count,
+                         &attr,
+                         data->ht,
+                         data->pclient,
+                         data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;
     }
 
   memcpy(res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier,
-	 NFS4_VERIFIER_SIZE);
+         NFS4_VERIFIER_SIZE);
 
   /* If you reach this point, then an error occured */
   res_COMMIT4.status = NFS4_OK;
   return res_COMMIT4.status;
-}				/* nfs4_op_commit */
+}                               /* nfs4_op_commit */
 
 /**
  * nfs4_op_commit_Free: frees what was allocared to handle nfs4_op_commit.
@@ -234,4 +234,4 @@ void nfs4_op_commit_Free(COMMIT4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_commit_Free */
+}                               /* nfs4_op_commit_Free */

@@ -144,10 +144,10 @@ void *Test1(void *arg)
   DisplayErrorFlux(stdout, 3, ERR_PIPO_2, 2);
   puts("Une erreur numerique : erreur %d = %R");
   log_sprintf(tampon, "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r", 5,
-	      0, 5, 3, ERR_PIPO_2);
+              0, 5, 3, ERR_PIPO_2);
   puts(tampon);
   DisplayLogFlux(stdout, "Une erreur numerique : erreur %d = %J%R, dans err_pipo_1 %J%r",
-		 5, 0, 5, 3, ERR_PIPO_2);
+                 5, 0, 5, 3, ERR_PIPO_2);
   DisplayErrorFlux(stderr, 3, ERR_PIPO_1, 1);
 
   /* teste si le nom du thread est reste le meme depuis le debut : */
@@ -155,7 +155,7 @@ void *Test1(void *arg)
     {
 
       printf("***** ERROR: initial function name \"%s\" differs from \"%s\" *****\n",
-	     (char *)arg, ReturnNameHost());
+             (char *)arg, ReturnNameHost());
       return (void *)1;
 
     }
@@ -179,74 +179,74 @@ int main(int argc, char *argv[])
       /* TEST 1 Standard */
 
       if (!strcmp(argv[1], "STD"))
-	{
+        {
 
-	  int rc;
+          int rc;
 
-	  SetNamePgm("test_liblog");
-	  SetNameHost("localhost");
-	  SetNameFileLog("/dev/tty");
-	  InitDebug(NIV_EVENT);
-	  printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
-	  printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
+          SetNamePgm("test_liblog");
+          SetNameHost("localhost");
+          SetNameFileLog("/dev/tty");
+          InitDebug(NIV_EVENT);
+          printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
+          printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
 
-	  rc = (int)Test1((void *)"monothread");
-	  return rc;
+          rc = (int)Test1((void *)"monothread");
+          return rc;
 
-	}
+        }
 
       /* TEST 1 multithread */
 
       else if (!strcmp(argv[1], "MT"))
-	{
+        {
 
-	  /* multithread test */
-	  pthread_attr_t th_attr[NB_THREADS];
-	  pthread_t threads[NB_THREADS];
-	  int th_index, i;
-	  void *result;
+          /* multithread test */
+          pthread_attr_t th_attr[NB_THREADS];
+          pthread_t threads[NB_THREADS];
+          int th_index, i;
+          void *result;
 
-	  SetNamePgm("test_liblog");
-	  SetNameHost("localhost");
-	  SetNameFileLog("/dev/tty");
-	  InitDebug(NIV_EVENT);
-	  printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
-	  printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
+          SetNamePgm("test_liblog");
+          SetNameHost("localhost");
+          SetNameFileLog("/dev/tty");
+          InitDebug(NIV_EVENT);
+          printf("AddFamilyError = %d\n", AddFamilyError(3, "Family Pipo", tab_test_err));
+          printf("La famille qui a ete ajoutee est %s\n", ReturnNameFamilyError(3));
 
-	  /* creation of attributes */
-	  for (th_index = 0; th_index < NB_THREADS; th_index++)
-	    {
-	      pthread_attr_init(&th_attr[th_index]);
-	      pthread_attr_setdetachstate(&th_attr[th_index], PTHREAD_CREATE_JOINABLE);
-	    }
+          /* creation of attributes */
+          for (th_index = 0; th_index < NB_THREADS; th_index++)
+            {
+              pthread_attr_init(&th_attr[th_index]);
+              pthread_attr_setdetachstate(&th_attr[th_index], PTHREAD_CREATE_JOINABLE);
+            }
 
-	  /* creation of threads with their names */
-	  for (i = 0; i < NB_THREADS; i++)
-	    {
-	      int rc;
-	      char *thread_name = malloc(256);
-	      snprintf(thread_name, 256, "thread %d", i);
-	      rc = pthread_create(&(threads[i]), &th_attr[i], Test1, (void *)thread_name);
-	    }
+          /* creation of threads with their names */
+          for (i = 0; i < NB_THREADS; i++)
+            {
+              int rc;
+              char *thread_name = malloc(256);
+              snprintf(thread_name, 256, "thread %d", i);
+              rc = pthread_create(&(threads[i]), &th_attr[i], Test1, (void *)thread_name);
+            }
 
-	  /* waiting for threads termination */
-	  for (i = 0; i < NB_THREADS; i++)
-	    {
-	      pthread_join(threads[i], &result);
-	      if (result)
-		return 1;
-	    }
+          /* waiting for threads termination */
+          for (i = 0; i < NB_THREADS; i++)
+            {
+              pthread_join(threads[i], &result);
+              if (result)
+                return 1;
+            }
 
-	  return 0;
+          return 0;
 
-	}
+        }
 
       /* unknown test */
-	else
-	{
-	  printf("%s\n", usage);
-	  exit(1);
-	}
+        else
+        {
+          printf("%s\n", usage);
+          exit(1);
+        }
 
     } else
     {

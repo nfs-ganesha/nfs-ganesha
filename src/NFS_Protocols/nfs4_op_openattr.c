@@ -97,7 +97,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -142,7 +142,7 @@
 #define res_OPENATTR4 resp->nfs_resop4_u.opopenattr
 
 int nfs4_op_openattr(struct nfs_argop4 *op,
-		     compound_data_t * data, struct nfs_resop4 *resp)
+                     compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_openattr";
 
@@ -152,7 +152,7 @@ int nfs4_op_openattr(struct nfs_argop4 *op,
   res_OPENATTR4.status = nfs4_fh_to_xattrfh(&(data->currentFH), &(data->currentFH));
 
   return res_OPENATTR4.status;
-}				/* nfs4_op_openattr */
+}                               /* nfs4_op_openattr */
 
 /**
  * nfs4_op_openattr_Free: frees what was allocared to handle nfs4_op_openattr.
@@ -168,4 +168,4 @@ void nfs4_op_openattr_Free(OPENATTR4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs4_op_openattr_Free */
+}                               /* nfs4_op_openattr_Free */

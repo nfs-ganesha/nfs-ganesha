@@ -42,10 +42,10 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
-			  fsal_name_t * p_object_name,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_attrib_list_t * p_parent_directory_attributes	/* [IN/OUT ] */
+fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
+                          fsal_name_t * p_object_name,  /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_attrib_list_t * p_parent_directory_attributes    /* [IN/OUT ] */
     )
 {
 
@@ -66,7 +66,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   /* build the destination path */
   status =
       fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1, &fsalpath,
-				      &buffstat_parent);
+                                      &buffstat_parent);
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_unlink);
 
@@ -102,7 +102,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   /****************
    * CHECK ACCESS *
    ****************/
-  if ((buffstat_parent.st_mode & S_ISVTX)	/* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
+  if ((buffstat_parent.st_mode & S_ISVTX)       /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
       && buffstat_parent.st_uid != p_context->credential.user
       && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     {
@@ -113,7 +113,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   if (FSAL_IS_ERROR
       (status =
        fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent,
-				NULL)))
+                                NULL)))
     {
       fsal_posixdb_cancelHandleLock(p_context->p_conn);
       Return(status.major, status.minor, INDEX_FSAL_unlink);
@@ -140,7 +140,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
   /* We have to delete the path from the database, and the handle if the object was a directory or has no more hardlink */
   statusdb =
       fsal_posixdb_delete(p_context->p_conn, p_parent_directory_handle, p_object_name,
-			  &info);
+                          &info);
   /* After this operation, there's no need to 'fsal_posixdb_cancelHandleLock' because the transaction is ended */
   switch (statusdb.major)
     {
@@ -150,7 +150,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
       break;
     default:
       if (FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
-	Return(status.major, status.minor, INDEX_FSAL_unlink);
+        Return(status.major, status.minor, INDEX_FSAL_unlink);
     }
 
   /***********************
@@ -161,12 +161,12 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,	/* IN */
     {
       status = posix2fsal_attributes(&buffstat_parent, p_parent_directory_attributes);
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
-			FSAL_ATTR_RDATTR_ERR);
-	  Return(status.major, status.minor, INDEX_FSAL_opendir);
-	}
+        {
+          FSAL_CLEAR_MASK(p_parent_directory_attributes->asked_attributes);
+          FSAL_SET_MASK(p_parent_directory_attributes->asked_attributes,
+                        FSAL_ATTR_RDATTR_ERR);
+          Return(status.major, status.minor, INDEX_FSAL_opendir);
+        }
     }
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlink);

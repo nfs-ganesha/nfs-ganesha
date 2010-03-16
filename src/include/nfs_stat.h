@@ -173,6 +173,6 @@ typedef struct nfs_request_stat__ {
 } nfs_request_stat_t;
 
 void nfs_stat_update(nfs_stat_type_t type,
-		     nfs_request_stat_t * pstat_req, struct svc_req *preq);
+                     nfs_request_stat_t * pstat_req, struct svc_req *preq);
 
-#endif				/* _NFS_STAT_H */
+#endif                          /* _NFS_STAT_H */

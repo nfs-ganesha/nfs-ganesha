@@ -166,18 +166,18 @@ static void print_list_ident(FILE * output, list_items * list, unsigned int inde
     {
 
       if (curr_item->type == TYPE_BLOCK)
-	{
-	  fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
-		  curr_item->item.block.block_name);
-	  print_list_ident(output, &curr_item->item.block.block_content, indent + 3);
-	  fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
-		  curr_item->item.block.block_name);
-	} else
-	{
-	  /* affectation */
-	  fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent, " ",
-		  curr_item->item.affect.varname, curr_item->item.affect.varvalue);
-	}
+        {
+          fprintf(output, "%*s<BLOCK '%s'>\n", indent, " ",
+                  curr_item->item.block.block_name);
+          print_list_ident(output, &curr_item->item.block.block_content, indent + 3);
+          fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
+                  curr_item->item.block.block_name);
+        } else
+        {
+          /* affectation */
+          fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent, " ",
+                  curr_item->item.affect.varname, curr_item->item.affect.varvalue);
+        }
 
       curr_item = curr_item->next;
     }
@@ -211,9 +211,9 @@ static void free_list_items_recurse(list_items * list)
       next_item = curr_item->next;
 
       if (curr_item->type == TYPE_BLOCK)
-	{
-	  free_list_items_recurse(&curr_item->item.block.block_content);
-	}
+        {
+          free_list_items_recurse(&curr_item->item.block.block_content);
+        }
 
       free(curr_item);
       curr_item = next_item;

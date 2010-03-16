@@ -61,16 +61,16 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
      one of the TOKENS.  */
   for (cnt = 0; tokens[cnt] != NULL; ++cnt)
     if (memcmp(*optionp, tokens[cnt], vstart - *optionp) == 0
-	&& tokens[cnt][vstart - *optionp] == '\0')
+        && tokens[cnt][vstart - *optionp] == '\0')
       {
-	/* We found the current option in TOKENS.  */
-	*valuep = vstart != endp ? vstart + 1 : NULL;
+        /* We found the current option in TOKENS.  */
+        *valuep = vstart != endp ? vstart + 1 : NULL;
 
-	if (*endp != '\0')
-	  *endp++ = '\0';
-	*optionp = endp;
+        if (*endp != '\0')
+          *endp++ = '\0';
+        *optionp = endp;
 
-	return cnt;
+        return cnt;
       }
 
   /* The current suboption does not match any option.  */
@@ -95,9 +95,9 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	/* OUT */
-				      fsal_path_t * p_export_path,	/* IN */
-				      char *fs_specific_options	/* IN */
+fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
+                                      fsal_path_t * p_export_path,      /* IN */
+                                      char *fs_specific_options /* IN */
     )
 {
   char subopts[256];
@@ -105,7 +105,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	
   char *value;
 
   char *filesetname = NULL;
-  int read_cos = 0;		/* 0 => not set */
+  int read_cos = 0;             /* 0 => not set */
 
   int rc;
 
@@ -121,35 +121,35 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	
 
       /* copy the option string (because it is modified by getsubopt call) */
       strncpy(subopts, fs_specific_options, 256);
-      p_subop = subopts;	/* set initial pointer */
+      p_subop = subopts;        /* set initial pointer */
 
       /* parse the FS specific option string */
 
       switch (Getsubopt(&p_subop, fs_specific_opts, &value))
-	{
-	case FILESET_OPTION:
-	  filesetname = value;
-	  break;
+        {
+        case FILESET_OPTION:
+          filesetname = value;
+          break;
 
-	case COS_OPTION:
-	  read_cos = atoi(value);
-	  if (read_cos <= 0)
-	    {
-	      DisplayLog
-		  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for EXPORT::FS_Specific::%s : ( %s ) positive integer expected.",
-		   fs_specific_opts[COS_OPTION], value);
-	      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
-	    }
-	  break;
+        case COS_OPTION:
+          read_cos = atoi(value);
+          if (read_cos <= 0)
+            {
+              DisplayLog
+                  ("FSAL LOAD PARAMETER: ERROR: Unexpected value for EXPORT::FS_Specific::%s : ( %s ) positive integer expected.",
+                   fs_specific_opts[COS_OPTION], value);
+              Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
+            }
+          break;
 
-	default:
-	  {
-	    DisplayLog
-		("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : %s or %s expected.",
-		 value, fs_specific_opts[FILESET_OPTION], fs_specific_opts[COS_OPTION]);
-	    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
-	  }
-	}
+        default:
+          {
+            DisplayLog
+                ("FSAL LOAD PARAMETER: ERROR: Invalid suboption found in EXPORT::FS_Specific : %s : %s or %s expected.",
+                 value, fs_specific_opts[FILESET_OPTION], fs_specific_opts[COS_OPTION]);
+            Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_BuildExportContext);
+          }
+        }
 
     }
 
@@ -162,8 +162,8 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context,	
   if (rc != 0)
     {
       DisplayLog
-	  ("FSAL LOAD PARAMETER: ERROR: Could not get root handle for fileset \"%s\"",
-	   (filesetname == NULL ? filesetname : "<root>"));
+          ("FSAL LOAD PARAMETER: ERROR: Could not get root handle for fileset \"%s\"",
+           (filesetname == NULL ? filesetname : "<root>"));
       Return(ERR_FSAL_INVAL, -rc, INDEX_FSAL_BuildExportContext);
     }
 
@@ -208,14 +208,14 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential created:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.SecPWent.Uid,
-		    p_thr_context->credential.hpss_usercred.SecPWent.Gid);
+                    p_thr_context->credential.hpss_usercred.SecPWent.Uid,
+                    p_thr_context->credential.hpss_usercred.SecPWent.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.SecPWent.Name);
+                    p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
 
@@ -223,14 +223,14 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential created:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.Uid,
-		    p_thr_context->credential.hpss_usercred.Gid);
+                    p_thr_context->credential.hpss_usercred.Uid,
+                    p_thr_context->credential.hpss_usercred.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.Name);
+                    p_thr_context->credential.hpss_usercred.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
 
@@ -238,14 +238,14 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential created:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.Uid,
-		    p_thr_context->credential.hpss_usercred.Gid);
+                    p_thr_context->credential.hpss_usercred.Uid,
+                    p_thr_context->credential.hpss_usercred.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.Name);
+                    p_thr_context->credential.hpss_usercred.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #endif
 
@@ -276,12 +276,12 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT  */
-				    fsal_export_context_t * p_export_context,	/* IN */
-				    fsal_uid_t uid,	/* IN */
-				    fsal_gid_t gid,	/* IN */
-				    fsal_gid_t * alt_groups,	/* IN */
-				    fsal_count_t nb_alt_groups	/* IN */
+fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                    fsal_export_context_t * p_export_context,   /* IN */
+                                    fsal_uid_t uid,     /* IN */
+                                    fsal_gid_t gid,     /* IN */
+                                    fsal_gid_t * alt_groups,    /* IN */
+                                    fsal_count_t nb_alt_groups  /* IN */
     )
 {
 
@@ -298,7 +298,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
     {
       st = FSAL_InitClientContext(p_thr_context);
       if (FSAL_IS_ERROR(st))
-	return st;
+        return st;
     }
 
   /* set the export specific context */
@@ -308,7 +308,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
 
 #if HPSS_MAJOR_VERSION == 5
   strcpy(p_thr_context->credential.hpss_usercred.SecPWent.Name, "NFS.User");
-  p_thr_context->credential.hpss_usercred.SecLabel = 0;	/* Symbol? */
+  p_thr_context->credential.hpss_usercred.SecLabel = 0; /* Symbol? */
   p_thr_context->credential.hpss_usercred.CurAccount = ACCT_REC_DEFAULT;
   p_thr_context->credential.hpss_usercred.DefAccount = ACCT_REC_DEFAULT;
   p_thr_context->credential.hpss_usercred.SecPWent.Uid = uid;
@@ -338,14 +338,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.SecPWent.Uid,
-		    p_thr_context->credential.hpss_usercred.SecPWent.Gid);
+                    p_thr_context->credential.hpss_usercred.SecPWent.Uid,
+                    p_thr_context->credential.hpss_usercred.SecPWent.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.SecPWent.Name);
+                    p_thr_context->credential.hpss_usercred.SecPWent.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 6 )
 
@@ -353,14 +353,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.Uid,
-		    p_thr_context->credential.hpss_usercred.Gid);
+                    p_thr_context->credential.hpss_usercred.Uid,
+                    p_thr_context->credential.hpss_usercred.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.Name);
+                    p_thr_context->credential.hpss_usercred.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #elif defined( _DEBUG_FSAL ) && ( HPSS_MAJOR_VERSION == 7 )
 
@@ -368,14 +368,14 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,	/* IN/OUT
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "credential modified:");
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tuid = %d, gid = %d",
-		    p_thr_context->credential.hpss_usercred.Uid,
-		    p_thr_context->credential.hpss_usercred.Gid);
+                    p_thr_context->credential.hpss_usercred.Uid,
+                    p_thr_context->credential.hpss_usercred.Gid);
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tName = %s",
-		    p_thr_context->credential.hpss_usercred.Name);
+                    p_thr_context->credential.hpss_usercred.Name);
 
   for (i = 0; i < p_thr_context->credential.hpss_usercred.NumGroups; i++)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "\tAlt grp: %d",
-		      p_thr_context->credential.hpss_usercred.AltGroups[i]);
+                      p_thr_context->credential.hpss_usercred.AltGroups[i]);
 
 #endif
 

@@ -82,7 +82,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -124,12 +124,12 @@
  */
 
 int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
-	      exportlist_t * pexport /* IN     */ ,
-	      fsal_op_context_t * pcontext /* IN     */ ,
-	      cache_inode_client_t * pclient /* INOUT  */ ,
-	      hash_table_t * ht /* INOUT  */ ,
-	      struct svc_req *preq /* IN     */ ,
-	      nfs_res_t * pres /* OUT    */ )
+              exportlist_t * pexport /* IN     */ ,
+              fsal_op_context_t * pcontext /* IN     */ ,
+              cache_inode_client_t * pclient /* INOUT  */ ,
+              hash_table_t * ht /* INOUT  */ ,
+              struct svc_req *preq /* IN     */ ,
+              nfs_res_t * pres /* OUT    */ )
 {
   fsal_file_t *fd;
   fsal_status_t retval;
@@ -141,7 +141,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   cache_inode_fsal_data_t fsal_data;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "REQUEST PROCESSING: Calling nlm_Test");
+                    "REQUEST PROCESSING: Calling nlm_Test");
 
   /* Convert file handle into a cache entry */
 
@@ -164,7 +164,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
   if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-				pclient, pcontext, &cache_status)) == NULL)
+                                pclient, pcontext, &cache_status)) == NULL)
     {
       /* handle is not valid */
       pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
@@ -186,18 +186,18 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   if (!FSAL_IS_ERROR(retval))
     {
       if (lock_desc->flock.l_type = F_UNLCK)
-	{
-	  /* we can place the lock */
-	  pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
-	  goto complete;
-	} else
-	{
-	  pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
-	  fsal_lockdesc_to_nlm_holder(lock_desc,
-				      &pres->res_nlm4test.test_stat.
-				      nlm4_testrply_u.holder);
-	  goto complete;
-	}
+        {
+          /* we can place the lock */
+          pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
+          goto complete;
+        } else
+        {
+          pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
+          fsal_lockdesc_to_nlm_holder(lock_desc,
+                                      &pres->res_nlm4test.test_stat.nlm4_testrply_u.
+                                      holder);
+          goto complete;
+        }
     }
   pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
  complete:

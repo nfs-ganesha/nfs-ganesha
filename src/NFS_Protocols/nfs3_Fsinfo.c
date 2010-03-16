@@ -141,10 +141,10 @@
  */
 
 int nfs3_Fsinfo(nfs_arg_t * parg,
-		exportlist_t * pexport,
-		fsal_op_context_t * pcontext,
-		cache_inode_client_t * pclient,
-		hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                exportlist_t * pexport,
+                fsal_op_context_t * pcontext,
+                cache_inode_client_t * pclient,
+                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs3_Fsinfo";
 
@@ -165,7 +165,7 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
 
   /* Get the entry in the cache_inode */
   if ((pentry = cache_inode_get(&fsal_data,
-				&attr, ht, pclient, pcontext, &cache_status)) == NULL)
+                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_fsinfo3.status = NFS3ERR_STALE;
@@ -198,11 +198,11 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
 
 #ifdef _DEBUG_NFSPROTO
   printf("rtmax = %d | rtpref = %d | trmult = %d\n",
-	 FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
+         FSINFO_FIELD.rtmax, FSINFO_FIELD.rtpref, FSINFO_FIELD.rtmult = DEV_BSIZE);
   printf("wtmax = %d | wtpref = %d | wrmult = %d\n",
-	 FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
+         FSINFO_FIELD.wtmax, FSINFO_FIELD.wtpref, FSINFO_FIELD.wtmult = DEV_BSIZE);
   printf("dtpref = %d | maxfilesize = %llu \n", FSINFO_FIELD.dtpref,
-	 FSINFO_FIELD.maxfilesize);
+         FSINFO_FIELD.maxfilesize);
 #endif
 
   /*
@@ -212,12 +212,12 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   FSINFO_FIELD.properties = FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
 
   nfs_SetPostOpAttr(pcontext, pexport,
-		    pentry,
-		    &attr, &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
+                    pentry,
+                    &attr, &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
   pres->res_fsinfo3.status = NFS3_OK;
 
   return NFS_REQ_OK;
-}				/* nfs3_Fsinfo */
+}                               /* nfs3_Fsinfo */
 
 /**
  * nfs3_Fsinfo_Free: Frees the result structure allocated for nfs3_Fsinfo.
@@ -231,4 +231,4 @@ void nfs3_Fsinfo_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
   return;
-}				/* nfs3_Fsinfo_Free */
+}                               /* nfs3_Fsinfo_Free */

@@ -38,8 +38,8 @@ extern log_t fsal_log;
  *  This function initializes shared variables of the FSAL.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info,
-					fs_specific_initinfo_t * fs_specific_info);
+                                        fs_common_initinfo_t * fs_common_info,
+                                        fs_specific_initinfo_t * fs_specific_info);
 
 /**
  *  Increments the number of calls for a function.
@@ -93,28 +93,28 @@ void ReleaseTokenFSCall();
  * Append a fsal_name to an fsal_path to have the full path of a file from its name and its parent path
  */
 fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
-					     const fsal_name_t * p_name);
+                                             const fsal_name_t * p_name);
 
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,	/* IN */
-					   fsal_handle_t * p_handle,	/* IN */
-					   fsal_path_t * p_fsalpath /* OUT */ );
+fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       /* IN */
+                                           fsal_handle_t * p_handle,    /* IN */
+                                           fsal_path_t * p_fsalpath /* OUT */ );
 
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
-					fsal_path_t * p_fsalpath,	/* IN */
-					fsal_handle_t * p_handle /* OUT */ );
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+                                        fsal_path_t * p_fsalpath,       /* IN */
+                                        fsal_handle_t * p_handle /* OUT */ );
 
 /**
  *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
  *
  */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
-				       fsal_accessflags_t access_type,	/* IN */
-				       struct stat *p_buffstat,	/* IN, optional */
-				       fsal_attrib_list_t *
-				       p_object_attributes /* IN, optional */ );
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+                                       fsal_accessflags_t access_type,  /* IN */
+                                       struct stat *p_buffstat, /* IN, optional */
+                                       fsal_attrib_list_t *
+                                       p_object_attributes /* IN, optional */ );

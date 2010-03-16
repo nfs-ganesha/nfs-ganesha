@@ -89,7 +89,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "stuff_alloc.h"
 #include "LRU_List.h"
@@ -121,14 +121,14 @@
  *
  */
 int cache_content_init(cache_content_client_parameter_t param,
-		       cache_content_status_t * pstatus)
+                       cache_content_status_t * pstatus)
 {
   /* Try to create the cache directory */
   if (mkdir(param.cache_dir, 0750) != 0 && errno != EEXIST)
     {
       /* Cannot create the directory for caching data */
       fprintf(stderr, "Can't create cache dir = %s, error = ( %d, %s )\n",
-	      param.cache_dir, errno, strerror(errno));
+              param.cache_dir, errno, strerror(errno));
 
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
       return -1;
@@ -136,7 +136,7 @@ int cache_content_init(cache_content_client_parameter_t param,
 
   /* Successfull exit */
   return 0;
-}				/* cache_content_init */
+}                               /* cache_content_init */
 
 /**
  *
@@ -149,7 +149,7 @@ int cache_content_init(cache_content_client_parameter_t param,
  *
  */
 int cache_content_init_dir(cache_content_client_parameter_t param,
-			   unsigned short export_id)
+                           unsigned short export_id)
 {
   char path_to_dir[MAXPATHLEN];
 
@@ -161,7 +161,7 @@ int cache_content_init_dir(cache_content_client_parameter_t param,
     }
 
   return 0;
-}				/* cache_content_init_dir */
+}                               /* cache_content_init_dir */
 
 /**
  *
@@ -176,7 +176,7 @@ int cache_content_init_dir(cache_content_client_parameter_t param,
  *
  */
 int cache_content_client_init(cache_content_client_t * pclient,
-			      cache_content_client_parameter_t param)
+                              cache_content_client_parameter_t param)
 {
   LRU_status_t lru_status;
 
@@ -195,7 +195,7 @@ int cache_content_client_init(cache_content_client_t * pclient,
 
 #ifndef _NO_BLOCK_PREALLOC
   STUFF_PREALLOC(pclient->pool_entry,
-		 pclient->nb_prealloc, cache_content_entry_t, next_alloc);
+                 pclient->nb_prealloc, cache_content_entry_t, next_alloc);
 
 # ifdef _DEBUG_MEMLEAKS
   /* For debugging memory leaks */
@@ -205,11 +205,11 @@ int cache_content_client_init(cache_content_client_t * pclient,
   if (pclient->pool_entry == NULL)
     {
       DisplayLogJd(pclient->log_outputs,
-		   "Error : can't init data_cache client entry pool");
+                   "Error : can't init data_cache client entry pool");
       return 1;
     }
 #endif
 
   /* Successfull exit */
   return 0;
-}				/* cache_content_init */
+}                               /* cache_content_init */

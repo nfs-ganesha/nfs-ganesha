@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,10 +143,10 @@
  */
 
 int nfs3_Pathconf(nfs_arg_t * parg,
-		  exportlist_t * pexport,
-		  fsal_op_context_t * pcontext,
-		  cache_inode_client_t * pclient,
-		  hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                  exportlist_t * pexport,
+                  fsal_op_context_t * pcontext,
+                  cache_inode_client_t * pclient,
+                  hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs3_Pathconf";
 
@@ -169,7 +169,7 @@ int nfs3_Pathconf(nfs_arg_t * parg,
 
   /* Get the entry in the cache_inode */
   if ((pentry = cache_inode_get(&fsal_data,
-				&attr, ht, pclient, pcontext, &cache_status)) == NULL)
+                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_pathconf3.status = NFS3ERR_STALE;
@@ -186,8 +186,8 @@ int nfs3_Pathconf(nfs_arg_t * parg,
 
   /* Build post op file attributes */
   nfs_SetPostOpAttr(pcontext, pexport,
-		    pentry,
-		    &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes));
+                    pentry,
+                    &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes));
 
   pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = staticinfo.maxlink;
   pres->res_pathconf3.PATHCONF3res_u.resok.name_max = staticinfo.maxnamelen;
@@ -197,7 +197,7 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = staticinfo.case_preserving;
 
   return NFS_REQ_OK;
-}				/* nfs3_Pathconf */
+}                               /* nfs3_Pathconf */
 
 /**
  * nfs3_Pathconf_Free: Frees the result structure allocated for nfs3_Pathconf.
@@ -211,4 +211,4 @@ void nfs3_Pathconf_Free(nfs_res_t * pres)
 {
   /* Nothing to do */
   return;
-}				/* nfs3_Pathconf_Free */
+}                               /* nfs3_Pathconf_Free */

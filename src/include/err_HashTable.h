@@ -116,17 +116,17 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_hash[] =
   HASHTABLE_UNKNOWN_HASH_TYPE, "HASHTABLE_UNKNOWN_HASH_TYPE", "Unknown hash type"},
   {
   HASHTABLE_INSERT_MALLOC_ERROR, "HASHTABLE_INSERT_MALLOC_ERROR",
-	"Malloc error at insert time"},
+        "Malloc error at insert time"},
   {
   HASHTABLE_ERROR_NO_SUCH_KEY, "HASHTABLE_ERROR_NO_SUCH_KEY", "No such key"},
   {
   HASHTABLE_ERROR_KEY_ALREADY_EXISTS, "HASHTABLE_ERROR_KEY_ALREADY_EXISTS",
-	"Entry of that key already exists"},
+        "Entry of that key already exists"},
   {
   HASHTABLE_ERROR_INVALID_ARGUMENT, "HASHTABLE_ERROR_INVALID_ARGUMENT",
-	"Invalid argument"},
+        "Invalid argument"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };
 
-#endif				/* _ERR_HASHTABLE_H */
+#endif                          /* _ERR_HASHTABLE_H */

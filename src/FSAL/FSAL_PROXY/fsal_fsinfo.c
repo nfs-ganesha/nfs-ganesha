@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -58,9 +58,9 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				 fsal_op_context_t * p_context,	/* IN */
-				 fsal_staticfsinfo_t * staticinfo	/* OUT */
+fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
     )
 {
   /* sanity checks. */
@@ -94,9 +94,9 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,	/* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
-				  fsal_op_context_t * p_context,	/* IN */
-				  fsal_dynamicfsinfo_t * dynamicinfo	/* OUT */
+fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
     )
 {
 
@@ -145,16 +145,16 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, bitmap);
 
-  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
   TakeTokenFSCall();
@@ -175,11 +175,10 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
   /* Use NFSv4 service function to build the FSAL_attr */
   if (proxy_Fattr_To_FSAL_dynamic_fsinfo(dynamicinfo,
-					 &resnfs4.
-					 resarray.resarray_val
-					 [FSAL_FSINFO_IDX_OP_GETATTR].nfs_resop4_u.
-					 opgetattr.GETATTR4res_u.resok4.obj_attributes) !=
-      1)
+                                         &resnfs4.resarray.resarray_val
+                                         [FSAL_FSINFO_IDX_OP_GETATTR].
+                                         nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                                         obj_attributes) != 1)
     {
       memset((char *)dynamicinfo, 0, sizeof(fsal_dynamicfsinfo_t));
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_dynamic_fsinfo);
@@ -187,4 +186,4 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,	/* IN */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_dynamic_fsinfo);
 
-}				/* FSAL_dynamic_fsinfo */
+}                               /* FSAL_dynamic_fsinfo */

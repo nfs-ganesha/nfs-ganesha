@@ -51,10 +51,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_path_t * p_link_content,	/* OUT */
-			    fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -72,11 +72,11 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_ReadlinkHandle(&(linkhandle->ns_handle),	/* IN - Handle of symbolic link */
-			   NULL,	/* IN - Path of the link (null=>ignored) */
-			   link_content_out,	/* OUT - contents of the link */
-			   FSAL_MAX_PATH_LEN,	/* IN - Size, in bytes, of contents buffer */
-			   &p_context->credential.hpss_usercred);	/* IN - pointer to user credentials */
+  rc = hpss_ReadlinkHandle(&(linkhandle->ns_handle),    /* IN - Handle of symbolic link */
+                           NULL,        /* IN - Path of the link (null=>ignored) */
+                           link_content_out,    /* OUT - contents of the link */
+                           FSAL_MAX_PATH_LEN,   /* IN - Size, in bytes, of contents buffer */
+                           &p_context->credential.hpss_usercred);       /* IN - pointer to user credentials */
 
   ReleaseTokenFSCall();
 
@@ -107,10 +107,10 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
       /* On error, we set a flag in the returned attributes */
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
-	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+          FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
@@ -152,13 +152,13 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle,	/* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
-			   fsal_name_t * p_linkname,	/* IN */
-			   fsal_path_t * p_linkcontent,	/* IN */
-			   fsal_op_context_t * p_context,	/* IN */
-			   fsal_accessmode_t accessmode,	/* IN (ignored) */
-			   fsal_handle_t * link_handle,	/* OUT */
-			   fsal_attrib_list_t * link_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored) */
+                           fsal_handle_t * link_handle, /* OUT */
+                           fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -181,12 +181,12 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
 
   TakeTokenFSCall();
 
-  rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->ns_handle),	/* IN - Handle of existing file */
-			      p_linkcontent->path,	/* IN - Desired contents of the link */
-			      p_linkname->name,	/* IN - New name of the symbolic link */
-			      &(p_context->credential.hpss_usercred),	/* IN - pointer to user credentials */
-			      &(link_handle->ns_handle),	/* OUT */
-			      &attrs	/* OUT - symbolic link attributes */
+  rc = HPSSFSAL_SymlinkHandle(&(parent_directory_handle->ns_handle),    /* IN - Handle of existing file */
+                              p_linkcontent->path,      /* IN - Desired contents of the link */
+                              p_linkname->name, /* IN - New name of the symbolic link */
+                              &(p_context->credential.hpss_usercred),   /* IN - pointer to user credentials */
+                              &(link_handle->ns_handle),        /* OUT */
+                              &attrs    /* OUT - symbolic link attributes */
       );
 
   ReleaseTokenFSCall();
@@ -198,10 +198,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
   if (rc == HPSS_ENOTDIR || rc == HPSS_ENOENT)
     {
       if (HPSSFSAL_IsStaleHandle(&parent_directory_handle->ns_handle,
-				 &p_context->credential.hpss_usercred))
-	{
-	  Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_symlink);
-	}
+                                 &p_context->credential.hpss_usercred))
+        {
+          Return(ERR_FSAL_STALE, -rc, INDEX_FSAL_symlink);
+        }
     }
 
   /* other errors */
@@ -221,10 +221,10 @@ fsal_status_t FSAL_symlink(fsal_handle_t * parent_directory_handle,	/* IN */
       status = hpss2fsal_attributes(&(link_handle->ns_handle), &attrs, link_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(link_attributes->asked_attributes);
-	  FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(link_attributes->asked_attributes);
+          FSAL_SET_MASK(link_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

@@ -89,16 +89,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
@@ -143,25 +143,25 @@ int display_state_id_key(hash_buffer_t * pbuff, char *str)
   for (i = 0; i < 12; i++)
     len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
   return len;
-}				/* display_state_id_val */
+}                               /* display_state_id_val */
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str)
 {
   cache_inode_state_t *pstate = (cache_inode_state_t *) (pbuff->pdata);
 
   return sprintf(str,
-		 "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p\n",
-		 pstate, pstate->pentry, pstate->state_type, pstate->seqid, pstate->prev,
-		 pstate->next);
-}				/* display_state_id_val */
+                 "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p\n",
+                 pstate, pstate->pentry, pstate->state_type, pstate->seqid, pstate->prev,
+                 pstate->next);
+}                               /* display_state_id_val */
 
 int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return memcmp(buff1->pdata, buff2->pdata, 12);	/* The value 12 is fixed by RFC3530 */
-}				/* compare_state_id */
+  return memcmp(buff1->pdata, buff2->pdata, 12);        /* The value 12 is fixed by RFC3530 */
+}                               /* compare_state_id */
 
 unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef)
+                                       hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -176,13 +176,13 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
 
 #ifdef _DEBUG_STATES
   printf("---> state_id_value_hash_func=%lu\n",
-	 (unsigned long)(sum % p_hparam->index_size));
+         (unsigned long)(sum % p_hparam->index_size));
 #endif
   return (unsigned long)(sum % p_hparam->index_size);
-}				/*  client_id_reverse_value_hash_func */
+}                               /*  client_id_reverse_value_hash_func */
 
 unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				     hash_buffer_t * buffclef)
+                                     hash_buffer_t * buffclef)
 {
 
   u_int32_t i1 = 0;
@@ -205,7 +205,7 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   printf("--->  state_id_rbt_hash_func=%lu\n", (unsigned long)(i1 ^ i2 ^ i3));
 #endif
   return (unsigned long)(i1 ^ i2 ^ i3);
-}				/* state_id_rbt_hash_func */
+}                               /* state_id_rbt_hash_func */
 
 /**
  *
@@ -230,7 +230,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
     }
 
   return 0;
-}				/* nfs_Init_client_id */
+}                               /* nfs_Init_client_id */
 
 /**
  *
@@ -249,8 +249,8 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
  */
 
 int nfs4_BuildStateId_Other(cache_entry_t * pentry,
-			    fsal_op_context_t * pcontext,
-			    cache_inode_open_owner_t * popen_owner, char *other)
+                            fsal_op_context_t * pcontext,
+                            cache_inode_open_owner_t * popen_owner, char *other)
 {
   uint64_t fileid_digest = 0;
   u_int16_t srvboot_digest = 0;
@@ -273,14 +273,14 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
 
 #ifdef _DEBUG_STATES
   printf("----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s\n",
-	 pentry, popen_owner->owner_len, popen_owner->owner_val);
+         pentry, popen_owner->owner_len, popen_owner->owner_val);
 #endif
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
   if (FSAL_IS_ERROR(FSAL_DigestHandle(pcontext->export_context,
-				      FSAL_DIGEST_FILEID3,
-				      &(pentry->object.file.handle),
-				      (caddr_t) & fileid_digest)))
+                                      FSAL_DIGEST_FILEID3,
+                                      &(pentry->object.file.handle),
+                                      (caddr_t) & fileid_digest)))
     return 0;
 
   srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
@@ -288,7 +288,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
 
 #ifdef _DEBUG_STATES
   printf("----  nfs4_BuildStateId_Other : pentry=%p fileid=%llu open_owner_digest=%u\n",
-	 pentry, fileid_digest, open_owner_digest);
+         pentry, fileid_digest, open_owner_digest);
 #endif
 
   /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
@@ -297,7 +297,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
   memcpy((char *)(other + 10), &open_owner_digest, 2);
 
   return 1;
-}				/* nfs4_BuildStateId_Other */
+}                               /* nfs4_BuildStateId_Other */
 
 /**
  *
@@ -339,7 +339,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
     return 0;
 
   return 1;
-}				/* nfs4_State_Set */
+}                               /* nfs4_State_Set */
 
 /**
  *
@@ -383,7 +383,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
   printf("---> nfs4_State_Get Found :-)\n");
 #endif
   return 1;
-}				/* nfs4_State_Get */
+}                               /* nfs4_State_Get */
 
 /**
  *
@@ -428,7 +428,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
   printf("---> nfs4_State_Get_Pointer Found :-)\n");
 #endif
   return 1;
-}				/* nfs4_State_Get_Pointer */
+}                               /* nfs4_State_Get_Pointer */
 
 /**
  * 
@@ -472,7 +472,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
   printf("---> nfs4_State_Update Found :-)\n");
 #endif
   return 1;
-}				/* nfs4_State_Update */
+}                               /* nfs4_State_Update */
 
 /**
  *
@@ -511,7 +511,7 @@ int nfs4_State_Del(char other[12])
       return 1;
     } else
     return 0;
-}				/* nfs4_State_Del */
+}                               /* nfs4_State_Del */
 
 /**
  *
@@ -525,7 +525,7 @@ int nfs4_State_Del(char other[12])
  *
  */
 int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
-		       clientid4 clientid)
+                       clientid4 clientid)
 {
   u_int16_t time_digest = 0;
   u_int16_t counter_digest = 0;
@@ -569,7 +569,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   if (clientid == 0LL)
     {
       if (nfs_client_id_get(state.powner->clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
-	return NFS4ERR_BAD_STATEID;	/* Refers to a non-existing client... */
+        return NFS4ERR_BAD_STATEID;     /* Refers to a non-existing client... */
     }
 
   /* Check if stateid was made from this server instance */
@@ -579,7 +579,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
     return NFS4ERR_STALE_STATEID;
 
   return NFS4_OK;
-}				/* nfs4_Check_Stateid */
+}                               /* nfs4_Check_Stateid */
 
 /**
  * 
@@ -593,4 +593,4 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
 void nfs_State_PrintAll(void)
 {
   HashTable_Print(ht_state_id);
-}				/* nfs_State_PrintAll */
+}                               /* nfs_State_PrintAll */

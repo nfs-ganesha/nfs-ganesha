@@ -51,7 +51,7 @@ static inline void init_glist(struct glist_head *head)
 
 /* Add the new element between left and right */
 static inline void __glist_add(struct glist_head *left, struct glist_head *right,
-			       struct glist_head *new)
+                               struct glist_head *new)
 {
   new->prev = left;
   new->next = right;

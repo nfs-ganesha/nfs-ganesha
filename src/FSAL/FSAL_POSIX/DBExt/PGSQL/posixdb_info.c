@@ -5,11 +5,11 @@
 #include "posixdb_internal.h"
 #include "string.h"
 
-fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/* IN */
-						   fsal_handle_t * p_parent_directory_handle,	/* IN/OUT */
-						   fsal_name_t * p_objectname,	/* IN */
-						   fsal_path_t * p_path,	/* OUT */
-						   fsal_handle_t * p_handle /* OUT */ )
+fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */
+                                                   fsal_handle_t * p_parent_directory_handle,   /* IN/OUT */
+                                                   fsal_name_t * p_objectname,  /* IN */
+                                                   fsal_path_t * p_path,        /* OUT */
+                                                   fsal_handle_t * p_handle /* OUT */ )
 {
   PGresult *p_res;
   fsal_posixdb_status_t st;
@@ -55,9 +55,9 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/
 
   p_handle->id = atoll(PQgetvalue(p_res, 0, 0));
   p_handle->ts = atoi(PQgetvalue(p_res, 0, 1));
-  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->info), PQgetvalue(p_res, 0, 2), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4),	/* nlink */
-					     PQgetvalue(p_res, 0, 5),	/* ctime */
-					     PQgetvalue(p_res, 0, 6)	/* ftype */
+  posixdb_internal_fillFileinfoFromStrValues(&(p_handle->info), PQgetvalue(p_res, 0, 2), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4),      /* nlink */
+                                             PQgetvalue(p_res, 0, 5),   /* ctime */
+                                             PQgetvalue(p_res, 0, 6)    /* ftype */
       );
   PQclear(p_res);
 
@@ -67,17 +67,17 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/
       /* build the path of the Parent */
       st = fsal_posixdb_buildOnePath(p_conn, p_parent_directory_handle, p_path);
       if (st.major != ERR_FSAL_POSIXDB_NOERR)
-	{
-	  RollbackTransaction(p_conn, p_res);
-	  return st;
-	}
+        {
+          RollbackTransaction(p_conn, p_res);
+          return st;
+        }
 
       /* then concatenate the filename */
       if (!(p_path->len + 1 + p_objectname->len < FSAL_MAX_PATH_LEN))
-	{
-	  RollbackTransaction(p_conn, p_res);
-	  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
-	}
+        {
+          RollbackTransaction(p_conn, p_res);
+          ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+        }
       p_path->path[p_path->len] = '/';
       strcpy(&p_path->path[p_path->len + 1], p_objectname->name);
       p_path->len += 1 + p_objectname->len;
@@ -95,11 +95,11 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,	/
   ReturnCode(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
-fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,	/* IN */
-						     fsal_handle_t * p_object_handle,	/* IN/OUT */
-						     fsal_path_t * p_paths,	/* OUT */
-						     int paths_size,	/* IN */
-						     int *p_count /* OUT */ )
+fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,        /* IN */
+                                                     fsal_handle_t * p_object_handle,   /* IN/OUT */
+                                                     fsal_path_t * p_paths,     /* OUT */
+                                                     int paths_size,    /* IN */
+                                                     int *p_count /* OUT */ )
 {
   PGresult *p_res;
   fsal_posixdb_status_t st;
@@ -137,23 +137,23 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
 #ifdef _DEBUG_FSAL
       DisplayLog("lookupHandle(%u,%u)", (unsigned int)p_object_handle->id,
-		 (unsigned int)p_object_handle->ts);
+                 (unsigned int)p_object_handle->ts);
 #endif
 
       /* entry not found */
       if (PQntuples(p_res) != 1)
-	{
+        {
 #ifdef _DEBUG_FSAL
-	  DisplayLog("lookupHandle=%d entries", PQntuples(p_res));
+          DisplayLog("lookupHandle=%d entries", PQntuples(p_res));
 #endif
-	  RollbackTransaction(p_conn, p_res);
-	  ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
-	}
+          RollbackTransaction(p_conn, p_res);
+          ReturnCode(ERR_FSAL_POSIXDB_NOENT, 0);
+        }
 
-      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), PQgetvalue(p_res, 0, 0), PQgetvalue(p_res, 0, 1), PQgetvalue(p_res, 0, 2),	/* nlink */
-						 PQgetvalue(p_res, 0, 3),	/* ctime */
-						 PQgetvalue(p_res, 0, 4)	/* ftype */
-	  );
+      posixdb_internal_fillFileinfoFromStrValues(&(p_object_handle->info), PQgetvalue(p_res, 0, 0), PQgetvalue(p_res, 0, 1), PQgetvalue(p_res, 0, 2),   /* nlink */
+                                                 PQgetvalue(p_res, 0, 3),       /* ctime */
+                                                 PQgetvalue(p_res, 0, 4)        /* ftype */
+          );
       PQclear(p_res);
 
       /* update the inode */
@@ -169,68 +169,68 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
       /* p_res contains name, handleidparent, handletsparent */
       *p_count = PQntuples(p_res);
       if (*p_count == 0)
-	{
-	  RollbackTransaction(p_conn, p_res);
-	  ReturnCode(ERR_FSAL_POSIXDB_NOPATH, 0);
-	}
+        {
+          RollbackTransaction(p_conn, p_res);
+          ReturnCode(ERR_FSAL_POSIXDB_NOPATH, 0);
+        }
       if (*p_count > paths_size)
-	{
-	  toomanypaths = 1;
+        {
+          toomanypaths = 1;
 
-	  DisplayLog("Too many paths found for object %s.%s: found=%u, max=%d",
-		     handleid_str, handlets_str, *p_count, paths_size);
+          DisplayLog("Too many paths found for object %s.%s: found=%u, max=%d",
+                     handleid_str, handlets_str, *p_count, paths_size);
 
-	  *p_count = paths_size;
-	}
+          *p_count = paths_size;
+        }
 
       for (i_path = 0; i_path < *p_count; i_path++)
-	{
-	  unsigned int tmp_len;
+        {
+          unsigned int tmp_len;
 
-	  /* build the path of the parent directory */
-	  parent_directory_handle.id = atoll(PQgetvalue(p_res, i_path, 1));
-	  parent_directory_handle.ts = atoi(PQgetvalue(p_res, i_path, 2));
+          /* build the path of the parent directory */
+          parent_directory_handle.id = atoll(PQgetvalue(p_res, i_path, 1));
+          parent_directory_handle.ts = atoi(PQgetvalue(p_res, i_path, 2));
 
-	  st = fsal_posixdb_buildOnePath(p_conn, &parent_directory_handle,
-					 &p_paths[i_path]);
-	  if (st.major != ERR_FSAL_POSIXDB_NOERR)
-	    {
-	      RollbackTransaction(p_conn, p_res);
-	      return st;
-	    }
+          st = fsal_posixdb_buildOnePath(p_conn, &parent_directory_handle,
+                                         &p_paths[i_path]);
+          if (st.major != ERR_FSAL_POSIXDB_NOERR)
+            {
+              RollbackTransaction(p_conn, p_res);
+              return st;
+            }
 
-	  tmp_len = p_paths[i_path].len;
+          tmp_len = p_paths[i_path].len;
 
-	  if ((tmp_len > 0) && (p_paths[i_path].path[tmp_len - 1] == '/'))
-	    {
-	      /* then concatenate the name of the file */
-	      /* but not concatenate '/' */
-	      if ((tmp_len + strlen(PQgetvalue(p_res, i_path, 0)) >= FSAL_MAX_PATH_LEN))
-		{
-		  RollbackTransaction(p_conn, p_res);
-		  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
-		}
-	      strcpy(&p_paths[i_path].path[tmp_len], PQgetvalue(p_res, i_path, 0));
-	      p_paths[i_path].len += strlen(PQgetvalue(p_res, i_path, 0));
+          if ((tmp_len > 0) && (p_paths[i_path].path[tmp_len - 1] == '/'))
+            {
+              /* then concatenate the name of the file */
+              /* but not concatenate '/' */
+              if ((tmp_len + strlen(PQgetvalue(p_res, i_path, 0)) >= FSAL_MAX_PATH_LEN))
+                {
+                  RollbackTransaction(p_conn, p_res);
+                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                }
+              strcpy(&p_paths[i_path].path[tmp_len], PQgetvalue(p_res, i_path, 0));
+              p_paths[i_path].len += strlen(PQgetvalue(p_res, i_path, 0));
 
-	    } else
-	    {
-	      /* then concatenate the name of the file */
-	      if ((tmp_len + 1 + strlen(PQgetvalue(p_res, i_path, 0)) >=
-		   FSAL_MAX_PATH_LEN))
-		{
-		  RollbackTransaction(p_conn, p_res);
-		  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
-		}
-	      p_paths[i_path].path[tmp_len] = '/';
-	      strcpy(&p_paths[i_path].path[tmp_len + 1], PQgetvalue(p_res, i_path, 0));
-	      p_paths[i_path].len += 1 + strlen(PQgetvalue(p_res, i_path, 0));
-	    }
+            } else
+            {
+              /* then concatenate the name of the file */
+              if ((tmp_len + 1 + strlen(PQgetvalue(p_res, i_path, 0)) >=
+                   FSAL_MAX_PATH_LEN))
+                {
+                  RollbackTransaction(p_conn, p_res);
+                  ReturnCode(ERR_FSAL_POSIXDB_PATHTOOLONG, 0);
+                }
+              p_paths[i_path].path[tmp_len] = '/';
+              strcpy(&p_paths[i_path].path[tmp_len + 1], PQgetvalue(p_res, i_path, 0));
+              p_paths[i_path].len += 1 + strlen(PQgetvalue(p_res, i_path, 0));
+            }
 
-	  /* insert the object into cache */
-	  fsal_posixdb_CachePath(p_object_handle, &p_paths[i_path]);
+          /* insert the object into cache */
+          fsal_posixdb_CachePath(p_object_handle, &p_paths[i_path]);
 
-	}
+        }
       PQclear(p_res);
     }
 
@@ -239,9 +239,9 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
   ReturnCode(toomanypaths ? ERR_FSAL_POSIXDB_TOOMANYPATHS : ERR_FSAL_POSIXDB_NOERR, 0);
 }
 
-fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,	/* IN */
-						      fsal_handle_t * p_object_handle,	/* IN */
-						      fsal_handle_t * p_parent_directory_handle	/* OUT */
+fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn,       /* IN */
+                                                      fsal_handle_t * p_object_handle,  /* IN */
+                                                      fsal_handle_t * p_parent_directory_handle /* OUT */
     )
 {
   PGresult *p_res;
@@ -272,9 +272,9 @@ fsal_posixdb_status_t fsal_posixdb_getParentDirHandle(fsal_posixdb_conn * p_conn
 
   p_parent_directory_handle->id = atoll(PQgetvalue(p_res, 0, 1));
   p_parent_directory_handle->ts = atoi(PQgetvalue(p_res, 0, 2));
-  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->info), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4), PQgetvalue(p_res, 0, 5),	/* nlink */
-					     PQgetvalue(p_res, 0, 6),	/* ctime */
-					     PQgetvalue(p_res, 0, 7)	/* ftype */
+  posixdb_internal_fillFileinfoFromStrValues(&(p_parent_directory_handle->info), PQgetvalue(p_res, 0, 3), PQgetvalue(p_res, 0, 4), PQgetvalue(p_res, 0, 5),     /* nlink */
+                                             PQgetvalue(p_res, 0, 6),   /* ctime */
+                                             PQgetvalue(p_res, 0, 7)    /* ftype */
       );
 
   PQclear(p_res);

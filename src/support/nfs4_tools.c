@@ -97,16 +97,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #ifdef _USE_GSSRPC
@@ -160,15 +160,15 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
 
   if (nfs_client_id_get(pentry->object.file.state_v4->clientid4, &nfs_clientid) !=
       CLIENT_ID_SUCCESS)
-    return 0;			/* No client id, manage it as non-expired */
+    return 0;                   /* No client id, manage it as non-expired */
 
 #ifdef _FULL_DEBUG
   printf("Lease on %p for client_name = %s id=%lld\n", pentry, nfs_clientid.client_name,
-	 nfs_clientid.clientid);
+         nfs_clientid.clientid);
 
   printf("--------- nfs4_is_lease_expired ---------> %u %u delta=%u lease=%u\n",
-	 time(NULL), time(NULL), nfs_clientid.last_renew,
-	 time(NULL) - nfs_clientid.last_renew, nfs_param.nfsv4_param.lease_lifetime);
+         time(NULL), time(NULL), nfs_clientid.last_renew,
+         time(NULL) - nfs_clientid.last_renew, nfs_param.nfsv4_param.lease_lifetime);
 #endif
 
 #endif
@@ -178,4 +178,4 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
     return 1;
     else
     return 0;
-}				/* nfs4_is_lease_expired */
+}                               /* nfs4_is_lease_expired */

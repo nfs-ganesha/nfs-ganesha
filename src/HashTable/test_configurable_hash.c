@@ -137,7 +137,7 @@
 
 #define LENBUF 256
 #define STRSIZE 10
-#define MAXTEST 10000		/* Plus grand que MAXDESTROY !! */
+#define MAXTEST 10000           /* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 5
 #define MAXGET 3
 #define NB_PREALLOC 10000
@@ -163,9 +163,9 @@ int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
     else
     {
       if (buff2->pdata == NULL)
-	return -1;		/* left member is the greater one */
-	else
-	return strcmp(buff1->pdata, buff2->pdata);
+        return -1;              /* left member is the greater one */
+        else
+        return strcmp(buff1->pdata, buff2->pdata);
     }
   /* This line should never be reached */
 }
@@ -196,7 +196,7 @@ int do_get(hash_table_t * ht, int key, int *pval)
     *pval = -1;
 
   return rc;
-}				/* get */
+}                               /* get */
 
 int do_set(hash_table_t * ht, int key, int val)
 {
@@ -219,7 +219,7 @@ int do_set(hash_table_t * ht, int key, int val)
   buffval.len = strlen(tmpval);
 
   return HashTable_Set(ht, &buffkey, &buffval);
-}				/* set */
+}                               /* set */
 
 int do_new(hash_table_t * ht, int key, int val)
 {
@@ -238,8 +238,8 @@ int do_new(hash_table_t * ht, int key, int val)
   buffval.len = strlen(tmpval);
 
   return HashTable_Test_And_Set(ht, &buffkey, &buffval,
-				HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
-}				/* new */
+                                HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+}                               /* new */
 
 int do_del(hash_table_t * ht, int key)
 {
@@ -252,7 +252,7 @@ int do_del(hash_table_t * ht, int key)
   buffkey.len = strlen(tmpkey);
 
   return HashTable_Del(ht, &buffkey, NULL, NULL);
-}				/* set */
+}                               /* set */
 
 int do_test(hash_table_t * ht, int key)
 {
@@ -335,14 +335,14 @@ int main(int argc, char *argv[])
 
       hrc = HashTable_Set(ht, &buffkey, &buffval);
       if (hrc != HASHTABLE_SUCCESS)
-	{
-	  printf("Test ECHOUE : Insertion d'une nouvelle entree impossible : %d, %d\n", i,
-		 hrc);
-	  exit(1);
-	}
+        {
+          printf("Test ECHOUE : Insertion d'une nouvelle entree impossible : %d, %d\n", i,
+                 hrc);
+          exit(1);
+        }
 #ifdef _FULL_DEBUG
       printf("Ajout de (%s,%s) , sortie = %d\n", astrkey + STRSIZE * i,
-	     astrval + STRSIZE * i, rc);
+             astrval + STRSIZE * i, rc);
 #endif
     }
   MesureTemps(&fin, &debut);
@@ -378,122 +378,122 @@ int main(int argc, char *argv[])
       /* Code interactif, pompe sur le test rbt de Jacques */
       fputs("> ", stdout);
       if ((p = fgets(buf, LENBUF, stdin)) == NULL)
-	{
-	  printf("fin des commandes\n");
-	  ok = 0;
-	  continue;
-	}
+        {
+          printf("fin des commandes\n");
+          ok = 0;
+          continue;
+        }
       if ((p = strchr(buf, '\n')) != NULL)
-	*p = '\0';
+        *p = '\0';
 
       rc = sscanf(buf, "%c %d %d %d", &c, &key, &val, &expected_rc);
       if (c == '#')
-	{
-	  /* # indique un commentaire */
-	  continue;
+        {
+          /* # indique un commentaire */
+          continue;
       } else if (c == ' ' || c == '\t' || rc == -1)
-	{
-	  /* Cas d'une ligne vide */
-	  if (rc > 1)
-	    printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
+        {
+          /* Cas d'une ligne vide */
+          if (rc > 1)
+            printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
-	  continue;
-	} else
-	{
-	  if (rc != 4)
-	    {
-	      printf("Erreur de syntaxe : sscanf retourne %d au lieu de 4\n", rc);
-	      continue;
-	    }
-	  printf("---> %c %d %d %d\n", c, key, val, expected_rc);
-	}
+          continue;
+        } else
+        {
+          if (rc != 4)
+            {
+              printf("Erreur de syntaxe : sscanf retourne %d au lieu de 4\n", rc);
+              continue;
+            }
+          printf("---> %c %d %d %d\n", c, key, val, expected_rc);
+        }
 
       switch (c)
-	{
-	case 's':
-	  /* set overwrite */
-	  printf("set  %d %d --> %d ?\n", key, val, expected_rc);
+        {
+        case 's':
+          /* set overwrite */
+          printf("set  %d %d --> %d ?\n", key, val, expected_rc);
 
-	  hrc = do_set(ht, key, val);
+          hrc = do_set(ht, key, val);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc,
-		   expected_rc);
-	    else
-	    printf(">>>> OK set  %d %d\n", key, val);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc,
+                   expected_rc);
+            else
+            printf(">>>> OK set  %d %d\n", key, val);
+          break;
 
-	case 't':
-	  /* test */
-	  printf("test %d %d --> %d ?\n", key, val, expected_rc);
+        case 't':
+          /* test */
+          printf("test %d %d --> %d ?\n", key, val, expected_rc);
 
-	  hrc = do_test(ht, key);
+          hrc = do_test(ht, key);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc);
-	    else
-	    printf(">>>> OK test %d \n", key);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc);
+            else
+            printf(">>>> OK test %d \n", key);
+          break;
 
-	case 'n':
-	  /* set no overwrite */
-	  printf("new  %d %d --> %d ?\n", key, val, expected_rc);
+        case 'n':
+          /* set no overwrite */
+          printf("new  %d %d --> %d ?\n", key, val, expected_rc);
 
-	  hrc = do_new(ht, key, val);
+          hrc = do_new(ht, key, val);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc,
-		   expected_rc);
-	    else
-	    printf(">>>> OK new  %d %d\n", key, val);
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc,
+                   expected_rc);
+            else
+            printf(">>>> OK new  %d %d\n", key, val);
+          break;
 
-	case 'g':
-	  /* get */
-	  printf("get  %d %d --> %d ?\n", key, val, expected_rc);
+        case 'g':
+          /* get */
+          printf("get  %d %d --> %d ?\n", key, val, expected_rc);
 
-	  hrc = do_get(ht, key, &readval);
+          hrc = do_get(ht, key, &readval);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc,
-		   expected_rc);
-	    else
-	    {
-	      if (hrc == HASHTABLE_SUCCESS)
-		{
-		  if (val != readval)
-		    printf
-			(">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n",
-			 key, readval, val);
-		    else
-		    printf(">>>> OK get  %d %d\n", key, val);
-		}
-	    }
-	  break;
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc,
+                   expected_rc);
+            else
+            {
+              if (hrc == HASHTABLE_SUCCESS)
+                {
+                  if (val != readval)
+                    printf
+                        (">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n",
+                         key, readval, val);
+                    else
+                    printf(">>>> OK get  %d %d\n", key, val);
+                }
+            }
+          break;
 
-	case 'd':
-	  /* del */
-	  printf("del  %d %d --> %d ?\n", key, val, expected_rc);
+        case 'd':
+          /* del */
+          printf("del  %d %d --> %d ?\n", key, val, expected_rc);
 
-	  hrc = do_del(ht, key);
+          hrc = do_del(ht, key);
 
-	  if (hrc != expected_rc)
-	    printf(">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc);
-	    else
-	    printf(">>>> OK del  %d %d\n", key, val);
+          if (hrc != expected_rc)
+            printf(">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc);
+            else
+            printf(">>>> OK del  %d %d\n", key, val);
 
-	  break;
+          break;
 
-	case 'p':
-	  /* Print */
-	  HashTable_Print(ht);
-	  break;
+        case 'p':
+          /* Print */
+          HashTable_Print(ht);
+          break;
 
-	default:
-	  /* syntaxe error */
-	  printf("ordre '%c' non-reconnu\n", c);
-	  break;
-	}
+        default:
+          /* syntaxe error */
+          printf("ordre '%c' non-reconnu\n", c);
+          break;
+        }
 
       fflush(stdin);
     }

@@ -15,12 +15,12 @@
 
 static int
 HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
-		      ns_ObjHandle_t * ObjHandle,
-		      char *Path,
-		      api_cwd_stack_t * CwdStack,
-		      int Mode,
-		      TYPE_CRED_HPSS * Ucred,
-		      ns_ObjHandle_t * RetObjHandle, hpss_Attrs_t * RetAttrs);
+                      ns_ObjHandle_t * ObjHandle,
+                      char *Path,
+                      api_cwd_stack_t * CwdStack,
+                      int Mode,
+                      TYPE_CRED_HPSS * Ucred,
+                      ns_ObjHandle_t * RetObjHandle, hpss_Attrs_t * RetAttrs);
 
 /*============================================================================
  *
@@ -66,12 +66,12 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
  *
  *-------------------------------------------------------------------------*/
 
-int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,	/* IN - handle of parent directory */
-			 char *Path,	/* IN - path of directory */
-			 mode_t Mode,	/* IN - perm bits for new directory */
-			 TYPE_CRED_HPSS * Ucred,	/* IN - user credentials */
-			 ns_ObjHandle_t * HandleOut,	/* OUT - returned object handle */
-			 hpss_Attrs_t * AttrsOut)	/* OUT - returned attributes */
+int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,    /* IN - handle of parent directory */
+                         char *Path,    /* IN - path of directory */
+                         mode_t Mode,   /* IN - perm bits for new directory */
+                         TYPE_CRED_HPSS * Ucred,        /* IN - user credentials */
+                         ns_ObjHandle_t * HandleOut,    /* OUT - returned object handle */
+                         hpss_Attrs_t * AttrsOut)       /* OUT - returned attributes */
 {
   long error = 0;
   apithrdstate_t *threadcontext;
@@ -116,9 +116,9 @@ int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,	/* IN - handle of parent di
     ucred_ptr = Ucred;
 
   error = HPSSFSAL_Common_Mkdir(threadcontext,
-				ObjHandle,
-				Path,
-				API_NULL_CWD_STACK, Mode, ucred_ptr, HandleOut, AttrsOut);
+                                ObjHandle,
+                                Path,
+                                API_NULL_CWD_STACK, Mode, ucred_ptr, HandleOut, AttrsOut);
 
   API_RETURN(error);
 }
@@ -167,20 +167,20 @@ int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,	/* IN - handle of parent di
 
 static int
 HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
-		      ns_ObjHandle_t * ObjHandle,
-		      char *Path,
-		      api_cwd_stack_t * CwdStack,
-		      int Mode,
-		      TYPE_CRED_HPSS * Ucred,
-		      ns_ObjHandle_t * RetObjHandle, hpss_Attrs_t * RetAttrs)
+                      ns_ObjHandle_t * ObjHandle,
+                      char *Path,
+                      api_cwd_stack_t * CwdStack,
+                      int Mode,
+                      TYPE_CRED_HPSS * Ucred,
+                      ns_ObjHandle_t * RetObjHandle, hpss_Attrs_t * RetAttrs)
 {
 #if HPSS_MAJOR_VERSION < 7
   call_type_t call_type;
 #endif
 #if HPSS_MAJOR_VERSION == 5
-  volatile long error = 0;	/* return error */
+  volatile long error = 0;      /* return error */
 #else
-  signed32 error = 0;		/* return error */
+  signed32 error = 0;           /* return error */
 #endif
   static char function_name[] = "HPSSFSAL_Common_Mkdir";
   ns_ObjHandle_t objhandle_parent;
@@ -252,34 +252,34 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
 
   select_flags = API_AddRegisterValues(cast64m(0), CORE_ATTR_ACCOUNT,
 #if HPSS_MAJOR_VERSION < 7
-				       CORE_ATTR_FILESET_ID,
-				       CORE_ATTR_FILESET_TYPE,
-				       CORE_ATTR_GATEWAY_UUID,
-				       CORE_ATTR_DM_HANDLE, CORE_ATTR_DM_HANDLE_LENGTH,
+                                       CORE_ATTR_FILESET_ID,
+                                       CORE_ATTR_FILESET_TYPE,
+                                       CORE_ATTR_GATEWAY_UUID,
+                                       CORE_ATTR_DM_HANDLE, CORE_ATTR_DM_HANDLE_LENGTH,
 #endif
-				       -1);
+                                       -1);
 
   error = API_TraversePath(ThreadContext,
-			   rqstid,
-			   Ucred,
-			   ObjHandle,
-			   path_parent,
-			   CwdStack,
-			   API_CHASE_ALL,
-			   0,
-			   0,
-			   select_flags,
-			   cast64m(0),
-			   API_NULL_CWD_STACK, &objhandle_parent, &attr_parent,
+                           rqstid,
+                           Ucred,
+                           ObjHandle,
+                           path_parent,
+                           CwdStack,
+                           API_CHASE_ALL,
+                           0,
+                           0,
+                           select_flags,
+                           cast64m(0),
+                           API_NULL_CWD_STACK, &objhandle_parent, &attr_parent,
 #if HPSS_MAJOR_VERSION < 7
-			   NULL,
+                           NULL,
 #endif
-			   NULL, NULL, NULL, NULL);
+                           NULL, NULL, NULL, NULL);
 
   if (error != 0)
     {
       API_DEBUG_FPRINTF(DebugFile, &rqstid,
-			"%s: Could not get attributes.\n", function_name);
+                        "%s: Could not get attributes.\n", function_name);
     } else
     {
       /*
@@ -289,56 +289,56 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
        */
 
       if (RetAttrs != (hpss_Attrs_t *) NULL)
-	{
-	  select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
-	} else
-	{
-	  select_flags = cast64m(0);
-	}
+        {
+          select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
+        } else
+        {
+          select_flags = cast64m(0);
+        }
 
       /*
        * Determine the appropriate accounting to use.
        */
 
       error = API_DetermineAcct(Ucred,
-				ThreadContext,
-				objhandle_parent.CoreServerUUID,
-				rqstid, &siteId, &temp_acct_code);
+                                ThreadContext,
+                                objhandle_parent.CoreServerUUID,
+                                rqstid, &siteId, &temp_acct_code);
       if (error != 0)
-	{
-	  API_DEBUG_FPRINTF(DebugFile, &rqstid,
-			    "%s: Could not determine which"
-			    " account to use.\n", function_name);
-	} else
-	{
-	  /*
-	   * Validate the account.
-	   */
+        {
+          API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                            "%s: Could not determine which"
+                            " account to use.\n", function_name);
+        } else
+        {
+          /*
+           * Validate the account.
+           */
 #if HPSS_MAJOR_VERSION == 5
-	  error = av_cli_ValidateCreate(siteId,
-					rqstid,
-					Ucred->DCECellId,
-					Ucred->SecPWent.Uid,
-					Ucred->SecPWent.Gid,
-					temp_acct_code,
-					attr_parent.Account, &new_acct_code);
+          error = av_cli_ValidateCreate(siteId,
+                                        rqstid,
+                                        Ucred->DCECellId,
+                                        Ucred->SecPWent.Uid,
+                                        Ucred->SecPWent.Gid,
+                                        temp_acct_code,
+                                        attr_parent.Account, &new_acct_code);
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
-	  error = av_cli_ValidateCreate(siteId,
-					rqstid,
-					Ucred->RealmId,
-					Ucred->Uid,
-					Ucred->Gid,
-					temp_acct_code,
-					attr_parent.Account, &new_acct_code);
+          error = av_cli_ValidateCreate(siteId,
+                                        rqstid,
+                                        Ucred->RealmId,
+                                        Ucred->Uid,
+                                        Ucred->Gid,
+                                        temp_acct_code,
+                                        attr_parent.Account, &new_acct_code);
 #endif
 
-	  if (error != 0)
-	    {
-	      API_DEBUG_FPRINTF(DebugFile, &rqstid,
-				"%s: Could not validate"
-				" the account.\n", function_name);
-	    }
-	}
+          if (error != 0)
+            {
+              API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                                "%s: Could not validate"
+                                " the account.\n", function_name);
+            }
+        }
     }
 
   if (error == 0)
@@ -357,155 +357,155 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
 #endif
 
       switch (call_type)
-	{
+        {
 
-	case API_CALL_DMG:
+        case API_CALL_DMG:
 
 #if defined ( API_DMAP_SUPPORT ) && !defined ( API_DMAP_GATEWAY )
-	  /*
-	   * Call the dmap gateway to create the file.  This will
-	   * have the side effect that the dmap will call us to
-	   * create the directory on the hpss side.  By the time this
-	   * call returns, the directory will exist on both sides.
-	   */
+          /*
+           * Call the dmap gateway to create the file.  This will
+           * have the side effect that the dmap will call us to
+           * create the directory on the hpss side.  By the time this
+           * call returns, the directory will exist on both sides.
+           */
 
-	  Ucred->CurAccount = new_acct_code;
-	  memset(dm_handle, 0, (sizeof(byte) * MAX_DMEPI_HANDLE_SIZE));
-	  memset(&dm_handle_length, 0, sizeof(unsigned32));
+          Ucred->CurAccount = new_acct_code;
+          memset(dm_handle, 0, (sizeof(byte) * MAX_DMEPI_HANDLE_SIZE));
+          memset(&dm_handle_length, 0, sizeof(unsigned32));
 
-	  /*
-	   * The mode should have the directory bit set and
-	   * the umask bits reset.
-	   */
+          /*
+           * The mode should have the directory bit set and
+           * the umask bits reset.
+           */
 
-	  Mode |= S_IFDIR;
-	  Mode &= ~(ThreadContext->Umask);
+          Mode |= S_IFDIR;
+          Mode &= ~(ThreadContext->Umask);
 
-	  error = API_dmg_Create(ThreadContext, rqstid, Ucred, &attr_parent.GatewayUUID, attr_parent.FilesetId, attr_parent.DMHandle, attr_parent.DMHandleLength, path_newdir, Mode, NS_OBJECT_TYPE_DIRECTORY, NULL,	/* cos hints in */
-				 NULL,	/* cos hints priority */
-				 dm_handle, (unsigned32 *) & dm_handle_length, NULL);	/* cos hints out */
+          error = API_dmg_Create(ThreadContext, rqstid, Ucred, &attr_parent.GatewayUUID, attr_parent.FilesetId, attr_parent.DMHandle, attr_parent.DMHandleLength, path_newdir, Mode, NS_OBJECT_TYPE_DIRECTORY, NULL,    /* cos hints in */
+                                 NULL,  /* cos hints priority */
+                                 dm_handle, (unsigned32 *) & dm_handle_length, NULL);   /* cos hints out */
 
-	  if (error != 0)
-	    {
-	      API_DEBUG_FPRINTF(DebugFile, &rqstid,
-				"%s: API_dmg_Create failed.\n", function_name);
-	    } else
-	    {
-	      /*
-	       * If the caller asked for them, obtain the hpss attributes
-	       * and an object handle for the new directory.
-	       *
-	       * ChaseSymlinks and ChaseJunctions shouldn't matter at
-	       * this point; the object should be a directory.
-	       */
+          if (error != 0)
+            {
+              API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                                "%s: API_dmg_Create failed.\n", function_name);
+            } else
+            {
+              /*
+               * If the caller asked for them, obtain the hpss attributes
+               * and an object handle for the new directory.
+               *
+               * ChaseSymlinks and ChaseJunctions shouldn't matter at
+               * this point; the object should be a directory.
+               */
 
-	      if (RetObjHandle || RetVAttrs)
-		{
-		  error = API_TraversePath(ThreadContext,
-					   rqstid,
-					   Ucred,
-					   &objhandle_parent,
-					   path_newdir,
-					   CwdStack,
-					   API_CHASE_NONE,
-					   0,
-					   0,
-					   select_flags,
-					   cast64m(0),
-					   API_NULL_CWD_STACK,
-					   &objhandle_newdir,
-					   NULL,
-					   NULL, &attr_newdir_out, NULL, NULL, NULL);
+              if (RetObjHandle || RetVAttrs)
+                {
+                  error = API_TraversePath(ThreadContext,
+                                           rqstid,
+                                           Ucred,
+                                           &objhandle_parent,
+                                           path_newdir,
+                                           CwdStack,
+                                           API_CHASE_NONE,
+                                           0,
+                                           0,
+                                           select_flags,
+                                           cast64m(0),
+                                           API_NULL_CWD_STACK,
+                                           &objhandle_newdir,
+                                           NULL,
+                                           NULL, &attr_newdir_out, NULL, NULL, NULL);
 
-		  if (error != 0)
-		    {
-		      API_DEBUG_FPRINTF(DebugFile, &rqstid,
-					"%s: Could not get attributes"
-					" of new directory.\n", function_name);
-		    }
-		}
-	    }
+                  if (error != 0)
+                    {
+                      API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                                        "%s: Could not get attributes"
+                                        " of new directory.\n", function_name);
+                    }
+                }
+            }
 #else
-	  error = EACCES;
-	  API_DEBUG_FPRINTF(DebugFile, &rqstid,
-			    "%s: No dmap support compiled in.\n", function_name);
+          error = EACCES;
+          API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                            "%s: No dmap support compiled in.\n", function_name);
 #endif
-	  break;
+          break;
 
-	case API_CALL_HPSS:
+        case API_CALL_HPSS:
 
-#endif				/* HPSS < 7 */
+#endif                          /* HPSS < 7 */
 
-	  /*
-	   * Set up the parameters for the new directory.
-	   */
+          /*
+           * Set up the parameters for the new directory.
+           */
 
-	  (void)memset(&attr_newdir_out, 0, sizeof(attr_newdir_out));
-	  (void)memset(&attr_newdir_in, 0, sizeof(attr_newdir_in));
+          (void)memset(&attr_newdir_out, 0, sizeof(attr_newdir_out));
+          (void)memset(&attr_newdir_in, 0, sizeof(attr_newdir_in));
 
-	  attr_newdir_in.Account = new_acct_code;
+          attr_newdir_in.Account = new_acct_code;
 
-	  API_ConvertPosixModeToMode(Mode & ~(ThreadContext->Umask), &attr_newdir_in);
+          API_ConvertPosixModeToMode(Mode & ~(ThreadContext->Umask), &attr_newdir_in);
 
-	  update_flags = API_AddRegisterValues(cast64m(0),
-					       CORE_ATTR_ACCOUNT,
-					       CORE_ATTR_USER_PERMS,
-					       CORE_ATTR_GROUP_PERMS,
-					       CORE_ATTR_OTHER_PERMS, -1);
+          update_flags = API_AddRegisterValues(cast64m(0),
+                                               CORE_ATTR_ACCOUNT,
+                                               CORE_ATTR_USER_PERMS,
+                                               CORE_ATTR_GROUP_PERMS,
+                                               CORE_ATTR_OTHER_PERMS, -1);
 
 #if defined(API_DMAP_GATEWAY)
 
-	  /*
-	   * If the gateway is trying to create a directory on a
-	   * mirrored fileset, it must supply a UID & GID for
-	   * the directory.
-	   */
+          /*
+           * If the gateway is trying to create a directory on a
+           * mirrored fileset, it must supply a UID & GID for
+           * the directory.
+           */
 
-	  if (attr_parent.FilesetType == CORE_FS_TYPE_MIRRORED)
-	    {
-	      attr_newdir_in.UID = Ucred->SecPWent.Uid;
-	      attr_newdir_in.GID = Ucred->SecPWent.Gid;
-	      update_flags = API_AddRegisterValues(update_flags,
-						   CORE_ATTR_UID, CORE_ATTR_GID, -1);
-	    }
+          if (attr_parent.FilesetType == CORE_FS_TYPE_MIRRORED)
+            {
+              attr_newdir_in.UID = Ucred->SecPWent.Uid;
+              attr_newdir_in.GID = Ucred->SecPWent.Gid;
+              update_flags = API_AddRegisterValues(update_flags,
+                                                   CORE_ATTR_UID, CORE_ATTR_GID, -1);
+            }
 #endif
-	  /*
-	   * Note: The DM handle is not loaded here for non
-	   * HPSS filesets because the handle can only be
-	   * determined after the file is created on the
-	   * DMAP side. Therefore, the gateway must update
-	   * the directories attributes after the directory
-	   * is created.
-	   */
+          /*
+           * Note: The DM handle is not loaded here for non
+           * HPSS filesets because the handle can only be
+           * determined after the file is created on the
+           * DMAP side. Therefore, the gateway must update
+           * the directories attributes after the directory
+           * is created.
+           */
 
-	  error = API_core_MkDir(ThreadContext,
-				 rqstid,
-				 Ucred,
-				 &objhandle_parent,
-				 path_newdir,
-				 update_flags,
-				 &attr_newdir_in,
-				 select_flags, &attr_newdir_out, &objhandle_newdir);
+          error = API_core_MkDir(ThreadContext,
+                                 rqstid,
+                                 Ucred,
+                                 &objhandle_parent,
+                                 path_newdir,
+                                 update_flags,
+                                 &attr_newdir_in,
+                                 select_flags, &attr_newdir_out, &objhandle_newdir);
 
-	  if (error != 0)
-	    {
-	      API_DEBUG_FPRINTF(DebugFile, &rqstid,
-				"%s: Could not create directory"
-				", error=%d\n", function_name, error);
+          if (error != 0)
+            {
+              API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                                "%s: Could not create directory"
+                                ", error=%d\n", function_name, error);
 
-	      API_LogMsg(function_name, rqstid, CS_DEBUG,
-			 SOFTWARE_ERROR, NONE, API_REQUEST_ERROR, error);
-	    }
+              API_LogMsg(function_name, rqstid, CS_DEBUG,
+                         SOFTWARE_ERROR, NONE, API_REQUEST_ERROR, error);
+            }
 #if HPSS_MAJOR_VERSION < 7
-	  break;
+          break;
 
-	default:
-	  if (error == 0)
-	    error = EIO;
-	  API_DEBUG_FPRINTF(DebugFile, &rqstid,
-			    "%s: Bad case from DetermineCall().\n", function_name);
-	  break;
-	}			/* end switch */
+        default:
+          if (error == 0)
+            error = EIO;
+          API_DEBUG_FPRINTF(DebugFile, &rqstid,
+                            "%s: Bad case from DetermineCall().\n", function_name);
+          break;
+        }                       /* end switch */
 #endif
 
     }

@@ -70,10 +70,10 @@ void *rpc_nullproc(CLIENT *);
 int __rpc_sockisbound(int);
 
 struct netbuf *__rpcb_findaddr(rpcprog_t, rpcvers_t, const struct netconfig *,
-			       const char *, CLIENT **);
+                               const char *, CLIENT **);
 struct netbuf *__rpcb_findaddr_timed(rpcprog_t, rpcvers_t,
-				     const struct netconfig *, const char *host,
-				     CLIENT ** clpp, struct timeval *tp);
+                                     const struct netconfig *, const char *host,
+                                     CLIENT ** clpp, struct timeval *tp);
 
 bool_t __rpc_control(int, void *);
 
@@ -88,4 +88,4 @@ SVCXPRT **__svc_xports;
 int __svc_maxrec;
 
 __END_DECLS
-#endif				/* _TIRPC_RPCCOM_H */
+#endif                          /* _TIRPC_RPCCOM_H */

@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -144,10 +144,10 @@
  */
 
 int nfs_Fsstat(nfs_arg_t * parg,
-	       exportlist_t * pexport,
-	       fsal_op_context_t * pcontext,
-	       cache_inode_client_t * pclient,
-	       hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+               exportlist_t * pexport,
+               fsal_op_context_t * pcontext,
+               cache_inode_client_t * pclient,
+               hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Fsstat";
 
@@ -166,12 +166,12 @@ int nfs_Fsstat(nfs_arg_t * parg,
 
   /* convert file handle to vnode */
   if ((pentry = nfs_FhandleToCache(preq->rq_vers,
-				   &(parg->arg_lookup2.dir),
-				   &(parg->arg_lookup3.what.dir),
-				   NULL,
-				   &(pres->res_statfs2.status),
-				   &(pres->res_fsstat3.status),
-				   NULL, NULL, pcontext, pclient, ht, &rc)) == NULL)
+                                   &(parg->arg_lookup2.dir),
+                                   &(parg->arg_lookup3.what.dir),
+                                   NULL,
+                                   &(pres->res_statfs2.status),
+                                   &(pres->res_fsstat3.status),
+                                   NULL, NULL, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       /* return NFS_REQ_DROP ; */
@@ -181,71 +181,71 @@ int nfs_Fsstat(nfs_arg_t * parg,
   /* Get statistics and convert from cache */
 
   if ((cache_status = cache_inode_statfs(pentry,
-					 &staticinfo,
-					 &dynamicinfo,
-					 pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
+                                         &staticinfo,
+                                         &dynamicinfo,
+                                         pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
     {
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
       if ((cache_status = cache_inode_getattr(pentry,
-					      &attr,
-					      ht,
-					      pclient, pcontext,
-					      &cache_status)) == CACHE_INODE_SUCCESS)
-	{
+                                              &attr,
+                                              ht,
+                                              pclient, pcontext,
+                                              &cache_status)) == CACHE_INODE_SUCCESS)
+        {
 #ifdef  _DEBUG_NFSPROTO
-	  printf
-	      ("-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu\n",
-	       dynamicinfo.total_bytes, dynamicinfo.free_bytes, dynamicinfo.avail_bytes);
-	  printf
-	      ("-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
-	       dynamicinfo.total_files, dynamicinfo.free_files, dynamicinfo.avail_files);
+          printf
+              ("-- nfs_Fsstat --> dynamicinfo.total_bytes = %llu dynamicinfo.free_bytes = %llu dynamicinfo.avail_bytes = %llu\n",
+               dynamicinfo.total_bytes, dynamicinfo.free_bytes, dynamicinfo.avail_bytes);
+          printf
+              ("-- nfs_Fsstat --> dynamicinfo.total_files = %llu dynamicinfo.free_files = %llu dynamicinfo.avail_files = %llu\n",
+               dynamicinfo.total_files, dynamicinfo.free_files, dynamicinfo.avail_files);
 #endif
-	  switch (preq->rq_vers)
-	    {
-	    case NFS_V2:
-	      pres->res_statfs2.STATFS2res_u.info.tsize = NFS2_MAXDATA;
-	      pres->res_statfs2.STATFS2res_u.info.bsize = DEV_BSIZE;
-	      pres->res_statfs2.STATFS2res_u.info.blocks =
-		  dynamicinfo.total_bytes / DEV_BSIZE;
-	      pres->res_statfs2.STATFS2res_u.info.bfree =
-		  dynamicinfo.free_bytes / DEV_BSIZE;
-	      pres->res_statfs2.STATFS2res_u.info.bavail =
-		  dynamicinfo.avail_bytes / DEV_BSIZE;
-	      pres->res_statfs2.status = NFS_OK;
-	      break;
+          switch (preq->rq_vers)
+            {
+            case NFS_V2:
+              pres->res_statfs2.STATFS2res_u.info.tsize = NFS2_MAXDATA;
+              pres->res_statfs2.STATFS2res_u.info.bsize = DEV_BSIZE;
+              pres->res_statfs2.STATFS2res_u.info.blocks =
+                  dynamicinfo.total_bytes / DEV_BSIZE;
+              pres->res_statfs2.STATFS2res_u.info.bfree =
+                  dynamicinfo.free_bytes / DEV_BSIZE;
+              pres->res_statfs2.STATFS2res_u.info.bavail =
+                  dynamicinfo.avail_bytes / DEV_BSIZE;
+              pres->res_statfs2.status = NFS_OK;
+              break;
 
-	    case NFS_V3:
-	      nfs_SetPostOpAttr(pcontext, pexport,
-				pentry,
-				&attr,
-				&(pres->res_fsstat3.FSSTAT3res_u.resok.obj_attributes));
+            case NFS_V3:
+              nfs_SetPostOpAttr(pcontext, pexport,
+                                pentry,
+                                &attr,
+                                &(pres->res_fsstat3.FSSTAT3res_u.resok.obj_attributes));
 
-	      pres->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
-	      pres->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;	/* volatile FS */
-	      pres->res_fsstat3.status = NFS3_OK;
+              pres->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
+              pres->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
+              pres->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
+              pres->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
+              pres->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
+              pres->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
+              pres->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;        /* volatile FS */
+              pres->res_fsstat3.status = NFS3_OK;
 
 #ifdef  _DEBUG_NFSPROTO
-	      printf("-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu\n",
-		     pres->res_fsstat3.FSSTAT3res_u.resok.tbytes,
-		     pres->res_fsstat3.FSSTAT3res_u.resok.fbytes,
-		     pres->res_fsstat3.FSSTAT3res_u.resok.abytes);
+              printf("-- nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu\n",
+                     pres->res_fsstat3.FSSTAT3res_u.resok.tbytes,
+                     pres->res_fsstat3.FSSTAT3res_u.resok.fbytes,
+                     pres->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
-	      printf("-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu\n",
-		     pres->res_fsstat3.FSSTAT3res_u.resok.tfiles,
-		     pres->res_fsstat3.FSSTAT3res_u.resok.ffiles,
-		     pres->res_fsstat3.FSSTAT3res_u.resok.afiles);
+              printf("-- nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu\n",
+                     pres->res_fsstat3.FSSTAT3res_u.resok.tfiles,
+                     pres->res_fsstat3.FSSTAT3res_u.resok.ffiles,
+                     pres->res_fsstat3.FSSTAT3res_u.resok.afiles);
 #endif
 
-	      break;
+              break;
 
-	    }
-	  return NFS_REQ_OK;
-	}
+            }
+          return NFS_REQ_OK;
+        }
     }
 
   /* At this point we met an error */
@@ -253,14 +253,14 @@ int nfs_Fsstat(nfs_arg_t * parg,
     return NFS_REQ_DROP;
 
   nfs_SetFailedStatus(pcontext, pexport,
-		      preq->rq_vers,
-		      cache_status,
-		      &pres->res_statfs2.status,
-		      &pres->res_fsstat3.status,
-		      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                      preq->rq_vers,
+                      cache_status,
+                      &pres->res_statfs2.status,
+                      &pres->res_fsstat3.status,
+                      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
   return NFS_REQ_OK;
-}				/* nfs_Fsstat */
+}                               /* nfs_Fsstat */
 
 /**
  * nfs_Fsstat_Free: Frees the result structure allocated for nfs_Fsstat.
@@ -274,4 +274,4 @@ void nfs_Fsstat_Free(nfs_res_t * resp)
 {
   /* Nothing to do here */
   return;
-}				/* nfs_Fsstat_Free */
+}                               /* nfs_Fsstat_Free */

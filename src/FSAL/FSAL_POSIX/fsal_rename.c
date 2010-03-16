@@ -53,13 +53,13 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
-			  fsal_name_t * p_old_name,	/* IN */
-			  fsal_handle_t * p_new_parentdir_handle,	/* IN */
-			  fsal_name_t * p_new_name,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_attrib_list_t * p_src_dir_attributes,	/* [ IN/OUT ] */
-			  fsal_attrib_list_t * p_tgt_dir_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
+                          fsal_name_t * p_old_name,     /* IN */
+                          fsal_handle_t * p_new_parentdir_handle,       /* IN */
+                          fsal_name_t * p_new_name,     /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
+                          fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */
     )
 {
 
@@ -82,7 +82,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
    **************************************/
   status =
       fsal_internal_getPathFromHandle(p_context, p_old_parentdir_handle, 1, &old_fsalpath,
-				      &old_parent_buffstat);
+                                      &old_parent_buffstat);
   if (FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_rename);
 
@@ -94,10 +94,10 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
     } else
     {
       status =
-	  fsal_internal_getPathFromHandle(p_context, p_new_parentdir_handle, 1,
-					  &new_fsalpath, &new_parent_buffstat);
+          fsal_internal_getPathFromHandle(p_context, p_new_parentdir_handle, 1,
+                                          &new_fsalpath, &new_parent_buffstat);
       if (FSAL_IS_ERROR(status))
-	Return(status.major, status.minor, INDEX_FSAL_rename);
+        Return(status.major, status.minor, INDEX_FSAL_rename);
     }
 
   status = fsal_internal_appendFSALNameToFSALPath(&old_fsalpath, p_old_name);
@@ -124,37 +124,37 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
   if (FSAL_IS_ERROR
       (status =
        fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
-				NULL)))
+                                NULL)))
     Return(status.major, status.minor, INDEX_FSAL_rename);
 
   if (FSAL_IS_ERROR
       (status =
        fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
-				NULL)))
+                                NULL)))
     Return(status.major, status.minor, INDEX_FSAL_rename);
 
   /* Check sticky bit on directories */
 
-  if ((old_parent_buffstat.st_mode & S_ISVTX)	/* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
+  if ((old_parent_buffstat.st_mode & S_ISVTX)   /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
       && old_parent_buffstat.st_uid != p_context->credential.user
       && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
 
   if (new_parent_buffstat.st_mode & S_ISVTX)
-    {				/* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
+    {                           /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
       TakeTokenFSCall();
       rc = lstat(new_fsalpath.path, &buffstat);
       errsv = errno;
       ReleaseTokenFSCall();
       if (rc)
-	{
-	  if (errsv != ENOENT)
-	    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
+        {
+          if (errsv != ENOENT)
+            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
       }
-	else if (new_parent_buffstat.st_uid != p_context->credential.user
-		   && buffstat.st_uid != p_context->credential.user
-		   && p_context->credential.user != 0)
-	Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
+        else if (new_parent_buffstat.st_uid != p_context->credential.user
+                   && buffstat.st_uid != p_context->credential.user
+                   && p_context->credential.user != 0)
+        Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
     }
   /*************************************
    * Rename the file on the filesystem *
@@ -171,9 +171,9 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
    * Rename the file in the database *
    ***********************************/
   statusdb = fsal_posixdb_replace(p_context->p_conn,
-				  &info,
-				  p_old_parentdir_handle,
-				  p_old_name, p_new_parentdir_handle, p_new_name);
+                                  &info,
+                                  p_old_parentdir_handle,
+                                  p_old_name, p_new_parentdir_handle, p_new_name);
 
   switch (statusdb.major)
     {
@@ -182,7 +182,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
       break;
     default:
       if (FSAL_IS_ERROR(status = posixdb2fsal_error(statusdb)))
-	Return(status.major, status.minor, INDEX_FSAL_rename);
+        Return(status.major, status.minor, INDEX_FSAL_rename);
     }
 
   /***********************
@@ -195,10 +195,10 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
       status = FSAL_getattrs(p_old_parentdir_handle, p_context, p_src_dir_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_src_dir_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_src_dir_attributes->asked_attributes);
+          FSAL_SET_MASK(p_src_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 
@@ -208,10 +208,10 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,	/* IN */
       status = FSAL_getattrs(p_new_parentdir_handle, p_context, p_tgt_dir_attributes);
 
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(p_tgt_dir_attributes->asked_attributes);
-	  FSAL_SET_MASK(p_tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(p_tgt_dir_attributes->asked_attributes);
+          FSAL_SET_MASK(p_tgt_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

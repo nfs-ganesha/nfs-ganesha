@@ -94,8 +94,8 @@
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
-#include <unistd.h>		/* for using gethostname */
-#include <stdlib.h>		/* for using exit */
+#include <unistd.h>             /* for using gethostname */
+#include <stdlib.h>             /* for using exit */
 #include <strings.h>
 #include <sys/types.h>
 
@@ -109,13 +109,13 @@ int lru_entry_to_str(LRU_data_t data, char *str)
   pentry = (cache_entry_t *) data.pdata;
 
   return sprintf(str, "Pentry: Addr %p, state=%d", pentry,
-		 pentry->internal_md.valid_state);
-}				/* lru_entry_to_str */
+                 pentry->internal_md.valid_state);
+}                               /* lru_entry_to_str */
 
 int lru_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
-}				/* lru_clean_entry */
+}                               /* lru_clean_entry */
 
 /**
  *
@@ -228,9 +228,9 @@ main(int argc, char *argv[])
 
 #if defined( _USE_GHOSTFS )
   if (FSAL_IS_ERROR(status = FSAL_str2path(configfile,
-					   strlen(configfile) + 1,
-					   &(init_param.
-					     fs_specific_info.definition_file))))
+                                           strlen(configfile) + 1,
+                                           &(init_param.fs_specific_info.
+                                             definition_file))))
     {
       DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
     }
@@ -255,11 +255,11 @@ main(int argc, char *argv[])
 
   init_param.fs_specific_info.behaviors.PrincipalName = FSAL_INIT_FORCE_VALUE;
   strncpy(init_param.fs_specific_info.hpss_config.PrincipalName,
-	  HPSS_SSM, HPSS_MAX_PRINCIPAL_NAME);
+          HPSS_SSM, HPSS_MAX_PRINCIPAL_NAME);
 
   init_param.fs_specific_info.behaviors.KeytabPath = FSAL_INIT_FORCE_VALUE;
   strncpy(init_param.fs_specific_info.hpss_config.KeytabPath,
-	  HPSS_KEYTAB, HPSS_MAX_PATH_NAME);
+          HPSS_KEYTAB, HPSS_MAX_PATH_NAME);
 
   FSAL_SET_INIT_DEFAULT(init_param.fs_specific_info, DebugPath);
   FSAL_SET_INIT_DEFAULT(init_param.fs_specific_info, HostName);
@@ -306,7 +306,7 @@ main(int argc, char *argv[])
 
   /* Init of the cache inode module */
   cache_param.hparam.index_size = 31;
-  cache_param.hparam.alphabet_length = 10;	/* Buffer seen as a decimal polynom */
+  cache_param.hparam.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
   cache_param.hparam.nb_node_prealloc = 100;
   cache_param.hparam.hash_func_key = cache_inode_fsal_hash_func;
   cache_param.hparam.hash_func_rbt = cache_inode_fsal_rbt_func;
@@ -373,10 +373,10 @@ main(int argc, char *argv[])
     }
 
   if ((cache_entry_lookup = cache_inode_lookup(cache_entry_root,
-					       name,
-					       &attrlookup,
-					       ht,
-					       &client, &cred, &cache_status)) == NULL)
+                                               name,
+                                               &attrlookup,
+                                               ht,
+                                               &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
@@ -384,10 +384,10 @@ main(int argc, char *argv[])
 
   /* Lookup a second time (entry should now be cached) */
   if ((cache_entry_lookup2 = cache_inode_lookup(cache_entry_root,
-						name,
-						&attrlookup,
-						ht,
-						&client, &cred, &cache_status)) == NULL)
+                                                name,
+                                                &attrlookup,
+                                                ht,
+                                                &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_fsal, "Error: can't lookup");
       exit(1);
@@ -407,20 +407,20 @@ main(int argc, char *argv[])
     }
 
   if ((cache_entry_lookup3 = cache_inode_lookup(cache_entry_root,
-						name,
-						&attrlookup,
-						ht,
-						&client, &cred, &cache_status)) == NULL)
+                                                name,
+                                                &attrlookup,
+                                                ht,
+                                                &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
     }
 
   if ((cache_entry_lookup4 = cache_inode_lookup(cache_entry_root,
-						name,
-						&attrlookup,
-						ht,
-						&client, &cred, &cache_status)) == NULL)
+                                                name,
+                                                &attrlookup,
+                                                ht,
+                                                &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
@@ -440,10 +440,10 @@ main(int argc, char *argv[])
     }
 
   if ((cache_entry_lookup = cache_inode_lookup(cache_entry_root,
-					       name,
-					       &attrlookup,
-					       ht,
-					       &client, &cred, &cache_status)) == NULL)
+                                               name,
+                                               &attrlookup,
+                                               ht,
+                                               &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
@@ -457,10 +457,10 @@ main(int argc, char *argv[])
     }
 
   if ((cache_entry_lookup = cache_inode_lookup(cache_entry_root,
-					       name,
-					       &attrlookup,
-					       ht,
-					       &client, &cred, &cache_status)) == NULL)
+                                               name,
+                                               &attrlookup,
+                                               ht,
+                                               &client, &cred, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error: can't lookup");
       exit(1);
@@ -472,4 +472,4 @@ main(int argc, char *argv[])
   DisplayLogJd(log_desc_cache, "All tests exited successfully");
 
   exit(0);
-}				/* main */
+}                               /* main */

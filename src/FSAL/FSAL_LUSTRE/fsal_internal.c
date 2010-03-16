@@ -22,7 +22,7 @@
 #include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h>             /* used for 'dirname' */
 
 #include <pthread.h>
 #include <string.h>
@@ -38,30 +38,30 @@ fsal_staticfsinfo_t global_fs_info;
 
 /* filesystem info for HPSS */
 static fsal_staticfsinfo_t default_posix_info = {
-  0xFFFFFFFFFFFFFFFFLL,		/* max file size (64bits) */
-  _POSIX_LINK_MAX,		/* max links */
-  FSAL_MAX_NAME_LEN,		/* max filename */
-  FSAL_MAX_PATH_LEN,		/* max pathlen */
-  TRUE,				/* no_trunc */
-  TRUE,				/* chown restricted */
-  FALSE,			/* case insensitivity */
-  TRUE,				/* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,	/* FH expire type */
-  TRUE,				/* hard link support */
-  TRUE,				/* symlink support */
-  FALSE,			/* lock management */
-  TRUE,				/* named attributes */
-  TRUE,				/* handles are unique and persistent */
-  {10, 0},			/* Duration of lease at FS in seconds */
-  FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
-  TRUE,				/* can change times */
-  TRUE,				/* homogenous */
-  POSIX_SUPPORTED_ATTRIBUTES,	/* supported attributes */
-  0,				/* maxread size */
-  0,				/* maxwrite size */
-  0,				/* default umask */
-  0,				/* cross junctions */
-  0400				/* default access rights for xattrs: root=RW, owner=R */
+  0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
+  _POSIX_LINK_MAX,              /* max links */
+  FSAL_MAX_NAME_LEN,            /* max filename */
+  FSAL_MAX_PATH_LEN,            /* max pathlen */
+  TRUE,                         /* no_trunc */
+  TRUE,                         /* chown restricted */
+  FALSE,                        /* case insensitivity */
+  TRUE,                         /* case preserving */
+  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
+  TRUE,                         /* hard link support */
+  TRUE,                         /* symlink support */
+  FALSE,                        /* lock management */
+  TRUE,                         /* named attributes */
+  TRUE,                         /* handles are unique and persistent */
+  {10, 0},                      /* Duration of lease at FS in seconds */
+  FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
+  TRUE,                         /* can change times */
+  TRUE,                         /* homogenous */
+  POSIX_SUPPORTED_ATTRIBUTES,   /* supported attributes */
+  0,                            /* maxread size */
+  0,                            /* maxwrite size */
+  0,                            /* default umask */
+  0,                            /* cross junctions */
+  0400                          /* default access rights for xattrs: root=RW, owner=R */
 };
 
 /*
@@ -84,7 +84,7 @@ static void init_keys(void)
     DisplayErrorJd(fsal_log, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
-}				/* init_keys */
+}                               /* init_keys */
 
 /**
  * fsal_increment_nbcall:
@@ -128,19 +128,19 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
       if (bythread_stat == NULL)
-	{
-	  DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
-	}
+        {
+          DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+        }
 
       /* inits the struct */
 
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -154,11 +154,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
       bythread_stat->func_stats.nb_call[function_index]++;
 
       if (!FSAL_IS_ERROR(status))
-	bythread_stat->func_stats.nb_success[function_index]++;
+        bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
-	bythread_stat->func_stats.nb_err_retryable[function_index]++;
-	else
-	bythread_stat->func_stats.nb_err_unrecover[function_index]++;
+        bythread_stat->func_stats.nb_err_retryable[function_index]++;
+        else
+        bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
   return;
@@ -195,17 +195,17 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if ((bythread_stat =
-	   (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
-	DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
+           (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
+        DisplayErrorJd(fsal_log, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
       for (i = 0; i < FSAL_NB_FUNC; i++)
-	{
-	  bythread_stat->func_stats.nb_call[i] = 0;
-	  bythread_stat->func_stats.nb_success[i] = 0;
-	  bythread_stat->func_stats.nb_err_retryable[i] = 0;
-	  bythread_stat->func_stats.nb_err_unrecover[i] = 0;
-	}
+        {
+          bythread_stat->func_stats.nb_call[i] = 0;
+          bythread_stat->func_stats.nb_success[i] = 0;
+          bythread_stat->func_stats.nb_err_retryable[i] = 0;
+          bythread_stat->func_stats.nb_err_unrecover[i] = 0;
+        }
 
       /* set the specific value */
       pthread_setspecific(key_stats, (void *)bythread_stat);
@@ -325,8 +325,8 @@ void ReleaseTokenFSCall()
  *  This function initializes shared variables of the fsal.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info,
-					fs_specific_initinfo_t * fs_specific_info)
+                                        fs_common_initinfo_t * fs_common_info,
+                                        fs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -346,16 +346,16 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
       rc = semaphore_init(&sem_fs_calls, fsal_info->max_fs_calls);
 
       if (rc != 0)
-	ReturnCode(ERR_FSAL_SERVERFAULT, rc);
+        ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-			fsal_info->max_fs_calls);
+                        "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+                        fsal_info->max_fs_calls);
 
     } else
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-			"FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+                        "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
@@ -365,45 +365,45 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "{");
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxfilesize  = %llX    ",
-		    default_posix_info.maxfilesize);
+                    default_posix_info.maxfilesize);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxlink  = %lu   ",
-		    default_posix_info.maxlink);
+                    default_posix_info.maxlink);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxnamelen  = %lu  ",
-		    default_posix_info.maxnamelen);
+                    default_posix_info.maxnamelen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxpathlen  = %lu  ",
-		    default_posix_info.maxpathlen);
+                    default_posix_info.maxpathlen);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  no_trunc  = %d ",
-		    default_posix_info.no_trunc);
+                    default_posix_info.no_trunc);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  chown_restricted  = %d ",
-		    default_posix_info.chown_restricted);
+                    default_posix_info.chown_restricted);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_insensitive  = %d ",
-		    default_posix_info.case_insensitive);
+                    default_posix_info.case_insensitive);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  case_preserving  = %d ",
-		    default_posix_info.case_preserving);
+                    default_posix_info.case_preserving);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  fh_expire_type  = %hu ",
-		    default_posix_info.fh_expire_type);
+                    default_posix_info.fh_expire_type);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  link_support  = %d  ",
-		    default_posix_info.link_support);
+                    default_posix_info.link_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  symlink_support  = %d  ",
-		    default_posix_info.symlink_support);
+                    default_posix_info.symlink_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  lock_support  = %d  ",
-		    default_posix_info.lock_support);
+                    default_posix_info.lock_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  named_attr  = %d  ",
-		    default_posix_info.named_attr);
+                    default_posix_info.named_attr);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  unique_handles  = %d  ",
-		    default_posix_info.unique_handles);
+                    default_posix_info.unique_handles);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  acl_support  = %hu  ",
-		    default_posix_info.acl_support);
+                    default_posix_info.acl_support);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  cansettime  = %d  ",
-		    default_posix_info.cansettime);
+                    default_posix_info.cansettime);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  homogenous  = %d  ",
-		    default_posix_info.homogenous);
+                    default_posix_info.homogenous);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  supported_attrs  = %llX  ",
-		    default_posix_info.supported_attrs);
+                    default_posix_info.supported_attrs);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxread  = %llX     ",
-		    default_posix_info.maxread);
+                    default_posix_info.maxread);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  maxwrite  = %llX     ",
-		    default_posix_info.maxwrite);
+                    default_posix_info.maxwrite);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "  umask  = %X ", default_posix_info.umask);
   DisplayLogJdLevel(fsal_log, NIV_DEBUG, "}");
 
@@ -440,17 +440,17 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
 #ifdef _DEBUG_FSAL
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		    "Supported attributes constant = 0x%llX.",
-		    POSIX_SUPPORTED_ATTRIBUTES);
+                    "Supported attributes constant = 0x%llX.",
+                    POSIX_SUPPORTED_ATTRIBUTES);
 
   DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-		    "Supported attributes default = 0x%llX.",
-		    default_posix_info.supported_attrs);
+                    "Supported attributes default = 0x%llX.",
+                    default_posix_info.supported_attrs);
 #endif
 
   DisplayLogJdLevel(fsal_log, NIV_DEBUG,
-		    "FSAL INIT: Supported attributes mask = 0x%llX.",
-		    global_fs_info.supported_attrs);
+                    "FSAL INIT: Supported attributes mask = 0x%llX.",
+                    global_fs_info.supported_attrs);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -464,7 +464,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
  * @return 
  */
 fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
-					     const fsal_name_t * p_name)
+                                             const fsal_name_t * p_name)
 {
   char *end;
   if (!p_path || !p_name)
@@ -474,7 +474,7 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
   if (*end != '/')
     {
       if (p_path->len + 1 + p_name->len > FSAL_MAX_PATH_LEN)
-	ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
+        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len + 1;
       end++;
       *end = '/';
@@ -483,7 +483,7 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
     } else
     {
       if (p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
-	ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
+        ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
       p_path->len += p_name->len;
       end++;
       strcpy(end, p_name->name);
@@ -498,9 +498,9 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,	/* IN */
-					   fsal_handle_t * p_handle,	/* IN */
-					   fsal_path_t * p_fsalpath /* OUT */ )
+fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,       /* IN */
+                                           fsal_handle_t * p_handle,    /* IN */
+                                           fsal_path_t * p_fsalpath /* OUT */ )
 {
   char *curr = p_fsalpath->path;
 
@@ -522,7 +522,7 @@ fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,	/* IN 
 
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "FidPath=%s (len %u)", p_fsalpath->path,
-		  p_fsalpath->len);
+                  p_fsalpath->len);
 #endif
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -531,9 +531,9 @@ fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t * p_context,	/* IN 
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
-					fsal_path_t * p_fsalpath,	/* IN */
-					fsal_handle_t * p_handle /* OUT */ )
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,  /* IN */
+                                        fsal_path_t * p_fsalpath,       /* IN */
+                                        fsal_handle_t * p_handle /* OUT */ )
 {
   int rc;
   struct stat ino;
@@ -552,7 +552,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
 
 #ifdef _DEBUG_FSAL
   DisplayLogLevel(NIV_FULL_DEBUG, "llapi_path2fid(%s): status=%d, fid=" DFID_NOBRACE,
-		  p_fsalpath->path, rc, PFID(&fid));
+                  p_fsalpath->path, rc, PFID(&fid));
 #endif
 
   if (rc)
@@ -566,7 +566,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
 #ifdef _DEBUG_FSAL
   if (rc)
     DisplayLogLevel(NIV_FULL_DEBUG, "lstat(%s)=%d, errno=%d", p_fsalpath->path, rc,
-		    errno);
+                    errno);
 #endif
   if (rc)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -580,10 +580,10 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,	/* IN */
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
-				       fsal_accessflags_t access_type,	/* IN */
-				       struct stat *p_buffstat,	/* IN */
-				       fsal_attrib_list_t * p_object_attributes /* IN */ )
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+                                       fsal_accessflags_t access_type,  /* IN */
+                                       struct stat *p_buffstat, /* IN */
+                                       fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
   fsal_accessflags_t missing_access;
   unsigned int is_grp, i;
@@ -632,25 +632,25 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
 #endif
 
       if (mode & FSAL_MODE_RUSR)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (mode & FSAL_MODE_WUSR)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (mode & FSAL_MODE_XUSR)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
-	else
-	{
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        else
+        {
 #if defined( _DEBUG_FSAL )
-	  DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			    "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
-			    access_type, missing_access);
+          DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+                            "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
+                            access_type, missing_access);
 #endif
-	  ReturnCode(ERR_FSAL_ACCESS, 0);
-	}
+          ReturnCode(ERR_FSAL_ACCESS, 0);
+        }
 
     }
 
@@ -661,7 +661,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
 # ifdef _DEBUG_FSAL
   if (is_grp)
     DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "File belongs to user's group %d",
-		      p_context->credential.group);
+                      p_context->credential.group);
 # endif
 
   /* Test if file belongs to alt user's groups */
@@ -669,20 +669,20 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
   if (!is_grp)
     {
       for (i = 0; i < p_context->credential.nbgroups; i++)
-	{
-	  is_grp = (p_context->credential.alt_groups[i] == gid);
+        {
+          is_grp = (p_context->credential.alt_groups[i] == gid);
 
 #ifdef _DEBUG_FSAL
-	  if (is_grp)
-	    DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
-			      "File belongs to user's alt group %d",
-			      p_context->credential.alt_groups[i]);
+          if (is_grp)
+            DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
+                              "File belongs to user's alt group %d",
+                              p_context->credential.alt_groups[i]);
 #endif
 
-	  // exits loop if found
-	  if (is_grp)
-	    break;
-	}
+          // exits loop if found
+          if (is_grp)
+            break;
+        }
     }
 
   /* finally apply group rights */
@@ -690,18 +690,18 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,	/* IN */
   if (is_grp)
     {
       if (mode & FSAL_MODE_RGRP)
-	missing_access &= ~FSAL_R_OK;
+        missing_access &= ~FSAL_R_OK;
 
       if (mode & FSAL_MODE_WGRP)
-	missing_access &= ~FSAL_W_OK;
+        missing_access &= ~FSAL_W_OK;
 
       if (mode & FSAL_MODE_XGRP)
-	missing_access &= ~FSAL_X_OK;
+        missing_access &= ~FSAL_X_OK;
 
       if (missing_access == 0)
-	ReturnCode(ERR_FSAL_NO_ERROR, 0);
-	else
-	ReturnCode(ERR_FSAL_ACCESS, 0);
+        ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        else
+        ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
 

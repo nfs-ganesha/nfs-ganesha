@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -146,12 +146,12 @@
  */
 
 int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
-	       exportlist_t * pexport /* IN  */ ,
-	       fsal_op_context_t * pcontext /* IN  */ ,
-	       cache_inode_client_t * pclient /* IN  */ ,
-	       hash_table_t * ht /* INOUT */ ,
-	       struct svc_req *preq /* IN  */ ,
-	       nfs_res_t * pres /* OUT */ )
+               exportlist_t * pexport /* IN  */ ,
+               fsal_op_context_t * pcontext /* IN  */ ,
+               cache_inode_client_t * pclient /* IN  */ ,
+               hash_table_t * ht /* INOUT */ ,
+               struct svc_req *preq /* IN  */ ,
+               nfs_res_t * pres /* OUT */ )
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Rename";
 
@@ -190,13 +190,13 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
   /* Convert fromdir file handle into a cache_entry */
   if ((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-					  &(parg->arg_rename2.from.dir),
-					  &(parg->arg_rename3.from.dir),
-					  NULL,
-					  &(pres->res_dirop2.status),
-					  &(pres->res_create3.status),
-					  NULL,
-					  &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+                                          &(parg->arg_rename2.from.dir),
+                                          &(parg->arg_rename3.from.dir),
+                                          NULL,
+                                          &(pres->res_dirop2.status),
+                                          &(pres->res_create3.status),
+                                          NULL,
+                                          &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -204,14 +204,14 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
   /* Convert todir file handle into a cache_entry */
   if ((new_parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-					      &(parg->arg_rename2.to.dir),
-					      &(parg->arg_rename3.to.dir),
-					      NULL,
-					      &(pres->res_dirop2.status),
-					      &(pres->res_create3.status),
-					      NULL,
-					      &new_parent_attr,
-					      pcontext, pclient, ht, &rc)) == NULL)
+                                              &(parg->arg_rename2.to.dir),
+                                              &(parg->arg_rename3.to.dir),
+                                              NULL,
+                                              &(pres->res_dirop2.status),
+                                              &(pres->res_create3.status),
+                                              NULL,
+                                              &new_parent_attr,
+                                              pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -232,15 +232,15 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
       (new_parent_filetype != DIR_BEGINNING && new_parent_filetype != DIR_CONTINUE))
     {
       switch (preq->rq_vers)
-	{
-	case NFS_V2:
-	  pres->res_stat2 = NFSERR_NOTDIR;
-	  break;
+        {
+        case NFS_V2:
+          pres->res_stat2 = NFSERR_NOTDIR;
+          break;
 
-	case NFS_V3:
-	  pres->res_rename3.status = NFS3ERR_NOTDIR;
-	  break;
-	}
+        case NFS_V3:
+          pres->res_rename3.status = NFS3ERR_NOTDIR;
+          break;
+        }
 
       return NFS_REQ_OK;
     }
@@ -266,7 +266,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
       strlen(str_new_entry_name) == 0 ||
       FSAL_IS_ERROR(FSAL_str2name(str_entry_name, FSAL_MAX_NAME_LEN, &entry_name)) ||
       FSAL_IS_ERROR(FSAL_str2name
-		    (str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
+                    (str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;
     } else
@@ -276,179 +276,179 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
        *
        */
       should_not_exists = cache_inode_lookup(new_parent_pentry,
-					     &new_entry_name,
-					     &tst_attr,
-					     ht, pclient, pcontext, &cache_status);
+                                             &new_entry_name,
+                                             &tst_attr,
+                                             ht, pclient, pcontext, &cache_status);
 
       if (cache_status == CACHE_INODE_NOT_FOUND)
-	{
-	  /* We need to lookup over the old entry also */
-	  should_exists = cache_inode_lookup(parent_pentry,
-					     &entry_name,
-					     &tst_attr,
-					     ht, pclient, pcontext, &cache_status);
+        {
+          /* We need to lookup over the old entry also */
+          should_exists = cache_inode_lookup(parent_pentry,
+                                             &entry_name,
+                                             &tst_attr,
+                                             ht, pclient, pcontext, &cache_status);
 
-	  /* Rename entry */
-	  if (cache_status == CACHE_INODE_SUCCESS)
-	    cache_inode_rename(parent_pentry,
-			       &entry_name,
-			       new_parent_pentry,
-			       &new_entry_name,
-			       &attr, &new_attr, ht, pclient, pcontext, &cache_status);
+          /* Rename entry */
+          if (cache_status == CACHE_INODE_SUCCESS)
+            cache_inode_rename(parent_pentry,
+                               &entry_name,
+                               new_parent_pentry,
+                               &new_entry_name,
+                               &attr, &new_attr, ht, pclient, pcontext, &cache_status);
 
-	  if (cache_status == CACHE_INODE_SUCCESS)
-	    {
-	      switch (preq->rq_vers)
-		{
-		case NFS_V2:
-		  pres->res_stat2 = NFS_OK;
-		  break;
+          if (cache_status == CACHE_INODE_SUCCESS)
+            {
+              switch (preq->rq_vers)
+                {
+                case NFS_V2:
+                  pres->res_stat2 = NFS_OK;
+                  break;
 
-		case NFS_V3:
-		  /*
-		   * Build Weak Cache Coherency
-		   * data 
-		   */
-		  nfs_SetWccData(pcontext, pexport,
-				 parent_pentry,
-				 ppre_attr,
-				 &attr,
-				 &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
+                case NFS_V3:
+                  /*
+                   * Build Weak Cache Coherency
+                   * data 
+                   */
+                  nfs_SetWccData(pcontext, pexport,
+                                 parent_pentry,
+                                 ppre_attr,
+                                 &attr,
+                                 &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
 
-		  nfs_SetWccData(pcontext, pexport,
-				 new_parent_pentry,
-				 pnew_pre_attr,
-				 &new_attr,
-				 &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
+                  nfs_SetWccData(pcontext, pexport,
+                                 new_parent_pentry,
+                                 pnew_pre_attr,
+                                 &new_attr,
+                                 &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
 
-		  pres->res_rename3.status = NFS3_OK;
-		  break;
+                  pres->res_rename3.status = NFS3_OK;
+                  break;
 
-		}
+                }
 
-	      return NFS_REQ_OK;
-	    }
-	} else
-	{
-	  /* If name are the same (basically renaming a/file1 to a/file1, this is a non-erroneous situation to be managed */
-	  if (new_parent_pentry == parent_pentry)
-	    {
-	      if (!FSAL_namecmp(&new_entry_name, &entry_name))
-		{
-		  /* trying to rename a file to himself, this is allowed */
-		  cache_status = CACHE_INODE_SUCCESS;
-		  switch (preq->rq_vers)
-		    {
-		    case NFS_V2:
-		      pres->res_stat2 = NFS_OK;
-		      break;
+              return NFS_REQ_OK;
+            }
+        } else
+        {
+          /* If name are the same (basically renaming a/file1 to a/file1, this is a non-erroneous situation to be managed */
+          if (new_parent_pentry == parent_pentry)
+            {
+              if (!FSAL_namecmp(&new_entry_name, &entry_name))
+                {
+                  /* trying to rename a file to himself, this is allowed */
+                  cache_status = CACHE_INODE_SUCCESS;
+                  switch (preq->rq_vers)
+                    {
+                    case NFS_V2:
+                      pres->res_stat2 = NFS_OK;
+                      break;
 
-		    case NFS_V3:
-		      /*
-		       * Build Weak Cache Coherency
-		       * data 
-		       */
-		      nfs_SetWccData(pcontext, pexport,
-				     parent_pentry,
-				     ppre_attr,
-				     &attr,
-				     &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
+                    case NFS_V3:
+                      /*
+                       * Build Weak Cache Coherency
+                       * data 
+                       */
+                      nfs_SetWccData(pcontext, pexport,
+                                     parent_pentry,
+                                     ppre_attr,
+                                     &attr,
+                                     &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
 
-		      nfs_SetWccData(pcontext, pexport,
-				     parent_pentry,
-				     ppre_attr,
-				     &attr,
-				     &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
+                      nfs_SetWccData(pcontext, pexport,
+                                     parent_pentry,
+                                     ppre_attr,
+                                     &attr,
+                                     &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
 
-		      pres->res_rename3.status = NFS3_OK;
-		      break;
+                      pres->res_rename3.status = NFS3_OK;
+                      break;
 
-		    }
+                    }
 
-		  return NFS_REQ_OK;
-		}
+                  return NFS_REQ_OK;
+                }
 
-	    }
+            }
 
-	  /* New entry already exists. In this case (see RFC), entry should be compatible: Both are non-directories or 
-	   * both are directories and 'todir' is empty. If compatible, old 'todir' entry is scratched, if not returns EEXISTS */
-	  if (should_not_exists != NULL)
-	    {
-	      /* We need to lookup over the old entry also */
-	      if ((should_exists = cache_inode_lookup(parent_pentry,
-						      &entry_name,
-						      &tst_attr,
-						      ht,
-						      pclient,
-						      pcontext, &cache_status)) != NULL)
-		{
-		  if (cache_inode_type_are_rename_compatible
-		      (should_exists, should_not_exists))
-		    {
-		      /* Remove the old entry before renaming it */
-		      if (cache_inode_remove(new_parent_pentry,
-					     &new_entry_name,
-					     &tst_attr,
-					     ht,
-					     pclient,
-					     pcontext,
-					     &cache_status) == CACHE_INODE_SUCCESS)
-			{
-			  if (cache_inode_rename(parent_pentry,
-						 &entry_name,
-						 new_parent_pentry,
-						 &new_entry_name,
-						 &attr,
-						 &new_attr,
-						 ht,
-						 pclient,
-						 pcontext,
-						 &cache_status) == CACHE_INODE_SUCCESS)
-			    {
-			      /* trying to rename a file to himself, this is allowed */
-			      switch (preq->rq_vers)
-				{
-				case NFS_V2:
-				  pres->res_stat2 = NFS_OK;
-				  break;
+          /* New entry already exists. In this case (see RFC), entry should be compatible: Both are non-directories or 
+           * both are directories and 'todir' is empty. If compatible, old 'todir' entry is scratched, if not returns EEXISTS */
+          if (should_not_exists != NULL)
+            {
+              /* We need to lookup over the old entry also */
+              if ((should_exists = cache_inode_lookup(parent_pentry,
+                                                      &entry_name,
+                                                      &tst_attr,
+                                                      ht,
+                                                      pclient,
+                                                      pcontext, &cache_status)) != NULL)
+                {
+                  if (cache_inode_type_are_rename_compatible
+                      (should_exists, should_not_exists))
+                    {
+                      /* Remove the old entry before renaming it */
+                      if (cache_inode_remove(new_parent_pentry,
+                                             &new_entry_name,
+                                             &tst_attr,
+                                             ht,
+                                             pclient,
+                                             pcontext,
+                                             &cache_status) == CACHE_INODE_SUCCESS)
+                        {
+                          if (cache_inode_rename(parent_pentry,
+                                                 &entry_name,
+                                                 new_parent_pentry,
+                                                 &new_entry_name,
+                                                 &attr,
+                                                 &new_attr,
+                                                 ht,
+                                                 pclient,
+                                                 pcontext,
+                                                 &cache_status) == CACHE_INODE_SUCCESS)
+                            {
+                              /* trying to rename a file to himself, this is allowed */
+                              switch (preq->rq_vers)
+                                {
+                                case NFS_V2:
+                                  pres->res_stat2 = NFS_OK;
+                                  break;
 
-				case NFS_V3:
-				  /*
-				   * Build Weak Cache Coherency
-				   * data 
-				   */
-				  nfs_SetWccData(pcontext, pexport,
-						 parent_pentry,
-						 ppre_attr,
-						 &attr,
-						 &(pres->res_rename3.RENAME3res_u.
-						   resok.fromdir_wcc));
+                                case NFS_V3:
+                                  /*
+                                   * Build Weak Cache Coherency
+                                   * data 
+                                   */
+                                  nfs_SetWccData(pcontext, pexport,
+                                                 parent_pentry,
+                                                 ppre_attr,
+                                                 &attr,
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   fromdir_wcc));
 
-				  nfs_SetWccData(pcontext, pexport,
-						 parent_pentry,
-						 ppre_attr,
-						 &attr,
-						 &(pres->res_rename3.RENAME3res_u.
-						   resok.todir_wcc));
+                                  nfs_SetWccData(pcontext, pexport,
+                                                 parent_pentry,
+                                                 ppre_attr,
+                                                 &attr,
+                                                 &(pres->res_rename3.RENAME3res_u.resok.
+                                                   todir_wcc));
 
-				  pres->res_rename3.status = NFS3_OK;
-				  break;
+                                  pres->res_rename3.status = NFS3_OK;
+                                  break;
 
-				}
+                                }
 
-			      return NFS_REQ_OK;
-			    }
-			}
+                              return NFS_REQ_OK;
+                            }
+                        }
 
-		    }
-		}		/*  if( cache_inode_type_are_rename_compatible( should_exists, should_not_exists ) ) */
-	    }
+                    }
+                }               /*  if( cache_inode_type_are_rename_compatible( should_exists, should_not_exists ) ) */
+            }
 
-	  /* if( ( should_exists = cache_inode_lookup( parent_pentry, .... */
-	  /* If this point is reached, then destination object already exists with that name in the directory 
-	     and types are not compatible, we should return that the file exists */
-	  cache_status = CACHE_INODE_ENTRY_EXISTS;
-	}			/* if( should_not_exists != NULL ) */
+          /* if( ( should_exists = cache_inode_lookup( parent_pentry, .... */
+          /* If this point is reached, then destination object already exists with that name in the directory 
+             and types are not compatible, we should return that the file exists */
+          cache_status = CACHE_INODE_ENTRY_EXISTS;
+        }                       /* if( should_not_exists != NULL ) */
     }
 
   /* If we are here, there was an error */
@@ -458,20 +458,20 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
-		      preq->rq_vers,
-		      cache_status,
-		      &pres->res_stat2,
-		      &pres->res_rename3.status,
-		      NULL, NULL,
-		      parent_pentry,
-		      ppre_attr,
-		      &(pres->res_rename3.RENAME3res_u.resfail.fromdir_wcc),
-		      new_parent_pentry,
-		      pnew_pre_attr, &(pres->res_rename3.RENAME3res_u.resfail.todir_wcc));
+                      preq->rq_vers,
+                      cache_status,
+                      &pres->res_stat2,
+                      &pres->res_rename3.status,
+                      NULL, NULL,
+                      parent_pentry,
+                      ppre_attr,
+                      &(pres->res_rename3.RENAME3res_u.resfail.fromdir_wcc),
+                      new_parent_pentry,
+                      pnew_pre_attr, &(pres->res_rename3.RENAME3res_u.resfail.todir_wcc));
 
   return NFS_REQ_OK;
 
-}				/* nfs_Rename */
+}                               /* nfs_Rename */
 
 /**
  * nfs_Rename_Free: Frees the result structure allocated for nfs_Rename.
@@ -485,4 +485,4 @@ void nfs_Rename_Free(nfs_res_t * resp)
 {
   /* Nothing to do here */
   return;
-}				/* nfs_Rename_Free */
+}                               /* nfs_Rename_Free */

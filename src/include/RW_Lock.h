@@ -62,4 +62,4 @@ int V_r(rw_lock_t * plock);
 int rw_lock_downgrade(rw_lock_t * plock);
 int rw_lock_upgrade(rw_lock_t * plock);
 
-#endif				/* _RW_LOCK */
+#endif                          /* _RW_LOCK */

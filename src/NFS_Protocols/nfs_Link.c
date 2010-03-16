@@ -96,7 +96,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -147,10 +147,10 @@
  */
 
 int nfs_Link(nfs_arg_t * parg,
-	     exportlist_t * pexport,
-	     fsal_op_context_t * pcontext,
-	     cache_inode_client_t * pclient,
-	     hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+             exportlist_t * pexport,
+             fsal_op_context_t * pcontext,
+             cache_inode_client_t * pclient,
+             hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Link";
 
@@ -181,14 +181,14 @@ int nfs_Link(nfs_arg_t * parg,
 
   /* Get entry for parent directory */
   if ((parent_pentry = nfs_FhandleToCache(preq->rq_vers,
-					  &(parg->arg_link2.to.dir),
-					  &(parg->arg_link3.link.dir),
-					  NULL,
-					  &(pres->res_stat2),
-					  &(pres->res_link3.status),
-					  NULL,
-					  &parent_attr,
-					  pcontext, pclient, ht, &rc)) == NULL)
+                                          &(parg->arg_link2.to.dir),
+                                          &(parg->arg_link3.link.dir),
+                                          NULL,
+                                          &(pres->res_stat2),
+                                          &(pres->res_link3.status),
+                                          NULL,
+                                          &parent_attr,
+                                          pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -196,14 +196,14 @@ int nfs_Link(nfs_arg_t * parg,
   ppre_attr = &parent_attr;
 
   if ((target_pentry = nfs_FhandleToCache(preq->rq_vers,
-					  &(parg->arg_link2.from),
-					  &(parg->arg_link3.file),
-					  NULL,
-					  &(pres->res_stat2),
-					  &(pres->res_link3.status),
-					  NULL,
-					  &target_attr,
-					  pcontext, pclient, ht, &rc)) == NULL)
+                                          &(parg->arg_link2.from),
+                                          &(parg->arg_link3.file),
+                                          NULL,
+                                          &(pres->res_stat2),
+                                          &(pres->res_link3.status),
+                                          NULL,
+                                          &target_attr,
+                                          pcontext, pclient, ht, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       return rc;
@@ -219,14 +219,14 @@ int nfs_Link(nfs_arg_t * parg,
   if (parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
     {
       switch (preq->rq_vers)
-	{
-	case NFS_V2:
-	  pres->res_stat2 = NFSERR_NOTDIR;
-	  break;
-	case NFS_V3:
-	  pres->res_link3.status = NFS3ERR_NOTDIR;
-	  break;
-	}
+        {
+        case NFS_V2:
+          pres->res_stat2 = NFSERR_NOTDIR;
+          break;
+        case NFS_V3:
+          pres->res_link3.status = NFS3ERR_NOTDIR;
+          break;
+        }
       return NFS_REQ_OK;
     }
 
@@ -234,26 +234,26 @@ int nfs_Link(nfs_arg_t * parg,
     {
     case NFS_V2:
       {
-	str_link_name = parg->arg_link2.to.name;
-	to_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.to.dir));
-	from_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.from));
-	break;
+        str_link_name = parg->arg_link2.to.name;
+        to_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.to.dir));
+        from_exportid = nfs2_FhandleToExportId(&(parg->arg_link2.from));
+        break;
       }
     case NFS_V3:
       {
-	str_link_name = parg->arg_link3.link.name;
-	to_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.link.dir));
-	from_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.file));
-	break;
+        str_link_name = parg->arg_link3.link.name;
+        to_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.link.dir));
+        from_exportid = nfs3_FhandleToExportId(&(parg->arg_link3.file));
+        break;
       }
     }
 
   if (str_link_name == NULL || strlen(str_link_name) == 0)
     {
       if (preq->rq_vers == NFS_V2)
-	pres->res_stat2 = NFSERR_IO;
+        pres->res_stat2 = NFSERR_IO;
       if (preq->rq_vers == NFS_V3)
-	pres->res_link3.status = NFS3ERR_INVAL;
+        pres->res_link3.status = NFS3ERR_INVAL;
     } else
     {
       /*
@@ -261,71 +261,71 @@ int nfs_Link(nfs_arg_t * parg,
        */
 
       if (to_exportid != from_exportid)
-	{
-	  if (preq->rq_vers == NFS_V2)
-	    pres->res_stat2 = NFSERR_PERM;
-	  if (preq->rq_vers == NFS_V3)
-	    pres->res_link3.status = NFS3ERR_XDEV;
-	} else
-	{
-	  /* Make the link */
-	  if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
-								      FSAL_MAX_NAME_LEN,
-								      &link_name))) ==
-	      CACHE_INODE_SUCCESS)
-	    {
-	      if (cache_inode_link(target_pentry,
-				   parent_pentry,
-				   &link_name,
-				   &attr,
-				   ht,
-				   pclient,
-				   pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-		{
-		  if (cache_inode_getattr(parent_pentry,
-					  &attr_parent_after,
-					  ht,
-					  pclient,
-					  pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-		    {
-		      switch (preq->rq_vers)
-			{
-			case NFS_V2:
-			  pres->res_stat2 = NFS_OK;
-			  break;
+        {
+          if (preq->rq_vers == NFS_V2)
+            pres->res_stat2 = NFSERR_PERM;
+          if (preq->rq_vers == NFS_V3)
+            pres->res_link3.status = NFS3ERR_XDEV;
+        } else
+        {
+          /* Make the link */
+          if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
+                                                                      FSAL_MAX_NAME_LEN,
+                                                                      &link_name))) ==
+              CACHE_INODE_SUCCESS)
+            {
+              if (cache_inode_link(target_pentry,
+                                   parent_pentry,
+                                   &link_name,
+                                   &attr,
+                                   ht,
+                                   pclient,
+                                   pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                {
+                  if (cache_inode_getattr(parent_pentry,
+                                          &attr_parent_after,
+                                          ht,
+                                          pclient,
+                                          pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                    {
+                      switch (preq->rq_vers)
+                        {
+                        case NFS_V2:
+                          pres->res_stat2 = NFS_OK;
+                          break;
 
-			case NFS_V3:
-			  /*
-			   * Build post op file
-			   * attributes 
-			   */
+                        case NFS_V3:
+                          /*
+                           * Build post op file
+                           * attributes 
+                           */
 
-			  nfs_SetPostOpAttr(pcontext, pexport,
-					    target_pentry,
-					    &attr,
-					    &(pres->res_link3.LINK3res_u.
-					      resok.file_attributes));
+                          nfs_SetPostOpAttr(pcontext, pexport,
+                                            target_pentry,
+                                            &attr,
+                                            &(pres->res_link3.LINK3res_u.resok.
+                                              file_attributes));
 
-			  /*
-			   * Build Weak Cache Coherency
-			   * data 
-			   */
-			  nfs_SetWccData(pcontext, pexport,
-					 parent_pentry,
-					 ppre_attr,
-					 &attr_parent_after,
-					 &(pres->res_link3.LINK3res_u.resok.linkdir_wcc));
+                          /*
+                           * Build Weak Cache Coherency
+                           * data 
+                           */
+                          nfs_SetWccData(pcontext, pexport,
+                                         parent_pentry,
+                                         ppre_attr,
+                                         &attr_parent_after,
+                                         &(pres->res_link3.LINK3res_u.resok.linkdir_wcc));
 
-			  pres->res_link3.status = NFS3_OK;
-			  break;
-			}	/* switch */
+                          pres->res_link3.status = NFS3_OK;
+                          break;
+                        }       /* switch */
 
-		      return NFS_REQ_OK;
+                      return NFS_REQ_OK;
 
-		    }		/* if( cache_inode_link ... */
-		}		/* if( cache_inode_getattr ... */
-	    }			/* else */
-	}
+                    }           /* if( cache_inode_link ... */
+                }               /* if( cache_inode_getattr ... */
+            }                   /* else */
+        }
     }
 
   /* If we are here, there was an error */
@@ -335,19 +335,19 @@ int nfs_Link(nfs_arg_t * parg,
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
-		      preq->rq_vers,
-		      cache_status,
-		      &pres->res_stat2,
-		      &pres->res_link3.status,
-		      target_pentry,
-		      &(pres->res_link3.LINK3res_u.resfail.file_attributes),
-		      parent_pentry,
-		      ppre_attr,
-		      &(pres->res_link3.LINK3res_u.resfail.linkdir_wcc),
-		      NULL, NULL, NULL);
+                      preq->rq_vers,
+                      cache_status,
+                      &pres->res_stat2,
+                      &pres->res_link3.status,
+                      target_pentry,
+                      &(pres->res_link3.LINK3res_u.resfail.file_attributes),
+                      parent_pentry,
+                      ppre_attr,
+                      &(pres->res_link3.LINK3res_u.resfail.linkdir_wcc),
+                      NULL, NULL, NULL);
 
   return NFS_REQ_OK;
-}				/* nfs_Link */
+}                               /* nfs_Link */
 
 /**
  * nfs_Link_Free: Frees the result structure allocated for nfs_Link.
@@ -361,4 +361,4 @@ void nfs_Link_Free(nfs_res_t * resp)
 {
   /* Nothing to do here */
   return;
-}				/* nfs_Link_Free */
+}                               /* nfs_Link_Free */

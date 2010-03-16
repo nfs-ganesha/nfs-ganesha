@@ -15,7 +15,7 @@
 int fsal2posix_testperm(fsal_accessflags_t testperm);
 int fuse2fsal_error(int errorcode, int noent_is_stale);
 fsal_status_t posix2fsal_attributes(struct stat *p_buffstat,
-				    fsal_attrib_list_t * p_fsalattr_out);
+                                    fsal_attrib_list_t * p_fsalattr_out);
 
 fsal_nodetype_t posix2fsal_type(mode_t posix_type_in);
 fsal_time_t posix2fsal_time(time_t tsec);

@@ -17,7 +17,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include <string.h>
 #ifdef _USE_GSSRPC
@@ -39,10 +39,10 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
-fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle,	/* IN */
-					    fsal_op_context_t * p_context,	/* IN */
-					    fsal_size_t length,	/* IN */
-					    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle, /* IN */
+                                            fsal_op_context_t * p_context,      /* IN */
+                                            fsal_size_t length, /* IN */
+                                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -102,10 +102,10 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle,	/* IN */
 
   fsal_interval_proxy_fsalattr2bitmap4(&fsal_attr_set, &convert_bitmap);
 
-  if (nfs4_FSALattr_To_Fattr(NULL,	/* no exportlist required here */
-			     &fsal_attr_set, &fattr_set, NULL,	/* no compound data required here */
-			     NULL,	/* No fh here, filehandle is not a settable attribute */
-			     &convert_bitmap) == -1)
+  if (nfs4_FSALattr_To_Fattr(NULL,      /* no exportlist required here */
+                             &fsal_attr_set, &fattr_set, NULL,  /* no compound data required here */
+                             NULL,      /* No fh here, filehandle is not a settable attribute */
+                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_truncate);
 
   inbitmap.bitmap4_val = inbitmap_val;
@@ -120,29 +120,27 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle,	/* IN */
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, inbitmap);
 
   /* For ATTR_SIZE, stateid is needed, we use the stateless "all-0's" stateid here */
-  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_argop4_u.opsetattr.stateid.seqid = 0;
-  memset(argnfs4.argarray.
-	 argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_argop4_u.opsetattr.
-	 stateid.other, 0, 12);
+  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_argop4_u.
+      opsetattr.stateid.seqid = 0;
+  memset(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
+         nfs_argop4_u.opsetattr.stateid.other, 0, 12);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val =
-      bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
-      nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
+      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_resop4_u.opsetattr.attrsset.bitmap4_val = bitmap_set;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].
-      nfs_resop4_u.opsetattr.attrsset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_resop4_u.
+      opsetattr.attrsset.bitmap4_val = bitmap_set;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_STATELESS_IDX_OP_SETATTR].nfs_resop4_u.
+      opsetattr.attrsset.bitmap4_len = 2;
 
   TakeTokenFSCall();
 
@@ -168,22 +166,22 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle,	/* IN */
   if (object_attributes)
     {
       if (nfs4_Fattr_To_FSAL_attr(object_attributes,
-				  &resnfs4.
-				  resarray.resarray_val
-				  [FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].nfs_resop4_u.
-				  opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+                                  &resnfs4.resarray.resarray_val
+                                  [FSAL_TRUNCATE_STATELESS_IDX_OP_GETATTR].
+                                  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
+                                  obj_attributes) != 1)
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
-	}
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
+        }
 
     }
 
   /* No error occured */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
-}				/* FSAL_proxy_truncate_stateless */
+}                               /* FSAL_proxy_truncate_stateless */
 
 /**
  * FSAL_truncate:
@@ -212,11 +210,11 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * filehandle,	/* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
-			    fsal_op_context_t * p_context,	/* IN */
-			    fsal_size_t length,	/* IN */
-			    fsal_file_t * file_descriptor,	/* [IN|OUT] */
-			    fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_truncate(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
+                            fsal_size_t length, /* IN */
+                            fsal_file_t * file_descriptor,      /* [IN|OUT] */
+                            fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -259,13 +257,13 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
     {
       /* Use the stateless version */
       fsal_status = FSAL_proxy_truncate_stateless(filehandle,
-						  p_context, length, object_attributes);
+                                                  p_context, length, object_attributes);
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
     }
 
   /* First, we need to get the fileid on a filehandle base */
   fsal_status = FSAL_DigestHandle(p_context->export_context,
-				  FSAL_DIGEST_FILEID4, filehandle, (caddr_t) & fileid);
+                                  FSAL_DIGEST_FILEID4, filehandle, (caddr_t) & fileid);
   if (FSAL_IS_ERROR(fsal_status))
     {
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
@@ -274,8 +272,8 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
   /* Then we have of open the file by fileid */
   open_attrs.asked_attributes = FSAL_ATTRS_POSIX;
   fsal_status = FSAL_open_by_fileid(filehandle,
-				    fileid,
-				    p_context, FSAL_O_RDWR, file_descriptor, &open_attrs);
+                                    fileid,
+                                    p_context, FSAL_O_RDWR, file_descriptor, &open_attrs);
   if (FSAL_IS_ERROR(fsal_status))
     {
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
@@ -304,10 +302,10 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
 
   fsal_interval_proxy_fsalattr2bitmap4(&fsal_attr_set, &convert_bitmap);
 
-  if (nfs4_FSALattr_To_Fattr(NULL,	/* no exportlist required here */
-			     &fsal_attr_set, &fattr_set, NULL,	/* no compound data required here */
-			     NULL,	/* No fh here, filehandle is not a settable attribute */
-			     &convert_bitmap) == -1)
+  if (nfs4_FSALattr_To_Fattr(NULL,      /* no exportlist required here */
+                             &fsal_attr_set, &fattr_set, NULL,  /* no compound data required here */
+                             NULL,      /* No fh here, filehandle is not a settable attribute */
+                             &convert_bitmap) == -1)
     Return(ERR_FSAL_INVAL, -1, INDEX_FSAL_truncate);
 
   inbitmap.bitmap4_val = inbitmap_val;
@@ -322,27 +320,27 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
   COMPOUNDV4_ARG_ADD_OP_GETATTR(argnfs4, inbitmap);
 
   /* For ATTR_SIZE, stateid is needed */
-  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.
-      opsetattr.stateid.seqid = file_descriptor->stateid.seqid;
-  memcpy(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].
-	 nfs_argop4_u.opsetattr.stateid.other, file_descriptor->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.opsetattr.
+      stateid.seqid = file_descriptor->stateid.seqid;
+  memcpy(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.
+         opsetattr.stateid.other, file_descriptor->stateid.other, 12);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_len = 2;
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val =
       (char *)&fattr_internal;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
-      opgetattr.GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
+      GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_len =
       sizeof(fattr_internal);
 
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_val = bitmap_set;
-  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.
-      opsetattr.attrsset.bitmap4_len = 2;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_val = bitmap_set;
+  resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_resop4_u.opsetattr.
+      attrsset.bitmap4_len = 2;
 
   TakeTokenFSCall();
 
@@ -368,16 +366,15 @@ fsal_status_t FSAL_truncate(fsal_handle_t * filehandle,	/* IN */
   if (object_attributes)
     {
       if (nfs4_Fattr_To_FSAL_attr(object_attributes,
-				  &resnfs4.
-				  resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].
-				  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-				  obj_attributes) != 1)
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+                                  &resnfs4.resarray.
+                                  resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.
+                                  opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
-	  Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
-	}
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
+        }
 
     }
 

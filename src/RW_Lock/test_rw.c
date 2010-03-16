@@ -61,9 +61,9 @@ void *thread_writter(void *arg)
       V_w(&lock);
       nb_iter -= 1;
     }
-  OkWrite = 1;			/* Ecriture concurrente ici, mais on s'en fout (pas d'impact) */
+  OkWrite = 1;                  /* Ecriture concurrente ici, mais on s'en fout (pas d'impact) */
   return NULL;
-}				/* thread_writter */
+}                               /* thread_writter */
 
 void *thread_reader(void *arg)
 {
@@ -77,9 +77,9 @@ void *thread_reader(void *arg)
       V_r(&lock);
       nb_iter -= 1;
     }
-  OkRead = 1;			/* Ecriture concurrente ici, mais on s'en fout (pas d'impact) */
+  OkRead = 1;                   /* Ecriture concurrente ici, mais on s'en fout (pas d'impact) */
   return NULL;
-}				/* thread_writter */
+}                               /* thread_writter */
 
 int main(int argc, char *argv[])
 {
@@ -96,49 +96,49 @@ int main(int argc, char *argv[])
   printf("Init lock: %d\n", rw_lock_init(&lock));
 
   printf("DUREE ESTIMEE DU TEST: %d s\n",
-	 (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
+         (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
   fflush(stdout);
 
   for (i = 0; i < MAX_WRITTERS; i++)
     {
       if ((rc =
-	   pthread_create(&ThrWritters[i], &attr_thr, thread_writter, (void *)NULL)) != 0)
-	{
-	  fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
-	  printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
-	  exit(1);
-	}
+           pthread_create(&ThrWritters[i], &attr_thr, thread_writter, (void *)NULL)) != 0)
+        {
+          fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
+          printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
+          exit(1);
+        }
     }
 
   for (i = 0; i < MAX_READERS; i++)
     {
       if ((rc =
-	   pthread_create(&ThrReaders[i], &attr_thr, thread_reader, (void *)NULL)) != 0)
-	{
-	  fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
-	  printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
-	  exit(1);
-	}
+           pthread_create(&ThrReaders[i], &attr_thr, thread_reader, (void *)NULL)) != 0)
+        {
+          fprintf(stderr, "pthread_create: Erreur %d %d \n", rc, errno);
+          printf("Test RW_Lock ECHOUE: Mauvaise allocation des thread\n");
+          exit(1);
+        }
     }
 
   sleep((MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
 
   printf("Fin du sleep( %d ) \n",
-	 (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
+         (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
   if (OkWrite == 1 & OkRead == 1)
     {
       printf("Test RW_Lock reussi: pas de deadlock detecte\n");
       exit(0);
-      return 0;			/* for compiler */
+      return 0;                 /* for compiler */
     } else
     {
       if (OkWrite == 0)
-	printf("Test RW_Lock ECHOUE: deadlock dans les redacteurs\n");
+        printf("Test RW_Lock ECHOUE: deadlock dans les redacteurs\n");
       if (OkRead == 0)
-	printf("Test RW_Lock ECHOUE: deadlock dans les lecteur\n");
+        printf("Test RW_Lock ECHOUE: deadlock dans les lecteur\n");
       exit(1);
-      return 1;			/* for compiler */
+      return 1;                 /* for compiler */
 
     }
 
-}				/* main */
+}                               /* main */

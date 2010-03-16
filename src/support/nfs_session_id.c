@@ -89,16 +89,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
@@ -142,22 +142,22 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str)
   for (i = 0; i < NFS4_SESSIONID_SIZE; i++)
     len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
   return len;
-}				/* display_session_id_val */
+}                               /* display_session_id_val */
 
 int display_session_id_val(hash_buffer_t * pbuff, char *str)
 {
   nfs41_session_t *psession = (nfs41_session_t *) (pbuff->pdata);
 
   return sprintf(str, "not implemented");
-}				/* display_session_id_val */
+}                               /* display_session_id_val */
 
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   return memcmp(buff1->pdata, buff2->pdata, NFS4_SESSIONID_SIZE);
-}				/* compare_session_id */
+}                               /* compare_session_id */
 
 unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
-					 hash_buffer_t * buffclef)
+                                         hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -172,13 +172,13 @@ unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
 
 #ifdef _DEBUG_SESSIONS
   printf("---> session_id_value_hash_func=%lu\n",
-	 (unsigned long)(sum % p_hparam->index_size));
+         (unsigned long)(sum % p_hparam->index_size));
 #endif
   return (unsigned long)(sum % p_hparam->index_size);
-}				/*  client_id_reverse_value_hash_func */
+}                               /*  client_id_reverse_value_hash_func */
 
 unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef)
+                                       hash_buffer_t * buffclef)
 {
 
   u_int32_t i1 = 0;
@@ -203,7 +203,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
   printf("--->  session_id_rbt_hash_func=%lu\n", (unsigned long)(i1 ^ i2 ^ i3));
 #endif
   return (unsigned long)(i1 ^ i2 ^ i3 | i4);
-}				/* session_id_rbt_hash_func */
+}                               /* session_id_rbt_hash_func */
 
 /**
  *
@@ -225,7 +225,7 @@ int nfs41_Init_session_id(nfs_session_id_parameter_t param)
     }
 
   return 0;
-}				/* nfs_Init_sesion_id */
+}                               /* nfs_Init_sesion_id */
 
 /**
  *
@@ -254,7 +254,7 @@ int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_S
   memcpy((char *)(sessionid + sizeof(clientid4)), (char *)&seq, sizeof(seq));
 
   return 1;
-}				/* nfs41_Build_sessionid */
+}                               /* nfs41_Build_sessionid */
 
 /**
  *
@@ -268,7 +268,7 @@ int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_S
  *
  */
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
-		      nfs41_session_t * psession_data)
+                      nfs41_session_t * psession_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -297,7 +297,7 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
     return 0;
 
   return 1;
-}				/* nfs41_Session_Set */
+}                               /* nfs41_Session_Set */
 
 /**
  *
@@ -312,7 +312,7 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
  *
  */
 int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
-		      nfs41_session_t * psession_data)
+                      nfs41_session_t * psession_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -342,7 +342,7 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
   printf("---> nfs41_Session_Get Found :-)\n");
 #endif
   return 1;
-}				/* nfs41_Session_Get */
+}                               /* nfs41_Session_Get */
 
 /**
  *
@@ -357,7 +357,7 @@ int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
  *
  */
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
-			      nfs41_session_t * *psession_data)
+                              nfs41_session_t * *psession_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -388,7 +388,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
   printf("---> nfs41_Session_Get_Pointer Found :-)\n");
 #endif
   return 1;
-}				/* nfs41_Session_Get_Pointer */
+}                               /* nfs41_Session_Get_Pointer */
 
 /**
  * 
@@ -403,7 +403,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  * 
  */
 int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
-			 nfs41_session_t * psession_data)
+                         nfs41_session_t * psession_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -433,7 +433,7 @@ int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
   printf("---> nfs41_Session_Update Found :-)\n");
 #endif
   return 1;
-}				/* nfs41_Session_Update */
+}                               /* nfs41_Session_Update */
 
 /**
  *
@@ -472,7 +472,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
       return 1;
     } else
     return 0;
-}				/* nfs41_Session_Del */
+}                               /* nfs41_Session_Del */
 
 /**
  * 
@@ -486,4 +486,4 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 void nfs41_Session_PrintAll(void)
 {
   HashTable_Print(ht_session_id);
-}				/* nfs41_Session_PrintAll */
+}                               /* nfs41_Session_PrintAll */

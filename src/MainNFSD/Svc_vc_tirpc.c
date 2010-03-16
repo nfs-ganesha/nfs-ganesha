@@ -103,13 +103,13 @@ static void Svc_vc_ops(SVCXPRT *);
 static bool_t Svc_vc_control(SVCXPRT * xprt, const u_int rq, void *in);
 static bool_t Svc_vc_rendezvous_control(SVCXPRT * xprt, const u_int rq, void *in);
 
-struct cf_rendezvous {		/* kept in xprt->xp_p1 for rendezvouser */
+struct cf_rendezvous {          /* kept in xprt->xp_p1 for rendezvouser */
   u_int sendsize;
   u_int recvsize;
   int maxrec;
 };
 
-struct cf_conn {		/* kept in xprt->xp_p1 for actual connection */
+struct cf_conn {                /* kept in xprt->xp_p1 for actual connection */
   enum xprt_stat strm_stat;
   u_int32_t x_id;
   XDR xdrs;
@@ -183,7 +183,7 @@ u_int recvsize;
   xprt->xp_p3 = NULL;
   xprt->xp_verf = _null_auth;
   Svc_vc_rendezvous_ops(xprt);
-  xprt->xp_port = (u_short) - 1;	/* It is the rendezvouser */
+  xprt->xp_port = (u_short) - 1;        /* It is the rendezvouser */
   xprt->xp_fd = fd;
 
   slen = sizeof(struct sockaddr_storage);
@@ -277,7 +277,7 @@ u_int recvsize;
       memcpy(&ret->xp_raddr, ret->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
       ret->xp_addrlen = sizeof(struct sockaddr_in6);
     }
-#endif				/* PORTMAP */
+#endif                          /* PORTMAP */
 
   return ret;
 
@@ -319,8 +319,8 @@ u_int recvsize;
   xdrrec_create(&(cd->xdrs), sendsize, recvsize, xprt, Read_vc, Write_vc);
   xprt->xp_p1 = cd;
   xprt->xp_verf.oa_base = cd->verf_body;
-  Svc_vc_ops(xprt);		/* truely deals with calls */
-  xprt->xp_port = 0;		/* this is a connection, not a rendezvouser */
+  Svc_vc_ops(xprt);             /* truely deals with calls */
+  xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_fd = fd;
   if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
     xprt->xp_netid = strdup(netid);
@@ -357,19 +357,19 @@ struct rpc_msg *msg;
   if ((sock = accept(xprt->xp_fd, (struct sockaddr *)(void *)&addr, &len)) < 0)
     {
       printf("Error in accept xp_fd=%u line=%u file=%s, errno=%u\n", xprt->xp_fd,
-	     __LINE__, __FILE__, errno);
+             __LINE__, __FILE__, errno);
       if (errno == EINTR)
-	goto again;
+        goto again;
       /*
        * Clean out the most idle file descriptor when we're
        * running out.
        */
       if (errno == EMFILE || errno == ENFILE)
-	{
-	  cleanfds = Svc_fdset;
-	  __svc_clean_idle(&cleanfds, 0, FALSE);
-	  goto again;
-	}
+        {
+          cleanfds = Svc_fdset;
+          __svc_clean_idle(&cleanfds, 0, FALSE);
+          goto again;
+        }
       return (FALSE);
     }
   /*
@@ -399,7 +399,7 @@ struct rpc_msg *msg;
       memcpy(&newxprt->xp_raddr, newxprt->xp_rtaddr.buf, sizeof(struct sockaddr_in6));
       newxprt->xp_addrlen = sizeof(struct sockaddr_in6);
     }
-#endif				/* PORTMAP */
+#endif                          /* PORTMAP */
   if (__rpc_fd2sockinfo(sock, &si) && si.si_proto == IPPROTO_TCP)
     {
       len = 1;
@@ -417,11 +417,11 @@ struct rpc_msg *msg;
     {
       flags = fcntl(sock, F_GETFL, 0);
       if (flags == -1)
-	return (FALSE);
+        return (FALSE);
       /*if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
          return (FALSE); */
       if (cd->recvsize > cd->maxrec)
-	cd->recvsize = cd->maxrec;
+        cd->recvsize = cd->maxrec;
       cd->nonblock = TRUE;
       __xdrrec_setnonblock(&cd->xdrs, cd->maxrec);
     } else
@@ -431,7 +431,7 @@ struct rpc_msg *msg;
   /* Spawns a new thread to handle the connection */
   pthread_attr_init(&attr_thr);
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);	/* If not, the conn mgr will be "defunct" threads */
+  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
 
   FD_CLR(newxprt->xp_fd, &Svc_fdset);
 
@@ -445,10 +445,10 @@ struct rpc_msg *msg;
 
   if ((rc =
        pthread_create(&sockmgr_thrid, &attr_thr, rpc_tcp_socket_manager_thread,
-		      (void *)(newxprt->xp_fd))) != 0)
+                      (void *)(newxprt->xp_fd))) != 0)
     return FALSE;
 
-  return (FALSE);		/* there is never an rpc msg to be processed */
+  return (FALSE);               /* there is never an rpc msg to be processed */
 }
 
  /*ARGSUSED*/ static enum xprt_stat Rendezvous_stat(xprt)
@@ -561,14 +561,14 @@ int len;
     {
       len = read(sock, buf, (size_t) len);
       if (len < 0)
-	{
-	  if (errno == EAGAIN)
-	    len = 0;
-	    else
-	    goto fatal_err;
-	}
+        {
+          if (errno == EAGAIN)
+            len = 0;
+            else
+            goto fatal_err;
+        }
       if (len != 0)
-	gettimeofday(&cfp->last_recv_time, NULL);
+        gettimeofday(&cfp->last_recv_time, NULL);
       return len;
     }
 
@@ -578,16 +578,16 @@ int len;
       pollfd.events = POLLIN;
       pollfd.revents = 0;
       switch (poll(&pollfd, 1, milliseconds))
-	{
-	case -1:
-	  if (errno == EINTR)
-	    continue;
-	 /*FALLTHROUGH*/ case 0:
-	  goto fatal_err;
+        {
+        case -1:
+          if (errno == EINTR)
+            continue;
+         /*FALLTHROUGH*/ case 0:
+          goto fatal_err;
 
-	default:
-	  break;
-	}
+        default:
+          break;
+        }
     }
   while ((pollfd.revents & POLLIN) == 0);
 
@@ -628,29 +628,29 @@ int len;
     {
       i = write(xprt->xp_fd, buf, (size_t) cnt);
       if (i < 0)
-	{
-	  if (errno != EAGAIN || !cd->nonblock)
-	    {
-	      cd->strm_stat = XPRT_DIED;
-	      return (-1);
-	    }
-	  if (cd->nonblock && i != cnt)
-	    {
-	      /*
-	       * For non-blocking connections, do not
-	       * take more than 2 seconds writing the
-	       * data out.
-	       *
-	       * XXX 2 is an arbitrary amount.
-	       */
-	      gettimeofday(&tv1, NULL);
-	      if (tv1.tv_sec - tv0.tv_sec >= 2)
-		{
-		  cd->strm_stat = XPRT_DIED;
-		  return (-1);
-		}
-	    }
-	}
+        {
+          if (errno != EAGAIN || !cd->nonblock)
+            {
+              cd->strm_stat = XPRT_DIED;
+              return (-1);
+            }
+          if (cd->nonblock && i != cnt)
+            {
+              /*
+               * For non-blocking connections, do not
+               * take more than 2 seconds writing the
+               * data out.
+               *
+               * XXX 2 is an arbitrary amount.
+               */
+              gettimeofday(&tv1, NULL);
+              if (tv1.tv_sec - tv0.tv_sec >= 2)
+                {
+                  cd->strm_stat = XPRT_DIED;
+                  return (-1);
+                }
+            }
+        }
     }
 
   return (len);
@@ -688,7 +688,7 @@ struct rpc_msg *msg;
   if (cd->nonblock)
     {
       if (!__xdrrec_getrec(xdrs, &cd->strm_stat, TRUE))
-	return FALSE;
+        return FALSE;
     }
 
   xdrs->x_op = XDR_DECODE;
@@ -790,7 +790,7 @@ SVCXPRT *xprt;
       ops.xp_getargs = (bool_t(*)(SVCXPRT *, xdrproc_t, void *))abort;
       ops.xp_reply = (bool_t(*)(SVCXPRT *, struct rpc_msg *))abort;
       ops.xp_freeargs =
-	  (bool_t(*)(SVCXPRT *, xdrproc_t, void *))abort, ops.xp_destroy = Svc_vc_destroy;
+          (bool_t(*)(SVCXPRT *, xdrproc_t, void *))abort, ops.xp_destroy = Svc_vc_destroy;
       ops2.xp_control = Svc_vc_rendezvous_control;
     }
   xprt->xp_ops = &ops;
@@ -815,7 +815,7 @@ int __rpc_get_local_uid(SVCXPRT * transp, uid_t * uid)
     {
       ret = getpeereid(sock, &euid, &egid);
       if (ret == 0)
-	*uid = euid;
+        *uid = euid;
       return (ret);
     } else
     return (-1);
@@ -841,31 +841,31 @@ bool_t __svc_clean_idle(fd_set * fds, int timeout, bool_t cleanblock)
   for (i = ncleaned = 0; i <= svc_maxfd; i++)
     {
       if (FD_ISSET(i, fds))
-	{
-	  xprt = Xports[i];
-	  if (xprt == NULL || xprt->xp_ops == NULL ||
-	      xprt->xp_ops->xp_recv != Svc_vc_recv)
-	    continue;
-	  cd = (struct cf_conn *)xprt->xp_p1;
-	  if (!cleanblock && !cd->nonblock)
-	    continue;
-	  if (timeout == 0)
-	    {
-	      timersub(&tv, &cd->last_recv_time, &tdiff);
-	      if (timercmp(&tdiff, &tmax, >))
-		{
-		  tmax = tdiff;
-		  least_active = xprt;
-		}
-	      continue;
-	    }
-	  if (tv.tv_sec - cd->last_recv_time.tv_sec > timeout)
-	    {
-	      __Xprt_unregister_unlocked(xprt);
-	      __Svc_vc_dodestroy(xprt);
-	      ncleaned++;
-	    }
-	}
+        {
+          xprt = Xports[i];
+          if (xprt == NULL || xprt->xp_ops == NULL ||
+              xprt->xp_ops->xp_recv != Svc_vc_recv)
+            continue;
+          cd = (struct cf_conn *)xprt->xp_p1;
+          if (!cleanblock && !cd->nonblock)
+            continue;
+          if (timeout == 0)
+            {
+              timersub(&tv, &cd->last_recv_time, &tdiff);
+              if (timercmp(&tdiff, &tmax, >))
+                {
+                  tmax = tdiff;
+                  least_active = xprt;
+                }
+              continue;
+            }
+          if (tv.tv_sec - cd->last_recv_time.tv_sec > timeout)
+            {
+              __Xprt_unregister_unlocked(xprt);
+              __Svc_vc_dodestroy(xprt);
+              ncleaned++;
+            }
+        }
     }
   if (timeout == 0 && least_active != NULL)
     {

@@ -97,11 +97,11 @@
 #include <netinet/in.h>
 #ifndef _FREEBSD
 #include <netinet/tcp.h>
-#endif				/* _FREEBSD */
+#endif                          /* _FREEBSD */
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h>              /* for having isalnum */
+#include <stdlib.h>             /* for having atoi */
+#include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -110,7 +110,7 @@
 #include <sys/poll.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 
 #include <grp.h>
@@ -134,7 +134,7 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-struct tcp_conn {		/* kept in xprt->xp_p1 */
+struct tcp_conn {               /* kept in xprt->xp_p1 */
   enum xprt_stat strm_stat;
   u_long x_id;
   XDR xdrs;
@@ -142,7 +142,7 @@ struct tcp_conn {		/* kept in xprt->xp_p1 */
 };
 
 unsigned long decimal_simple_hash_func(hash_parameter_t * p_hparam,
-				       hash_buffer_t * buffclef)
+                                       hash_buffer_t * buffclef)
 {
   printf("ATTENTION: APPEL D'UNE DUMMY FUNCTION\n");
   return 0;
@@ -172,7 +172,7 @@ int print_cache(LRU_data_t data, char *str)
 int clean_cache(LRU_entry_t * pentry, void *addparam)
 {
   return 0;
-}				/* clean_cache */
+}                               /* clean_cache */
 
 /**
  * 
@@ -189,7 +189,7 @@ int clean_cache(LRU_entry_t * pentry, void *addparam)
 int lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
   return sprintf(str, "N/A ");
-}				/* lru_inode_entry_to_str */
+}                               /* lru_inode_entry_to_str */
 
 /**
  *
@@ -206,7 +206,7 @@ int lru_inode_entry_to_str(LRU_data_t data, char *str)
 int lru_data_entry_to_str(LRU_data_t data, char *str)
 {
   return sprintf(str, "addr=%p,len=%llu ", data.pdata, (unsigned long long)data.len);
-}				/* lru_data_entry_to_str */
+}                               /* lru_data_entry_to_str */
 
 /**
  *
@@ -223,7 +223,7 @@ int lru_data_entry_to_str(LRU_data_t data, char *str)
 int lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
-}				/* lru_inode_clean_entry */
+}                               /* lru_inode_clean_entry */
 
 /**
  *
@@ -240,24 +240,24 @@ int lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 int lru_data_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
-}				/* lru_data_clean_entry */
+}                               /* lru_data_clean_entry */
 
 void socket_setoptions(int socketFd)
 {
-  unsigned int SbMax = (1 << 30);	/* 1GB */
+  unsigned int SbMax = (1 << 30);       /* 1GB */
 
   while (SbMax > 1048576)
     {
       if ((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof(SbMax)) < 0)
-	  || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
-	      0))
-	{
-	  SbMax >>= 1;		/* SbMax = SbMax/2 */
-	  continue;
-	}
+          || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
+              0))
+        {
+          SbMax >>= 1;          /* SbMax = SbMax/2 */
+          continue;
+        }
 
       break;
     }
 
   return;
-}				/* socket_setoptions_ctrl */
+}                               /* socket_setoptions_ctrl */

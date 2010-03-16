@@ -61,7 +61,7 @@ static int xmp_readlink(const char *path, char *buf, size_t size)
 }
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi)
+                       off_t offset, struct fuse_file_info *fi)
 {
   DIR *dp;
   struct dirent *de;
@@ -80,7 +80,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
       st.st_ino = de->d_ino;
       st.st_mode = de->d_type << 12;
       if (filler(buf, de->d_name, &st, 0))
-	break;
+        break;
     }
 
   closedir(dp);
@@ -97,7 +97,7 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
     {
       res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
       if (res >= 0)
-	res = close(res);
+        res = close(res);
   } else if (S_ISFIFO(mode))
     res = mkfifo(path, mode);
     else
@@ -237,7 +237,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 }
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
-		    struct fuse_file_info *fi)
+                    struct fuse_file_info *fi)
 {
   int fd;
   int res;
@@ -256,7 +256,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+                     off_t offset, struct fuse_file_info *fi)
 {
   int fd;
   int res;
@@ -309,7 +309,7 @@ static int xmp_fsync(const char *path, int isdatasync, struct fuse_file_info *fi
 #ifdef HAVE_SETXATTR
 /* xattr operations are optional and can safely be left unimplemented */
 static int xmp_setxattr(const char *path, const char *name, const char *value,
-			size_t size, int flags)
+                        size_t size, int flags)
 {
   int res = lsetxattr(path, name, value, size, flags);
   if (res == -1)
@@ -340,7 +340,7 @@ static int xmp_removexattr(const char *path, const char *name)
     return -errno;
   return 0;
 }
-#endif				/* HAVE_SETXATTR */
+#endif                          /* HAVE_SETXATTR */
 
 static struct fuse_operations xmp_oper = {
   .getattr = xmp_getattr,

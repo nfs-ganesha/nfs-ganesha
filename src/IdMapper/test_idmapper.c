@@ -13,14 +13,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include <sys/resource.h>	/* for having setrlimit */
-#include <signal.h>		/* for sigaction */
+#include <sys/file.h>           /* for having FNDELAY */
+#include <sys/resource.h>       /* for having setrlimit */
+#include <signal.h>             /* for sigaction */
 #ifdef _USE_GSSRPC
 #include <gssapi/gssapi.h>
 #ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h>	/* For krb5_gss_register_acceptor_identity */
-#endif				/* HAVE_KRB5 */
+#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
+#endif                          /* HAVE_KRB5 */
 #include <gssrpc/rpc.h>
 #include <gssrpc/svc.h>
 #include <gssrpc/pmap_clnt.h>
@@ -98,26 +98,26 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
       i8 = (padded_name[offset + 7]) << 56;
 
       sum = (uint64_t) padded_name[offset + 0] +
-	  (uint64_t) padded_name[offset + 1] +
-	  (uint64_t) padded_name[offset + 2] +
-	  (uint64_t) padded_name[offset + 3] +
-	  (uint64_t) padded_name[offset + 4] +
-	  (uint64_t) padded_name[offset + 5] +
-	  (uint64_t) padded_name[offset + 6] + (uint64_t) padded_name[offset + 7];
+          (uint64_t) padded_name[offset + 1] +
+          (uint64_t) padded_name[offset + 2] +
+          (uint64_t) padded_name[offset + 3] +
+          (uint64_t) padded_name[offset + 4] +
+          (uint64_t) padded_name[offset + 5] +
+          (uint64_t) padded_name[offset + 6] + (uint64_t) padded_name[offset + 7];
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
       printf("|%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx |%llx | = ",
-	     i1, i2, i3, i4, i5, i6, i7, i8);
+             i1, i2, i3, i4, i5, i6, i7, i8);
 #endif
 
       /* Get xor combibation of all the 8h bit */
       l = (padded_name[offset + 0]) ^
-	  (padded_name[offset + 1]) ^
-	  (padded_name[offset + 2]) ^
-	  (padded_name[offset + 3]) ^
-	  (padded_name[offset + 4]) ^
-	  (padded_name[offset + 5]) ^
-	  (padded_name[offset + 6]) ^ (padded_name[offset + 7]);
+          (padded_name[offset + 1]) ^
+          (padded_name[offset + 2]) ^
+          (padded_name[offset + 3]) ^
+          (padded_name[offset + 4]) ^
+          (padded_name[offset + 5]) ^
+          (padded_name[offset + 6]) ^ (padded_name[offset + 7]);
 
       extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 | l;
 
@@ -142,7 +142,7 @@ int idmap_computer_hash_value(char *name, uint32_t * phashval)
   *phashval = computed_value;
 
   return CLIENT_ID_SUCCESS;
-}				/* idmap_computer_hash_value */
+}                               /* idmap_computer_hash_value */
 
 main(int argc, char *argv[])
 {

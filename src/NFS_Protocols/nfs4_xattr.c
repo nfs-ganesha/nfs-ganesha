@@ -95,7 +95,7 @@ t*
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -122,7 +122,7 @@ t*
 #include "cache_content.h"
 
 int nfs4_XattrToFattr(fattr4 * Fattr,
-		      compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
+                      compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
 {
   fattr4_type file_type;
   fattr4_link_support link_support;
@@ -187,7 +187,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   uint32_t supported_attrs_len = 0;
   uint32_t supported_attrs_val = 0;
   unsigned int LastOffset;
-  unsigned int len = 0, off = 0;	/* Use for XDR alignment */
+  unsigned int len = 0, off = 0;        /* Use for XDR alignment */
   int op_attr_success = 0;
   unsigned int c = 0;
   unsigned int i = 0;
@@ -197,8 +197,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   unsigned int attribute_to_set = 0;
 
   unsigned int attrvalslist_supported[FATTR4_MOUNTED_ON_FILEID];
-  unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];	/* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
-  unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];	/* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+  unsigned int attrmasklist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+  unsigned int attrvalslist[FATTR4_MOUNTED_ON_FILEID];  /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   char attrvalsBuffer[ATTRVALS_BUFFLEN];
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_XattrToFattr";
@@ -220,9 +220,9 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
 #ifdef _DEBUG_NFS_V4_XATTR
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-		    "Asked Attributes (Pseudo): Bitmap = (len=%d, val[0]=%d, val[1]=%d), %d item in list",
-		    Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],
-		    attrmasklen);
+                    "Asked Attributes (Pseudo): Bitmap = (len=%d, val[0]=%d, val[1]=%d), %d item in list",
+                    Bitmap->bitmap4_len, Bitmap->bitmap4_val[0], Bitmap->bitmap4_val[1],
+                    attrmasklen);
 #endif
 
   for (i = 0; i < attrmasklen; i++)
@@ -230,11 +230,11 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
       attribute_to_set = attrmasklist[i];
 
       DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-			NIV_FULL_DEBUG,
-			"Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d",
-			attrmasklist[i], fattr4tab[attribute_to_set].val,
-			fattr4tab[attribute_to_set].name,
-			fattr4tab[attribute_to_set].size_fattr4);
+                        NIV_FULL_DEBUG,
+                        "Flag for Operation (Pseudo) = %d|%d is ON,  name  = %s  reply_size = %d",
+                        attrmasklist[i], fattr4tab[attribute_to_set].val,
+                        fattr4tab[attribute_to_set].name,
+                        fattr4tab[attribute_to_set].size_fattr4);
 
       op_attr_success = 0;
 
@@ -242,817 +242,817 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
       /* This space is to be filled below in the big switch/case statement */
 
       switch (attribute_to_set)
-	{
-	case FATTR4_SUPPORTED_ATTRS:
+        {
+        case FATTR4_SUPPORTED_ATTRS:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SUPPORTED_ATTRS\n");
+          printf("-----> Wanting FATTR4_SUPPORTED_ATTRS\n");
 #endif
-	  /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
-	   * 1st: compute the number of supported attributes
-	   * 2nd: allocate the replyed bitmap and fill it
-	   *
-	   * I do not set a #define to keep the number of supported attributes because I want this parameter
-	   * to be a consequence of fattr4tab and avoid incoherency */
+          /* The supported attributes have field ',supported' set in tab fattr4tab, I will proceed in 2 pass 
+           * 1st: compute the number of supported attributes
+           * 2nd: allocate the replyed bitmap and fill it
+           *
+           * I do not set a #define to keep the number of supported attributes because I want this parameter
+           * to be a consequence of fattr4tab and avoid incoherency */
 
-	  /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
-	  c = 0;
-	  for (k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
-	    {
-	      if (fattr4tab[k].supported)
-		{
-		  attrvalslist_supported[c++] = k;
-		}
-	    }
+          /* How many supported attributes ? Compute the result in variable named c and set attrvalslist_supported  */
+          c = 0;
+          for (k = FATTR4_SUPPORTED_ATTRS; k <= FATTR4_MOUNTED_ON_FILEID; k++)
+            {
+              if (fattr4tab[k].supported)
+                {
+                  attrvalslist_supported[c++] = k;
+                }
+            }
 
-	  /* Let set the reply bitmap */
-	  /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-	  if ((supported_attrs.bitmap4_val =
-	       (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
-	    return -1;
-	  memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
-	  nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
+          /* Let set the reply bitmap */
+          /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
+          if ((supported_attrs.bitmap4_val =
+               (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+            return -1;
+          memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
+          nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 
 #ifdef _DEBUG_NFS_V4_XATTR
-	  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-			    NIV_FULL_DEBUG,
-			    "Fattr (pseudo) supported_attrs(len)=%u -> %u|%u",
-			    supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
-			    supported_attrs.bitmap4_val[1]);
+          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
+                            NIV_FULL_DEBUG,
+                            "Fattr (pseudo) supported_attrs(len)=%u -> %u|%u",
+                            supported_attrs.bitmap4_len, supported_attrs.bitmap4_val[0],
+                            supported_attrs.bitmap4_val[1]);
 #endif
 
-	  /* This kind of operation is always a success */
-	  op_attr_success = 1;
+          /* This kind of operation is always a success */
+          op_attr_success = 1;
 
-	  /* we store the index */
-	  supported_attrs_len = htonl(supported_attrs.bitmap4_len);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
-		 sizeof(uint32_t));
-	  LastOffset += sizeof(uint32_t);
+          /* we store the index */
+          supported_attrs_len = htonl(supported_attrs.bitmap4_len);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_len,
+                 sizeof(uint32_t));
+          LastOffset += sizeof(uint32_t);
 
-	  /* And then the data */
-	  for (k = 0; k < supported_attrs.bitmap4_len; k++)
-	    {
-	      supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
-	      memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
-		     sizeof(uint32_t));
-	      LastOffset += sizeof(uint32_t);
-	    }
-	  break;
+          /* And then the data */
+          for (k = 0; k < supported_attrs.bitmap4_len; k++)
+            {
+              supported_attrs_val = htonl(supported_attrs.bitmap4_val[k]);
+              memcpy((char *)(attrvalsBuffer + LastOffset), &supported_attrs_val,
+                     sizeof(uint32_t));
+              LastOffset += sizeof(uint32_t);
+            }
+          break;
 
-	case FATTR4_TYPE:
+        case FATTR4_TYPE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TYPE\n");
+          printf("-----> Wanting FATTR4_TYPE\n");
 #endif
-	  op_attr_success = 1;
+          op_attr_success = 1;
 
-	  if (pfile_handle->xattr_pos == 1)
-	    file_type = htonl(NF4DIR);	/* There are only directories in the pseudo fs */
-	    else
-	    file_type = htonl(NF4REG);
+          if (pfile_handle->xattr_pos == 1)
+            file_type = htonl(NF4DIR);  /* There are only directories in the pseudo fs */
+            else
+            file_type = htonl(NF4REG);
 
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_type, sizeof(fattr4_type));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  break;
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_type, sizeof(fattr4_type));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          break;
 
-	case FATTR4_FH_EXPIRE_TYPE:
+        case FATTR4_FH_EXPIRE_TYPE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FH_EXPIRE_TYPE\n");
+          printf("-----> Wanting FATTR4_FH_EXPIRE_TYPE\n");
 #endif
-	  /* For the moment, we handle only the persistent filehandle */
-	  /* expire_type = htonl( FH4_VOLATILE_ANY ) ; */
-	  expire_type = htonl(FH4_PERSISTENT);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &expire_type,
-		 sizeof(expire_type));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* For the moment, we handle only the persistent filehandle */
+          /* expire_type = htonl( FH4_VOLATILE_ANY ) ; */
+          expire_type = htonl(FH4_PERSISTENT);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &expire_type,
+                 sizeof(expire_type));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_CHANGE:
+        case FATTR4_CHANGE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_CHANGE\n");
+          printf("-----> Wanting FATTR4_CHANGE\n");
 #endif
-	  /* Use boot time as time value for every pseudo fs object */
-	  memset(&file_change, 0, sizeof(changeid4));
-	  file_change = nfs_htonl64((changeid4) time(NULL));
+          /* Use boot time as time value for every pseudo fs object */
+          memset(&file_change, 0, sizeof(changeid4));
+          file_change = nfs_htonl64((changeid4) time(NULL));
 
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_change,
-		 sizeof(fattr4_change));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_change,
+                 sizeof(fattr4_change));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SIZE:
+        case FATTR4_SIZE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SIZE\n");
+          printf("-----> Wanting FATTR4_SIZE\n");
 #endif
-	  file_size = nfs_htonl64((fattr4_size) DEV_BSIZE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_size, sizeof(fattr4_size));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          file_size = nfs_htonl64((fattr4_size) DEV_BSIZE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_size, sizeof(fattr4_size));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_LINK_SUPPORT:
+        case FATTR4_LINK_SUPPORT:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_LINK_SUPPORT\n");
+          printf("-----> Wanting FATTR4_LINK_SUPPORT\n");
 #endif
-	  /* HPSS NameSpace support hard link */
-	  link_support = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &link_support,
-		 sizeof(fattr4_link_support));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* HPSS NameSpace support hard link */
+          link_support = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &link_support,
+                 sizeof(fattr4_link_support));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SYMLINK_SUPPORT:
+        case FATTR4_SYMLINK_SUPPORT:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SYMLINK_SUPPORT\n");
+          printf("-----> Wanting FATTR4_SYMLINK_SUPPORT\n");
 #endif
-	  /* HPSS NameSpace support symbolic link */
-	  symlink_support = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &symlink_support,
-		 sizeof(fattr4_symlink_support));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* HPSS NameSpace support symbolic link */
+          symlink_support = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &symlink_support,
+                 sizeof(fattr4_symlink_support));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_NAMED_ATTR:
+        case FATTR4_NAMED_ATTR:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_NAMED_ATTR\n");
+          printf("-----> Wanting FATTR4_NAMED_ATTR\n");
 #endif
-	  /* For this version of the binary, named attributes is not supported */
-	  named_attr = htonl(FALSE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &named_attr,
-		 sizeof(fattr4_named_attr));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* For this version of the binary, named attributes is not supported */
+          named_attr = htonl(FALSE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &named_attr,
+                 sizeof(fattr4_named_attr));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FSID:
+        case FATTR4_FSID:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FSID\n");
+          printf("-----> Wanting FATTR4_FSID\n");
 #endif
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_UNIQUE_HANDLES:
+        case FATTR4_UNIQUE_HANDLES:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_UNIQUE_HANDLES\n");
+          printf("-----> Wanting FATTR4_UNIQUE_HANDLES\n");
 #endif
-	  /* Filehandles are unique */
-	  unique_handles = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &unique_handles,
-		 sizeof(fattr4_unique_handles));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* Filehandles are unique */
+          unique_handles = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &unique_handles,
+                 sizeof(fattr4_unique_handles));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_LEASE_TIME:
+        case FATTR4_LEASE_TIME:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_LEASE_TIME\n");
+          printf("-----> Wanting FATTR4_LEASE_TIME\n");
 #endif
-	  lease_time = htonl(NFS4_LEASE_LIFETIME);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &lease_time,
-		 sizeof(fattr4_lease_time));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          lease_time = htonl(NFS4_LEASE_LIFETIME);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &lease_time,
+                 sizeof(fattr4_lease_time));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_RDATTR_ERROR:
+        case FATTR4_RDATTR_ERROR:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_RDATTR_ERROR\n");
+          printf("-----> Wanting FATTR4_RDATTR_ERROR\n");
 #endif
-	  rdattr_error = htonl(NFS4_OK);	/* By default, READDIR call may use a different value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &rdattr_error,
-		 sizeof(fattr4_rdattr_error));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          rdattr_error = htonl(NFS4_OK);        /* By default, READDIR call may use a different value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &rdattr_error,
+                 sizeof(fattr4_rdattr_error));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_ACL:
+        case FATTR4_ACL:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_ACL\n");
+          printf("-----> Wanting FATTR4_ACL\n");
 #endif
-	  acl.fattr4_acl_len = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          acl.fattr4_acl_len = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_ACLSUPPORT:
+        case FATTR4_ACLSUPPORT:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_ACL_SUPPORT\n");
+          printf("-----> Wanting FATTR4_ACL_SUPPORT\n");
 #endif
-	  aclsupport = htonl(ACL4_SUPPORT_DENY_ACL);	/* temporary, wanting for houston to give me information to implemente ACL's support */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
-		 sizeof(fattr4_aclsupport));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          aclsupport = htonl(ACL4_SUPPORT_DENY_ACL);    /* temporary, wanting for houston to give me information to implemente ACL's support */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
+                 sizeof(fattr4_aclsupport));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_ARCHIVE:
+        case FATTR4_ARCHIVE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_ARCHIVE\n");
+          printf("-----> Wanting FATTR4_ARCHIVE\n");
 #endif
-	  /* Archive flag is not supported */
-	  archive = htonl(FALSE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &archive, sizeof(fattr4_archive));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* Archive flag is not supported */
+          archive = htonl(FALSE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &archive, sizeof(fattr4_archive));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_CANSETTIME:
+        case FATTR4_CANSETTIME:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_CANSETTIME\n");
+          printf("-----> Wanting FATTR4_CANSETTIME\n");
 #endif
-	  /* The time can be set on files */
-	  cansettime = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &cansettime,
-		 sizeof(fattr4_cansettime));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* The time can be set on files */
+          cansettime = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &cansettime,
+                 sizeof(fattr4_cansettime));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_CASE_INSENSITIVE:
+        case FATTR4_CASE_INSENSITIVE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_CASE_INSENSITIVE\n");
+          printf("-----> Wanting FATTR4_CASE_INSENSITIVE\n");
 #endif
-	  /* pseudofs is not case INSENSITIVE... it is Read-Only */
-	  case_insensitive = htonl(FALSE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &case_insensitive,
-		 sizeof(fattr4_case_insensitive));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* pseudofs is not case INSENSITIVE... it is Read-Only */
+          case_insensitive = htonl(FALSE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &case_insensitive,
+                 sizeof(fattr4_case_insensitive));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_CASE_PRESERVING:
+        case FATTR4_CASE_PRESERVING:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_PRESERVING\n");
+          printf("-----> Wanting FATTR4_PRESERVING\n");
 #endif
-	  /* pseudofs is case preserving... it is Read-Only */
-	  case_preserving = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &case_preserving,
-		 sizeof(fattr4_case_preserving));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* pseudofs is case preserving... it is Read-Only */
+          case_preserving = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &case_preserving,
+                 sizeof(fattr4_case_preserving));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_CHOWN_RESTRICTED:
+        case FATTR4_CHOWN_RESTRICTED:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_CHOWN_RESTRICTED\n");
+          printf("-----> Wanting FATTR4_CHOWN_RESTRICTED\n");
 #endif
-	  /* chown is restricted to root, but in fact no chown will be done on pseudofs */
-	  chown_restricted = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &chown_restricted,
-		 sizeof(fattr4_chown_restricted));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* chown is restricted to root, but in fact no chown will be done on pseudofs */
+          chown_restricted = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &chown_restricted,
+                 sizeof(fattr4_chown_restricted));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FILEHANDLE:
+        case FATTR4_FILEHANDLE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FILEHANDLE\n");
+          printf("-----> Wanting FATTR4_FILEHANDLE\n");
 #endif
-	  /* Return the file handle */
-	  fhandle_len = htonl(objFH->nfs_fh4_len);
+          /* Return the file handle */
+          fhandle_len = htonl(objFH->nfs_fh4_len);
 
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &fhandle_len, sizeof(u_int));
-	  LastOffset += sizeof(u_int);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &fhandle_len, sizeof(u_int));
+          LastOffset += sizeof(u_int);
 
-	  memcpy((char *)(attrvalsBuffer + LastOffset),
-		 objFH->nfs_fh4_val, objFH->nfs_fh4_len);
-	  LastOffset += objFH->nfs_fh4_len;
+          memcpy((char *)(attrvalsBuffer + LastOffset),
+                 objFH->nfs_fh4_val, objFH->nfs_fh4_len);
+          LastOffset += objFH->nfs_fh4_len;
 
-	  /* XDR's special stuff for 32-bit alignment */
-	  len = objFH->nfs_fh4_len;
-	  off = 0;
-	  while ((len + off) % 4 != 0)
-	    {
-	      char c = '\0';
+          /* XDR's special stuff for 32-bit alignment */
+          len = objFH->nfs_fh4_len;
+          off = 0;
+          while ((len + off) % 4 != 0)
+            {
+              char c = '\0';
 
-	      off += 1;
-	      memset((char *)(attrvalsBuffer + LastOffset), c, 1);
-	      LastOffset += 1;
-	    }
+              off += 1;
+              memset((char *)(attrvalsBuffer + LastOffset), c, 1);
+              LastOffset += 1;
+            }
 
-	  op_attr_success = 1;
-	  break;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FILEID:
+        case FATTR4_FILEID:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FILEID\n");
+          printf("-----> Wanting FATTR4_FILEID\n");
 #endif
-	  /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
-	   * In the case of a pseudofs entry, the entry's unique id is used */
-	  cache_inode_get_attributes(data->current_entry, &fsalattr);
+          /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem" 
+           * In the case of a pseudofs entry, the entry's unique id is used */
+          cache_inode_get_attributes(data->current_entry, &fsalattr);
 
-#ifndef _XATTR_D_USE_SAME_INUM	/* I wrapped off this part of the code... Not sure it would be useful */
-	  file_id = nfs_htonl64(~(fsalattr.fileid));
+#ifndef _XATTR_D_USE_SAME_INUM  /* I wrapped off this part of the code... Not sure it would be useful */
+          file_id = nfs_htonl64(~(fsalattr.fileid));
 
-	  if (pfile_handle->xattr_pos == 1)
-	    file_id = nfs_htonl64(~(fsalattr.fileid));
-	    else
-	    file_mode = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos + 1;
+          if (pfile_handle->xattr_pos == 1)
+            file_id = nfs_htonl64(~(fsalattr.fileid));
+            else
+            file_mode = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos + 1;
 #else
-	  file_id = nfs_htonl64(fsalattr.fileid);
+          file_id = nfs_htonl64(fsalattr.fileid);
 #endif
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_id, sizeof(fattr4_fileid));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_id, sizeof(fattr4_fileid));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FILES_AVAIL:
+        case FATTR4_FILES_AVAIL:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FILES_AVAIL\n");
+          printf("-----> Wanting FATTR4_FILES_AVAIL\n");
 #endif
-	  files_avail = nfs_htonl64((fattr4_files_avail) 512);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &files_avail,
-		 sizeof(fattr4_files_avail));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          files_avail = nfs_htonl64((fattr4_files_avail) 512);  /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &files_avail,
+                 sizeof(fattr4_files_avail));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FILES_FREE:
+        case FATTR4_FILES_FREE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FILES_FREE\n");
+          printf("-----> Wanting FATTR4_FILES_FREE\n");
 #endif
-	  files_free = nfs_htonl64((fattr4_files_avail) 512);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &files_free,
-		 sizeof(fattr4_files_free));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          files_free = nfs_htonl64((fattr4_files_avail) 512);   /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &files_free,
+                 sizeof(fattr4_files_free));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FILES_TOTAL:
+        case FATTR4_FILES_TOTAL:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FILES_TOTAL\n");
+          printf("-----> Wanting FATTR4_FILES_TOTAL\n");
 #endif
-	  files_total = nfs_htonl64((fattr4_files_avail) 512);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &files_total,
-		 sizeof(fattr4_files_total));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          files_total = nfs_htonl64((fattr4_files_avail) 512);  /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &files_total,
+                 sizeof(fattr4_files_total));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_FS_LOCATIONS:
+        case FATTR4_FS_LOCATIONS:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_FS_LOCATIONS\n");
+          printf("-----> Wanting FATTR4_FS_LOCATIONS\n");
 #endif
-	  fs_locations.fs_root.pathname4_len = 0;
-	  fs_locations.locations.locations_len = 0;	/* No FS_LOCATIONS no now */
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          fs_locations.fs_root.pathname4_len = 0;
+          fs_locations.locations.locations_len = 0;     /* No FS_LOCATIONS no now */
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_HIDDEN:
+        case FATTR4_HIDDEN:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_HIDDEN\n");
+          printf("-----> Wanting FATTR4_HIDDEN\n");
 #endif
-	  /* There are no hidden file in pseudofs */
-	  hidden = htonl(FALSE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &hidden, sizeof(fattr4_hidden));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* There are no hidden file in pseudofs */
+          hidden = htonl(FALSE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &hidden, sizeof(fattr4_hidden));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_HOMOGENEOUS:
+        case FATTR4_HOMOGENEOUS:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_HOMOGENEOUS\n");
+          printf("-----> Wanting FATTR4_HOMOGENEOUS\n");
 #endif
-	  /* Unix semantic is homogeneous (all objects have the same kind of attributes) */
-	  homogeneous = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &homogeneous,
-		 sizeof(fattr4_homogeneous));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* Unix semantic is homogeneous (all objects have the same kind of attributes) */
+          homogeneous = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &homogeneous,
+                 sizeof(fattr4_homogeneous));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MAXFILESIZE:
+        case FATTR4_MAXFILESIZE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MAXFILESIZE\n");
+          printf("-----> Wanting FATTR4_MAXFILESIZE\n");
 #endif
-	  max_filesize = nfs_htonl64((fattr4_maxfilesize) FSINFO_MAX_FILESIZE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &max_filesize,
-		 sizeof(fattr4_maxfilesize));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          max_filesize = nfs_htonl64((fattr4_maxfilesize) FSINFO_MAX_FILESIZE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &max_filesize,
+                 sizeof(fattr4_maxfilesize));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MAXLINK:
+        case FATTR4_MAXLINK:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MAXLINK\n");
+          printf("-----> Wanting FATTR4_MAXLINK\n");
 #endif
-	  maxlink = htonl(MAX_HARD_LINK_VALUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &maxlink, sizeof(fattr4_maxlink));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          maxlink = htonl(MAX_HARD_LINK_VALUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &maxlink, sizeof(fattr4_maxlink));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MAXNAME:
+        case FATTR4_MAXNAME:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MAXNAME\n");
+          printf("-----> Wanting FATTR4_MAXNAME\n");
 #endif
-	  maxname = htonl((fattr4_maxname) MAXNAMLEN);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &maxname, sizeof(fattr4_maxname));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          maxname = htonl((fattr4_maxname) MAXNAMLEN);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &maxname, sizeof(fattr4_maxname));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MAXREAD:
+        case FATTR4_MAXREAD:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MAXREAD\n");
+          printf("-----> Wanting FATTR4_MAXREAD\n");
 #endif
-	  maxread = nfs_htonl64((fattr4_maxread) NFS4_PSEUDOFS_MAX_READ_SIZE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          maxread = nfs_htonl64((fattr4_maxread) NFS4_PSEUDOFS_MAX_READ_SIZE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MAXWRITE:
+        case FATTR4_MAXWRITE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MAXWRITE\n");
+          printf("-----> Wanting FATTR4_MAXWRITE\n");
 #endif
-	  maxwrite = nfs_htonl64((fattr4_maxwrite) NFS4_PSEUDOFS_MAX_WRITE_SIZE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
-		 sizeof(fattr4_maxwrite));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          maxwrite = nfs_htonl64((fattr4_maxwrite) NFS4_PSEUDOFS_MAX_WRITE_SIZE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
+                 sizeof(fattr4_maxwrite));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_MIMETYPE:
+        case FATTR4_MIMETYPE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MIMETYPE\n");
+          printf("-----> Wanting FATTR4_MIMETYPE\n");
 #endif
-	  mimetype.utf8string_len = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &mimetype,
-		 sizeof(fattr4_mimetype));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;	/* No supported for the moment */
-	  break;
+          mimetype.utf8string_len = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &mimetype,
+                 sizeof(fattr4_mimetype));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;  /* No supported for the moment */
+          break;
 
-	case FATTR4_MODE:
+        case FATTR4_MODE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MODE\n");
+          printf("-----> Wanting FATTR4_MODE\n");
 #endif
-	  if (pfile_handle->xattr_pos == 1)
-	    file_mode = htonl(0555);	/* Every pseudo fs object is dr-xr-xr-x */
-	    else
-	    file_mode = htonl(0644);	/* -rw-r--r-- */
+          if (pfile_handle->xattr_pos == 1)
+            file_mode = htonl(0555);    /* Every pseudo fs object is dr-xr-xr-x */
+            else
+            file_mode = htonl(0644);    /* -rw-r--r-- */
 
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_mode, sizeof(fattr4_mode));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_mode, sizeof(fattr4_mode));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_NO_TRUNC:
+        case FATTR4_NO_TRUNC:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_NO_TRUNC\n");
+          printf("-----> Wanting FATTR4_NO_TRUNC\n");
 #endif
-	  /* File's names are not truncated, an error is returned is name is too long */
-	  no_trunc = htonl(TRUE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &no_trunc,
-		 sizeof(fattr4_no_trunc));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* File's names are not truncated, an error is returned is name is too long */
+          no_trunc = htonl(TRUE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &no_trunc,
+                 sizeof(fattr4_no_trunc));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_NUMLINKS:
+        case FATTR4_NUMLINKS:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_NUMLINKS\n");
+          printf("-----> Wanting FATTR4_NUMLINKS\n");
 #endif
-	  /* Reply the number of links found in vattr structure */
-	  file_numlinks = htonl((fattr4_numlinks) 1);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_numlinks,
-		 sizeof(fattr4_numlinks));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* Reply the number of links found in vattr structure */
+          file_numlinks = htonl((fattr4_numlinks) 1);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_numlinks,
+                 sizeof(fattr4_numlinks));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_OWNER:
+        case FATTR4_OWNER:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_OWNER\n");
+          printf("-----> Wanting FATTR4_OWNER\n");
 #endif
-	  /* Return the uid as a human readable utf8 string */
-	  if (uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
-	    {
-	      u_int utf8len = 0;
-	      u_int deltalen = 0;
+          /* Return the uid as a human readable utf8 string */
+          if (uid2utf8(NFS4_ROOT_UID, &file_owner) == 0)
+            {
+              u_int utf8len = 0;
+              u_int deltalen = 0;
 
-	      /* Take care of 32 bits alignment */
-	      if (file_owner.utf8string_len % 4 == 0)
-		deltalen = 0;
-		else
-		deltalen = 4 - file_owner.utf8string_len % 4;
+              /* Take care of 32 bits alignment */
+              if (file_owner.utf8string_len % 4 == 0)
+                deltalen = 0;
+                else
+                deltalen = 4 - file_owner.utf8string_len % 4;
 
-	      utf8len = htonl(file_owner.utf8string_len + deltalen);
-	      memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
-	      LastOffset += sizeof(u_int);
+              utf8len = htonl(file_owner.utf8string_len + deltalen);
+              memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
+              LastOffset += sizeof(u_int);
 
-	      memcpy((char *)(attrvalsBuffer + LastOffset),
-		     file_owner.utf8string_val, file_owner.utf8string_len);
-	      LastOffset += file_owner.utf8string_len;
+              memcpy((char *)(attrvalsBuffer + LastOffset),
+                     file_owner.utf8string_val, file_owner.utf8string_len);
+              LastOffset += file_owner.utf8string_len;
 
-	      /* Free what was allocated by uid2utf8 */
-	      Mem_Free((char *)file_owner.utf8string_val);
+              /* Free what was allocated by uid2utf8 */
+              Mem_Free((char *)file_owner.utf8string_val);
 
-	      /* Pad with zero to keep xdr alignement */
-	      if (deltalen != 0)
-		memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
-	      LastOffset += deltalen;
+              /* Pad with zero to keep xdr alignement */
+              if (deltalen != 0)
+                memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
+              LastOffset += deltalen;
 
-	      op_attr_success = 1;
-	    } else
-	    op_attr_success = 0;
-	  break;
+              op_attr_success = 1;
+            } else
+            op_attr_success = 0;
+          break;
 
-	case FATTR4_OWNER_GROUP:
+        case FATTR4_OWNER_GROUP:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_OWNER_GROUP\n");
+          printf("-----> Wanting FATTR4_OWNER_GROUP\n");
 #endif
-	  /* Return the uid as a human readable utf8 string */
-	  if (gid2utf8(2, &file_owner_group) == 0)
-	    {
-	      u_int utf8len = 0;
-	      u_int deltalen = 0;
+          /* Return the uid as a human readable utf8 string */
+          if (gid2utf8(2, &file_owner_group) == 0)
+            {
+              u_int utf8len = 0;
+              u_int deltalen = 0;
 
-	      /* Take care of 32 bits alignment */
-	      if (file_owner_group.utf8string_len % 4 == 0)
-		deltalen = 0;
-		else
-		deltalen = 4 - file_owner_group.utf8string_len % 4;
+              /* Take care of 32 bits alignment */
+              if (file_owner_group.utf8string_len % 4 == 0)
+                deltalen = 0;
+                else
+                deltalen = 4 - file_owner_group.utf8string_len % 4;
 
-	      utf8len = htonl(file_owner_group.utf8string_len + deltalen);
-	      memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
-	      LastOffset += sizeof(u_int);
+              utf8len = htonl(file_owner_group.utf8string_len + deltalen);
+              memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
+              LastOffset += sizeof(u_int);
 
-	      memcpy((char *)(attrvalsBuffer + LastOffset),
-		     file_owner_group.utf8string_val, file_owner_group.utf8string_len);
-	      LastOffset += file_owner_group.utf8string_len;
+              memcpy((char *)(attrvalsBuffer + LastOffset),
+                     file_owner_group.utf8string_val, file_owner_group.utf8string_len);
+              LastOffset += file_owner_group.utf8string_len;
 
-	      /* Free what was used for utf8 conversion */
-	      Mem_Free((char *)file_owner_group.utf8string_val);
+              /* Free what was used for utf8 conversion */
+              Mem_Free((char *)file_owner_group.utf8string_val);
 
-	      /* Pad with zero to keep xdr alignement */
-	      if (deltalen != 0)
-		memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
-	      LastOffset += deltalen;
+              /* Pad with zero to keep xdr alignement */
+              if (deltalen != 0)
+                memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
+              LastOffset += deltalen;
 
-	      op_attr_success = 1;
-	    } else
-	    op_attr_success = 0;
-	  break;
+              op_attr_success = 1;
+            } else
+            op_attr_success = 0;
+          break;
 
-	case FATTR4_QUOTA_AVAIL_HARD:
+        case FATTR4_QUOTA_AVAIL_HARD:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_QUOTA_AVAIL_HARD\n");
+          printf("-----> Wanting FATTR4_QUOTA_AVAIL_HARD\n");
 #endif
-	  quota_avail_hard = nfs_htonl64((fattr4_quota_avail_hard) NFS_V4_MAX_QUOTA_HARD);    /** @todo: not the right answer, actual quotas should be implemented */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_hard,
-		 sizeof(fattr4_quota_avail_hard));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          quota_avail_hard = nfs_htonl64((fattr4_quota_avail_hard) NFS_V4_MAX_QUOTA_HARD);    /** @todo: not the right answer, actual quotas should be implemented */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_hard,
+                 sizeof(fattr4_quota_avail_hard));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_QUOTA_AVAIL_SOFT:
+        case FATTR4_QUOTA_AVAIL_SOFT:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_QUOTA_AVAIL_SOFT\n");
+          printf("-----> Wanting FATTR4_QUOTA_AVAIL_SOFT\n");
 #endif
-	  quota_avail_soft = nfs_htonl64((fattr4_quota_avail_soft) NFS_V4_MAX_QUOTA_SOFT);    /** @todo: not the right answer, actual quotas should be implemented */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_soft,
-		 sizeof(fattr4_quota_avail_soft));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          quota_avail_soft = nfs_htonl64((fattr4_quota_avail_soft) NFS_V4_MAX_QUOTA_SOFT);    /** @todo: not the right answer, actual quotas should be implemented */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_soft,
+                 sizeof(fattr4_quota_avail_soft));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_QUOTA_USED:
+        case FATTR4_QUOTA_USED:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_QUOTA_AVAIL_USED\n");
+          printf("-----> Wanting FATTR4_QUOTA_AVAIL_USED\n");
 #endif
-	  quota_used = nfs_htonl64((fattr4_quota_used) NFS_V4_MAX_QUOTA);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &quota_used,
-		 sizeof(fattr4_quota_used));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          quota_used = nfs_htonl64((fattr4_quota_used) NFS_V4_MAX_QUOTA);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &quota_used,
+                 sizeof(fattr4_quota_used));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_RAWDEV:
+        case FATTR4_RAWDEV:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_RAWDEV\n");
+          printf("-----> Wanting FATTR4_RAWDEV\n");
 #endif
-	  /* Not usefull, there are no special block or character file in HPSS */
-	  /* since FATTR4_TYPE will never be NFS4BLK or NFS4CHR, this value should not be used by the client */
-	  rawdev.specdata1 = htonl(0);
-	  rawdev.specdata2 = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &rawdev, sizeof(fattr4_rawdev));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* Not usefull, there are no special block or character file in HPSS */
+          /* since FATTR4_TYPE will never be NFS4BLK or NFS4CHR, this value should not be used by the client */
+          rawdev.specdata1 = htonl(0);
+          rawdev.specdata2 = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &rawdev, sizeof(fattr4_rawdev));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SPACE_AVAIL:
+        case FATTR4_SPACE_AVAIL:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SPACE_AVAIL\n");
+          printf("-----> Wanting FATTR4_SPACE_AVAIL\n");
 #endif
-	  space_avail = nfs_htonl64(512000LL);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &space_avail,
-		 sizeof(fattr4_space_avail));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          space_avail = nfs_htonl64(512000LL);  /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &space_avail,
+                 sizeof(fattr4_space_avail));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SPACE_FREE:
+        case FATTR4_SPACE_FREE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SPACE_FREE\n");
+          printf("-----> Wanting FATTR4_SPACE_FREE\n");
 #endif
-	  space_free = nfs_htonl64(512000LL);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &space_free,
-		 sizeof(fattr4_space_free));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          space_free = nfs_htonl64(512000LL);   /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &space_free,
+                 sizeof(fattr4_space_free));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SPACE_TOTAL:
+        case FATTR4_SPACE_TOTAL:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SPACE_TOTAL\n");
+          printf("-----> Wanting FATTR4_SPACE_TOTAL\n");
 #endif
-	  space_total = nfs_htonl64(1024000LL);	/* Fake value */
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &space_total,
-		 sizeof(fattr4_space_total));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          space_total = nfs_htonl64(1024000LL); /* Fake value */
+          memcpy((char *)(attrvalsBuffer + LastOffset), &space_total,
+                 sizeof(fattr4_space_total));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SPACE_USED:
+        case FATTR4_SPACE_USED:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SPACE_USED\n");
+          printf("-----> Wanting FATTR4_SPACE_USED\n");
 #endif
-	  /* the number of bytes on the filesystem used by the object, which is slightly different 
-	   * from the file's size (there can be hole in the file) */
-	  file_space_used = nfs_htonl64((fattr4_space_used) DEV_BSIZE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &file_space_used,
-		 sizeof(fattr4_space_used));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* the number of bytes on the filesystem used by the object, which is slightly different 
+           * from the file's size (there can be hole in the file) */
+          file_space_used = nfs_htonl64((fattr4_space_used) DEV_BSIZE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &file_space_used,
+                 sizeof(fattr4_space_used));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_SYSTEM:
+        case FATTR4_SYSTEM:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_SYSTEM\n");
+          printf("-----> Wanting FATTR4_SYSTEM\n");
 #endif
-	  /* This is not a windows system File-System with respect to the regarding API */
-	  system = htonl(FALSE);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &system, sizeof(fattr4_system));
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* This is not a windows system File-System with respect to the regarding API */
+          system = htonl(FALSE);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &system, sizeof(fattr4_system));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_ACCESS:
+        case FATTR4_TIME_ACCESS:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_ACCESS\n");
+          printf("-----> Wanting FATTR4_TIME_ACCESS\n");
 #endif
-	  /* This will contain the object's time os last access, the 'atime' in the Unix semantic */
-	  memset(&(time_access.seconds), 0, sizeof(int64_t));
-	  time_access.seconds = nfs_htonl64((int64_t) time(NULL));
-	  time_access.nseconds = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_access,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* This will contain the object's time os last access, the 'atime' in the Unix semantic */
+          memset(&(time_access.seconds), 0, sizeof(int64_t));
+          time_access.seconds = nfs_htonl64((int64_t) time(NULL));
+          time_access.nseconds = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_access,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_ACCESS_SET:
+        case FATTR4_TIME_ACCESS_SET:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_ACCESS_SET\n");
+          printf("-----> Wanting FATTR4_TIME_ACCESS_SET\n");
 #endif
-	  /* To be used with NFS4_OP_SETATTR only */
-	  op_attr_success = 0;
-	  break;
+          /* To be used with NFS4_OP_SETATTR only */
+          op_attr_success = 0;
+          break;
 
-	case FATTR4_TIME_BACKUP:
+        case FATTR4_TIME_BACKUP:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_BACKUP\n");
+          printf("-----> Wanting FATTR4_TIME_BACKUP\n");
 #endif
-	  /* No time backup, return unix's beginning of time */
-	  time_backup.seconds = nfs_htonl64(0LL);
-	  time_backup.nseconds = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_backup,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* No time backup, return unix's beginning of time */
+          time_backup.seconds = nfs_htonl64(0LL);
+          time_backup.nseconds = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_backup,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_CREATE:
+        case FATTR4_TIME_CREATE:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_CREATE\n");
+          printf("-----> Wanting FATTR4_TIME_CREATE\n");
 #endif
-	  /* No time create, return unix's beginning of time */
-	  time_create.seconds = nfs_htonl64(0LL);
-	  time_create.nseconds = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_create,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* No time create, return unix's beginning of time */
+          time_create.seconds = nfs_htonl64(0LL);
+          time_create.nseconds = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_create,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_DELTA:
+        case FATTR4_TIME_DELTA:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_DELTA\n");
+          printf("-----> Wanting FATTR4_TIME_DELTA\n");
 #endif
 
-	  /* According to RFC3530, this is "the smallest usefull server time granularity", I set this to 1s */
-	  time_delta.seconds = nfs_htonl64(1LL);
-	  time_delta.nseconds = 0;
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_delta,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* According to RFC3530, this is "the smallest usefull server time granularity", I set this to 1s */
+          time_delta.seconds = nfs_htonl64(1LL);
+          time_delta.nseconds = 0;
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_delta,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_METADATA:
+        case FATTR4_TIME_METADATA:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_METADATA\n");
+          printf("-----> Wanting FATTR4_TIME_METADATA\n");
 #endif
 
-	  /* The time for the last metadata operation, the ctime in the unix's semantic */
-	  memset(&(time_metadata.seconds), 0, sizeof(int64_t));
-	  time_metadata.seconds = nfs_htonl64((int64_t) time(NULL));
-	  time_metadata.nseconds = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_metadata,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* The time for the last metadata operation, the ctime in the unix's semantic */
+          memset(&(time_metadata.seconds), 0, sizeof(int64_t));
+          time_metadata.seconds = nfs_htonl64((int64_t) time(NULL));
+          time_metadata.nseconds = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_metadata,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_MODIFY:
+        case FATTR4_TIME_MODIFY:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_MODIFY\n");
+          printf("-----> Wanting FATTR4_TIME_MODIFY\n");
 #endif
 
-	  /* The time for the last modify operation, the mtime in the unix's semantic */
-	  memset(&(time_modify.seconds), 0, sizeof(int64_t));
-	  time_modify.seconds = nfs_htonl64((int64_t) time(NULL));
-	  time_modify.nseconds = htonl(0);
-	  memcpy((char *)(attrvalsBuffer + LastOffset), &time_modify,
-		 fattr4tab[attribute_to_set].size_fattr4);
-	  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-	  op_attr_success = 1;
-	  break;
+          /* The time for the last modify operation, the mtime in the unix's semantic */
+          memset(&(time_modify.seconds), 0, sizeof(int64_t));
+          time_modify.seconds = nfs_htonl64((int64_t) time(NULL));
+          time_modify.nseconds = htonl(0);
+          memcpy((char *)(attrvalsBuffer + LastOffset), &time_modify,
+                 fattr4tab[attribute_to_set].size_fattr4);
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          op_attr_success = 1;
+          break;
 
-	case FATTR4_TIME_MODIFY_SET:
+        case FATTR4_TIME_MODIFY_SET:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_TIME_MODIFY_SET\n");
+          printf("-----> Wanting FATTR4_TIME_MODIFY_SET\n");
 #endif
 
-	  op_attr_success = 0;	/* should never be used here, only for setattr */
-	  break;
+          op_attr_success = 0;  /* should never be used here, only for setattr */
+          break;
 
-	case FATTR4_MOUNTED_ON_FILEID:
+        case FATTR4_MOUNTED_ON_FILEID:
 #ifdef   _DEBUG_NFS_V4_XATTR
-	  printf("-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
+          printf("-----> Wanting FATTR4_MOUNTED_ON_FILEID\n");
 #endif
-	  if (!nfs4_FhandleToFSAL
-	      (&data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext))
-	    {
-	      if (FSAL_IS_ERROR
-		  (fsal_status =
-		   FSAL_DigestHandle(data->pcontext->export_context, FSAL_DIGEST_FILEID4,
-				     &mounted_on_fsal_handle,
-				     (caddr_t) & mounted_on_fileid)))
-		{
-		  op_attr_success = 0;
-		} else
-		{
-		  mounted_on_fileid = nfs_htonl64(mounted_on_fileid);
-		  memcpy((char *)(attrvalsBuffer + LastOffset), &mounted_on_fileid,
-			 sizeof(fattr4_mounted_on_fileid));
-		  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-		  op_attr_success = 1;
-		}
-	    } else
-	    op_attr_success = 0;
+          if (!nfs4_FhandleToFSAL
+              (&data->mounted_on_FH, &mounted_on_fsal_handle, data->pcontext))
+            {
+              if (FSAL_IS_ERROR
+                  (fsal_status =
+                   FSAL_DigestHandle(data->pcontext->export_context, FSAL_DIGEST_FILEID4,
+                                     &mounted_on_fsal_handle,
+                                     (caddr_t) & mounted_on_fileid)))
+                {
+                  op_attr_success = 0;
+                } else
+                {
+                  mounted_on_fileid = nfs_htonl64(mounted_on_fileid);
+                  memcpy((char *)(attrvalsBuffer + LastOffset), &mounted_on_fileid,
+                         sizeof(fattr4_mounted_on_fileid));
+                  LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+                  op_attr_success = 1;
+                }
+            } else
+            op_attr_success = 0;
 
-	  break;
+          break;
 
-	default:
-	  DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-			    NIV_EVENT, "Bad file attributes %d queried",
-			    attribute_to_set);
-	  /* BUGAZOMEU : un traitement special ici */
-	  break;
-	}			/* switch( attr_to_set ) */
+        default:
+          DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
+                            NIV_EVENT, "Bad file attributes %d queried",
+                            attribute_to_set);
+          /* BUGAZOMEU : un traitement special ici */
+          break;
+        }                       /* switch( attr_to_set ) */
 
       /* Increase the Offset for the next operation if this was a success */
       if (op_attr_success)
-	{
-	  /* Set the returned bitmask */
-	  attrvalslist[j] = attribute_to_set;
-	  j += 1;
+        {
+          /* Set the returned bitmask */
+          attrvalslist[j] = attribute_to_set;
+          j += 1;
 
-	  /* Be carefull not to get out of attrvalsBuffer */
-	  if (LastOffset > NFS4_ATTRVALS_BUFFLEN)
-	    return -1;
-	}
+          /* Be carefull not to get out of attrvalsBuffer */
+          if (LastOffset > NFS4_ATTRVALS_BUFFLEN)
+            return -1;
+        }
 
-    }				/* for i */
+    }                           /* for i */
 
 #ifdef   _DEBUG_NFS_V4_XATTR
   printf("----------------------------------------\n");
@@ -1060,8 +1060,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
   /* LastOffset contains the length of the attrvalsBuffer usefull data */
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-		    "Fattr (pseudo) At the end LastOffset = %u, i=%d, j=%d", LastOffset,
-		    i, j);
+                    "Fattr (pseudo) At the end LastOffset = %u, i=%d, j=%d", LastOffset,
+                    i, j);
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
@@ -1084,15 +1084,15 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer, Fattr->attr_vals.attrlist4_len);
 
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-		    "nfs4_PseudoToFattr (end): Fattr->attr_vals.attrlist4_len = %d",
-		    Fattr->attr_vals.attrlist4_len);
+                    "nfs4_PseudoToFattr (end): Fattr->attr_vals.attrlist4_len = %d",
+                    Fattr->attr_vals.attrlist4_len);
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-		    "nfs4_PseudoToFattr (end):Fattr->attrmask.bitmap4_len = %d  [0]=%u, [1]=%u",
-		    Fattr->attrmask.bitmap4_len, Fattr->attrmask.bitmap4_val[0],
-		    Fattr->attrmask.bitmap4_val[1]);
+                    "nfs4_PseudoToFattr (end):Fattr->attrmask.bitmap4_len = %d  [0]=%u, [1]=%u",
+                    Fattr->attrmask.bitmap4_len, Fattr->attrmask.bitmap4_val[0],
+                    Fattr->attrmask.bitmap4_val[1]);
 
   return 0;
-}				/* nfs4_XattrToFattr */
+}                               /* nfs4_XattrToFattr */
 
 /** 
  * nfs4_fh_to_xattrfh: builds the fh to the xattrs ghost directory 
@@ -1117,10 +1117,10 @@ nfsstat4 nfs4_fh_to_xattrfh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
    * - a value greater than 1 if the fh is related to a ghost file in ghost xattr directory that represents a xattr. The value is then equal 
    *   to the xattr_id + 1 (see how FSAL manages xattrs for meaning of this field). This limits the number of xattrs per object to 254. 
    */
-  pfile_handle->xattr_pos = 1;	/**< 1 = xattr ghost directory */
+  pfile_handle->xattr_pos = 1;  /**< 1 = xattr ghost directory */
 
   return NFS4_OK;
-}				/* nfs4_fh_to_xattrfh */
+}                               /* nfs4_fh_to_xattrfh */
 
 /**
  * nfs4_op_getattr_xattr: Gets attributes for xattrs objects
@@ -1139,7 +1139,7 @@ nfsstat4 nfs4_fh_to_xattrfh(nfs_fh4 * pfhin, nfs_fh4 * pfhout)
 #define res_GETATTR4 resp->nfs_resop4_u.opgetattr
 
 int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
-			  compound_data_t * data, struct nfs_resop4 *resp)
+                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
 
@@ -1148,13 +1148,13 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
   res_GETATTR4.status = NFS4_OK;
 
   if (nfs4_XattrToFattr(&(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
-			data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
+                        data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
     res_GETATTR4.status = NFS4ERR_SERVERFAULT;
     else
     res_GETATTR4.status = NFS4_OK;
 
   return res_GETATTR4.status;
-}				/* nfs4_op_getattr_xattr */
+}                               /* nfs4_op_getattr_xattr */
 
 /**
  * nfs4_op_access_xattrs: Checks for xattrs accessibility 
@@ -1174,7 +1174,7 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
 #define arg_ACCESS4 op->nfs_argop4_u.opaccess
 
 int nfs4_op_access_xattr(struct nfs_argop4 *op,
-			 compound_data_t * data, struct nfs_resop4 *resp)
+                         compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_access_xattr";
 
@@ -1189,7 +1189,7 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
       arg_ACCESS4.access & ~(ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE);
 
   return NFS4_OK;
-}				/* nfs4_op_access_xattr */
+}                               /* nfs4_op_access_xattr */
 
 /**
  * nfs4_op_lookup_xattr: looks up into the pseudo fs.
@@ -1209,7 +1209,7 @@ int nfs4_op_access_xattr(struct nfs_argop4 *op,
 #define res_LOOKUP4 resp->nfs_resop4_u.oplookup
 
 int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
-			 compound_data_t * data, struct nfs_resop4 *resp)
+                         compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_name_t name;
   char strname[MAXNAMLEN];
@@ -1234,13 +1234,13 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
 
   /* UTF8 strings may not end with \0, but they carry their length */
   strncpy(strname, arg_LOOKUP4.objname.utf8string_val,
-	  arg_LOOKUP4.objname.utf8string_len);
+          arg_LOOKUP4.objname.utf8string_len);
   strname[arg_LOOKUP4.objname.utf8string_len] = '\0';
 
   /* Build the FSAL name */
   if ((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
-							      MAXNAMLEN,
-							      &name))) !=
+                                                              MAXNAMLEN,
+                                                              &name))) !=
       CACHE_INODE_SUCCESS)
     {
       res_LOOKUP4.status = nfs4_Errno(cache_status);
@@ -1264,7 +1264,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   pfile_handle->xattr_pos = xattr_id + 2;
 
   return NFS4_OK;
-}				/* nfs4_op_lookup_xattr */
+}                               /* nfs4_op_lookup_xattr */
 
 /**
  * nfs4_op_lookupp_xattr: looks up into the pseudo fs for the parent directory
@@ -1284,7 +1284,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
 #define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
 
 int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
-			  compound_data_t * data, struct nfs_resop4 *resp)
+                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup_xattr";
 
@@ -1292,7 +1292,7 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
 
   res_LOOKUPP4.status = NFS4_OK;
   return NFS4_OK;
-}				/* nfs4_op_lookupp_xattr */
+}                               /* nfs4_op_lookupp_xattr */
 
 /**
  * nfs4_op_readdir_xattr: Reads a directory in the pseudo fs 
@@ -1314,7 +1314,7 @@ extern time_t ServerBootTime;
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
 
 int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
-			  compound_data_t * data, struct nfs_resop4 *resp)
+                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   unsigned long dircount = 0;
   unsigned long maxcount = 0;
@@ -1343,8 +1343,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir_xattr";
 
-  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };	/* 0xB = 11 = FATTR4_RDATTR_ERROR */
-  attrlist4 RdAttrErrorVals = { 0, NULL };	/* Nothing to be seen here */
+  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
+  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
@@ -1356,7 +1356,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   entryFH.nfs_fh4_len = 0;
 
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs, NIV_FULL_DEBUG,
-		    "Entering NFS4_OP_READDIR_PSEUDO");
+                    "Entering NFS4_OP_READDIR_PSEUDO");
 
   /* get the caracteristic value for readdir operation */
   dircount = arg_READDIR4.dircount;
@@ -1368,9 +1368,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   estimated_num_entries = maxcount / sizeof(entry4);
 
   DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
-		    NIV_FULL_DEBUG,
-		    "PSEUDOFS READDIR: dircount=%d, maxcount=%d, cookie=%d, sizeof(entry4)=%d num_entries=%d",
-		    dircount, maxcount, cookie, space_used, estimated_num_entries);
+                    NIV_FULL_DEBUG,
+                    "PSEUDOFS READDIR: dircount=%d, maxcount=%d, cookie=%d, sizeof(entry4)=%d num_entries=%d",
+                    dircount, maxcount, cookie, space_used, estimated_num_entries);
 
   /* If maxcount is too short, return NFS4ERR_TOOSMALL */
   if (maxcount < sizeof(entry4) || estimated_num_entries == 0)
@@ -1395,7 +1395,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     }
 
   if (cookie != 0)
-    cookie = cookie - 2;	/* 0,1 and 2 are reserved, there is a delta of '3' because of this */
+    cookie = cookie - 2;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
 
   /* Get only attributes that are allowed to be read */
   if (!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
@@ -1419,14 +1419,14 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
       if (cookie != 0)
-	{
-	  if (memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
-	    {
-	      res_READDIR4.status = NFS4ERR_BAD_COOKIE;
-	      Mem_Free(entry_nfs_array);
-	      return res_READDIR4.status;
-	    }
-	}
+        {
+          if (memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
+            {
+              res_READDIR4.status = NFS4ERR_BAD_COOKIE;
+              Mem_Free(entry_nfs_array);
+              return res_READDIR4.status;
+            }
+        }
     }
 #endif
 
@@ -1444,10 +1444,10 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   /* Used FSAL extended attributes functions */
   fsal_status = FSAL_ListXAttrs(pfsal_handle,
-				cookie,
-				data->pcontext,
-				xattrs_tab,
-				estimated_num_entries, &nb_xattrs_read, &eod_met);
+                                cookie,
+                                data->pcontext,
+                                xattrs_tab,
+                                estimated_num_entries, &nb_xattrs_read, &eod_met);
   if (FSAL_IS_ERROR(fsal_status))
     {
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1459,7 +1459,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       /* This is the end of the directory */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
       memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
-	     NFS4_VERIFIER_SIZE);
+             NFS4_VERIFIER_SIZE);
     }
 
   if (nb_xattrs_read == 0)
@@ -1468,70 +1468,70 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
       memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
-	     NFS4_VERIFIER_SIZE);
+             NFS4_VERIFIER_SIZE);
     } else
     {
       /* Allocation of reply structures */
       if ((entry_name_array =
-	   (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
-						 (FSAL_MAX_NAME_LEN + 1))) == NULL)
-	{
-	  DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
-	  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-	  return res_READDIR4.status;
-	}
+           (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
+                                                 (FSAL_MAX_NAME_LEN + 1))) == NULL)
+        {
+          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          res_READDIR4.status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4.status;
+        }
       memset((char *)entry_name_array, 0,
-	     estimated_num_entries * (FSAL_MAX_NAME_LEN + 1));
+             estimated_num_entries * (FSAL_MAX_NAME_LEN + 1));
 
       if ((entry_nfs_array =
-	   (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
-	{
-	  DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
-	  res_READDIR4.status = NFS4ERR_SERVERFAULT;
-	  return res_READDIR4.status;
-	}
+           (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
+        {
+          DisplayErrorLog(ERR_SYS, ERR_MALLOC, errno);
+          res_READDIR4.status = NFS4ERR_SERVERFAULT;
+          return res_READDIR4.status;
+        }
 
       for (i = 0; i < nb_xattrs_read; i++)
-	{
-	  entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
+        {
+          entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
-	  if (str2utf8(xattrs_tab[i].xattr_name.name, &entry_nfs_array[i].name) == -1)
-	    {
-	      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-	      return res_READDIR4.status;
-	    }
+          if (str2utf8(xattrs_tab[i].xattr_name.name, &entry_nfs_array[i].name) == -1)
+            {
+              res_READDIR4.status = NFS4ERR_SERVERFAULT;
+              return res_READDIR4.status;
+            }
 
-	  /* Set the cookie value */
-	  entry_nfs_array[i].cookie = cookie + i + 2;	/* 0, 1 and 2 are reserved */
+          /* Set the cookie value */
+          entry_nfs_array[i].cookie = cookie + i + 2;   /* 0, 1 and 2 are reserved */
 
-	  file_handle.xattr_pos = xattrs_tab[i].xattr_id + 2;
-	  if (nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
-				data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
-	    {
-	      /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
-	      entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
-	      entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
-	    }
+          file_handle.xattr_pos = xattrs_tab[i].xattr_id + 2;
+          if (nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
+                                data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
+            {
+              /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
+              entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
+              entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
+            }
 
-	  /* Chain the entries together */
-	  entry_nfs_array[i].nextentry = NULL;
-	  if (i != 0)
-	    entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
+          /* Chain the entries together */
+          entry_nfs_array[i].nextentry = NULL;
+          if (i != 0)
+            entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
 
-	  /* This test is there to avoid going further than the buffer provided by the client 
-	   * the factor "9/10" is there for safety. Its value could be change as beta tests will be done */
-	  if ((caddr_t)
-	      ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
-	      (caddr_t) (maxcount * 9 / 10))
-	    break;
+          /* This test is there to avoid going further than the buffer provided by the client 
+           * the factor "9/10" is there for safety. Its value could be change as beta tests will be done */
+          if ((caddr_t)
+              ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
+              (caddr_t) (maxcount * 9 / 10))
+            break;
 
-	}			/* for */
+        }                       /* for */
 
-    }				/* else */
+    }                           /* else */
 
   /* Build the reply */
   memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
-	 NFS4_VERIFIER_SIZE);
+         NFS4_VERIFIER_SIZE);
   if (i == 0)
     res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
     else
@@ -1541,7 +1541,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 
   return NFS4_OK;
 
-}				/* nfs4_op_readdir_xattr */
+}                               /* nfs4_op_readdir_xattr */
 
 /**
  * nfs4_op_open_xattr: Opens the content of a xattr attribute
@@ -1557,27 +1557,27 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
 #define res_READ4 resp->nfs_resop4_u.opread
 
 int nfs4_op_open_xattr(struct nfs_argop4 *op,
-		       compound_data_t * data, struct nfs_resop4 *resp)
+                       compound_data_t * data, struct nfs_resop4 *resp)
 {
   /* Nothing done here, we do not use the stateful logic for accessing xattrs */
   return NFS4_OK;
-}				/* nfs4_op_open_xattr
+}                               /* nfs4_op_open_xattr
 
-				   /**
-				   * nfs4_op_read_xattr: Reads the content of a xattr attribute
-				   * 
-				   * @param op    [IN]    pointer to nfs4_op arguments
-				   * @param data  [INOUT] Pointer to the compound request's data
-				   * @param resp  [IN]    Pointer to nfs4_op results
-				   * 
-				   * @return NFS4_OK if successfull, other values show an error. 
-				   * 
-				 */
+                                   /**
+                                   * nfs4_op_read_xattr: Reads the content of a xattr attribute
+                                   * 
+                                   * @param op    [IN]    pointer to nfs4_op arguments
+                                   * @param data  [INOUT] Pointer to the compound request's data
+                                   * @param resp  [IN]    Pointer to nfs4_op results
+                                   * 
+                                   * @return NFS4_OK if successfull, other values show an error. 
+                                   * 
+                                 */
 #define arg_READ4 op->nfs_argop4_u.opread
 #define res_READ4 resp->nfs_resop4_u.opread
 
 int nfs4_op_read_xattr(struct nfs_argop4 *op,
-		       compound_data_t * data, struct nfs_resop4 *resp)
+                       compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_handle_t *pfsal_handle = NULL;
   file_handle_v4_t *pfile_handle = NULL;
@@ -1621,9 +1621,9 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   memset(buffer, 0, XATTR_BUFFERSIZE);
 
   fsal_status = FSAL_GetXAttrValueById(pfsal_handle,
-				       xattr_id,
-				       data->pcontext,
-				       buffer, XATTR_BUFFERSIZE, &size_returned);
+                                       xattr_id,
+                                       data->pcontext,
+                                       buffer, XATTR_BUFFERSIZE, &size_returned);
 
   if (FSAL_IS_ERROR(fsal_status))
     {
@@ -1639,7 +1639,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   res_READ4.status = NFS4_OK;
 
   return res_READ4.status;
-}				/* nfs4_op_read_xattr */
+}                               /* nfs4_op_read_xattr */
 
 /**
  * nfs4_op_write_xattr: Writes the content of a xattr attribute
@@ -1655,7 +1655,7 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 
 int nfs4_op_write_xattr(struct nfs_argop4 *op,
-			compound_data_t * data, struct nfs_resop4 *resp)
+                        compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_handle_t *pfsal_handle = NULL;
   file_handle_v4_t *pfile_handle = NULL;
@@ -1693,4 +1693,4 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
   /** @todo to be continued */
 
   return NFS4_OK;
-}				/* nfs4_op_write_xattr */
+}                               /* nfs4_op_write_xattr */

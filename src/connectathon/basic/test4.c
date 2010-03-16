@@ -38,9 +38,9 @@
 #include "tests.h"
 #include "Connectathon_config_parsing.h"
 
-static int Tflag = 0;		/* print timing */
-static int Fflag = 0;		/* test function only;  set count to 1, negate -t */
-static int Nflag = 0;		/* Suppress directory operations */
+static int Tflag = 0;           /* print timing */
+static int Fflag = 0;           /* test function only;  set count to 1, negate -t */
+static int Nflag = 0;           /* Suppress directory operations */
 
 static void usage()
 {
@@ -53,9 +53,9 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-  int files;			/* number of files in each dir */
+  int files;                    /* number of files in each dir */
   int fi;
-  int count;			/* times to do each file */
+  int count;                    /* times to do each file */
   int ct;
   int totfiles = 0;
   int totdirs = 0;
@@ -79,32 +79,32 @@ int main(int argc, char *argv[])
   while (argc && **argv == '-')
     {
       for (opts = &argv[0][1]; *opts; opts++)
-	{
-	  switch (*opts)
-	    {
-	    case 'h':		/* help */
-	      usage();
-	      exit(1);
-	      break;
+        {
+          switch (*opts)
+            {
+            case 'h':          /* help */
+              usage();
+              exit(1);
+              break;
 
-	    case 't':		/* time */
-	      Tflag++;
-	      break;
+            case 't':          /* time */
+              Tflag++;
+              break;
 
-	    case 'f':		/* funtionality */
-	      Fflag++;
-	      break;
+            case 'f':          /* funtionality */
+              Fflag++;
+              break;
 
-	    case 'n':		/* suppress initial directory */
-	      Nflag++;
-	      break;
+            case 'n':          /* suppress initial directory */
+              Nflag++;
+              break;
 
-	    default:
-	      error("unknown option '%c'", *opts);
-	      usage();
-	      exit(1);
-	    }
-	}
+            default:
+              error("unknown option '%c'", *opts);
+              usage();
+              exit(1);
+            }
+        }
       argc--;
       argv++;
     }
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
   if (b == NULL)
     {
       fprintf(stderr, "Missing basic test number 4 in the config file '%s'\n",
-	      config_file);
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -146,16 +146,16 @@ int main(int argc, char *argv[])
   if (b->files == -1)
     {
       fprintf(stderr,
-	      "Missing 'files' parameter in the config file '%s' for the basic test number 4\n",
-	      config_file);
+              "Missing 'files' parameter in the config file '%s' for the basic test number 4\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
   if (b->count == -1)
     {
       fprintf(stderr,
-	      "Missing 'count' parameter in the config file '%s' for the basic test number 4\n",
-	      config_file);
+              "Missing 'count' parameter in the config file '%s' for the basic test number 4\n",
+              config_file);
       free_testparam(param);
       exit(1);
     }
@@ -187,39 +187,39 @@ int main(int argc, char *argv[])
   for (ct = 0; ct < count; ct++)
     {
       for (fi = 0; fi < files; fi++)
-	{
-	  sprintf(str, "%s%d", fname, fi);
-	  if (chmod(str, CHMOD_NONE) < 0)
-	    {
-	      error("can't chmod %o %s", CHMOD_NONE, str);
-	      exit(0);
-	    }
-	  if (stat(str, &statb) < 0)
-	    {
-	      error("can't stat %s after CMOD_NONE", str);
-	      exit(1);
-	    }
-	  if ((statb.st_mode & CHMOD_MASK) != CHMOD_NONE)
-	    {
-	      error("%s has mode %o after chmod 0", str, (statb.st_mode & 0777));
-	      exit(1);
-	    }
-	  if (chmod(str, CHMOD_RW) < 0)
-	    {
-	      error("can't chmod %o %s", CHMOD_RW, str);
-	      exit(0);
-	    }
-	  if (stat(str, &statb) < 0)
-	    {
-	      error("can't stat %s after CHMOD_RW", str);
-	      exit(1);
-	    }
-	  if ((statb.st_mode & CHMOD_MASK) != CHMOD_RW)
-	    {
-	      error("%s has mode %o after chmod 0666", str, (statb.st_mode & 0777));
-	      exit(1);
-	    }
-	}
+        {
+          sprintf(str, "%s%d", fname, fi);
+          if (chmod(str, CHMOD_NONE) < 0)
+            {
+              error("can't chmod %o %s", CHMOD_NONE, str);
+              exit(0);
+            }
+          if (stat(str, &statb) < 0)
+            {
+              error("can't stat %s after CMOD_NONE", str);
+              exit(1);
+            }
+          if ((statb.st_mode & CHMOD_MASK) != CHMOD_NONE)
+            {
+              error("%s has mode %o after chmod 0", str, (statb.st_mode & 0777));
+              exit(1);
+            }
+          if (chmod(str, CHMOD_RW) < 0)
+            {
+              error("can't chmod %o %s", CHMOD_RW, str);
+              exit(0);
+            }
+          if (stat(str, &statb) < 0)
+            {
+              error("can't stat %s after CHMOD_RW", str);
+              exit(1);
+            }
+          if ((statb.st_mode & CHMOD_MASK) != CHMOD_RW)
+            {
+              error("%s has mode %o after chmod 0666", str, (statb.st_mode & 0777));
+              exit(1);
+            }
+        }
     }
   endtime(&time);
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
   if (Tflag)
     {
       fprintf(stdout, " in %ld.%02ld seconds",
-	      (long)time.tv_sec, (long)time.tv_usec / 10000);
+              (long)time.tv_sec, (long)time.tv_usec / 10000);
     }
   fprintf(stdout, "\n");
 
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
       complete();
     }
   fprintf(log, "b4\t%d\t%d\t%ld.%02ld\n", files * count * 2, files, (long)time.tv_sec,
-	  (long)time.tv_usec / 10000);
+          (long)time.tv_usec / 10000);
   fclose(log);
 
   /* XXX REMOVE DIRECTORY TREE? */

@@ -55,10 +55,10 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
-			  fsal_op_context_t * p_context,	/* IN */
-			  fsal_accessflags_t access_type,	/* IN */
-			  fsal_attrib_list_t * object_attributes	/* [ IN/OUT ] */
+fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_accessflags_t access_type,       /* IN */
+                          fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
@@ -80,12 +80,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
   TakeTokenFSCall();
 
-  rc = hpss_AccessHandle(&(object_handle->ns_handle),	/* IN - parent object handle */
-			 NULL,	/* IN - path of file to check access rights */
-			 hpss_test_mode,	/* IN - Type of access to be checked */
-			 &p_context->credential.hpss_usercred	/* IN - user credentials */
+  rc = hpss_AccessHandle(&(object_handle->ns_handle),   /* IN - parent object handle */
+                         NULL,  /* IN - path of file to check access rights */
+                         hpss_test_mode,        /* IN - Type of access to be checked */
+                         &p_context->credential.hpss_usercred   /* IN - user credentials */
 #if HPSS_MAJOR_VERSION < 7
-			 , NULL	/* OUT - authorization ticket */
+                         , NULL /* OUT - authorization ticket */
 #endif
       );
 
@@ -110,10 +110,10 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,	/* IN */
 
       /* on error, we set a special bit in the mask. */
       if (FSAL_IS_ERROR(status))
-	{
-	  FSAL_CLEAR_MASK(object_attributes->asked_attributes);
-	  FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-	}
+        {
+          FSAL_CLEAR_MASK(object_attributes->asked_attributes);
+          FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+        }
 
     }
 

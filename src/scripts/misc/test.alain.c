@@ -39,7 +39,7 @@ main(int argc, char **argv)
       printf("repertoire vide : repertoire OK\n");
     };
 
-  sprintf(cmde, "touch %s", name);	/* pour simuler la pre-existence du fichier */
+  sprintf(cmde, "touch %s", name);      /* pour simuler la pre-existence du fichier */
   system(cmde);
 
   err = stat(path, &stbuf);
@@ -66,21 +66,21 @@ main(int argc, char **argv)
     {
       err = stat(path, &stbuf);
       if (err == -1)
-	{
-	  printf("apres destruction du fichier : stat erreur\n");
-	} else
-	{
-	  printf("apres destruction du fichier : stat OK\n");
-	};
+        {
+          printf("apres destruction du fichier : stat erreur\n");
+        } else
+        {
+          printf("apres destruction du fichier : stat OK\n");
+        };
 
       if ((err == -1) || ((stbuf.st_mode & S_IFMT) != S_IFDIR))
-	{
-	  printf("apres destruction du fichier : pas un repertoire\n");
-	} else
-	{
-	  printf("apres destruction du fichier : repertoire OK\n");
-	  rc = 0;
-	};
+        {
+          printf("apres destruction du fichier : pas un repertoire\n");
+        } else
+        {
+          printf("apres destruction du fichier : repertoire OK\n");
+          rc = 0;
+        };
 
       sleep(3);
     };

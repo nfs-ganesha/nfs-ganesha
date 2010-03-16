@@ -121,12 +121,12 @@ fsal_status_t cache_inode_async_setattr(cache_inode_async_op_desc_t * popasyncde
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_setattrs(popasyncdesc->op_args.setattr.pfsal_handle,
-			      &popasyncdesc->fsal_op_context,
-			      &popasyncdesc->op_args.setattr.attr,
-			      &popasyncdesc->op_res.setattr.attr);
+                              &popasyncdesc->fsal_op_context,
+                              &popasyncdesc->op_args.setattr.attr,
+                              &popasyncdesc->op_res.setattr.attr);
 
   return fsal_status;
-}				/* cache_inode_aync_setattr */
+}                               /* cache_inode_aync_setattr */
 
 /**
  *
@@ -147,11 +147,11 @@ fsal_status_t cache_inode_async_setattr(cache_inode_async_op_desc_t * popasyncde
  *
  */
 cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
-					 fsal_attrib_list_t * pattr,
-					 hash_table_t * ht,
-					 cache_inode_client_t * pclient,
-					 fsal_op_context_t * pcontext,
-					 cache_inode_status_t * pstatus)
+                                         fsal_attrib_list_t * pattr,
+                                         hash_table_t * ht,
+                                         cache_inode_client_t * pclient,
+                                         fsal_op_context_t * pcontext,
+                                         cache_inode_status_t * pstatus)
 {
   fsal_handle_t *pfsal_handle;
   fsal_status_t fsal_status;
@@ -193,7 +193,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
       P(pentry->object.dir_cont.pdir_begin->lock);
       pfsal_handle = &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
       p_object_attributes =
-	  &pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes;
+          &pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes;
       V(pentry->object.dir_cont.pdir_begin->lock);
       break;
 
@@ -235,8 +235,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
   /* Post an asynchronous operation */
   P(pclient->pool_lock);
   GET_PREALLOC(pasyncopdesc,
-	       pclient->pool_async_op,
-	       pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
+               pclient->pool_async_op,
+               pclient->nb_pre_async_op_desc, cache_inode_async_op_desc_t, next_alloc);
   V(pclient->pool_lock);
 
   if (pasyncopdesc == NULL)
@@ -292,53 +292,53 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
     {
 
       if (pentry->internal_md.type == REGULAR_FILE)
-	{
-	  if (pentry->object.file.pentry_content == NULL)
-	    {
-	      /* Operation on a non data cached file */
-	      p_object_attributes->filesize = candidate_attributes.filesize;
-	      p_object_attributes->spaceused = candidate_attributes.filesize;	/* Unclear hook here. BUGAZOMEU */
-	    } else
-	    {
-	      /* Data cached file */
-	      /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
-	       * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
-	       * with a size of 0 despite the fact that they are not empty */
+        {
+          if (pentry->object.file.pentry_content == NULL)
+            {
+              /* Operation on a non data cached file */
+              p_object_attributes->filesize = candidate_attributes.filesize;
+              p_object_attributes->spaceused = candidate_attributes.filesize;   /* Unclear hook here. BUGAZOMEU */
+            } else
+            {
+              /* Data cached file */
+              /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
+               * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
+               * with a size of 0 despite the fact that they are not empty */
 #ifdef  _DEBUG_CACHE_INODE
-	      DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-				"cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
+              DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+                                "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
 #endif
-	    }
+            }
       } else if (pattr->asked_attributes & FSAL_ATTR_SIZE)
-	DisplayLog
-	    ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
-	     pentry->internal_md.type);
+        DisplayLog
+            ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
+             pentry->internal_md.type);
     }
 
   if (candidate_attributes.asked_attributes &
       (FSAL_ATTR_MODE | FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
       if (candidate_attributes.asked_attributes & FSAL_ATTR_MODE)
-	p_object_attributes->mode = candidate_attributes.mode;
+        p_object_attributes->mode = candidate_attributes.mode;
 
       if (candidate_attributes.asked_attributes & FSAL_ATTR_OWNER)
-	p_object_attributes->owner = candidate_attributes.owner;
+        p_object_attributes->owner = candidate_attributes.owner;
 
       if (candidate_attributes.asked_attributes & FSAL_ATTR_GROUP)
-	p_object_attributes->group = candidate_attributes.group;
+        p_object_attributes->group = candidate_attributes.group;
     }
 
   if (candidate_attributes.asked_attributes &
       (FSAL_ATTR_ATIME | FSAL_ATTR_CTIME | FSAL_ATTR_MTIME))
     {
       if (candidate_attributes.asked_attributes & FSAL_ATTR_ATIME)
-	p_object_attributes->atime = candidate_attributes.atime;
+        p_object_attributes->atime = candidate_attributes.atime;
 
       if (candidate_attributes.asked_attributes & FSAL_ATTR_CTIME)
-	p_object_attributes->ctime = candidate_attributes.ctime;
+        p_object_attributes->ctime = candidate_attributes.ctime;
 
       if (candidate_attributes.asked_attributes & FSAL_ATTR_MTIME)
-	p_object_attributes->mtime = candidate_attributes.mtime;
+        p_object_attributes->mtime = candidate_attributes.mtime;
     }
 
   /* Return the attributes as set */
@@ -357,4 +357,4 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
     pclient->stat.func_stats.nb_success[CACHE_INODE_SETATTR] += 1;
 
   return *pstatus;
-}				/* cache_inode_setattr */
+}                               /* cache_inode_setattr */

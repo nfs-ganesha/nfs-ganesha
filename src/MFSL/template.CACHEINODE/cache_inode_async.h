@@ -251,4 +251,4 @@ fsal_status_t cache_inode_async_rename_dst(cache_inode_async_op_desc_t * popasyn
 fsal_status_t cache_inode_async_setattr(cache_inode_async_op_desc_t * popasyncdesc);
 fsal_status_t cache_inode_async_truncate(cache_inode_async_op_desc_t * popasyncdesc);
 
-#endif				/* _CACHE_INODE__ASYNC_H */
+#endif                          /* _CACHE_INODE__ASYNC_H */

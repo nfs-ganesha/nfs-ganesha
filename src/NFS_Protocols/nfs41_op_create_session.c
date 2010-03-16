@@ -95,7 +95,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -143,7 +143,7 @@ extern time_t ServerBootTime;
  */
 
 int nfs41_op_create_session(struct nfs_argop4 *op,
-			    compound_data_t * data, struct nfs_resop4 *resp)
+                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   nfs_client_id_t *pnfs_clientid;
   nfs41_session_t *pnfs41_session = NULL;
@@ -175,20 +175,20 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
     {
       /* Special case : the request is used without use of OP_SEQUENCE */
       if ((arg_CREATE_SESSION4.csa_sequence + 1 == pnfs_clientid->create_session_sequence)
-	  && (pnfs_clientid->create_session_slot.cache_used == TRUE))
-	{
-	  data->use_drc = TRUE;
-	  data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
+          && (pnfs_clientid->create_session_slot.cache_used == TRUE))
+        {
+          data->use_drc = TRUE;
+          data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
 
-	  res_CREATE_SESSION4.csr_status = NFS4_OK;
-	  return res_CREATE_SESSION4.csr_status;
+          res_CREATE_SESSION4.csr_status = NFS4_OK;
+          return res_CREATE_SESSION4.csr_status;
       }
-	else if (arg_CREATE_SESSION4.csa_sequence !=
-		   pnfs_clientid->create_session_sequence)
-	{
-	  res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED;
-	  return res_CREATE_SESSION4.csr_status;
-	}
+        else if (arg_CREATE_SESSION4.csa_sequence !=
+                   pnfs_clientid->create_session_sequence)
+        {
+          res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED;
+          return res_CREATE_SESSION4.csr_status;
+        }
 
     }
 
@@ -200,8 +200,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   /* Record session related information at the right place */
   GET_PREALLOC(pnfs41_session,
-	       data->pclient->pool_session,
-	       data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
+               data->pclient->pool_session,
+               data->pclient->nb_pre_state_v4, nfs41_session_t, next_alloc);
 
   if (pnfs41_session == NULL)
     {
@@ -244,7 +244,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       pnfs41_session->back_channel_attrs;
 
   memcpy(res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid,
-	 pnfs41_session->session_id, NFS4_SESSIONID_SIZE);
+         pnfs41_session->session_id, NFS4_SESSIONID_SIZE);
 
   /* Create Session replay cache */
   data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
@@ -252,14 +252,14 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   if (!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
     {
-      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;	/* Maybe a more precise status would be better */
+      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;     /* Maybe a more precise status would be better */
       return res_CREATE_SESSION4.csr_status;
     }
 
   /* Successful exit */
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   return res_CREATE_SESSION4.csr_status;
-}				/* nfs41_op_create_session */
+}                               /* nfs41_op_create_session */
 
 /**
  * nfs41_op_create_session_Free: frees what was allocared to handle nfs41_op_create_session.
@@ -275,4 +275,4 @@ void nfs41_op_create_session_Free(CREATE_SESSION4res * resp)
 {
   /* To be completed */
   return;
-}				/* nfs41_op_create_session_Free */
+}                               /* nfs41_op_create_session_Free */

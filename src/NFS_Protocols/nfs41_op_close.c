@@ -93,7 +93,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -194,13 +194,13 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* Get the related state */
   if (cache_inode_get_state(arg_CLOSE4.open_stateid.other,
-			    &pstate_found,
-			    data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                            &pstate_found,
+                            data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       if (cache_status == CACHE_INODE_NOT_FOUND)
-	res_CLOSE4.status = NFS4ERR_BAD_STATEID;
-	else
-	res_CLOSE4.status = NFS4ERR_INVAL;
+        res_CLOSE4.status = NFS4ERR_BAD_STATEID;
+        else
+        res_CLOSE4.status = NFS4ERR_INVAL;
 
       return res_CLOSE4.status;
     }
@@ -223,7 +223,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
   if (cache_inode_close(data->current_entry,
-			data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                        data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       V_w(&data->current_entry->lock);
 
@@ -234,7 +234,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* File is closed, release the corresponding state */
   if (cache_inode_del_state_by_key(arg_CLOSE4.open_stateid.other,
-				   data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                                   data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_CLOSE4.status = nfs4_Errno(cache_status);
       return res_CLOSE4.status;
@@ -245,7 +245,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_CLOSE4.status = NFS4_OK;
 
   return NFS4_OK;
-}				/* nfs41_op_close */
+}                               /* nfs41_op_close */
 
 /**
  * nfs41_op_close_Free: frees what was allocared to handle nfs4_op_close.
@@ -261,4 +261,4 @@ void nfs41_op_close_Free(CLOSE4res * resp)
 {
   /* Nothing to be done */
   return;
-}				/* nfs41_op_close_Free */
+}                               /* nfs41_op_close_Free */

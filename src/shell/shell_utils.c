@@ -152,9 +152,9 @@ static int timer_state = 0;
 
 /* The timer command */
 
-int util_timer(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_timer(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -170,16 +170,16 @@ int util_timer(int argc,	/* IN : number of args in argv */
     {
 
       if (timer_state)
-	{
-	  fprintf(output, "Timer already started.\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "Timer already started.\n");
+          return -1;
+        }
 
       if (gettimeofday(&timer_start, NULL) == -1)
-	{
-	  fprintf(output, "Error retrieving system time.\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "Error retrieving system time.\n");
+          return -1;
+        }
 
       fprintf(output, "Timer start time: ");
       print_timeval(output, timer_start);
@@ -194,16 +194,16 @@ int util_timer(int argc,	/* IN : number of args in argv */
     {
 
       if (!timer_state)
-	{
-	  fprintf(output, "Timer is not started.\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "Timer is not started.\n");
+          return -1;
+        }
 
       if (gettimeofday(&timer_end, NULL) == -1)
-	{
-	  fprintf(output, "Error retrieving system time.\n");
-	  return -1;
-	}
+        {
+          fprintf(output, "Error retrieving system time.\n");
+          return -1;
+        }
 
       fprintf(output, "Timer stop time: ");
       print_timeval(output, timer_end);
@@ -218,29 +218,29 @@ int util_timer(int argc,	/* IN : number of args in argv */
     {
 
       if (timer_state)
-	{
+        {
 
-	  struct timeval timer_tmp;
+          struct timeval timer_tmp;
 
-	  /* timer is running, print current enlapsed time */
-	  if (gettimeofday(&timer_tmp, NULL) == -1)
-	    {
-	      fprintf(output, "Error retrieving system time.\n");
-	      return -1;
-	    }
+          /* timer is running, print current enlapsed time */
+          if (gettimeofday(&timer_tmp, NULL) == -1)
+            {
+              fprintf(output, "Error retrieving system time.\n");
+              return -1;
+            }
 
-	  timer_tmp = time_diff(timer_start, timer_tmp);
-	  print_timeval(output, timer_tmp);
+          timer_tmp = time_diff(timer_start, timer_tmp);
+          print_timeval(output, timer_tmp);
 
-	} else
-	{
+        } else
+        {
 
-	  struct timeval timer_tmp;
+          struct timeval timer_tmp;
 
-	  timer_tmp = time_diff(timer_start, timer_end);
-	  print_timeval(output, timer_tmp);
+          timer_tmp = time_diff(timer_start, timer_end);
+          print_timeval(output, timer_tmp);
 
-	}
+        }
       return 0;
     }
 
@@ -248,15 +248,15 @@ int util_timer(int argc,	/* IN : number of args in argv */
   fprintf(output, "Usage: %s start|print|stop.\n", argv[0]);
   return -1;
 
-}				/* util_timer */
+}                               /* util_timer */
 
 /*--------------------------
  *      System utils.
  *-------------------------*/
 
-int util_sleep(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_sleep(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -275,7 +275,7 @@ int util_sleep(int argc,	/* IN : number of args in argv */
   if (rc < 0)
     {
       fprintf(output, "Usage: %s <int value> (%s is not a positive integer)\n", argv[0],
-	      argv[1]);
+              argv[1]);
       return -1;
     }
 
@@ -291,9 +291,9 @@ int util_sleep(int argc,	/* IN : number of args in argv */
 
 }
 
-int util_shell(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_shell(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -314,7 +314,7 @@ int util_shell(int argc,	/* IN : number of args in argv */
     {
       strncat(command_line, argv[i], strlen(command_line) - 1024 - 1);
       if (i != argc - 1)
-	strncat(command_line, " ", strlen(command_line) - 1024 - 1);
+        strncat(command_line, " ", strlen(command_line) - 1024 - 1);
     }
 
   /* launch the command */
@@ -338,11 +338,11 @@ int util_shell(int argc,	/* IN : number of args in argv */
 
   return pclose(cmd_output);
 
-}				/* util_shell */
+}                               /* util_shell */
 
-int util_meminfo(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int util_meminfo(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     )
 {
 #if( !defined( _APPLE ) && !defined( _SOLARIS ) )
@@ -363,12 +363,12 @@ int util_meminfo(int argc,	/* IN : number of args in argv */
   fprintf(output, "   Number of holding blocks: %d\n", meminfo.hblks);
   fprintf(output, "   Space in holding block headers: %d\n", meminfo.hblkhd);
   fprintf(output, "   Space in small blocks in use: %lu\n",
-	  (unsigned long)meminfo.usmblks);
+          (unsigned long)meminfo.usmblks);
   fprintf(output, "   Space in free small blocks: %lu\n", (unsigned long)meminfo.fsmblks);
   fprintf(output, "   Space in ordinary blocks in use: %lu\n",
-	  (unsigned long)meminfo.uordblks);
+          (unsigned long)meminfo.uordblks);
   fprintf(output, "   Space in free ordinary blocks: %lu\n",
-	  (unsigned long)meminfo.fordblks);
+          (unsigned long)meminfo.fordblks);
   fprintf(output, "   Cost of enabling keep option: %d\n", meminfo.keepcost);
   fprintf(output, "\n");
 
@@ -380,46 +380,46 @@ int util_meminfo(int argc,	/* IN : number of args in argv */
   /* Buddy sytem info */
 
   fprintf(output, "Total Space in Arena: %lu  (Watermark: %lu)\n",
-	  (unsigned long)bstats.TotalMemSpace, (unsigned long)bstats.WM_TotalMemSpace);
+          (unsigned long)bstats.TotalMemSpace, (unsigned long)bstats.WM_TotalMemSpace);
   fprintf(output, "\n");
 
   fprintf(output, "Total Space for Standard Pages: %lu  (Watermark: %lu)\n",
-	  (unsigned long)bstats.StdMemSpace, (unsigned long)bstats.WM_StdMemSpace);
+          (unsigned long)bstats.StdMemSpace, (unsigned long)bstats.WM_StdMemSpace);
 
   fprintf(output, "      Nb Standard Pages: %lu\n", (unsigned long)bstats.NbStdPages);
 
   fprintf(output, "      Size of Std Pages: %lu\n", (unsigned long)bstats.StdPageSize);
 
   fprintf(output, "      Space Used inside Std Pages: %lu  (Watermark: %lu)\n",
-	  (unsigned long)bstats.StdUsedSpace, (unsigned long)bstats.WM_StdUsedSpace);
+          (unsigned long)bstats.StdUsedSpace, (unsigned long)bstats.WM_StdUsedSpace);
 
   fprintf(output, "      Nb of Std Pages Used: %lu  (Watermark: %lu)\n",
-	  (unsigned long)bstats.NbStdUsed, (unsigned long)bstats.WM_NbStdUsed);
+          (unsigned long)bstats.NbStdUsed, (unsigned long)bstats.WM_NbStdUsed);
 
   if (bstats.NbStdUsed > 0)
     {
       fprintf(output, "      Memory Fragmentation: %.2f %%\n",
-	      100.0 -
-	      (100.0 * bstats.StdUsedSpace /
-	       (1.0 * bstats.NbStdUsed * bstats.StdPageSize)));
+              100.0 -
+              (100.0 * bstats.StdUsedSpace /
+               (1.0 * bstats.NbStdUsed * bstats.StdPageSize)));
     }
 
   fprintf(output, "\n");
 
 #endif
 
-#endif				/* _APPLE */
+#endif                          /* _APPLE */
   return 0;
 
-}				/* util_meminfo */
+}                               /* util_meminfo */
 
 /*----------------------
  *    String utils.
  *----------------------*/
 
-int util_cmp(int argc,		/* IN : number of args in argv */
-	     char **argv,	/* IN : arg list               */
-	     FILE * output	/* IN : output stream          */
+int util_cmp(int argc,          /* IN : number of args in argv */
+             char **argv,       /* IN : arg list               */
+             FILE * output      /* IN : output stream          */
     )
 {
 
@@ -430,16 +430,16 @@ int util_cmp(int argc,		/* IN : number of args in argv */
       "     -i: case insensitive comparison\n"
       "     -n: numerical comparison\n" "     -v: verbose mode\n";
 
-  int err_flag = 0;		/* error parsing options */
-  int flag_h = 0;		/* help */
-  int flag_i = 0;		/* case insensitive compare */
-  int flag_n = 0;		/* numerical compare */
-  int flag_v = 0;		/* verbose */
+  int err_flag = 0;             /* error parsing options */
+  int flag_h = 0;               /* help */
+  int flag_i = 0;               /* case insensitive compare */
+  int flag_n = 0;               /* numerical compare */
+  int flag_v = 0;               /* verbose */
 
   int rc, option;
 
-  char *str1 = NULL;		/* arg1 */
-  char *str2 = NULL;		/* arg2 */
+  char *str1 = NULL;            /* arg1 */
+  char *str2 = NULL;            /* arg2 */
 
   /* the value to been returned, according to argv[0] */
   int value_if_equal = FALSE;
@@ -463,48 +463,48 @@ int util_cmp(int argc,		/* IN : number of args in argv */
   while ((option = Getopt(argc, argv, format)) != -1)
     {
       switch (option)
-	{
-	case 'h':
-	  if (flag_h)
-	    fprintf(output,
-		    "%s: warning: option 'h' has been specified more than once.\n",
-		    argv[0]);
-	    else
-	    flag_h++;
-	  break;
+        {
+        case 'h':
+          if (flag_h)
+            fprintf(output,
+                    "%s: warning: option 'h' has been specified more than once.\n",
+                    argv[0]);
+            else
+            flag_h++;
+          break;
 
-	case 'i':
-	  if (flag_i)
-	    fprintf(output,
-		    "%s: warning: option 'i' has been specified more than once.\n",
-		    argv[0]);
-	    else
-	    flag_i++;
-	  break;
+        case 'i':
+          if (flag_i)
+            fprintf(output,
+                    "%s: warning: option 'i' has been specified more than once.\n",
+                    argv[0]);
+            else
+            flag_i++;
+          break;
 
-	case 'n':
-	  if (flag_n)
-	    fprintf(output,
-		    "%s: warning: option 'n' has been specified more than once.\n",
-		    argv[0]);
-	    else
-	    flag_n++;
-	  break;
+        case 'n':
+          if (flag_n)
+            fprintf(output,
+                    "%s: warning: option 'n' has been specified more than once.\n",
+                    argv[0]);
+            else
+            flag_n++;
+          break;
 
-	case 'v':
-	  if (flag_v)
-	    fprintf(output,
-		    "%s: warning: option 'v' has been specified more than once.\n",
-		    argv[0]);
-	    else
-	    flag_v++;
-	  break;
+        case 'v':
+          if (flag_v)
+            fprintf(output,
+                    "%s: warning: option 'v' has been specified more than once.\n",
+                    argv[0]);
+            else
+            flag_v++;
+          break;
 
-	case '?':
-	  fprintf(output, "%s: unknown option : %c\n", argv[0], Optopt);
-	  err_flag++;
-	  break;
-	}
+        case '?':
+          fprintf(output, "%s: unknown option : %c\n", argv[0], Optopt);
+          err_flag++;
+          break;
+        }
     }
 
   /* help flag */
@@ -552,32 +552,32 @@ int util_cmp(int argc,		/* IN : number of args in argv */
       int a, b;
 
       if (str1[0] == '-')
-	a = my_atoi(str1 + 1);
-	else
-	a = my_atoi(str1);
+        a = my_atoi(str1 + 1);
+        else
+        a = my_atoi(str1);
 
       if (a < 0)
-	{
-	  fprintf(output, "cmp: invalid integer value %s\n", str1);
-	  return -1;
-	}
+        {
+          fprintf(output, "cmp: invalid integer value %s\n", str1);
+          return -1;
+        }
 
       if (str1[0] == '-')
-	a = -a;
+        a = -a;
 
       if (str2[0] == '-')
-	b = my_atoi(str2 + 1);
-	else
-	b = my_atoi(str2);
+        b = my_atoi(str2 + 1);
+        else
+        b = my_atoi(str2);
 
       if (b < 0)
-	{
-	  fprintf(output, "cmp: invalid integer value %s\n", str2);
-	  return -1;
-	}
+        {
+          fprintf(output, "cmp: invalid integer value %s\n", str2);
+          return -1;
+        }
 
       if (str2[0] == '-')
-	b = -b;
+        b = -b;
 
       rc = b - a;
 
@@ -588,18 +588,18 @@ int util_cmp(int argc,		/* IN : number of args in argv */
   if (rc == 0)
     {
       if (flag_v)
-	fprintf(output, "arg1 = arg2\n");
+        fprintf(output, "arg1 = arg2\n");
 
       return value_if_equal;
     } else
     {
       if (flag_v)
-	fprintf(output, "arg1 <> arg2\n");
+        fprintf(output, "arg1 <> arg2\n");
 
       return (!value_if_equal);
     }
 
-}				/* util_cmp */
+}                               /* util_cmp */
 
 /* diff 2 strings line by line */
 
@@ -622,56 +622,56 @@ static void diff(FILE * output, char *str1, char *str2)
       char2 = str_line2;
 
       while (*char1 == *char2)
-	{
-	  if ((*char1 == '\0') || (*char1 == '\n'))
-	    break;
+        {
+          if ((*char1 == '\0') || (*char1 == '\n'))
+            break;
 
-	  char1++;
-	  char2++;
-	}
+          char1++;
+          char2++;
+        }
 
       /* different ? */
       if (*char1 != *char2)
-	{
+        {
 
-	  /* prints from the beggining of the line to the end */
-	  if (*str_line1)
-	    fprintf(output, "\t<- ");
+          /* prints from the beggining of the line to the end */
+          if (*str_line1)
+            fprintf(output, "\t<- ");
 
-	  while ((*str_line1) && (*str_line1 != '\n'))
-	    {
-	      putc(*str_line1, output);
-	      str_line1++;
-	    }
+          while ((*str_line1) && (*str_line1 != '\n'))
+            {
+              putc(*str_line1, output);
+              str_line1++;
+            }
 
-	  /* skip the final \n  */
-	  if (*str_line1)
-	    str_line1++;
+          /* skip the final \n  */
+          if (*str_line1)
+            str_line1++;
 
-	  if (*str_line2)
-	    fprintf(output, "\n\t-> ");
+          if (*str_line2)
+            fprintf(output, "\n\t-> ");
 
-	  while ((*str_line2) && (*str_line2 != '\n'))
-	    {
-	      putc(*str_line2, output);
-	      str_line2++;
-	    }
-	  /* skip the final \n  */
-	  if (*str_line2)
-	    str_line2++;
+          while ((*str_line2) && (*str_line2 != '\n'))
+            {
+              putc(*str_line2, output);
+              str_line2++;
+            }
+          /* skip the final \n  */
+          if (*str_line2)
+            str_line2++;
 
-	  putc('\n', output);
+          putc('\n', output);
 
       } else if (*char1 == '\n')
-	{
-	  /* end of line */
-	  str_line1 = char1 + 1;
-	  str_line2 = char2 + 1;
-	} else
-	{
-	  /* end of file */
-	  break;
-	}
+        {
+          /* end of line */
+          str_line1 = char1 + 1;
+          str_line2 = char2 + 1;
+        } else
+        {
+          /* end of file */
+          break;
+        }
 
     }
   while (1);
@@ -680,9 +680,9 @@ static void diff(FILE * output, char *str1, char *str2)
 
 }
 
-int util_diff(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output	/* IN : output stream          */
+int util_diff(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output     /* IN : output stream          */
     )
 {
 
@@ -710,7 +710,7 @@ static void wc(FILE * output, char *str)
     {
       nb_char++;
       if (*curr == '\n')
-	nb_NL++;
+        nb_NL++;
       curr++;
     }
 
@@ -719,9 +719,9 @@ static void wc(FILE * output, char *str)
   return;
 }
 
-int util_wc(int argc,		/* IN : number of args in argv */
-	    char **argv,	/* IN : arg list               */
-	    FILE * output	/* IN : output stream          */
+int util_wc(int argc,           /* IN : number of args in argv */
+            char **argv,        /* IN : arg list               */
+            FILE * output       /* IN : output stream          */
     )
 {
 
@@ -737,9 +737,9 @@ int util_wc(int argc,		/* IN : number of args in argv */
 
 }
 
-int util_chomp(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int util_chomp(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     )
 {
 
@@ -763,7 +763,7 @@ int util_chomp(int argc,	/* IN : number of args in argv */
       out = (char *)Mem_Alloc(len + 1);
 
       if (out == NULL)
-	return Mem_Errno;
+        return Mem_Errno;
 
       /* local copy */
       strncpy(out, in, len + 1);

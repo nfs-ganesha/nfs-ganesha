@@ -90,7 +90,7 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#endif				/* _SOLARIS */
+#endif                          /* _SOLARIS */
 
 #include "LRU_List.h"
 #include "log_functions.h"
@@ -127,8 +127,8 @@
  *
  */
 cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentry,
-						   cache_content_client_t * pclient,
-						   cache_content_status_t * pstatus)
+                                                   cache_content_client_t * pclient,
+                                                   cache_content_status_t * pstatus)
 {
   /* By default, operation status is successful */
   *pstatus = CACHE_CONTENT_SUCCESS;
@@ -153,20 +153,20 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   if (unlink(pentry->local_fs_entry.cache_path_index) != 0)
     {
       if (errno != ENOENT)
-	DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
-			  "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
-			  pentry->local_fs_entry.cache_path_index,
-			  errno, strerror(errno));
+        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+                          "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
+                          pentry->local_fs_entry.cache_path_index,
+                          errno, strerror(errno));
     }
 
   /* Remove the data file */
   if (unlink(pentry->local_fs_entry.cache_path_data) != 0)
     {
       if (errno != ENOENT)
-	DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
-			  "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
-			  pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
+        DisplayLogJdLevel(pclient->log_outputs, NIV_EVENT,
+                          "cache_content_release_entry: error when unlinking index file %s, errno = ( %d, '%s' )",
+                          pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
     }
 
   return *pstatus;
-}				/* cache_content_release_entry */
+}                               /* cache_content_release_entry */

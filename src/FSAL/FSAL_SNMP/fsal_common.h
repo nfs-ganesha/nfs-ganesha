@@ -22,9 +22,9 @@ typedef struct set_info__ {
 
 /* SNMP request descriptor  */
 typedef struct fsal_request_desc__ {
-  int request_type;		/* the request type */
+  int request_type;             /* the request type */
 
-  union				/* options depending on the request type */
+  union                         /* options depending on the request type */
   {
     getbulk_info_t getbulk_info;
     set_info_t set_info;
@@ -56,14 +56,14 @@ int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle);
  *         In case of an internal error, SNMPERR_MAX-1 is returned.
  */
 int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
-		   fsal_request_desc_t * p_req_desc);
+                   fsal_request_desc_t * p_req_desc);
 
 /**
  * It has the same behavior as get_tree in net-snmp library,
  * except that it always NULL if it didn't find.
  */
 struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
-			  int return_nearest_parent);
+                          int return_nearest_parent);
 
 /**
  * Retrieve the MIB tree node associated to the FSAL handle.
@@ -73,7 +73,7 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
  *         if it exists, NULL else.
  */
 struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
-			int return_nearest_parent);
+                        int return_nearest_parent);
 
 /**
  * Retrieve the list of mib childs asssociated to the FSAL handle.

@@ -22,286 +22,286 @@
 void fsal_layer_SetLogLevel(int log_lvl);
 
 /** inits the filesystem. */
-int fn_fsal_init_fs(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_fsal_init_fs(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** proceed an pwd command. */
-int fn_fsal_pwd(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_fsal_pwd(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
 /** proceed a cd command. */
-int fn_fsal_cd(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_fsal_cd(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** proceed a stat command. */
-int fn_fsal_stat(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_fsal_stat(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** proceed an ls command. */
-int fn_fsal_ls(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_fsal_ls(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** display statistics about FSAL calls. */
-int fn_fsal_callstat(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_fsal_callstat(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** change current user. */
-int fn_fsal_su(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_fsal_su(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** unlink an fs object. */
-int fn_fsal_unlink(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
 /** create a directory. */
-int fn_fsal_mkdir(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** create a directory. */
-int fn_fsal_rename(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_fsal_rename(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
 /** create a symlink. */
-int fn_fsal_ln(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_fsal_ln(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** create a hardlink. */
-int fn_fsal_hardlink(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** create a regular file. */
-int fn_fsal_create(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_fsal_create(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
 /** change file attributes. */
-int fn_fsal_setattr(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** test access rights. */
-int fn_fsal_access(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_fsal_access(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
 /** truncate file. */
-int fn_fsal_truncate(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** open a file. */
-int fn_fsal_open(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_fsal_open(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** open a file (using FSAL_open_by_name). */
-int fn_fsal_open_byname(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output	/* IN : output stream          */
+int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output   /* IN : output stream          */
     );
 
 /** open a file (using FSAL_open_by_name). */
-int fn_fsal_open_byfileid(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output	/* IN : output stream          */
+int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */
     );
 
 /** read from file. */
-int fn_fsal_read(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_fsal_read(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** write to file. */
-int fn_fsal_write(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_fsal_write(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** close a file. */
-int fn_fsal_close(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_fsal_close(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** close a file. */
-int fn_fsal_close_byfileid(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_fsal_close_byfileid(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** display a file. */
-int fn_fsal_cat(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_fsal_cat(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
 /** copy a file to/from local path. */
-int fn_fsal_rcp(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
 /** cross a junction. */
-int fn_fsal_cross(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_fsal_cross(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** compare 2 handles. */
-int fn_fsal_handlecmp(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list   */
-		      FILE * output	/* IN : output stream */
+int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list   */
+                      FILE * output     /* IN : output stream */
     );
 
 /** list extended attributes. */
-int fn_fsal_lsxattrs(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** display an extended attribute. */
-int fn_fsal_getxattr(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 #ifdef _USE_MFSL
 void mfsl_layer_SetLogLevel(int log_lvl);
 
-int fn_mfsl_init(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output);	/* IN : output stream          */
+int fn_mfsl_init(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output);        /* IN : output stream          */
 
-int fn_mfsl_pwd(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_mfsl_pwd(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
-int fn_mfsl_cd(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_cd(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
-int fn_mfsl_stat(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_stat(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
-int fn_mfsl_ls(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output);
+int fn_mfsl_ls(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output);
 
-int fn_mfsl_su(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_su(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
-int fn_mfsl_unlink(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_unlink(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int fn_mfsl_mkdir(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_mkdir(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int fn_mfsl_rename(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_rename(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int fn_mfsl_ln(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_mfsl_ln(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
-int fn_mfsl_hardlink(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_mfsl_hardlink(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
-int fn_mfsl_create(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_create(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int fn_mfsl_setattr(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_mfsl_setattr(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
-int fn_mfsl_access(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_mfsl_access(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
-int fn_mfsl_truncate(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_mfsl_truncate(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
-int fn_mfsl_open(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_open(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
-int fn_mfsl_read(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_mfsl_read(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
-int fn_mfsl_write(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_write(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int fn_mfsl_close(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_mfsl_close(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
-int fn_mfsl_cat(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_mfsl_cat(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
-int fn_mfsl_handlecmp(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list   */
-		      FILE * output	/* IN : output stream */
+int fn_mfsl_handlecmp(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list   */
+                      FILE * output     /* IN : output stream */
     );
 
-#endif				/* _USE_MFSL */
+#endif                          /* _USE_MFSL */
 
 /*----------------------------------*
  * Cache_inode commands prototypes.
@@ -311,74 +311,74 @@ int fn_mfsl_handlecmp(int argc,	/* IN : number of args in argv */
 void Cache_inode_layer_SetLogLevel(int log_lvl);
 
 /** inits the filesystem. */
-int fn_Cache_inode_cache_init(int argc,	/* IN : number of args in argv */
-			      char **argv,	/* IN : arg list               */
-			      FILE * output	/* IN : output stream          */
+int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
+                              char **argv,      /* IN : arg list               */
+                              FILE * output     /* IN : output stream          */
     );
 
 /** proceed an pwd command. */
-int fn_Cache_inode_pwd(int argc,	/* IN : number of args in argv */
-		       char **argv,	/* IN : arg list               */
-		       FILE * output	/* IN : output stream          */
+int fn_Cache_inode_pwd(int argc,        /* IN : number of args in argv */
+                       char **argv,     /* IN : arg list               */
+                       FILE * output    /* IN : output stream          */
     );
 
 /** proceed a cd command. */
-int fn_Cache_inode_cd(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output	/* IN : output stream          */
+int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output     /* IN : output stream          */
     );
 
 /** proceed a stat command. */
-int fn_Cache_inode_stat(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output	/* IN : output stream          */
+int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output   /* IN : output stream          */
     );
 
 /** proceed to a call to the garbagge collector. */
-int fn_Cache_inode_gc(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output);	/* IN : output stream          */
+int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output);   /* IN : output stream          */
 
 /** proceed an ls command. */
-int fn_Cache_inode_ls(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output	/* IN : output stream          */
+int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output     /* IN : output stream          */
     );
 
 /** proceed a hard link (hard link) command. */
-int fn_Cache_inode_link(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output /* IN : output stream          */ );
 
 /** proceed a mkdir command. */
-int fn_Cache_inode_mkdir(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output /* IN : output stream          */ );
 
 /** proceed a rename command. */
-int fn_Cache_inode_rename(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */ );
 
 /** proceed an create command. */
-int fn_Cache_inode_create(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */ );
 
 /** proceed an ln (symlink) command. */
-int fn_Cache_inode_ln(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output /* IN : output stream          */ );
 
 /** proceed an open by name (open_by_name) command. */
-int fn_Cache_inode_open_by_name(int argc,	/* IN : number of args in argv */
-				char **argv,	/* IN : arg list               */
-				FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv */
+                                char **argv,    /* IN : arg list               */
+                                FILE * output /* IN : output stream          */ );
 
 /** Close a previously opened file */
-int fn_Cache_inode_close(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output /* IN : output stream          */ );
 
 /** setattr
  *
@@ -386,59 +386,59 @@ int fn_Cache_inode_close(int argc,	/* IN : number of args in argv */
  * setattr file_path  attribute_name  attribute_value
  *
  */
-int fn_Cache_inode_setattr(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output /* IN : output stream          */ );
 
 /** proceed an unlink command. */
-int fn_Cache_inode_unlink(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */ );
 
 /** display statistics about FSAL calls. */
-int fn_Cache_inode_callstat(int argc,	/* IN : number of args in argv */
-			    char **argv,	/* IN : arg list               */
-			    FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_callstat(int argc,   /* IN : number of args in argv */
+                            char **argv,        /* IN : arg list               */
+                            FILE * output /* IN : output stream          */ );
 
 /** cache en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_data_cache(int argc,	/* IN : number of args in argv */
-			      char **argv,	/* IN : arg list               */
-			      FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
+                              char **argv,      /* IN : arg list               */
+                              FILE * output /* IN : output stream          */ );
 
 /** recover the data cache */
-int fn_Cache_inode_recover_cache(int argc,	/* IN : number of args in argv */
-				 char **argv,	/* IN : arg list               */
-				 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv */
+                                 char **argv,   /* IN : arg list               */
+                                 FILE * output /* IN : output stream          */ );
 
 /** refresh en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_refresh_cache(int argc,	/* IN : number of args in argv */
-				 char **argv,	/* IN : arg list               */
-				 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv */
+                                 char **argv,   /* IN : arg list               */
+                                 FILE * output /* IN : output stream          */ );
 
 /** flush en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_flush_cache(int argc,	/* IN : number of args in argv */
-			       char **argv,	/* IN : arg list               */
-			       FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv */
+                               char **argv,     /* IN : arg list               */
+                               FILE * output /* IN : output stream          */ );
 
 /** cache en entry (REGULAR_FILE) in the data cache */
-int fn_Cache_inode_release_cache(int argc,	/* IN : number of args in argv */
-				 char **argv,	/* IN : arg list               */
-				 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv */
+                                 char **argv,   /* IN : arg list               */
+                                 FILE * output /* IN : output stream          */ );
 
 /** Reads the content of a cached regular file */
-int fn_Cache_inode_read(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output /* IN : output stream          */ );
 
 /** Reads the content of a cached regular file */
-int fn_Cache_inode_write(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output /* IN : output stream          */ );
 
 /** Change current user */
-int fn_Cache_inode_su(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output /* IN : output stream          */ );
 
 /**
  * perform an access command.
@@ -446,9 +446,9 @@ int fn_Cache_inode_su(int argc,	/* IN : number of args in argv */
  * example: access toto FRX
  */
 
-int fn_Cache_inode_access(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output /* IN : output stream          */ );
+int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */ );
 
 /*----------------------------------*
  *      NFS commands prototypes.
@@ -458,120 +458,120 @@ int fn_Cache_inode_access(int argc,	/* IN : number of args in argv */
 void nfs_layer_SetLogLevel(int log_lvl);
 
 /** process NFS layer initialization. */
-int fn_nfs_init(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_nfs_init(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
 /** process MNT1 protocol's command. */
-int fn_MNT1_command(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_MNT1_command(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** process MNT3 protocol's command. */
-int fn_MNT3_command(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_MNT3_command(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** process NFS2 protocol's command. */
-int fn_NFS2_command(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_NFS2_command(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** process NFS3 protocol's command. */
-int fn_NFS3_command(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_NFS3_command(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** process a cd command using NFS protocol. */
-int fn_nfs_cd(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output	/* IN : output stream          */
+int fn_nfs_cd(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output     /* IN : output stream          */
     );
 
 /** process an ls command using NFS protocol. */
-int fn_nfs_ls(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output	/* IN : output stream          */
+int fn_nfs_ls(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output     /* IN : output stream          */
     );
 
 /** process a mount command using MOUNT protocol. */
-int fn_nfs_mount(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_nfs_mount(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** process an umount command using MOUNT protocol. */
-int fn_nfs_umount(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_nfs_umount(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** process an ls command using NFS protocol. */
-int fn_nfs_pwd(int argc,	/* IN : number of args in argv */
-	       char **argv,	/* IN : arg list               */
-	       FILE * output	/* IN : output stream          */
+int fn_nfs_pwd(int argc,        /* IN : number of args in argv */
+               char **argv,     /* IN : arg list               */
+               FILE * output    /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_create(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_nfs_create(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_mkdir(int argc,	/* IN : number of args in argv */
-		 char **argv,	/* IN : arg list               */
-		 FILE * output	/* IN : output stream          */
+int fn_nfs_mkdir(int argc,      /* IN : number of args in argv */
+                 char **argv,   /* IN : arg list               */
+                 FILE * output  /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_unlink(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_nfs_unlink(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_setattr(int argc,	/* IN : number of args in argv */
-		   char **argv,	/* IN : arg list               */
-		   FILE * output	/* IN : output stream          */
+int fn_nfs_setattr(int argc,    /* IN : number of args in argv */
+                   char **argv, /* IN : arg list               */
+                   FILE * output        /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_rename(int argc,	/* IN : number of args in argv */
-		  char **argv,	/* IN : arg list               */
-		  FILE * output	/* IN : output stream          */
+int fn_nfs_rename(int argc,     /* IN : number of args in argv */
+                  char **argv,  /* IN : arg list               */
+                  FILE * output /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_hardlink(int argc,	/* IN : number of args in argv */
-		    char **argv,	/* IN : arg list               */
-		    FILE * output	/* IN : output stream          */
+int fn_nfs_hardlink(int argc,   /* IN : number of args in argv */
+                    char **argv,        /* IN : arg list               */
+                    FILE * output       /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_ln(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output	/* IN : output stream          */
+int fn_nfs_ln(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output     /* IN : output stream          */
     );
 
 /** process a stat command using NFS protocol. */
-int fn_nfs_stat(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_nfs_stat(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
-int fn_nfs_su(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output);	/* IN : output stream          */
+int fn_nfs_su(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output);   /* IN : output stream          */
 
-int fn_nfs_id(int argc,		/* IN : number of args in argv */
-	      char **argv,	/* IN : arg list               */
-	      FILE * output);	/* IN : output stream          */
+int fn_nfs_id(int argc,         /* IN : number of args in argv */
+              char **argv,      /* IN : arg list               */
+              FILE * output);   /* IN : output stream          */
 
 /*----------------------------------*
  *      NFS_remote commands prototypes.
@@ -581,120 +581,120 @@ int fn_nfs_id(int argc,		/* IN : number of args in argv */
 void nfs_remote_layer_SetLogLevel(int log_lvl);
 
 /** process RPC clients initialization. */
-int fn_rpc_init(int argc,	/* IN : number of args in argv */
-		char **argv,	/* IN : arg list               */
-		FILE * output	/* IN : output stream          */
+int fn_rpc_init(int argc,       /* IN : number of args in argv */
+                char **argv,    /* IN : arg list               */
+                FILE * output   /* IN : output stream          */
     );
 
 /** process MNT1 protocol's command. */
-int fn_MNT1_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_MNT1_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** process MNT3 protocol's command. */
-int fn_MNT3_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_MNT3_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** process NFS2 protocol's command. */
-int fn_NFS2_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_NFS2_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** process NFS3 protocol's command. */
-int fn_NFS3_remote_command(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_NFS3_remote_command(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** process a cd command using NFS protocol. */
-int fn_nfs_remote_cd(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** process an ls command using NFS protocol. */
-int fn_nfs_remote_ls(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** process an mount command using MOUNT protocol. */
-int fn_nfs_remote_mount(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output	/* IN : output stream          */
+int fn_nfs_remote_mount(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output   /* IN : output stream          */
     );
 
 /** process a umount command using MOUNT protocol. */
-int fn_nfs_remote_umount(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_umount(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     );
 
 /** process an ls command using NFS protocol. */
-int fn_nfs_remote_pwd(int argc,	/* IN : number of args in argv */
-		      char **argv,	/* IN : arg list               */
-		      FILE * output	/* IN : output stream          */
+int fn_nfs_remote_pwd(int argc, /* IN : number of args in argv */
+                      char **argv,      /* IN : arg list               */
+                      FILE * output     /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_create(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_mkdir(int argc,	/* IN : number of args in argv */
-			char **argv,	/* IN : arg list               */
-			FILE * output	/* IN : output stream          */
+int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
+                        char **argv,    /* IN : arg list               */
+                        FILE * output   /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_unlink(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_setattr(int argc,	/* IN : number of args in argv */
-			  char **argv,	/* IN : arg list               */
-			  FILE * output	/* IN : output stream          */
+int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
+                          char **argv,  /* IN : arg list               */
+                          FILE * output /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_rename(int argc,	/* IN : number of args in argv */
-			 char **argv,	/* IN : arg list               */
-			 FILE * output	/* IN : output stream          */
+int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
+                         char **argv,   /* IN : arg list               */
+                         FILE * output  /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_hardlink(int argc,	/* IN : number of args in argv */
-			   char **argv,	/* IN : arg list               */
-			   FILE * output	/* IN : output stream          */
+int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
+                           char **argv, /* IN : arg list               */
+                           FILE * output        /* IN : output stream          */
     );
 
 /** process an create command using NFS protocol. */
-int fn_nfs_remote_ln(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output	/* IN : output stream          */
+int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output      /* IN : output stream          */
     );
 
 /** process a stat command using NFS protocol. */
-int fn_nfs_remote_stat(int argc,	/* IN : number of args in argv */
-		       char **argv,	/* IN : arg list               */
-		       FILE * output	/* IN : output stream          */
+int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
+                       char **argv,     /* IN : arg list               */
+                       FILE * output    /* IN : output stream          */
     );
 
-int fn_nfs_remote_su(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output);	/* IN : output stream          */
+int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output);    /* IN : output stream          */
 
-int fn_nfs_remote_id(int argc,	/* IN : number of args in argv */
-		     char **argv,	/* IN : arg list               */
-		     FILE * output);	/* IN : output stream          */
+int fn_nfs_remote_id(int argc,  /* IN : number of args in argv */
+                     char **argv,       /* IN : arg list               */
+                     FILE * output);    /* IN : output stream          */
 
 /*------------------------------------------
  *       Layers and commands definitions
@@ -763,7 +763,7 @@ static command_def_t __attribute__ ((__unused__)) commands_FSAL[] =
   {
   "write", fn_fsal_write, "write data to current file"},
   {
-  NULL, NULL, NULL}		/* End of command list */
+  NULL, NULL, NULL}             /* End of command list */
 };
 
 /* MFSL command list */
@@ -816,9 +816,9 @@ static command_def_t __attribute__ ((__unused__)) commands_MFSL[] =
   {
   "write", fn_mfsl_write, "write data to current file"},
   {
-  NULL, NULL, NULL}		/* End of command list */
+  NULL, NULL, NULL}             /* End of command list */
 };
-#endif				/* _USE_MFSL */
+#endif                          /* _USE_MFSL */
 
 /* Cache inode command list */
 
@@ -858,10 +858,10 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   "recover_cache", fn_Cache_inode_recover_cache, "recover the data cache after a crash"},
   {
   "refresh_cache", fn_Cache_inode_refresh_cache,
-	"refreshes a previously Data cached entry"},
+        "refreshes a previously Data cached entry"},
   {
   "release_cache", fn_Cache_inode_release_cache,
-	"releases a previously Data cached entry"},
+        "releases a previously Data cached entry"},
   {
   "rename", fn_Cache_inode_rename, "rename/move an object"},
   {
@@ -877,7 +877,7 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   {
   "write", fn_Cache_inode_write, "writes the content of a data cached file"},
   {
-  NULL, NULL, NULL}		/* End of command list */
+  NULL, NULL, NULL}             /* End of command list */
 };
 
 static command_def_t __attribute__ ((__unused__)) commands_NFS[] =
@@ -1019,7 +1019,7 @@ static command_def_t __attribute__ ((__unused__)) commands_NFS[] =
   {
   "unlink", fn_nfs_unlink, "remove an object"},
   {
-  NULL, NULL, NULL}		/* End of NFS command list. */
+  NULL, NULL, NULL}             /* End of NFS command list. */
 };
 
 static command_def_t __attribute__ ((__unused__)) commands_NFS_remote[] =
@@ -1161,7 +1161,7 @@ static command_def_t __attribute__ ((__unused__)) commands_NFS_remote[] =
   {
   "unlink", fn_nfs_remote_unlink, "remove an object"},
   {
-  NULL, NULL, NULL}		/* End of NFS command list. */
+  NULL, NULL, NULL}             /* End of NFS command list. */
 };
 
 /**

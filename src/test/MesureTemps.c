@@ -108,13 +108,13 @@ void MesureTemps(struct Temps *resultatp, struct Temps *basep)
 
       resultatp->secondes = t.tv_sec - basep->secondes;
       if ((tempo = t.tv_usec - basep->micro_secondes) < 0)
-	{
-	  resultatp->secondes--;
-	  resultatp->micro_secondes = tempo + 1000000;
-	} else
-	{
-	  resultatp->micro_secondes = tempo;
-	}
+        {
+          resultatp->secondes--;
+          resultatp->micro_secondes = tempo + 1000000;
+        } else
+        {
+          resultatp->micro_secondes = tempo;
+        }
     }
 }
 
@@ -131,7 +131,7 @@ char *ConvertiTempsChaine(struct Temps temps, char *resultat)
       ptr = resultat;
     }
   sprintf(ptr, "%u.%.6llu", (unsigned int)temps.secondes,
-	  (unsigned long long)temps.micro_secondes);
+          (unsigned long long)temps.micro_secondes);
   return (ptr);
 }
 

@@ -121,11 +121,11 @@
  */
 
 cache_inode_status_t cache_inode_rename_cached_dirent(cache_entry_t * pentry_parent,
-						      fsal_name_t * oldname,
-						      fsal_name_t * newname,
-						      hash_table_t * ht,
-						      cache_inode_client_t * pclient,
-						      cache_inode_status_t * pstatus)
+                                                      fsal_name_t * oldname,
+                                                      fsal_name_t * newname,
+                                                      hash_table_t * ht,
+                                                      cache_inode_client_t * pclient,
+                                                      cache_inode_status_t * pstatus)
 {
   cache_entry_t *removed_pentry = NULL;
   cache_inode_parent_entry_t *parent_iter = NULL;
@@ -145,14 +145,14 @@ cache_inode_status_t cache_inode_rename_cached_dirent(cache_entry_t * pentry_par
 
   /* BUGAZOMEU: Ne pas oublier de jarter un dir_cont dont toutes les entrees sont inactives */
   if ((removed_pentry = cache_inode_operate_cached_dirent(pentry_parent,
-							  oldname,
-							  newname,
-							  CACHE_INODE_DIRENT_OP_RENAME,
-							  pstatus)) == NULL)
+                                                          oldname,
+                                                          newname,
+                                                          CACHE_INODE_DIRENT_OP_RENAME,
+                                                          pstatus)) == NULL)
     return *pstatus;
 
   return *pstatus;
-}				/* cache_inode_rename_cached_dirent */
+}                               /* cache_inode_rename_cached_dirent */
 
 /**
  *
@@ -172,15 +172,15 @@ fsal_status_t cache_inode_async_rename_src(cache_inode_async_op_desc_t * popasyn
   fsal_status_t fsal_status;
 
   fsal_status = FSAL_rename(popasyncdesc->op_args.rename.pfsal_handle_dirsrc,
-			    &popasyncdesc->op_args.rename.name_src,
-			    popasyncdesc->op_args.rename.pfsal_handle_dirdest,
-			    &popasyncdesc->op_args.rename.name_dest,
-			    &popasyncdesc->fsal_op_context,
-			    &popasyncdesc->op_res.rename.attrsrc,
-			    &popasyncdesc->op_res.rename.attrdest);
+                            &popasyncdesc->op_args.rename.name_src,
+                            popasyncdesc->op_args.rename.pfsal_handle_dirdest,
+                            &popasyncdesc->op_args.rename.name_dest,
+                            &popasyncdesc->fsal_op_context,
+                            &popasyncdesc->op_res.rename.attrsrc,
+                            &popasyncdesc->op_res.rename.attrdest);
 
   return fsal_status;
-}				/* cache_inode_aync_rename_src */
+}                               /* cache_inode_aync_rename_src */
 
 fsal_status_t cache_inode_async_rename_dst(cache_inode_async_op_desc_t * popasyncdesc)
 {
@@ -190,7 +190,7 @@ fsal_status_t cache_inode_async_rename_dst(cache_inode_async_op_desc_t * popasyn
   fsal_status.minor = 0;
 
   return fsal_status;
-}				/* cache_inode_async_rename_dst */
+}                               /* cache_inode_async_rename_dst */
 
 /**
  *
@@ -215,15 +215,15 @@ fsal_status_t cache_inode_async_rename_dst(cache_inode_async_op_desc_t * popasyn
  *
  */
 cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
-					fsal_name_t * poldname,
-					cache_entry_t * pentry_dirdest,
-					fsal_name_t * pnewname,
-					fsal_attrib_list_t * pattr_src,
-					fsal_attrib_list_t * pattr_dst,
-					hash_table_t * ht,
-					cache_inode_client_t * pclient,
-					fsal_op_context_t * pcontext,
-					cache_inode_status_t * pstatus)
+                                        fsal_name_t * poldname,
+                                        cache_entry_t * pentry_dirdest,
+                                        fsal_name_t * pnewname,
+                                        fsal_attrib_list_t * pattr_src,
+                                        fsal_attrib_list_t * pattr_dst,
+                                        hash_table_t * ht,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t * pcontext,
+                                        cache_inode_status_t * pstatus)
 {
   cache_inode_status_t status;
   fsal_status_t fsal_status;
@@ -249,7 +249,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
   if ((pentry_dirsrc->internal_md.type != DIR_BEGINNING
        && pentry_dirsrc->internal_md.type != DIR_CONTINUE)
       || (pentry_dirdest->internal_md.type != DIR_BEGINNING
-	  && pentry_dirdest->internal_md.type != DIR_CONTINUE))
+          && pentry_dirdest->internal_md.type != DIR_CONTINUE))
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -271,43 +271,43 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     else
     {
       if (pentry_dirsrc < pentry_dirdest)
-	{
-	  P(pentry_dirsrc->lock);
-	  P(pentry_dirdest->lock);
-	} else
-	{
-	  P(pentry_dirdest->lock);
-	  P(pentry_dirsrc->lock);
-	}
+        {
+          P(pentry_dirsrc->lock);
+          P(pentry_dirdest->lock);
+        } else
+        {
+          P(pentry_dirdest->lock);
+          P(pentry_dirsrc->lock);
+        }
     }
 
   /* Check for object existence in source directory */
   if ((pentry_lookup_src = cache_inode_lookup_no_mutex(pentry_dirsrc,
-						       poldname,
-						       &attrlookup,
-						       ht,
-						       pclient,
-						       pcontext, pstatus)) == NULL)
+                                                       poldname,
+                                                       &attrlookup,
+                                                       ht,
+                                                       pclient,
+                                                       pcontext, pstatus)) == NULL)
     {
       /* Source object does not exist */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
       /* If FSAL FH is staled, then this was managed in cache_inode_lookup */
       if (*pstatus != CACHE_INODE_FSAL_ESTALE)
-	*pstatus = CACHE_INODE_NOT_FOUND;
+        *pstatus = CACHE_INODE_NOT_FOUND;
 
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
-	{
-	  V(pentry_dirdest->lock);
-	}
+        {
+          V(pentry_dirdest->lock);
+        }
 
       if (*pstatus != CACHE_INODE_FSAL_ESTALE)
-	DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			  "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
-			  poldname->name, pentry_dirdest, pnewname->name);
-	else
-	DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "Rename : stale source");
+        DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+                          "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
+                          poldname->name, pentry_dirdest, pnewname->name);
+        else
+        DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "Rename : stale source");
 
       return *pstatus;
     }
@@ -332,7 +332,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
       P(pentry_lookup_src->object.dir_cont.pdir_begin->lock);
       pattr_moved =
-	  &pentry_lookup_src->object.dir_cont.pdir_begin->object.dir_begin.attributes;
+          &pentry_lookup_src->object.dir_cont.pdir_begin->object.dir_begin.attributes;
       V(pentry_lookup_src->object.dir_cont.pdir_begin->lock);
       break;
 
@@ -347,129 +347,129 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
   /* Check if an object with the new name exists in the destination directory */
   if ((pentry_lookup_dest = cache_inode_lookup_no_mutex(pentry_dirdest,
-							pnewname,
-							&attrlookup,
-							ht,
-							pclient,
-							pcontext, pstatus)) != NULL)
+                                                        pnewname,
+                                                        &attrlookup,
+                                                        ht,
+                                                        pclient,
+                                                        pcontext, pstatus)) != NULL)
     {
 
       DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			"Rename (%p,%s)->(%p,%s) : destination already exists",
-			pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
+                        "Rename (%p,%s)->(%p,%s) : destination already exists",
+                        pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
       /* If the already existing object is a directory, source object should ne a directory */
       if (pentry_lookup_dest->internal_md.type == DIR_BEGINNING &&
-	  pentry_lookup_src->internal_md.type != DIR_BEGINNING)
-	{
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          pentry_lookup_src->internal_md.type != DIR_BEGINNING)
+        {
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  /* Return EISDIR */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = CACHE_INODE_IS_A_DIRECTORY;
+          /* Return EISDIR */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = CACHE_INODE_IS_A_DIRECTORY;
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       if (pentry_lookup_dest->internal_md.type != DIR_BEGINNING &&
-	  pentry_lookup_src->internal_md.type == DIR_BEGINNING)
-	{
-	  /* Return ENOTDIR */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = CACHE_INODE_NOT_A_DIRECTORY;
+          pentry_lookup_src->internal_md.type == DIR_BEGINNING)
+        {
+          /* Return ENOTDIR */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = CACHE_INODE_NOT_A_DIRECTORY;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* If caller wants to rename a file on himself, let it do it: return CACHE_INODE_SUCCESS but do nothing */
       if (pentry_lookup_dest == pentry_lookup_src)
-	{
-	  /* There is in fact only one file (may be one of the arguments is a hard link to the other) */
+        {
+          /* There is in fact only one file (may be one of the arguments is a hard link to the other) */
 
-	  /* Return SUCCESS */
-	  pclient->stat.func_stats.nb_success[CACHE_INODE_RENAME] += 1;
-	  *pstatus = cache_inode_valid(pentry_dirdest, CACHE_INODE_OP_SET, pclient);
+          /* Return SUCCESS */
+          pclient->stat.func_stats.nb_success[CACHE_INODE_RENAME] += 1;
+          *pstatus = cache_inode_valid(pentry_dirdest, CACHE_INODE_OP_SET, pclient);
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			    "Rename (%p,%s)->(%p,%s) : rename the object on itself",
-			    pentry_dirsrc, poldname->name, pentry_dirdest,
-			    pnewname->name);
+          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+                            "Rename (%p,%s)->(%p,%s) : rename the object on itself",
+                            pentry_dirsrc, poldname->name, pentry_dirdest,
+                            pnewname->name);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* Entry with the newname exists, if it is a non-empty directory, operation cannot be performed */
       if ((pentry_lookup_dest->internal_md.type == DIR_BEGINNING) &&
-	  (cache_inode_is_dir_empty(pentry_lookup_dest) != CACHE_INODE_SUCCESS))
-	{
-	  /* The entry is a non-empty directory */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = CACHE_INODE_DIR_NOT_EMPTY;
+          (cache_inode_is_dir_empty(pentry_lookup_dest) != CACHE_INODE_SUCCESS))
+        {
+          /* The entry is a non-empty directory */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = CACHE_INODE_DIR_NOT_EMPTY;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			    "Rename (%p,%s)->(%p,%s) : destination is a non-empty directory",
-			    pentry_dirsrc, poldname->name, pentry_dirdest,
-			    pnewname->name);
-	  return *pstatus;
-	}
+          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+                            "Rename (%p,%s)->(%p,%s) : destination is a non-empty directory",
+                            pentry_dirsrc, poldname->name, pentry_dirdest,
+                            pnewname->name);
+          return *pstatus;
+        }
 
       /* get ride of this entry by trying removing it */
 
       status = cache_inode_remove_no_mutex(pentry_dirdest,
-					   pnewname,
-					   &attrlookup, ht, pclient, pcontext, pstatus);
+                                           pnewname,
+                                           &attrlookup, ht, pclient, pcontext, pstatus);
       if (status != CACHE_INODE_SUCCESS)
-	{
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = status;
+        {
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = status;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
     } /* if( pentry_lookup_dest != NULL ) */
     else
     {
       if (*pstatus == CACHE_INODE_FSAL_ESTALE)
-	{
-	  DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			    "Rename : stale destnation");
+        {
+          DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
+                            "Rename : stale destnation");
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
     }
 
   /* Get the handle for the dirsrc pentry */
@@ -483,7 +483,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       P(pentry_dirsrc->object.dir_cont.pdir_begin->lock);
 
       phandle_dirsrc =
-	  &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.handle;
+          &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.handle;
       pattrsrc = &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.attributes;
 
       V(pentry_dirsrc->object.dir_cont.pdir_begin->lock);
@@ -494,9 +494,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
-	{
-	  V(pentry_dirdest->lock);
-	}
+        {
+          V(pentry_dirdest->lock);
+        }
 
       return *pstatus;
     }
@@ -512,25 +512,25 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       P(pentry_dirdest->object.dir_cont.pdir_begin->lock);
 
       phandle_dirdest =
-	  &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.handle;
+          &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.handle;
       pattrdest =
-	  &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.attributes;
+          &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.attributes;
 
       V(pentry_dirdest->object.dir_cont.pdir_begin->lock);
     } else
     {
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
-	{
-	  V(pentry_dirdest->lock);
-	}
+        {
+          V(pentry_dirdest->lock);
+        }
 
       *pstatus = CACHE_INODE_BAD_TYPE;
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
-	V(pentry_dirdest->lock);
+        V(pentry_dirdest->lock);
 
       return *pstatus;
     }
@@ -541,24 +541,24 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       /* Post an asynchronous operation */
       P(pclient->pool_lock);
       GET_PREALLOC(pasyncopdesc_src,
-		   pclient->pool_async_op,
-		   pclient->nb_pre_async_op_desc,
-		   cache_inode_async_op_desc_t, next_alloc);
+                   pclient->pool_async_op,
+                   pclient->nb_pre_async_op_desc,
+                   cache_inode_async_op_desc_t, next_alloc);
       V(pclient->pool_lock);
 
       if (pasyncopdesc_src == NULL)
-	{
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+        {
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
-	  *pstatus = CACHE_INODE_MALLOC_ERROR;
+          *pstatus = CACHE_INODE_MALLOC_ERROR;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    V(pentry_dirdest->lock);
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            V(pentry_dirdest->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       pasyncopdesc_src->op_type = CACHE_INODE_ASYNC_OP_RENAME_SRC;
       pasyncopdesc_src->op_args.rename.pfsal_handle_dirsrc = phandle_dirsrc;
@@ -572,90 +572,90 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       pasyncopdesc_src->fsal_op_context = *pcontext;
       pasyncopdesc_src->fsal_export_context = *(pcontext->export_context);
       pasyncopdesc_src->fsal_op_context.export_context =
-	  &pasyncopdesc_src->fsal_export_context;
+          &pasyncopdesc_src->fsal_export_context;
 
       pasyncopdesc_src->ht = ht;
       pasyncopdesc_src->origine_pool = pclient->pool_async_op;
       pasyncopdesc_src->ppool_lock = &pclient->pool_lock;
 
       if (gettimeofday(&pasyncopdesc_src->op_time, NULL) != 0)
-	{
-	  /* Could'not get time of day... Stopping, this may need a major failure */
-	  DisplayLog("cache_inode_rename: cannot get time of day... exiting");
-	  exit(1);
-	}
+        {
+          /* Could'not get time of day... Stopping, this may need a major failure */
+          DisplayLog("cache_inode_rename: cannot get time of day... exiting");
+          exit(1);
+        }
 
       /* Affect the operation to a synclet */
       if (cache_inode_post_async_op(pasyncopdesc_src,
-				    pentry_dirsrc, pstatus) != CACHE_INODE_SUCCESS)
-	{
-	  /* stat */
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+                                    pentry_dirsrc, pstatus) != CACHE_INODE_SUCCESS)
+        {
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
-	  DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
+          DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
 
-	  *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
+          *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    V(pentry_dirdest->lock);
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            V(pentry_dirdest->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* If the rename is a "move" to another directory, then post a second (smaller) async op to manage the destination cache resync */
       if (pentry_dirsrc != pentry_dirdest)
-	{
-	  P(pclient->pool_lock);
-	  GET_PREALLOC(pasyncopdesc_dst,
-		       pclient->pool_async_op,
-		       pclient->nb_pre_async_op_desc,
-		       cache_inode_async_op_desc_t, next_alloc);
-	  V(pclient->pool_lock);
+        {
+          P(pclient->pool_lock);
+          GET_PREALLOC(pasyncopdesc_dst,
+                       pclient->pool_async_op,
+                       pclient->nb_pre_async_op_desc,
+                       cache_inode_async_op_desc_t, next_alloc);
+          V(pclient->pool_lock);
 
-	  pasyncopdesc_dst->op_type = CACHE_INODE_ASYNC_OP_RENAME_DST;
-	  pasyncopdesc_dst->op_args.rename.pfsal_handle_dirsrc = phandle_dirsrc;
-	  pasyncopdesc_dst->op_args.rename.name_src = *poldname;
-	  pasyncopdesc_dst->op_args.rename.pfsal_handle_dirdest = phandle_dirdest;
-	  pasyncopdesc_dst->op_args.rename.name_src = *pnewname;
-	  pasyncopdesc_dst->op_func = cache_inode_async_rename_dst;
-	  pasyncopdesc_dst->op_res.rename.attrsrc.asked_attributes = FSAL_ATTRS_POSIX;
-	  pasyncopdesc_dst->op_res.rename.attrdest.asked_attributes = FSAL_ATTRS_POSIX;
+          pasyncopdesc_dst->op_type = CACHE_INODE_ASYNC_OP_RENAME_DST;
+          pasyncopdesc_dst->op_args.rename.pfsal_handle_dirsrc = phandle_dirsrc;
+          pasyncopdesc_dst->op_args.rename.name_src = *poldname;
+          pasyncopdesc_dst->op_args.rename.pfsal_handle_dirdest = phandle_dirdest;
+          pasyncopdesc_dst->op_args.rename.name_src = *pnewname;
+          pasyncopdesc_dst->op_func = cache_inode_async_rename_dst;
+          pasyncopdesc_dst->op_res.rename.attrsrc.asked_attributes = FSAL_ATTRS_POSIX;
+          pasyncopdesc_dst->op_res.rename.attrdest.asked_attributes = FSAL_ATTRS_POSIX;
 
-	  pasyncopdesc_dst->fsal_op_context = *pcontext;
-	  pasyncopdesc_dst->fsal_export_context = *(pcontext->export_context);
-	  pasyncopdesc_dst->fsal_op_context.export_context =
-	      &pasyncopdesc_dst->fsal_export_context;
-	  pasyncopdesc_dst->ht = ht;
-	  pasyncopdesc_dst->origine_pool = pclient->pool_async_op;
-	  pasyncopdesc_dst->ppool_lock = &pclient->pool_lock;
+          pasyncopdesc_dst->fsal_op_context = *pcontext;
+          pasyncopdesc_dst->fsal_export_context = *(pcontext->export_context);
+          pasyncopdesc_dst->fsal_op_context.export_context =
+              &pasyncopdesc_dst->fsal_export_context;
+          pasyncopdesc_dst->ht = ht;
+          pasyncopdesc_dst->origine_pool = pclient->pool_async_op;
+          pasyncopdesc_dst->ppool_lock = &pclient->pool_lock;
 
-	  if (gettimeofday(&pasyncopdesc_dst->op_time, NULL) != 0)
-	    {
-	      /* Could'not get time of day... Stopping, this may need a major failure */
-	      DisplayLog("cache_inode_rename: cannot get time of day... exiting");
-	      exit(1);
-	    }
+          if (gettimeofday(&pasyncopdesc_dst->op_time, NULL) != 0)
+            {
+              /* Could'not get time of day... Stopping, this may need a major failure */
+              DisplayLog("cache_inode_rename: cannot get time of day... exiting");
+              exit(1);
+            }
 
-	  /* Affect the operation to a synclet */
-	  if (cache_inode_post_async_op(pasyncopdesc_dst,
-					pentry_dirdest, pstatus) != CACHE_INODE_SUCCESS)
-	    {
-	      /* stat */
-	      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          /* Affect the operation to a synclet */
+          if (cache_inode_post_async_op(pasyncopdesc_dst,
+                                        pentry_dirdest, pstatus) != CACHE_INODE_SUCCESS)
+            {
+              /* stat */
+              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
 
-	      DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
+              DisplayLog("WARNING !!! cache_inode_rename could not post async op....");
 
-	      *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
+              *pstatus = CACHE_INODE_ASYNC_POST_ERROR;
 
-	      V(pentry_dirsrc->lock);
-	      if (pentry_dirsrc != pentry_dirdest)
-		V(pentry_dirdest->lock);
+              V(pentry_dirsrc->lock);
+              if (pentry_dirsrc != pentry_dirdest)
+                V(pentry_dirdest->lock);
 
-	      return *pstatus;
+              return *pstatus;
 
-	    }
-	}
+            }
+        }
     }
 
   /* if( !FSAL_IS_ERROR( fsal_status ) )  */
@@ -667,49 +667,49 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
-	{
-	  V(pentry_dirdest->lock);
-	}
+        {
+          V(pentry_dirdest->lock);
+        }
 
       if (fsal_status.major == ERR_FSAL_STALE)
-	{
-	  cache_inode_status_t kill_status;
-	  fsal_status_t getattr_status;
+        {
+          cache_inode_status_t kill_status;
+          fsal_status_t getattr_status;
 
-	  DisplayLog
-	      ("cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
-	       pentry_dirsrc, pentry_dirdest);
+          DisplayLog
+              ("cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
+               pentry_dirsrc, pentry_dirdest);
 
-	  /* Use FSAL_getattrs to find which entry is staled */
-	  getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);
-	  if (getattr_status.major == ERR_FSAL_ACCESS)
-	    {
-	      DisplayLog
-		  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
-		   pentry_dirsrc);
+          /* Use FSAL_getattrs to find which entry is staled */
+          getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);
+          if (getattr_status.major == ERR_FSAL_ACCESS)
+            {
+              DisplayLog
+                  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+                   pentry_dirsrc);
 
-	      if (cache_inode_kill_entry(pentry_dirsrc, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
-			   pentry_dirsrc, kill_status);
-	    }
+              if (cache_inode_kill_entry(pentry_dirsrc, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
+                           pentry_dirsrc, kill_status);
+            }
 
-	  getattr_status = FSAL_getattrs(phandle_dirdest, pcontext, &attrlookup);
-	  if (getattr_status.major == ERR_FSAL_ACCESS)
-	    {
-	      DisplayLog
-		  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
-		   pentry_dirdest);
+          getattr_status = FSAL_getattrs(phandle_dirdest, pcontext, &attrlookup);
+          if (getattr_status.major == ERR_FSAL_ACCESS)
+            {
+              DisplayLog
+                  ("cache_inode_rename: Stale FSAL File Handle detected for pentry = %p",
+                   pentry_dirdest);
 
-	      if (cache_inode_kill_entry(pentry_dirdest, ht, pclient, &kill_status) !=
-		  CACHE_INODE_SUCCESS)
-		DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
-			   pentry_dirdest, kill_status);
-	    }
+              if (cache_inode_kill_entry(pentry_dirdest, ht, pclient, &kill_status) !=
+                  CACHE_INODE_SUCCESS)
+                DisplayLog("cache_inode_rename: Could not kill entry %p, status = %u",
+                           pentry_dirdest, kill_status);
+            }
 
-	  *pstatus = CACHE_INODE_FSAL_ESTALE;
+          *pstatus = CACHE_INODE_FSAL_ESTALE;
 
-	}
+        }
 
       return *pstatus;
     }
@@ -747,63 +747,63 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
        * the use of resource in this case */
 
       DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			"Rename (%p,%s)->(%p,%s) : source and target directory are the same",
-			pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
+                        "Rename (%p,%s)->(%p,%s) : source and target directory are the same",
+                        pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
       status = cache_inode_rename_cached_dirent(pentry_dirdest,
-						poldname, pnewname, ht, pclient, pstatus);
+                                                poldname, pnewname, ht, pclient, pstatus);
 
       if (status != CACHE_INODE_SUCCESS)
-	{
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = status;
+        {
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = status;
 
-	  /* Unlock the pentry and exists */
-	  V(pentry_dirsrc->lock);
+          /* Unlock the pentry and exists */
+          V(pentry_dirsrc->lock);
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
     } else
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-			"Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
-			poldname->name, pentry_dirdest, pnewname->name);
+                        "Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
+                        poldname->name, pentry_dirdest, pnewname->name);
 
       /* Add the new entry */
       status = cache_inode_add_cached_dirent(pentry_dirdest,
-					     pnewname,
-					     pentry_lookup_src,
-					     NULL, ht, pclient, pcontext, pstatus);
+                                             pnewname,
+                                             pentry_lookup_src,
+                                             NULL, ht, pclient, pcontext, pstatus);
       if (status != CACHE_INODE_SUCCESS)
-	{
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = status;
+        {
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = status;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
 
       /* Remove the old entry */
       if (cache_inode_remove_cached_dirent(pentry_dirsrc,
-					   poldname,
-					   ht, pclient, &status) != CACHE_INODE_SUCCESS)
-	{
-	  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
-	  *pstatus = status;
+                                           poldname,
+                                           ht, pclient, &status) != CACHE_INODE_SUCCESS)
+        {
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
+          *pstatus = status;
 
-	  V(pentry_dirsrc->lock);
-	  if (pentry_dirsrc != pentry_dirdest)
-	    {
-	      V(pentry_dirdest->lock);
-	    }
+          V(pentry_dirsrc->lock);
+          if (pentry_dirsrc != pentry_dirdest)
+            {
+              V(pentry_dirdest->lock);
+            }
 
-	  return *pstatus;
-	}
+          return *pstatus;
+        }
     }
 
   /* Validate the entries */
@@ -817,9 +817,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       *pstatus = cache_inode_valid(pentry_dirdest, CACHE_INODE_OP_SET, pclient);
 
       if (*pstatus != CACHE_INODE_SUCCESS)
-	pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_RENAME] += 1;
-	else
-	pclient->stat.func_stats.nb_success[CACHE_INODE_RENAME] += 1;
+        pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_RENAME] += 1;
+        else
+        pclient->stat.func_stats.nb_success[CACHE_INODE_RENAME] += 1;
     }
 
   /* unlock entries */
@@ -831,4 +831,4 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     }
 
   return *pstatus;
-}				/* cache_inode_rename */
+}                               /* cache_inode_rename */

@@ -247,29 +247,29 @@ typedef struct buddy_stats__ {
 
   /* Total space allocated BuddyMallocExit */
 
-  size_t TotalMemSpace;		/* Current */
-  size_t WM_TotalMemSpace;	/* High watermark */
+  size_t TotalMemSpace;         /* Current */
+  size_t WM_TotalMemSpace;      /* High watermark */
 
   /* Pages allocated using standard page size */
 
-  size_t StdMemSpace;		/* Total Space used for standard pages */
-  size_t WM_StdMemSpace;	/* High watermark for memory used for std pages */
+  size_t StdMemSpace;           /* Total Space used for standard pages */
+  size_t WM_StdMemSpace;        /* High watermark for memory used for std pages */
 
-  size_t StdUsedSpace;		/* Total Space really used */
-  size_t WM_StdUsedSpace;	/* High watermark for memory used in std pages */
+  size_t StdUsedSpace;          /* Total Space really used */
+  size_t WM_StdUsedSpace;       /* High watermark for memory used in std pages */
 
-  size_t StdPageSize;		/* Standard Pages size */
+  size_t StdPageSize;           /* Standard Pages size */
 
-  unsigned int NbStdPages;	/* Number of pages (current) */
-  unsigned int NbStdUsed;	/* Number of used pages (current) */
-  unsigned int WM_NbStdUsed;	/* High watermark for used std pages */
+  unsigned int NbStdPages;      /* Number of pages (current) */
+  unsigned int NbStdUsed;       /* Number of used pages (current) */
+  unsigned int WM_NbStdUsed;    /* High watermark for used std pages */
 
-  size_t ExtraMemSpace;		/* Total Space */
-  size_t WM_ExtraMemSpace;	/* High watermark for memory used by extra pages */
-  size_t MinExtraPageSize;	/* Low water mark size for extra page  */
-  size_t MaxExtraPageSize;	/* High water mark size for extra page */
-  unsigned int NbExtraPages;	/* Number of extra pages (current) */
-  unsigned int WM_NbExtraPages;	/* Watermark of extra pages */
+  size_t ExtraMemSpace;         /* Total Space */
+  size_t WM_ExtraMemSpace;      /* High watermark for memory used by extra pages */
+  size_t MinExtraPageSize;      /* Low water mark size for extra page  */
+  size_t MaxExtraPageSize;      /* High water mark size for extra page */
+  unsigned int NbExtraPages;    /* Number of extra pages (current) */
+  unsigned int WM_NbExtraPages; /* Watermark of extra pages */
 
 } buddy_stats_t;
 
@@ -284,22 +284,22 @@ void BuddyGetStats(buddy_stats_t * budd_stats);
  * Those functions allocate memory with a file/function/line label
  */
 BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
-				   const char *file,
-				   const char *function, const unsigned int line);
+                                   const char *file,
+                                   const char *function, const unsigned int line);
 
 BUDDY_ADDR_T BuddyCalloc_Autolabel(size_t NumberOfElements, size_t ElementSize,
-				   const char *file,
-				   const char *function, const unsigned int line);
+                                   const char *file,
+                                   const char *function, const unsigned int line);
 
 BUDDY_ADDR_T BuddyRealloc_Autolabel(BUDDY_ADDR_T ptr, size_t Size,
-				    const char *file,
-				    const char *function, const unsigned int line);
+                                    const char *file,
+                                    const char *function, const unsigned int line);
 
 /**
  *  Set a label for allocated areas, for debugging.
  */
 int _BuddySetDebugLabel(const char *file, const char *func, const unsigned int line,
-			const char *label);
+                        const char *label);
 
 #define BuddySetDebugLabel( _user_lbl_ )  _BuddySetDebugLabel(  __FILE__, __FUNCTION__, __LINE__, _user_lbl_ )
 
@@ -348,6 +348,6 @@ int Buddy_set_default_parameter(buddy_parameter_t * out_parameter);
  * from configuration file.
  */
 int Buddy_load_parameter_from_conf(config_file_t in_config,
-				   buddy_parameter_t * out_parameter);
+                                   buddy_parameter_t * out_parameter);
 
-#endif				/* _BUDDY_MALLOC_H */
+#endif                          /* _BUDDY_MALLOC_H */

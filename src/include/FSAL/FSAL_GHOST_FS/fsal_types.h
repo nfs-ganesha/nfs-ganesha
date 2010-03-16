@@ -127,7 +127,7 @@ typedef struct fsal_path__ {
 static fsal_name_t FSAL_DOT = { ".", 1 };
 static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
-typedef GHOSTFS_handle_t fsal_handle_t;	   /**< FS object handle.            */
+typedef GHOSTFS_handle_t fsal_handle_t;    /**< FS object handle.            */
 
 /** Authentification context.    */
 
@@ -149,11 +149,11 @@ typedef struct ghostfs_dir_def__ {
 } ghostfs_dir_def_t;
 
 typedef struct fs_specific_initinfo__ {
-  fsal_accessmode_t root_mode;	/* the mode of fs root */
-  fsal_uid_t root_owner;	/* the owner of fs root */
-  fsal_gid_t root_group;	/* the group of fs root */
-  int dot_dot_root_eq_root;	/* indicates if fs root contains a '..' entry pointing on itself */
-  int root_access;		/* indicates if root can access everything */
+  fsal_accessmode_t root_mode;  /* the mode of fs root */
+  fsal_uid_t root_owner;        /* the owner of fs root */
+  fsal_gid_t root_group;        /* the group of fs root */
+  int dot_dot_root_eq_root;     /* indicates if fs root contains a '..' entry pointing on itself */
+  int root_access;              /* indicates if root can access everything */
 
   ghostfs_dir_def_t *dir_list;
 
@@ -167,7 +167,7 @@ typedef struct fsal_cookie__ {
 
 static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { (GHOSTFS_cookie_t) NULL };
 
-typedef void *fsal_lockdesc_t;	 /**< not implemented in ghostfs */
+typedef void *fsal_lockdesc_t;   /**< not implemented in ghostfs */
 typedef void *fsal_export_context_t;
 
 typedef struct {
@@ -184,13 +184,13 @@ typedef struct {
 /* Directory stream descriptor. */
 
 typedef struct fsal_dir__ {
-  dir_descriptor_t dir_descriptor;	/* GHOSTFS dirdescriptor */
-  fsal_op_context_t context;	/* credential for readdir operations */
+  dir_descriptor_t dir_descriptor;      /* GHOSTFS dirdescriptor */
+  fsal_op_context_t context;    /* credential for readdir operations */
 } fsal_dir_t;
 
-typedef void *fsal_file_t;	/**< not implemented in ghostfs */
+typedef void *fsal_file_t;      /**< not implemented in ghostfs */
 
 /* no fd in ghostfs for the moment */
 #define FSAL_FILENO( p_fsal_file )  ( 1 )
 
-#endif				/* _FSAL_TYPES_SPECIFIC_H */
+#endif                          /* _FSAL_TYPES_SPECIFIC_H */

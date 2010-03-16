@@ -39,8 +39,8 @@ typedef struct fsal_proxy_internal_fattr__ {
   fattr4_fileid fileid;
   fattr4_mode mode;
   fattr4_numlinks numlinks;
-  fattr4_owner owner;		/* Needs to points to a string */
-  fattr4_owner_group owner_group;	/* Needs to points to a string */
+  fattr4_owner owner;           /* Needs to points to a string */
+  fattr4_owner_group owner_group;       /* Needs to points to a string */
   fattr4_space_used space_used;
   fattr4_time_access time_access;
   fattr4_time_metadata time_metadata;
@@ -60,8 +60,8 @@ typedef struct fsal_proxy_internal_fattr_readdir__ {
   fattr4_fileid fileid;
   fattr4_mode mode;
   fattr4_numlinks numlinks;
-  fattr4_owner owner;		/* Needs to points to a string */
-  fattr4_owner_group owner_group;	/* Needs to points to a string */
+  fattr4_owner owner;           /* Needs to points to a string */
+  fattr4_owner_group owner_group;       /* Needs to points to a string */
   fattr4_space_used space_used;
   fattr4_time_access time_access;
   fattr4_time_metadata time_metadata;
@@ -74,13 +74,13 @@ typedef struct fsal_proxy_internal_fattr_readdir__ {
 
 void fsal_internal_proxy_setup_fattr(fsal_proxy_internal_fattr_t * pfattr);
 void fsal_internal_proxy_setup_readdir_fattr(fsal_proxy_internal_fattr_readdir_t *
-					     pfattr);
+                                             pfattr);
 
 /**
  *  This function initializes shared variables of the FSAL.
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-					fs_common_initinfo_t * fs_common_info);
+                                        fs_common_initinfo_t * fs_common_info);
 
 /**
  *  Increments the number of calls for a function.
@@ -111,7 +111,7 @@ void fsal_internal_proxy_create_fattr_bitmap(bitmap4 * pbitmap);
 void fsal_internal_proxy_create_fattr_readdir_bitmap(bitmap4 * pbitmap);
 void fsal_internal_proxy_create_fattr_fsinfo_bitmap(bitmap4 * pbitmap);
 void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
-					  bitmap4 * pbitmap);
+                                          bitmap4 * pbitmap);
 
 /*
  * A few functions dedicated in proxy related information management and conversion 
@@ -119,17 +119,17 @@ void fsal_interval_proxy_fsalattr2bitmap4(fsal_attrib_list_t * pfsalattr,
 fsal_status_t fsal_internal_set_auth_gss(fsal_op_context_t * p_thr_context);
 fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfunc);
 int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
-				  fsal_nodetype_t type,
-				  fsal_u64_t fileid, fsal_handle_t * pfsal_handle);
+                                  fsal_nodetype_t type,
+                                  fsal_u64_t fileid, fsal_handle_t * pfsal_handle);
 int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle, fsal_handle_t * pfsal_handle);
 int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8str);
 int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8str);
 int fsal_internal_proxy_fsal_utf8_2_name(fsal_name_t * pname, utf8string * utf8str);
 int fsal_internal_proxy_fsal_utf8_2_path(fsal_path_t * ppath, utf8string * utf8str);
 int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
-			     fsal_handle_t * phandle, fattr4 * Fattr);
+                             fsal_handle_t * phandle, fattr4 * Fattr);
 int proxy_Fattr_To_FSAL_dynamic_fsinfo(fsal_dynamicfsinfo_t * pdynamicinfo,
-				       fattr4 * Fattr);
+                                       fattr4 * Fattr);
 fsal_status_t FSAL_proxy_setclientid(fsal_op_context_t * p_context);
 int FSAL_proxy_set_hldir(fsal_op_context_t * p_thr_context, char *hl_path);
 int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context);

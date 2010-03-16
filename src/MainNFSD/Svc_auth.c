@@ -58,13 +58,13 @@
  */
 
 enum auth_stat Gssrpc__svcauth_none(register struct svc_req *rqst,
-				    register struct rpc_msg *msg, bool_t * no_dispatch);
+                                    register struct rpc_msg *msg, bool_t * no_dispatch);
 
 enum auth_stat Gssrpc__svcauth_unix(register struct svc_req *rqst,
-				    register struct rpc_msg *msg, bool_t * no_dispatch);
+                                    register struct rpc_msg *msg, bool_t * no_dispatch);
 
 enum auth_stat Gssrpc__svcauth_gss(register struct svc_req *rqst,
-				   register struct rpc_msg *msg, bool_t * no_dispatch);
+                                   register struct rpc_msg *msg, bool_t * no_dispatch);
 
 #define Gssrpc__svcauth_short Gssrpc__svcauth_unix
 
@@ -74,19 +74,19 @@ static struct svcauthsw_type {
 } svcauthsw[] =
 {
   {
-  AUTH_GSSAPI, Gssrpc__svcauth_gss},	/* AUTH_GSSAPI */
+  AUTH_GSSAPI, Gssrpc__svcauth_gss},    /* AUTH_GSSAPI */
   {
-  AUTH_NONE, Gssrpc__svcauth_none},	/* AUTH_NONE */
+  AUTH_NONE, Gssrpc__svcauth_none},     /* AUTH_NONE */
 #if 0
   {
-  AUTH_GSSAPI_COMPAT, gssrpc__svcauth_gssapi},	/* AUTH_GSSAPI_COMPAT */
+  AUTH_GSSAPI_COMPAT, gssrpc__svcauth_gssapi},  /* AUTH_GSSAPI_COMPAT */
 #endif
   {
-  AUTH_UNIX, Gssrpc__svcauth_unix},	/* AUTH_UNIX */
+  AUTH_UNIX, Gssrpc__svcauth_unix},     /* AUTH_UNIX */
   {
-  AUTH_SHORT, Gssrpc__svcauth_short},	/* AUTH_SHORT */
+  AUTH_SHORT, Gssrpc__svcauth_short},   /* AUTH_SHORT */
   {
-  RPCSEC_GSS, Gssrpc__svcauth_gss}	/* RPCSEC_GSS */
+  RPCSEC_GSS, Gssrpc__svcauth_gss}      /* RPCSEC_GSS */
 };
 
 static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
@@ -108,7 +108,7 @@ static int svcauthnum = sizeof(svcauthsw) / sizeof(struct svcauthsw_type);
  */
 enum auth_stat
 Rpcsecgss__authenticate(register struct svc_req *rqst,
-			struct rpc_msg *msg, bool_t * no_dispatch)
+                        struct rpc_msg *msg, bool_t * no_dispatch)
 {
   register int cred_flavor, i;
 
@@ -120,9 +120,9 @@ Rpcsecgss__authenticate(register struct svc_req *rqst,
   for (i = 0; i < svcauthnum; i++)
     {
       if (cred_flavor == svcauthsw[i].flavor && svcauthsw[i].authenticator != NULL)
-	{
-	  return ((*(svcauthsw[i].authenticator)) (rqst, msg, no_dispatch));
-	}
+        {
+          return ((*(svcauthsw[i].authenticator)) (rqst, msg, no_dispatch));
+        }
     }
 
   return (AUTH_REJECTEDCRED);

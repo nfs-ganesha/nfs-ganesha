@@ -83,7 +83,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #ifdef _USE_GSSRPC
@@ -133,12 +133,12 @@ static void do_cancel_lock(nlm_lock_t * nlmb)
  */
 
 int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
-		exportlist_t * pexport /* IN     */ ,
-		fsal_op_context_t * pcontext /* IN     */ ,
-		cache_inode_client_t * pclient /* INOUT  */ ,
-		hash_table_t * ht /* INOUT  */ ,
-		struct svc_req *preq /* IN     */ ,
-		nfs_res_t * pres /* OUT    */ )
+                exportlist_t * pexport /* IN     */ ,
+                fsal_op_context_t * pcontext /* IN     */ ,
+                cache_inode_client_t * pclient /* INOUT  */ ,
+                hash_table_t * ht /* INOUT  */ ,
+                struct svc_req *preq /* IN     */ ,
+                nfs_res_t * pres /* OUT    */ )
 {
   nlm_lock_t *nlmb;
   fsal_file_t *fd;
@@ -150,7 +150,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   cache_inode_fsal_data_t fsal_data;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
-		    "REQUEST PROCESSING: Calling nlm4_Lock");
+                    "REQUEST PROCESSING: Calling nlm4_Lock");
 
   /* Convert file handle into a cache entry */
   arg = &parg->arg_nlm4_cancel;
@@ -167,7 +167,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
   if ((pentry = cache_inode_get(&fsal_data, &attr, ht,
-				pclient, pcontext, &cache_status)) == NULL)
+                                pclient, pcontext, &cache_status)) == NULL)
     {
       /* handle is not valid */
       pres->res_nlm4.stat.stat = NLM4_STALE_FH;
@@ -183,7 +183,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   do_cancel_lock(nlmb);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
   return NFS_REQ_OK;
-}				/* nlm4_Cancel */
+}                               /* nlm4_Cancel */
 
 /**
  * nlm4_Lock_Free: Frees the result structure allocated for nlm4_Lock
@@ -196,4 +196,4 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
 void nlm4_Cancel_Free(nfs_res_t * pres)
 {
   return;
-}				/* nlm4_Cancel_Free */
+}                               /* nlm4_Cancel_Free */
