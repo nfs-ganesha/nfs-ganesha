@@ -1315,7 +1315,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               if (pentry_to_read->object.dir_begin.end_of_dir == END_OF_DIR)
                 {
                   /* End of dir is reached */
-                  *peod_met = END_OF_DIR;
+		  if( pnbfound == 0 )
+                    *peod_met = END_OF_DIR;
 
                   *pstatus = CACHE_INODE_SUCCESS;
                   V_r(&dir_pentry->lock);
@@ -1333,7 +1334,8 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               if (pentry_to_read->object.dir_cont.end_of_dir == END_OF_DIR)
                 {
                   /* End of dir is reached */
-                  *peod_met = END_OF_DIR;
+		  if( pnbfound == 0 )
+                    *peod_met = END_OF_DIR;
 
                   *pstatus = CACHE_INODE_SUCCESS;
                   V_r(&dir_pentry->lock);
