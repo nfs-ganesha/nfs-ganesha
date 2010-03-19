@@ -1,9 +1,9 @@
 ;;
 ;; ganesha.el
-;;
+;; 
 ;; Made by Sean Dague
 ;; Login   <japh@us.ibm.com>
-;;
+;; 
 ;; Started on  Wed Mar 17 14:17:25 2010 Sean Dague
 ;; Last update Wed Mar 17 14:17:25 2010 Sean Dague
 ;;
@@ -25,7 +25,8 @@
                                (substatement-open before after)
                                (block-close . c-snug-do-while)
                                (arglist-cont-nonempty)))
-    (c-cleanup-list . (brace-else-brace))
+    (c-cleanup-list . (brace-else-brace
+		       brace-elseif-brace))
     (c-offsets-alist . ((statement-block-intro . +)
                         (knr-argdecl-intro     . 0)
                         (substatement-open     . +)
