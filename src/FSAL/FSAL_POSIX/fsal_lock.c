@@ -39,6 +39,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "fsal_convert.h"
 
 static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {

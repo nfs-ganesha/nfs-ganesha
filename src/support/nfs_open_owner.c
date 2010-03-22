@@ -148,7 +148,7 @@ int display_open_owner_key(hash_buffer_t * pbuff, char *str)
     len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->owner_val[i]);
 
   return len + sprintf(str, "clientid=%llu owner=(%u|%s)",
-                       pname->clientid, pname->owner_len, strtmp);
+                       (unsigned long long)pname->clientid, pname->owner_len, strtmp);
 }                               /* display_state_id_val */
 
 int display_open_owner_val(hash_buffer_t * pbuff, char *str)
@@ -163,7 +163,7 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
     len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
 
   return len + sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
-                       powner->clientid, powner->owner_len, strtmp, powner->confirmed,
+                       (unsigned long long)powner->clientid, powner->owner_len, strtmp, powner->confirmed,
                        powner->seqid);
 }                               /* display_state_id_val */
 

@@ -188,7 +188,7 @@ void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_pare
     }
   for (i = 0; i < count; i++)
     {
-      printf("%llu %s/%s\n", p_children[i].handle.info.inode, basedir,
+      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode, basedir,
              p_children[i].name.name);
       if (p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
         {

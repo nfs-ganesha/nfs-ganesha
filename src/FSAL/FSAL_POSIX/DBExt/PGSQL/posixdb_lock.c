@@ -29,8 +29,8 @@ fsal_posixdb_status_t fsal_posixdb_lockHandleForUpdate(fsal_posixdb_conn * p_con
 
   BeginTransaction(p_conn, p_res);
 
-  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%lli", p_info->devid);
-  snprintf(inode_str, MAX_INODESTR_SIZE, "%lli", p_info->inode);
+  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%lli", (long long int)p_info->devid);
+  snprintf(inode_str, MAX_INODESTR_SIZE, "%lli", (long long int)p_info->inode);
   paramValues[0] = devid_str;
   paramValues[1] = inode_str;
   p_res = PQexecPrepared(p_conn, "lookupHandleByInodeFU", 2, paramValues, NULL, NULL, 0);

@@ -265,7 +265,8 @@ int nfs_ParseConfLine(char *Argv[],
         {
           p2 += 1;
           p1 = p2;
-        } else
+        }
+      else
         return output_value;
 
     }                           /* for( ; ; ) */
@@ -399,7 +400,8 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
 
           memcpy(&net_addr, host_ent->h_addr, host_ent->h_length);
           compute_mask = FALSE;
-        } else
+        }
+      else
         {
 
           /*
@@ -413,7 +415,8 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
               if (error == 0)
                 error = ENOENT;
               endnetent();
-            } else
+            }
+          else
             {
               net_addr = net_ent->n_net;
               endnetent();
@@ -538,7 +541,8 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                  (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                  p_clients[i].client.netgroup.netgroupname);
 #endif
-      } else if ((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
+        }
+      else if ((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
         {
 
           /* Entry is a hostif */
@@ -557,17 +561,18 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                      (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                      (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
 #endif
-            } else
+            }
+          else
             {
               /* IPv6 address */
               memcpy(&(p_clients[i].client.hostif.clientaddr6), hostEntry->h_addr,
                      hostEntry->h_length);
               p_clients[i].type = HOSTIF_CLIENT_V6;
             }
-      }
-        else if (((error = nfs_LookupNetworkAddr(client_hostname,
-                                                   (unsigned long *)&netAddr,
-                                                   (unsigned long *)&netMask))) == 0)
+        }
+      else if (((error = nfs_LookupNetworkAddr(client_hostname,
+                                               (unsigned long *)&netAddr,
+                                               (unsigned long *)&netMask))) == 0)
         {
           /* Entry is a network definition */
           p_clients[i].client.network.netaddr = netAddr;
@@ -584,7 +589,8 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                  (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
                  (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
 #endif
-        } else
+        }
+      else
         {
           /* this may be  a wildcarded host */
           /* Lookup into the string to see if it contains '*' or '?' */
@@ -609,7 +615,8 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
                      (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                      client_hostname);
 #endif
-            } else
+            }
+          else
             {
               /* Last case: type for client could not be identified. This should not occur */
               DisplayLog("Unsupported type for client %s", client_hostname);
@@ -750,7 +757,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_ID;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_PATH))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PATH))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_PATH) == FLAG_EXPORT_PATH)
@@ -776,7 +784,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_PATH;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_ROOT))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
           char *expended_node_list;
 
@@ -797,7 +806,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                    var_name);
 
               continue;
-          } else if (count > EXPORT_MAX_CLIENTS)
+            }
+          else if (count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
@@ -860,7 +870,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
            */
           set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_ACCESS))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
           char *expended_node_list;
 
@@ -881,7 +892,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                    var_name);
 
               continue;
-          } else if (count > EXPORT_MAX_CLIENTS)
+            }
+          else if (count > EXPORT_MAX_CLIENTS)
             {
               err_flag = TRUE;
               DisplayLog("NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
@@ -944,7 +956,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
            */
           set_options |= FLAG_EXPORT_ROOT_OR_ACCESS;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_PSEUDO))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PSEUDO))
         {
 
           /* check if it has not already been set */
@@ -968,10 +981,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_PSEUDO;
           p_entry->options |= EXPORT_OPTION_PSEUDO;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_REFERRAL))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_REFERRAL))
         {
           strncpy(p_entry->referral, var_value, MAXPATHLEN);
-      } else if (!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
 
           /* check if it has not already been set */
@@ -984,16 +999,20 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if (!STRCMP(var_value, "RW"))
             {
               p_entry->access_type = ACCESSTYPE_RW;
-          } else if (!STRCMP(var_value, "RO"))
+            }
+          else if (!STRCMP(var_value, "RO"))
             {
               p_entry->access_type = ACCESSTYPE_RO;
-          } else if (!STRCMP(var_value, "MDONLY"))
+            }
+          else if (!STRCMP(var_value, "MDONLY"))
             {
               p_entry->access_type = ACCESSTYPE_MDONLY;
-          } else if (!STRCMP(var_value, "MDONLY_RO"))
+            }
+          else if (!STRCMP(var_value, "MDONLY_RO"))
             {
               p_entry->access_type = ACCESSTYPE_MDONLY_RO;
-            } else
+            }
+          else
             {
               DisplayLog
                   ("NFS READ_EXPORT: ERROR: Invalid access type \"%s\". Values can be: RW, RO, MDONLY, MDONLY_RO.",
@@ -1004,7 +1023,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_ACCESSTYPE;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_NFS_PROTO))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_NFS_PROTO))
         {
 
 #     define MAX_NFSPROTO      10       /* large enough !!! */
@@ -1054,13 +1074,16 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               if (!STRCMP(nfsvers_list[idx], "2"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV2;
-              } else if (!STRCMP(nfsvers_list[idx], "3"))
+                }
+              else if (!STRCMP(nfsvers_list[idx], "3"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV3;
-              } else if (!STRCMP(nfsvers_list[idx], "4"))
+                }
+              else if (!STRCMP(nfsvers_list[idx], "4"))
                 {
                   p_entry->options |= EXPORT_OPTION_NFSV4;
-                } else
+                }
+              else
                 {
                   DisplayLog
                       ("NFS READ_EXPORT: ERROR: Invalid NFS version \"%s\". Values can be: 2, 3, 4.",
@@ -1080,7 +1103,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_NFS_PROTO;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_TRANS_PROTO))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_TRANS_PROTO))
         {
 
 #     define MAX_TRANSPROTO      10     /* large enough !!! */
@@ -1129,10 +1153,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               if (!STRCMP(transproto_list[idx], "UDP"))
                 {
                   p_entry->options |= EXPORT_OPTION_UDP;
-              } else if (!STRCMP(transproto_list[idx], "TCP"))
+                }
+              else if (!STRCMP(transproto_list[idx], "TCP"))
                 {
                   p_entry->options |= EXPORT_OPTION_TCP;
-                } else
+                }
+              else
                 {
                   DisplayLog
                       ("NFS READ_EXPORT: ERROR: Invalid protocol \"%s\". Values can be: UDP, TCP.",
@@ -1151,7 +1177,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_TRANS_PROTO;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_ANON_ROOT))
         {
 
           long int anon_uid;
@@ -1183,7 +1210,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_ANON_ROOT;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_SECTYPE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_SECTYPE))
         {
 #     define MAX_SECTYPE      10        /* large enough !!! */
 #     define MAX_SECTYPE_LEN  256       /* so is it !!! */
@@ -1235,19 +1263,24 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               if (!STRCMP(sec_list[idx], "none"))
                 {
                   p_entry->options |= EXPORT_OPTION_AUTH_NONE;
-              } else if (!STRCMP(sec_list[idx], "sys"))
+                }
+              else if (!STRCMP(sec_list[idx], "sys"))
                 {
                   p_entry->options |= EXPORT_OPTION_AUTH_UNIX;
-              } else if (!STRCMP(sec_list[idx], "krb5"))
+                }
+              else if (!STRCMP(sec_list[idx], "krb5"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_NONE;
-              } else if (!STRCMP(sec_list[idx], "krb5i"))
+                }
+              else if (!STRCMP(sec_list[idx], "krb5i"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_INTG;
-              } else if (!STRCMP(sec_list[idx], "krb5p"))
+                }
+              else if (!STRCMP(sec_list[idx], "krb5p"))
                 {
                   p_entry->options |= EXPORT_OPTION_RPCSEC_GSS_PRIV;
-                } else
+                }
+              else
                 {
                   DisplayLog
                       ("NFS READ_EXPORT: ERROR: Invalid SecType \"%s\". Values can be: none, sys, krb5, krb5i, krb5p.",
@@ -1270,7 +1303,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_SECTYPE;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_MAX_READ))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_MAX_READ))
         {
           long long int size;
           char *end_ptr;
@@ -1305,7 +1339,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_MAXREAD;
 
           set_options |= FLAG_EXPORT_MAX_READ;
-      } else if (!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_MAX_WRITE))
         {
           long long int size;
           char *end_ptr;
@@ -1340,7 +1375,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_MAXWRITE;
 
           set_options |= FLAG_EXPORT_MAX_WRITE;
-      } else if (!STRCMP(var_name, CONF_EXPORT_PREF_READ))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PREF_READ))
         {
           long long int size;
           char *end_ptr;
@@ -1375,7 +1411,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_PREFREAD;
 
           set_options |= FLAG_EXPORT_PREF_READ;
-      } else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
           long long int size;
           char *end_ptr;
@@ -1410,7 +1447,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_PREFWRITE;
 
           set_options |= FLAG_EXPORT_PREF_WRITE;
-      } else if (!STRCMP(var_name, CONF_EXPORT_PREF_READDIR))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PREF_READDIR))
         {
           long long int size;
           char *end_ptr;
@@ -1446,7 +1484,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           p_entry->options |= EXPORT_OPTION_PREFRDDIR;
 
           set_options |= FLAG_EXPORT_PREF_READDIR;
-      } else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PREF_WRITE))
         {
           long long int size;
           char *end_ptr;
@@ -1482,7 +1521,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_PREF_WRITE;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_FSID))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_FSID))
         {
           long long int major, minor;
           char *end_ptr;
@@ -1534,7 +1574,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_FSID;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_NOSUID))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_NOSUID))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_NOSUID) == FLAG_EXPORT_NOSUID)
@@ -1565,7 +1606,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_NOSUID;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_NOSGID))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_NOSGID))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_NOSGID) == FLAG_EXPORT_NOSGID)
@@ -1593,7 +1635,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
 
           set_options |= FLAG_EXPORT_NOSGID;
-      } else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_PRIVILEGED_PORT))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_PRIVILEGED_PORT) == FLAG_EXPORT_PRIVILEGED_PORT)
@@ -1620,7 +1663,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
           set_options |= FLAG_EXPORT_PRIVILEGED_PORT;
-      } else if (!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_USE_DATACACHE))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_USE_DATACACHE) == FLAG_EXPORT_USE_DATACACHE)
@@ -1647,7 +1691,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
           set_options |= FLAG_EXPORT_USE_DATACACHE;
-      } else if (!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_FS_SPECIFIC) == FLAG_EXPORT_FS_SPECIFIC)
@@ -1660,7 +1705,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_FS_SPECIFIC;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_FS_TAG))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_FS_TAG))
         {
           /* check if it has not already been set */
           if ((set_options & FLAG_EXPORT_FS_TAG) == FLAG_EXPORT_FS_TAG)
@@ -1673,7 +1719,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_FS_TAG;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
           long long int offset;
           char *end_ptr;
@@ -1696,7 +1743,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_MAX_OFF_WRITE;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_MAX_CACHE_SIZE))
         {
           long long int offset;
           char *end_ptr;
@@ -1719,7 +1767,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_MAX_CACHE_SIZE;
 
-      } else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
+        }
+      else if (!STRCMP(var_name, CONF_EXPORT_MAX_OFF_READ))
         {
           long long int offset;
           char *end_ptr;
@@ -1742,7 +1791,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_MAX_OFF_READ;
 
-        } else
+        }
+      else
         {
           DisplayLog("NFS READ_EXPORT: WARNING: Unknown option: %s", var_name);
         }
@@ -1931,7 +1981,8 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
           if (*ppexportlist == NULL)
             {
               *ppexportlist = p_export_item;
-            } else
+            }
+          else
             {
               p_export_last->next = p_export_item;
             }
@@ -1946,7 +1997,8 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   if (err_flag)
     {
       return -1;
-    } else
+    }
+  else
     return nb_entries;
 }
 
@@ -1994,16 +2046,16 @@ static int export_client_match(unsigned int addr,
 
 #ifdef _DEBUG_DISPATCH
           printf("Test net %d.%d.%d.%d in %d.%d.%d.%d ??\n",
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr >> 24),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr >> 24),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 16) & 0xFF),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 16) & 0xFF),
                  (unsigned
-                  int)((pexport->clients.clientarray[i].client.network.
-                        netaddr >> 8) & 0xFF),
-                 (unsigned int)(pexport->clients.clientarray[i].client.network.
-                                netaddr & 0xFF), (unsigned int)(addr >> 24),
+                  int)((pexport->clients.clientarray[i].client.
+                        network.netaddr >> 8) & 0xFF),
+                 (unsigned int)(pexport->clients.clientarray[i].client.
+                                network.netaddr & 0xFF), (unsigned int)(addr >> 24),
                  (unsigned int)(addr >> 16) & 0xFF, (unsigned int)(addr >> 8) & 0xFF,
                  (unsigned int)(addr & 0xFF));
 #endif
@@ -2208,7 +2260,7 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
     {
       if (ptr_req->rq_cred.oa_flavor != AUTH_NONE)
         return TRUE;
-        else
+      else
         return FALSE;
     }
 #ifdef _USE_TIPRC_IPV6
@@ -2233,7 +2285,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
       else if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
-    } else
+    }
+  else
     {
       psockaddr_in6 = (struct sockaddr_in6 *)pssaddr;
 #ifdef _DEBUG_DISPATCH
@@ -2263,8 +2316,8 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
           if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ROOT))
             return TRUE;
           /* else, check if any access only export matches this client */
-          else
-              if (export_client_match(addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
+          else if (export_client_match
+                   (addr, pexport, pclient_found, EXPORT_OPTION_ACCESS))
             return TRUE;
         }
 
@@ -2272,10 +2325,9 @@ int nfs_export_check_access(struct sockaddr_storage *pssaddr,
           (&(psockaddr_in6->sin6_addr), pexport, pclient_found, EXPORT_OPTION_ROOT))
         return TRUE;
       /* else, check if any access only export matches this client */
-      else
-          if (export_client_matchv6
-                (&(psockaddr_in6->sin6_addr), pexport, pclient_found,
-                   EXPORT_OPTION_ACCESS))
+      else if (export_client_matchv6
+               (&(psockaddr_in6->sin6_addr), pexport, pclient_found,
+                EXPORT_OPTION_ACCESS))
         return TRUE;
     }
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -2336,7 +2388,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           DisplayLog
               ("NFS_STARTUP: CRITICAL: small cache inode client could not be allocated, exiting...");
           exit(1);
-        } else
+        }
+      else
         DisplayLog("NFS STARTUP: small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
@@ -2440,7 +2493,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                   ("NFS STARTUP: /!\\ | Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
                    pcurrent->fullpath, pcurrent->id, cache_status);
               return FALSE;
-            } else
+            }
+          else
             DisplayLogLevel(NIV_EVENT,
                             "NFS STARTUP: Added root entry for path %s on export_id=%d",
                             pcurrent->fullpath, pcurrent->id);

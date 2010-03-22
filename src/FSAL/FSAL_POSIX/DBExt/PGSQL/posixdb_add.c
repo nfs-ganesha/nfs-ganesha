@@ -75,8 +75,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   /**********************************************************
    * 3/ Check if there is an existing Handle for the object *
    **********************************************************/
-  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%llu", p_object_info->devid);
-  snprintf(inode_str, MAX_INODESTR_SIZE, "%llu", p_object_info->inode);
+  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%llu", (unsigned long long int)p_object_info->devid);
+  snprintf(inode_str, MAX_INODESTR_SIZE, "%llu", (unsigned long long int)p_object_info->inode);
   paramValues[0] = devid_str;
   paramValues[1] = inode_str;
   p_res = PQexecPrepared(p_conn, "lookupHandleByInodeFU", 2, paramValues, NULL, NULL, 0);
