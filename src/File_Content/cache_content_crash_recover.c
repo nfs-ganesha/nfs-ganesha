@@ -210,7 +210,8 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                         "File Content Cache record for File ID %llx is unreadable",
                                         inum);
                       continue;
-                    } else
+                    }
+                  else
                     DisplayLogJdLevel(pclient_data->log_outputs, NIV_MAJOR,
                                       "File Content Cache record for File ID %llx : READ OK",
                                       inum);
@@ -229,7 +230,8 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                    "Error adding cached inode for file ID %llx, error=%d",
                                    inum, cache_inode_status);
                       continue;
-                    } else
+                    }
+                  else
                     DisplayLogJdLevel(pclient_inode->log_outputs, NIV_EVENT,
                                       "Cached inode added successfully for file ID %llx",
                                       inum);
@@ -240,7 +242,8 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                     {
                       DisplayLogJd(pclient_inode->log_outputs,
                                    "Error when recovering size for file ID %llx", inum);
-                    } else
+                    }
+                  else
                     pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
 
                   /* Adding the cached entry to the data cache */
@@ -256,7 +259,8 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                    "Error adding cached data for file ID %llx, error=%d",
                                    inum, cache_inode_status);
                       continue;
-                    } else
+                    }
+                  else
                     DisplayLogJdLevel(pclient_data->log_outputs, NIV_EVENT,
                                       "Cached data added successfully for file ID %llx",
                                       inum);

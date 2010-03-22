@@ -233,8 +233,8 @@ int nfs_Lookup(nfs_arg_t * parg,
                        pexport))
                     {
                       if (nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                 &(pres->res_dirop2.DIROP2res_u.diropok.
-                                                   attributes)))
+                                                 &(pres->res_dirop2.DIROP2res_u.
+                                                   diropok.attributes)))
                         {
                           pres->res_dirop2.status = NFS_OK;
                         }
@@ -246,7 +246,7 @@ int nfs_Lookup(nfs_arg_t * parg,
                   if ((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
                        Mem_Alloc(NFS3_FHSIZE)) == NULL)
                     pres->res_lookup3.status = NFS3ERR_INVAL;
-                    else
+                  else
                     {
                       if (nfs3_FSALToFhandle
                           ((nfs_fh3 *) &
@@ -260,32 +260,33 @@ int nfs_Lookup(nfs_arg_t * parg,
                             {
                               pres->res_lookup3.status =
                                   nfs3_fh_to_xattrfh((nfs_fh3 *) &
-                                                     (pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.object.data),
-                                                     (nfs_fh3 *) & (pres->res_lookup3.
-                                                                    LOOKUP3res_u.resok.
-                                                                    object.data));
+                                                     (pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.object.data),
+                                                     (nfs_fh3 *) & (pres->
+                                                                    res_lookup3.LOOKUP3res_u.
+                                                                    resok.object.data));
                               /* Build entry attributes */
                               nfs_SetPostOpXAttrDir(pcontext, pexport,
                                                     &attr,
-                                                    &(pres->res_lookup3.LOOKUP3res_u.
-                                                      resok.obj_attributes));
+                                                    &(pres->res_lookup3.
+                                                      LOOKUP3res_u.resok.obj_attributes));
 
-                            } else
+                            }
+                          else
 #endif
                             /* Build entry attributes */
                             nfs_SetPostOpAttr(pcontext, pexport,
                                               pentry_file,
                                               &attr,
-                                              &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                                obj_attributes));
+                                              &(pres->res_lookup3.LOOKUP3res_u.
+                                                resok.obj_attributes));
 
                           /* Build directory attributes */
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             pentry_dir,
                                             &attrdir,
-                                            &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                              dir_attributes));
+                                            &(pres->res_lookup3.LOOKUP3res_u.
+                                              resok.dir_attributes));
 
                           pres->res_lookup3.status = NFS3_OK;
                         }       /* if */

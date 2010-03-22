@@ -268,7 +268,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                 pres->res_readdir3.status = NFS3ERR_BAD_COOKIE;
                 return NFS_REQ_OK;
               }
-          } else
+          }
+        else
           {
             /*
              * This cookie verifier will always produce
@@ -378,7 +379,8 @@ int nfs_Readdir(nfs_arg_t * parg,
     {
       asked_num_entries = estimated_num_entries;
       cache_inode_cookie = cookie - 2;
-    } else
+    }
+  else
     {
 
       /* keep space for "." and ".." */
@@ -440,7 +442,8 @@ int nfs_Readdir(nfs_arg_t * parg,
               memcpy(RES_READDIR3_OK.cookieverf, cookie_verifier, sizeof(cookieverf3));
               break;
             }
-        } else
+        }
+      else
         {
           typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
           entry_name_array_item_t *entry_name_array;
@@ -525,7 +528,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       if (estimated_num_entries > 1)
                         RES_READDIR2_OK.entries[0].nextentry =
                             &(RES_READDIR2_OK.entries[1]);
-                        else
+                      else
                         RES_READDIR2_OK.entries[0].nextentry = NULL;
 
                       delta++;
@@ -574,8 +577,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                       FSAL_DigestHandle(pcontext->export_context,
                                         FSAL_DIGEST_FILEID2,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR2_OK.entries[delta].
-                                                     fileid));
+                                        (caddr_t) & (RES_READDIR2_OK.
+                                                     entries[delta].fileid));
 
                       RES_READDIR2_OK.entries[delta].name = entry_name_array[delta];
                       strcpy(RES_READDIR2_OK.entries[delta].name, "..");
@@ -587,7 +590,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       if ((num_entries > 0) && (estimated_num_entries > delta + 1))
                         RES_READDIR2_OK.entries[delta].nextentry =
                             &(RES_READDIR2_OK.entries[delta + 1]);
-                        else
+                      else
                         RES_READDIR2_OK.entries[delta].nextentry = NULL;
 
                       delta++;
@@ -639,7 +642,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                   if (i != num_entries + delta - 1)
                     *((int *)RES_READDIR2_OK.entries[i].cookie) =
                         cookie_array[i + 1 - delta] + 2;
-                    else
+                  else
                     *((int *)RES_READDIR2_OK.entries[i].cookie) = end_cookie + 2;
 
                   RES_READDIR2_OK.entries[i].nextentry = NULL;
@@ -702,8 +705,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                       FSAL_DigestHandle(pcontext->export_context,
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR3_OK.reply.entries[0].
-                                                     fileid));
+                                        (caddr_t) & (RES_READDIR3_OK.reply.
+                                                     entries[0].fileid));
 
                       RES_READDIR3_OK.reply.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR3_OK.reply.entries[0].name, ".");
@@ -715,7 +718,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       if (estimated_num_entries > 1)
                         RES_READDIR3_OK.reply.entries[0].nextentry =
                             &(RES_READDIR3_OK.reply.entries[1]);
-                        else
+                      else
                         RES_READDIR3_OK.reply.entries[0].nextentry = NULL;
 
                       delta++;
@@ -770,8 +773,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                       FSAL_DigestHandle(pcontext->export_context,
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR3_OK.reply.entries[delta].
-                                                     fileid));
+                                        (caddr_t) & (RES_READDIR3_OK.reply.
+                                                     entries[delta].fileid));
 
                       RES_READDIR3_OK.reply.entries[delta].name = entry_name_array[delta];
                       strcpy(RES_READDIR3_OK.reply.entries[delta].name, "..");
@@ -783,7 +786,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       if ((num_entries > 0) && (estimated_num_entries > delta + 1))
                         RES_READDIR3_OK.reply.entries[delta].nextentry =
                             &(RES_READDIR3_OK.reply.entries[delta + 1]);
-                        else
+                      else
                         RES_READDIR3_OK.reply.entries[delta].nextentry = NULL;
 
                       delta++;
@@ -820,8 +823,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                                     cache_inode_get_fsal_handle(dirent_array
                                                                 [i - delta].pentry,
                                                                 &cache_status_gethandle),
-                                    (caddr_t) & (RES_READDIR3_OK.reply.entries[i].
-                                                 fileid));
+                                    (caddr_t) & (RES_READDIR3_OK.reply.
+                                                 entries[i].fileid));
 
                   FSAL_name2str(&dirent_array[i - delta].name, entry_name_array[i],
                                 FSAL_MAX_NAME_LEN);
@@ -836,7 +839,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                   if (i != num_entries + delta - 1)
                     RES_READDIR3_OK.reply.entries[i].cookie =
                         cookie_array[i + 1 - delta] + 2;
-                    else
+                  else
                     RES_READDIR3_OK.reply.entries[i].cookie = end_cookie + 2;
 
                   RES_READDIR3_OK.reply.entries[i].nextentry = NULL;

@@ -268,7 +268,8 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
       /* Set the head state id */
       pentry->object.file.pstate_head = (void *)pnew_state;
-    } else
+    }
+  else
     {
       /* Brwose the state's list */
       for (piter_state = pentry->object.file.pstate_head; piter_state != NULL;
@@ -502,7 +503,8 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
         {
           /* I am the only remaining state, set the head counter to 0 in the pentry */
           pentry->object.file.pstate_head = NULL;
-        } else
+        }
+      else
         {
           /* The state that is next to me become the new head */
           pentry->object.file.pstate_head = (void *)pstate->next;
@@ -611,7 +613,8 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
         {
           /* I am the only remaining state, set the head counter to 0 in the pentry */
           pentry->object.file.pstate_head = NULL;
-        } else
+        }
+      else
         {
           /* The state that is next to me become the new head */
           pentry->object.file.pstate_head = (void *)pstate->next;
@@ -711,7 +714,8 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
     {
       /* The file already have at least one state, browse all of them, starting with the first state */
       piter_state = pentry->object.file.pstate_head;
-    } else
+    }
+  else
     {
       /* Sanity check: make sure that this state is related to this pentry */
       if (previous_pstate->pentry != pentry)

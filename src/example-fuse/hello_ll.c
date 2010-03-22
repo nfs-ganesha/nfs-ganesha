@@ -53,7 +53,7 @@ static void hello_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_in
   memset(&stbuf, 0, sizeof(stbuf));
   if (hello_stat(ino, &stbuf) == -1)
     fuse_reply_err(req, ENOENT);
-    else
+  else
     fuse_reply_attr(req, &stbuf, 1.0);
 }
 
@@ -63,7 +63,7 @@ static void hello_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 
   if (parent != 1 || strcmp(name, hello_name) != 0)
     fuse_reply_err(req, ENOENT);
-    else
+  else
     {
       memset(&e, 0, sizeof(e));
       e.ino = 2;
@@ -98,7 +98,7 @@ static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
 {
   if (off < bufsize)
     return fuse_reply_buf(req, buf + off, min(bufsize - off, maxsize));
-    else
+  else
     return fuse_reply_buf(req, NULL, 0);
 }
 
@@ -109,7 +109,7 @@ static void hello_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 
   if (ino != 1)
     fuse_reply_err(req, ENOTDIR);
-    else
+  else
     {
       struct dirbuf b;
 
@@ -128,7 +128,7 @@ static void hello_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info 
     fuse_reply_err(req, EISDIR);
   else if ((fi->flags & 3) != O_RDONLY)
     fuse_reply_err(req, EACCES);
-    else
+  else
     fuse_reply_open(req, fi);
 }
 

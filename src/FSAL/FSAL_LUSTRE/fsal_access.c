@@ -88,7 +88,8 @@ fsal_status_t FSAL_access(fsal_handle_t * p_object_handle,      /* IN */
       status =
           fsal_internal_testAccess(p_context, access_type, NULL, p_object_attributes);
 
-    } else
+    }
+  else
     {                           /* p_object_attributes is NULL */
       fsal_attrib_list_t attrs;
 

@@ -102,7 +102,8 @@ void MesureTemps(struct Temps *resultatp, struct Temps *basep)
     {
       resultatp->secondes = t.tv_sec;
       resultatp->micro_secondes = t.tv_usec;
-    } else
+    }
+  else
     {
       long tempo;
 
@@ -111,7 +112,8 @@ void MesureTemps(struct Temps *resultatp, struct Temps *basep)
         {
           resultatp->secondes--;
           resultatp->micro_secondes = tempo + 1000000;
-        } else
+        }
+      else
         {
           resultatp->micro_secondes = tempo;
         }
@@ -126,7 +128,8 @@ char *ConvertiTempsChaine(struct Temps temps, char *resultat)
   if (resultat == NULL)
     {
       ptr = chaine;
-    } else
+    }
+  else
     {
       ptr = resultat;
     }
@@ -144,7 +147,8 @@ struct Temps *ConvertiChaineTemps(char *chaine, struct Temps *resultatp)
   if (resultatp == NULL)
     {
       tp = &temps;
-    } else
+    }
+  else
     {
       tp = resultatp;
     }
@@ -153,7 +157,8 @@ struct Temps *ConvertiChaineTemps(char *chaine, struct Temps *resultatp)
     {
       tp->secondes = atoi(chaine);
       tp->micro_secondes = 0;
-    } else
+    }
+  else
     {
       *ptr = '\0';
       tp->secondes = atoi(chaine);

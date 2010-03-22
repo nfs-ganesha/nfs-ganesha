@@ -247,7 +247,8 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
       if (!xdr_replymsg(xdrs, msg) ||
           !SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_proc, xdr_where))
         return (FALSE);
-  } else if (!xdr_replymsg(xdrs, msg))
+    }
+  else if (!xdr_replymsg(xdrs, msg))
     {
       return (FALSE);
     }

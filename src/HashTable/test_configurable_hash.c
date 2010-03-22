@@ -160,11 +160,11 @@ int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
   /* Test if one of teh entries are NULL */
   if (buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
-    else
+  else
     {
       if (buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
-        else
+      else
         return strcmp(buff1->pdata, buff2->pdata);
     }
   /* This line should never be reached */
@@ -192,7 +192,7 @@ int do_get(hash_table_t * ht, int key, int *pval)
 
   if ((rc = HashTable_Get(ht, &buffkey, &buffval)) == HASHTABLE_SUCCESS)
     *pval = atoi(buffval.pdata);
-    else
+  else
     *pval = -1;
 
   return rc;
@@ -391,14 +391,16 @@ int main(int argc, char *argv[])
         {
           /* # indique un commentaire */
           continue;
-      } else if (c == ' ' || c == '\t' || rc == -1)
+        }
+      else if (c == ' ' || c == '\t' || rc == -1)
         {
           /* Cas d'une ligne vide */
           if (rc > 1)
             printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
           continue;
-        } else
+        }
+      else
         {
           if (rc != 4)
             {
@@ -419,7 +421,7 @@ int main(int argc, char *argv[])
           if (hrc != expected_rc)
             printf(">>>> ERREUR: set  %d %d: %d != %d (expected)\n", key, val, hrc,
                    expected_rc);
-            else
+          else
             printf(">>>> OK set  %d %d\n", key, val);
           break;
 
@@ -431,7 +433,7 @@ int main(int argc, char *argv[])
 
           if (hrc != expected_rc)
             printf(">>>> ERREUR: test %d : %d != %d (expected)\n", key, hrc, expected_rc);
-            else
+          else
             printf(">>>> OK test %d \n", key);
           break;
 
@@ -444,7 +446,7 @@ int main(int argc, char *argv[])
           if (hrc != expected_rc)
             printf(">>>> ERREUR: new  %d %d: %d != %d (expected)\n", key, val, hrc,
                    expected_rc);
-            else
+          else
             printf(">>>> OK new  %d %d\n", key, val);
           break;
 
@@ -457,7 +459,7 @@ int main(int argc, char *argv[])
           if (hrc != expected_rc)
             printf(">>>> ERREUR: get  %d %d: %d != %d (expected)\n", key, val, hrc,
                    expected_rc);
-            else
+          else
             {
               if (hrc == HASHTABLE_SUCCESS)
                 {
@@ -465,7 +467,7 @@ int main(int argc, char *argv[])
                     printf
                         (">>>> ERREUR: get %d Mauvaise valeur lue : %d != %d (expected)\n",
                          key, readval, val);
-                    else
+                  else
                     printf(">>>> OK get  %d %d\n", key, val);
                 }
             }
@@ -479,7 +481,7 @@ int main(int argc, char *argv[])
 
           if (hrc != expected_rc)
             printf(">>>> ERREUR: del  %d  %d != %d (expected)\n", key, hrc, expected_rc);
-            else
+          else
             printf(">>>> OK del  %d %d\n", key, val);
 
           break;

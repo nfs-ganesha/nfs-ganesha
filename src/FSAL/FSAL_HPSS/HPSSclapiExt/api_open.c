@@ -247,7 +247,7 @@ int HPSSFSAL_OpenHandle(ns_ObjHandle_t * ObjHandle,     /* IN - Parent object ha
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   /*
@@ -411,7 +411,7 @@ int HPSSFSAL_CreateHandle(ns_ObjHandle_t * ObjHandle,   /* IN - Parent object ha
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
 #if HPSS_MAJOR_VERSION >= 7
@@ -492,7 +492,8 @@ int HPSSFSAL_CreateHandle(ns_ObjHandle_t * ObjHandle,   /* IN - Parent object ha
     {
       API_DEBUG_FPRINTF(DebugFile, &rqstid,
                         "%s: Could not get attributes, error=%d\n", function_name, error);
-    } else
+    }
+  else
     {
       /*
        *  Call Common_Create() to perform the majority of the common open
@@ -725,7 +726,8 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
                                                CORE_ATTR_GATEWAY_UUID,
                                                CORE_ATTR_DM_HANDLE,
                                                CORE_ATTR_DM_HANDLE_LENGTH, -1);
-        } else
+        }
+      else
         select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
 
       error = API_TraversePath(ThreadContext,
@@ -749,7 +751,8 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                             "%s: Could not find entry.\n", function_name);
           break;                /* break out of retry loop */
-      } else if (error == -ENOENT && (Oflag & O_CREAT) == 0)
+        }
+      else if (error == -ENOENT && (Oflag & O_CREAT) == 0)
         {
           /*
            *  No entry and we are not allowed to create a new one.
@@ -758,7 +761,8 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                             "%s: Could not find entry (!O_CREATE).\n", function_name);
           break;                /* break out of retry loop */
-      } else if ((error == 0) && ((Oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)))
+        }
+      else if ((error == 0) && ((Oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)))
         {
           /*
            *  Can not create an already existing file.
@@ -884,7 +888,8 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
            */
 
           error = 0;
-        } else
+        }
+      else
         break;
 
     }                           /* end of create retry loop */
@@ -1049,17 +1054,19 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
         {
           if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
             error = -ENOTDIR;
-            else
+          else
             {
               hndl_ptr = &hndl;
               pacct_ptr = &attrs.Account;
             }
         }
-  } else if (API_PATH_IS_ROOT(parentpath))
+    }
+  else if (API_PATH_IS_ROOT(parentpath))
     {
       /* If needed, use the root handle */
       error = API_InitRootHandle(ThreadContext, RequestID, &hndl_ptr);
-    } else
+    }
+  else
     {
       /*
        * Otherwise , just look up the COS Id.
@@ -1193,17 +1200,19 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
         {
           if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
             error = -ENOTDIR;
-            else
+          else
             {
               hndl_ptr = &hndl;
               pacct_ptr = &attrs.Account;
             }
         }
-  } else if (API_PATH_IS_ROOT(parentpath))
+    }
+  else if (API_PATH_IS_ROOT(parentpath))
     {
       /* If needed, use the root handle */
       error = API_InitRootHandle(ThreadContext, RequestID, &hndl_ptr);
-    } else
+    }
+  else
     {
       /* Get the Fileset COS from the ThreadState */
       attrs.COSId = ThreadContext->CwdState.FilesetCOS;
@@ -1300,15 +1309,15 @@ static int HPSSFSAL_Common_Open(apithrdstate_t * ThreadContext, /* IN - thread c
                                                HintsOut,
                                                AttrsOut, HandleOut, ++LoopCount);
 
-                } /* error from ReadlinkHandle > 0 */
-                else
+                }               /* error from ReadlinkHandle > 0 */
+              else
                 {
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "Could not get path for symlink."
                                     " path =%s, errno=%d\n", file, -error);
                 }
-            } /* object is a sym link */
-            else
+            }                   /* object is a sym link */
+          else
             {
               error = -EISDIR;
             }
@@ -1629,11 +1638,11 @@ static int HPSSFSAL_Common_Create(apithrdstate_t * ThreadContext,       /* IN - 
           /* Start with any hints & prios passed in */
           if (HintsIn != NULL)
             memcpy(&hint, HintsIn, sizeof(hint));
-            else
+          else
             memset(&hint, 0, sizeof(hint));
           if (HintsPri != NULL)
             memcpy(&prio, HintsPri, sizeof(prio));
-            else
+          else
             memset(&prio, 0, sizeof(prio));
 
           /* Select the COS based on that of the parent */
@@ -1641,7 +1650,8 @@ static int HPSSFSAL_Common_Create(apithrdstate_t * ThreadContext,       /* IN - 
           prio.COSIdPriority = REQUIRED_PRIORITY;
           hintptr = &hint;
           prioptr = &prio;
-        } else
+        }
+      else
         {
           /*
            * Just use the Hints that were passed in.
@@ -1720,7 +1730,7 @@ static int HPSSFSAL_Common_Create(apithrdstate_t * ThreadContext,       /* IN - 
 
       if (AttrsOut != (hpss_Attrs_t *) NULL)
         select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
-        else
+      else
         select_flags = cast64m(0);
 
       error = API_core_CreateFile(ThreadContext,
@@ -1900,13 +1910,14 @@ static int HPSSFSAL_Common_Create(apithrdstate_t * ThreadContext,       /* IN - 
 
           if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
             error = -ENOTDIR;
-            else
+          else
             {
               hndl_ptr = &hndl;
               pacct_ptr = &attrs.Account;
             }
         }
-  } else if (API_PATH_IS_ROOT(parentpath))
+    }
+  else if (API_PATH_IS_ROOT(parentpath))
     {
       /* If needed, use the root handle */
       error = API_InitRootHandle(ThreadContext, RequestID, &hndl_ptr);
@@ -2048,10 +2059,12 @@ static int HPSSFSAL_Common_Open_Bitfile(apithrdstate_t * ThreadContext, /* IN - 
   if ((Oflag & O_ACCMODE) == O_RDONLY)
     {
       bfsopenflags = BFS_OPEN_READ;
-  } else if ((Oflag & O_ACCMODE) == O_WRONLY)
+    }
+  else if ((Oflag & O_ACCMODE) == O_WRONLY)
     {
       bfsopenflags = BFS_OPEN_WRITE;
-    } else
+    }
+  else
     {
       bfsopenflags = BFS_OPEN_READ | BFS_OPEN_WRITE;
     }
@@ -2173,7 +2186,8 @@ static int HPSSFSAL_Common_Open_Bitfile(apithrdstate_t * ThreadContext, /* IN - 
           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                             "%s: Couldn't get"
                             " bitfile attributes: %d\n", function_name, error);
-      } else if (bfattr.BfAttribMd.Flags & CACHE_DATA_VALID)
+        }
+      else if (bfattr.BfAttribMd.Flags & CACHE_DATA_VALID)
         {
 
           /*
@@ -2472,10 +2486,12 @@ static int HPSSFSAL_Common_Open_File(apithrdstate_t * ThreadContext,    /* IN - 
   if ((Oflag & O_ACCMODE) == O_RDONLY)
     {
       oflags = BFS_OPEN_READ;
-  } else if ((Oflag & O_ACCMODE) == O_WRONLY)
+    }
+  else if ((Oflag & O_ACCMODE) == O_WRONLY)
     {
       oflags = BFS_OPEN_WRITE;
-    } else
+    }
+  else
     {
       oflags = BFS_OPEN_READ | BFS_OPEN_WRITE;
     }
@@ -2564,7 +2580,8 @@ static int HPSSFSAL_Common_Open_File(apithrdstate_t * ThreadContext,    /* IN - 
           API_DEBUG_FPRINTF(DebugFile, &RequestID, "%s: couldn't"
                             " get the account code from the given"
                             " information: error= %d\n", function_name, error);
-        } else
+        }
+      else
         {
           if (ParentAcct == NULL)
             {
@@ -2592,7 +2609,8 @@ static int HPSSFSAL_Common_Open_File(apithrdstate_t * ThreadContext,    /* IN - 
                                     " the account code: error= %d\n",
                                     function_name, error);
                   error = -EPERM;
-                } else
+                }
+              else
                 {
                   /*
                    * Everything went okay, setup the attributes for the new file
@@ -2659,7 +2677,8 @@ static int HPSSFSAL_Common_Open_File(apithrdstate_t * ThreadContext,    /* IN - 
 
           API_LogMsg(function_name, RequestID, CS_DEBUG,
                      COMMUNICATION_ERROR, WARNING, API_OPEN_LISTEN_DESC_ERROR, error);
-        } else
+        }
+      else
         {
 
           /*
@@ -2848,7 +2867,7 @@ static int HPSSFSAL_Common_Create_File(apithrdstate_t * ThreadContext,  /* IN - 
 
   if (AttrsOut != (hpss_Attrs_t *) NULL)
     select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
-    else
+  else
     select_flags = cast64m(0);
 
   error = API_core_CreateFile(ThreadContext,

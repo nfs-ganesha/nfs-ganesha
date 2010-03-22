@@ -10,7 +10,8 @@ int main(int argc, char **argv)
   if ((argc > 1) && (argv[1]))
     {
       filename = argv[1];
-    } else
+    }
+  else
     {
       fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
       return -1;

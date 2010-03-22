@@ -243,7 +243,8 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
             {
               int_tab_indexes[nb_int] = i - root_len;
               nb_int++;
-          } else if (in_fsal_handle->oid_tab[i] > MAX_CHAR_VAL)
+            }
+          else if (in_fsal_handle->oid_tab[i] > MAX_CHAR_VAL)
             {
               short_tab_indexes[nb_short] = i - root_len;
               nb_short++;
@@ -307,7 +308,8 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                   (unsigned char)((in_fsal_handle->oid_tab[i + root_len] >> 8) & 0xFF);
 
               curr_addr += 2;
-            } else              /* write 1 byte */
+            }
+          else                  /* write 1 byte */
             {
               if (curr_addr + 1 > (unsigned char *)out_buff + FSAL_DIGEST_SIZE_HDLV2)
                 ReturnCode(ERR_FSAL_TOOSMALL, 0);
@@ -468,16 +470,17 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
                    ((unsigned long)curr_addr[0] << 24));
               curr_addr += 4;
               curr_int_idx++;
-          }
-            else if ((curr_short_idx < short_tab_indexes + nb_short)
-                       && (i == *curr_short_idx))
+            }
+          else if ((curr_short_idx < short_tab_indexes + nb_short)
+                   && (i == *curr_short_idx))
             {
               /* read 2 bytes */
               out_fsal_handle->oid_tab[i + root_len] =
                   ((unsigned long)curr_addr[1] + ((unsigned long)curr_addr[0] << 8));
               curr_addr += 2;
               curr_short_idx++;
-            } else
+            }
+          else
             {
               /* read 1 byte */
               out_fsal_handle->oid_tab[i + root_len] = (unsigned long)curr_addr[0];
@@ -632,7 +635,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FSAL);
@@ -669,12 +673,14 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
 
-      } else if (!STRCMP(key_name, "LogFile"))
+        }
+      else if (!STRCMP(key_name, "LogFile"))
         {
 
           LogFile = key_value;
 
-      } else if (!STRCMP(key_name, "Max_FS_calls"))
+        }
+      else if (!STRCMP(key_name, "Max_FS_calls"))
         {
 
           int maxcalls = s_read_int(key_value);
@@ -689,7 +695,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           out_parameter->fsal_info.max_fs_calls = (unsigned int)maxcalls;
 
-        } else
+        }
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -712,7 +719,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       if (DebugLevel == -1)
         AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
                        V_FILE, log_stream, NIV_CRIT, SUP);
-        else
+      else
         AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
                        V_FILE, log_stream, DebugLevel, SUP);
 
@@ -741,7 +748,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_COMMON);
@@ -797,7 +805,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, link_support,
                              FSAL_INIT_MAX_LIMIT, bool);
 
-      } else if (!STRCMP(key_name, "symlink_support"))
+        }
+      else if (!STRCMP(key_name, "symlink_support"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -814,7 +823,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
            */
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, symlink_support,
                              FSAL_INIT_MAX_LIMIT, bool);
-      } else if (!STRCMP(key_name, "cansettime"))
+        }
+      else if (!STRCMP(key_name, "cansettime"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -832,7 +842,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, cansettime,
                              FSAL_INIT_MAX_LIMIT, bool);
 
-      } else if (!STRCMP(key_name, "maxread"))
+        }
+      else if (!STRCMP(key_name, "maxread"))
         {
           fsal_u64_t size;
 
@@ -847,7 +858,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, maxread,
                              FSAL_INIT_FORCE_VALUE, size);
 
-      } else if (!STRCMP(key_name, "maxwrite"))
+        }
+      else if (!STRCMP(key_name, "maxwrite"))
         {
           fsal_u64_t size;
 
@@ -862,7 +874,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, maxwrite,
                              FSAL_INIT_FORCE_VALUE, size);
 
-      } else if (!STRCMP(key_name, "umask"))
+        }
+      else if (!STRCMP(key_name, "umask"))
         {
           int mode = s_read_octal(key_value);
 
@@ -877,7 +890,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, umask,
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
-      } else if (!STRCMP(key_name, "auth_xdev_export"))
+        }
+      else if (!STRCMP(key_name, "auth_xdev_export"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -891,7 +905,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, auth_exportpath_xdev,
                              FSAL_INIT_FORCE_VALUE, bool);
-      } else if (!STRCMP(key_name, "xattr_access_rights"))
+        }
+      else if (!STRCMP(key_name, "xattr_access_rights"))
         {
           int mode = s_read_octal(key_value);
 
@@ -906,7 +921,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, xattr_access_rights,
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
-        } else
+        }
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -940,7 +956,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_SPECIFIC);
@@ -981,14 +998,17 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             }
           out_parameter->fs_specific_info.snmp_version = version;
 
-      } else if (!STRCMP(key_name, "snmp_server"))
+        }
+      else if (!STRCMP(key_name, "snmp_server"))
         {
           strncpy(out_parameter->fs_specific_info.snmp_server, key_value, HOST_NAME_MAX);
-      } else if (!STRCMP(key_name, "community"))
+        }
+      else if (!STRCMP(key_name, "community"))
         {
           strncpy(out_parameter->fs_specific_info.community, key_value,
                   COMMUNITY_MAX_LEN);
-      } else if (!STRCMP(key_name, "nb_retries"))
+        }
+      else if (!STRCMP(key_name, "nb_retries"))
         {
           int retries = s_read_int(key_value);
 
@@ -1001,7 +1021,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             }
           out_parameter->fs_specific_info.nb_retries = retries;
 
-      } else if (!STRCMP(key_name, "microsec_timeout"))
+        }
+      else if (!STRCMP(key_name, "microsec_timeout"))
         {
           int timeout = s_read_int(key_value);
 
@@ -1014,7 +1035,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             }
           out_parameter->fs_specific_info.microsec_timeout = timeout;
 
-      } else if (!STRCMP(key_name, "enable_descriptions"))
+        }
+      else if (!STRCMP(key_name, "enable_descriptions"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -1027,10 +1049,12 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             }
           out_parameter->fs_specific_info.enable_descriptions = bool;
 
-      } else if (!STRCMP(key_name, "client_name"))
+        }
+      else if (!STRCMP(key_name, "client_name"))
         {
           strncpy(out_parameter->fs_specific_info.client_name, key_value, 256);
-      } else if (!STRCMP(key_name, "snmp_getbulk_count"))
+        }
+      else if (!STRCMP(key_name, "snmp_getbulk_count"))
         {
           int count = s_read_int(key_value);
 
@@ -1043,27 +1067,33 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             }
           out_parameter->fs_specific_info.getbulk_count = count;
 
-      } else if (!STRCMP(key_name, "auth_proto"))
+        }
+      else if (!STRCMP(key_name, "auth_proto"))
         {
           strncpy(out_parameter->fs_specific_info.auth_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
-      } else if (!STRCMP(key_name, "enc_proto"))
+        }
+      else if (!STRCMP(key_name, "enc_proto"))
         {
           strncpy(out_parameter->fs_specific_info.enc_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
-      } else if (!STRCMP(key_name, "username"))
+        }
+      else if (!STRCMP(key_name, "username"))
         {
           strncpy(out_parameter->fs_specific_info.username, key_value,
                   FSAL_MAX_USERNAME_LEN);
-      } else if (!STRCMP(key_name, "auth_phrase"))
+        }
+      else if (!STRCMP(key_name, "auth_phrase"))
         {
           strncpy(out_parameter->fs_specific_info.auth_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);
-      } else if (!STRCMP(key_name, "enc_phrase"))
+        }
+      else if (!STRCMP(key_name, "enc_phrase"))
         {
           strncpy(out_parameter->fs_specific_info.enc_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);
-        } else
+        }
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",

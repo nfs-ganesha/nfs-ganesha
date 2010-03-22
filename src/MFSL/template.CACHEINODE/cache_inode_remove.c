@@ -70,7 +70,8 @@ cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t * pentry)
             break;
 
           pentry_iter = pentry_iter->object.dir_begin.pdir_cont;
-        } else
+        }
+      else
         {
           if (pentry_iter->object.dir_cont.nbactive != 0)
             {
@@ -244,7 +245,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     {
       fsal_handle_parent = pentry->object.dir_begin.handle;
       pparent_attr = &pentry->object.dir_begin.attributes;
-  } else if (pentry->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry->internal_md.type == DIR_CONTINUE)
     {
       if (use_mutex)
         P(pentry->object.dir_cont.pdir_begin->lock);
@@ -337,7 +339,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           return status;
         }
 
-    } else
+    }
+  else
     {
       if (use_mutex)
         V(pentry->lock);
@@ -358,7 +361,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       pentry->object.dir_begin.attributes.mtime.nseconds = pasyncopdesc->op_time.tv_usec;
       pentry->object.dir_begin.attributes.ctime.seconds = pasyncopdesc->op_time.tv_sec;
       pentry->object.dir_begin.attributes.ctime.nseconds = pasyncopdesc->op_time.tv_usec;
-  } else if (pentry->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry->internal_md.type == DIR_CONTINUE)
     {
       if (use_mutex)
         P(pentry->object.dir_cont.pdir_begin->lock);
@@ -423,7 +427,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
               break;
             }
         }
-    } else
+    }
+  else
     {
       /* No hardlink counter to be decremented for a directory: hardlink are not allowed for them */
     }
@@ -479,7 +484,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       fsaldata.handle = *pfsal_handle_remove;
       if (to_remove_entry->internal_md.type != DIR_CONTINUE)
         fsaldata.cookie = DIR_START;
-        else
+      else
         fsaldata.cookie = to_remove_entry->object.dir_cont.dir_cont_pos;
 
       if (cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
@@ -568,7 +573,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
   if (status == CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_success[CACHE_INODE_REMOVE] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1;
 
   return status;

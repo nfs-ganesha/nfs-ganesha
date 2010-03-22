@@ -157,7 +157,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
         bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
-        else
+      else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
@@ -352,7 +352,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                         "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                         fsal_info->max_fs_calls);
 
-    } else
+    }
+  else
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
@@ -480,7 +481,8 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
       *end = '/';
       end++;
       strcpy(end, p_name->name);
-    } else
+    }
+  else
     {
       if (p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
         ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
@@ -615,7 +617,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       uid = p_object_attributes->owner;
       gid = p_object_attributes->group;
       mode = p_object_attributes->mode;
-    } else
+    }
+  else
     {
       uid = p_buffstat->st_uid;
       gid = p_buffstat->st_gid;
@@ -642,7 +645,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
-        else
+      else
         {
 #if defined( _DEBUG_FSAL )
           DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
@@ -700,7 +703,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
-        else
+      else
         ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
@@ -720,7 +723,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   if (missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    else
+  else
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
 }

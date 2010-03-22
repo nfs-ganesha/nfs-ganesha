@@ -256,7 +256,8 @@ u_int recvsize;
   if (ss.ss_family == AF_INET)
     {
       map_ipv4_to_ipv6((struct sockaddr_in *)&ss, &sin6);
-    } else
+    }
+  else
     {
       memcpy(&sin6, &ss, sizeof(ss));
     }
@@ -269,7 +270,7 @@ u_int recvsize;
     }
   if (ss.ss_family == AF_INET)
     memcpy(ret->xp_rtaddr.buf, &ss, (size_t) sizeof(ss));
-    else
+  else
     memcpy(ret->xp_rtaddr.buf, &sin6, (size_t) sizeof(ss));
 #ifdef PORTMAP
   if (sin6.sin6_family == AF_INET6 || sin6.sin6_family == AF_LOCAL)
@@ -380,7 +381,8 @@ struct rpc_msg *msg;
   if (addr.ss_family == AF_INET)
     {
       map_ipv4_to_ipv6((struct sockaddr_in *)&addr, &sin6);
-    } else
+    }
+  else
     {
       memcpy(&sin6, &addr, len);
     }
@@ -390,7 +392,7 @@ struct rpc_msg *msg;
 
   if (addr.ss_family == AF_INET)
     memcpy(newxprt->xp_rtaddr.buf, &addr, len);
-    else
+  else
     memcpy(newxprt->xp_rtaddr.buf, &sin6, len);
   newxprt->xp_rtaddr.maxlen = newxprt->xp_rtaddr.len = len;
 #ifdef PORTMAP
@@ -424,7 +426,8 @@ struct rpc_msg *msg;
         cd->recvsize = cd->maxrec;
       cd->nonblock = TRUE;
       __xdrrec_setnonblock(&cd->xdrs, cd->maxrec);
-    } else
+    }
+  else
     cd->nonblock = FALSE;
   gettimeofday(&cd->last_recv_time, NULL);
 
@@ -483,7 +486,8 @@ SVCXPRT *xprt;
       r = (struct cf_rendezvous *)xprt->xp_p1;
       Mem_Free(r);
       xprt->xp_port = 0;
-    } else
+    }
+  else
     {
       /* an actual connection socket */
       XDR_DESTROY(&(cd->xdrs));
@@ -564,7 +568,7 @@ int len;
         {
           if (errno == EAGAIN)
             len = 0;
-            else
+          else
             goto fatal_err;
         }
       if (len != 0)
@@ -817,7 +821,8 @@ int __rpc_get_local_uid(SVCXPRT * transp, uid_t * uid)
       if (ret == 0)
         *uid = euid;
       return (ret);
-    } else
+    }
+  else
     return (-1);
 }
 

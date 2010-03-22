@@ -93,7 +93,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
       if (rc)
         Return(ghost2fsal_error(rc), rc, INDEX_FSAL_lookup);
 
-    } else
+    }
+  else
     {
 
       /* test lookup right (X) on parent directory.

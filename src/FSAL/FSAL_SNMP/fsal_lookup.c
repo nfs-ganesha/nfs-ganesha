@@ -106,7 +106,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
             }
         }
 
-    } else                      /* this is a real lookup(parent, name)  */
+    }
+  else                          /* this is a real lookup(parent, name)  */
     {
       struct tree *curr_child = NULL;
       int found = FALSE;
@@ -178,7 +179,7 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
 
           if (object_handle->oid_len == 0)
             object_handle->object_type_reminder = FSAL_NODETYPE_ROOT;
-            else
+          else
             object_handle->object_type_reminder = FSAL_NODETYPE_NODE;
 
           printf("parent handle has (oid len = %u)\n", object_handle->oid_len);
@@ -304,7 +305,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
                                     "ERROR: unexpected return value from HasSNMPChild");
                   Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
                 }
-            } else
+            }
+          else
             {
               /* this is a typed object, so its a leaf */
               object_handle->object_type_reminder = FSAL_NODETYPE_LEAF;
@@ -321,8 +323,9 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
         {
           rc = snmp2fsal_attributes(object_handle,
                                     (object_handle->object_type_reminder ==
-                                     FSAL_NODETYPE_LEAF ? p_context->snmp_response->
-                                     variables : NULL), curr_child, object_attributes);
+                                     FSAL_NODETYPE_LEAF ? p_context->
+                                     snmp_response->variables : NULL), curr_child,
+                                    object_attributes);
 
           if (rc != 0)
             {

@@ -246,7 +246,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* This is not a directory */
       if (dir_pentry->internal_md.type == SYMBOLIC_LINK)
         res_LOOKUP4.status = NFS4ERR_SYMLINK;
-        else
+      else
         res_LOOKUP4.status = NFS4ERR_NOTDIR;
 
       /* Return failed status */

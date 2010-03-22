@@ -166,7 +166,7 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
   if (openflags & FSAL_O_RDONLY)
     file_descriptor->rw_mode = FSAL_MODE_READ;
-    else
+  else
     file_descriptor->rw_mode = FSAL_MODE_WRITE;
 
   /* if attributes are asked, get them */
@@ -385,7 +385,8 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
     {
       tmp_buf[sz - 1] = '\0';
       sz--;
-  } else if (sz > 1 && tmp_buf[sz - 2] == '\n')
+    }
+  else if (sz > 1 && tmp_buf[sz - 2] == '\n')
     {
       tmp_buf[sz - 2] = '\0';
       sz--;

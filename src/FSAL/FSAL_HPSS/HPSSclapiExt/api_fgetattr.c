@@ -130,7 +130,7 @@ int HPSSFSAL_GetRawAttrHandle(ns_ObjHandle_t * ObjHandle,       /* IN - parent o
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   /*
@@ -318,7 +318,8 @@ static int HPSSFSAL_Common_FileGetAttributes(apithrdstate_t * ThreadContext,    
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                         "%s: Could not get attributes, error=%d\n", function_name, error);
-  } else if (XAttrOut != NULL)
+    }
+  else if (XAttrOut != NULL)
     {
       XAttrOut->ObjectHandle = AttrOut->ObjectHandle;
       XAttrOut->Attrs = AttrOut->Attrs;

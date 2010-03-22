@@ -133,11 +133,11 @@ int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
   /* Test if one of teh entries are NULL */
   if (buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
-    else
+  else
     {
       if (buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
-        else
+      else
         {
           int rc;
           pfsdata1 = (cache_inode_fsal_data_t *) (buff1->pdata);
@@ -196,7 +196,8 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
       *ppoolfsdata = *pfsdata;
 
       pkey->pdata = (caddr_t) ppoolfsdata;
-    } else
+    }
+  else
     pkey->pdata = (caddr_t) pfsdata;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -351,7 +352,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
       if (type == DIR_BEGINNING)
         pentry->object.dir_begin.pdir_data = pdir_data;
-        else
+      else
         pentry->object.dir_cont.pdir_data = pdir_data;
     }
 
@@ -413,7 +414,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
               return NULL;
             }
         }
-    } else
+    }
+  else
     {
       /* Use the provided attributes */
       fsal_attributes = *pfsal_attr;
@@ -665,8 +667,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                                                                             NULL,
                                                                             (cache_content_client_t
                                                                              *)
-                                                                            pclient->
-                                                                            pcontent_client,
+                                                                            pclient->pcontent_client,
                                                                             RECOVER_ENTRY,
                                                                             pcontext,
                                                                             &cache_content_status))
@@ -674,18 +675,20 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
             {
               DisplayLogJd(pclient->log_outputs,
                            "Error recovering cached data for pentry %p", pentry);
-            } else
+            }
+          else
             DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                               "Cached data added successfully for pentry %p", pentry);
 
           /* Recover the size from the data cache too... */
           if ((size_in_cache =
-               cache_content_get_cached_size((cache_content_entry_t *) pentry->object.
-                                             file.pentry_content)) == -1)
+               cache_content_get_cached_size((cache_content_entry_t *) pentry->
+                                             object.file.pentry_content)) == -1)
             {
               DisplayLogJd(pclient->log_outputs,
                            "Error when recovering size in cache for pentry %p", pentry);
-            } else
+            }
+          else
             pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
 
         }
@@ -1144,7 +1147,8 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
     {
       preturned_handle = NULL;
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-    } else
+    }
+  else
     {
       switch (pentry->internal_md.type)
         {
@@ -1207,8 +1211,8 @@ int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
 
   if (pentry_dest->internal_md.type == DIR_CONTINUE)
     return cache_inode_type_are_rename_compatible(pentry_src,
-                                                  pentry_dest->object.dir_cont.
-                                                  pdir_begin);
+                                                  pentry_dest->object.
+                                                  dir_cont.pdir_begin);
 
   /* TRUE is both entries are non directories or to directories and the second is empty */
   if (pentry_src->internal_md.type == DIR_BEGINNING)
@@ -1217,16 +1221,18 @@ int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
         {
           if (cache_inode_is_dir_empty(pentry_dest) == CACHE_INODE_SUCCESS)
             return TRUE;
-            else
+          else
             return FALSE;
-        } else
+        }
+      else
         return FALSE;
-    } else
+    }
+  else
     {
       /* pentry_src is not a directory */
       if (pentry_dest->internal_md.type == DIR_BEGINNING)
         return FALSE;
-        else
+      else
         return TRUE;
     }
 }                               /* cache_inode_type_are_rename_compatible */
@@ -1285,7 +1291,8 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
                    i);
 
           cache_entry_iter = cache_entry_iter->object.dir_begin.pdir_cont;
-        } else
+        }
+      else
         {
           for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
             printf("Name = %s, DIR_CONTINUE entry = %p, active=%d, i=%d\n",
@@ -1447,16 +1454,17 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
                    __LINE__, __FILE__, pentry, pentry->internal_md.type,
                    parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return;
-            } else
+            }
+          else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
-                                                                           subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               /* Garbagge invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
             }
-        } else
+        }
+      else
         {
           if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
@@ -1466,11 +1474,11 @@ static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
                    __LINE__, __FILE__, pentry, pentry->internal_md.type,
                    parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return;
-            } else
+            }
+          else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
-                                                                          subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }
@@ -1545,7 +1553,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 
   if (pentry->internal_md.type == DIR_CONTINUE)
     fsaldata.cookie = pentry->object.dir_cont.dir_cont_pos;
-    else
+  else
     fsaldata.cookie = DIR_START;
 
   /* Use the handle to build the key */

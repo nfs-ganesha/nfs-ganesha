@@ -287,7 +287,8 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
     {
       new_entry->prev = NULL;
       plru->LRU = new_entry;
-    } else
+    }
+  else
     {
       new_entry->prev = plru->MRU;
       plru->MRU->next = new_entry;
@@ -353,13 +354,13 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
 
           if (pentry->prev != NULL)
             pentry->prev->next = pentry->next;
-            else
+          else
             plru->LRU = pentry->next;
 
           if (pentry->next != NULL)
             pentry->next->prev = pentry->prev;
 #ifdef _DEBUG_LRU
-            else
+          else
             printf("SHOULD Never appear  !!!! line %d file %s\n", __LINE__, __FILE__);
 #endif
           plru->nb_entry -= 1;

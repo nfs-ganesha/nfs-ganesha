@@ -154,7 +154,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
   if (pentry->internal_md.type != DIR_CONTINUE)
     fsaldata.cookie = DIR_START;
-    else
+  else
     fsaldata.cookie = pentry->object.dir_cont.dir_cont_pos;
 
   /* Use the handle to build the key */
@@ -308,16 +308,17 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
                    __LINE__, __FILE__, pentry, pentry->internal_md.type,
                    parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return LRU_LIST_DO_NOT_SET_INVALID;
-            } else
+            }
+          else
             {
-              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
-                                                                           subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_begin.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               /* Garbagge invalidates the effet of the readdir previously made */
               parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
               parent_iter->parent->object.dir_begin.nbactive -= 1;
             }
-        } else
+        }
+      else
         {
           if (parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
             {
@@ -327,11 +328,11 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
                    __LINE__, __FILE__, pentry, pentry->internal_md.type,
                    parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
               return LRU_LIST_DO_NOT_SET_INVALID;
-            } else
+            }
+          else
             {
-              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
-                                                                          subdirpos].
-                  active = INVALID;
+              parent_iter->parent->object.dir_cont.pdir_data->
+                  dir_entries[parent_iter->subdirpos].active = INVALID;
               parent_iter->parent->object.dir_cont.nbactive -= 1;
             }
         }
@@ -510,7 +511,7 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
   /* Get the entry time (the larger value in read_time and mod_time ) */
   if (pentry->internal_md.read_time > pentry->internal_md.mod_time)
     entry_time = pentry->internal_md.read_time;
-    else
+  else
     entry_time = pentry->internal_md.mod_time;
 
   if (pgcparam->nb_to_be_purged != 0)
@@ -531,15 +532,16 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
                                 "----->>>>>>>> DIR GC : Garbagge collection on dir entry %p",
                                 pentry);
               return cache_inode_gc_suppress_directory(pentry, pgcparam);
-            } else
+            }
+          else
             DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_FULL_DEBUG,
                               "No garbagge on dir entry %p %d %d", pentry,
                               current_time - entry_time,
                               cache_inode_gc_policy.directory_expiration_delay);
-      } else
-          if ((pentry->internal_md.type == REGULAR_FILE
-                 || pentry->internal_md.type == SYMBOLIC_LINK)
-                && (cache_inode_gc_policy.file_expiration_delay > 0))
+        }
+      else if ((pentry->internal_md.type == REGULAR_FILE
+                || pentry->internal_md.type == SYMBOLIC_LINK)
+               && (cache_inode_gc_policy.file_expiration_delay > 0))
         {
           if (current_time - entry_time > cache_inode_gc_policy.file_expiration_delay)
             {
@@ -548,7 +550,8 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
                                 "----->>>>>> REGULAR/SYMLINK GC : Garbagge collection on regular/symlink entry %p",
                                 pentry);
               return cache_inode_gc_suppress_file(pentry, pgcparam);
-            } else
+            }
+          else
             DisplayLogJdLevel(pgcparam->pclient->log_outputs, NIV_FULL_DEBUG,
                               "No garbagge on regular/symlink entry %p %d %d", pentry,
                               current_time - entry_time,
@@ -684,7 +687,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
                         invalid_after_gc - invalid_before_gc);
 
       *pstatus = CACHE_INODE_SUCCESS;
-    } else
+    }
+  else
     {
       /* no garbagge is required, just gets ride of the invalid in tyhe LRU list */
       /* Removes the LRU entries and put them back to the pool */
@@ -692,7 +696,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
-        } else
+        }
+      else
         *pstatus = CACHE_INODE_SUCCESS;
     }
 

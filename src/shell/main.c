@@ -207,7 +207,7 @@ int main(int argc, char **argv)
             fprintf(stderr,
                     "%s: warning: option 'h' has been specified more than once.\n",
                     progname);
-            else
+          else
             flag_h++;
           break;
 
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
             fprintf(stderr,
                     "%s: warning: option 'n' has been specified more than once.\n",
                     progname);
-            else
+          else
             nb_instance = atoi(Optarg);
 
           break;
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
             fprintf(stderr,
                     "%s: warning: option 'v' has been specified more than once.\n",
                     progname);
-            else
+          else
             verbose++;
           break;
 
@@ -352,7 +352,8 @@ int main(int argc, char **argv)
 
       exit(0);
 
-    } else
+    }
+  else
     {
       int i;
       /* case when there two or more threads */

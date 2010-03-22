@@ -229,7 +229,8 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
   if (file_name == NULL || strlen(file_name) == 0)
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
-    } else
+    }
+  else
     {
 
       if ((cache_status = cache_inode_error_convert(FSAL_str2name(file_name,

@@ -232,14 +232,16 @@ int main(int argc, char *argv[])
         {
           /* # indique un commentaire */
           continue;
-      } else if (c == ' ' || c == '\t' || rc == -1)
+        }
+      else if (c == ' ' || c == '\t' || rc == -1)
         {
           /* Cas d'une ligne vide */
           if (rc > 1)
             printf("Erreur de syntaxe : mettre un diese au debut d'un commentaire\n");
 
           continue;
-        } else
+        }
+      else
         {
           if (rc != 3)
             {
@@ -260,7 +262,7 @@ int main(int argc, char *argv[])
           if (hrc != expected_rc)
             printf(">>>> ERREUR: invalidate  %d : %d != %d (expected)\n", key, hrc,
                    expected_rc);
-            else
+          else
             printf(">>>> OK invalidate %d\n", key);
           break;
 
@@ -272,7 +274,7 @@ int main(int argc, char *argv[])
 
           if (hrc != expected_rc)
             printf(">>>> ERREUR: new %d : %d != %d (expected)\n", key, hrc, expected_rc);
-            else
+          else
             printf(">>>> OK new %d\n", key);
           break;
 
@@ -284,7 +286,7 @@ int main(int argc, char *argv[])
 
           if (hrc != expected_rc)
             printf(">>>> ERREUR: gc %d: %d != %d (expected)\n", key, hrc, expected_rc);
-            else
+          else
             printf(">>>> OK new  %d\n", key);
           break;
 

@@ -243,7 +243,7 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
   /* Append to the tail of the list */
   if (MNT_List_tail == NULL)
     MNT_List_tail = pnew_mnt_list_entry;
-    else
+  else
     {
       MNT_List_tail->ml_next = pnew_mnt_list_entry;
       MNT_List_tail = pnew_mnt_list_entry;
@@ -333,7 +333,7 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
       /* remove head item ? */
       if (piter_mnt_list_entry_prev == NULL)
         MNT_List_head = MNT_List_head->ml_next;
-        else
+      else
         piter_mnt_list_entry_prev->ml_next = piter_mnt_list_entry->ml_next;
 
       /* remove tail item ? */

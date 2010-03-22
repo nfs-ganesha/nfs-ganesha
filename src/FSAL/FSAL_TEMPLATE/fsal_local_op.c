@@ -172,7 +172,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-        else
+      else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
@@ -201,7 +201,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-        else
+      else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
@@ -221,7 +221,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   if (missing_access == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-    else
+  else
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
 }

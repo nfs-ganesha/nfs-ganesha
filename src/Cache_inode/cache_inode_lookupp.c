@@ -169,7 +169,8 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
     {
       /* YES, the parent is cached, use the pentry that we have found */
       pentry_parent = pentry->parent_list->parent;
-    } else
+    }
+  else
     {
       /* NO, the parent is not cached, query FSAL to get it and cache the result */
       object_attributes.asked_attributes = pclient->attrmask;
@@ -229,7 +230,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUPP] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUPP] += 1;
 
   return pentry_parent;

@@ -487,7 +487,8 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
       printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
       HashTable_Print(ht_client_id_reverse);
 #endif
-    } else
+    }
+  else
     {
       status = CLIENT_ID_NOT_FOUND;
     }
@@ -527,7 +528,8 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
       printf("-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse \n");
       HashTable_Print(ht_client_id_reverse);
 #endif
-    } else
+    }
+  else
     {
       status = CLIENT_ID_NOT_FOUND;
     }
@@ -557,7 +559,8 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
 
       *client_id_res = *pnfs_client_id;
       status = CLIENT_ID_SUCCESS;
-    } else
+    }
+  else
     {
       status = CLIENT_ID_NOT_FOUND;
     }

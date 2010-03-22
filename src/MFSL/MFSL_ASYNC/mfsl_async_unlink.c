@@ -263,7 +263,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
   if ((obj_pasyncdata->async_attr.numlinks > 1)
       && (obj_pasyncdata->async_attr.type == FSAL_TYPE_FILE))
     obj_pasyncdata->async_attr.numlinks -= 1;
-    else
+  else
     obj_pasyncdata->deleted = TRUE;
 
   if (!mfsl_async_set_specdata(object_handle, obj_pasyncdata))

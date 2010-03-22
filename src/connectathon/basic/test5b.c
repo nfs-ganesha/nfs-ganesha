@@ -125,7 +125,8 @@ int main(int argc, char *argv[])
       config_file = *argv;
       argc--;
       argv++;
-    } else
+    }
+  else
     {
       fprintf(stderr, "Missing config_file");
       exit(1);
@@ -242,7 +243,8 @@ int main(int argc, char *argv[])
           fprintf(stdout, " in %ld.%02ld seconds (%ld bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000,
                   (long)((double)size * ((double)count / etime)));
-        } else
+        }
+      else
         {
           fprintf(stdout, " in %ld.%02ld seconds (> %ld bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count);
@@ -266,7 +268,8 @@ int main(int argc, char *argv[])
     {
       fprintf(log, "b5b\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
               (long)time.tv_usec / 10000, (long)((double)size * ((double)count / etime)));
-    } else
+    }
+  else
     {
       fprintf(log, "b5b\t%d\t%d\t%ld.%02ld\t%ld\n", (long)size, count, (long)time.tv_sec,
               (long)time.tv_usec / 10000, (long)size * count);

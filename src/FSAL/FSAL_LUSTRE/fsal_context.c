@@ -108,8 +108,8 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
             }
           /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
           else if ((pathlen > outlen) &&
-                     !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
-                     ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
+                   !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
+                   ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
             {
               DisplayLogLevel(NIV_FULL_DEBUG, "%s is under mountpoint %s, type=%s, fs=%s",
                               rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);

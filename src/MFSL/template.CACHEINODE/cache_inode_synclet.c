@@ -280,7 +280,8 @@ void cache_inode_async_init(cache_inode_client_parameter_t param)
         {
           DisplayErrorLog(ERR_SYS, ERR_PTHREAD_CREATE, rc);
           exit(1);
-        } else
+        }
+      else
         DisplayLog("MD WRITEBACK STARTUP: writeback synclet #%u started", i);
 
       /* Init the root fsal_op_context that is used for internal ops in the asyncops */
@@ -400,7 +401,8 @@ fsal_handle_t *cache_inode_async_get_preallocated(cache_inode_client_t * pclient
           *pfileid = pclient->dir_pool_fileid[index];
 
           pclient->avail_precreated_dirs -= 1;
-        } else
+        }
+      else
         {
           /* I create a new pool and recall the function is successful */
           if (cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
@@ -417,7 +419,8 @@ fsal_handle_t *cache_inode_async_get_preallocated(cache_inode_client_t * pclient
           *pfileid = pclient->file_pool_fileid[index];
 
           pclient->avail_precreated_files -= 1;
-        } else
+        }
+      else
         {
           /* I create a new pool and recall the function is successful */
           if (cache_inode_async_precreate_object(pclient, type, pexport_context) > 0)
@@ -557,7 +560,7 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
       /* Entry has to be added ro async_pentries_list */
       if (async_pentries_list == NULL)
         async_pentries_list = pentry;
-        else
+      else
         async_pentries_list->next_asyncop = pentry;
 
     }
@@ -568,7 +571,8 @@ cache_inode_status_t cache_inode_post_async_op(cache_inode_async_op_desc_t * pop
     {
       /* Add op to pending_ops */
       pentry->pending_ops = popdesc;
-    } else
+    }
+  else
     {
       /* Go to the end of the list of pending ops... */
       for (piter_opdesc = pentry->pending_ops; piter_opdesc != NULL;
@@ -732,7 +736,7 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
   /* if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* if the directory has not been readdir, only update its attributes */
   else if (pentry->internal_md.type == DIR_BEGINNING &&
-             pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
+           pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES)
     {
       pfsal_handle = &pentry->object.dir_begin.handle;
 
@@ -769,7 +773,7 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
   /* else if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* Check for attributes expiration in other cases */
   else if (pentry->internal_md.type != DIR_CONTINUE &&
-             pentry->internal_md.type != DIR_BEGINNING)
+           pentry->internal_md.type != DIR_BEGINNING)
     {
       switch (pentry->internal_md.type)
         {
@@ -861,7 +865,8 @@ cache_inode_status_t cache_inode_resync_entry(cache_entry_t * pentry,
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
-        } else
+        }
+      else
         {
           fsal_status = FSAL_pathcpy(&pentry->object.symlink.content, &link_content);
           if (FSAL_IS_ERROR(fsal_status))
@@ -1279,7 +1284,8 @@ void *cache_inode_synclet_thread(void *Arg)
               LRU_LIST_SUCCESS)
             {
               DisplayLog("/!\\  Could not recover invalid entries from LRU...");
-            } else
+            }
+          else
             DisplayLogLevel(NIV_DEBUG, "LRU_gc_invalid OK");
         }
 

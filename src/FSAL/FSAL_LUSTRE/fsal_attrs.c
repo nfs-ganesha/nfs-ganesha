@@ -72,7 +72,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
       rc = errno;
       if (rc == ENOENT)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_getattrs);
-        else
+      else
         Return(posix2fsal_error(rc), rc, INDEX_FSAL_getattrs);
     }
 
@@ -173,7 +173,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_setattrs);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_setattrs);
     }
 
@@ -248,7 +248,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* set in_grp */
       if (p_context->credential.group == attrs.group)
         in_grp = 1;
-        else
+      else
         for (i = 0; i < p_context->credential.nbgroups; i++)
           {
             if ((in_grp = (attrs.group == p_context->credential.alt_groups[i])))
@@ -315,11 +315,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       struct utimbuf timebuf;
 
       timebuf.actime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
-           atime.seconds : buffstat.st_atime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.atime.
+           seconds : buffstat.st_atime);
       timebuf.modtime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
-           mtime.seconds : buffstat.st_mtime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.mtime.
+           seconds : buffstat.st_mtime);
 
       TakeTokenFSCall();
       rc = utime(fsalpath.path, &timebuf);

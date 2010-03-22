@@ -217,7 +217,7 @@ int my_atoi(char *str)
 
       if ((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 10;
           out += (int)(str[i] - '0');
@@ -251,7 +251,7 @@ int atomode(char *str)
 
       if ((str[i] < '0') || (str[i] > '7'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 8;
           out += (int)(str[i] - '0');
@@ -279,7 +279,7 @@ int ato64(char *str, unsigned long long *out64)
 
       if ((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 10;
           out += (unsigned long long)(str[i] - '0');
@@ -499,7 +499,8 @@ void split_path(char *in_path, char **p_path, char **p_file)
       *p_file = in_path + index + 1;
       return;
 
-  } else if (in_path[index] == '/')
+    }
+  else if (in_path[index] == '/')
     {
 
       in_path[index] = '\0';
@@ -507,7 +508,8 @@ void split_path(char *in_path, char **p_path, char **p_file)
       *p_file = in_path + index + 1;
       return;
 
-  } else if (index == 0)
+    }
+  else if (index == 0)
     {
 
       /* no '/' found */
@@ -542,7 +544,8 @@ char *time2str(time_t time_in, char *str_out)
   if (time_in < jan_1)
     {                           /* if dates back to last year : MM dd YYYY */
       strftime(str_out, TIME_STRLEN, "%b %e %Y ", Localtime_r(&time_in, &paramtm));
-    } else
+    }
+  else
     {                           /* MM dd hh:mm */
       strftime(str_out, TIME_STRLEN, "%b %e %R", Localtime_r(&time_in, &paramtm));
     }
@@ -659,7 +662,8 @@ void clean_path(char *str, int len)
               indexsrc++;
             }
 
-        } else
+        }
+      else
         {
 
           /* if not found, it is '..' on the root directory. */
@@ -672,7 +676,8 @@ void clean_path(char *str, int len)
 
               sdd_index[3] = '>';
 
-            } else
+            }
+          else
             {
               /* Else , we remove '/..' */
 
@@ -922,13 +927,14 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
         {
           if (attrib->mode & FSAL_MODE_XUSR)
             fprintf(out, "s");
-            else
+          else
             fprintf(out, "S");
-        } else
+        }
+      else
         {
           if (attrib->mode & FSAL_MODE_XUSR)
             fprintf(out, "x");
-            else
+          else
             fprintf(out, "-");
         }
 
@@ -939,13 +945,14 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
         {
           if (attrib->mode & FSAL_MODE_XGRP)
             fprintf(out, "s");
-            else
+          else
             fprintf(out, "l");
-        } else
+        }
+      else
         {
           if (attrib->mode & FSAL_MODE_XGRP)
             fprintf(out, "x");
-            else
+          else
             fprintf(out, "-");
         }
       print_mask(out, attrib->mode, FSAL_MODE_ROTH, "r");
@@ -1154,7 +1161,8 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
       result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
-    } else
+    }
+  else
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec;
       result.tv_usec = time_to.tv_usec - time_from.tv_usec;

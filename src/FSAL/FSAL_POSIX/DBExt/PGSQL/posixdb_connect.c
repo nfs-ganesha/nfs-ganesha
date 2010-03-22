@@ -25,7 +25,8 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
          prepared statements
        */
       return fsal_posixdb_initPreparedQueries(*p_conn);
-    } else
+    }
+  else
     {
       DisplayLogLevel(NIV_EVENT, "ERROR: could not connect to database : %s",
                       PQerrorMessage(*p_conn));

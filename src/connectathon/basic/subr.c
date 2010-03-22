@@ -74,7 +74,7 @@ int *totdirs;
     {
       if (Dflag == 0)
         sprintf(name, "%s%d", fname, f);
-        else
+      else
         sprintf(name, "%s%d.%d", fname, lev, f);
       if ((fd = creat(name, CHMOD_RW)) < 0)
         {
@@ -92,7 +92,7 @@ int *totdirs;
     {
       if (Dflag == 0)
         sprintf(name, "%s%d", dname, d);
-        else
+      else
         sprintf(name, "%s%d.%d", dname, lev, d);
       if (unix_mkdir(name, 0777) < 0)
         {
@@ -147,7 +147,7 @@ int ignore;
     {
       if (Dflag == 0)
         sprintf(name, "%s%d", fname, f);
-        else
+      else
         sprintf(name, "%s%d.%d", fname, lev, f);
       if (unlink(name) < 0 && !ignore)
         {
@@ -160,7 +160,7 @@ int ignore;
     {
       if (Dflag == 0)
         sprintf(name, "%s%d", dname, d);
-        else
+      else
         sprintf(name, "%s%d.%d", dname, lev, d);
       if (unix_chdir(name) < 0)
         {
@@ -197,7 +197,7 @@ void error(char *str, ...)
   va_start(ap, str);
   if ((ret = getcwd(path, sizeof(path))) == NULL)
     fprintf(stderr, "%s: getcwd failed\n", Myname);
-    else
+  else
     fprintf(stderr, "\t%s: (%s) ", Myname, path);
   vfprintf(stderr, str, ap);
   va_end(ap);
@@ -206,7 +206,8 @@ void error(char *str, ...)
     {
       errno = oerrno;
       perror(" ");
-    } else
+    }
+  else
     {
       fprintf(stderr, "\n");
     }
@@ -226,7 +227,7 @@ char *str;
   oerrno = errno;
   if ((ret = getcwd(path, sizeof(path))) == NULL)
     fprintf(stderr, "%s: getcwd failed\n", Myname);
-    else
+  else
     fprintf(stderr, "\t%s: (%s) ", Myname, path);
 
   fprintf(stderr, str, ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9);
@@ -234,7 +235,8 @@ char *str;
     {
       errno = oerrno;
       perror(" ");
-    } else
+    }
+  else
     {
       fprintf(stderr, "\n");
     }
@@ -500,7 +502,7 @@ int statfs(char *path, struct statfs *buf)
   buf->f_type = 0;              /* that's what the man page says */
   if (path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
-    else
+  else
     drive = _getdrive();
 
   // GetDiskFreeSpace must have the #$%^&* root!
@@ -624,7 +626,7 @@ struct dirent *readdir(DIR * dirp)
   dirp = dirp;                  /* shut up compiler */
   if (currententry > maxentry)
     return (struct dirent *)NULL;
-    else
+  else
     {
       return &dirlist[currententry++];
     }
@@ -703,7 +705,7 @@ struct statfs *buf;
   buf->f_type = 0;              /* that's what the man page says */
   if (path[1] == ':')
     drive = toupper(path[0]) - ('A' - 1);
-    else
+  else
     _dos_getdrive(&drive);
   if (_dos_getdiskfree(drive, &diskspace))
     return -1;
@@ -798,7 +800,7 @@ DIR *dirp;
   dirp = dirp;                  /* shut up compiler */
   if (currententry > maxentry)
     return (struct dirent *)NULL;
-    else
+  else
     {
       return &dirlist[currententry++];
     }

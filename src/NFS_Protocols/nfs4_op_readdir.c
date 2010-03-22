@@ -309,14 +309,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
       return res_READDIR4.status;
     }
 
-  if (eod_met == END_OF_DIR)
-    {
-      /* This is the end of the directory */
-      res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-      memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
-             NFS4_VERIFIER_SIZE);
-    }
-
   /* For an empty directory, we will find only . and .., so reply af if the end if reached */
   if (num_entries == 0)
     {
@@ -325,7 +317,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
       memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
              NFS4_VERIFIER_SIZE);
-    } else
+    }
+  else
     {
       /* Allocation of reply structures */
       if ((entry_name_array =
@@ -358,7 +351,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           /* Set the cookie value */
           if (i != num_entries - 1)
             entry_nfs_array[i].cookie = cookie_array[i + 1] + 2;        /* 0, 1 and 2 are reserved */
-            else
+          else
             entry_nfs_array[i].cookie = end_cookie + 2;
 
 #ifdef _DEBUG_NFS_V4
@@ -433,6 +426,14 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
             break;
         }                       /* for i */
 
+      if ((eod_met == END_OF_DIR) && (i == num_entries))
+        {
+          /* This is the end of the directory */
+          res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
+          memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
+                 NFS4_VERIFIER_SIZE);
+        }
+
       /* Put the entry's list in the READDIR reply */
       res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
     }
@@ -473,8 +474,8 @@ void nfs4_op_readdir_Free(READDIR4res * resp)
 
       if (resp->READDIR4res_u.resok4.reply.entries != NULL)
         {
-          Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries[0].name.
-                   utf8string_val);
+          Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries[0].
+                   name.utf8string_val);
           Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries);
         }
     }

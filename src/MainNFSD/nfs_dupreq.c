@@ -183,7 +183,7 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
   /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
   if (reqp->rq_xprt->xp_p2 != NULL)
     Xid = pudpxp->up_xid;       /* UDP XID */
-    else
+  else
     Xid = ptcpxp->x_id;         /* TCP XID */
 
   return Xid;
@@ -267,7 +267,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
           funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
           break;
         }
-  } else if (pdupreq->rq_prog == nfs_param.core_param.mnt_program)
+    }
+  else if (pdupreq->rq_prog == nfs_param.core_param.mnt_program)
     {
       switch (pdupreq->rq_vers)
         {
@@ -286,7 +287,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
           break;
 
         }                       /* switch( ptr_req->vers ) */
-    } else
+    }
+  else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
       DisplayLog("NFS DUPREQ: protocol %d is not managed", pdupreq->rq_prog);
@@ -510,7 +512,8 @@ nfs_res_t nfs_dupreq_get(long xid, int *pstatus)
 #ifdef _DEBUG_DUPREQ
       DisplayLog("NFS DUPREQ: Hit in the dupreq cache for xid=%u", xid);
 #endif
-    } else
+    }
+  else
     {
       *pstatus = DUPREQ_NOT_FOUND;
     }

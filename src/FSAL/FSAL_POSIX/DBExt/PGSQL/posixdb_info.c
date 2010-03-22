@@ -37,7 +37,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
       snprintf(handlets_str, MAX_HANDLETSSTR_SIZE, "%i", p_parent_directory_handle->ts);
       p_res = PQexecPrepared(p_conn, "lookupHandleByName", 3, paramValues, NULL, NULL, 0);
       CheckResult(p_res);
-    } else
+    }
+  else
     {
       // get root handle :
       p_res = PQexecPrepared(p_conn, "lookupRootHandle", 0, NULL, NULL, NULL, 0);
@@ -84,7 +85,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 
       /* add the the path to cache */
       fsal_posixdb_CachePath(p_handle, p_path);
-    } else
+    }
+  else
     {
       /* update handle if it was in cache */
       fsal_posixdb_UpdateInodeCache(p_handle);
@@ -213,7 +215,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
               strcpy(&p_paths[i_path].path[tmp_len], PQgetvalue(p_res, i_path, 0));
               p_paths[i_path].len += strlen(PQgetvalue(p_res, i_path, 0));
 
-            } else
+            }
+          else
             {
               /* then concatenate the name of the file */
               if ((tmp_len + 1 + strlen(PQgetvalue(p_res, i_path, 0)) >=

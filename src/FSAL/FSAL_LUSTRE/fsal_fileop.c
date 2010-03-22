@@ -143,7 +143,7 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
     }
 
@@ -295,7 +295,7 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
   if (pcall)
     nb_read = pread(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
-    else
+  else
     nb_read = read(p_file_descriptor->fd, buffer, i_size);
   errsv = errno;
   ReleaseTokenFSCall();
@@ -427,7 +427,7 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
   if (pcall)
     nb_written = pwrite(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
-    else
+  else
     nb_written = write(p_file_descriptor->fd, buffer, i_size);
   errsv = errno;
 

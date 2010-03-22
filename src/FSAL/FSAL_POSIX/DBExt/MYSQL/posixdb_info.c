@@ -43,7 +43,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
       st = db_exec_sql(p_conn, query, &res);
       if (FSAL_POSIXDB_IS_ERROR(st))
         goto rollback;
-    } else
+    }
+  else
     {
       /* get root handle: */
 
@@ -93,7 +94,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  
 
       /* add the the path to cache */
       fsal_posixdb_CachePath(p_handle, p_path);
-    } else
+    }
+  else
     {
       /* update handle if it was in cache */
       fsal_posixdb_UpdateInodeCache(p_handle);
@@ -189,7 +191,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
           mysql_free_result(res);
           RollbackTransaction(p_conn);
           ReturnCode(ERR_FSAL_POSIXDB_NOPATH, 0);
-      } else if (*p_count > paths_size)
+        }
+      else if (*p_count > paths_size)
         {
           toomanypaths = 1;
 
@@ -235,7 +238,8 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
               strcpy(&p_paths[i_path].path[tmp_len], row[0]);
               p_paths[i_path].len += strlen(row[0]);
 
-            } else
+            }
+          else
             {
               /* then concatenate the name of the file */
               if ((tmp_len + 1 + strlen(row[0]) >= FSAL_MAX_PATH_LEN))
@@ -261,7 +265,7 @@ fsal_posixdb_status_t fsal_posixdb_getInfoFromHandle(fsal_posixdb_conn * p_conn,
 
   if (toomanypaths)
     ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
-    else
+  else
     return st;
 
  free_res:

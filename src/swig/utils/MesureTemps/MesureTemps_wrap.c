@@ -338,7 +338,8 @@ extern "C" {
           ++f2;
         if (*f1 != *f2)
           return (*f1 > *f2) ? 1 : -1;
-      } return (l1 - f1) - (l2 - f2);
+      }
+    return (l1 - f1) - (l2 - f2);
   }
 
 /*
@@ -471,7 +472,8 @@ extern "C" {
           if (*s == '|')
             last_name = s + 1;
         return last_name;
-      } else
+      }
+    else
       return type->name;
   }
 
@@ -532,20 +534,24 @@ extern "C" {
                     if (compare == 0)
                       {
                         return iter->types[i];
-                    } else if (compare < 0)
+                      }
+                    else if (compare < 0)
                       {
                         if (i)
                           {
                             r = i - 1;
-                          } else
+                          }
+                        else
                           {
                             break;
                           }
-                    } else if (compare > 0)
+                      }
+                    else if (compare > 0)
                       {
                         l = i + 1;
                       }
-                  } else
+                  }
+                else
                   {
                     break;      /* should never happen */
                   }
@@ -575,7 +581,8 @@ extern "C" {
     if (ret)
       {
         return ret;
-      } else
+      }
+    else
       {
         /* STEP 2: If the type hasn't been found, do a complete search
            of the str field (the human readable name) */
@@ -627,14 +634,14 @@ extern "C" {
           uu = ((d - '0') << 4);
         else if ((d >= 'a') && (d <= 'f'))
           uu = ((d - ('a' - 10)) << 4);
-          else
+        else
           return (char *)0;
         d = *(c++);
         if ((d >= '0') && (d <= '9'))
           uu |= (d - '0');
         else if ((d >= 'a') && (d <= 'f'))
           uu |= (d - ('a' - 10));
-          else
+        else
           return (char *)0;
         *u = uu;
       }
@@ -663,7 +670,8 @@ extern "C" {
           {
             *ptr = (void *)0;
             return name;
-          } else
+          }
+        else
           {
             return 0;
           }
@@ -682,7 +690,8 @@ extern "C" {
     if (lname)
       {
         strncpy(r, name, lname + 1);
-      } else
+      }
+    else
       {
         *r = 0;
       }
@@ -697,7 +706,8 @@ extern "C" {
           {
             memset(ptr, 0, sz);
             return name;
-          } else
+          }
+        else
           {
             return 0;
           }
@@ -1026,9 +1036,10 @@ extern "C" {
       return NULL;
       if (type->clientdata != NULL) {
         return (const char *)type->clientdata;
-        } else {
+      }
+      else {
         return type->name;
-        }
+      }
   }
 
   SWIGRUNTIME swig_cast_info *SWIG_TypeProxyCheck(const char *c, swig_type_info * ty) {
@@ -1071,30 +1082,36 @@ extern "C" {
                         tmp = SvIV(tsv);
                       }
                   }
-              } else
+              }
+            else
               {
                 return SWIG_ERROR;
               }
-          } else
+          }
+        else
           {
             tmp = SvIV(tsv);
           }
         voidptr = INT2PTR(void *, tmp);
-    } else if (!SvOK(sv))
+      }
+    else if (!SvOK(sv))
       {                         /* Check for undef */
         *(ptr) = (void *)0;
         return SWIG_OK;
-    } else if (SvTYPE(sv) == SVt_RV)
+      }
+    else if (SvTYPE(sv) == SVt_RV)
       {                         /* Check for NULL pointer */
         if (!SvROK(sv))
           {
             *(ptr) = (void *)0;
             return SWIG_OK;
-          } else
+          }
+        else
           {
             return SWIG_ERROR;
           }
-      } else
+      }
+    else
       {                         /* Don't know what it is */
         return SWIG_ERROR;
       }
@@ -1108,7 +1125,8 @@ extern "C" {
             return SWIG_ERROR;
           }
         *ptr = SWIG_TypeCast(tc, voidptr);
-      } else
+      }
+    else
       {
         *ptr = voidptr;
       }
@@ -1166,7 +1184,8 @@ extern "C" {
         sv_setsv(sv, self);
         SvREFCNT_dec((SV *) self);
         sv_bless(sv, stash);
-      } else
+      }
+    else
       {
         sv_setref_pv(sv, (char *)SWIG_Perl_TypeProxyName(t), ptr);
       }
@@ -1482,7 +1501,8 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
                   *cptr =
                       (char *)memcpy((char *)malloc((size) * sizeof(char)), cstr,
                                      sizeof(char) * (size));
-                } else
+                }
+              else
                 {
                   *cptr = cstr;
                   *alloc = SWIG_OLDOBJ;
@@ -1492,7 +1512,8 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
       if (psize)
         *psize = size;
       return SWIG_OK;
-    } else
+    }
+  else
     {
       swig_type_info *pchar_descriptor = SWIG_pchar_descriptor();
       if (pchar_descriptor)
@@ -1521,7 +1542,8 @@ SWIGINTERNINLINE SV *SWIG_FromCharPtrAndSize(const char *carray, size_t size)
       if (carray[size - 1] == 0)
         {
           sv_setpv(obj, carray);
-        } else
+        }
+      else
         {
           char *tmp = (char *)malloc((size + 1) * sizeof(char));
           memcpy(tmp, carray, size);
@@ -1529,7 +1551,8 @@ SWIGINTERNINLINE SV *SWIG_FromCharPtrAndSize(const char *carray, size_t size)
           sv_setpv(obj, tmp);
           free((char *)tmp);
         }
-    } else
+    }
+  else
     {
       sv_setsv(obj, &PL_sv_undef);
     }
@@ -1586,8 +1609,7 @@ extern "C" {
 
         if ((items < 2) || (items > 2)) {
           SWIG_croak("Usage: Temps_secondes_set(self,secondes);");
-        }
-      res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
+        } res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
       if (!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
@@ -1609,7 +1631,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "Temps_secondes_set" "', argument " "2" " of type '"
                                 "ulong" "'");
-          } else
+          }
+        else
           {
             arg2 = *((ulong *) (argp2));
           }
@@ -1699,7 +1722,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "Temps_micro_secondes_set" "', argument " "2" " of type '"
                                 "ulong" "'");
-          } else
+          }
+        else
           {
             arg2 = *((ulong *) (argp2));
           }
@@ -1876,7 +1900,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "ConvertiTempsChaine" "', argument " "1" " of type '"
                                 "struct Temps" "'");
-          } else
+          }
+        else
           {
             arg1 = *((struct Temps *)(argp1));
           }
@@ -2145,7 +2170,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
     {
       swig_module.next = module_head->next;
       module_head->next = &swig_module;
-    } else
+    }
+  else
     {
       /* This is the first module loaded */
       swig_module.next = &swig_module;
@@ -2186,7 +2212,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
               printf("SWIG_InitializeModule: found and overwrite type %s \n", type->name);
 #endif
             }
-        } else
+        }
+      else
         {
           type = swig_module.type_initial[i];
         }
@@ -2219,7 +2246,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 #endif
                   cast->type = ret;
                   ret = 0;
-                } else
+                }
+              else
                 {
                   /* Check for casting already in the list */
                   swig_cast_info *ocast = SWIG_TypeCheck(ret->name, type);
@@ -2335,7 +2363,8 @@ XS(SWIG_init)
       if (swig_variables[i].type)
         {
           SWIG_MakePtr(sv, (void *)1, *swig_variables[i].type, 0);
-        } else
+        }
+      else
         {
           sv_setiv(sv, (IV) 0);
         }

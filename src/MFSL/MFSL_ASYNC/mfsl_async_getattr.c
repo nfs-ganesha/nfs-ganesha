@@ -197,7 +197,8 @@ fsal_status_t MFSL_getattrs(mfsl_object_t * filehandle, /* IN */
 
       /* Regular exit */
       MFSL_return(ERR_FSAL_NO_ERROR, 0);
-    } else
+    }
+  else
     {
       return FSAL_getattrs(&filehandle->handle, p_context, object_attributes);
     }

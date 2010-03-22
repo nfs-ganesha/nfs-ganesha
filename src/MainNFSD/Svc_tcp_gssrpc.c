@@ -338,7 +338,8 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
     {
       /* a rendezvouser socket */
       xprt->xp_port = 0;
-    } else
+    }
+  else
     {
       /* an actual connection socket */
       XDR_DESTROY(&(cd->xdrs));
@@ -489,7 +490,8 @@ static bool_t Svctcp_reply(SVCXPRT * xprt, register struct rpc_msg *msg)
 
       msg->acpted_rply.ar_results.proc = xdr_void;
       msg->acpted_rply.ar_results.where = NULL;
-    } else
+    }
+  else
     has_args = FALSE;
 
   xdrs->x_op = XDR_ENCODE;

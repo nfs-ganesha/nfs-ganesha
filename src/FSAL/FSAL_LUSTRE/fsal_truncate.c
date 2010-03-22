@@ -80,7 +80,7 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_truncate);
     }
 

@@ -264,7 +264,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               if (cache_status == CACHE_INODE_NOT_FOUND)
                 res_LOCK4.status = NFS4ERR_STALE_STATEID;
-                else
+              else
                 res_LOCK4.status = NFS4ERR_INVAL;
 
               return res_LOCK4.status;
@@ -327,7 +327,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                 {
                   if (a1 < b)
                     overlap = TRUE;
-                } else
+                }
+              else
                 {
                   if (a < b1)
                     {
@@ -359,7 +360,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
-                          } else
+                          }
+                        else
                           {
                             /* Increment seqid */
                             if (pstate_exists != NULL)
@@ -390,10 +392,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if (pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if ((pstate_found_iterate->state_data.share.
-                   share_deny & OPEN4_SHARE_DENY_WRITE)
-                  && !(pstate_found_iterate->state_data.share.
-                       share_access & OPEN4_SHARE_ACCESS_WRITE)
+              if ((pstate_found_iterate->state_data.
+                   share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                  && !(pstate_found_iterate->state_data.
+                       share.share_access & OPEN4_SHARE_ACCESS_WRITE)
                   && (arg_LOCK4.locktype == WRITE_LT))
                 {
                   if (pstate_exists != NULL)
@@ -623,7 +625,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           P(pstate_found->powner->related_owner->lock);
           pstate_found->powner->related_owner->seqid += 1;
           V(pstate_found->powner->related_owner->lock);
-        } else
+        }
+      else
         DisplayLog
             ("/!\\ : IMPLEMENTATION ERROR File=%s Line=%s pstate_found->powner->related_owner should not be NULL",
              __FILE__, __LINE__);

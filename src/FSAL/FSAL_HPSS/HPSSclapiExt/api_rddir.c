@@ -130,7 +130,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
 
   if (Ucred == (sec_cred_t *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   error = HPSSFSAL_Common_ReadAttrs(threadcontext,
@@ -251,7 +251,8 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                                               CORE_ATTR_READ_COUNT,
                                               CORE_ATTR_WRITE_COUNT,
                                               CORE_ATTR_TIME_LAST_WRITTEN, -1);
-    } else
+    }
+  else
     select_flags = cast64m(0);
 
   /*
@@ -356,7 +357,8 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                                     "HPSSFSAL_Common_ReadAttrs: API_TraversePath"
                                     "failed, error = %d\n", error);
                   error = 0;
-                } else
+                }
+              else
                 {
                   /*
                    * We got the fileset attributes, copy
@@ -376,7 +378,7 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
         {
           if (direntbuf.DirEntry.DirEntry_len > 0)
             *OffsetOut = outptr->ObjOffset;
-            else
+          else
             *OffsetOut = cast64m(0);
 
           /*

@@ -104,7 +104,8 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
   if (to_fs)
     {
       local_flags = O_RDONLY;
-    } else
+    }
+  else
     {
       local_flags = O_WRONLY | O_TRUNC;
 
@@ -167,7 +168,8 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
           close(local_fd);
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_rcp);
         }
-    } else
+    }
+  else
     {
       fs_flags = FSAL_O_RDONLY;
     }
@@ -245,7 +247,8 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
           eof = (local_size == 0);
 
-        } else                  /* from FSAL filesystem */
+        }
+      else                      /* from FSAL filesystem */
         {
           fs_size = 0;
           st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
@@ -277,7 +280,8 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
               if (FSAL_IS_ERROR(st))
                 break;          /* exit loop */
 
-            } else              /* to local filesystem */
+            }
+          else                  /* to local filesystem */
             {
 
               local_size = write(local_fd, IObuffer, fs_size);
@@ -298,7 +302,7 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
         }                       /* if eof */
 #ifdef  _DEBUG_FSAL
-        else
+      else
         DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "End of source file reached");
 #endif
 

@@ -179,7 +179,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
               res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
               return res_SETCLIENTID_CONFIRM4.status;
             }
-        } else
+        }
+      else
         {
           if (nfs_clientid.confirmed == REBOOTED_CLIENT_ID)
             {
@@ -202,7 +203,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
               return res_SETCLIENTID_CONFIRM4.status;
             }
         }
-    } else
+    }
+  else
     {
       /* The client id does not exist: stale client id */
       res_SETCLIENTID_CONFIRM4.status = NFS4ERR_STALE_CLIENTID;

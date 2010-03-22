@@ -73,7 +73,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
     }
 

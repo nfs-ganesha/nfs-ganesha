@@ -200,13 +200,15 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
   if (!FSAL_IS_ERROR(retval))
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
-    } else
+    }
+  else
     {
       if (fsal_is_retryable(retval) && arg->block)
         {
           /* FIXME!! fsal_is_retryable don't check for EACCESS */
           pres->res_nlm4.stat.stat = NLM4_BLOCKED;
-        } else
+        }
+      else
         {
           pres->res_nlm4.stat.stat = NLM4_DENIED;
         }

@@ -161,10 +161,12 @@ int Getopt(int argc, char *argv[], char *opts)
           ERR(": option requires an argument -- ", c);
           sp = 1;
           return ('?');
-        } else
+        }
+      else
         Optarg = argv[Optind++];
       sp = 1;
-    } else
+    }
+  else
     {
       if (argv[Optind][++sp] == '\0')
         {

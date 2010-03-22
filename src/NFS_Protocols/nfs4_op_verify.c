@@ -220,11 +220,11 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   if ((rc = nfs4_Fattr_cmp(&(arg_VERIFY4.obj_attributes), &file_attr4)) == TRUE)
     res_VERIFY4.status = NFS4_OK;
-    else
+  else
     {
       if (rc == -1)
         res_VERIFY4.status = NFS4ERR_INVAL;
-        else
+      else
         res_VERIFY4.status = NFS4ERR_NOT_SAME;
     }
 

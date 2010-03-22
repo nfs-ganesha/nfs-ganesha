@@ -361,7 +361,8 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
     {
       /* a rendezvouser socket */
       xprt->xp_port = 0;
-    } else
+    }
+  else
     {
       /* an actual connection socket */
       XDR_DESTROY(&(cd->xdrs));
@@ -421,13 +422,15 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
       /* print_xdrrec_fbtbc( "Readtcp (end)",  xprt ) ;           */
 
       return (len);
-    } else
+    }
+  else
     {
       if (len < 0 && errno == EAGAIN)
         {
           len = 0;
           return len;
-        } else
+        }
+      else
         goto fatal_err;
     }
  fatal_err:
@@ -523,7 +526,8 @@ static bool_t Svctcp_reply(SVCXPRT * xprt, register struct rpc_msg *msg)
 
       if (!xdr_replymsg(xdrs, msg) || !SVCAUTH_WRAP(NULL, xdrs, xdr_proc, xdr_where))
         return (FALSE);
-  } else if (!xdr_replymsg(xdrs, msg))
+    }
+  else if (!xdr_replymsg(xdrs, msg))
     {
       return (FALSE);
     }

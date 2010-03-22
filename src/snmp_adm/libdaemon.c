@@ -87,7 +87,8 @@ static int get_conf_from_env()
       root_oid_len = sizeof(tmp_root) / sizeof(oid);
       root_oid = malloc(root_oid_len * sizeof(oid));
       memcpy(root_oid, tmp_root, root_oid_len * sizeof(oid));
-    } else
+    }
+  else
     {
       /* parse str_root 
        */
@@ -230,7 +231,8 @@ static int register_scal_instance(int type, const register_scal * instance)
          we use the last two netsnmp register (type and value)
        */
       err2 = reg_scal(myoid, len, instance->value, instance->type, instance->access, info->reg + 2);    /* name+desc offset */
-    } else
+    }
+  else
     {
       err1 = 1;
       snmp_adm_log("Cannot register NULL value for \"%s\"", instance->label);
@@ -278,7 +280,8 @@ static int register_get_set_instance(int branch, const register_get_set * instan
          we use the last two netsnmp register (type and value)
        */
       err2 = reg_get_set(myoid, len, instance->type, instance->access, info->reg + 2);  /* name+desc offset */
-    } else
+    }
+  else
     {
       err1 = 1;
       snmp_adm_log("Cannot register NULL function for \"%s\"", instance->label);
@@ -401,7 +404,8 @@ static void free_register_info(register_info * ptr)
       pinfo->outputs = NULL;
 
       free(pinfo);
-  } else if (ptr->type == GET_SET)
+    }
+  else if (ptr->type == GET_SET)
     {
       gsinfo = ptr->function_info.get_set;
       free(gsinfo);
@@ -433,7 +437,8 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
     {
       snmp_enable_syslog();
       issyslog = 1;
-    } else
+    }
+  else
     snmp_enable_filelog(filelog, 1);    /* 1:append 0:write */
 
   if (get_conf_from_env() == 0)
@@ -448,7 +453,8 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
         }
       snmp_adm_log("ROOT_OID=%s", buf);
       err_root = 0;
-    } else
+    }
+  else
     {
       snmp_adm_log("cannot find a valid ROOT_OID");
       err_root = 1;
@@ -489,7 +495,8 @@ int snmp_adm_register_scalars(int branch, register_scal * tab, int len)
           snmp_adm_log("ERROR registering %s %s",
                        ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
           return 1;
-        } else
+        }
+      else
         snmp_adm_log("register %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
                      tab[i].label);
     }
@@ -519,7 +526,8 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
           snmp_adm_log("ERROR registering getset %s %s",
                        ((branch == CONF_OID) ? "conf " : "stat "), tab[i].label);
           return 1;
-        } else
+        }
+      else
         snmp_adm_log("register getset %s %s", ((branch == CONF_OID) ? "conf " : "stat "),
                      tab[i].label);
 
@@ -548,7 +556,8 @@ int snmp_adm_register_procedure(register_proc * tab, int len)
         {
           snmp_adm_log("register proc %s", tab[i].label);
           return 1;
-        } else
+        }
+      else
         snmp_adm_log("register proc %s", tab[i].label);
 
     }
@@ -778,7 +787,8 @@ void snmp_adm_log(char *format, ...)
     {
       vsnprintf(msg_buf, 256, format, pa);
       snmp_log(LOG_NOTICE, msg_buf);
-    } else
+    }
+  else
     {
       /* emulate a syslog like format on a file */
 

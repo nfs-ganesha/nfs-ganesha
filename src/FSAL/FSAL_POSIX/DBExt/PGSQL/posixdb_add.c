@@ -75,8 +75,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
   /**********************************************************
    * 3/ Check if there is an existing Handle for the object *
    **********************************************************/
-  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%llu", (unsigned long long int)p_object_info->devid);
-  snprintf(inode_str, MAX_INODESTR_SIZE, "%llu", (unsigned long long int)p_object_info->inode);
+  snprintf(devid_str, MAX_DEVICEIDSTR_SIZE, "%llu",
+           (unsigned long long int)p_object_info->devid);
+  snprintf(inode_str, MAX_INODESTR_SIZE, "%llu",
+           (unsigned long long int)p_object_info->inode);
   paramValues[0] = devid_str;
   paramValues[1] = inode_str;
   p_res = PQexecPrepared(p_conn, "lookupHandleByInodeFU", 2, paramValues, NULL, NULL, 0);
@@ -130,7 +132,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
       fsal_posixdb_UpdateInodeCache(p_object_handle);
 
-    } else
+    }
+  else
     {                           /* no handle found */
       /* Handle does not exist, add a new Handle entry */
       char nlink_str[MAX_NLINKSTR_SIZE];
@@ -229,7 +232,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                   RollbackTransaction(p_conn, p_res);
                   return st;
                 }
-            } else
+            }
+          else
             {                   /* the Handle line has been deleted */
               PQclear(p_res);   /* clear old res before a new query */
             }
@@ -237,12 +241,14 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* the bad entry has been deleted. Now we had a new Parent entry */
           goto add_new_parent_entry;
 
-        } else
+        }
+      else
         {
           /* a Parent entry exists with our handle, nothing to do */
           PQclear(p_res);
         }
-    } else
+    }
+  else
     {
       /* add a Parent entry */
       PQclear(p_res);

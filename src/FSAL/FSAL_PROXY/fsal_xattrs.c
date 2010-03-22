@@ -240,7 +240,8 @@ int get_svr_handle(fsal_handle_t * p_objecthandle,      /* IN */
     {
       memcpy(buffer_addr, p_objecthandle->srv_handle_val, buffer_size);
       *p_output_size = buffer_size;
-    } else
+    }
+  else
     {
       memcpy(buffer_addr, p_objecthandle->srv_handle_val, p_objecthandle->srv_handle_len);
       *p_output_size = p_objecthandle->srv_handle_len;
@@ -600,7 +601,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context,
                                          buffer_addr, buffer_size, p_output_size);
-    } else
+    }
+  else
     {
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context, buff, MAXPATHLEN, p_output_size);
@@ -648,7 +650,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 

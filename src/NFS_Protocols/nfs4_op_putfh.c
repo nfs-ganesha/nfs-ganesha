@@ -218,7 +218,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       data->current_entry = NULL;
       data->current_filetype = DIR_BEGINNING;
       data->pexport = NULL;     /* No exportlist is related to pseudo fs */
-    } else
+    }
+  else
     {
       /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
       if (data->pexport == NULL)

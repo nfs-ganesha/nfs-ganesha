@@ -87,7 +87,8 @@ fsal_status_t FSAL_readlink(fsal_handle_t * linkhandle, /* IN */
       if (rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_readlink);
 
-    } else
+    }
+  else
     /* return empty link */
     link_content_out[0] = '\0';
 

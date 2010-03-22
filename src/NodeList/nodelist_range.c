@@ -23,7 +23,8 @@ int nodelist_range_set(nodelist_range_t * r1, long int v1, long int v2)
     {
       r1->from = v1;
       r1->to = v2;
-    } else
+    }
+  else
     {
       r1->from = v2;
       r1->to = v1;
@@ -35,7 +36,7 @@ int nodelist_range_check(nodelist_range_t * r1)
 {
   if ((r1->from) <= (r1->to))
     return 1;
-    else
+  else
     return 0;
 }
 
@@ -55,7 +56,7 @@ int nodelist_range_compare(nodelist_range_t * r1, nodelist_range_t * r2)
     return 0;
   else if (r1->to < r2->from)
     return -1;
-    else
+  else
     return 1;
   return fstatus;
 }
@@ -103,7 +104,7 @@ int nodelist_range_contiguous(nodelist_range_t * r1, nodelist_range_t * r2)
     fstatus = 0;
   else if (r1->to < r2->from)
     fstatus = 1;
-    else
+  else
     fstatus = 2;
   return fstatus;
 }
@@ -119,7 +120,7 @@ int nodelist_range_includes(nodelist_range_t * r1, nodelist_range_t * r2)
     fstatus = 1;
   else if (r1->from >= r2->from && r1->to <= r2->to)
     fstatus = 2;
-    else
+  else
     fstatus = 0;
   return fstatus;
 }
@@ -152,7 +153,8 @@ int nodelist_rangelist_init(nodelist_rangelist_t * array)
   if (array->array != NULL)
     {
       fstatus = 0;
-    } else
+    }
+  else
     {
       array->pre_allocated_ranges = 0;
     }
@@ -175,7 +177,8 @@ nodelist_rangelist_init_by_copy(nodelist_rangelist_t * array, nodelist_rangelist
           memcpy(((array->array) + i), ((a2c->array) + i), sizeof(nodelist_range_t));
         }
       fstatus = 0;
-    } else
+    }
+  else
     {
       array->pre_allocated_ranges = 0;
     }
@@ -224,7 +227,8 @@ int nodelist_rangelist_add_range(nodelist_rangelist_t * array, nodelist_range_t 
       memcpy(array->array, &r, sizeof(nodelist_range_t));
       array->ranges_nb++;
       fstatus = 0;
-    } else
+    }
+  else
     {
       /* test if range is already present */
       for (id = 0; id < array->ranges_nb; id++)
@@ -238,7 +242,8 @@ int nodelist_rangelist_add_range(nodelist_rangelist_t * array, nodelist_range_t 
       if (already_added_flag)
         {
           fstatus = 0;
-        } else
+        }
+      else
         {
           /* initialize working ranges array */
           nodelist_rangelist_init(&work_array);
@@ -257,7 +262,8 @@ int nodelist_rangelist_add_range(nodelist_rangelist_t * array, nodelist_range_t 
                   memcpy(work_array.array + work_array.ranges_nb, &(array->array[id]),
                          sizeof(nodelist_range_t));
                   work_array.ranges_nb++;
-                } else
+                }
+              else
                 {
                   nodelist_range_union(&(array->array[id]), &r, &r);
                 }
@@ -307,7 +313,8 @@ int nodelist_rangelist_remove_range(nodelist_rangelist_t * array, nodelist_range
   if (array->ranges_nb == 0)
     {
       fstatus = 0;
-    } else
+    }
+  else
     {
       memcpy(&r, rin, sizeof(nodelist_range_t));
       /* initialize working ranges array */
@@ -323,7 +330,8 @@ int nodelist_rangelist_remove_range(nodelist_rangelist_t * array, nodelist_range
             {
               /* add this range to work array */
               fstatus += nodelist_rangelist_add_range(&work_array, pr);
-            } else
+            }
+          else
             {
               /* extract any hypothetic non intersecting part of the range */
               /* and add them to work_array range list */
@@ -411,7 +419,8 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
   if (work_buffer == NULL)
     {
       fstatus = -1;
-    } else
+    }
+  else
     {
       /* set entry point */
       begin = in_list;
@@ -464,7 +473,7 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
                   start_val = value;
                 }
               /* current lemme has a invalid format */
-                else
+              else
                 {
                   fstatus = 3;
                   break;
@@ -500,7 +509,7 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
   /* at this point fstatus=0 if process was done succesfully, we may update it to padding value */
   if (fstatus != 0)
     fstatus = -1;
-    else
+  else
     fstatus = padding;
 
   return fstatus;

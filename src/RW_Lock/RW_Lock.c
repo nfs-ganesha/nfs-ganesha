@@ -141,7 +141,8 @@ int V_w(rw_lock_t * plock)
 
       print_lock("V_w.5", plock);
 
-  } else if (plock->nbr_waiting > 0)
+    }
+  else if (plock->nbr_waiting > 0)
     {
       /* if readers are waiting, let them go */
       print_lock("V_w.2 redacteur libere les lecteurs", plock);

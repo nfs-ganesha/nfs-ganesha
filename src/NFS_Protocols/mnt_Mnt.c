@@ -127,7 +127,6 @@
 
 extern nfs_parameter_t nfs_param;
 
-
 /**
  * mnt_Mnt: The Mount proc mount function, for all versions.
  * 
@@ -165,9 +164,9 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   char *hostname;
-  fsal_handle_t res_handle ;
-  fsal_path_t fsal_path ;
-  unsigned int bytag = FALSE ;
+  fsal_handle_t res_handle;
+  fsal_path_t fsal_path;
+  unsigned int bytag = FALSE;
 
   DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                     "REQUEST PROCESSING: Calling mnt_Mnt, version %u", preq->rq_vers);
@@ -207,28 +206,28 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
           if (!strcmp(exportPath, p_current_item->FS_tag))
             {
               strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
-              bytag = TRUE ;
+              bytag = TRUE;
               break;
             }
         }
       else
         {
-          /* Make sure the path in export entry ends with a '/', if not adds one */	
-	  if( p_current_item->fullpath[strlen(p_current_item->fullpath)-1] == '/' )
-            strncpy( tmplist_path, p_current_item->fullpath, MAXPATHLEN ) ;
-	  else
-	     snprintf( tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath ) ;
+          /* Make sure the path in export entry ends with a '/', if not adds one */
+          if (p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
+            strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
+          else
+            snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
 
-	  /* Make sure that the argument from MNT ends with a '/', if not adds one */
-	  if( exportPath[strlen(exportPath)-1] == '/' )
-            strncpy( tmpexport_path, exportPath, MAXPATHLEN ) ;
-	  else
-	     snprintf( tmpexport_path, MAXPATHLEN, "%s/", exportPath ) ;
+          /* Make sure that the argument from MNT ends with a '/', if not adds one */
+          if (exportPath[strlen(exportPath) - 1] == '/')
+            strncpy(tmpexport_path, exportPath, MAXPATHLEN);
+          else
+            snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
 
-	  /* Is tmplist_path a subdirectory of tmpexport_path ? */
-          if( !strncmp( tmplist_path, tmpexport_path, strlen( tmplist_path ) ) )
+          /* Is tmplist_path a subdirectory of tmpexport_path ? */
+          if (!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
             {
-              strncpy( exported_path,  p_current_item->fullpath, MAXPATHLEN);
+              strncpy(exported_path, p_current_item->fullpath, MAXPATHLEN);
               break;
             }
         }
@@ -271,37 +270,37 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    */
 
   pfsal_handle = p_current_item->proot_handle;
-  if ( !( bytag == TRUE || !strncmp( tmpexport_path, tmplist_path, MAXPATHLEN ) ) )
-   {
-    if( FSAL_IS_ERROR( FSAL_str2path( tmpexport_path, MAXPATHLEN, &fsal_path ) ) )
-     {
-        switch (preq->rq_vers)
-          {
-          case MOUNT_V1:
-            pres->res_mnt1.status = NFSERR_IO;
-            break;
+  if (!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
+    {
+      if (FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
+        {
+          switch (preq->rq_vers)
+            {
+            case MOUNT_V1:
+              pres->res_mnt1.status = NFSERR_IO;
+              break;
 
-          case MOUNT_V3:
-            pres->res_mnt3.fhs_status = MNT3ERR_IO;
-            break;
-          }
-        return NFS_REQ_OK;
-      }
+            case MOUNT_V3:
+              pres->res_mnt3.fhs_status = MNT3ERR_IO;
+              break;
+            }
+          return NFS_REQ_OK;
+        }
 
-    if( FSAL_IS_ERROR( FSAL_lookupPath( &fsal_path, pcontext, pfsal_handle, NULL ) ) )
-     {
-        switch (preq->rq_vers)
-          {
-          case MOUNT_V1:
-            pres->res_mnt1.status = NFSERR_ACCES;
-            break;
+      if (FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
+        {
+          switch (preq->rq_vers)
+            {
+            case MOUNT_V1:
+              pres->res_mnt1.status = NFSERR_ACCES;
+              break;
 
-          case MOUNT_V3:
-            pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
-            break;
-          }
-        return NFS_REQ_OK;
-     }
+            case MOUNT_V3:
+              pres->res_mnt3.fhs_status = MNT3ERR_ACCES;
+              break;
+            }
+          return NFS_REQ_OK;
+        }
 
     }
   /* convert the fsal_handle to a file handle */
@@ -409,8 +408,8 @@ void mnt3_Mnt_Free(nfs_res_t * pres)
 {
   if (pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
-               auth_flavors.auth_flavors_val);
+      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.auth_flavors.
+               auth_flavors_val);
       Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
   return;

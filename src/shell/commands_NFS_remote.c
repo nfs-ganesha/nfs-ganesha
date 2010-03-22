@@ -142,7 +142,7 @@ void print_nfs_res(nfs_res_t * p_res)
     {
       if ((index + 1) % 32 == 0)
         printf("%02X\n", ((char *)p_res)[index]);
-        else
+      else
         printf("%02X.", ((char *)p_res)[index]);
     }
   printf("\n");
@@ -641,7 +641,7 @@ int fn_rpc_init(int argc,       /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "rpc_init: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -661,7 +661,8 @@ int fn_rpc_init(int argc,       /* IN : number of args in argv */
     {
       /* too much or not enough arguments */
       err_flag++;
-    } else
+    }
+  else
     {
       hostname = argv[Optind];
       name = argv[Optind + 1];
@@ -1064,7 +1065,8 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle o
 
       return 0;
 
-  } else if (str_path[0] == '/')
+    }
+  else if (str_path[0] == '/')
     {
       /* absolute path, starting from "/", with a relative path */
       curr++;
@@ -1080,7 +1082,8 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle o
           return 0;
         }
 
-    } else
+    }
+  else
     {
       hdl_lookup = *p_current_hdl;
       strncpy(tmp_path, io_global_path, NFS2_MAXPATHLEN);
@@ -1522,7 +1525,7 @@ int nfs_remote_create(shell_fh3_t * p_dir_hdl,  /* IN */
   /* object handle */
   if (res.CREATE3res_u.resok.obj.handle_follows)
     set_shell_fh3(p_obj_hdl, &res.CREATE3res_u.resok.obj.post_op_fh3_u.handle);
-    else
+  else
     {
       fprintf(output, "Warning: nfs3_remote_Create did not return file handle.\n");
       nfs3_remote_Create_Free((nfs_res_t *) & res);
@@ -1595,7 +1598,7 @@ int nfs_remote_mkdir(shell_fh3_t * p_dir_hdl,   /* IN */
   /* object handle */
   if (res.MKDIR3res_u.resok.obj.handle_follows)
     set_shell_fh3(p_obj_hdl, &res.MKDIR3res_u.resok.obj.post_op_fh3_u.handle);
-    else
+  else
     {
       fprintf(output, "Warning: nfs3_remote_Mkdir did not return file handle.\n");
       nfs3_remote_Mkdir_Free((nfs_res_t *) & res);
@@ -1905,7 +1908,8 @@ int nfs_remote_symlink(shell_fh3_t path_hdl,    /* IN */
   if (res.SYMLINK3res_u.resok.obj.handle_follows)
     {
       set_shell_fh3(p_link_hdl, &res.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle);
-    } else
+    }
+  else
     {
       fprintf(output, "Warning: nfs3_remote_Symlink did not return file handle.\n");
       nfs3_remote_Symlink_Free((nfs_res_t *) & res);
@@ -2181,7 +2185,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2189,7 +2193,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2197,7 +2201,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_d)
             fprintf(output,
                     "ls: warning: option 'd' has been specified more than once.\n");
-            else
+          else
             flag_d++;
           break;
 
@@ -2205,7 +2209,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_l)
             fprintf(output,
                     "ls: warning: option 'l' has been specified more than once.\n");
-            else
+          else
             flag_l++;
           break;
 
@@ -2213,7 +2217,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_S)
             fprintf(output,
                     "ls: warning: option 'S' has been specified more than once.\n");
-            else
+          else
             flag_S++;
           break;
 
@@ -2221,7 +2225,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_z)
             fprintf(output,
                     "ls: warning: option 'z' has been specified more than once.\n");
-            else
+          else
             flag_z++;
           break;
 
@@ -2229,7 +2233,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if (flag_H)
             fprintf(output,
                     "ls: warning: option 'H' has been specified more than once.\n");
-            else
+          else
             flag_H++;
           break;
 
@@ -2278,7 +2282,8 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
                                     NFS2_MAXPATHLEN,
                                     str_name, &current_path_hdl, &handle_tmp, output))
         return rc;
-    } else
+    }
+  else
     {
       str_name = ".";
       handle_tmp = current_path_hdl;
@@ -2306,14 +2311,16 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
         {
           if (!flag_z)
             print_nfsitem_line(output, &attrs, str_name, linkdata);
-      } else if (flag_S)
+        }
+      else if (flag_S)
         {
           if (!flag_z)
             {
               fprintf(output, "%s :\n", str_name);
               print_nfs_attributes(&attrs, output);
             }
-      } else if (flag_H)
+        }
+      else if (flag_H)
         {
           if (!flag_z)
             {
@@ -2323,7 +2330,8 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
                          handle_tmp.data_len);
               fprintf(output, "%s (@%s)\n", str_name, buff);
             }
-        } else                  /* only prints the name */
+        }
+      else                      /* only prints the name */
         {
           if (!flag_z)
             fprintf(output, "%s\n", str_name);
@@ -2357,14 +2365,14 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
             strncpy(item_path, p_entry->name, NFS2_MAXPATHLEN);
           else if (str_name[strlen(str_name) - 1] == '/')
             snprintf(item_path, NFS2_MAXPATHLEN, "%s%s", str_name, p_entry->name);
-            else
+          else
             snprintf(item_path, NFS2_MAXPATHLEN, "%s/%s", str_name, p_entry->name);
 
           /* interpreting post-op attributes */
 
           if (p_entry->name_attributes.attributes_follow)
             p_attrs = &p_entry->name_attributes.post_op_attr_u.attributes;
-            else
+          else
             p_attrs = NULL;
 
           /* interpreting post-op handle */
@@ -2373,7 +2381,8 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
             {
               set_shell_fh3(&hdl, &p_entry->name_handle.post_op_fh3_u.handle);
               p_hdl = &hdl;
-            } else
+            }
+          else
             p_hdl = NULL;
 
           if ((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
@@ -2385,12 +2394,14 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
           if ((p_attrs != NULL) && flag_l)
             {
               print_nfsitem_line(output, p_attrs, item_path, linkdata);
-          } else if ((p_attrs != NULL) && flag_S)
+            }
+          else if ((p_attrs != NULL) && flag_S)
             {
               fprintf(output, "%s :\n", item_path);
               if (!flag_z)
                 print_nfs_attributes(p_attrs, output);
-          } else if ((p_hdl != NULL) && flag_H)
+            }
+          else if ((p_hdl != NULL) && flag_H)
             {
               if (!flag_z)
                 {
@@ -2400,7 +2411,8 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
                              p_hdl->data_len);
                   fprintf(output, "%s (@%s)\n", item_path, buff);
                 }
-            } else
+            }
+          else
             {
               if (!flag_z)
                 fprintf(output, "%s\n", item_path);
@@ -2540,7 +2552,7 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "create: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2548,7 +2560,7 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "create: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2569,7 +2581,8 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], NFS2_MAXPATHLEN);
       split_path(tmp_path, &path, &file);
@@ -2655,7 +2668,7 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "mkdir: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2663,7 +2676,7 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "mkdir: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2684,7 +2697,8 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], NFS2_MAXPATHLEN);
       split_path(tmp_path, &path, &file);
@@ -2770,7 +2784,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "unlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2778,7 +2792,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "unlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2799,7 +2813,8 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], NFS2_MAXPATHLEN);
       split_path(tmp_path, &path, &file);
@@ -2836,7 +2851,8 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
 
       if (rc = nfs_remote_remove(&subdir_hdl, file, output))
         return rc;
-    } else
+    }
+  else
     {
       if (flag_v)
         fprintf(output, "%s is a directory: calling nfs3_rmdir...\n", glob_path_object);
@@ -2900,7 +2916,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "setattr: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2908,7 +2924,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "setattr: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2931,7 +2947,8 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strcpy(file, argv[Optind]);
       attr_string = argv[Optind + 1];
@@ -3013,14 +3030,14 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "rename: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "rename: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3040,7 +3057,8 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
 
       strncpy(tmp_path1, argv[Optind], NFS2_MAXPATHLEN);
@@ -3142,14 +3160,14 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "hardlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "hardlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3175,7 +3193,8 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind + 1], NFS2_MAXPATHLEN);
       split_path(tmp_path, &path, &name);
 
-    } else
+    }
+  else
     {
       err_flag++;
     }
@@ -3264,14 +3283,14 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ln: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "ln: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3297,7 +3316,8 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind + 1], NFS2_MAXPATHLEN);
       split_path(tmp_path, &path, &name);
 
-    } else
+    }
+  else
     {
       err_flag++;
     }
@@ -3394,7 +3414,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "stat: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3402,7 +3422,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "stat: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3410,7 +3430,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
           if (flag_z)
             fprintf(output,
                     "stat: warning: option 'z' has been specified more than once.\n");
-            else
+          else
             flag_z++;
           break;
 
@@ -3418,7 +3438,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
           if (flag_H)
             fprintf(output,
                     "stat: warning: option 'H' has been specified more than once.\n");
-            else
+          else
             flag_H++;
           break;
 
@@ -3445,7 +3465,8 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
     {
       fprintf(output, "stat: Missing argument: <path>\n");
       err_flag++;
-    } else
+    }
+  else
     {
       str_name = argv[Optind];
     }
@@ -3481,7 +3502,8 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
                      handle_tmp.data_len);
           fprintf(output, "%s (@%s)\n", str_name, buff);
         }
-  } else if (!flag_z)
+    }
+  else if (!flag_z)
     {
       fprintf(output, "%s :\n", str_name);
       print_nfs_attributes(&attrs, output);
@@ -3514,7 +3536,8 @@ int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
     {
       fprintf(output, help_su);
       return -1;
-    } else
+    }
+  else
     {
       str_uid = argv[1];
     }
@@ -3527,7 +3550,8 @@ int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
           return -1;
         }
       pw_struct = getpwuid(uid);
-    } else
+    }
+  else
     {
       pw_struct = getpwnam(str_uid);
     }
@@ -3550,7 +3574,7 @@ int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
         {
           if (i == 1)
             fprintf(output, "%d", groups_tab[i]);
-            else
+          else
             fprintf(output, ", %d", groups_tab[i]);
         }
       fprintf(output, "\n");

@@ -37,7 +37,7 @@ int s_read_int(char *str)
 
       if ((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 10;
           out += (int)(str[i] - '0');
@@ -70,7 +70,7 @@ int s_read_octal(char *str)
 
       if ((str[i] < '0') || (str[i] > '7'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 8;
           out += (int)(str[i] - '0');
@@ -106,7 +106,7 @@ int s_read_int64(char *str, unsigned long long *out64)
 
       if ((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 10;
           out += (unsigned long long)(str[i] - '0');
@@ -134,7 +134,7 @@ int s_read_size(char *str, size_t * p_size)
 
       if ((str[i] < '0') || (str[i] > '9'))
         return -1;              /* error */
-        else
+      else
         {
           out *= 10;
           out += (size_t) (str[i] - '0');

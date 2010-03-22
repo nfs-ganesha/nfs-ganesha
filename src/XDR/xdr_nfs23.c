@@ -200,7 +200,8 @@ fattr2 *objp;
           if (!xdr_u_int(xdrs, &objp->fileid))
             return (FALSE);
 
-        } else
+        }
+      else
         {
 #if defined(_LP64) || defined(_KERNEL)
           IXDR_PUT_U_INT32(buf, objp->mode);
@@ -233,7 +234,8 @@ fattr2 *objp;
       if (!xdr_nfstime2(xdrs, &objp->ctime))
         return (FALSE);
       return (TRUE);
-  } else if (xdrs->x_op == XDR_DECODE)
+    }
+  else if (xdrs->x_op == XDR_DECODE)
     {
       if (!xdr_ftype2(xdrs, &objp->type))
         return (FALSE);
@@ -266,7 +268,8 @@ fattr2 *objp;
           if (!xdr_u_int(xdrs, &objp->fileid))
             return (FALSE);
 
-        } else
+        }
+      else
         {
 #if defined(_LP64) || defined(_KERNEL)
           objp->mode = IXDR_GET_U_INT32(buf);
@@ -493,7 +496,8 @@ statinfo2 *objp;
             return (FALSE);
           if (!xdr_u_int(xdrs, &objp->bavail))
             return (FALSE);
-        } else
+        }
+      else
         {
 #if defined(_LP64) || defined(_KERNEL)
           IXDR_PUT_U_INT32(buf, objp->tsize);
@@ -510,7 +514,8 @@ statinfo2 *objp;
 #endif
         }
       return (TRUE);
-  } else if (xdrs->x_op == XDR_DECODE)
+    }
+  else if (xdrs->x_op == XDR_DECODE)
     {
 #if defined(_LP64) || defined(_KERNEL)
       buf = (int *)XDR_INLINE(xdrs, 5 * BYTES_PER_XDR_UNIT);
@@ -529,7 +534,8 @@ statinfo2 *objp;
             return (FALSE);
           if (!xdr_u_int(xdrs, &objp->bavail))
             return (FALSE);
-        } else
+        }
+      else
         {
 #if defined(_LP64) || defined(_KERNEL)
           objp->tsize = IXDR_GET_U_INT32(buf);

@@ -199,7 +199,7 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
       /* set in_grp */
       if (p_context->credential.group == attrs.group)
         in_grp = 1;
-        else
+      else
         for (i = 0; i < p_context->credential.nbgroups; i++)
           {
             if (in_grp = (attrs.group == p_context->credential.alt_groups[i]))
@@ -251,11 +251,11 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
         Return(status.major, status.minor, INDEX_FSAL_setattrs);
 
       timebuf.actime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.atime.
-           seconds : buffstat.st_atime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ? (time_t) attrs.
+           atime.seconds : buffstat.st_atime);
       timebuf.modtime =
-          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.mtime.
-           seconds : buffstat.st_mtime);
+          (FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ? (time_t) attrs.
+           mtime.seconds : buffstat.st_mtime);
 
       TakeTokenFSCall();
       rc = utime(fsalpath.path, &timebuf);

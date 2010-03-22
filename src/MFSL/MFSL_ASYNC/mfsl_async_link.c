@@ -121,7 +121,8 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
     {
       P(popasyncdesc->op_args.link.pmobject_src->lock);
       P(popasyncdesc->op_args.link.pmobject_dirdest->lock);
-    } else
+    }
+  else
     {
       P(popasyncdesc->op_args.link.pmobject_src->lock);
     }
@@ -137,7 +138,8 @@ fsal_status_t MFSL_link_async_op(mfsl_async_op_desc_t * popasyncdesc)
     {
       V(popasyncdesc->op_args.link.pmobject_src->lock);
       V(popasyncdesc->op_args.link.pmobject_dirdest->lock);
-    } else
+    }
+  else
     {
       V(popasyncdesc->op_args.link.pmobject_src->lock);
     }

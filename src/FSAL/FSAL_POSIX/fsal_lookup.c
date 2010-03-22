@@ -81,7 +81,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       ReleaseTokenFSCall();
       if (rc)
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
-    } else
+    }
+  else
     {
       status =
           fsal_internal_getPathFromHandle(p_context, p_parent_directory_handle, 1,
@@ -125,7 +126,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
       if (FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_lookup);
 
-    } else
+    }
+  else
     {
 
 #ifdef _DEBUG_FSAL
@@ -156,14 +158,16 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
           /* lookup "." */
           memcpy(p_object_handle, p_parent_directory_handle, sizeof(fsal_handle_t));
 
-      } else if (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
+        }
+      else if (!FSAL_namecmp(p_filename, &FSAL_DOT_DOT))
         {
           /* lookup ".." */
           statusdb = fsal_posixdb_getParentDirHandle(p_context->p_conn,
                                                      p_parent_directory_handle,
                                                      p_object_handle);
 
-        } else
+        }
+      else
         {
           /* convert struct stat to fsal_posixdb_fileinfo_t */
           if (FSAL_IS_ERROR

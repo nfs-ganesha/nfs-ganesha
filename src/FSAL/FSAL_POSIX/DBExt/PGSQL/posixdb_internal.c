@@ -325,7 +325,8 @@ fsal_posixdb_status_t fsal_posixdb_buildOnePath(fsal_posixdb_conn * p_conn,
     {
       DisplayLog("Returned path: %s", p_path->path);
       ReturnCode(ERR_FSAL_POSIXDB_TOOMANYPATHS, toomanypaths);  /* too many entries */
-    } else
+    }
+  else
     {
       /* set result in cache */
       fsal_posixdb_CachePath(p_handle, p_path);
@@ -367,7 +368,8 @@ fsal_posixdb_status_t fsal_posixdb_recursiveDelete(fsal_posixdb_conn * p_conn,
             {
               st = fsal_posixdb_recursiveDelete(p_conn, PQgetvalue(p_res, i, 0),
                                                 PQgetvalue(p_res, i, 1), ftype_tmp);
-            } else
+            }
+          else
             {
               st = fsal_posixdb_deleteParent(p_conn, PQgetvalue(p_res, i, 0),   /* handleidparent */
                                              PQgetvalue(p_res, i, 1),   /* handletsparent */
@@ -440,7 +442,8 @@ fsal_posixdb_status_t fsal_posixdb_deleteParent(fsal_posixdb_conn * p_conn,     
 
       p_res = PQexecPrepared(p_conn, "deleteHandle", 2, paramValues, NULL, NULL, 0);
       CheckCommand(p_res);
-    } else
+    }
+  else
     {
       /* update the Handle entry ( Handle.nlink <- (nlink - 1) ) */
       paramValues[0] = handleid_str;

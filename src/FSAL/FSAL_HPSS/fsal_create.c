@@ -109,7 +109,7 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
   if (p_context->export_context->default_cos != 0)
     DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with COS = %d",
                       p_context->export_context->default_cos);
-    else
+  else
     DisplayLogJdLevel(fsal_log, NIV_DEBUG, "Creating file with default fileset COS.");
 
 #ifdef _DEBUG_FSAL

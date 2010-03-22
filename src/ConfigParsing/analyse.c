@@ -107,7 +107,8 @@ generic_item *config_CreateBlock(char *blockname, list_items * list)
     {
       new->item.block.block_content = *list;
       free(list);
-    } else
+    }
+  else
     new->item.block.block_content = NULL;
 
   new->next = NULL;
@@ -141,7 +142,8 @@ void config_AddItem(list_items * list, generic_item * item)
   if ((*list) == NULL)
     {
       (*list) = item;
-    } else
+    }
+  else
     {
       item->next = (*list);
       (*list) = item;
@@ -172,7 +174,8 @@ static void print_list_ident(FILE * output, list_items * list, unsigned int inde
           print_list_ident(output, &curr_item->item.block.block_content, indent + 3);
           fprintf(output, "%*s</BLOCK '%s'>\n", indent, " ",
                   curr_item->item.block.block_name);
-        } else
+        }
+      else
         {
           /* affectation */
           fprintf(output, "%*sKEY: '%s', VALUE: '%s'\n", indent, " ",

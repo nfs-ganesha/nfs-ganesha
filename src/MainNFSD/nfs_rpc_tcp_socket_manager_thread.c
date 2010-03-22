@@ -332,7 +332,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
               if (Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
-                else
+              else
                 DisplayLog
                     ("TCP SOCKET MANAGER : /!\\ **** ERROR **** Mismatch between tcp_sock and xprt array");
 
@@ -342,7 +342,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               V(workers_data[worker_index].request_pool_mutex);
 
               return NULL;
-          } else if (stat == XPRT_MOREREQS)
+            }
+          else if (stat == XPRT_MOREREQS)
             {
               DisplayLogLevel(NIV_DEBUG,
                               "TCP SOCKET MANAGER Sock=%d: XPRT has MOREREQS status",
@@ -356,7 +357,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                           tcp_sock, stat);
 #endif
           workers_data[worker_index].passcounter += 1;
-        } else
+        }
+      else
         {
           /* Regular management of the request (UDP request or TCP request on connected handler */
 #ifdef _DEBUG_DISPATCH

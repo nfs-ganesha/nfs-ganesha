@@ -464,7 +464,8 @@ int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx)
       Mem_Free((void *)old_value.pdata);
 
       return 1;
-    } else
+    }
+  else
     return 0;
 }                               /* Gss_ctx_Hash_Del */
 

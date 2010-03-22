@@ -175,7 +175,8 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
 
       V_w(&pentry->lock);
 
-    } else
+    }
+  else
     {
       if (offset < pentry->object.file.unstable_data.offset)
         {

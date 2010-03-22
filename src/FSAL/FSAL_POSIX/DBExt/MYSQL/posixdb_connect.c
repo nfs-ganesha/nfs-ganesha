@@ -67,7 +67,8 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
         }
 
       port = atoi(dbparams->port);
-    } else
+    }
+  else
     port = 0;
 
   *p_conn = (fsal_posixdb_conn *) Mem_Alloc(sizeof(fsal_posixdb_conn));
@@ -156,7 +157,8 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
           retry *= 2;
           /*if ( retry > lmgr_config.connect_retry_max )
              retry = lmgr_config.connect_retry_max; */
-        } else
+        }
+      else
         break;
 
     }
@@ -184,7 +186,8 @@ fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_con
           /*if ( retry > lmgr_config.connect_retry_max )
              retry = lmgr_config.connect_retry_max; */
 
-        } else
+        }
+      else
         break;
 
     }

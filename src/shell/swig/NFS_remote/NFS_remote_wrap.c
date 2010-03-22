@@ -338,7 +338,8 @@ extern "C" {
           ++f2;
         if (*f1 != *f2)
           return (*f1 > *f2) ? 1 : -1;
-      } return (l1 - f1) - (l2 - f2);
+      }
+    return (l1 - f1) - (l2 - f2);
   }
 
 /*
@@ -471,7 +472,8 @@ extern "C" {
           if (*s == '|')
             last_name = s + 1;
         return last_name;
-      } else
+      }
+    else
       return type->name;
   }
 
@@ -532,20 +534,24 @@ extern "C" {
                     if (compare == 0)
                       {
                         return iter->types[i];
-                    } else if (compare < 0)
+                      }
+                    else if (compare < 0)
                       {
                         if (i)
                           {
                             r = i - 1;
-                          } else
+                          }
+                        else
                           {
                             break;
                           }
-                    } else if (compare > 0)
+                      }
+                    else if (compare > 0)
                       {
                         l = i + 1;
                       }
-                  } else
+                  }
+                else
                   {
                     break;      /* should never happen */
                   }
@@ -575,7 +581,8 @@ extern "C" {
     if (ret)
       {
         return ret;
-      } else
+      }
+    else
       {
         /* STEP 2: If the type hasn't been found, do a complete search
            of the str field (the human readable name) */
@@ -627,14 +634,14 @@ extern "C" {
           uu = ((d - '0') << 4);
         else if ((d >= 'a') && (d <= 'f'))
           uu = ((d - ('a' - 10)) << 4);
-          else
+        else
           return (char *)0;
         d = *(c++);
         if ((d >= '0') && (d <= '9'))
           uu |= (d - '0');
         else if ((d >= 'a') && (d <= 'f'))
           uu |= (d - ('a' - 10));
-          else
+        else
           return (char *)0;
         *u = uu;
       }
@@ -663,7 +670,8 @@ extern "C" {
           {
             *ptr = (void *)0;
             return name;
-          } else
+          }
+        else
           {
             return 0;
           }
@@ -682,7 +690,8 @@ extern "C" {
     if (lname)
       {
         strncpy(r, name, lname + 1);
-      } else
+      }
+    else
       {
         *r = 0;
       }
@@ -697,7 +706,8 @@ extern "C" {
           {
             memset(ptr, 0, sz);
             return name;
-          } else
+          }
+        else
           {
             return 0;
           }
@@ -1026,9 +1036,10 @@ extern "C" {
       return NULL;
       if (type->clientdata != NULL) {
         return (const char *)type->clientdata;
-        } else {
+      }
+      else {
         return type->name;
-        }
+      }
   }
 
   SWIGRUNTIME swig_cast_info *SWIG_TypeProxyCheck(const char *c, swig_type_info * ty) {
@@ -1071,30 +1082,36 @@ extern "C" {
                         tmp = SvIV(tsv);
                       }
                   }
-              } else
+              }
+            else
               {
                 return SWIG_ERROR;
               }
-          } else
+          }
+        else
           {
             tmp = SvIV(tsv);
           }
         voidptr = INT2PTR(void *, tmp);
-    } else if (!SvOK(sv))
+      }
+    else if (!SvOK(sv))
       {                         /* Check for undef */
         *(ptr) = (void *)0;
         return SWIG_OK;
-    } else if (SvTYPE(sv) == SVt_RV)
+      }
+    else if (SvTYPE(sv) == SVt_RV)
       {                         /* Check for NULL pointer */
         if (!SvROK(sv))
           {
             *(ptr) = (void *)0;
             return SWIG_OK;
-          } else
+          }
+        else
           {
             return SWIG_ERROR;
           }
-      } else
+      }
+    else
       {                         /* Don't know what it is */
         return SWIG_ERROR;
       }
@@ -1108,7 +1125,8 @@ extern "C" {
             return SWIG_ERROR;
           }
         *ptr = SWIG_TypeCast(tc, voidptr);
-      } else
+      }
+    else
       {
         *ptr = voidptr;
       }
@@ -1166,7 +1184,8 @@ extern "C" {
         sv_setsv(sv, self);
         SvREFCNT_dec((SV *) self);
         sv_bless(sv, stash);
-      } else
+      }
+    else
       {
         sv_setref_pv(sv, (char *)SWIG_Perl_TypeProxyName(t), ptr);
       }
@@ -1696,7 +1715,8 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
                   *cptr =
                       (char *)memcpy((char *)malloc((size) * sizeof(char)), cstr,
                                      sizeof(char) * (size));
-                } else
+                }
+              else
                 {
                   *cptr = cstr;
                   *alloc = SWIG_OLDOBJ;
@@ -1706,7 +1726,8 @@ SWIGINTERN int SWIG_AsCharPtrAndSize(SV * obj, char **cptr, size_t * psize, int 
       if (psize)
         *psize = size;
       return SWIG_OK;
-    } else
+    }
+  else
     {
       swig_type_info *pchar_descriptor = SWIG_pchar_descriptor();
       if (pchar_descriptor)
@@ -1767,7 +1788,8 @@ SWIGINTERNINLINE SV *SWIG_FromCharPtrAndSize(const char *carray, size_t size)
       if (carray[size - 1] == 0)
         {
           sv_setpv(obj, carray);
-        } else
+        }
+      else
         {
           char *tmp = (char *)malloc((size + 1) * sizeof(char));
           memcpy(tmp, carray, size);
@@ -1775,7 +1797,8 @@ SWIGINTERNINLINE SV *SWIG_FromCharPtrAndSize(const char *carray, size_t size)
           sv_setpv(obj, tmp);
           free((char *)tmp);
         }
-    } else
+    }
+  else
     {
       sv_setsv(obj, &PL_sv_undef);
     }
@@ -1813,12 +1836,14 @@ SWIG_AsVal_double SWIG_PERL_DECL_ARGS_2(SV * obj, double *val)
       if (val)
         *val = SvNV(obj);
       return SWIG_OK;
-  } else if (SvIOK(obj))
+    }
+  else if (SvIOK(obj))
     {
       if (val)
         *val = (double)SvIV(obj);
       return SWIG_AddCast(SWIG_OK);
-    } else
+    }
+  else
     {
       const char *nptr = SvPV(obj, PL_na);
       if (nptr)
@@ -1829,7 +1854,8 @@ SWIG_AsVal_double SWIG_PERL_DECL_ARGS_2(SV * obj, double *val)
             {
               errno = 0;
               return SWIG_OverflowError;
-            } else
+            }
+          else
             {
               if (*endptr == '\0')
                 {
@@ -1858,16 +1884,19 @@ SWIGINTERNINLINE int SWIG_CanCastAsInteger(double *d, double min, double max)
       if ((errno == EDOM) || (errno == ERANGE))
         {
           errno = 0;
-        } else
+        }
+      else
         {
           double summ, reps, diff;
           if (rd < x)
             {
               diff = x - rd;
-          } else if (rd > x)
+            }
+          else if (rd > x)
             {
               diff = rd - x;
-            } else
+            }
+          else
             {
               return 1;
             }
@@ -1891,7 +1920,8 @@ SWIG_AsVal_long SWIG_PERL_DECL_ARGS_2(SV * obj, long *val)
       if (val)
         *val = SvIV(obj);
       return SWIG_OK;
-    } else
+    }
+  else
     {
       int dispatch = 0;
       const char *nptr = SvPV(obj, PL_na);
@@ -1903,7 +1933,8 @@ SWIG_AsVal_long SWIG_PERL_DECL_ARGS_2(SV * obj, long *val)
             {
               errno = 0;
               return SWIG_OverflowError;
-            } else
+            }
+          else
             {
               if (*endptr == '\0')
                 {
@@ -1938,7 +1969,8 @@ SWIG_AsVal_int SWIG_PERL_DECL_ARGS_2(SV * obj, int *val)
       if ((v < INT_MIN || v > INT_MAX))
         {
           return SWIG_OverflowError;
-        } else
+        }
+      else
         {
           if (val)
             *val = (int)(v);
@@ -2211,8 +2243,7 @@ extern "C" {
 
         if ((items < 2) || (items > 2)) {
           SWIG_croak("Usage: shell_fh3_t_data_len_set(self,data_len);");
-        }
-      res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_shell_fh3__, 0 | 0);
+        } res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_shell_fh3__, 0 | 0);
       if (!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
@@ -2234,7 +2265,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "shell_fh3_t_data_len_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -2320,7 +2352,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->data_val, arg2, NFS3_FHSIZE * sizeof(char));
-        else
+      else
         memset(arg1->data_val, 0, NFS3_FHSIZE * sizeof(char));
 
       XSRETURN(argvi);
@@ -2842,7 +2874,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_remote_readdirplus" "', argument " "2" " of type '"
                                 "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -2973,7 +3006,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_remote_readdir" "', argument " "2" " of type '"
                                 "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -3109,7 +3143,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_remote_create" "', argument " "3" " of type '"
                                 "mode_t" "'");
-          } else
+          }
+        else
           {
             arg3 = *((mode_t *) (argp3));
           }
@@ -3204,7 +3239,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "nfs_remote_mkdir"
                                 "', argument " "3" " of type '" "mode_t" "'");
-          } else
+          }
+        else
           {
             arg3 = *((mode_t *) (argp3));
           }
@@ -3632,7 +3668,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_remote_symlink" "', argument " "1" " of type '"
                                 "shell_fh3_t" "'");
-          } else
+          }
+        else
           {
             arg1 = *((shell_fh3_t *) (argp1));
           }
@@ -3794,7 +3831,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfsdata2_nfsdata2_len_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -3887,7 +3925,8 @@ extern "C" {
           arg1->nfsdata2_val =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->nfsdata2_val = 0;
         }
@@ -4026,7 +4065,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfstime2_seconds_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4116,7 +4156,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfstime2_useconds_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4332,7 +4373,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_mode_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4421,7 +4463,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_nlink_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4510,7 +4553,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_uid_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4599,7 +4643,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_gid_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4688,7 +4733,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_size_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4778,7 +4824,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fattr2_blocksize_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4867,7 +4914,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_rdev_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -4957,7 +5005,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fattr2_blocks_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -5046,7 +5095,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr2_fsid_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -5136,7 +5186,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fattr2_fileid_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -5509,7 +5560,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fhstatus2_status_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -5685,7 +5737,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->directory, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->directory, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -5827,7 +5879,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->dir, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->dir, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -5918,7 +5970,8 @@ extern "C" {
           arg1->name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->name = 0;
         }
@@ -6055,7 +6108,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->file, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->file, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -6870,7 +6923,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "sattr2_mode_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -6959,7 +7013,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "sattr2_uid_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7048,7 +7103,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "sattr2_gid_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7137,7 +7193,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "sattr2_size_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7433,7 +7490,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "statinfo2_tsize_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7523,7 +7581,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "statinfo2_bsize_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7613,7 +7672,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "statinfo2_blocks_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7703,7 +7763,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "statinfo2_bfree_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -7793,7 +7854,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "statinfo2_bavail_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -8234,7 +8296,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->dir, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->dir, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -8318,7 +8380,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookie, arg2, 4 * sizeof(char));
-        else
+      else
         memset(arg1->cookie, 0, 4 * sizeof(char));
 
       XSRETURN(argvi);
@@ -8406,7 +8468,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIR2args_count_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -8553,7 +8616,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "entry2_fileid_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -8646,7 +8710,8 @@ extern "C" {
           arg1->name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->name = 0;
         }
@@ -8729,7 +8794,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookie, arg2, 4 * sizeof(char));
-        else
+      else
         memset(arg1->cookie, 0, 4 * sizeof(char));
 
       XSRETURN(argvi);
@@ -9021,7 +9086,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIR2resok_eof_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -9551,7 +9617,8 @@ extern "C" {
           arg1->to =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->to = 0;
         }
@@ -9767,7 +9834,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->from, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->from, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -10399,7 +10466,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->file, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->file, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -10487,7 +10554,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE2args_beginoffset_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -10577,7 +10645,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE2args_offset_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -10667,7 +10736,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE2args_totalcount_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -11389,7 +11459,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->file, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->file, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -11477,7 +11547,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ2args_offset_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -11567,7 +11638,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ2args_count_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -11657,7 +11729,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ2args_totalcount_set" "', argument " "2" " of type '"
                                 "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -11974,7 +12047,8 @@ extern "C" {
           arg1->data =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->data = 0;
         }
@@ -12118,7 +12192,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->file, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->file, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -12339,7 +12413,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "specdata3_specdata1_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -12429,7 +12504,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "specdata3_specdata2_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -12660,7 +12736,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_fh3_data_data_len_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -12753,7 +12830,8 @@ extern "C" {
           arg1->data_val =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->data_val = 0;
         }
@@ -12894,7 +12972,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfstime3_seconds_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -12984,7 +13063,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfstime3_nseconds_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -13200,7 +13280,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_mode_set"
                                 "', argument " "2" " of type '" "mode3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((mode3 *) (argp2));
           }
@@ -13289,7 +13370,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_nlink_set"
                                 "', argument " "2" " of type '" "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -13378,7 +13460,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_uid_set"
                                 "', argument " "2" " of type '" "uid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((uid3 *) (argp2));
           }
@@ -13466,7 +13549,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_gid_set"
                                 "', argument " "2" " of type '" "gid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((gid3 *) (argp2));
           }
@@ -13554,7 +13638,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_size_set"
                                 "', argument " "2" " of type '" "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -13643,7 +13728,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_used_set"
                                 "', argument " "2" " of type '" "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -13809,7 +13895,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "fattr3_fsid_set"
                                 "', argument " "2" " of type '" "nfs3_uint64" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint64 *) (argp2));
           }
@@ -13899,7 +13986,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fattr3_fileid_set" "', argument " "2" " of type '"
                                 "fileid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((fileid3 *) (argp2));
           }
@@ -14274,7 +14362,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "post_op_attr_attributes_follow_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -14598,7 +14687,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "wcc_attr_size_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -14894,7 +14984,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "pre_op_attr_attributes_follow_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -15418,7 +15509,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "post_op_fh3_handle_follows_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -15736,7 +15828,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_mode3_set_it_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -15916,7 +16009,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_mode3_set_mode3_u_mode_set" "', argument " "2"
                                 " of type '" "mode3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((mode3 *) (argp2));
           }
@@ -16064,7 +16158,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_uid3_set_it_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -16241,7 +16336,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_uid3_set_uid3_u_uid_set" "', argument " "2"
                                 " of type '" "uid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((uid3 *) (argp2));
           }
@@ -16387,7 +16483,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_gid3_set_it_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -16564,7 +16661,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_gid3_set_gid3_u_gid_set" "', argument " "2"
                                 " of type '" "gid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((gid3 *) (argp2));
           }
@@ -16710,7 +16808,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_size3_set_it_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -16890,7 +16989,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "set_size3_set_size3_u_size_set" "', argument " "2"
                                 " of type '" "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -18232,7 +18332,8 @@ extern "C" {
           arg1->name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->name = 0;
         }
@@ -18945,7 +19046,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "sattrguard3_check_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -21219,7 +21321,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "ACCESS3args_access_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -21443,7 +21546,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "ACCESS3resok_access_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -22323,7 +22427,8 @@ extern "C" {
           arg1->data =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->data = 0;
         }
@@ -23070,7 +23175,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ3args_offset_set" "', argument " "2" " of type '"
                                 "offset3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((offset3 *) (argp2));
           }
@@ -23160,7 +23266,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ3args_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -23381,7 +23488,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ3resok_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -23471,7 +23579,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ3resok_eof_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -23650,7 +23759,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READ3resok_data_data_len_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -23743,7 +23853,8 @@ extern "C" {
           arg1->data_val =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->data_val = 0;
         }
@@ -24472,7 +24583,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE3args_offset_set" "', argument " "2" " of type '"
                                 "offset3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((offset3 *) (argp2));
           }
@@ -24562,7 +24674,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE3args_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -24816,7 +24929,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE3args_data_data_len_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -24909,7 +25023,8 @@ extern "C" {
           arg1->data_val =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->data_val = 0;
         }
@@ -25127,7 +25242,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "WRITE3resok_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -25288,7 +25404,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->verf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->verf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -26184,7 +26300,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->verf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->verf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -28432,7 +28548,8 @@ extern "C" {
           arg1->symlink_data =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->symlink_data = 0;
         }
@@ -34838,7 +34955,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIR3args_cookie_set" "', argument " "2" " of type '"
                                 "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -34924,7 +35042,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookieverf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->cookieverf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -35012,7 +35130,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIR3args_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -35159,7 +35278,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "entry3_fileid_set" "', argument " "2" " of type '"
                                 "fileid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((fileid3 *) (argp2));
           }
@@ -35252,7 +35372,8 @@ extern "C" {
           arg1->name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->name = 0;
         }
@@ -35339,7 +35460,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "entry3_cookie_set" "', argument " "2" " of type '"
                                 "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -35632,7 +35754,8 @@ extern "C" {
             SWIG_exception_fail(SWIG_ValueError,
                                 "invalid null reference " "in method '" "dirlist3_eof_set"
                                 "', argument " "2" " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -35849,7 +35972,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookieverf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->cookieverf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -36666,7 +36789,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIRPLUS3args_cookie_set" "', argument " "2"
                                 " of type '" "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -36753,7 +36877,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookieverf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->cookieverf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -36842,7 +36966,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIRPLUS3args_dircount_set" "', argument " "2"
                                 " of type '" "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -36932,7 +37057,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "READDIRPLUS3args_maxcount_set" "', argument " "2"
                                 " of type '" "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -37079,7 +37205,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "entryplus3_fileid_set" "', argument " "2" " of type '"
                                 "fileid3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((fileid3 *) (argp2));
           }
@@ -37172,7 +37299,8 @@ extern "C" {
           arg1->name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->name = 0;
         }
@@ -37259,7 +37387,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "entryplus3_cookie_set" "', argument " "2" " of type '"
                                 "cookie3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((cookie3 *) (argp2));
           }
@@ -37713,7 +37842,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "dirlistplus3_eof_set" "', argument " "2" " of type '"
                                 "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -37936,7 +38066,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->cookieverf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->cookieverf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -38905,7 +39035,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_tbytes_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -38995,7 +39126,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_fbytes_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -39085,7 +39217,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_abytes_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -39175,7 +39308,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_tfiles_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -39265,7 +39399,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_ffiles_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -39355,7 +39490,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_afiles_set" "', argument " "2" " of type '"
                                 "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -39445,7 +39581,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSSTAT3resok_invarsec_set" "', argument " "2"
                                 " of type '" "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40319,7 +40456,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_rtmax_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40409,7 +40547,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_rtpref_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40499,7 +40638,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_rtmult_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40589,7 +40729,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_wtmax_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40679,7 +40820,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_wtpref_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40769,7 +40911,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_wtmult_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40859,7 +41002,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_dtpref_set" "', argument " "2" " of type '"
                                 "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -40949,7 +41093,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_maxfilesize_set" "', argument " "2"
                                 " of type '" "size3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((size3 *) (argp2));
           }
@@ -41116,7 +41261,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "FSINFO3resok_properties_set" "', argument " "2"
                                 " of type '" "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -41992,7 +42138,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_linkmax_set" "', argument " "2"
                                 " of type '" "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -42082,7 +42229,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_name_max_set" "', argument " "2"
                                 " of type '" "nfs3_uint32" "'");
-          } else
+          }
+        else
           {
             arg2 = *((nfs3_uint32 *) (argp2));
           }
@@ -42172,7 +42320,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_no_trunc_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -42264,7 +42413,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_chown_restricted_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -42357,7 +42507,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_case_insensitive_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -42449,7 +42600,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "PATHCONF3resok_case_preserving_set" "', argument " "2"
                                 " of type '" "bool_t" "'");
-          } else
+          }
+        else
           {
             arg2 = *((bool_t *) (argp2));
           }
@@ -43199,7 +43351,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "COMMIT3args_offset_set" "', argument " "2" " of type '"
                                 "offset3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((offset3 *) (argp2));
           }
@@ -43289,7 +43442,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "COMMIT3args_count_set" "', argument " "2" " of type '"
                                 "count3" "'");
-          } else
+          }
+        else
           {
             arg2 = *((count3 *) (argp2));
           }
@@ -43507,7 +43661,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->verf, arg2, 8 * sizeof(char));
-        else
+      else
         memset(arg1->verf, 0, 8 * sizeof(char));
 
       XSRETURN(argvi);
@@ -51990,7 +52144,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "fhandle3_fhandle3_len_set" "', argument " "2"
                                 " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -52083,7 +52238,8 @@ extern "C" {
           arg1->fhandle3_val =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->fhandle3_val = 0;
         }
@@ -52225,7 +52381,8 @@ extern "C" {
           arg1->gr_name =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->gr_name = 0;
         }
@@ -52447,7 +52604,8 @@ extern "C" {
           arg1->ex_dir =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->ex_dir = 0;
         }
@@ -52747,7 +52905,8 @@ extern "C" {
           arg1->ml_hostname =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->ml_hostname = 0;
         }
@@ -52837,7 +52996,8 @@ extern "C" {
           arg1->ml_directory =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->ml_directory = 0;
         }
@@ -53229,7 +53389,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "mountres3_ok_auth_flavors_auth_flavors_len_set"
                                 "', argument " "2" " of type '" "u_int" "'");
-          } else
+          }
+        else
           {
             arg2 = *((u_int *) (argp2));
           }
@@ -54474,7 +54635,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->arg_getattr2, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->arg_getattr2, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -54712,7 +54873,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->arg_readlink2, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->arg_readlink2, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -55566,7 +55727,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->arg_statfs2, arg2, 32 * sizeof(char));
-        else
+      else
         memset(arg1->arg_statfs2, 0, 32 * sizeof(char));
 
       XSRETURN(argvi);
@@ -57271,7 +57432,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_arg_t_arg_compound4_set" "', argument " "2"
                                 " of type '" "COMPOUND4args" "'");
-          } else
+          }
+        else
           {
             arg2 = *((COMPOUND4args *) (argp2));
           }
@@ -57364,7 +57526,8 @@ extern "C" {
           arg1->arg_mnt =
               (char *)memcpy((char *)malloc((size) * sizeof(char)), arg2,
                              sizeof(char) * (size));
-        } else
+        }
+      else
         {
           arg1->arg_mnt = 0;
         }
@@ -59658,7 +59821,8 @@ extern "C" {
                                 "invalid null reference " "in method '"
                                 "nfs_res_t_res_compound4_set" "', argument " "2"
                                 " of type '" "COMPOUND4res" "'");
-          } else
+          }
+        else
           {
             arg2 = *((COMPOUND4res *) (argp2));
           }
@@ -60054,7 +60218,7 @@ extern "C" {
       arg2 = temp2;
       if (arg2)
         memcpy(arg1->toto, arg2, 1024 * sizeof(char));
-        else
+      else
         memset(arg1->toto, 0, 1024 * sizeof(char));
 
       XSRETURN(argvi);
@@ -63573,7 +63737,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
     {
       swig_module.next = module_head->next;
       module_head->next = &swig_module;
-    } else
+    }
+  else
     {
       /* This is the first module loaded */
       swig_module.next = &swig_module;
@@ -63614,7 +63779,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
               printf("SWIG_InitializeModule: found and overwrite type %s \n", type->name);
 #endif
             }
-        } else
+        }
+      else
         {
           type = swig_module.type_initial[i];
         }
@@ -63647,7 +63813,8 @@ SWIGRUNTIME void SWIG_InitializeModule(void *clientdata)
 #endif
                   cast->type = ret;
                   ret = 0;
-                } else
+                }
+              else
                 {
                   /* Check for casting already in the list */
                   swig_cast_info *ocast = SWIG_TypeCheck(ret->name, type);
@@ -63763,7 +63930,8 @@ XS(SWIG_init)
       if (swig_variables[i].type)
         {
           SWIG_MakePtr(sv, (void *)1, *swig_variables[i].type, 0);
-        } else
+        }
+      else
         {
           sv_setiv(sv, (IV) 0);
         }

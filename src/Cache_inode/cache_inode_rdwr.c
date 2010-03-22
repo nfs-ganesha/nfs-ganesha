@@ -186,7 +186,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
       io_direction = CACHE_CONTENT_READ;
       openflags = FSAL_O_RDONLY;
       pclient->stat.func_stats.nb_call[CACHE_INODE_READ_DATA] += 1;
-    } else
+    }
+  else
     {
       statindex = CACHE_INODE_WRITE_DATA;
       io_direction = CACHE_CONTENT_WRITE;
@@ -253,8 +254,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
 
           *pio_size = buffer_size;
-        } /* if( pentry->object.file.unstable_data.buffer == NULL ) */
-        else
+        }                       /* if( pentry->object.file.unstable_data.buffer == NULL ) */
+      else
         {
           if ((pentry->object.file.unstable_data.offset < seek_descriptor->offset) &&
               (buffer_size + seek_descriptor->offset < CACHE_INODE_UNSTABLE_BUFFERSIZE))
@@ -272,7 +273,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
 
               *pio_size = buffer_size;
-            } else
+            }
+          else
             {
               /* Go back to regular situation */
               stable_flag = TRUE;
@@ -313,7 +315,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                     "Read/Write Operation through cache failed with status %d (renew process failed)",
                                     cache_content_status);
 
-                } else
+                }
+              else
                 {
                   /* Entry was successfully renewed */
                   DisplayLog("----> File Content Entry %p was successfully renewed",
@@ -368,7 +371,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           pentry->object.file.attributes.spaceused =
               buffstat.st_blksize * buffstat.st_blocks;
 
-        } else
+        }
+      else
         {
           /* No data cache entry, we operated directly on FSAL */
           pentry->object.file.attributes.asked_attributes = pclient->attrmask;
@@ -436,7 +440,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
               if (fsal_status.major == ERR_FSAL_DELAY)
                 DisplayLogJd(pclient->log_outputs, "FSAL_write returned EBUSY");
-                else
+              else
                 DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                                   "cache_inode_rdwr: fsal_status.major = %d",
                                   fsal_status.major);
@@ -456,7 +460,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 #endif
 
                   *pstatus = cache_inode_error_convert(fsal_status);
-                } else
+                }
+              else
                 {
                   /* the fd has been close by another thread.
                    * return CACHE_INODE_FSAL_DELAY so the client will
@@ -513,7 +518,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               /* if failed, the next block will handle the error */
               if (FSAL_IS_ERROR(fsal_status_getattr))
                 fsal_status = fsal_status_getattr;
-                else
+              else
                 {
                   /* Update Cache Inode attributes */
                   pentry->object.file.attributes.filesize = post_write_attr.filesize;
@@ -559,15 +564,16 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
       if (*pstatus != CACHE_INODE_SUCCESS)
         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READ] += 1;
-        else
+      else
         pclient->stat.func_stats.nb_success[CACHE_INODE_READ] += 1;
-    } else
+    }
+  else
     {
       *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
       if (*pstatus != CACHE_INODE_SUCCESS)
         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_WRITE] += 1;
-        else
+      else
         pclient->stat.func_stats.nb_success[CACHE_INODE_WRITE] += 1;
     }
 

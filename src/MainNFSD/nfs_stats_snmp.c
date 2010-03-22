@@ -86,13 +86,16 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
       if (!STRCMP(key_name, "Snmp_Agentx_Socket"))
         {
           strncpy(out_parameter->snmp_adm.snmp_agentx_socket, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "Product_Id"))
+        }
+      else if (!STRCMP(key_name, "Product_Id"))
         {
           out_parameter->snmp_adm.product_id = atoi(key_value);
-      } else if (!STRCMP(key_name, "Snmp_adm_log"))
+        }
+      else if (!STRCMP(key_name, "Snmp_adm_log"))
         {
           strncpy(out_parameter->snmp_adm.snmp_log_file, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "Export_cache_stats"))
+        }
+      else if (!STRCMP(key_name, "Export_cache_stats"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -102,7 +105,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_cache_stats = bool;
-      } else if (!STRCMP(key_name, "Export_requests_stats"))
+        }
+      else if (!STRCMP(key_name, "Export_requests_stats"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -112,7 +116,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_requests_stats = bool;
-      } else if (!STRCMP(key_name, "Export_maps_stats"))
+        }
+      else if (!STRCMP(key_name, "Export_maps_stats"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -122,7 +127,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_maps_stats = bool;
-      } else if (!STRCMP(key_name, "Export_buddy_stats"))
+        }
+      else if (!STRCMP(key_name, "Export_buddy_stats"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -132,7 +138,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_buddy_stats = bool;
-      } else if (!STRCMP(key_name, "Export_nfs_calls_detail"))
+        }
+      else if (!STRCMP(key_name, "Export_nfs_calls_detail"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -142,7 +149,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_nfs_calls_detail = bool;
-      } else if (!STRCMP(key_name, "Export_cache_inode_calls_detail"))
+        }
+      else if (!STRCMP(key_name, "Export_cache_inode_calls_detail"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -152,7 +160,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_cache_inode_calls_detail = bool;
-      } else if (!STRCMP(key_name, "Export_FSAL_calls_detail"))
+        }
+      else if (!STRCMP(key_name, "Export_FSAL_calls_detail"))
         {
           int bool = StrToBoolean(key_value);
           if (bool == -1)
@@ -162,7 +171,8 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_fsal_calls_detail = bool;
-        } else
+        }
+      else
         {
           DisplayLog
               ("SNMP_ADM LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -256,27 +266,34 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
       /* Pinting the cache inode hash stat */
       /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
       HashTable_GetStats(workers_data[0].ht, &hstat);
-  } else if ((cs & 0xF0) == 0x10)
+    }
+  else if ((cs & 0xF0) == 0x10)
     {
       nfs_dupreq_get_stats(&hstat);
-  } else if ((cs & 0xF0) == 0x20)
+    }
+  else if ((cs & 0xF0) == 0x20)
     {
       idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
-  } else if ((cs & 0xF0) == 0x30)
+    }
+  else if ((cs & 0xF0) == 0x30)
     {
       idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
       memcpy(&hstat, &hstat_reverse, sizeof(hash_stat_t));
-  } else if ((cs & 0xF0) == 0x40)
+    }
+  else if ((cs & 0xF0) == 0x40)
     {
       idmap_get_stats(GIDMAP_TYPE, &hstat, &hstat_reverse);
-  } else if ((cs & 0xF0) == 0x50)
+    }
+  else if ((cs & 0xF0) == 0x50)
     {
       idmap_get_stats(GIDMAP_TYPE, &hstat, &hstat_reverse);
       memcpy(&hstat, &hstat_reverse, sizeof(hash_stat_t));
-  } else if ((cs & 0xF0) == 0x60)
+    }
+  else if ((cs & 0xF0) == 0x60)
     {
       nfs_ip_name_get_stats(&hstat);
-    } else
+    }
+  else
     {
       return 1;
     }

@@ -129,7 +129,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
         bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
-        else
+      else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 

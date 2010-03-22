@@ -180,7 +180,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   if (!FSAL_namecmp(pname, &FSAL_DOT))
     {
       pentry = pentry_parent;
-  } else if (!FSAL_namecmp(pname, &FSAL_DOT_DOT))
+    }
+  else if (!FSAL_namecmp(pname, &FSAL_DOT_DOT))
     {
       /* Directory do only have exactly one parent. This a limitation in all FS, which 
        * implies that hard link are forbidden on directories (so that they exists only in one dir)
@@ -188,7 +189,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
        * Clients SHOULD never 'lookup( .. )' in something that is no dir */
       pentry =
           cache_inode_lookupp_no_mutex(pentry_parent, ht, pclient, pcontext, pstatus);
-    } else
+    }
+  else
     {
       /* This is a "regular lookup" (not on "." or "..") */
 
@@ -220,13 +222,13 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                       VALID)
                     if (!FSAL_namecmp
                         (pname,
-                         &(pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                           name)))
+                         &(pentry_parent->object.dir_begin.pdir_data->
+                           dir_entries[i].name)))
                       {
                         /* Entry was found */
                         pentry =
-                            pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                            pentry;
+                            pentry_parent->object.dir_begin.pdir_data->
+                            dir_entries[i].pentry;
                         DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                                           "Cache Hit detected (dir_begin)");
                         break;
@@ -241,7 +243,8 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
               /* Next step */
               pdir_chain = pdir_chain->object.dir_begin.pdir_cont;
-            } else
+            }
+          else
             {
               /* The element in the dir_chain is a DIR_CONTINUE */
               for (i = 0; i < CHILDREN_ARRAY_SIZE; i++)
@@ -433,7 +436,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUP] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUP] += 1;
 
   return pentry;

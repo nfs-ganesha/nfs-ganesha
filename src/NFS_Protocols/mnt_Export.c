@@ -226,7 +226,7 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
               if ((i + 1) == p_clients->num_clients)    /* this is the last item */
                 new_expnode->ex_groups[i].gr_next = NULL;
-                else            /* other items point to the next memory slot */
+              else              /* other items point to the next memory slot */
                 new_expnode->ex_groups[i].gr_next = &(new_expnode->ex_groups[i + 1]);
 
               /* ---- gr_name ----- */
@@ -325,7 +325,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 
             }
 
-        } else
+        }
+      else
         {
           /* There are no groups for this export entry. */
           new_expnode->ex_groups = NULL;
@@ -344,7 +345,8 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
         {
           p_exp_current->ex_next = new_expnode;
           p_exp_current = new_expnode;
-        } else
+        }
+      else
         {
           /* This is the first item in the list */
           p_exp_out = new_expnode;

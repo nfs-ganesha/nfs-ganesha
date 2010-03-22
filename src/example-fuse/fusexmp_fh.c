@@ -132,7 +132,7 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
 
   if (S_ISFIFO(mode))
     res = mkfifo(path, mode);
-    else
+  else
     res = mknod(path, mode, rdev);
   if (res == -1)
     return -errno;
@@ -365,7 +365,7 @@ static int xmp_fsync(const char *path, int isdatasync, struct fuse_file_info *fi
 #else
   if (isdatasync)
     res = fdatasync(fi->fh);
-    else
+  else
 #endif
     res = fsync(fi->fh);
   if (res == -1)

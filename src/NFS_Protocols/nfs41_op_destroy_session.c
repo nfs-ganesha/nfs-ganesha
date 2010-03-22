@@ -154,7 +154,7 @@ int nfs41_op_destroy_session(struct nfs_argop4 *op,
 
   if (nfs41_Session_Del(arg_DESTROY_SESSION4.dsa_sessionid))
     res_DESTROY_SESSION4.dsr_status = NFS4ERR_BADSESSION;
-    else
+  else
     res_DESTROY_SESSION4.dsr_status = NFS4_OK;
 
   return res_DESTROY_SESSION4.dsr_status;

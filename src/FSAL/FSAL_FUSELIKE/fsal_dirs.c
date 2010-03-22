@@ -81,7 +81,8 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
       if (rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_opendir);
-    } else
+    }
+  else
     {
       /* ignoring opendir */
       memset(&(dir_descriptor->dir_info), 0, sizeof(struct ganefuse_file_info));
@@ -232,7 +233,8 @@ static int ganefuse_fill_dir(void *buf, const char *name,
     {
       i = dirbuff->nb_entries;
       fill_dirent(&(tab[i]), dirbuff->getattr_mask, name, stbuf, off);
-    } else
+    }
+  else
     {
       /* no offset is provided, we must skip some entries */
 
@@ -254,7 +256,7 @@ static int ganefuse_fill_dir(void *buf, const char *name,
 
   if (dirbuff->nb_entries == dirbuff->max_entries)
     return 1;
-    else
+  else
     return 0;
 }
 
@@ -351,7 +353,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   if (p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
                            start_position, &dir_descriptor->dir_info);
-    else
+  else
     rc = p_fs_ops->getdir(dir_path, (ganefuse_dirh_t) & reqbuff, ganefuse_dirfil_old);
 
   ReleaseTokenFSCall();
@@ -391,7 +393,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
         {                       /* last entry */
           pdirent[i].nextentry = NULL;
           *end_position = pdirent[i].cookie;
-        } else
+        }
+      else
         pdirent[i].nextentry = &(pdirent[i + 1]);
 
       /* 2) check weither the filesystem provided stat buff */
@@ -413,7 +416,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
           if (FSAL_IS_ERROR(st))
             Return(st.major, st.minor, INDEX_FSAL_readdir);
-        } else
+        }
+      else
         {
           /* 3) just add entry to namespace except for '.' and '..'
            *    Also set a validator for this entry.

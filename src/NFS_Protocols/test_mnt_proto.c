@@ -164,7 +164,8 @@ int test_mnt_Null()
     {
       printf("TEST MNT_NULL : OK\n");
       return 0;
-    } else
+    }
+  else
     {
       printf("TEST MNT_NULL : ERROR\n");
       return rc;
@@ -194,7 +195,8 @@ int test_mnt_Export()
   if ((rc == MNT3_OK) && (result.res_mntexport == NULL))
     {
       printf("TEST MNT_EXPORT : OK\n\n");
-    } else
+    }
+  else
     {
       printf("TEST MNT_EXPORT : ERROR\n\n");
       error++;
@@ -241,7 +243,7 @@ int test_mnt_Export()
       /* linking to the next element. */
       if ((i + 1) < NB_EXPORT_ENTRIES)
         export_entries[i].next = &(export_entries[i + 1]);
-        else
+      else
         export_entries[i].next = NULL;
 
       /* tests several clients list type */
@@ -310,7 +312,8 @@ int test_mnt_Export()
   if ((rc == MNT3_OK) && (result.res_mntexport != NULL))
     {
       printf("TEST MNT_EXPORT : OK\n\n");
-    } else
+    }
+  else
     {
       printf("TEST MNT_EXPORT : ERROR\n\n");
       error++;

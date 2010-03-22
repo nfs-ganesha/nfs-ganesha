@@ -298,7 +298,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
               /* Operation on a non data cached file */
               p_object_attributes->filesize = candidate_attributes.filesize;
               p_object_attributes->spaceused = candidate_attributes.filesize;   /* Unclear hook here. BUGAZOMEU */
-            } else
+            }
+          else
             {
               /* Data cached file */
               /* Do not set the p_object_attributes->filesize and p_object_attributes->spaceused  in this case 
@@ -309,7 +310,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
                                 "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
 #endif
             }
-      } else if (pattr->asked_attributes & FSAL_ATTR_SIZE)
+        }
+      else if (pattr->asked_attributes & FSAL_ATTR_SIZE)
         DisplayLog
             ("WARNING !!! cache_inode_setattr tryed to operate size on a non REGULAR_FILE type=%d",
              pentry->internal_md.type);
@@ -353,7 +355,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_SETATTR] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_SETATTR] += 1;
 
   return *pstatus;

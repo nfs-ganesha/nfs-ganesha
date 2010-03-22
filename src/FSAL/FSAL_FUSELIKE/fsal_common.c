@@ -22,7 +22,7 @@ void FSAL_internal_append_path(char *tgt, char *parent, char *child)
 
   if ((len > 0) && (parent[len - 1] != '/'))
     snprintf(tgt, FSAL_MAX_PATH_LEN, "%s/%s", parent, child);
-    else
+  else
     snprintf(tgt, FSAL_MAX_PATH_LEN, "%s%s", parent, child);
 
 }

@@ -509,7 +509,8 @@ int nfs4_State_Del(char other[12])
       /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
 
       return 1;
-    } else
+    }
+  else
     return 0;
 }                               /* nfs4_State_Del */
 

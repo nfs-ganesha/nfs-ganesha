@@ -96,7 +96,7 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
@@ -249,7 +249,7 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
     }
 
@@ -398,7 +398,7 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
     }
 
@@ -523,7 +523,7 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_mknode);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
     }
 

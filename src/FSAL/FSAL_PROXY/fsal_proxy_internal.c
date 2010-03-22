@@ -503,7 +503,7 @@ int fsal_internal_proxy_fsal_name_2_utf8(fsal_name_t * pname, utf8string * utf8s
     {
       if ((utf8str->utf8string_val = (char *)Mem_Alloc(pname->len)) == NULL)
         return FALSE;
-        else
+      else
         utf8str->utf8string_len = pname->len;
     }
 #ifdef _DEBUG_MEMLEAKS
@@ -549,7 +549,7 @@ int fsal_internal_proxy_fsal_path_2_utf8(fsal_path_t * ppath, utf8string * utf8s
     {
       if ((utf8str->utf8string_val = (char *)Mem_Alloc(ppath->len)) == NULL)
         return FALSE;
-        else
+      else
         utf8str->utf8string_len = ppath->len;
     }
 #ifdef _DEBUG_MEMLEAKS
@@ -1085,7 +1085,8 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
             {
               pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->atime.nseconds = 0;
-            } else
+            }
+          else
             {
               /* Take care of XDR when dealing with fattr4 */
               attr_time = attr_time_set.settime4_u.time;
@@ -1109,7 +1110,8 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
             {
               pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->mtime.nseconds = 0;
-            } else
+            }
+          else
             {
               /* Take care of XDR when dealing with fattr4 */
               attr_time = attr_time_set.settime4_u.time;
@@ -1264,7 +1266,8 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
 
           return -1;
         }
-  } else if (!strcmp(p_thr_context->srv_proto, "tcp"))
+    }
+  else if (!strcmp(p_thr_context->srv_proto, "tcp"))
     {
       if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         {
@@ -1303,7 +1306,8 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
 
           return -1;
         }
-    } else
+    }
+  else
     {
       return -1;
     }
@@ -1313,7 +1317,8 @@ int fsal_internal_ClientReconnect(fsal_op_context_t * p_thr_context)
       fsal_status = fsal_internal_set_auth_gss(p_thr_context);
       if (FSAL_IS_ERROR(fsal_status))
         return -1;
-    } else
+    }
+  else
 #endif
   if ((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
     {
@@ -1431,13 +1436,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].argop =
       NFS4_OP_OPEN_CONFIRM;
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
-  memcpy((char *)argnfs4.argarray.
-         argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-         opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.seqid = pfd->stateid.seqid + 1;
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
+  memcpy((char *)argnfs4.
+         argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_argop4_u.opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.seqid = pfd->stateid.seqid + 1;
   argnfs4.argarray.argarray_len = 2;
 
   TakeTokenFSCall();
@@ -1464,12 +1469,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
     }
   /* Update the file descriptor with the new stateid */
   pfd->stateid.seqid =
-      resnfs4.resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-      nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
+      resnfs4.resarray.
+      resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
+      opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
   memcpy((char *)pfd->stateid.other,
-         (char *)resnfs4.resarray.
-         resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
-         opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
+         (char *)resnfs4.
+         resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = NFS4_OK;
@@ -1500,14 +1506,14 @@ void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
       p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-                                                           p_thr_context->user_credential.
-                                                           user,
-                                                           p_thr_context->user_credential.
-                                                           group,
-                                                           p_thr_context->user_credential.
-                                                           nbgroups,
-                                                           p_thr_context->user_credential.
-                                                           alt_groups);
+                                                           p_thr_context->
+                                                           user_credential.user,
+                                                           p_thr_context->
+                                                           user_credential.group,
+                                                           p_thr_context->
+                                                           user_credential.nbgroups,
+                                                           p_thr_context->
+                                                           user_credential.alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:

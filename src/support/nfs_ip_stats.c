@@ -334,7 +334,8 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
               pnfs_ip_stats->nb_req_nfs4 += 1;
               break;
             }
-      } else if (ptr_req->rq_prog == mnt_prog)
+        }
+      else if (ptr_req->rq_prog == mnt_prog)
         {
           switch (ptr_req->rq_vers)
             {
@@ -349,7 +350,8 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
               break;
             }
         }
-    } else
+    }
+  else
     {
       status = IP_STATS_NOT_FOUND;
     }
@@ -387,7 +389,8 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
       *pnfs_ip_stats = (nfs_ip_stats_t *) buffval.pdata;
 
       status = IP_STATS_SUCCESS;
-    } else
+    }
+  else
     {
       status = IP_STATS_NOT_FOUND;
     }
@@ -427,7 +430,8 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
     {
       pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
       RELEASE_PREALLOC(pnfs_ip_stats, nfs_ip_stats_pool, next_alloc);
-    } else
+    }
+  else
     {
       status = IP_STATS_NOT_FOUND;
     }

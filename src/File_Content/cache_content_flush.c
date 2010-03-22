@@ -181,9 +181,9 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
   fsal_status =
       FSAL_rcp_by_name(&
-                       (pentry_inode->object.file.pentry_parent_open->object.dir_begin.
-                        handle), pentry_inode->object.file.pname, pcontext, &local_path,
-                       FSAL_RCP_LOCAL_TO_FS);
+                       (pentry_inode->object.file.pentry_parent_open->object.
+                        dir_begin.handle), pentry_inode->object.file.pname, pcontext,
+                       &local_path, FSAL_RCP_LOCAL_TO_FS);
 #else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
@@ -337,7 +337,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 #ifdef _DEBUG_FSAL
   if (how == FORCE_FROM_FSAL)
     printf("FORCE FROM FSAL\n");
-    else
+  else
     printf("FORCE FROM FSAL PAS ACTIVE\n");
 #endif
 
@@ -355,14 +355,15 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
       pentry_inode->object.file.attributes.atime.nseconds = 0;
       pentry_inode->object.file.attributes.ctime.seconds = buffstat.st_ctime;
       pentry_inode->object.file.attributes.ctime.nseconds = 0;
-    } else
+    }
+  else
     {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       fsal_status =
           FSAL_rcp_by_name(&
-                           (pentry_inode->object.file.pentry_parent_open->object.
-                            dir_begin.handle), pentry_inode->object.file.pname, pcontext,
-                           &local_path, FSAL_RCP_FS_TO_LOCAL);
+                           (pentry_inode->object.file.pentry_parent_open->
+                            object.dir_begin.handle), pentry_inode->object.file.pname,
+                           pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
 #else
       /* Write the data from the local data file to the fs file */
       fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);

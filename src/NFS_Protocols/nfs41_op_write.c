@@ -214,9 +214,9 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
        * This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
-  }
-    else if (!memcmp((char *)all_one, arg_WRITE4.stateid.other, 12) &&
-               arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
+    }
+  else if (!memcmp((char *)all_one, arg_WRITE4.stateid.other, 12) &&
+           arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case", see RFC3530 page 220-221 for details 
        * This will be treated as a client that held no lock at all,
@@ -251,8 +251,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
             case CACHE_INODE_STATE_SHARE:
               if (pstate_found != pstate_iterate)
                 {
-                  if (pstate_iterate->state_data.share.
-                      share_deny & OPEN4_SHARE_DENY_WRITE)
+                  if (pstate_iterate->state_data.
+                      share.share_deny & OPEN4_SHARE_DENY_WRITE)
                     {
                       /* Writing to this file if prohibited, file is write-denied */
                       res_WRITE4.status = NFS4ERR_LOCKED;
@@ -273,7 +273,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if (data->current_filetype == DIR_BEGINNING
           || data->current_filetype == DIR_CONTINUE)
         res_WRITE4.status = NFS4ERR_ISDIR;
-        else
+      else
         res_WRITE4.status = NFS4ERR_INVAL;
 
       return res_WRITE4.status;
@@ -331,8 +331,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if ((data->pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
       (cache_content_cache_behaviour(entry,
                                      &datapol,
-                                     (cache_content_client_t *) (data->pclient->
-                                                                 pcontent_client),
+                                     (cache_content_client_t *) (data->
+                                                                 pclient->pcontent_client),
                                      &content_status) == CACHE_CONTENT_FULLY_CACHED)
       && (entry->object.file.pentry_content == NULL))
     {
@@ -361,7 +361,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if ((nfs_param.core_param.use_nfs_commit == TRUE) && (arg_WRITE4.stable == UNSTABLE4))
     {
       stable_flag = FALSE;
-    } else
+    }
+  else
     {
       stable_flag = TRUE;
     }
@@ -391,7 +392,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Set the returned value */
   if (stable_flag == TRUE)
     res_WRITE4.WRITE4res_u.resok4.committed = FILE_SYNC4;
-    else
+  else
     res_WRITE4.WRITE4res_u.resok4.committed = UNSTABLE4;
 
   res_WRITE4.WRITE4res_u.resok4.count = written_size;

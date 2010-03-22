@@ -471,7 +471,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 #endif
 

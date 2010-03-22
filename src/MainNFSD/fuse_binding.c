@@ -153,7 +153,8 @@ static void action_sigusr1(int sig)
     {
       DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
       force_flush_by_signal = FALSE;
-    } else
+    }
+  else
     {
       DisplayLog("NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
       force_flush_by_signal = TRUE;
@@ -215,7 +216,8 @@ int ganefuse_main(int argc, char *argv[],
     {
       fprintf(stderr, "Could not get local host name, exiting...");
       exit(1);
-    } else
+    }
+  else
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
 
   /* now parsing options with getopt */
@@ -362,7 +364,8 @@ int ganefuse_main(int argc, char *argv[],
     {
       DisplayErrorLog(ERR_SYS, ERR_SIGACTION, errno);
       exit(1);
-    } else
+    }
+  else
     DisplayLogLevel(NIV_EVENT, "Signal SIGUSR1 (force flush) is ready to be used");
 
   memset(&nfs_param, 0, sizeof(nfs_param));

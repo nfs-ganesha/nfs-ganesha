@@ -109,7 +109,7 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
     error = -EEXIST;
   else if (error == -ENOENT && memcmp(&ta, &null_ticket, sizeof(ta)) != 0)
     error = 0;
-    else
+  else
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                         "%s: Could not find object.\n", function_name);
@@ -148,7 +148,8 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
                             "%s: No dmap support compiled in.\n", function_name);
 #endif
 
-      } else if (call_type == API_CALL_HPSS)
+        }
+      else if (call_type == API_CALL_HPSS)
         {
           /*
            * Here we are being call by either a gateway client
@@ -176,7 +177,7 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
        * Call type is not DMG or HPSS.
        */
 
-        else
+      else
         {
           if (error == 0)
             error = EIO;
@@ -216,7 +217,8 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
             {
               API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                 "%s: Could not get attributes.\n", function_name);
-            } else
+            }
+          else
             {
               *AttrsOut = new_attrs;
               *HandleOut = new_handle;
@@ -314,12 +316,13 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
         {
           if (attrs.Type != NS_OBJECT_TYPE_DIRECTORY)
             error = -ENOTDIR;
-            else
+          else
             {
               hndl_ptr = &parent_handle;
             }
         }
-  } else if (API_PATH_IS_ROOT(parentpath))
+    }
+  else if (API_PATH_IS_ROOT(parentpath))
     {
       /* If needed, use the root handle */
       error = API_InitRootHandle(ThreadContext, RequestID, &hndl_ptr);
@@ -365,7 +368,8 @@ HPSSFSAL_Common_Symlink(apithrdstate_t * ThreadContext,
         {
           API_DEBUG_FPRINTF(DebugFile, &RequestID,
                             "%s: Could not get attributes.\n", function_name);
-        } else
+        }
+      else
         {
           *AttrsOut = new_attrs;
           *HandleOut = ret_handle;
@@ -434,7 +438,7 @@ int HPSSFSAL_SymlinkHandle(ns_ObjHandle_t * ObjHandle,  /* IN - Handle of existi
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   /*

@@ -235,7 +235,7 @@ cache_inode_status_t cache_inode_getattr(cache_entry_t * pentry, fsal_attrib_lis
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_GETATTR] += 1;
 
   return *pstatus;

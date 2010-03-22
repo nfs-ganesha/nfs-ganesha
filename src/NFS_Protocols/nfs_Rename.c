@@ -269,7 +269,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                     (str_new_entry_name, FSAL_MAX_NAME_LEN, &new_entry_name)))
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;
-    } else
+    }
+  else
     {
       /*
        * Lookup file to see if new entry exists
@@ -328,7 +329,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
               return NFS_REQ_OK;
             }
-        } else
+        }
+      else
         {
           /* If name are the same (basically renaming a/file1 to a/file1, this is a non-erroneous situation to be managed */
           if (new_parent_pentry == parent_pentry)
@@ -421,15 +423,15 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.resok.
-                                                   fromdir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.
+                                                   resok.fromdir_wcc));
 
                                   nfs_SetWccData(pcontext, pexport,
                                                  parent_pentry,
                                                  ppre_attr,
                                                  &attr,
-                                                 &(pres->res_rename3.RENAME3res_u.resok.
-                                                   todir_wcc));
+                                                 &(pres->res_rename3.RENAME3res_u.
+                                                   resok.todir_wcc));
 
                                   pres->res_rename3.status = NFS3_OK;
                                   break;

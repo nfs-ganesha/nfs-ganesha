@@ -113,7 +113,8 @@ int main(int argc, char *argv[])
       config_file = *argv;
       argc--;
       argv++;
-    } else
+    }
+  else
     {
       fprintf(stderr, "Missing config_file");
       exit(1);
@@ -175,7 +176,7 @@ int main(int argc, char *argv[])
 
   if (!Nflag)
     testdir(test_dir);
-    else
+  else
     mtestdir(test_dir);
 
   dirtree(1, files, 0, fname, dname, &totfiles, &totdirs);

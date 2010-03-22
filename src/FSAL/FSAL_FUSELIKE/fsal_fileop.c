@@ -114,7 +114,8 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
       file_info_provided = TRUE;
 
-    } else
+    }
+  else
     {
 #ifdef _DEBUG_FSAL
       printf("no open command provided\n");
@@ -140,7 +141,8 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
 
           if (rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
-      } else if (p_fs_ops->truncate)
+        }
+      else if (p_fs_ops->truncate)
         {
 #ifdef _DEBUG_FSAL
           printf("call to truncate on file since FSAL_O_TRUNC was set\n");
@@ -166,7 +168,8 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
       if (file_info_provided && p_fs_ops->fgetattr)
         {
           rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
-        } else
+        }
+      else
         {
           rc = p_fs_ops->getattr(object_path, &stbuf);
         }
@@ -175,7 +178,8 @@ fsal_status_t FSAL_open(fsal_handle_t * filehandle,     /* IN */
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_open);
 
       file_descriptor->current_offset = stbuf.st_size;
-    } else
+    }
+  else
     {
       file_descriptor->current_offset = 0;
     }
@@ -362,7 +366,8 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
           if (p_fs_ops->fgetattr)
             {
               rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
-            } else
+            }
+          else
             {
               rc = p_fs_ops->getattr(object_path, &stbuf);
             }
@@ -380,7 +385,8 @@ fsal_status_t FSAL_read(fsal_file_t * file_descriptor,  /* IN */
                             seek_descriptor->whence);
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
         }
-    } else
+    }
+  else
     {
       seekoffset = file_descriptor->current_offset;
     }
@@ -494,7 +500,8 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
           if (p_fs_ops->fgetattr)
             {
               rc = p_fs_ops->fgetattr(object_path, &stbuf, &(file_descriptor->file_info));
-            } else
+            }
+          else
             {
               rc = p_fs_ops->getattr(object_path, &stbuf);
             }
@@ -512,7 +519,8 @@ fsal_status_t FSAL_write(fsal_file_t * file_descriptor, /* IN */
                             seek_descriptor->whence);
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
         }
-    } else
+    }
+  else
     {
       seekoffset = file_descriptor->current_offset;
     }

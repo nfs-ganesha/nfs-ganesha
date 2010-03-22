@@ -222,11 +222,11 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
 
   if ((rc = nfs4_Fattr_cmp(&(arg_NVERIFY4.obj_attributes), &file_attr4)) == FALSE)
     res_NVERIFY4.status = NFS4_OK;
-    else
+  else
     {
       if (rc == -1)
         res_NVERIFY4.status = NFS4ERR_INVAL;
-        else
+      else
         res_NVERIFY4.status = NFS4ERR_SAME;
     }
 

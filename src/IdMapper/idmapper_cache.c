@@ -620,7 +620,8 @@ int idmap_get(hash_table_t * ht, char *key, unsigned long *pval)
       *pval = (unsigned long)buffval.pdata;
 
       status = ID_MAPPER_SUCCESS;
-    } else
+    }
+  else
     {
       status = ID_MAPPER_NOT_FOUND;
     }
@@ -646,7 +647,8 @@ int namemap_get(hash_table_t * ht, unsigned int key, char *pval)
       strncpy(pval, (char *)buffval.pdata, PWENT_MAX_LEN);
 
       status = ID_MAPPER_SUCCESS;
-    } else
+    }
+  else
     {
       status = ID_MAPPER_NOT_FOUND;
     }
@@ -671,14 +673,16 @@ int uidgidmap_get(unsigned int key, unsigned int *pval)
     {
       memcpy((char *)pval, &(buffval.pdata), sizeof(unsigned int));
       status = ID_MAPPER_SUCCESS;
-    } else
+    }
+  else
     {
       /* WIth RPCSEC_GSS, it may be possible that 0 is not mapped to root */
       if (key == 0)
         {
           *pval = 0;
           status = ID_MAPPER_SUCCESS;
-        } else
+        }
+      else
         status = ID_MAPPER_NOT_FOUND;
     }
 
@@ -733,7 +737,8 @@ int idmap_remove(hash_table_t * ht, char *key)
     {
       status = ID_MAPPER_SUCCESS;
       Mem_Free(old_key.pdata);
-    } else
+    }
+  else
     {
       status = ID_MAPPER_NOT_FOUND;
     }
@@ -757,7 +762,8 @@ int namemap_remove(hash_table_t * ht, unsigned int key)
     {
       status = ID_MAPPER_SUCCESS;
       Mem_Free(old_data.pdata);
-    } else
+    }
+  else
     {
       status = ID_MAPPER_NOT_FOUND;
     }
@@ -777,7 +783,8 @@ int uidgidmap_remove(unsigned int key)
   if (HashTable_Del(ht_uidgid, &buffkey, NULL, &old_data) == HASHTABLE_SUCCESS)
     {
       status = ID_MAPPER_SUCCESS;
-    } else
+    }
+  else
     {
       status = ID_MAPPER_NOT_FOUND;
     }
@@ -862,7 +869,8 @@ int idmap_populate(char *path, idmap_type_t maptype)
     {
       DisplayLog("Can't get label %s in file %s", label, path);
       return ID_MAPPER_INVALID_ARGUMENT;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       DisplayLog("Label %s in file %s is expected to be a block", label, path);

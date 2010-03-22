@@ -223,7 +223,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
       if (parg->arg_mkdir2.attributes.mode != (unsigned int)-1)
         {
           mode = (fsal_accessmode_t) parg->arg_mkdir2.attributes.mode;
-        } else
+        }
+      else
         {
           mode = (fsal_accessmode_t) 0;
         }
@@ -234,7 +235,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
 
       if (parg->arg_mkdir3.attributes.mode.set_it == TRUE)
         mode = (fsal_accessmode_t) parg->arg_mkdir3.attributes.mode.set_mode3_u.mode;
-        else
+      else
         mode = (fsal_accessmode_t) 0;
       break;
     }
@@ -245,7 +246,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
         pres->res_dirop2.status = NFSERR_IO;
       if (preq->rq_vers == NFS_V3)
         pres->res_mkdir3.status = NFS3ERR_INVAL;
-    } else
+    }
+  else
     {
       /* Make the directory */
       if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_dir_name,
@@ -290,17 +292,18 @@ int nfs_Mkdir(nfs_arg_t * parg,
                               (&(pres->res_dirop2.DIROP2res_u.diropok.file), pfsal_handle,
                                pexport))
                             pres->res_dirop2.status = NFSERR_IO;
-                            else
+                          else
                             {
                               /*
                                * Build entry
                                * attributes 
                                */
                               if (nfs2_FSALattr_To_Fattr(pexport, &attr,
-                                                         &(pres->res_dirop2.DIROP2res_u.
-                                                           diropok.attributes)) == 0)
+                                                         &(pres->res_dirop2.
+                                                           DIROP2res_u.diropok.
+                                                           attributes)) == 0)
                                 pres->res_dirop2.status = NFSERR_IO;
-                                else
+                              else
                                 pres->res_dirop2.status = NFS_OK;
                             }
                           break;
@@ -312,8 +315,9 @@ int nfs_Mkdir(nfs_arg_t * parg,
 #endif
 
                           /* Build file handle */
-                          if ((pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                               handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                          if ((pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                               post_op_fh3_u.handle.data.data_val =
+                               Mem_Alloc(NFS3_FHSIZE)) == NULL)
                             {
                               pres->res_mkdir3.status = NFS3ERR_IO;
                               return NFS_REQ_OK;
@@ -324,20 +328,21 @@ int nfs_Mkdir(nfs_arg_t * parg,
 #endif
 
                           if (nfs3_FSALToFhandle
-                              (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                               handle, pfsal_handle, pexport) == 0)
+                              (&pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                               post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                             {
-                              Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
-                                       post_op_fh3_u.handle.data.data_val);
+                              Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.
+                                       obj.post_op_fh3_u.handle.data.data_val);
                               pres->res_mkdir3.status = NFS3ERR_INVAL;
                               return NFS_REQ_OK;
-                            } else
+                            }
+                          else
                             {
                               /* Set Post Op Fh3 structure */
                               pres->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows =
                                   TRUE;
-                              pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle.
-                                  data.data_len = sizeof(file_handle_v3_t);
+                              pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
+                                  handle.data.data_len = sizeof(file_handle_v3_t);
 
                               /*
                                * Build entry
@@ -346,8 +351,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
                               nfs_SetPostOpAttr(pcontext, pexport,
                                                 dir_pentry,
                                                 &attr,
-                                                &(pres->res_mkdir3.MKDIR3res_u.resok.
-                                                  obj_attributes));
+                                                &(pres->res_mkdir3.MKDIR3res_u.
+                                                  resok.obj_attributes));
 
                               /* Get the attributes of the parent after the operation */
                               cache_inode_get_attributes(parent_pentry,
@@ -361,8 +366,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                              parent_pentry,
                                              ppre_attr,
                                              &attr_parent_after,
-                                             &(pres->res_mkdir3.MKDIR3res_u.resok.
-                                               dir_wcc));
+                                             &(pres->res_mkdir3.MKDIR3res_u.
+                                               resok.dir_wcc));
 
                               pres->res_mkdir3.status = NFS3_OK;
                             }
@@ -372,8 +377,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
                 }
-            } /* If( cache_status_lookup == CACHE_INODE_NOT_FOUND ) */
-            else
+            }                   /* If( cache_status_lookup == CACHE_INODE_NOT_FOUND ) */
+          else
             {
               /* object already exists or failure during lookup */
               if (cache_status_lookup == CACHE_INODE_SUCCESS)
@@ -391,7 +396,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
                       pres->res_mkdir3.status = NFS3ERR_EXIST;
                       break;
                     }
-                } else
+                }
+              else
                 {
                   /* Server fault */
                   cache_status = cache_status_lookup;

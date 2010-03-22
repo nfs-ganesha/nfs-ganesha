@@ -127,7 +127,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 
   if (ht != NULL)
     *pstatus = CACHE_INODE_SUCCESS;
-    else
+  else
     *pstatus = CACHE_INODE_INVALID_ARGUMENT;
 
   DisplayLog("Hash Table initiated");

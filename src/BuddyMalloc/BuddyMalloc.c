@@ -367,7 +367,7 @@ int *p_BuddyErrno()
    */
   if (!context)
     return &ErrMalloc;
-    else
+  else
     return &(context->Errno);
 }
 
@@ -410,7 +410,8 @@ static void BuddyPrintLog(char *logfile, char *format, ...)
       va_start(args, format);
       vfprintf(stderr, format, args);
       va_end(args);
-    } else
+    }
+  else
     {
       /* log to file */
 
@@ -484,7 +485,8 @@ static void remove_allocated_block(BuddyThreadContext_t * context, BuddyBlock_t 
           if (p_prev_block == NULL)
             {
               context->p_allocated = p_curr_block->Header.p_next_allocated;
-            } else
+            }
+          else
             {
               p_prev_block->Header.p_next_allocated
                   = p_curr_block->Header.p_next_allocated;
@@ -544,7 +546,8 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
       p_buddyblock->Content.FreeBlockInfo.PrevBlock = NULL;
       next->Content.FreeBlockInfo.PrevBlock = p_buddyblock;
 
-    } else
+    }
+  else
     {
 
       context->MemDesc[p_buddyblock->Header.StdInfo.k_size] = p_buddyblock;
@@ -589,7 +592,8 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
                       "/!\\ ***** Remove_FreeBlock: CRITICAL WARNING : prev block %p has been overwritten or is not a buddy block (Magic number %8X<>%8X)****** /!\\\n",
                       prev, prev->Header.MagicNumber, MAGIC_NUMBER_FREE);
       prev->Content.FreeBlockInfo.NextBlock = next;
-    } else
+    }
+  else
     {
       context->MemDesc[p_buddyblock->Header.StdInfo.k_size] = next;
     }
@@ -1105,7 +1109,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   if (p_buddy_init_info)
     context->Config = *p_buddy_init_info;
-    else
+  else
     context->Config = default_buddy_parameter;
 
   /* check for minimum size :
@@ -1178,7 +1182,7 @@ int BuddyInit(buddy_parameter_t * p_buddy_init_info)
 
   if (p_block)
     return BUDDY_SUCCESS;
-    else
+  else
     return BUDDY_ERR_MALLOC;
 
 }                               /* BuddyInit */
@@ -1205,7 +1209,7 @@ unsigned int BuddyPreferedPoolCount(unsigned int min_count, size_t type_size)
 
   if (min_size < MIN_ALLOC_SIZE)
     sizelog2 = Log2Ceil(MIN_ALLOC_SIZE + size_header64);
-    else
+  else
     sizelog2 = Log2Ceil(min_size + size_header64);
 
   /* If it is greater that buddy pages, an extra allocation
@@ -1259,7 +1263,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
 
   if (Size < MIN_ALLOC_SIZE)
     sizelog2 = Log2Ceil(MIN_ALLOC_SIZE + size_header64);
-    else
+  else
     sizelog2 = Log2Ceil(Size + size_header64);
 
   i = sizelog2;
@@ -1276,7 +1280,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
         {
           /* extra block are allowed */
           return AllocLargeBlock(context, Size);
-        } else
+        }
+      else
         {
           /* Extra blocks are not allowed */
 
@@ -1316,7 +1321,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
     {
       /* 1st case : a block is available */
       p_block = context->MemDesc[i];
-  } else if (context->Config.on_demand_alloc)
+    }
+  else if (context->Config.on_demand_alloc)
     {
       /* 2nd case :
        * No memory block available.
@@ -1340,7 +1346,8 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
           return NULL;
         }
 
-    } else
+    }
+  else
     {
       /* Out of memory */
 #ifdef _DEBUG_MEMALLOC
@@ -1611,7 +1618,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
                           guilt_block->Header.label_file, guilt_block->Header.label_func,
                           guilt_block->Header.label_line,
                           guilt_block->Header.label_user_defined);
-            else
+          else
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** No previous Block ??? ****\n");
 #endif
@@ -1800,7 +1807,8 @@ BUDDY_ADDR_T BuddyRealloc(BUDDY_ADDR_T ptr, size_t Size)
 
       memcpy(new_ptr, ptr, p_block->Header.ExtraInfo - size_header64);
 
-    } else
+    }
+  else
     {
 
 #ifdef _DEBUG_MEMALLOC
@@ -1987,7 +1995,8 @@ void BuddyDumpMem(FILE * output)
                     p_curr_block->Header.Base_ptr, p_curr_block->Header.label_file,
                     p_curr_block->Header.label_func, p_curr_block->Header.label_line,
                     p_curr_block->Header.label_user_defined);
-          } else
+          }
+        else
           {
             fprintf(output,
                     "%p: type=STD_BLOCK   | size=2^%.2d | status=%s | block_addr=%8p | base_ptr=%8p | label=%s:%s:%u:%s\n",
@@ -2365,7 +2374,8 @@ void DisplayMemoryMap()
           /* insert as the first */
           p_curr_block->Header.p_next_allocated = p_ordered_list;
           p_ordered_list = p_curr_block;
-        } else
+        }
+      else
         {
           /* insert after p_last */
           p_curr_block->Header.p_next_allocated = p_last->Header.p_next_allocated;
@@ -2416,7 +2426,7 @@ void DisplayMemoryMap()
 
       if ((1 << p_curr_block->Header.StdInfo.k_size) < DISPLAY_SPACE_UNIT)
         printf("|");
-        else
+      else
         {
           nb_space =
               ((1 << p_curr_block->Header.StdInfo.k_size) / DISPLAY_SPACE_UNIT) - 1;
@@ -2440,14 +2450,15 @@ void DisplayMemoryMap()
           is_first = TRUE;
           printf("\n");
           return;
-      }
-        else if (p_curr_block->Header.Base_ptr !=
-                   p_curr_block->Header.p_next_allocated->Header.Base_ptr)
+        }
+      else if (p_curr_block->Header.Base_ptr !=
+               p_curr_block->Header.p_next_allocated->Header.Base_ptr)
         {
           /* another page or extra block */
           is_first = TRUE;
           printf("\n");
-        } else
+        }
+      else
         {
           diff =
               p_curr_block->Header.p_next_allocated - p_curr_block -
@@ -2526,7 +2537,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                           guilt_block->Header.label_line,
                           guilt_block->Header.label_user_defined);
 
-            else
+          else
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** No previous Block ??? ****\n");
 #endif
@@ -2562,7 +2573,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                           guilt_block->Header.label_file, guilt_block->Header.label_func,
                           guilt_block->Header.label_line,
                           guilt_block->Header.label_user_defined);
-            else
+          else
             BuddyPrintLog(context->Config.buddy_error_file,
                           "/!\\ ***** No previous Block ??? ****\n");
 #endif
@@ -2605,7 +2616,7 @@ int BuddyCheck(BUDDY_ADDR_T ptr)
                       guilt_block->Header.label_file, guilt_block->Header.label_func,
                       guilt_block->Header.label_line,
                       guilt_block->Header.label_user_defined);
-        else
+      else
         BuddyPrintLog(context->Config.buddy_error_file,
                       "/!\\ ***** no previous Block ****\n");
 #endif

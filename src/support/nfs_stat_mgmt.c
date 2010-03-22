@@ -187,7 +187,8 @@ void nfs_stat_update(nfs_stat_type_t type,
           return;
           break;
         }
-  } else if (preq->rq_prog == nfs_param.core_param.mnt_program)
+    }
+  else if (preq->rq_prog == nfs_param.core_param.mnt_program)
     {
       switch (preq->rq_vers)
         {
@@ -209,7 +210,8 @@ void nfs_stat_update(nfs_stat_type_t type,
           return;
           break;
         }
-  } else if (preq->rq_prog == nfs_param.core_param.nlm_program)
+    }
+  else if (preq->rq_prog == nfs_param.core_param.nlm_program)
     {
       switch (preq->rq_vers)
         {
@@ -227,7 +229,7 @@ void nfs_stat_update(nfs_stat_type_t type,
         }
     }
 
-    else
+  else
     {
       /* Bad program ? */
       DisplayLog

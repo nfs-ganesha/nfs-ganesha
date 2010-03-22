@@ -230,7 +230,8 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       read_flag = FSAL_MODE_RGRP;
       write_flag = FSAL_MODE_WGRP;
       exec_flag = FSAL_MODE_XGRP;
-    } else
+    }
+  else
     {
       read_flag = FSAL_MODE_ROTH;
       write_flag = FSAL_MODE_WOTH;

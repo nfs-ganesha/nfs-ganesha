@@ -74,7 +74,7 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
       rc = errno;
       if (rc == ENOENT)
         Return(ERR_FSAL_STALE, rc, INDEX_FSAL_opendir);
-        else
+      else
         Return(posix2fsal_error(rc), rc, INDEX_FSAL_opendir);
     }
 
@@ -177,7 +177,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
     {
       rewinddir(p_dir_descriptor->p_dir);
       rc = errno;
-    } else
+    }
+  else
     {
       seekdir(p_dir_descriptor->p_dir, start_position.cookie);
       rc = errno;

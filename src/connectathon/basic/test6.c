@@ -141,7 +141,8 @@ int main(int argc, char *argv[])
       config_file = *argv;
       argc--;
       argv++;
-    } else
+    }
+  else
     {
       fprintf(stderr, "Missing config_file");
       exit(1);
@@ -219,7 +220,7 @@ int main(int argc, char *argv[])
 
   if (!Nflag)
     testdir(test_dir);
-    else
+  else
     mtestdir(test_dir);
 
   dirtree(1, files, 0, fname, dname, &totfiles, &totdirs);
@@ -252,7 +253,8 @@ int main(int argc, char *argv[])
                 }
               dot++;
               continue;
-          } else if (strcmp("..", dp->d_name) == 0)
+            }
+          else if (strcmp("..", dp->d_name) == 0)
             {
               if (dotdot)
                 {
@@ -274,7 +276,7 @@ int main(int argc, char *argv[])
             {
               if (Iflag)
                 continue;
-                else
+              else
                 {
                   error("unexpected dir entry '%s'", dp->d_name);
                   exit(1);
@@ -293,7 +295,8 @@ int main(int argc, char *argv[])
             {
               error("duplicate '%s' dir entry read", dp->d_name);
               err++;
-            } else
+            }
+          else
             SETBIT(fi);
         }                       /* end readdir loop */
       if (!dot)

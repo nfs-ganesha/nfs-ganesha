@@ -204,7 +204,8 @@ static int Add_Dir_Entry(GHOSTFS_item_t * dir_item,
   if (dir_item->ITEM_DIR.lastentry == NULL)
     {
       dir_item->ITEM_DIR.direntries = dir_item->ITEM_DIR.lastentry = p_entry;
-    } else
+    }
+  else
     {
       dir_item->ITEM_DIR.lastentry->next = p_entry;
       dir_item->ITEM_DIR.lastentry = p_entry;
@@ -324,7 +325,7 @@ static int Remove_Entry(GHOSTFS_item_t * p_parent, char *entry_name)
           /* if it was the first entry */
           if (last == NULL)
             p_parent->ITEM_DIR.direntries = dirl->next;
-            else
+          else
             last->next = dirl->next;
 
           /* if it was the last entry */
@@ -613,7 +614,7 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
     result_mask |= (mask & (test_set << 6));
   else if (is_grp)
     result_mask |= (mask & (test_set << 3));
-    else
+  else
     result_mask |= (mask & test_set);
 
 #ifdef _DEBUG_GHOST_FS
@@ -623,7 +624,7 @@ int GHOSTFS_Access(GHOSTFS_handle_t handle,
 
   if (result_mask)
     return ERR_GHOSTFS_NO_ERROR;
-    else
+  else
     return ERR_GHOSTFS_ACCES;
 
 }
@@ -783,7 +784,8 @@ int GHOSTFS_Seekdir(dir_descriptor_t * dir, GHOSTFS_cookie_t cookie)
     {
       /* begin of the directory */
       dir->current_dir_entry = dir->master_record->direntries;
-    } else
+    }
+  else
     {
       /* last read == cookie => next = the one that follows the cookie */
       dir->current_dir_entry = cookie->next;
@@ -849,7 +851,7 @@ int GHOSTFS_SetAttrs(GHOSTFS_handle_t handle,
     editable =
         (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME |
          SETATTR_SIZE);
-    else
+  else
     editable = (SETATTR_UID | SETATTR_GID | SETATTR_MODE | SETATTR_ATIME | SETATTR_MTIME);
 
   /* check for unsupported atributes */
@@ -1435,8 +1437,8 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
       rw_lock_destroy(&p_object->entry_lock);
       Mem_Free(p_object);
 
-    } /* dir */
-    else
+    }                           /* dir */
+  else
     {
       /* If it is a file or symlink, decrease its linkcount,
        * if it is null, we can destroy the objet.
@@ -1449,7 +1451,8 @@ int GHOSTFS_Unlink(GHOSTFS_handle_t parent_handle,      /* IN */
           /* destroy the entry */
           rw_lock_destroy(&p_object->entry_lock);
           Mem_Free(p_object);
-        } else
+        }
+      else
         {
           /* unlock the object */
           V_w(&p_object->entry_lock);
@@ -1524,7 +1527,8 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       P_w(&p_parent1->entry_lock);
 
       p_parent2 = p_parent1;
-    } else
+    }
+  else
     {
       /* get the parents and lock them for writing */
 
@@ -1543,7 +1547,8 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
         {
           P_w(&p_parent1->entry_lock);
           P_w(&p_parent2->entry_lock);
-        } else
+        }
+      else
         {
           P_w(&p_parent2->entry_lock);
           P_w(&p_parent1->entry_lock);
@@ -1682,7 +1687,8 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
           rw_lock_destroy(&p_object2->entry_lock);
           Mem_Free(p_object2);
 
-      } else if ((p_object1->type != GHOSTFS_DIR) && (p_object2->type != GHOSTFS_DIR))
+        }
+      else if ((p_object1->type != GHOSTFS_DIR) && (p_object2->type != GHOSTFS_DIR))
         {
           /* compatible types, we remove the target file/link */
 
@@ -1711,13 +1717,15 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
               /* destroy the entry */
               rw_lock_destroy(&p_object2->entry_lock);
               Mem_Free(p_object2);
-            } else
+            }
+          else
             {
               /* unlock the object */
               V_w(&p_object2->entry_lock);
             }
 
-        } else
+        }
+      else
         {
           /* incompatible types or non empty target dir, return an error */
           V_w(&p_object2->entry_lock);
@@ -1744,7 +1752,7 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
           return ERR_GHOSTFS_INTERNAL;
         }
 
-    } /* end if srcpath = tgtpath */
+    }                           /* end if srcpath = tgtpath */
   else if (p_object1->type == GHOSTFS_DIR)
     {
       /* we must remove the directory from the source dir,
@@ -1808,8 +1816,8 @@ int GHOSTFS_Rename(GHOSTFS_handle_t src_dir_handle,
       /* unlock the child directory */
       V_w(&p_object1->entry_lock);
 
-    } /* end if dir */
-    else                        /* file and symlinks */
+    }                           /* end if dir */
+  else                          /* file and symlinks */
     {
       /* we must remove the object from the source dir */
 

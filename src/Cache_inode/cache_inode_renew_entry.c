@@ -314,9 +314,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* if the directory has not been readdir, only update its attributes */
   else if (pentry->internal_md.type == DIR_BEGINNING &&
-             pclient->grace_period_attr != 0 &&
-             pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES &&
-             (current_time - entry_time > pclient->grace_period_attr))
+           pclient->grace_period_attr != 0 &&
+           pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES &&
+           (current_time - entry_time > pclient->grace_period_attr))
     {
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
@@ -380,9 +380,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* else if( pentry->internal_md.type == DIR_BEGINNING && ... */
   /* Check for attributes expiration in other cases */
   else if (pentry->internal_md.type != DIR_CONTINUE &&
-             pentry->internal_md.type != DIR_BEGINNING &&
-             pclient->grace_period_attr != 0 &&
-             (current_time - entry_time > pclient->grace_period_attr))
+           pentry->internal_md.type != DIR_BEGINNING &&
+           pclient->grace_period_attr != 0 &&
+           (current_time - entry_time > pclient->grace_period_attr))
     {
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
@@ -528,7 +528,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
 
-        } else
+        }
+      else
         {
           fsal_status = FSAL_pathcpy(&pentry->object.symlink.content, &link_content);
           if (FSAL_IS_ERROR(fsal_status))

@@ -118,7 +118,8 @@ Gssrpc__svcauth_unix(register struct svc_req *rqst,
           stat = AUTH_BADCRED;
           goto done;
         }
-  } else if (!xdr_authunix_parms(&xdrs, aup))
+    }
+  else if (!xdr_authunix_parms(&xdrs, aup))
     {
       xdrs.x_op = XDR_FREE;
       (void)xdr_authunix_parms(&xdrs, aup);

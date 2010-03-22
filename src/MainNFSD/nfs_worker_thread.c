@@ -476,7 +476,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           return;
           break;
         }
-  } else if (ptr_req->rq_prog == nfs_param.core_param.mnt_program)
+    }
+  else if (ptr_req->rq_prog == nfs_param.core_param.mnt_program)
     {
       if (ptr_req->rq_proc > MOUNTPROC3_EXPORT) /* functions are almost the same in MOUNTv1 and MOUNTv3 */
         {
@@ -532,7 +533,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }                       /* switch( ptr_req->vers ) */
     }
 #endif                          /* _USE_NLM */
-    else
+  else
     {
       /* We should never go there (this situation is filtered in nfs_rpc_getreq) */
       DisplayLog("NFS DISPATCHER: protocol %d is not managed", ptr_req->rq_prog);
@@ -717,7 +718,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           pexport = nfs_param.pexportlist;
           break;
         }                       /* switch( ptr_req->rq_vers ) */
-  } else if (ptr_req->rq_prog == nfs_param.core_param.mnt_program)
+    }
+  else if (ptr_req->rq_prog == nfs_param.core_param.mnt_program)
     {
       /* Always use the whole export list for mount protocol */
       pexport = nfs_param.pexportlist;
@@ -742,16 +744,19 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
               /* All the nfs_res structure in V2 have the status at the same place (because it is an union) */
               res_nfs.res_attr2.status = NFSERR_ROFS;
               rc = NFS_REQ_OK;  /* Processing of the request is done */
-            } else
+            }
+          else
             {
               /* V3 request */
               /* All the nfs_res structure in V2 have the status at the same place, and so does V3 ones */
               res_nfs.res_attr2.status = (nfsstat2) NFS3ERR_ROFS;
               rc = NFS_REQ_OK;  /* Processing of the request is done */
             }
-        } else                  /* unexpected protocol (mount doesn't make write) */
+        }
+      else                      /* unexpected protocol (mount doesn't make write) */
         rc = NFS_REQ_DROP;
-    } else
+    }
+  else
     {
       /* This is not a MAKES_WRITE call done on a read-only export entry */
 
@@ -852,7 +857,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       DisplayLogLevel(NIV_EVENT,
                       "Drop request rpc_xid=%u, program %u, version %u, function %u",
                       rpcxid, ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc);
-    } else
+    }
+  else
     {
 #ifdef _DEBUG_DISPATCH
 #if defined( _USE_TIRPC ) || defined( _FREEBSD )
@@ -925,7 +931,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
              pworker_data->stats.stat_req.nb_nfs3_req,
              pworker_data->stats.stat_req.nb_nfs4_req);
 
-    } else
+    }
+  else
     nb_iter_memleaks += 1;
 #endif
 
@@ -1182,7 +1189,7 @@ void *worker_thread(void *IndexArg)
         DisplayLogLevel(NIV_FULL_DEBUG, "NFS WORKER #%d:No RPC management, xp_sock==0",
                         index);
 #endif
-        else
+      else
         {
           /* Set pointers */
           cred_area = pnfsreq->cred_area;
@@ -1216,7 +1223,8 @@ void *worker_thread(void *IndexArg)
                                     "Could not authenticate request... rejecting with AUTH_STAT=%s",
                                     auth_str);
                     svcerr_auth(xprt, why);
-                  } else
+                  }
+                else
                   {
 #ifdef _USE_GSSRPC
                     if (preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
@@ -1249,7 +1257,8 @@ void *worker_thread(void *IndexArg)
                                                     "/!\\ | Invalid Program number #%d",
                                                     preq->rq_prog);
                                     svcerr_noprog(xprt);        /* This is no NFS, MOUNT, NLM program, exit... */
-                                  } else
+                                  }
+                                else
                                   {
                                     /* Call is with NLMPROG */
                                     if (preq->rq_vers != NLM4_VERS)
@@ -1258,7 +1267,8 @@ void *worker_thread(void *IndexArg)
                                                         "/!\\ | Invalid NLM Version #%d",
                                                         preq->rq_vers);
                                         svcerr_progvers(xprt, NLM4_VERS, NLM4_VERS);    /* Bad NLM version */
-                                      } else
+                                      }
+                                    else
                                       {
                                         /* Actual work starts here */
                                         nfs_rpc_execute(pnfsreq, pmydata);
@@ -1270,7 +1280,8 @@ void *worker_thread(void *IndexArg)
                                                 preq->rq_prog);
                                 svcerr_noprog(xprt);    /* This is no NFS, MOUNT program, exit... */
 #endif                          /* _USE_NLM */
-                              } else
+                              }
+                            else
                               {
                                 /* Call is with MOUNTPROG */
                                 if ((preq->rq_vers != MOUNT_V1) &&
@@ -1280,13 +1291,15 @@ void *worker_thread(void *IndexArg)
                                                     "/!\\ | Invalid Mount Version #%d",
                                                     preq->rq_vers);
                                     svcerr_progvers(xprt, MOUNT_V1, MOUNT_V3);  /* Bad MOUNT version */
-                                  } else
+                                  }
+                                else
                                   {
                                     /* Actual work starts here */
                                     nfs_rpc_execute(pnfsreq, pmydata);
                                   }
                               }
-                          } else
+                          }
+                        else
                           {
                             /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
 /* FSAL_PROXY supports only NFSv4 except if handle mapping is enabled */
@@ -1305,7 +1318,8 @@ void *worker_thread(void *IndexArg)
 #else
                                 svcerr_progvers(xprt, NFS_V4, NFS_V4);  /* Bad NFS version */
 #endif
-                              } else
+                              }
+                            else
                               {
                                 /* Actual work starts here */
                                 nfs_rpc_execute(pnfsreq, pmydata);
@@ -1362,7 +1376,7 @@ void *worker_thread(void *IndexArg)
             DisplayLogLevel(NIV_CRIT,
                             "NFS WORKER #%d: FAILURE: Impossible to gc entries for duplicate request cache (error %d)",
                             index, rc);
-            else
+          else
             DisplayLogLevel(NIV_FULL_DEBUG,
                             "NFS WORKER #%d: gc entries for duplicate request cache OK",
                             index);
@@ -1385,7 +1399,7 @@ void *worker_thread(void *IndexArg)
             DisplayLogLevel(NIV_CRIT,
                             "NFS WORKER #%d: ERROR: Impossible garbage collection on pending request list",
                             index);
-            else
+          else
             DisplayLogLevel(NIV_FULL_DEBUG,
                             "NFS WORKER #%d: garbage collection on pending request list OK",
                             index);
@@ -1394,7 +1408,7 @@ void *worker_thread(void *IndexArg)
 
         }
 #ifdef _DEBUG_DISPATCH
-        else
+      else
         DisplayLogLevel(NIV_FULL_DEBUG,
                         "NFS WORKER #%d: garbage collection isn't necessary count=%d, max=%d",
                         index, pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
@@ -1424,7 +1438,8 @@ void *worker_thread(void *IndexArg)
         {
           nb_current_gc_workers += 1;
           gc_allowed = TRUE;
-        } else
+        }
+      else
         gc_allowed = FALSE;
       V(lock_nb_current_gc_workers);
 

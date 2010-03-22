@@ -151,7 +151,8 @@ int main(int argc, char *argv[])
       config_file = *argv;
       argc--;
       argv++;
-    } else
+    }
+  else
     {
       fprintf(stderr, "Missing config_file");
       exit(1);
@@ -233,7 +234,7 @@ int main(int argc, char *argv[])
 
   if (!Nflag)
     testdir(test_dir);
-    else
+  else
     mtestdir(test_dir);
 
   for (i = 0; i < BUFSZ / sizeof(int); i++)
@@ -344,7 +345,8 @@ int main(int argc, char *argv[])
           fprintf(stdout, " in %ld.%02ld seconds (%d bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000,
                   (int)((double)size * ((double)count / etime1)));
-        } else
+        }
+      else
         {
           fprintf(stdout, " in %ld.%02ld seconds (> %ld bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count);
@@ -403,7 +405,8 @@ int main(int argc, char *argv[])
           fprintf(stdout, " in %ld.%02ld seconds (%d bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000,
                   (int)((double)size * ((double)count / etime2)));
-        } else
+        }
+      else
         {
           fprintf(stdout, " in %ld.%02ld seconds (> %ld bytes/sec)",
                   (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count);
@@ -431,20 +434,23 @@ int main(int argc, char *argv[])
                   g, d, (long)time.tv_sec, (long)time.tv_usec / 10000,
                   (long)((double)size * ((double)count / etime1)),
                   (long)((double)size * ((double)count / etime2)));
-        } else
+        }
+      else
         {
           fprintf(log, "b5\t%d\t%d\t%ld.%02ld\t%ld.%02ld\t%ld\t%ld\n", (long)size, count,
                   g, d, (long)time.tv_sec, (long)time.tv_usec / 10000,
                   (long)((double)size * ((double)count / etime1)), (long)size * count);
         }
-    } else
+    }
+  else
     {
       if (etime2 != 0.0)
         {
           fprintf(log, "b5\t%d\t%d\t%ld.%02ld\t%ld.%02ld\t%ld\t%ld\n", (long)size, count,
                   g, d, (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count,
                   (long)((double)size * ((double)count / etime2)));
-        } else
+        }
+      else
         {
           fprintf(log, "b5\t%d\t%d\t%ld.%02ld\t%ld.%02ld\t%ld\t%ld\n", (long)size, count,
                   g, d, (long)time.tv_sec, (long)time.tv_usec / 10000, (long)size * count,

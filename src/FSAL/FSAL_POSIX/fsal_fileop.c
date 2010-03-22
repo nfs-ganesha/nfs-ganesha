@@ -388,7 +388,8 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
 
           break;
         }
-    } else
+    }
+  else
     {
       TakeTokenFSCall();
 
@@ -615,7 +616,8 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
           break;
         }
-    } else
+    }
+  else
     {
       TakeTokenFSCall();
 

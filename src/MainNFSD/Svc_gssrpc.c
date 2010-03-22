@@ -207,7 +207,8 @@ void Svc_unregister(rpcprog_t prog, rpcvers_t vers)
   if (prev == NULL_SVC)
     {
       svc_head = s->sc_next;
-    } else
+    }
+  else
     {
       prev->sc_next = s->sc_next;
     }

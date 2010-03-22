@@ -73,7 +73,8 @@ cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t * pentry)
             break;
 
           pentry_iter = pentry_iter->object.dir_begin.pdir_cont;
-        } else
+        }
+      else
         {
           if (pentry_iter->object.dir_cont.nbactive != 0)
             {
@@ -156,7 +157,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
   fsaldata.handle = *pfsal_handle_remove;
   if (to_remove_entry->internal_md.type != DIR_CONTINUE)
     fsaldata.cookie = DIR_START;
-    else
+  else
     fsaldata.cookie = to_remove_entry->object.dir_cont.dir_cont_pos;
 
   if (cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
@@ -347,7 +348,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   if (pentry->internal_md.type == DIR_BEGINNING)
     {
       fsal_handle_parent = pentry->object.dir_begin.handle;
-  } else if (pentry->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry->internal_md.type == DIR_CONTINUE)
     {
       if (use_mutex)
         P_r(&pentry->object.dir_cont.pdir_begin->lock);
@@ -402,7 +404,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             }
           return *pstatus;
         }
-    } else
+    }
+  else
     {
       if (use_mutex)
         {
@@ -423,7 +426,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   if (pentry->internal_md.type == DIR_BEGINNING)
     {
       pentry->object.dir_begin.attributes = after_attr;
-  } else if (pentry->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry->internal_md.type == DIR_CONTINUE)
     {
       if (use_mutex)
         P_r(&pentry->object.dir_cont.pdir_begin->lock);
@@ -479,7 +483,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
               break;
             }
         }
-    } else
+    }
+  else
     {
       /* No hardlink counter to be decremented for a directory: hardlink are not allowed for them */
     }
@@ -536,7 +541,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                */
               pentry_next = pentry_iter->object.dir_begin.pdir_cont;
 
-          } else if (pentry_iter->internal_md.type == DIR_CONTINUE)
+            }
+          else if (pentry_iter->internal_md.type == DIR_CONTINUE)
             {
               /* next step */
               pentry_next = pentry_iter->object.dir_cont.pdir_cont;
@@ -545,7 +551,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
               cache_inode_mutex_destroy(pentry_iter);
 
               RELEASE_PREALLOC(pentry_iter, pclient->pool_entry, next_alloc);
-            } else              /* not a directory, exiting loop */
+            }
+          else                  /* not a directory, exiting loop */
             pentry_next = NULL;
 
           pentry_iter = pentry_next;
@@ -575,7 +582,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
 
   if (status == CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_success[CACHE_INODE_REMOVE] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1;
 
   return status;

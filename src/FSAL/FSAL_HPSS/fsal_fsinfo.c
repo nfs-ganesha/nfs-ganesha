@@ -103,7 +103,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   if (p_context->export_context->default_cos != 0)
     {
       cos_export = p_context->export_context->default_cos;
-    } else
+    }
+  else
     {
       /* retrieves default fileset cos */
 
@@ -137,7 +138,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   if (p_context->export_context->default_cos != 0)
     {
       cos_export = p_context->export_context->default_cos;
-    } else
+    }
+  else
     {
       /* retrieves default fileset cos */
 
@@ -173,7 +175,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
   if (DefaultCosId != 0)
     {
       cos_export = DefaultCosId;
-    } else
+    }
+  else
     {
       /* retrieves default fileset cos */
 

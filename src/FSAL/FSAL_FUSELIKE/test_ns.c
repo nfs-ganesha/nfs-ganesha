@@ -86,7 +86,8 @@ int main(int argc, char **argv)
         {
           printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE, rc);
           exit(1);
-        } else
+        }
+      else
         printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE, path);
 
       /* recolte du chemin complet des entrees */
@@ -98,7 +99,8 @@ int main(int argc, char **argv)
             {
               printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
               exit(1);
-            } else
+            }
+          else
             printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
         }
 
@@ -118,11 +120,13 @@ int main(int argc, char **argv)
             {
               printf("NamespacePath(%lu) => \"%s\"\n", p_test->entry_inode, path);
               exit(1);
-          } else if (rc != ENOENT)
+            }
+          else if (rc != ENOENT)
             {
               printf("NamespacePath(%lu) rc=%d\n", p_test->entry_inode, rc);
               exit(1);
-            } else
+            }
+          else
             printf("NamespacePath(%lu) rc=%d (ENOENT)\n", p_test->entry_inode, rc);
         }
     }
@@ -168,7 +172,8 @@ int main(int argc, char **argv)
         {
           printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
           exit(1);
-        } else
+        }
+      else
         printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }
@@ -190,7 +195,8 @@ int main(int argc, char **argv)
         {
           printf("NamespacePath(%lu) rc=%d\n", ROOT_INODE + 3, rc);
           exit(1);
-        } else
+        }
+      else
         printf("NamespacePath(%lu) => \"%s\"\n", ROOT_INODE + 3, path);
 
     }

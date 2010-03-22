@@ -130,7 +130,8 @@ int main(int argc, char *argv[])
       printf("Test RW_Lock reussi: pas de deadlock detecte\n");
       exit(0);
       return 0;                 /* for compiler */
-    } else
+    }
+  else
     {
       if (OkWrite == 0)
         printf("Test RW_Lock ECHOUE: deadlock dans les redacteurs\n");
