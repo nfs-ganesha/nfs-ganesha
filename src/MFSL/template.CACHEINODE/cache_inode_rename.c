@@ -268,13 +268,14 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
    * Lock are acquired has their related pentry are allocated (to avoid deadlocks) */
   if (pentry_dirsrc == pentry_dirdest)
     P(pentry_dirsrc->lock);
-    else
+  else
     {
       if (pentry_dirsrc < pentry_dirdest)
         {
           P(pentry_dirsrc->lock);
           P(pentry_dirdest->lock);
-        } else
+        }
+      else
         {
           P(pentry_dirdest->lock);
           P(pentry_dirsrc->lock);
@@ -306,7 +307,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
         DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                           "Rename (%p,%s)->(%p,%s) : source doesn't exist", pentry_dirsrc,
                           poldname->name, pentry_dirdest, pnewname->name);
-        else
+      else
         DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG, "Rename : stale source");
 
       return *pstatus;
@@ -454,8 +455,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           return *pstatus;
         }
 
-    } /* if( pentry_lookup_dest != NULL ) */
-    else
+    }                           /* if( pentry_lookup_dest != NULL ) */
+  else
     {
       if (*pstatus == CACHE_INODE_FSAL_ESTALE)
         {
@@ -478,7 +479,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     {
       phandle_dirsrc = &pentry_dirsrc->object.dir_begin.handle;
       pattrsrc = &pentry_dirsrc->object.dir_begin.attributes;
-  } else if (pentry_dirsrc->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry_dirsrc->internal_md.type == DIR_CONTINUE)
     {
       P(pentry_dirsrc->object.dir_cont.pdir_begin->lock);
 
@@ -487,7 +489,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       pattrsrc = &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.attributes;
 
       V(pentry_dirsrc->object.dir_cont.pdir_begin->lock);
-    } else
+    }
+  else
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
@@ -507,7 +510,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
     {
       phandle_dirdest = &pentry_dirdest->object.dir_begin.handle;
       pattrdest = &pentry_dirdest->object.dir_begin.attributes;
-  } else if (pentry_dirdest->internal_md.type == DIR_CONTINUE)
+    }
+  else if (pentry_dirdest->internal_md.type == DIR_CONTINUE)
     {
       P(pentry_dirdest->object.dir_cont.pdir_begin->lock);
 
@@ -517,7 +521,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.attributes;
 
       V(pentry_dirdest->object.dir_cont.pdir_begin->lock);
-    } else
+    }
+  else
     {
       V(pentry_dirsrc->lock);
       if (pentry_dirsrc != pentry_dirdest)
@@ -763,7 +768,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
           return *pstatus;
         }
-    } else
+    }
+  else
     {
       DisplayLogJdLevel(pclient->log_outputs, NIV_FULL_DEBUG,
                         "Rename (%p,%s)->(%p,%s) : moving entry", pentry_dirsrc,
@@ -812,13 +818,13 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_RENAME] += 1;
-    else
+  else
     {
       *pstatus = cache_inode_valid(pentry_dirdest, CACHE_INODE_OP_SET, pclient);
 
       if (*pstatus != CACHE_INODE_SUCCESS)
         pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_RENAME] += 1;
-        else
+      else
         pclient->stat.func_stats.nb_success[CACHE_INODE_RENAME] += 1;
     }
 

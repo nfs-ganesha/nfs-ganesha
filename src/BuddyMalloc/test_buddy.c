@@ -164,7 +164,8 @@ static struct timeval time_diff(struct timeval time_from, struct timeval time_to
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec - 1;
       result.tv_usec = 1000000 + time_to.tv_usec - time_from.tv_usec;
-    } else
+    }
+  else
     {
       result.tv_sec = time_to.tv_sec - time_from.tv_sec;
       result.tv_usec = time_to.tv_usec - time_from.tv_usec;
@@ -806,7 +807,8 @@ void *TEST7(void *arg)
 
           table_alloc[index] = ptr;
 
-        } else
+        }
+      else
         {
 #ifdef _DEBUG_MEMALLOC
           printf("---------- BuddyFree( %p ) ---------\n", table_alloc[index]);
@@ -941,7 +943,8 @@ void *TEST8(void *arg)
 
           table_alloc[index] = ptr;
 
-        } else
+        }
+      else
         {
 #ifdef _DEBUG_MEMALLOC
           printf("---------- BuddyFree( %p ) ---------\n", table_alloc[index]);
@@ -1353,7 +1356,7 @@ int main(int argc, char **argv)
   else if (!strcmp(argv[1], "Bmt"))
     LAUNCH_THREADS(TESTB, NB_THREADS);
 
-    else
+  else
     {
       printf("\n***** Unknown test: \"%s\" ******\n\n", argv[1]);
       printf("%s\n", usage);

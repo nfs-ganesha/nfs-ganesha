@@ -178,13 +178,15 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
               /* there was 1 update */
               st.major = ERR_FSAL_POSIXDB_NOERR;
               st.minor = 0;
-            } else
+            }
+          else
             {
               /* no row updated */
               st.major = ERR_FSAL_POSIXDB_NOENT;
               st.minor = 0;
             }
-        } else
+        }
+      else
         {
           /* error (switch on MySQL status) */
 
@@ -249,7 +251,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
   if (FSAL_POSIXDB_IS_ERROR(st))
     goto rollback;
-    else
+  else
     return EndTransaction(p_conn);
 
  rollback:

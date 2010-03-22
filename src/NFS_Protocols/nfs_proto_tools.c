@@ -270,7 +270,7 @@ int nfs_SetPostOpAttr(fsal_op_context_t * pcontext,
   if (nfs3_FSALattr_To_Fattr(pexport, pfsal_attr, &(presult->post_op_attr_u.attributes))
       == 0)
     presult->attributes_follow = FALSE;
-    else
+  else
     presult->attributes_follow = TRUE;
 
   return 0;
@@ -293,7 +293,8 @@ void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
   if (pfsal_attr == NULL)
     {
       pattr->attributes_follow = FALSE;
-    } else
+    }
+  else
     {
       pattr->pre_op_attr_u.attributes.size = pfsal_attr->filesize;
 
@@ -359,7 +360,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
         {
           /* Drop the request */
           return TRUE;
-        } else
+        }
+      else
         {
           /* Propagate error to the client */
           return FALSE;
@@ -371,7 +373,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
         {
           /* Drop the request */
           return TRUE;
-        } else
+        }
+      else
         {
           /* Propagate error to the client */
           return FALSE;
@@ -749,7 +752,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           /* For the moment, we handle only the persistent filehandle */
           if (nfs_param.nfsv4_param.fh_expire == TRUE)
             expire_type = htonl(FH4_VOLATILE_ANY);
-            else
+          else
             expire_type = htonl(FH4_PERSISTENT);
           memcpy((char *)(attrvalsBuffer + LastOffset), &expire_type,
                  sizeof(expire_type));
@@ -841,7 +844,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           /* lease_time = htonl( (fattr4_lease_time)staticinfo.lease_time.seconds ) ; */
@@ -905,7 +909,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           case_insensitive = htonl(staticinfo.case_insensitive);
@@ -928,7 +933,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           case_preserving = htonl(staticinfo.case_preserving);
@@ -951,7 +957,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           chown_restricted = htonl(staticinfo.chown_restricted);
@@ -1007,7 +1014,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           files_avail = nfs_htonl64((fattr4_files_avail) dynamicinfo.avail_files);
@@ -1029,7 +1037,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           files_free = nfs_htonl64((fattr4_files_avail) dynamicinfo.free_files);
@@ -1051,7 +1060,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           files_total = nfs_htonl64((fattr4_files_avail) dynamicinfo.total_files);
@@ -1117,7 +1127,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           maxlink = htonl(staticinfo.maxlink);
@@ -1138,7 +1149,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           maxname = htonl((fattr4_maxname) staticinfo.maxnamelen);
@@ -1159,7 +1171,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           maxread = nfs_htonl64((fattr4_maxread) staticinfo.maxread);
@@ -1180,7 +1193,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           maxwrite = nfs_htonl64((fattr4_maxwrite) staticinfo.maxwrite);
@@ -1219,7 +1233,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           no_trunc = htonl(staticinfo.no_trunc);
@@ -1248,7 +1263,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               /* Take care of 32 bits alignment */
               if (file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner.utf8string_len % 4;
 
               utf8len = htonl(file_owner.utf8string_len + deltalen);
@@ -1269,7 +1284,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
               op_attr_success = 1;
 
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -1283,7 +1299,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               /* Take care of 32 bits alignment */
               if (file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
 
               utf8len = htonl(file_owner_group.utf8string_len + deltalen);
@@ -1304,7 +1320,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
               op_attr_success = 1;
 
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -1352,7 +1369,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           space_avail = nfs_htonl64((fattr4_space_avail) dynamicinfo.avail_bytes);
@@ -1374,7 +1392,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           space_free = nfs_htonl64((fattr4_space_free) dynamicinfo.free_bytes);
@@ -1396,7 +1415,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 {
                   op_attr_success = 0;
                   break;
-                } else
+                }
+              else
                 statfscalled = 1;
             }
           space_total = nfs_htonl64((fattr4_space_total) dynamicinfo.total_bytes);
@@ -1682,7 +1702,8 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
         {
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
           pFSAL_attr->atime.nseconds = psattr->atime.set_atime_u.atime.nseconds;
-        } else
+        }
+      else
         {
           /* Use the server's current time */
           gettimeofday(&t, NULL);
@@ -1704,7 +1725,8 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
         {
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
           pFSAL_attr->mtime.nseconds = psattr->mtime.set_mtime_u.mtime.nseconds;
-        } else
+        }
+      else
         {
           /* Use the server's current time */
           gettimeofday(&t, NULL);
@@ -1801,7 +1823,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
   if (pFSAL_attr->filesize > NFS2_MAX_FILESIZE)
     pFattr->size = NFS2_MAX_FILESIZE;
-    else
+  else
     pFattr->size = pFSAL_attr->filesize;
 
   pFattr->blocksize = DEV_BSIZE;
@@ -1812,7 +1834,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
   if (pFSAL_attr->type == FSAL_TYPE_CHR || pFSAL_attr->type == FSAL_TYPE_BLK)
     pFattr->rdev = pFSAL_attr->rawdev.major;
-    else
+  else
     pFattr->rdev = 0;
 
   pFattr->atime.seconds = pFSAL_attr->atime.seconds;
@@ -2069,7 +2091,7 @@ void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
   if (b->bitmap4_len > 0)
     printf("Bitmap: Len = %u Val = %u|%u\n", b->bitmap4_len, b->bitmap4_val[0],
            b->bitmap4_val[1]);
-    else
+  else
     printf("Bitmap: Len = %u ... \n", b->bitmap4_len);
 #endif
 
@@ -2238,7 +2260,8 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
     {
       Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
       Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
-    } else
+    }
+  else
     {
       Fattr->rdev.specdata1 = 0;
       Fattr->rdev.specdata2 = 0;
@@ -2324,7 +2347,8 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_ATIME);
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_MTIME);
-    } else
+    }
+  else
     {
       /* set atime to client */
 
@@ -2334,7 +2358,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
           if (Fattr->atime.seconds != (unsigned int)-1)
             pFSAL_attr->atime.nseconds = Fattr->atime.useconds * 1000;
-            else
+          else
             pFSAL_attr->atime.nseconds = 0;     /* ignored */
 
           FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_ATIME);
@@ -2348,7 +2372,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
 
           if (Fattr->mtime.seconds != (unsigned int)-1)
             pFSAL_attr->mtime.nseconds = Fattr->mtime.useconds * 1000;
-            else
+          else
             pFSAL_attr->mtime.nseconds = 0;     /* ignored */
 
           FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_MTIME);
@@ -2715,7 +2739,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     }
   if (cmp == 0)
     return TRUE;
-    else
+  else
     return FALSE;
 }
 
@@ -3048,7 +3072,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
             {
               pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->atime.nseconds = 0;
-            } else
+            }
+          else
             {
               /* Read the remaining part of the data */
               memcpy((char *)&(attr_time_set.settime4_u.time),
@@ -3080,7 +3105,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
             {
               pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
               pFSAL_attr->mtime.nseconds = 0;
-            } else
+            }
+          else
             {
               /* Read the remaining part of the data */
               memcpy((char *)&(attr_time_set.settime4_u.time),

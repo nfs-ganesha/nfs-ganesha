@@ -150,7 +150,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   if (get_attr_mask & (~handle_attr_mask))
     bool_getattr_in = TRUE;
-    else
+  else
     bool_getattr_in = FALSE;
 
   /* init values */
@@ -173,7 +173,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
        */
       if (missing_entries < FSAL_READDIR_SIZE)
         buff_size_in = missing_entries * sizeof(ns_DirEntry_t);
-        else
+      else
         buff_size_in = FSAL_READDIR_SIZE * sizeof(ns_DirEntry_t);
 
       /* call to hpss clapi */
@@ -192,7 +192,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
       if (rc < 0)
         Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_readdir);
-        else
+      else
         returned = rc;
 
       /* Fills the fsal dirent list. */
@@ -226,13 +226,14 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if (FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }
 
-          } else if (get_attr_mask)
+            }
+          else if (get_attr_mask)
             {
 
               /* extract asked attributes from file handle */
@@ -242,8 +243,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
               /* on error, we set a special bit in the mask. */
               if (FSAL_IS_ERROR(st))
                 {
-                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].attributes.
-                                  asked_attributes);
+                  FSAL_CLEAR_MASK(pdirent[current_nb_entries].
+                                  attributes.asked_attributes);
                   FSAL_SET_MASK(pdirent[current_nb_entries].attributes.asked_attributes,
                                 FSAL_ATTR_RDATTR_ERR);
                 }

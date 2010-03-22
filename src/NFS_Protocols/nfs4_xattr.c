@@ -307,7 +307,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           if (pfile_handle->xattr_pos == 1)
             file_type = htonl(NF4DIR);  /* There are only directories in the pseudo fs */
-            else
+          else
             file_type = htonl(NF4REG);
 
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_type, sizeof(fattr4_type));
@@ -551,7 +551,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           if (pfile_handle->xattr_pos == 1)
             file_id = nfs_htonl64(~(fsalattr.fileid));
-            else
+          else
             file_mode = nfs_htonl64(~(fsalattr.fileid)) - pfile_handle->xattr_pos + 1;
 #else
           file_id = nfs_htonl64(fsalattr.fileid);
@@ -696,7 +696,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 #endif
           if (pfile_handle->xattr_pos == 1)
             file_mode = htonl(0555);    /* Every pseudo fs object is dr-xr-xr-x */
-            else
+          else
             file_mode = htonl(0644);    /* -rw-r--r-- */
 
           memcpy((char *)(attrvalsBuffer + LastOffset), &file_mode, sizeof(fattr4_mode));
@@ -741,7 +741,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               /* Take care of 32 bits alignment */
               if (file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner.utf8string_len % 4;
 
               utf8len = htonl(file_owner.utf8string_len + deltalen);
@@ -761,7 +761,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               LastOffset += deltalen;
 
               op_attr_success = 1;
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -778,7 +779,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               /* Take care of 32 bits alignment */
               if (file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
 
               utf8len = htonl(file_owner_group.utf8string_len + deltalen);
@@ -798,7 +799,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               LastOffset += deltalen;
 
               op_attr_success = 1;
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -1019,7 +1021,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                                      (caddr_t) & mounted_on_fileid)))
                 {
                   op_attr_success = 0;
-                } else
+                }
+              else
                 {
                   mounted_on_fileid = nfs_htonl64(mounted_on_fileid);
                   memcpy((char *)(attrvalsBuffer + LastOffset), &mounted_on_fileid,
@@ -1027,7 +1030,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                   LastOffset += fattr4tab[attribute_to_set].size_fattr4;
                   op_attr_success = 1;
                 }
-            } else
+            }
+          else
             op_attr_success = 0;
 
           break;
@@ -1150,7 +1154,7 @@ int nfs4_op_getattr_xattr(struct nfs_argop4 *op,
   if (nfs4_XattrToFattr(&(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
                         data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
     res_GETATTR4.status = NFS4ERR_SERVERFAULT;
-    else
+  else
     res_GETATTR4.status = NFS4_OK;
 
   return res_GETATTR4.status;
@@ -1469,7 +1473,8 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
       memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
              NFS4_VERIFIER_SIZE);
-    } else
+    }
+  else
     {
       /* Allocation of reply structures */
       if ((entry_name_array =
@@ -1534,7 +1539,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
          NFS4_VERIFIER_SIZE);
   if (i == 0)
     res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
-    else
+  else
     res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
   res_READDIR4.status = NFS4_OK;

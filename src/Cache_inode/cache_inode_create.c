@@ -188,7 +188,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
           return NULL;
-        } else
+        }
+      else
         {
           /* stats */
           pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
@@ -364,7 +365,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
       return NULL;
-    } else
+    }
+  else
     {
 #ifdef _USE_MFSL
       fsal_data.handle = object_handle.handle;
@@ -424,13 +426,14 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
           pentry_parent->object.dir_begin.attributes.numlinks++;
         }
 
-    } else
+    }
+  else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
@@ -439,8 +442,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
        */
       if (type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-              numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
+              attributes.numlinks++;
         }
 
     }
@@ -457,7 +460,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_CREATE] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
 
   return pentry;

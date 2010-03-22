@@ -43,7 +43,8 @@ int HPSSFSAL_GetFilesetRoot(char *fileset_name, ns_ObjHandle_t * p_root_hdl)
       *p_root_hdl = root_attr.ObjectHandle;
       return 0;
 
-    } else
+    }
+  else
     {
       ns_FilesetAttrBits_t attrBits;
       ns_FilesetAttrs_t fsattrs;

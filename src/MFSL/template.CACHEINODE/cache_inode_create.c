@@ -250,7 +250,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
 
           return NULL;
-        } else
+        }
+      else
         {
           /* stats */
           pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
@@ -345,14 +346,15 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
       V(pentry_parent->lock);
 
       return NULL;
-    } else
+    }
+  else
     object_handle = *(pasyncopdesc->op_args.create.pfsal_handle_obj_pre);
 
   pasyncopdesc->op_args.create.pfsal_handle_dir = pdir_handle;
 
   if (type == REGULAR_FILE)
     pasyncopdesc->op_args.create.object_type = FSAL_TYPE_FILE;
-    else
+  else
     pasyncopdesc->op_args.create.object_type = FSAL_TYPE_DIR;
 
   pasyncopdesc->op_args.create.name = *pname;
@@ -398,7 +400,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
     {
       object_attributes.type = FSAL_TYPE_FILE;
       object_attributes.numlinks = 1;
-    } else
+    }
+  else
     {
       /* This is a directory */
       object_attributes.type = FSAL_TYPE_DIR;
@@ -468,13 +471,14 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
           pentry_parent->object.dir_begin.attributes.numlinks++;
         }
 
-    } else
+    }
+  else
     {
       /* DIR_CONTINUE */
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = time(NULL);
-      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime.
-          seconds = 0;
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = time(NULL);
+      pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
+          mtime.seconds = 0;
       pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.ctime =
           pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.mtime;
 
@@ -483,8 +487,8 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
        */
       if (type == DIR_BEGINNING)
         {
-          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.attributes.
-              numlinks++;
+          pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.
+              attributes.numlinks++;
         }
 
     }
@@ -501,7 +505,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_CREATE] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_CREATE] += 1;
 
   return pentry;

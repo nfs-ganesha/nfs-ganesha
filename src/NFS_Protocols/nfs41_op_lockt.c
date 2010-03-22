@@ -253,7 +253,8 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                 {
                   if (a1 < b)
                     overlap = TRUE;
-                } else
+                }
+              else
                 {
                   if (a < b1)
                     {
@@ -278,7 +279,8 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                         {
                           /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                            * lock and continue iterating on the other states */
-                        } else
+                        }
+                      else
                         {
                           /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
                           res_LOCKT4.LOCKT4res_u.denied.offset =

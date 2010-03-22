@@ -213,7 +213,7 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
     {
       if (errno == EINTR)
         goto again;
-        else
+      else
         return (FALSE);
     }
 
@@ -252,7 +252,8 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
 
       msg->acpted_rply.ar_results.proc = xdr_void;
       msg->acpted_rply.ar_results.where = NULL;
-    } else
+    }
+  else
     has_args = FALSE;
 
   xdrs->x_op = XDR_ENCODE;

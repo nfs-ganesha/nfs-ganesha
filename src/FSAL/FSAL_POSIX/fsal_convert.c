@@ -250,7 +250,7 @@ int fsal2posix_openflags(fsal_openflags_t fsal_flags, char *p_posix_flags)
     strcpy(p_posix_flags, "a+");
   else if (fsal_flags & FSAL_O_TRUNC)
     strcpy(p_posix_flags, "w+");
-    else
+  else
     strcpy(p_posix_flags, "r+");
 
   return ERR_FSAL_NO_ERROR;

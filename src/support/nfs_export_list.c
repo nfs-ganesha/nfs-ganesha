@@ -284,7 +284,7 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
 
   if (found == 0)
     return NULL;
-    else
+  else
     return piter;
 }                               /* nfs_Get_export_by_id */
 
@@ -448,7 +448,7 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
       return FALSE;
     }
 #ifdef _DEBUG_DISPATCH
-    else
+  else
     DisplayLogLevel(NIV_DEBUG, "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
                     caller_uid, caller_gid);
 #endif

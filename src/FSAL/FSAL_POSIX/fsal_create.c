@@ -427,7 +427,8 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
         {
           status.major = posix2fsal_error(errsv);
           status.minor = errsv;
-        } else
+        }
+      else
         {
           status = posix2fsal_attributes(&buffstat, p_attributes);
         }

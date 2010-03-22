@@ -100,13 +100,14 @@ int get_oid_numeric(fsal_handle_t * p_objecthandle,     /* IN */
     {
       if (i == 0)
         snprintf(tmpstr, 256, "%lu", p_objecthandle->oid_tab[i]);
-        else
+      else
         snprintf(tmpstr, 256, ".%lu", p_objecthandle->oid_tab[i]);
 
       if (strlen(tmpstr) + strlen(outstr) < buffer_size)
         {
           strcat(outstr, tmpstr);
-        } else
+        }
+      else
         break;
 
     }
@@ -491,7 +492,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 

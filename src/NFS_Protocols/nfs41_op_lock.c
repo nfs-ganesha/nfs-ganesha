@@ -263,7 +263,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             {
               if (cache_status == CACHE_INODE_NOT_FOUND)
                 res_LOCK4.status = NFS4ERR_STALE_STATEID;
-                else
+              else
                 res_LOCK4.status = NFS4ERR_INVAL;
 
               return res_LOCK4.status;
@@ -326,7 +326,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 {
                   if (a1 < b)
                     overlap = TRUE;
-                } else
+                }
+              else
                 {
                   if (a < b1)
                     {
@@ -358,7 +359,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
-                          } else
+                          }
+                        else
                           {
                             /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
                             res_LOCK4.LOCK4res_u.denied.offset =
@@ -381,10 +383,10 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           if (pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if ((pstate_found_iterate->state_data.share.
-                   share_deny & OPEN4_SHARE_DENY_WRITE)
-                  && !(pstate_found_iterate->state_data.share.
-                       share_access & OPEN4_SHARE_ACCESS_WRITE)
+              if ((pstate_found_iterate->state_data.
+                   share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                  && !(pstate_found_iterate->state_data.
+                       share.share_access & OPEN4_SHARE_ACCESS_WRITE)
                   && (arg_LOCK4.locktype == WRITE_LT))
                 {
                   /* A conflicting open state, return NFS4ERR_OPENMODE

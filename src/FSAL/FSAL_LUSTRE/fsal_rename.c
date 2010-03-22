@@ -93,7 +93,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
     {
       if (errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-        else
+      else
         Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
     }
 
@@ -103,7 +103,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
       FSAL_pathcpy(&new_fsalpath, &old_fsalpath);
       src_equal_tgt = TRUE;
       new_parent_buffstat = old_parent_buffstat;
-    } else
+    }
+  else
     {
       status =
           fsal_internal_Handle2FidPath(p_context, p_new_parentdir_handle, &new_fsalpath);
@@ -120,7 +121,7 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
         {
           if (errsv == ENOENT)
             Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-            else
+          else
             Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
         }
 
@@ -178,10 +179,10 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
         {
           if (errsv != ENOENT)
             Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-      }
-        else if (new_parent_buffstat.st_uid != p_context->credential.user
-                   && buffstat.st_uid != p_context->credential.user
-                   && p_context->credential.user != 0)
+        }
+      else if (new_parent_buffstat.st_uid != p_context->credential.user
+               && buffstat.st_uid != p_context->credential.user
+               && p_context->credential.user != 0)
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_rename);
     }
 

@@ -149,7 +149,7 @@ int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
     return snmp_errno;
   else if (!p_context->snmp_response)
     return SNMP_ERR_GENERR;
-    else
+  else
     return p_context->snmp_response->errstat;
 
 }
@@ -183,10 +183,11 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
 
       if (return_tree != NULL)
         return return_tree;
-        else
+      else
         return subtree;
 
-    } else                      /* only return node when it is found */
+    }
+  else                          /* only return node when it is found */
     {
       if (objidlen == 1)
         return subtree;
@@ -285,7 +286,7 @@ netsnmp_variable_list *GetNextResponse(fsal_op_context_t * p_context)
   /* initialize or increment current_response */
   if (p_context->current_response == NULL)
     p_context->current_response = p_context->snmp_response->variables;
-    else
+  else
     p_context->current_response = p_context->current_response->next_variable;
 
   return p_context->current_response;

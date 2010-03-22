@@ -160,7 +160,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
         bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
-        else
+      else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
@@ -349,7 +349,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                         "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                         fsal_info->max_fs_calls);
 
-    } else
+    }
+  else
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
@@ -552,7 +553,8 @@ fsal_status_t fsal_internal_posixdb_add_entry(fsal_posixdb_conn * p_conn,
       if (FSAL_POSIXDB_IS_ERROR(stdb))
         return posixdb2fsal_error(stdb);
       goto add;
-  } else if (FSAL_POSIXDB_IS_ERROR(stdb))
+    }
+  else if (FSAL_POSIXDB_IS_ERROR(stdb))
     {
       return posixdb2fsal_error(stdb);
     }
@@ -585,7 +587,8 @@ fsal_status_t fsal_internal_appendFSALNameToFSALPath(fsal_path_t * p_path,
       *end = '/';
       end++;
       strcpy(end, p_name->name);
-    } else
+    }
+  else
     {
       if (p_path->len + p_name->len > FSAL_MAX_PATH_LEN)
         ReturnCode(ERR_FSAL_NAMETOOLONG, 0);
@@ -667,7 +670,8 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
                   /* no need to check if there was an error, because it doesn't change the behavior of the function */
                 }
 
-            } else
+            }
+          else
             {                   /* no error */
               FSAL_pathcpy(p_fsalpath, &(paths[0]));
               break;
@@ -693,7 +697,8 @@ fsal_status_t fsal_internal_getPathFromHandle(fsal_op_context_t * p_context,    
           ReturnCode(ERR_FSAL_STALE, 0);
         }
 
-    } else
+    }
+  else
     {
       /* @TODO : check that there si at liste 1 path */
       FSAL_pathcpy(p_fsalpath, &(paths[0]));
@@ -744,7 +749,8 @@ fsal_status_t fsal_internal_getInfoFromName(fsal_op_context_t * p_context,      
           if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
             return st;
           /* don't break, add a new entry */
-        } else
+        }
+      else
         {
           break;
         }
@@ -829,7 +835,8 @@ fsal_status_t fsal_internal_getInfoFromChildrenList(fsal_op_context_t * p_contex
 
           /* don't break, add a new entry */
 
-        } else
+        }
+      else
         {
           memcpy(p_object_handle, &(p_children[count].handle), sizeof(fsal_handle_t));
           break;
@@ -887,7 +894,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       uid = p_object_attributes->owner;
       gid = p_object_attributes->group;
       mode = p_object_attributes->mode;
-    } else
+    }
+  else
     {
       uid = p_buffstat->st_uid;
       gid = p_buffstat->st_gid;
@@ -914,7 +922,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
-        else
+      else
         ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
@@ -965,7 +973,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
-        else
+      else
         ReturnCode(ERR_FSAL_ACCESS, 0);
 
     }
@@ -985,7 +993,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
   if (missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    else
+  else
     ReturnCode(ERR_FSAL_ACCESS, 0);
 
 }

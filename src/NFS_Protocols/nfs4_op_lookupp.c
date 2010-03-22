@@ -284,7 +284,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   if ((cache_status == CACHE_INODE_NOT_A_DIRECTORY) &&
       (dir_pentry->internal_md.type == SYMBOLIC_LINK))
     res_LOOKUPP4.status = NFS4ERR_SYMLINK;
-    else
+  else
     res_LOOKUPP4.status = nfs4_Errno(cache_status);
 
   return res_LOOKUPP4.status;

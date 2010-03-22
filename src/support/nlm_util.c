@@ -123,7 +123,7 @@ fsal_lockdesc_t *nlm_lock_to_fsal_lockdesc(struct nlm4_lock *nlm_lock, bool_t ex
 
   if (exclusive)
     fldesc->flock.l_type = F_WRLCK;
-    else
+  else
     fldesc->flock.l_type = F_RDLCK;
   fldesc->flock.l_whence = SEEK_SET;
   fldesc->flock.l_start = nlm_lock->l_offset;

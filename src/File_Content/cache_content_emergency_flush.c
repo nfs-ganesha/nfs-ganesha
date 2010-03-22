@@ -376,7 +376,8 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                  errno, strerror(errno));
                       return CACHE_CONTENT_LOCAL_CACHE_ERROR;
                     }
-                } else
+                }
+              else
                 {
                   /* update stats, if provided */
                   if (p_nb_errors != NULL)
@@ -386,7 +387,8 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                       ("Can't flush file #%x, fsal_status.major=%u fsal_status.minor=%u",
                        inum, fsal_status.major, fsal_status.minor);
                 }
-            } else
+            }
+          else
             {
               /* success */
               /* update stats, if provided */

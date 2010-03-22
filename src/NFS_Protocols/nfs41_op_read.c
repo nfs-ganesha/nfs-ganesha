@@ -210,9 +210,9 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
-  }
-    else if (!memcmp((char *)all_one, arg_READ4.stateid.other, 12) &&
-               arg_READ4.stateid.seqid == 0xFFFFFFFF)
+    }
+  else if (!memcmp((char *)all_one, arg_READ4.stateid.other, 12) &&
+           arg_READ4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case" */
       /* This will be treated as a client that held no lock at all, but may goes through locks 
@@ -268,7 +268,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if (data->current_filetype == DIR_BEGINNING
           || data->current_filetype == DIR_CONTINUE)
         res_READ4.status = NFS4ERR_ISDIR;
-        else
+      else
         res_READ4.status = NFS4ERR_INVAL;
 
       return res_READ4.status;
@@ -330,8 +330,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if ((cache_status != CACHE_INODE_SUCCESS) &&
           (cache_content_cache_behaviour(entry,
                                          &datapol,
-                                         (cache_content_client_t *) (data->pclient->
-                                                                     pcontent_client),
+                                         (cache_content_client_t *) (data->
+                                                                     pclient->pcontent_client),
                                          &content_status) == CACHE_CONTENT_FULLY_CACHED)
           && (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
         {
@@ -383,7 +383,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Is EOF met or not ? */
   if (eof_met == TRUE)
     res_READ4.READ4res_u.resok4.eof = TRUE;
-    else
+  else
     res_READ4.READ4res_u.resok4.eof = FALSE;
 
   /* Say it is ok */

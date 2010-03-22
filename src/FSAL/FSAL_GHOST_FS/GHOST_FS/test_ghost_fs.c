@@ -545,13 +545,15 @@ int main(int argc, char **argv)
         }
       gid = atoi(str_gid);
 
-  } else if ((action == ACTION_LS) && (argc == 4))
+    }
+  else if ((action == ACTION_LS) && (argc == 4))
     {
 
       output1 = argv[2];
       output2 = argv[3];
 
-    } else
+    }
+  else
     {
       usage(basename(argv[0]));
       exit(EINVAL);

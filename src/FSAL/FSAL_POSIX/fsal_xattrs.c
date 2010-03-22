@@ -599,7 +599,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context,
                                          buffer_addr, buffer_size, p_output_size);
-    } else
+    }
+  else
     {
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context, buff, MAXNAMLEN, p_output_size);
@@ -647,7 +648,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 

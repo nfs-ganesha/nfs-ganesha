@@ -108,7 +108,8 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
           DisplayLogLevel(NIV_DEBUG, "%s has no stripe information", entry_path.path);
           *p_output_size = sprintf(buffer_addr, "none\n");
           return 0;
-        } else
+        }
+      else
         DisplayLog("Error %d getting stripe info for %s", rc, entry_path.path);
       return posix2fsal_error(rc);
     }
@@ -140,7 +141,7 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
               if (i != p_lum->lmm_stripe_count - 1)
                 sz = snprintf(curr, buffer_size - *p_output_size, "%u,",
                               p_lum->lmm_objects[i].l_ost_idx);
-                else
+              else
                 sz = snprintf(curr, buffer_size - *p_output_size, "%u\n",
                               p_lum->lmm_objects[i].l_ost_idx);
               curr += sz;
@@ -149,7 +150,8 @@ int print_stripe(fsal_handle_t * p_objecthandle,        /* object handle */
 
           break;
         }
-    } else
+    }
+  else
     {
       DisplayLog("Wrong Luster magic number for %s: %#X <> %#X",
                  entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
@@ -377,7 +379,8 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
       && !do_match_type(xattr_list[xattr_id].flags, file_attrs.type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
-  } else if (xattr_id >= XATTR_COUNT)
+    }
+  else if (xattr_id >= XATTR_COUNT)
     {
       /* This is user defined xattr */
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG,
@@ -526,9 +529,10 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
       /* all xattrs are in the output array */
       if (ptr >= names + namesize)
         *end_of_list = TRUE;
-        else
+      else
         *end_of_list = FALSE;
-    } else                      /* no xattrs */
+    }
+  else                          /* no xattrs */
     *end_of_list = TRUE;
 
   *p_nb_returned = out_index;
@@ -642,22 +646,26 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
       unsigned char val = *((unsigned char *)buffer);
       *datalen = 1 + snprintf((char *)buffer, maxlen, "%hhu\n", val);
       return ERR_FSAL_NO_ERROR;
-  } else if (size_in == 2)
+    }
+  else if (size_in == 2)
     {
       unsigned short val = *((unsigned short *)buffer);
       *datalen = 1 + snprintf((char *)buffer, maxlen, "%hu\n", val);
       return ERR_FSAL_NO_ERROR;
-  } else if (size_in == 4)
+    }
+  else if (size_in == 4)
     {
       unsigned int val = *((unsigned int *)buffer);
       *datalen = 1 + snprintf((char *)buffer, maxlen, "%u\n", val);
       return ERR_FSAL_NO_ERROR;
-  } else if (size_in == 8)
+    }
+  else if (size_in == 8)
     {
       unsigned long long val = *((unsigned long long *)buffer);
       *datalen = 1 + snprintf((char *)buffer, maxlen, "%llu\n", val);
       return ERR_FSAL_NO_ERROR;
-    } else
+    }
+  else
     {
       /* 2 bytes per initial byte +'0x' +\n +\0 */
       char *curr_out;
@@ -672,7 +680,7 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
           unsigned char *p8 = (unsigned char *)(buffer + i);
           if ((i % 4 == 3) && (i != size_in - 1))
             curr_out += sprintf(curr_out, "%02hhX.", *p8);
-            else
+          else
             curr_out += sprintf(curr_out, "%02hhX", *p8);
         }
       *curr_out = '\n';
@@ -727,7 +735,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       && !do_match_type(xattr_list[xattr_id].flags, file_attrs.type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
-  } else if (xattr_id >= XATTR_COUNT)
+    }
+  else if (xattr_id >= XATTR_COUNT)
     {
       fsal_path_t lustre_path;
       char attr_name[MAXPATHLEN];
@@ -752,7 +761,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       xattr_format_value(buffer_addr, p_output_size, buffer_size);
 
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else                      /* built-in attr */
+    }
+  else                          /* built-in attr */
     {
       /* get the value */
       rc = xattr_list[xattr_id].get_func(p_objecthandle, p_context,
@@ -810,7 +820,7 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
       rc = xattr_name_to_id(lustre_path.path, xattr_name->name);
       if (rc < 0)
         Return(-rc, errno, INDEX_FSAL_GetXAttrValue);
-        else
+      else
         {
           index = rc;
           found = TRUE;
@@ -821,7 +831,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 
@@ -933,14 +944,14 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
   if (len == 0)
     rc = lsetxattr(lustre_path.path, xattr_name->name, "", 1,
                    create ? XATTR_CREATE : XATTR_REPLACE);
-    else
+  else
     rc = lsetxattr(lustre_path.path, xattr_name->name, (char *)buffer_addr,
                    len, create ? XATTR_CREATE : XATTR_REPLACE);
 
   ReleaseTokenFSCall();
   if (rc != 0)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_SetXAttrValue);
-    else
+  else
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 

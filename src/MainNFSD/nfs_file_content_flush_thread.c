@@ -212,8 +212,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
           if (cache_content_emergency_flush(cache_sub_dir,
                                             nfs_start_info.flush_behaviour,
                                             nfs_start_info.lw_mark_trigger,
-                                            nfs_param.cache_layers_param.dcgcpol.
-                                            emergency_grace_delay,
+                                            nfs_param.cache_layers_param.
+                                            dcgcpol.emergency_grace_delay,
                                             p_flush_data->thread_index,
                                             nfs_start_info.nb_flush_threads,
                                             &p_flush_data->nb_flushed,
@@ -224,7 +224,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
                                             &content_status) != CACHE_CONTENT_SUCCESS)
             {
               DisplayLog("Flush on Export Entry #%u failed", pexport->id);
-            } else
+            }
+          else
             {
               DisplayLog("Flush on Export Entry #%u is ok", pexport->id);
 
@@ -235,7 +236,8 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
               break;
             }
 
-        } else
+        }
+      else
         DisplayLog("Export Entry #%u is not data cached, skipping..", pexport->id);
     }
 

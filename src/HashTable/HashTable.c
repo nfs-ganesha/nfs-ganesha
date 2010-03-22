@@ -666,7 +666,8 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       printf("Ecrasement d'une ancienne entree (k=%p,v=%p)\n", buffkey->pdata,
              buffval->pdata);
 #endif
-    } else
+    }
+  else
     {
       /* No entry of that key, add it to the trees */
       if (how == HASHTABLE_SET_HOW_TEST_ONLY)

@@ -188,8 +188,8 @@ static unsigned long hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * 
 
   hash =
       (p_conf->alphabet_length +
-       ((unsigned long)p_digest->nfs23_digest.object_id ^ (unsigned int)p_digest->
-        nfs23_digest.handle_hash));
+       ((unsigned long)p_digest->nfs23_digest.
+        object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
   hash = (743 * hash + 1999) % p_conf->index_size;
 
   return hash;
@@ -218,7 +218,7 @@ static int cmp_digest(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
   else if (p_digest1->nfs23_digest.handle_hash != p_digest2->nfs23_digest.handle_hash)
     return (int)p_digest1->nfs23_digest.handle_hash -
         (int)p_digest2->nfs23_digest.handle_hash;
-    else                        /* same */
+  else                          /* same */
     return 0;
 }
 
@@ -276,7 +276,8 @@ int handle_mapping_hash_add(hash_table_t * p_hash,
           DisplayLogJdLevel(fsal_log, NIV_CRIT,
                             "ERROR %d inserting entry to handle mapping hash table", rc);
           return HANDLEMAP_HASHTABLE_ERROR;
-        } else
+        }
+      else
         {
           return HANDLEMAP_EXISTS;
         }
@@ -308,7 +309,8 @@ int HandleMap_Init(const handle_map_param_t * p_param)
                         rc, p_param->database_count);
 
       return HANDLEMAP_INVALID_PARAM;
-  } else if (rc < 0)
+    }
+  else if (rc < 0)
     return -rc;
 
   /* init database module */
@@ -390,7 +392,8 @@ int HandleMap_GetFH(nfs23_map_handle_t * p_in_nfs23_digest,
       *p_out_fsal_handle = *p_handle;
 
       return HANDLEMAP_SUCCESS;
-    } else
+    }
+  else
     return HANDLEMAP_STALE;
 
 }                               /* HandleMap_GetFH */
@@ -413,7 +416,7 @@ int HandleMap_SetFH(nfs23_map_handle_t * p_in_nfs23_digest, fsal_handle_t * p_in
   else if (rc == HANDLEMAP_EXISTS)
     /* already in database */
     return HANDLEMAP_EXISTS;
-    else
+  else
     {
       /* insert it to DB */
       return handlemap_db_insert(p_in_nfs23_digest, p_in_handle);

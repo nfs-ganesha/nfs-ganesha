@@ -190,7 +190,8 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_WORKER  ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -216,28 +217,36 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
       if (!strcasecmp(key_name, "Pending_Job_Prealloc"))
         {
           pparam->nb_pending_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_Before_GC"))
+        }
+      else if (!strcasecmp(key_name, "Nb_Before_GC"))
         {
           pparam->nb_before_gc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_DupReq_Prealloc"))
+        }
+      else if (!strcasecmp(key_name, "Nb_DupReq_Prealloc"))
         {
           pparam->nb_dupreq_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
+        }
+      else if (!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
         {
           pparam->nb_dupreq_before_gc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
+        }
+      else if (!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
         {
           pparam->nb_client_id_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_IP_Stats_Prealloc"))
+        }
+      else if (!strcasecmp(key_name, "Nb_IP_Stats_Prealloc"))
         {
           pparam->nb_ip_stats_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
+        }
+      else if (!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
         {
           pparam->lru_param.nb_entry_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
+        }
+      else if (!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
         {
           pparam->lru_dupreq.nb_entry_prealloc = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -280,7 +289,8 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_CORE  ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -306,55 +316,72 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       if (!strcasecmp(key_name, "Nb_Worker"))
         {
           pparam->nb_worker = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
+        }
+      else if (!strcasecmp(key_name, "Nb_MaxConcurrentGC"))
         {
           pparam->nb_max_concurrent_gc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "DupReq_Expiration"))
+        }
+      else if (!strcasecmp(key_name, "DupReq_Expiration"))
         {
           pparam->expiration_dupreq = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Use_NFS_Commit"))
+        }
+      else if (!strcasecmp(key_name, "Use_NFS_Commit"))
         {
           pparam->use_nfs_commit = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "NFS_Port"))
+        }
+      else if (!strcasecmp(key_name, "NFS_Port"))
         {
           pparam->nfs_port = (unsigned short)atoi(key_value);
-      } else if (!strcasecmp(key_name, "Drop_IO_Errors"))
+        }
+      else if (!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "Drop_Inval_Errors"))
+        }
+      else if (!strcasecmp(key_name, "Drop_Inval_Errors"))
         {
           pparam->drop_inval_errors = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "MNT_Port"))
+        }
+      else if (!strcasecmp(key_name, "MNT_Port"))
         {
           pparam->mnt_port = (unsigned short)atoi(key_value);
-      } else if (!strcasecmp(key_name, "NFS_Program"))
+        }
+      else if (!strcasecmp(key_name, "NFS_Program"))
         {
           pparam->nfs_program = atoi(key_value);
-      } else if (!strcasecmp(key_name, "MNT_Program"))
+        }
+      else if (!strcasecmp(key_name, "MNT_Program"))
         {
           pparam->mnt_program = atoi(key_value);
-      } else if (!strcasecmp(key_name, "NLM_Program"))
+        }
+      else if (!strcasecmp(key_name, "NLM_Program"))
         {
           pparam->nlm_program = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Core_Dump_Size"))
+        }
+      else if (!strcasecmp(key_name, "Core_Dump_Size"))
         {
           pparam->core_dump_size = atol(key_value);
-      } else if (!strcasecmp(key_name, "Nb_Max_Fd"))
+        }
+      else if (!strcasecmp(key_name, "Nb_Max_Fd"))
         {
           pparam->nb_max_fd = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Stats_File_Path"))
+        }
+      else if (!strcasecmp(key_name, "Stats_File_Path"))
         {
           strncpy(pparam->stats_file_path, key_value, MAXPATHLEN);
-      } else if (!strcasecmp(key_name, "Stats_Update_Delay"))
+        }
+      else if (!strcasecmp(key_name, "Stats_Update_Delay"))
         {
           pparam->stats_update_delay = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Dump_Stats_Per_Client"))
+        }
+      else if (!strcasecmp(key_name, "Dump_Stats_Per_Client"))
         {
           pparam->dump_stats_per_client = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "Stats_Per_Client_Directory"))
+        }
+      else if (!strcasecmp(key_name, "Stats_Per_Client_Directory"))
         {
           strncpy(pparam->stats_per_client_directory, key_value, MAXPATHLEN);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -398,7 +425,8 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_DUPREQ ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -424,13 +452,16 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -472,7 +503,8 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_IP_NAME ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -498,19 +530,24 @@ int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * ppa
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Expiration_Time"))
+        }
+      else if (!strcasecmp(key_name, "Expiration_Time"))
         {
           pparam->expiration_time = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Map"))
+        }
+      else if (!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -574,13 +611,16 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -644,13 +684,16 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -704,13 +747,16 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -741,7 +787,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
       fprintf(stderr, "Cannot read item \"%s\" from configuration file\n",
               CONF_LABEL_PNFS);
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -806,7 +853,8 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -832,16 +880,20 @@ int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Map"))
+        }
+      else if (!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -883,7 +935,8 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CLIENT_ID ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -909,16 +962,20 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
       if (!strcasecmp(key_name, "Index_Size"))
         {
           pparam->hash_param.index_size = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Alphabet_Length"))
+        }
+      else if (!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hash_param.alphabet_length = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
+        }
+      else if (!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
         {
           pparam->hash_param.nb_node_prealloc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Map"))
+        }
+      else if (!strcasecmp(key_name, "Map"))
         {
           strncpy(pparam->mapfile, key_value, MAXPATHLEN);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -960,7 +1017,8 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_KRB5 ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -986,13 +1044,16 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
       if (!strcasecmp(key_name, "PrincipalName"))
         {
           strncpy(pparam->principal, key_value, MAXNAMLEN);
-      } else if (!strcasecmp(key_name, "KeytabPath"))
+        }
+      else if (!strcasecmp(key_name, "KeytabPath"))
         {
           strncpy(pparam->keytab, key_value, MAXPATHLEN);
-      } else if (!strcasecmp(key_name, "Active_krb5"))
+        }
+      else if (!strcasecmp(key_name, "Active_krb5"))
         {
           pparam->active_krb5 = StrToBoolean(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -1034,7 +1095,8 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_NFS_VERSION4 ) ; */
       return 1;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return 1;
@@ -1060,22 +1122,28 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
       if (!strcasecmp(key_name, "Lease_Lifetime"))
         {
           pparam->lease_lifetime = atoi(key_value);
-      } else if (!strcasecmp(key_name, "DomainName"))
+        }
+      else if (!strcasecmp(key_name, "DomainName"))
         {
           strncpy(pparam->domainname, key_value, MAXNAMLEN);
-      } else if (!strcasecmp(key_name, "IdmapConf"))
+        }
+      else if (!strcasecmp(key_name, "IdmapConf"))
         {
           strncpy(pparam->idmapconf, key_value, MAXPATHLEN);
-      } else if (!strcasecmp(key_name, "FH_Expire"))
+        }
+      else if (!strcasecmp(key_name, "FH_Expire"))
         {
           pparam->fh_expire = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
+        }
+      else if (!strcasecmp(key_name, "Returns_ERR_FH_EXPIRED"))
         {
           pparam->returns_err_fh_expired = StrToBoolean(key_value);
-      } else if (!strcasecmp(key_name, "Use_OPEN_CONFIRM"))
+        }
+      else if (!strcasecmp(key_name, "Use_OPEN_CONFIRM"))
         {
           pparam->use_open_confirm = StrToBoolean(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",

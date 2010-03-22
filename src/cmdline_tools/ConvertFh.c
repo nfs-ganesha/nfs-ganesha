@@ -147,14 +147,15 @@ void print_buffer(caddr_t buffer, size_t sz_returned)
     {
       if (sz_returned == 1 || sz_returned == 2 || sz_returned == 4 || sz_returned == 8)
         numeric = TRUE;
-        else
+      else
         hexa = TRUE;
     }
 
   if (ascii)
     {
       printf("%s\n", buffer);
-  } else if (numeric)
+    }
+  else if (numeric)
     {
       if (sz_returned == 1)
         printf("%hhu\n", buffer[0]);
@@ -164,19 +165,20 @@ void print_buffer(caddr_t buffer, size_t sz_returned)
         printf("%u\n", *((unsigned int *)buffer));
       else if (sz_returned == 8)
         printf("%llu\n", *((unsigned long long *)buffer));
-        else
+      else
         {
           for (i = 0; i < sz_returned; i += 8)
             {
               unsigned long long *p64 = (unsigned long long *)(buffer + i);
               if (i == 0)
                 printf("%llu", *p64);
-                else
+              else
                 printf(".%llu", *p64);
             }
           printf("\n");
         }
-  } else if (hexa)              /* hexa */
+    }
+  else if (hexa)                /* hexa */
     {
       printf("0x");
       for (i = 0; i < sz_returned; i++)
@@ -514,7 +516,8 @@ int main(int argc, char *argv[])
       if (FSAL_IS_ERROR(fsal_status))
         {
           fprintf(stderr, "Error retrieving fileid from handle\n");
-        } else
+        }
+      else
         {
           printf("%-18s = %llu\n", "FileId", objid);
         }

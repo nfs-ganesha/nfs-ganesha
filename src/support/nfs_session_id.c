@@ -470,7 +470,8 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
       /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
 
       return 1;
-    } else
+    }
+  else
     return 0;
 }                               /* nfs41_Session_Del */
 

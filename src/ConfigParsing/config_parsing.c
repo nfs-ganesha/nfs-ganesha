@@ -237,7 +237,7 @@ int config_GetNbBlocks(config_file_t config)
       return 0;
     }
   /* on compte le nombre d'elements */
-    else
+  else
     {
       /* il y a au moins un element : le premier */
       generic_item *curr_block = (*config_struct->syntax_tree);
@@ -298,7 +298,7 @@ int config_GetNbItems(config_item_t block)
       return 0;
     }
   /* on compte le nombre d'elements */
-    else
+  else
     {
       /* il y a au moins un element : le premier */
       generic_item *curr_block = the_block->item.block.block_content;
@@ -344,7 +344,7 @@ config_item_type config_ItemType(config_item_t item)
     return CONFIG_ITEM_BLOCK;
   else if (the_item->type == TYPE_AFFECT)
     return CONFIG_ITEM_VAR;
-    else
+  else
     return 0;
 }
 
@@ -411,14 +411,14 @@ config_item_t config_FindItemByName(config_file_t config, const char *name)
       /* it is a whole name */
       if (!separ)
         return (config_item_t) GetItemFromList(list, current);
-        else
+      else
         {
           /* split the name */
           *separ = '\0';
 
           if ((separ - tmp_name) < MAXSTRLEN - 2)
             separ += 2;
-            else
+          else
             return NULL;        /* overflow */
 
           block = GetItemFromList(list, current);
@@ -450,7 +450,7 @@ char *config_FindKeyValueByName(config_file_t config, const char *key_name)
 
   if (!var || (var->type != TYPE_AFFECT))
     return NULL;
-    else
+  else
     return var->item.affect.varvalue;
 
 }
@@ -481,14 +481,14 @@ config_item_t config_GetItemByName(config_item_t block, const char *name)
       /* it is a whole name */
       if (!separ)
         return (config_item_t) GetItemFromList(list, current);
-        else
+      else
         {
           /* split the name */
           *separ = '\0';
 
           if ((separ - tmp_name) < MAXSTRLEN - 2)
             separ += 2;
-            else
+          else
             return NULL;        /* overflow */
 
           curr_block = GetItemFromList(list, current);
@@ -520,7 +520,7 @@ char *config_GetKeyValueByName(config_item_t block, const char *key_name)
 
   if (!var || (var->type != TYPE_AFFECT))
     return NULL;
-    else
+  else
     return var->item.affect.varvalue;
 
 }

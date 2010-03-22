@@ -30,7 +30,7 @@ int nodelist_common_string_get_token(char *string, char *separators_list, int to
                                                token_id, p_token);
   if (*p_token != NULL)
     fstatus = 0;
-    else
+  else
     fstatus = -1;
   return fstatus;
 }
@@ -101,7 +101,7 @@ int nodelist_common_string_appends_and_extends(char **p_io_string,
 
       if (separator != NULL)
         local_separator = separator;
-        else
+      else
         local_separator = default_separator;
 
       if (strlen(*p_io_string) == 0)
@@ -120,7 +120,7 @@ int nodelist_common_string_appends_and_extends(char **p_io_string,
               (char *)realloc(*p_io_string, (new_output_length + 1) * sizeof(char));
           if (*p_io_string != NULL)
             *p_current_length = new_output_length;
-            else
+          else
             *p_current_length = 0;
         }
 
@@ -173,10 +173,11 @@ int nodelist_common_extended2condensed_nodelist(char *src_list, char **p_dst_lis
     {
       if (nodelist_nodelist_get_compacted_string(&nodelist, p_dst_list) == 0)
         fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
-        else
+      else
         fstatus = -1;
       nodelist_nodelist_free_contents(&nodelist);
-    } else
+    }
+  else
     {
       fstatus = -1;
     }
@@ -218,10 +219,11 @@ int nodelist_common_condensed2extended_nodelist(char *src_list, char **p_dst_lis
     {
       if (nodelist_nodelist_get_extended_string(&nodelist, p_dst_list) == 0)
         fstatus = nodelist_nodelist_nodes_quantity(&nodelist);
-        else
+      else
         fstatus = -1;
       nodelist_nodelist_free_contents(&nodelist);
-    } else
+    }
+  else
     {
       fstatus = -1;
     }
@@ -314,7 +316,8 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
                   if (best_pointer == NULL)
                     {
                       best_pointer = current_pointer;
-                  } else if (best_pointer > current_pointer && current_pointer != NULL)
+                    }
+                  else if (best_pointer > current_pointer && current_pointer != NULL)
                     {
                       best_pointer = current_pointer;
                     }
@@ -326,7 +329,7 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
                 {
                   if (best_pointer == NULL)
                     copy_length = strlen(old_pointer);
-                    else
+                  else
                     copy_length = (size_t) (best_pointer - old_pointer);
                   *p_token = (char *)malloc((copy_length + 1) * sizeof(char));
                   if (*p_token != NULL)
@@ -334,7 +337,8 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
                       (*p_token)[copy_length] = '\0';
                       strncpy(*p_token, old_pointer, copy_length);
                       fstatus++;
-                    } else
+                    }
+                  else
                     {
                       fstatus = -2;
                     }
@@ -349,7 +353,7 @@ int _nodelist_common_string_get_token_common(char *string, char *separators_list
               /*
                  Otherwise, increment token counter and adjust working string
                */
-                else
+              else
                 {
                   local_token_nb++;
                   working_string = best_pointer + 1;

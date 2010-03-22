@@ -141,7 +141,8 @@ void emptydb(fsal_posixdb_conn * p_conn)
   if (FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while emptying the database\n", st.major, st.minor);
-    } else
+    }
+  else
     {
       printf("Database entries have been successfully deleted\n");
     }
@@ -162,7 +163,8 @@ void find(fsal_posixdb_conn * p_conn)
     {
       fputs("Error : Root handle not found. Is the database empty ?", stderr);
       return;
-  } else if (FSAL_POSIXDB_IS_ERROR(st))
+    }
+  else if (FSAL_POSIXDB_IS_ERROR(st))
     {
       fprintf(stderr, "Error (%i/%i) while getting root handle\n", st.major, st.minor);
       return;
@@ -188,8 +190,8 @@ void display_directory(fsal_posixdb_conn * p_conn, fsal_handle_t * p_handle_pare
     }
   for (i = 0; i < count; i++)
     {
-      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode, basedir,
-             p_children[i].name.name);
+      printf("%llu %s/%s\n", (unsigned long long int)p_children[i].handle.info.inode,
+             basedir, p_children[i].name.name);
       if (p_children[i].handle.info.ftype == FSAL_TYPE_DIR)
         {
           char basedir_new[FSAL_MAX_PATH_LEN];
@@ -285,26 +287,31 @@ int main(int argc, char **argv)
       if (!strcmp(argv[optind], "test_connection"))
         {
           op = OP_TESTCONN;
-      } else if (!strcmp(argv[optind], "empty_database"))
+        }
+      else if (!strcmp(argv[optind], "empty_database"))
         {
           op = OP_EMPTYDB;
-      } else if (!strcmp(argv[optind], "find"))
+        }
+      else if (!strcmp(argv[optind], "find"))
         {
           op = OP_FIND;
-      } else if (!strcmp(argv[optind], "populate"))
+        }
+      else if (!strcmp(argv[optind], "populate"))
         {
           op = OP_POPULATE;
           optind++;
           if (optind < argc)
             {
               strncpy(path, argv[optind], MAXPATHLEN);
-            } else
+            }
+          else
             {
               fputs("Operation 'populate' need a parameter", stderr);
               fprintf(stderr, usage, exec_name);
               exit(-1);
             }
-        } else
+        }
+      else
         {
           fprintf(stderr, "Unknown operation : %s\n", argv[optind]);
           fprintf(stderr, usage, exec_name);
@@ -329,7 +336,8 @@ int main(int argc, char **argv)
     {
       fprintf(stderr, "Error %i. exiting.\n", statusdb.minor);
       exit(-1);
-    } else
+    }
+  else
     {
       fprintf(stderr, "Connected.\n");
     }

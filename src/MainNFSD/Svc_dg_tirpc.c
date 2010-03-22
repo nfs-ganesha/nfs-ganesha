@@ -503,7 +503,8 @@ size_t replylen;
         }
       *vicp = victim->cache_next;       /* remove from cache */
       newbuf = victim->cache_reply;
-    } else
+    }
+  else
     {
       victim = ALLOC(struct cache_node, 1);
       if (victim == NULL)

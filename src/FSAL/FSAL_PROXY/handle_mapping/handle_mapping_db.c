@@ -224,7 +224,8 @@ static int init_database_access(db_thread_info_t * p_thr_info)
                             "ERROR: could not connect to SQLite3 database (file %s): %s",
                             db_file, sqlite3_errmsg(p_thr_info->db_conn));
           sqlite3_close(p_thr_info->db_conn);
-        } else
+        }
+      else
         {
           DisplayLogJdLevel(fsal_log, NIV_CRIT,
                             "ERROR: could not connect to SQLite3 database (file %s): status=%d",
@@ -320,7 +321,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
 
       if (rc == 0)
         nb_loaded++;
-        else
+      else
         DisplayLogJdLevel(fsal_log, NIV_CRIT,
                           "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
                           (unsigned long long)object_id, handle_hash, fsal_handle_str);
@@ -419,7 +420,8 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
           /* first operation */
           p_queue->highprio_first = p_op;
           p_queue->highprio_last = p_op;
-        } else
+        }
+      else
         {
           p_queue->highprio_last->p_next = p_op;
           p_queue->highprio_last = p_op;
@@ -440,7 +442,8 @@ static int dbop_push(flusher_queue_t * p_queue, db_op_item_t * p_op)
           /* first operation */
           p_queue->lowprio_first = p_op;
           p_queue->lowprio_last = p_op;
-        } else
+        }
+      else
         {
           p_queue->lowprio_last->p_next = p_op;
           p_queue->lowprio_last = p_op;
@@ -546,7 +549,8 @@ static void *database_worker_thread(void *arg)
 
           /* something to do */
           p_info->work_queue.status = WORKING;
-      } else if (p_info->work_queue.lowprio_first != NULL)
+        }
+      else if (p_info->work_queue.lowprio_first != NULL)
         {
           /* take the next item in the list */
           to_be_done = p_info->work_queue.lowprio_first;
@@ -640,11 +644,13 @@ int handlemap_db_count(const char *dir)
           if (!fnmatch(db_pattern, direntry.d_name, FNM_PATHNAME))
             count++;
 
-      } else if (rc == 0 && cookie == NULL)
+        }
+      else if (rc == 0 && cookie == NULL)
         {
           /* end of dir */
           end_of_dir = TRUE;
-      } else if (errno != 0)
+        }
+      else if (errno != 0)
         {
           /* error */
           DisplayLogJdLevel(fsal_log, NIV_CRIT, "ERROR: error reading directory %s: %s",
@@ -652,7 +658,8 @@ int handlemap_db_count(const char *dir)
 
           closedir(dir_hdl);
           return -HANDLEMAP_SYSTEM_ERROR;
-        } else
+        }
+      else
         {
           /* end of dir */
           end_of_dir = TRUE;

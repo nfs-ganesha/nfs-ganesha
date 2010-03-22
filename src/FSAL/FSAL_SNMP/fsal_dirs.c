@@ -160,7 +160,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       /* first try to get .0 child */
       last_listed.oid_tab[last_listed.oid_len] = 0;
       last_listed.oid_len++;
-    } else                      /* readdir from another entry */
+    }
+  else                          /* readdir from another entry */
     {
       FSAL_OID_DUP(&last_listed, start_position.oid_tab, start_position.oid_len);
     }
@@ -195,7 +196,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                             "SNMP GET request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
                             rc, snmp_errno, errno, snmp_api_errstring(rc));
           Return(snmp2fsal_error(rc), rc, INDEX_FSAL_readdir);
-      } else if (snmp2fsal_error(rc) != ERR_FSAL_NOENT)
+        }
+      else if (snmp2fsal_error(rc) != ERR_FSAL_NOENT)
         {
 
           p_curr_var = GetNextResponse(dir_descriptor->p_context);
@@ -231,7 +233,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                 nearest_node =
                     GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
                                TRUE);
-                else
+              else
                 nearest_node = cur_node;
 
 #ifdef _DEBUG_FSAL
@@ -254,8 +256,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if (rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
-                                      asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
+                                      attributes.asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -293,7 +295,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                             "SNMP GETNEXT request failed: error=%d, snmp_errno=%d, errno=%d, msg=%s",
                             rc, snmp_errno, errno, snmp_api_errstring(rc));
           Return(snmp2fsal_error(rc), rc, INDEX_FSAL_readdir);
-      } else if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
+        }
+      else if (snmp2fsal_error(rc) == ERR_FSAL_NOENT)
         {
           bool_eod = TRUE;
           break;
@@ -343,7 +346,7 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                 nearest_node =
                     GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
                                TRUE);
-                else
+              else
                 nearest_node = cur_node;
 
 #ifdef _DEBUG_FSAL
@@ -366,8 +369,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if (rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
-                                      asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
+                                      attributes.asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -385,7 +388,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
               /* restart a sequence from GET request  */
               continue;
-            } else              /* directory item */
+            }
+          else                  /* directory item */
             {
 
               /* it the returned subdirectory is "smaller" than the cookie, we skip it
@@ -427,16 +431,16 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                 nearest_node =
                     GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
                                TRUE);
-                else
+              else
                 nearest_node = cur_node;
 
 #ifdef _DEBUG_FSAL
               printf("FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)\n",
                      pdirent[cur_nb_entries].name.name,
-                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->node_handle.
-                                                            oid_len],
-                     pdirent[cur_nb_entries].cookie.oid_tab[pdirent[cur_nb_entries].
-                                                            cookie.oid_len - 1]);
+                     pdirent[cur_nb_entries].handle.oid_tab[dir_descriptor->
+                                                            node_handle.oid_len],
+                     pdirent[cur_nb_entries].cookie.
+                     oid_tab[pdirent[cur_nb_entries].cookie.oid_len - 1]);
 #endif
 
               /* set entry attributes  */
@@ -449,8 +453,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
                   if (rc != ERR_FSAL_NO_ERROR)
                     {
-                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].attributes.
-                                      asked_attributes);
+                      FSAL_CLEAR_MASK(pdirent[cur_nb_entries].
+                                      attributes.asked_attributes);
                       FSAL_SET_MASK(pdirent[cur_nb_entries].attributes.asked_attributes,
                                     FSAL_ATTR_RDATTR_ERR);
                     }
@@ -470,7 +474,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
             }
 
-        } else                  /* no more objects in the directory tree */
+        }
+      else                      /* no more objects in the directory tree */
         {
           bool_eod = TRUE;
           break;

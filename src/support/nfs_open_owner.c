@@ -163,8 +163,8 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
     len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
 
   return len + sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
-                       (unsigned long long)powner->clientid, powner->owner_len, strtmp, powner->confirmed,
-                       powner->seqid);
+                       (unsigned long long)powner->clientid, powner->owner_len, strtmp,
+                       powner->confirmed, powner->seqid);
 }                               /* display_state_id_val */
 
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -451,7 +451,8 @@ int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname)
       /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
 
       return 1;
-    } else
+    }
+  else
     return 0;
 }                               /* nfs_open_owner_Del */
 

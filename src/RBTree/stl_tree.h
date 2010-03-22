@@ -103,11 +103,13 @@ namespace std {
       while (__x->_M_left != 0)
         __x = __x->_M_left;
       return __x;
-    } static _Base_ptr _S_maximum(_Base_ptr __x) {
+    }
+    static _Base_ptr _S_maximum(_Base_ptr __x) {
       while (__x->_M_right != 0)
         __x = __x->_M_right;
       return __x;
-  }};
+    }
+  };
 
   template < typename _Val > struct _Rb_tree_node:public _Rb_tree_node_base {
     typedef _Rb_tree_node < _Val > *_Link_type;
@@ -128,7 +130,8 @@ namespace std {
           _M_node = _M_node->_M_right;
           while (_M_node->_M_left != 0)
             _M_node = _M_node->_M_left;
-          } else {
+        }
+        else {
           _Base_ptr __y = _M_node->_M_parent;
           while (_M_node == __y->_M_right)
             {
@@ -137,7 +140,7 @@ namespace std {
             }
           if (_M_node->_M_right != __y)
             _M_node = __y;
-          }
+        }
     }
 
     void
@@ -150,7 +153,8 @@ namespace std {
           while (__y->_M_right != 0)
             __y = __y->_M_right;
           _M_node = __y;
-        } else
+        }
+      else
         {
           _Base_ptr __y = _M_node->_M_parent;
           while (_M_node == __y->_M_left)
@@ -183,9 +187,11 @@ namespace std {
 
     reference operator*() const {
       return _Link_type(_M_node)->_M_value_field;
-    } pointer operator->() const {
+    }
+    pointer operator->() const {
       return &(operator*());
-    } _Self & operator++() {
+    }
+    _Self & operator++() {
       _M_increment();
       return *this;
     }
@@ -269,7 +275,7 @@ namespace std {
       __root = __y;
     else if (__x == __x->_M_parent->_M_left)
       __x->_M_parent->_M_left = __y;
-      else
+    else
       __x->_M_parent->_M_right = __y;
     __y->_M_left = __x;
     __x->_M_parent = __y;
@@ -287,7 +293,7 @@ namespace std {
       __root = __y;
     else if (__x == __x->_M_parent->_M_right)
       __x->_M_parent->_M_right = __y;
-      else
+    else
       __x->_M_parent->_M_left = __y;
     __y->_M_right = __x;
     __x->_M_parent = __y;
@@ -307,7 +313,8 @@ namespace std {
                 __y->_M_color = _M_black;
                 __x->_M_parent->_M_parent->_M_color = _M_red;
                 __x = __x->_M_parent->_M_parent;
-              } else
+              }
+            else
               {
                 if (__x == __x->_M_parent->_M_right)
                   {
@@ -318,7 +325,8 @@ namespace std {
                 __x->_M_parent->_M_parent->_M_color = _M_red;
                 _Rb_tree_rotate_right(__x->_M_parent->_M_parent, __root);
               }
-          } else
+          }
+        else
           {
             _Rb_tree_node_base *__y = __x->_M_parent->_M_parent->_M_left;
             if (__y && __y->_M_color == _M_red)
@@ -327,7 +335,8 @@ namespace std {
                 __y->_M_color = _M_black;
                 __x->_M_parent->_M_parent->_M_color = _M_red;
                 __x = __x->_M_parent->_M_parent;
-              } else
+              }
+            else
               {
                 if (__x == __x->_M_parent->_M_left)
                   {
@@ -356,7 +365,7 @@ namespace std {
       __x = __y->_M_right;      // __x might be null.
     else if (__y->_M_right == 0)        // __z has exactly one non-null child. y == z.
       __x = __y->_M_left;       // __x is not null.
-      else
+    else
       {
         // __z has two non-null children.  Set __y to
         __y = __y->_M_right;    //   __z's successor.  __x might be null.
@@ -377,19 +386,21 @@ namespace std {
             __y->_M_parent->_M_left = __x;      // __y must be a child of _M_left
             __y->_M_right = __z->_M_right;
             __z->_M_right->_M_parent = __y;
-          } else
+          }
+        else
           __x_parent = __y;
         if (__root == __z)
           __root = __y;
         else if (__z->_M_parent->_M_left == __z)
           __z->_M_parent->_M_left = __y;
-          else
+        else
           __z->_M_parent->_M_right = __y;
         __y->_M_parent = __z->_M_parent;
         std::swap(__y->_M_color, __z->_M_color);
         __y = __z;
         // __y now points to node to be actually deleted
-      } else
+      }
+    else
       {                         // __y == __z
         __x_parent = __y->_M_parent;
         if (__x)
@@ -398,19 +409,19 @@ namespace std {
           __root = __x;
         else if (__z->_M_parent->_M_left == __z)
           __z->_M_parent->_M_left = __x;
-          else
+        else
           __z->_M_parent->_M_right = __x;
         if (__leftmost == __z)
           if (__z->_M_right == 0)       // __z->_M_left must be null also
             __leftmost = __z->_M_parent;
         // makes __leftmost == _M_header if __z == __root
-            else
+          else
             __leftmost = _Rb_tree_node_base::_S_minimum(__x);
         if (__rightmost == __z)
           if (__z->_M_left == 0)        // __z->_M_right must be null also
             __rightmost = __z->_M_parent;
         // makes __rightmost == _M_header if __z == __root
-            else                // __x == __z->_M_left
+          else                  // __x == __z->_M_left
             __rightmost = _Rb_tree_node_base::_S_maximum(__x);
       }
     if (__y->_M_color != _M_red)
@@ -433,7 +444,8 @@ namespace std {
                   __w->_M_color = _M_red;
                   __x = __x_parent;
                   __x_parent = __x_parent->_M_parent;
-                } else
+                }
+              else
                 {
                   if (__w->_M_right == 0 || __w->_M_right->_M_color == _M_black)
                     {
@@ -450,7 +462,8 @@ namespace std {
                   _Rb_tree_rotate_left(__x_parent, __root);
                   break;
                 }
-            } else
+            }
+          else
             {
               // same as above, with _M_right <-> _M_left.
               _Rb_tree_node_base *__w = __x_parent->_M_left;
@@ -468,7 +481,8 @@ namespace std {
                   __w->_M_color = _M_red;
                   __x = __x_parent;
                   __x_parent = __x_parent->_M_parent;
-                } else
+                }
+              else
                 {
                   if (__w->_M_left == 0 || __w->_M_left->_M_color == _M_black)
                     {
@@ -506,7 +520,8 @@ namespace std {
 
     allocator_type get_allocator() const {
       return _M_node_allocator;
-    } _Rb_tree_alloc_base(const allocator_type & __a):_M_node_allocator(__a), _M_header(0) {
+    }
+    _Rb_tree_alloc_base(const allocator_type & __a):_M_node_allocator(__a), _M_header(0) {
     }
 
  protected:
@@ -534,7 +549,8 @@ namespace std {
     typedef typename _Alloc_traits < _Tp, _Alloc >::allocator_type allocator_type;
     allocator_type get_allocator() const {
       return allocator_type();
-    } _Rb_tree_alloc_base(const allocator_type &):_M_header(0) {
+    }
+    _Rb_tree_alloc_base(const allocator_type &):_M_header(0) {
     }
 
  protected:
@@ -592,7 +608,8 @@ namespace std {
     typedef typename _Base::allocator_type allocator_type;
     allocator_type get_allocator() const {
       return _Base::get_allocator();
- } protected:
+    }
+ protected:
      using _Base::_M_get_node;
     using _Base::_M_put_node;
     using _Base::_M_header;
@@ -630,11 +647,14 @@ namespace std {
 
     _Link_type & _M_root()const {
       return (_Link_type &) _M_header->_M_parent;
-    } _Link_type & _M_leftmost() const {
+    }
+    _Link_type & _M_leftmost() const {
       return (_Link_type &) _M_header->_M_left;
-    } _Link_type & _M_rightmost() const {
+    }
+    _Link_type & _M_rightmost() const {
       return (_Link_type &) _M_header->_M_right;
-    } static _Link_type & _S_left(_Link_type __x) {
+    }
+    static _Link_type & _S_left(_Link_type __x) {
       return (_Link_type &) (__x->_M_left);
     }
 
@@ -728,7 +748,7 @@ namespace std {
         _M_key_compare(__x._M_key_compare) {
       if (__x._M_root() == 0)
         _M_empty_initialize();
-        else
+      else
         {
           _S_color(_M_header) = _M_red;
           _M_root() = _M_copy(__x._M_root(), _M_header);
@@ -760,37 +780,45 @@ namespace std {
     // Accessors.
     _Compare key_comp()const {
       return _M_key_compare;
-    } iterator begin() {
+    }
+    iterator begin() {
       return _M_leftmost();
     }
 
     const_iterator begin() const {
       return _M_leftmost();
-    } iterator end() {
+    }
+    iterator end() {
       return _M_header;
     }
 
     const_iterator end() const {
       return _M_header;
-    } reverse_iterator rbegin() {
+    }
+    reverse_iterator rbegin() {
       return reverse_iterator(end());
     }
 
     const_reverse_iterator rbegin() const {
       return const_reverse_iterator(end());
-    } reverse_iterator rend() {
+    }
+    reverse_iterator rend() {
       return reverse_iterator(begin());
     }
 
     const_reverse_iterator rend() const {
       return const_reverse_iterator(begin());
-    } bool empty() const {
+    }
+    bool empty() const {
       return _M_node_count == 0;
-    } size_type size() const {
+    }
+    size_type size() const {
       return _M_node_count;
-    } size_type max_size() const {
+    }
+    size_type max_size() const {
       return size_type(-1);
-    } void
+    }
+    void
      swap(_Rb_tree < _Key, _Val, _KeyOfValue, _Compare, _Alloc > &__t) {
       std::swap(_M_header, __t._M_header);
       std::swap(_M_node_count, __t._M_node_count);
@@ -934,7 +962,8 @@ namespace std {
             _M_root() = 0;
             _M_leftmost() = _M_header;
             _M_rightmost() = _M_header;
-          } else
+          }
+        else
           {
             _M_root() = _M_copy(__x._M_root(), _M_header);
             _M_leftmost() = _S_minimum(_M_root());
@@ -965,9 +994,11 @@ namespace std {
           {
             _M_root() = __z;
             _M_rightmost() = __z;
-        } else if (__y == _M_leftmost())
+          }
+        else if (__y == _M_leftmost())
           _M_leftmost() = __z;  // maintain _M_leftmost() pointing to min node
-      } else
+      }
+    else
       {
         __z = _M_create_node(__v);
         _S_right(__y) = __z;
@@ -1020,7 +1051,7 @@ namespace std {
     if (__comp)
       if (__j == begin())
         return pair < iterator, bool > (_M_insert(__x, __y, __v), true);
-        else
+      else
         --__j;
     if (_M_key_compare(_S_key(__j._M_node), _KeyOfValue()(__v)))
       return pair < iterator, bool > (_M_insert(__x, __y, __v), true);
@@ -1039,16 +1070,18 @@ namespace std {
         if (size() > 0 && _M_key_compare(_KeyOfValue()(__v), _S_key(__position._M_node)))
           return _M_insert(__position._M_node, __position._M_node, __v);
         // first argument just needs to be non-null 
-          else
+        else
           return insert_unique(__v).first;
-    } else if (__position._M_node == _M_header)
+      }
+    else if (__position._M_node == _M_header)
       {
         // end()
         if (_M_key_compare(_S_key(_M_rightmost()), _KeyOfValue()(__v)))
           return _M_insert(0, _M_rightmost(), __v);
-          else
+        else
           return insert_unique(__v).first;
-      } else
+      }
+    else
       {
         iterator __before = __position;
         --__before;
@@ -1057,10 +1090,11 @@ namespace std {
           {
             if (_S_right(__before._M_node) == 0)
               return _M_insert(0, __before._M_node, __v);
-              else
+            else
               return _M_insert(__position._M_node, __position._M_node, __v);
             // first argument just needs to be non-null 
-          } else
+          }
+        else
           return insert_unique(__v).first;
       }
   }
@@ -1077,16 +1111,18 @@ namespace std {
         if (size() > 0 && !_M_key_compare(_S_key(__position._M_node), _KeyOfValue()(__v)))
           return _M_insert(__position._M_node, __position._M_node, __v);
         // first argument just needs to be non-null 
-          else
+        else
           return insert_equal(__v);
-    } else if (__position._M_node == _M_header)
+      }
+    else if (__position._M_node == _M_header)
       {
         // end()
         if (!_M_key_compare(_KeyOfValue()(__v), _S_key(_M_rightmost())))
           return _M_insert(0, _M_rightmost(), __v);
-          else
+        else
           return insert_equal(__v);
-      } else
+      }
+    else
       {
         iterator __before = __position;
         --__before;
@@ -1095,10 +1131,11 @@ namespace std {
           {
             if (_S_right(__before._M_node) == 0)
               return _M_insert(0, __before._M_node, __v);
-              else
+            else
               return _M_insert(__position._M_node, __position._M_node, __v);
             // first argument just needs to be non-null 
-          } else
+          }
+        else
           return insert_equal(__v);
       }
   }
@@ -1193,7 +1230,7 @@ namespace std {
       erase(iterator __first, iterator __last) {
     if (__first == begin() && __last == end())
       clear();
-      else
+    else
       while (__first != __last)
         erase(__first++);
   }
@@ -1216,7 +1253,7 @@ namespace std {
     while (__x != 0)
       if (!_M_key_compare(_S_key(__x), __k))
         __y = __x, __x = _S_left(__x);
-        else
+      else
         __x = _S_right(__x);
 
     iterator __j = iterator(__y);
@@ -1235,9 +1272,10 @@ namespace std {
       {
         if (!_M_key_compare(_S_key(__x), __k))
           __y = __x, __x = _S_left(__x);
-          else
+        else
           __x = _S_right(__x);
-      } const_iterator __j = const_iterator(__y);
+      }
+    const_iterator __j = const_iterator(__y);
     return (__j == end() || _M_key_compare(__k, _S_key(__j._M_node))) ? end() : __j;
   }
 
@@ -1249,7 +1287,8 @@ namespace std {
     pair < const_iterator, const_iterator > __p = equal_range(__k);
     size_type __n = distance(__p.first, __p.second);
      return __n;
-  } template < typename _Key, typename _Val, typename _KeyOfValue,
+  }
+  template < typename _Key, typename _Val, typename _KeyOfValue,
       typename _Compare, typename _Alloc >
       typename _Rb_tree < _Key, _Val, _KeyOfValue, _Compare, _Alloc >::iterator
       _Rb_tree < _Key, _Val, _KeyOfValue, _Compare,
@@ -1260,7 +1299,7 @@ namespace std {
     while (__x != 0)
       if (!_M_key_compare(_S_key(__x), __k))
         __y = __x, __x = _S_left(__x);
-        else
+      else
         __x = _S_right(__x);
 
     return iterator(__y);
@@ -1277,11 +1316,12 @@ namespace std {
     while (__x != 0)
       if (!_M_key_compare(_S_key(__x), __k))
          __y = __x, __x = _S_left(__x);
-        else
+      else
          __x = _S_right(__x);
 
      return const_iterator(__y);
-  } template < typename _Key, typename _Val, typename _KeyOfValue,
+  }
+  template < typename _Key, typename _Val, typename _KeyOfValue,
       typename _Compare, typename _Alloc >
       typename _Rb_tree < _Key, _Val, _KeyOfValue, _Compare, _Alloc >::iterator
       _Rb_tree < _Key, _Val, _KeyOfValue, _Compare,
@@ -1292,7 +1332,7 @@ namespace std {
     while (__x != 0)
       if (_M_key_compare(__k, _S_key(__x)))
         __y = __x, __x = _S_left(__x);
-        else
+      else
         __x = _S_right(__x);
 
     return iterator(__y);
@@ -1309,11 +1349,12 @@ namespace std {
     while (__x != 0)
       if (_M_key_compare(__k, _S_key(__x)))
          __y = __x, __x = _S_left(__x);
-        else
+      else
          __x = _S_right(__x);
 
      return const_iterator(__y);
-  } template < typename _Key, typename _Val, typename _KeyOfValue,
+  }
+  template < typename _Key, typename _Val, typename _KeyOfValue,
       typename _Compare, typename _Alloc >
       inline
       pair < typename _Rb_tree < _Key, _Val, _KeyOfValue, _Compare, _Alloc >::iterator,
@@ -1331,7 +1372,8 @@ namespace std {
       _Rb_tree < _Key, _Val, _KoV, _Compare, _Alloc >::equal_range(const _Key & __k)const
   {
     return pair < const_iterator, const_iterator > (lower_bound(__k), upper_bound(__k));
-  } inline int
+  }
+  inline int
    __black_count(_Rb_tree_node_base * __node, _Rb_tree_node_base * __root) {
     if (__node == 0)
       return 0;
@@ -1373,7 +1415,8 @@ namespace std {
 
         if (!__L && !__R && __black_count(__x, _M_root()) != __len)
            return false;
-    } if (_M_leftmost() != _Rb_tree_node_base::_S_minimum(_M_root()))
+      }
+    if (_M_leftmost() != _Rb_tree_node_base::_S_minimum(_M_root()))
        return false;
     if (_M_rightmost() != _Rb_tree_node_base::_S_maximum(_M_root()))
       return false;

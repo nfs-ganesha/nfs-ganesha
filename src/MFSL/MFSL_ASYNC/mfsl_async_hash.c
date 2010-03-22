@@ -208,11 +208,11 @@ int mfsl_async_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
   /* Test if one of teh entries are NULL */
   if (buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
-    else
+  else
     {
       if (buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
-        else
+      else
         {
           int rc;
           mobject1 = (mfsl_object_t *) (buff1->pdata);
@@ -294,7 +294,8 @@ int mfsl_async_get_specdata(mfsl_object_t * key, mfsl_object_specific_data_t ** 
     {
       *ppvalue = (mfsl_object_specific_data_t *) (buffval.pdata);
       status = 1;
-    } else
+    }
+  else
     {
       status = 0;
     }
@@ -318,7 +319,8 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
       status = 1;
         /** @todo release previously allocated specdata */
       // Mem_Free( old_key.pdata ) ;
-    } else
+    }
+  else
     {
       status = 0;
     }
@@ -346,7 +348,7 @@ int mfsl_async_is_object_asynchronous(mfsl_object_t * object)
   rc = HashTable_Get(mfsl_ht, &buffkey, &buffval);
   if (rc == HASHTABLE_SUCCESS)
     status = 1;
-    else
+  else
     status = 0;
 
   return status;

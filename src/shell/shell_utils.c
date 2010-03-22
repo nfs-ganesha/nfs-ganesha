@@ -232,7 +232,8 @@ int util_timer(int argc,        /* IN : number of args in argv */
           timer_tmp = time_diff(timer_start, timer_tmp);
           print_timeval(output, timer_tmp);
 
-        } else
+        }
+      else
         {
 
           struct timeval timer_tmp;
@@ -451,7 +452,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
   else if (!strcmp(argv[0], "cmp"))
     value_if_equal = FALSE;
   /* unexpected !!! */
-    else
+  else
     exit(1);
 
   /* disables Getopt error message */
@@ -469,7 +470,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
             fprintf(output,
                     "%s: warning: option 'h' has been specified more than once.\n",
                     argv[0]);
-            else
+          else
             flag_h++;
           break;
 
@@ -478,7 +479,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
             fprintf(output,
                     "%s: warning: option 'i' has been specified more than once.\n",
                     argv[0]);
-            else
+          else
             flag_i++;
           break;
 
@@ -487,7 +488,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
             fprintf(output,
                     "%s: warning: option 'n' has been specified more than once.\n",
                     argv[0]);
-            else
+          else
             flag_n++;
           break;
 
@@ -496,7 +497,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
             fprintf(output,
                     "%s: warning: option 'v' has been specified more than once.\n",
                     argv[0]);
-            else
+          else
             flag_v++;
           break;
 
@@ -526,7 +527,8 @@ int util_cmp(int argc,          /* IN : number of args in argv */
     {
       /* too much or not enough arguments */
       err_flag++;
-    } else
+    }
+  else
     {
       str1 = argv[Optind];
       str2 = argv[Optind + 1];
@@ -543,17 +545,19 @@ int util_cmp(int argc,          /* IN : number of args in argv */
     {
       /* normal comparison */
       rc = strcmp(str1, str2);
-  } else if (flag_i)
+    }
+  else if (flag_i)
     {
       /* case insensitive comparison */
       rc = strcasecmp(str1, str2);
-  } else if (flag_n)
+    }
+  else if (flag_n)
     {
       int a, b;
 
       if (str1[0] == '-')
         a = my_atoi(str1 + 1);
-        else
+      else
         a = my_atoi(str1);
 
       if (a < 0)
@@ -567,7 +571,7 @@ int util_cmp(int argc,          /* IN : number of args in argv */
 
       if (str2[0] == '-')
         b = my_atoi(str2 + 1);
-        else
+      else
         b = my_atoi(str2);
 
       if (b < 0)
@@ -591,7 +595,8 @@ int util_cmp(int argc,          /* IN : number of args in argv */
         fprintf(output, "arg1 = arg2\n");
 
       return value_if_equal;
-    } else
+    }
+  else
     {
       if (flag_v)
         fprintf(output, "arg1 <> arg2\n");
@@ -662,12 +667,14 @@ static void diff(FILE * output, char *str1, char *str2)
 
           putc('\n', output);
 
-      } else if (*char1 == '\n')
+        }
+      else if (*char1 == '\n')
         {
           /* end of line */
           str_line1 = char1 + 1;
           str_line2 = char2 + 1;
-        } else
+        }
+      else
         {
           /* end of file */
           break;
@@ -774,7 +781,8 @@ int util_chomp(int argc,        /* IN : number of args in argv */
 
       Mem_Free(out);
 
-    } else
+    }
+  else
     {
       fprintf(output, "%s", in);
     }

@@ -40,7 +40,8 @@ int main(int argc, char **argv)
   if ((argc > 1) && (argv[1]))
     {
       fichier = argv[1];
-    } else
+    }
+  else
     {
       fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
       exit(EINVAL);
@@ -53,7 +54,8 @@ int main(int argc, char **argv)
       errtxt = config_GetErrorMsg();
       fprintf(stderr, "Erreur de parsing de %s : %s\n", argv[1], errtxt);
       exit(EINVAL);
-    } else
+    }
+  else
     {
       fprintf(stderr, "La syntaxe du fichier %s est correcte !\n", argv[1]);
       exit(0);

@@ -209,7 +209,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       if (cache_status == CACHE_INODE_NOT_FOUND)
         res_CLOSE4.status = NFS4ERR_BAD_STATEID;
-        else
+      else
         res_CLOSE4.status = NFS4ERR_INVAL;
 
       return res_CLOSE4.status;

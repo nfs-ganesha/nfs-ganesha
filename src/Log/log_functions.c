@@ -597,8 +597,8 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
 
               return SUCCES;
 #ifdef _LOCK_LOG
-            } /* if fcntl */
-            else
+            }                   /* if fcntl */
+          else
             {
               /* Si la prise du verrou a fait un probleme */
               my_status = errno;
@@ -606,8 +606,8 @@ static int DisplayLogPath_valist(char *path, char *format, va_list arguments)
             }
 #endif
           close(fd);
-        } /* if open */
-        else
+        }                       /* if open */
+      else
         {
           /* Si l'ouverture du fichier s'est mal passee */
           my_status = errno;
@@ -669,7 +669,8 @@ int DisplayLogStringLevel(char *tampon, int level, char *format, ...)
   if (level <= niveau_debug)
     {
       rc = DisplayLogString_valist(tampon, format, arguments);
-    } else
+    }
+  else
     rc = SUCCES;
 
   va_end(arguments);
@@ -687,7 +688,7 @@ int DisplayLogFluxLevel(FILE * flux, int level, char *format, ...)
 
   if (level <= niveau_debug)
     rc = DisplayLogFlux_valist(flux, format, arguments);
-    else
+  else
     rc = SUCCES;
 
   va_end(arguments);
@@ -705,7 +706,7 @@ int DisplayLogFdLevel(int fd, int level, char *format, ...)
 
   if (level <= niveau_debug)
     rc = DisplayLogFd_valist(fd, format, arguments);
-    else
+  else
     rc = SUCCES;
 
   va_end(arguments);
@@ -723,7 +724,7 @@ int DisplayLogLevel(int level, char *format, ...)
 
   if (level <= niveau_debug)
     rc = DisplayLog_valist(format, arguments);
-    else
+  else
     rc = SUCCES;
 
   va_end(arguments);
@@ -741,7 +742,7 @@ int DisplayLogPathLevel(char *path, int level, char *format, ...)
 
   if (level <= niveau_debug)
     rc = DisplayLogPath_valist(path, format, arguments);
-    else
+  else
     rc = SUCCES;
 
   va_end(arguments);
@@ -870,7 +871,8 @@ static int FaireLogError(char *buffer, int num_family, int num_error, int status
     {
       return sprintf(buffer, "Error %s : %s : status %d : Line %d",
                      the_error.label, the_error.msg, status, ma_ligne);
-    } else
+    }
+  else
     {
       return sprintf(buffer, "Error %s : %s : status %d : %s : Line %d",
                      the_error.label, the_error.msg, status, strerror(status), ma_ligne);
@@ -940,7 +942,8 @@ int AddLogStreamJd(log_t * pjd, type_log_stream_t type, desc_log_stream_t desc_v
     {
       pjd->liste_voies = nouvelle_voie;
       pjd->fin_liste_voies = nouvelle_voie;
-    } else
+    }
+  else
     {
       pjd->fin_liste_voies->suivante = nouvelle_voie;
       pjd->fin_liste_voies = nouvelle_voie;
@@ -1165,7 +1168,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
       if (*iterformat == '\0')
         break;
-        else
+      else
         endofstr = iterformat;
 
       /* Je vire le premier caractere (qui est forcement un '%') */
@@ -1245,8 +1248,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                 {
                   ONE_STEP;
                 }
-            } /* if( *iterformat == '*' ) */
-            else
+            }                   /* if( *iterformat == '*' ) */
+          else
             {
               if (isdigit(*iterformat))
                 {
@@ -1255,8 +1258,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                     {
                       ONE_STEP;
                     }
-                } /*  if( isdigit( *iterformat ) */
-                else
+                }               /*  if( isdigit( *iterformat ) */
+              else
                 {
                   /* Le cas %.? est traite comme %.0? */
                   ONE_STEP;
@@ -1547,8 +1550,8 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 
               break;
             }
-        } /* if( type != EXTENDED_TYPE ) */
-        else
+        }                       /* if( type != EXTENDED_TYPE ) */
+      else
         {
           /* Cette macro (un peu crade), extrait une family_error_t des arguments variables */
 #define VA_ARG_ERREUR_T numero = va_arg( arguments, long ) ; label  = va_arg( arguments, char * ) ; msg    = va_arg( arguments, char *)

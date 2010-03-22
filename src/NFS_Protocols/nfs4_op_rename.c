@@ -384,9 +384,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if (((tst_entry_src->internal_md.type == DIR_BEGINNING)
        || (tst_entry_src->internal_md.type == DIR_CONTINUE)) && ((tst_entry_dst != NULL)
                                                                  &&
-                                                                 (tst_entry_dst->
-                                                                  internal_md.type ==
-                                                                  REGULAR_FILE)))
+                                                                 (tst_entry_dst->internal_md.
+                                                                  type == REGULAR_FILE)))
     {
       res_RENAME4.status = NFS4ERR_EXIST;
       return res_RENAME4.status;
@@ -465,12 +464,14 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
           res_RENAME4.status = NFS4_OK;
           return NFS4_OK;
-        } else
+        }
+      else
         {
           res_RENAME4.status = NFS4ERR_EXIST;
           return NFS4ERR_EXIST;
         }
-    } else
+    }
+  else
     {
       /* New entry does not already exist, call cache_entry_rename */
       if (cache_inode_rename(src_entry,

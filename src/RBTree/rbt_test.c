@@ -91,7 +91,8 @@ main(int argc, char **argv)
             {
               qn = node_free;
               node_free = node_free->next;
-            } else
+            }
+          else
             {
               qn = (struct rbt_node *)malloc(RBT_NUM * sizeof(struct rbt_node));
               if (qn)
@@ -103,7 +104,8 @@ main(int argc, char **argv)
                       pn->next = pn + 1;
                     }
                   pn->next = (struct rbt_node *)NULL;
-                } else
+                }
+              else
                 {
                   fprintf(stderr, "erreur d'allocation d'un node\n");
                   ok = 0;

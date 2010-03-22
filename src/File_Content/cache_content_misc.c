@@ -253,7 +253,7 @@ int cache_content_get_export_id(char *dirname)
 
   if (sscanf(dirname, "export_id=%d", &exportid) == 0)
     return -1;
-    else
+  else
     return exportid;
 }                               /* cache_content_get_export_id */
 
@@ -286,7 +286,7 @@ u_int64_t cache_content_get_inum(char *filename)
 
   if (sscanf(bname, "node=%llx.index", &inum) == 0)
     return 0;
-    else
+  else
     return (u_int64_t) inum;
 }                               /* cache_content_get_inum */
 
@@ -462,7 +462,7 @@ off_t cache_content_fsal_seek_convert(fsal_seek_t seek, cache_content_status_t *
 
   if (seek.whence != FSAL_SEEK_SET)
     *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
-    else
+  else
     {
       *pstatus = CACHE_CONTENT_SUCCESS;
       offset = (off_t) seek.offset;
@@ -677,7 +677,8 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
       *p_bool_overflow = FALSE;
       *p_blocks_to_lwm = 0;
       DisplayLogLevel(NIV_EVENT, "Datacache: no purge needed");
-    } else
+    }
+  else
     {
       *p_bool_overflow = TRUE;
       *p_blocks_to_lwm = dispo_lw - info_fs.f_bavail;
@@ -718,7 +719,8 @@ int cache_content_local_cache_opendir(char *cache_dir,
     {
       cache_content_dir_errno = errno;
       return FALSE;
-    } else
+    }
+  else
     {
       cache_content_dir_errno = 0;
       strncpy(pdirectory->level0_path, cache_dir, MAXPATHLEN);
@@ -842,14 +844,16 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
                        directory->level1_name, directory->level2_name, d_name_save);
 
               return TRUE;
-            } else
+            }
+          else
             {
               /* test if it is an error or an end of dir */
               if (errno != 0)
                 {
                   cache_content_dir_errno = errno;
                   return TRUE;
-                } else
+                }
+              else
                 {
                   /* the lowest level entry dir is finished,
                    * must proceed a readdir on the topper level
@@ -869,7 +873,8 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
               rc_readdir =
                   readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
               directory->level1_cnt += 1;
-            } else
+            }
+          else
             {
               rc_readdir =
                   readdir_r(directory->level1_dir, pdir_entry, &(directory->cookie1));
@@ -907,14 +912,16 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
                   cache_content_dir_errno = errno;
                   return FALSE;
                 }
-            } else
+            }
+          else
             {
               /* test if it is an error or an end of dir */
               if (errno != 0)
                 {
                   cache_content_dir_errno = errno;
                   return TRUE;
-                } else
+                }
+              else
                 {
                   /* the lowest level entry dir is finished,
                    * must proceed a readdir on the topper level
@@ -952,14 +959,16 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
                   cache_content_dir_errno = errno;
                   return TRUE;
                 }
-            } else
+            }
+          else
             {
               /* test if it is an error or an end of dir */
               if (errno != 0)
                 {
                   cache_content_dir_errno = errno;
                   return TRUE;
-                } else
+                }
+              else
                 {
                   /* we are at the end of the level directory
                    * return End of Dir
@@ -968,7 +977,8 @@ int cache_content_local_cache_dir_iter(cache_content_dirinfo_t * directory,
                   return FALSE;
                 }
             }
-        } else
+        }
+      else
         {
           /* invalid base directory descriptor */
           cache_content_dir_errno = EINVAL;

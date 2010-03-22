@@ -180,7 +180,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
       io_direction = CACHE_CONTENT_READ;
       openflags = FSAL_O_RDONLY;
       pclient->stat.func_stats.nb_call[CACHE_INODE_READ_DATA] += 1;
-    } else
+    }
+  else
     {
       statindex = CACHE_INODE_WRITE_DATA;
       io_direction = CACHE_CONTENT_WRITE;
@@ -244,7 +245,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                 "Read/Write Operation through cache failed with status %d (renew process failed)",
                                 cache_content_status);
 
-            } else
+            }
+          else
             {
               /* Entry was successfully renewed */
               DisplayLog("----> File Content Entry %p was successfully renewed", pentry);
@@ -296,7 +298,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
       pentry->object.file.attributes.filesize = buffstat.st_size;
       pentry->object.file.attributes.spaceused = buffstat.st_blksize * buffstat.st_blocks;
 
-    } else
+    }
+  else
     {
       /* No data cache entry, we operated directly on FSAL */
       pentry->object.file.attributes.asked_attributes = pclient->attrmask;
@@ -339,7 +342,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if (fsal_status.major == ERR_FSAL_DELAY)
             printf("--------------------------> EBUSY \n");
-            else
+          else
             printf("----> rdwr: fsal_status.major =%d\n", fsal_status.major);
 
           FSAL_close(&(pentry->object.file.open_fd.fd));
@@ -371,7 +374,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           /* if failed, the next block will handle the error */
           if (FSAL_IS_ERROR(fsal_status_getattr))
             fsal_status = fsal_status_getattr;
-            else
+          else
             {
               /* Update Cache Inode attributes */
               pentry->object.file.attributes.filesize = post_write_attr.filesize;
@@ -431,15 +434,16 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
       if (*pstatus != CACHE_INODE_SUCCESS)
         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READ] += 1;
-        else
+      else
         pclient->stat.func_stats.nb_success[CACHE_INODE_READ] += 1;
-    } else
+    }
+  else
     {
       *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
 
       if (*pstatus != CACHE_INODE_SUCCESS)
         pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_WRITE] += 1;
-        else
+      else
         pclient->stat.func_stats.nb_success[CACHE_INODE_WRITE] += 1;
     }
   return *pstatus;

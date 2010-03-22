@@ -370,7 +370,8 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
     {
       printf("Un fh expirable a ete cree\n");
       file_handle.srvboot_time = ServerBootTime;
-    } else
+    }
+  else
     {
       /* Non expirable FH */
       file_handle.srvboot_time = 0;

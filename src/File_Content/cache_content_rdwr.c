@@ -166,7 +166,7 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
         {
           if (errno == ENOENT)
             *pstatus = CACHE_CONTENT_LOCAL_CACHE_NOT_FOUND;
-            else
+          else
             *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
           return *pstatus;
@@ -392,13 +392,13 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
       /* Get the eof */
       if (iosize_after == 0)
         *p_fsal_eof = TRUE;
-        else
+      else
         {
           rc = pread(pentry->local_fs_entry.opened_file.local_fd, &c, 1,
                      offset + iosize_before);
           if (rc == 0)
             *p_fsal_eof = TRUE;
-            else
+          else
             *p_fsal_eof = FALSE;
         }
       break;
@@ -439,7 +439,8 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
   if (stat(pentry->local_fs_entry.cache_path_data, &buffstat) == -1)
     {
       *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
-    } else
+    }
+  else
     {
       if (pbuffstat != NULL)
         *pbuffstat = buffstat;

@@ -315,7 +315,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         {
           res_CREATE4.status = NFS4ERR_INVAL;
           return res_CREATE4.status;
-        } else
+        }
+      else
         {
           if (utf82str
               (create_arg.link_content.path,

@@ -147,7 +147,8 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_CONTENT_CLIENT ) ; */
       return CACHE_CONTENT_NOT_FOUND;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return CACHE_CONTENT_INVALID_ARGUMENT;
@@ -173,19 +174,24 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
       if (!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))    /** @todo: BUGAZOMEU: to be removed */
         {
           //pparam->lru_param.nb_entry_prealloc = atoi( key_value ) ;
-      } else if (!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))   /** @todo: BUGAZOMEU: to be removed */
+        }
+      else if (!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))     /** @todo: BUGAZOMEU: to be removed */
         {
           //pparam->lru_param.nb_call_gc_invalid = atoi( key_value ) ;
-      } else if (!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))   /** @todo: BUGAZOMEU: to be removed */
+        }
+      else if (!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))     /** @todo: BUGAZOMEU: to be removed */
         {
           pparam->nb_prealloc_entry = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Cache_Directory"))
+        }
+      else if (!strcasecmp(key_name, "Cache_Directory"))
         {
           strcpy(pparam->cache_dir, key_value);
-      } else if (!strcasecmp(key_name, "Refresh_FSAL_Force"))
+        }
+      else if (!strcasecmp(key_name, "Refresh_FSAL_Force"))
         {
           pparam->flush_force_fsal = atoi(key_value);
-      } else if (!strcasecmp(key_name, "DebugLevel"))
+        }
+      else if (!strcasecmp(key_name, "DebugLevel"))
         {
           DebugLevel = ReturnLevelAscii(key_value);
 
@@ -196,19 +202,24 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
                    key_value);
               return CACHE_CONTENT_INVALID_ARGUMENT;
             }
-      } else if (!strcasecmp(key_name, "LogFile"))
+        }
+      else if (!strcasecmp(key_name, "LogFile"))
         {
           LogFile = key_value;
-      } else if (!strcasecmp(key_name, "Max_Fd"))
+        }
+      else if (!strcasecmp(key_name, "Max_Fd"))
         {
           pparam->max_fd_per_thread = atoi(key_value);
-      } else if (!strcasecmp(key_name, "OpenFile_Retention"))
+        }
+      else if (!strcasecmp(key_name, "OpenFile_Retention"))
         {
           pparam->retention = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Use_OpenClose_cache"))
+        }
+      else if (!strcasecmp(key_name, "Use_OpenClose_cache"))
         {
           pparam->use_cache = StrToBoolean(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",
@@ -220,7 +231,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
   fcc_debug_level = DebugLevel;
   if (LogFile)
     strncpy(fcc_log_path, LogFile, MAXPATHLEN);
-    else
+  else
     strncpy(fcc_log_path, "/dev/null", MAXPATHLEN);
 
   /* init logging */
@@ -234,7 +245,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
 
       if (DebugLevel == -1)
         AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, NIV_CRIT, SUP);
-        else
+      else
         AddLogStreamJd(&(pparam->log_outputs), V_FILE, log_stream, DebugLevel, SUP);
 
     }
@@ -297,7 +308,8 @@ cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config
     {
       /* fprintf(stderr, "Cannot read item \"%s\" from configuration file\n", CONF_LABEL_CACHE_CONTENT_GCPOL ) ; */
       return CACHE_CONTENT_NOT_FOUND;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return CACHE_CONTENT_INVALID_ARGUMENT;
@@ -323,25 +335,32 @@ cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config
       if (!strcasecmp(key_name, "Lifetime"))
         {
           ppolicy->lifetime = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Inactivity_Before_Flush"))
+        }
+      else if (!strcasecmp(key_name, "Inactivity_Before_Flush"))
         {
           ppolicy->inactivity_before_flush = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Runtime_Interval"))
+        }
+      else if (!strcasecmp(key_name, "Runtime_Interval"))
         {
           ppolicy->run_interval = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Nb_Call_Before_GC"))
+        }
+      else if (!strcasecmp(key_name, "Nb_Call_Before_GC"))
         {
           ppolicy->nb_call_before_gc = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Df_HighWater"))
+        }
+      else if (!strcasecmp(key_name, "Df_HighWater"))
         {
           ppolicy->hwmark_df = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Df_LowWater"))
+        }
+      else if (!strcasecmp(key_name, "Df_LowWater"))
         {
           ppolicy->lwmark_df = atoi(key_value);
-      } else if (!strcasecmp(key_name, "Emergency_Grace_Delay"))
+        }
+      else if (!strcasecmp(key_name, "Emergency_Grace_Delay"))
         {
           ppolicy->emergency_grace_delay = atoi(key_value);
-        } else
+        }
+      else
         {
           fprintf(stderr,
                   "Unknown or unsettable key: %s (item %s)\n",

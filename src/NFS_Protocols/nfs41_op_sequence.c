@@ -188,7 +188,8 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 
               res_SEQUENCE4.sr_status = NFS4_OK;
               return res_SEQUENCE4.sr_status;
-            } else
+            }
+          else
             {
               /* Illegal replay */
               res_SEQUENCE4.sr_status = NFS4ERR_RETRY_UNCACHED_REP;
@@ -219,7 +220,8 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
     {
       data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE;
-    } else
+    }
+  else
     {
       data->pcached_res = NULL;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = FALSE;

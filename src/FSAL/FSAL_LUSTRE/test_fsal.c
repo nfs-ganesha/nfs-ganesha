@@ -197,7 +197,8 @@ int main(int argc, char **argv)
     {
       DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
-    } else
+    }
+  else
     SetNameHost(localmachine);
 
   InitDebug(NIV_FULL_DEBUG);
@@ -337,7 +338,8 @@ int main(int argc, char **argv)
 
       printattributes(attribs);
 
-    } else
+    }
+  else
 /* TEST 2 */
   if (test[0] == '2')
     {
@@ -399,7 +401,8 @@ int main(int argc, char **argv)
       /* displaying attributes */
       printattributes(attribs);
 
-    } else
+    }
+  else
 /* TEST 3 */
   if (test[0] == '3')
     {
@@ -438,7 +441,8 @@ int main(int argc, char **argv)
       /* displaying attributes */
       printattributes(attribs);
 
-    } else
+    }
+  else
 /* TEST 4 */
   if (test[0] == '4')
     {
@@ -494,7 +498,8 @@ int main(int argc, char **argv)
         }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
-    } else
+    }
+  else
 /* TEST 5 */
   if (test[0] == '5')
     {
@@ -557,7 +562,8 @@ int main(int argc, char **argv)
         }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
-    } else
+    }
+  else
 /* TEST 6 */
   if (test[0] == '6')
     {
@@ -675,7 +681,8 @@ int main(int argc, char **argv)
         }
       printf("Fin de boucle : error=%d ; eod=%d\n", error, eod);
 
-    } else
+    }
+  else
 /* TEST 7 */
   if (test[0] == '7')
     {
@@ -723,20 +730,21 @@ int main(int argc, char **argv)
 
       if (size1 != size3)
         printf("***** ERROR: source size <> target size\n");
-        else
+      else
         printf("OK: source size = target size\n");
 
       if ((size1 * 2) != size2)
         printf("***** ERROR: hexa size <> 2 * source size\n");
-        else
+      else
         printf("OK: hexa size = 2 * source size\n");
 
       if (strcmp(test_string, string))
         printf("***** ERROR: source string <> target string\n");
-        else
+      else
         printf("OK: source string = target string\n");
 
-    } else
+    }
+  else
 /* TEST 8 */
   if (test[0] == '8')
     {
@@ -777,7 +785,8 @@ int main(int argc, char **argv)
                                         | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           snprintHandle(tracebuff, 256, &dir_hdl);
@@ -798,7 +807,8 @@ int main(int argc, char **argv)
                                         | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           printf("**** Error: FSAL should have returned ERR_FSAL_EXIST\n");
@@ -821,7 +831,8 @@ int main(int argc, char **argv)
                                         | FSAL_MODE_WGRP, &subdir_hdl, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           snprintHandle(tracebuff, 256, &subdir_hdl);
@@ -837,7 +848,8 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           printf("FSAL should not have unlinked %s because it is not empty\n", name.name);
@@ -852,7 +864,8 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st = FSAL_unlink(&dir_hdl, &subdir_name, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           printf("New attributes for parent directory:\n");
@@ -866,7 +879,8 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           printf("Unlink %s OK\n", name.name);
@@ -923,7 +937,8 @@ int main(int argc, char **argv)
                                          | FSAL_MODE_WGRP, &dir_hdl, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           snprintHandle(tracebuff, 256, &dir_hdl);
@@ -1008,14 +1023,16 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st = FSAL_unlink(&handle, &name, &op_ctx, &attribs)))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
 
           printf("Unlink %s OK\n", name.name);
 
         }
 
-  } else if (test[0] == 'A')
+    }
+  else if (test[0] == 'A')
     {
 
       char digest_buff[FSAL_DIGEST_SIZE_HDLV3];
@@ -1042,7 +1059,8 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
           /* print digest */
           snprintmem(tracebuff, 256, digest_buff, FSAL_DIGEST_SIZE_HDLV3);
@@ -1058,14 +1076,16 @@ int main(int argc, char **argv)
       if (FSAL_IS_ERROR(st))
         {
           DisplayErrorJd(log_desc, ERR_FSAL, st.major, st.minor);
-        } else
+        }
+      else
         {
           /* print expended handle */
           snprintHandle(tracebuff, 256, &handle);
           printf("/cea/prot/S/lama/s8/leibovic: handle expended = %s\n", tracebuff);
         }
 
-  } else if (test[0] == 'B')
+    }
+  else if (test[0] == 'B')
     {
 
       fsal_dynamicfsinfo_t dyninfo;
@@ -1085,7 +1105,8 @@ int main(int argc, char **argv)
       printf("time_delta = %u.%u\n", dyninfo.time_delta.seconds,
              dyninfo.time_delta.nseconds);
 
-    } else
+    }
+  else
     printf("%s : test inconnu\n", test);
 
   return 0;

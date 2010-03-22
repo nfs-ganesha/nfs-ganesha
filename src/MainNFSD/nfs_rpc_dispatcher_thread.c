@@ -928,7 +928,8 @@ int nfs_Init_svc()
           DisplayLog("NFS EXIT: Could not import principal name %s into GSSAPI",
                      nfs_param.krb5_param.principal);
           exit(1);
-        } else
+        }
+      else
         {
           DisplayLogLevel(NIV_EVENT, "Successfully imported principal %s into GSSAPI",
                           nfs_param.krb5_param.principal);
@@ -939,7 +940,8 @@ int nfs_Init_svc()
               DisplayLog("NFS EXIT: Cannot acquire credentials for principal %s",
                          nfs_param.krb5_param.principal);
               exit(1);
-            } else
+            }
+          else
             {
               DisplayLogLevel(NIV_EVENT,
                               "Principal %s is suitable for acquiring credentials",
@@ -971,7 +973,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V2 on UDP");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V3/UDP");
@@ -987,7 +990,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V3 on UDP");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 #endif                          /* _USE_PROXY */
 
@@ -1004,7 +1008,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V4 on UDP");
-    } else
+    }
+  else
     {
       nb_svc_nfs_ok += 1;
 #ifdef _USE_PROXY
@@ -1020,7 +1025,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V2 on UDPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V3/UDPv6");
@@ -1030,7 +1036,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V3 on UDPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V4/UDPv6");
@@ -1040,7 +1047,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V4 on UDPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
 #endif
@@ -1063,7 +1071,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V2 on TCP");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V3/TCP");
@@ -1079,7 +1088,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V3 on TCP");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 #endif                          /* _USE_PROXY */
 
@@ -1096,7 +1106,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V4 on TCP");
-    } else
+    }
+  else
     {
       nb_svc_nfs_ok += 1;
 #ifdef _USE_PROXY
@@ -1112,7 +1123,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V2 on TCPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V3/TCPv6");
@@ -1122,7 +1134,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V3 on TCPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering NFS V4/TCPv6");
@@ -1132,7 +1145,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NFS V4 on TCPv6");
-    } else
+    }
+  else
     nb_svc_nfs_ok += 1;
 
 #endif                          /* _USE_TIRPC_IPV6 */
@@ -1153,7 +1167,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V1 on UDP");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering MOUNT V3/UDP");
@@ -1169,7 +1184,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V3 on UDP");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 #endif                          /* _USE_PROXY */
 
@@ -1181,7 +1197,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V1 on UDPv6");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering MOUNT V3/UDPv6");
@@ -1191,7 +1208,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V3 on UDPv6");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
 #endif
@@ -1212,7 +1230,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V1 on TCP");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering MOUNT V3/TCP");
@@ -1228,7 +1247,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V3 on TCP");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 #else
   nb_svc_mnt_ok += 1;
@@ -1242,7 +1262,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V1 on TCPv6");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
   DisplayLogLevel(NIV_EVENT, "Registering MOUNT V3/TCPv6");
@@ -1252,7 +1273,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register MOUNT V3 on TCPv6");
-    } else
+    }
+  else
     nb_svc_mnt_ok += 1;
 
 #endif
@@ -1272,7 +1294,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on UDP");
-    } else
+    }
+  else
     nb_svc_nlm_ok += 1;
 #else
   nb_svc_nlm_ok = 1;
@@ -1295,7 +1318,8 @@ int nfs_Init_svc()
     {
       DisplayErrorLog(ERR_RPC, ERR_SVC_REGISTER, 0);
       DisplayLog("NFS DISPATCHER: Cannot register NLM V4 on TCP");
-    } else
+    }
+  else
     nb_svc_nlm_ok += 1;
 #else
   nb_svc_nlm_ok += 1;
@@ -1398,7 +1422,7 @@ int nfs_rpc_get_worker_index(int mount_protocol_flag)
 #ifndef _NO_MOUNT_LIST
   if (mount_protocol_flag == TRUE)
     worker_index = 0;           /* worker #0 is dedicated to mount protocol */
-    else
+  else
     worker_index = select_worker_queue();
 #else
   /* choose a worker depending on its queue length */
@@ -1458,7 +1482,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           if ((nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1) ||
               (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1))
             mount_flag = TRUE;
-            else
+          else
             mount_flag = FALSE;
 
           /* Get a worker to do the job */
@@ -1539,7 +1563,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->ipproto = IPPROTO_UDP;
 
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
-          } else if (nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1)
+            }
+          else if (nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1)
             {
 #ifdef _DEBUG_DISPATCH
               DisplayLogLevel(NIV_FULL_DEBUG, "A MOUNT UDP request");
@@ -1577,7 +1602,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->ipproto = IPPROTO_TCP;
 
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
-          } else if (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1)
+            }
+          else if (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1)
             {
 #ifdef _DEBUG_DISPATCH
               DisplayLogLevel(NIV_FULL_DEBUG,
@@ -1600,7 +1626,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #endif                          /* _USE_NLM */
-            else
+          else
             {
               /* This is a regular tcp request on an established connection, should be handle by a dedicated thread */
 #ifdef _DEBUG_DISPATCH
@@ -1646,7 +1672,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                                    next_alloc);
                   V(workers_data[worker_index].request_pool_mutex);
 
-              } else if (stat == XPRT_MOREREQS)
+                }
+              else if (stat == XPRT_MOREREQS)
                 {
                   DisplayLogLevel(NIV_DEBUG,
                                   "Client on socket %d has status XPRT_MOREREQS",
@@ -1663,7 +1690,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                               "NFS DISPATCH: Invalidating entry with xprt_stat=%d", stat);
 #endif
               workers_data[worker_index].passcounter += 1;
-            } else
+            }
+          else
             {
               /* This should be used for UDP requests only, TCP request have dedicted management threads */
 #ifdef _DEBUG_DISPATCH
@@ -1809,7 +1837,8 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
         {
           nb_iter_memleaks = 0;
           nfs_debug_buddy_info();
-        } else
+        }
+      else
         nb_iter_memleaks += 1;
 #endif
 

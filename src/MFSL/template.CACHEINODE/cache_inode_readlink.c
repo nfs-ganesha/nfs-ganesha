@@ -197,7 +197,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_READLINK] += 1;
 
   return *pstatus;

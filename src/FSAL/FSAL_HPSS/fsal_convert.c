@@ -749,7 +749,8 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
             {
               p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;    /* empty ACL slot */
             }
-        } else
+        }
+      else
         {
 
       /** @todo : This doesn't convert ACLs for the moment. */
@@ -803,7 +804,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
       if (p_hpss_attr_in->TimeLastRead != 0)
         p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeLastRead);
-        else
+      else
         p_fsalattr_out->atime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
 
     }
@@ -839,7 +840,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
           if (p_hpss_attr_in->TimeLastWritten != 0)
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeLastWritten);
-            else
+          else
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
           break;
 
@@ -848,7 +849,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
           if (p_hpss_attr_in->TimeModified != 0)
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeModified);
-            else
+          else
             p_fsalattr_out->mtime = hpss2fsal_time(p_hpss_attr_in->TimeCreated);
           break;
 

@@ -291,7 +291,7 @@ int nfs_Setattr(nfs_arg_t * parg,
       if (pentry->internal_md.type == DIR_BEGINNING
           || pentry->internal_md.type == DIR_CONTINUE)
         cache_status = CACHE_INODE_IS_A_DIRECTORY;
-        else
+      else
         {
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
@@ -300,7 +300,8 @@ int nfs_Setattr(nfs_arg_t * parg,
           setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
         }
-    } else
+    }
+  else
     cache_status = CACHE_INODE_SUCCESS;
 
   if (cache_status == CACHE_INODE_SUCCESS)
@@ -313,12 +314,14 @@ int nfs_Setattr(nfs_arg_t * parg,
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
                                                  ht, pclient, pcontext, &cache_status);
-            } else
+            }
+          else
             cache_status = CACHE_INODE_SUCCESS;
 
           setattr.asked_attributes |= FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes |= FSAL_ATTR_SIZE;
-        } else
+        }
+      else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
                                            ht, pclient, pcontext, &cache_status);
@@ -334,7 +337,7 @@ int nfs_Setattr(nfs_arg_t * parg,
           if (nfs2_FSALattr_To_Fattr
               (pexport, &setattr, &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
             pres->res_attr2.status = NFSERR_IO;
-            else
+          else
             pres->res_attr2.status = NFS_OK;
           break;
 

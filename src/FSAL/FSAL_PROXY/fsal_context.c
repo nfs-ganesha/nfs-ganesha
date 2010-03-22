@@ -239,7 +239,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
         }
-  } else if (!strcmp(p_thr_context->srv_proto, "tcp"))
+    }
+  else if (!strcmp(p_thr_context->srv_proto, "tcp"))
     {
       if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         {
@@ -279,7 +280,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
         }
-    } else
+    }
+  else
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_InitClientContext);
     }
@@ -290,7 +292,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
       fsal_status = fsal_internal_set_auth_gss(p_thr_context);
       if (FSAL_IS_ERROR(fsal_status))
         Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_InitClientContext);
-    } else
+    }
+  else
 #endif                          /* _USE_GSSRPC */
   if ((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
     {

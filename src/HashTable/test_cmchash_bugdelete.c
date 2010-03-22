@@ -203,11 +203,11 @@ int compare_string_buffer(hash_buffer_t * buff1, hash_buffer_t * buff2)
   /* Test if one of teh entries are NULL */
   if (buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
-    else
+  else
     {
       if (buff2->pdata == NULL)
         return -1;              /* left member is the greater one */
-        else
+      else
         return strcmp(buff1->pdata, buff2->pdata);
     }
   /* This line should never be reached */

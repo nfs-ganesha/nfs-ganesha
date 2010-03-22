@@ -254,7 +254,8 @@ int nfs_Link(nfs_arg_t * parg,
         pres->res_stat2 = NFSERR_IO;
       if (preq->rq_vers == NFS_V3)
         pres->res_link3.status = NFS3ERR_INVAL;
-    } else
+    }
+  else
     {
       /*
        * Both objects have to be in the same filesystem 
@@ -266,7 +267,8 @@ int nfs_Link(nfs_arg_t * parg,
             pres->res_stat2 = NFSERR_PERM;
           if (preq->rq_vers == NFS_V3)
             pres->res_link3.status = NFS3ERR_XDEV;
-        } else
+        }
+      else
         {
           /* Make the link */
           if ((cache_status = cache_inode_error_convert(FSAL_str2name(str_link_name,
@@ -303,8 +305,8 @@ int nfs_Link(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             target_pentry,
                                             &attr,
-                                            &(pres->res_link3.LINK3res_u.resok.
-                                              file_attributes));
+                                            &(pres->res_link3.LINK3res_u.
+                                              resok.file_attributes));
 
                           /*
                            * Build Weak Cache Coherency

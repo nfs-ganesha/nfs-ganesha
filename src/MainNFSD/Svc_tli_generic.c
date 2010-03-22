@@ -108,7 +108,7 @@ const char *nettype;            /* Networktype token */
               if (Svc_reg(l->xprt, prognum, versnum, dispatch, nconf) == FALSE)
                 warnx("svc_create: could not register prog %u vers %u on %s",
                       (unsigned)prognum, (unsigned)versnum, nconf->nc_netid);
-                else
+              else
                 num++;
               break;
             }
@@ -215,7 +215,8 @@ u_int recvsz;                   /* Max recvsize */
         }
       __rpc_nconf2sockinfo(nconf, &si);
       madefd = TRUE;
-    } else
+    }
+  else
     {
       /*
        * It is an open descriptor. Get the transport info.
@@ -245,7 +246,8 @@ u_int recvsz;                   /* Max recvsize */
                 }
             }
           listen(fd, SOMAXCONN);
-        } else
+        }
+      else
         {
           if (bind(fd, (struct sockaddr *)bindaddr->addr.buf, (socklen_t) si.si_alen) < 0)
             {
@@ -267,7 +269,8 @@ u_int recvsz;                   /* Max recvsize */
         {
           /* accepted socket */
           xprt = svc_fd_create(fd, sendsz, recvsz);
-        } else
+        }
+      else
         xprt = svc_vc_create(fd, sendsz, recvsz);
       if (!nconf || !xprt)
         break;

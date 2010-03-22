@@ -190,7 +190,8 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
       pentry->object.file.attributes.mtime.seconds = time(NULL);
       pentry->object.file.attributes.mtime.nseconds = 0;
       pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
-    } else
+    }
+  else
     {
       /* Call FSAL to actually truncate */
       pentry->object.file.attributes.asked_attributes = pclient->attrmask;
@@ -244,7 +245,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
   /* stat */
   if (*pstatus != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_TRUNCATE] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_TRUNCATE] += 1;
 
   return *pstatus;

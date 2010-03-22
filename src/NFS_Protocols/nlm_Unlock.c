@@ -188,7 +188,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
       nlm_delete_lock_entry(nlmb, &(arg->alock));
       Mem_Free(lock_desc);
       return NFS_REQ_OK;
-    } else
+    }
+  else
     {
       /*FIXME check with RFC Whether we can return nlm4_denied */
       pres->res_nlm4.stat.stat = NLM4_DENIED;

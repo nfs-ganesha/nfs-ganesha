@@ -282,7 +282,8 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                 {
                   /* a matching entry was found in the tree */
                   PseudoFsCurrent = iterPseudoFs;
-                } else
+                }
+              else
                 {
                   /* a new entry is to be created */
                   if ((newPseudoFsEntry =
@@ -304,7 +305,7 @@ int nfs4_ExportToPseudoFS(exportlist_t * pexportlist)
                   /* Step into the new entry and attach it to the tree */
                   if (PseudoFsCurrent->sons == NULL)
                     PseudoFsCurrent->sons = newPseudoFsEntry;
-                    else
+                  else
                     {
                       PseudoFsCurrent->sons->last->next = newPseudoFsEntry;
                       PseudoFsCurrent->sons->last = newPseudoFsEntry;
@@ -618,7 +619,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
             {
               fsid.major = nfs_htonl64(152LL);
               fsid.minor = nfs_htonl64(152LL);
-            } else
+            }
+          else
             {
               fsid.major = nfs_htonl64(153LL);  /* @todo BUGAZOMEU : tres cradem mais utile */
               fsid.minor = nfs_htonl64(153LL);
@@ -956,7 +958,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               /* Take care of 32 bits alignment */
               if (file_owner.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner.utf8string_len % 4;
 
               utf8len = htonl(file_owner.utf8string_len + deltalen);
@@ -976,7 +978,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               LastOffset += deltalen;
 
               op_attr_success = 1;
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -993,7 +996,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               /* Take care of 32 bits alignment */
               if (file_owner_group.utf8string_len % 4 == 0)
                 deltalen = 0;
-                else
+              else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
 
               utf8len = htonl(file_owner_group.utf8string_len + deltalen);
@@ -1013,7 +1016,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
               LastOffset += deltalen;
 
               op_attr_success = 1;
-            } else
+            }
+          else
             op_attr_success = 0;
           break;
 
@@ -1433,7 +1437,7 @@ int nfs4_op_getattr_pseudo(struct nfs_argop4 *op,
                          &(res_GETATTR4.GETATTR4res_u.resok4.obj_attributes),
                          data, &(data->currentFH), &(arg_GETATTR4.attr_request)) != 0)
     res_GETATTR4.status = NFS4ERR_SERVERFAULT;
-    else
+  else
     res_GETATTR4.status = NFS4_OK;
 
 #ifdef _DEBUG_NFS_V4
@@ -1556,7 +1560,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
         }
-    } else
+    }
+  else
     {
       /* The entry is a junction */
       DisplayLogJdLevel(((cache_inode_client_t *) data->pclient)->log_outputs,
@@ -2100,7 +2105,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
          NFS4_VERIFIER_SIZE);
   if (i == 0)
     res_READDIR4.READDIR4res_u.resok4.reply.entries = NULL;
-    else
+  else
     res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
 
   /* did we reach the end ? */
@@ -2108,7 +2113,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     {
       /* Yes, we did */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-    } else
+    }
+  else
     {
       /* No, there are some more entries */
       res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;

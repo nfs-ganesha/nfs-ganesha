@@ -224,7 +224,7 @@ int nfs_Write(nfs_arg_t * parg,
         case NFS_V3:
           if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
             pres->res_write3.status = NFS3ERR_ISDIR;
-            else
+          else
             pres->res_write3.status = NFS3ERR_INVAL;
           break;
         }
@@ -298,7 +298,8 @@ int nfs_Write(nfs_arg_t * parg,
           (parg->arg_write3.stable == UNSTABLE))
         {
           stable_flag = FALSE;
-        } else
+        }
+      else
         {
           stable_flag = TRUE;
         }
@@ -367,7 +368,8 @@ int nfs_Write(nfs_arg_t * parg,
     {
       cache_status = CACHE_INODE_SUCCESS;
       written_size = 0;
-    } else
+    }
+  else
     {
       /* An actual write is to be made, prepare it */
 
@@ -458,7 +460,8 @@ int nfs_Write(nfs_arg_t * parg,
               if (stable_flag == TRUE)
                 {
                   pres->res_write3.WRITE3res_u.resok.committed = FILE_SYNC;
-                } else
+                }
+              else
                 {
                   pres->res_write3.WRITE3res_u.resok.committed = UNSTABLE;
                 }

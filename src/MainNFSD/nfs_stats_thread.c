@@ -169,7 +169,7 @@ void *stats_thread(void *addr)
   /* start snmp library */
   if (stats_snmp(workers_data) == 0)
     DisplayLog("NFS STATS: SNMP stats service was started successfully");
-    else
+  else
     DisplayLog("NFS STATS: ERROR starting SNMP stats export thread");
 #endif /*_SNMP_ADM_ACTIVE*/
 
@@ -186,7 +186,8 @@ void *stats_thread(void *addr)
         {
           if (stattest.st_ino != statref.st_ino)
             reopen_stats = TRUE;
-        } else
+        }
+      else
         {
           if (errno == ENOENT)
             reopen_stats = TRUE;
@@ -261,23 +262,24 @@ void *stats_thread(void *addr)
                   global_cache_inode_stat.func_stats.nb_call[j] =
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] =
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
-                } else
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
+                }
+              else
                 {
                   global_cache_inode_stat.func_stats.nb_success[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_success[j];
                   global_cache_inode_stat.func_stats.nb_call[j] +=
                       workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
                   global_cache_inode_stat.func_stats.nb_err_retryable[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_retryable[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_retryable[j];
                   global_cache_inode_stat.func_stats.nb_err_unrecover[j] +=
-                      workers_data[i].cache_inode_client.stat.func_stats.
-                      nb_err_unrecover[j];
+                      workers_data[i].cache_inode_client.stat.
+                      func_stats.nb_err_unrecover[j];
                 }
 
             }
@@ -356,7 +358,8 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_mnt1[j].success;
                   global_worker_stat.stat_req.stat_req_mnt1[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_mnt1[j].dropped;
-                } else
+                }
+              else
                 {
                   global_worker_stat.stat_req.stat_req_mnt1[j].total +=
                       workers_data[i].stats.stat_req.stat_req_mnt1[j].total;
@@ -377,7 +380,8 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_mnt3[j].success;
                   global_worker_stat.stat_req.stat_req_mnt3[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_mnt3[j].dropped;
-                } else
+                }
+              else
                 {
                   global_worker_stat.stat_req.stat_req_mnt3[j].total +=
                       workers_data[i].stats.stat_req.stat_req_mnt3[j].total;
@@ -398,7 +402,8 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs2[j].success;
                   global_worker_stat.stat_req.stat_req_nfs2[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_nfs2[j].dropped;
-                } else
+                }
+              else
                 {
                   global_worker_stat.stat_req.stat_req_nfs2[j].total +=
                       workers_data[i].stats.stat_req.stat_req_nfs2[j].total;
@@ -419,7 +424,8 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].success;
                   global_worker_stat.stat_req.stat_req_nfs3[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].dropped;
-                } else
+                }
+              else
                 {
                   global_worker_stat.stat_req.stat_req_nfs3[j].total +=
                       workers_data[i].stats.stat_req.stat_req_nfs3[j].total;
@@ -440,7 +446,8 @@ void *stats_thread(void *addr)
                       workers_data[i].stats.stat_req.stat_req_nfs4[j].success;
                   global_worker_stat.stat_req.stat_req_nfs4[j].dropped =
                       workers_data[i].stats.stat_req.stat_req_nfs4[j].dropped;
-                } else
+                }
+              else
                 {
                   global_worker_stat.stat_req.stat_req_nfs4[j].total +=
                       workers_data[i].stats.stat_req.stat_req_nfs4[j].total;

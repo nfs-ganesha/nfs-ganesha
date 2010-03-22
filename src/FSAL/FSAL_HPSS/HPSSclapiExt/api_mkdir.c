@@ -112,7 +112,7 @@ int HPSSFSAL_MkdirHandle(ns_ObjHandle_t * ObjHandle,    /* IN - handle of parent
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   error = HPSSFSAL_Common_Mkdir(threadcontext,
@@ -280,7 +280,8 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
     {
       API_DEBUG_FPRINTF(DebugFile, &rqstid,
                         "%s: Could not get attributes.\n", function_name);
-    } else
+    }
+  else
     {
       /*
        *  Check to see if we need to return the attributes of
@@ -291,7 +292,8 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
       if (RetAttrs != (hpss_Attrs_t *) NULL)
         {
           select_flags = API_AddAllRegisterValues(MAX_CORE_ATTR_INDEX);
-        } else
+        }
+      else
         {
           select_flags = cast64m(0);
         }
@@ -309,7 +311,8 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
           API_DEBUG_FPRINTF(DebugFile, &rqstid,
                             "%s: Could not determine which"
                             " account to use.\n", function_name);
-        } else
+        }
+      else
         {
           /*
            * Validate the account.
@@ -389,7 +392,8 @@ HPSSFSAL_Common_Mkdir(apithrdstate_t * ThreadContext,
             {
               API_DEBUG_FPRINTF(DebugFile, &rqstid,
                                 "%s: API_dmg_Create failed.\n", function_name);
-            } else
+            }
+          else
             {
               /*
                * If the caller asked for them, obtain the hpss attributes

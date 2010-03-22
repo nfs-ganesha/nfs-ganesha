@@ -461,7 +461,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       auth->svc_ah_ops = &Svc_auth_gss_ops;
       SVCAUTH_PRIVATE(auth) = gd;
       rqst->rq_xprt->xp_auth = auth;
-    } else
+    }
+  else
     gd = SVCAUTH_PRIVATE(rqst->rq_xprt->xp_auth);
 
   /* Deserialize client credentials. */
@@ -494,7 +495,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
         {
           DisplayLog("RPCSEC_GSS: /!\\ ERROR could not find gss context ");
           ret_freegc(AUTH_BADCRED);
-        } else
+        }
+      else
         {
 
           /* If you 'mount -o sec=krb5i' you will have gc->gc_proc > RPCSEC_GSS_SVN_NONE, but the
@@ -511,7 +513,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 #ifdef _DEBUG_RPCSEC_GSS
   if (gd->ctx != NULL)
     memcpy(&buff64_2, gd->ctx, 8);
-    else
+  else
     buff64_2 = 0LL;
 
   memcpy(&buff64, gc->gc_ctx.value, gc->gc_ctx.length);
@@ -543,9 +545,9 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
           offset = 0 - offset;
           gd->seqmask <<= offset;
           offset = 0;
-      }
-        else if ((unsigned int)offset >= gd->win
-                   || (gd->seqmask & (1 << (unsigned int)offset)))
+        }
+      else if ((unsigned int)offset >= gd->win
+               || (gd->seqmask & (1 << (unsigned int)offset)))
         {
           *no_dispatch = 1;
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
@@ -608,7 +610,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
             DisplayLog
                 ("RPCSEC_GSS: /!\\ ERROR, could not add context 0x%llx to hashtable",
                  buff64);
-            else
+          else
             printf("Call to Gssrpc_svcauth_gss : gss context 0x%llx added to hash\n",
                    buff64);
         }
@@ -641,7 +643,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if (!Gss_ctx_Hash_Del(&gss_ctx_data))
         {
           DisplayLog("RPCSEC_GSS: /!\\ ERROR, could not delete Gss Context from hash");
-        } else
+        }
+      else
         printf("Gss_ctx_Hash_Del OK\n");
 
       if (!Svcauth_gss_release_cred())

@@ -243,7 +243,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
       /* The XDR padding  : strings must be aligned to 32bits fields */
       if ((strlen(local_comp[i]) % 4) == 0)
         delta_xdr = 0;
-        else
+      else
         {
           delta_xdr = 4 - (strlen(local_comp[i]) % 4);
           memset((char *)(buff + lastoff), 0, delta_xdr);
@@ -273,7 +273,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
   /* 7- XDR padding for server's string */
   if ((strlen(server_part) % 4) == 0)
     delta_xdr = 0;
-    else
+  else
     {
       delta_xdr = 4 - (strlen(server_part) % 4);
       memset((char *)(buff + lastoff), 0, delta_xdr);
@@ -300,7 +300,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
       /* The XDR padding  : strings must be aligned to 32bits fields */
       if ((strlen(remote_comp[i]) % 4) == 0)
         delta_xdr = 0;
-        else
+      else
         {
           delta_xdr = 4 - (strlen(remote_comp[i]) % 4);
           memset((char *)(buff + lastoff), 0, delta_xdr);

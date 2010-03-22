@@ -345,7 +345,8 @@ void Cache_inode_layer_SetLogLevel(int log_lvl)
       log_level = log_lvl;
       voie_cache.fd = fileno(stderr);
       AddLogStreamJd(&log_desc_cache, V_FD, voie_cache, log_level, SUP);
-    } else
+    }
+  else
     {
       log_level = log_lvl;
       /* changing log level */
@@ -451,7 +452,8 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       return 0;
 
-  } else if (str_path[0] == '/')
+    }
+  else if (str_path[0] == '/')
     {
       /* absolute path, starting from "/", with a relative path */
       curr++;
@@ -467,7 +469,8 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
           return 0;
         }
 
-    } else
+    }
+  else
     {
       pentry_lookup = current_pentry;
       strncpy(tmp_path, io_global_path, FSAL_MAX_PATH_LEN);
@@ -566,7 +569,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
     {
       DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
-    } else
+    }
+  else
     SetNameHost(localmachine);
 
   /* Parse config file */
@@ -615,7 +619,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
     {
       fprintf(output, "Error %d while init hash\n ", context->cache_status);
       return 1;
-  } else if (flag_v)
+    }
+  else if (flag_v)
     fprintf(output, "\tHash Table address = %p\n", ht);
 
   /* Get the gc policy */
@@ -813,7 +818,7 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "init_cache: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -821,7 +826,7 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "init_cache: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -843,7 +848,8 @@ int fn_Cache_inode_cache_init(int argc, /* IN : number of args in argv */
     {
       /* too much or not enough arguments */
       err_flag++;
-    } else
+    }
+  else
     filename = argv[Optind];
 
   if (err_flag)
@@ -993,14 +999,14 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "stat: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "stat: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -1014,7 +1020,8 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -1093,7 +1100,7 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -1101,7 +1108,7 @@ int fn_Cache_inode_gc(int argc, /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -1203,7 +1210,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -1211,7 +1218,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -1219,7 +1226,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_d)
             fprintf(output,
                     "ls: warning: option 'd' has been specified more than once.\n");
-            else
+          else
             flag_d++;
           break;
 
@@ -1227,7 +1234,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_l)
             fprintf(output,
                     "ls: warning: option 'l' has been specified more than once.\n");
-            else
+          else
             flag_l++;
           break;
 
@@ -1235,7 +1242,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_L)
             fprintf(output,
                     "ls: warning: option 'L' has been specified more than once.\n");
-            else
+          else
             flag_L++;
           break;
 
@@ -1243,7 +1250,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_S)
             fprintf(output,
                     "ls: warning: option 'S' has been specified more than once.\n");
-            else
+          else
             flag_S++;
           break;
 
@@ -1251,7 +1258,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_z)
             fprintf(output,
                     "ls: warning: option 'z' has been specified more than once.\n");
-            else
+          else
             flag_z++;
           break;
 
@@ -1259,7 +1266,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           if (flag_H)
             fprintf(output,
                     "ls: warning: option 'H' has been specified more than once.\n");
-            else
+          else
             flag_H++;
           break;
 
@@ -1307,7 +1314,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                                str_name, context->pentry, &pentry_tmp, output))
         return rc;
 
-    } else
+    }
+  else
     {
       str_name = ".";
       pentry_tmp = context->pentry;
@@ -1357,14 +1365,16 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         {
           if (!flag_z)
             print_item_line(output, &attrs, str_name, symlink_path.path);
-      } else if (flag_S)
+        }
+      else if (flag_S)
         {
           if (!flag_z)
             {
               fprintf(output, "%s :\n", str_name);
               print_fsal_attributes(attrs, output);
             }
-      } else if (flag_H)
+        }
+      else if (flag_H)
         {
           if (!flag_z)
             {
@@ -1379,23 +1389,25 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
               snprintmem(buff, 128, (caddr_t) pfsal_handle, sizeof(fsal_handle_t));
               fprintf(output, "%s (@%s)\n", str_name, buff);
             }
-      } else if (flag_L)
+        }
+      else if (flag_L)
         {
           if (!flag_z)
             {
               if (context->pentry->internal_md.type != REGULAR_FILE)
                 fprintf(output, "%p N/A  \t\t%s\n", pentry_tmp, str_name);
-                else
+              else
                 {
                   if (context->pentry->object.file.pentry_content == NULL)
                     fprintf(output, "%p (not cached) \t%s\n", context->pentry, str_name);
-                    else
+                  else
                     fprintf(output, "%p %p \t%s\n",
                             context->pentry,
                             context->pentry->object.file.pentry_content, str_name);
                 }
             }
-        } else                  /* only prints the name */
+        }
+      else                      /* only prints the name */
         {
           if (!flag_z)
             fprintf(output, "%s\n", str_name);
@@ -1439,7 +1451,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           else if (str_name[strlen(str_name) - 1] == '/')
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name,
                      dirent_array[i].name.name);
-            else
+          else
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
                      dirent_array[i].name.name);
 
@@ -1474,7 +1486,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 }
 
               print_item_line(output, &attrs, item_path, symlink_path.path);
-          } else if (flag_S)
+            }
+          else if (flag_S)
             {
               fprintf(output, "%s :\n", item_path);
               if (cache_inode_getattr(dirent_array[i].pentry,
@@ -1490,25 +1503,27 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 }
               if (!flag_z)
                 print_fsal_attributes(attrs, output);
-          } else if (flag_L)
+            }
+          else if (flag_L)
             {
               if (!flag_z)
                 {
                   if (dirent_array[i].pentry->internal_md.type != REGULAR_FILE)
                     fprintf(output, "%p N/A \t\t%s\n", dirent_array[i].pentry, item_path);
-                    else
+                  else
                     {
                       if (dirent_array[i].pentry->object.file.pentry_content == NULL)
                         fprintf(output, "%p (not cached) \t%s\n", dirent_array[i].pentry,
                                 item_path);
-                        else
+                      else
                         fprintf(output, "%p %p \t%s\n",
                                 dirent_array[i].pentry,
                                 dirent_array[i].pentry->object.file.pentry_content,
                                 item_path);
                     }
                 }
-          } else if (flag_H)
+            }
+          else if (flag_H)
             {
               if (!flag_z)
                 {
@@ -1523,7 +1538,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                   snprintmem(buff, 128, (caddr_t) pfsal_handle, sizeof(fsal_handle_t));
                   fprintf(output, "%s (@%s)\n", item_path, buff);
                 }
-            } else
+            }
+          else
             {
               if (!flag_z)
                 fprintf(output, "%s\n", item_path);
@@ -1665,7 +1681,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "mkdir: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -1673,7 +1689,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "mkdir: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -1695,7 +1711,8 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 2) && Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &file);
@@ -1703,7 +1720,8 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
       if (Optind == (argc - 1))
         {
           mode = 0755;
-        } else
+        }
+      else
         {
           strmode = argv[Optind + 1];
           /* converting mode string to FSAL mode string */
@@ -1712,7 +1730,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
       if (mode < 0)
         err_flag++;
-        else
+      else
         {
           fsalmode = 0;
 
@@ -1852,7 +1870,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "hardlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -1860,7 +1878,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "hardlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -1884,7 +1902,8 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
 
       strncpy(tmp_path, argv[Optind + 1], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &name);
-    } else
+    }
+  else
     {
       err_flag++;
     }
@@ -1996,7 +2015,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ln: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2004,7 +2023,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "ln: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2025,7 +2044,8 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       content = argv[Optind];
       strncpy(tmp_path, argv[Optind + 1], FSAL_MAX_PATH_LEN);
@@ -2149,7 +2169,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "create: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2157,7 +2177,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "create: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2178,7 +2198,8 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 2) && Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
 
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
@@ -2187,7 +2208,8 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
       if (Optind == (argc - 1))
         {
           mode = 0755;
-        } else
+        }
+      else
         {
           strmode = argv[Optind + 1];
           /* converting mode string to FSAL mode string */
@@ -2196,7 +2218,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
 
       if (mode < 0)
         err_flag++;
-        else
+      else
         {
 
           fsalmode = 0;
@@ -2337,7 +2359,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "rename: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2345,7 +2367,7 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "rename: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2366,7 +2388,8 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path1, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path1, &src_path, &src_file);
@@ -2493,7 +2516,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "unlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2501,7 +2524,7 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "unlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2522,7 +2545,8 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &file);
@@ -2634,7 +2658,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "setattr: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2642,7 +2666,7 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "setattr: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2696,7 +2720,8 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strcpy(file, argv[Optind]);
       attr_list = argv[Optind + 1];
@@ -2833,7 +2858,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2841,7 +2866,7 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -2864,7 +2889,8 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       str_perms = argv[Optind];
       file = argv[Optind + 1];
@@ -2936,7 +2962,8 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
       log_fprintf(output, "Error executing cache_inode_access : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
-    } else
+    }
+  else
     {
       fprintf(output, "access: Access granted.\n");
       return 0;
@@ -2990,7 +3017,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -2998,7 +3025,7 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3021,7 +3048,8 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -3128,7 +3156,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3136,7 +3164,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3159,7 +3187,8 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -3236,7 +3265,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3244,7 +3273,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3278,8 +3307,8 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   if (cache_content_crash_recover(EXPORT_ID,
                                   0,
                                   1,
-                                  (cache_content_client_t *) context->client.
-                                  pcontent_client, &context->client, ht,
+                                  (cache_content_client_t *) context->
+                                  client.pcontent_client, &context->client, ht,
                                   &context->context,
                                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {
@@ -3340,7 +3369,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3348,7 +3377,7 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3371,7 +3400,8 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -3460,7 +3490,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3468,7 +3498,7 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3491,7 +3521,8 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -3621,7 +3652,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "read: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3629,7 +3660,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "read: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3641,7 +3672,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
             {
               fprintf(output, "read: option 'A' conflicts with option 'X'.\n");
               err_flag++;
-            } else
+            }
+          else
             flag_A++;
           break;
 
@@ -3653,7 +3685,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
             {
               fprintf(output, "read: option 'X' conflicts with option 'A'.\n");
               err_flag++;
-            } else
+            }
+          else
             flag_X++;
           break;
 
@@ -3661,7 +3694,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           if (flag_B)
             fprintf(output,
                     "read: warning: option 'B' has been specified more than once.\n");
-            else
+          else
             {
               flag_B++;
               str_block_size = Optarg;
@@ -3672,7 +3705,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           if (flag_s)
             fprintf(output,
                     "read: warning: option 's' has been specified more than once.\n");
-            else
+          else
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
@@ -3698,7 +3731,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       str_total_bytes = argv[Optind];
       file = argv[Optind + 1];
@@ -3778,7 +3812,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
             seek_desc.whence = FSAL_SEEK_SET;
           else if (!strncmp(str_seek_type, "END", 256))
             seek_desc.whence = FSAL_SEEK_END;
-            else
+          else
             {
               fprintf(output,
                       "read: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
@@ -3807,7 +3841,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
             {
               fprintf(output, "read: error: invalid offset \"%s\".\n", str_seek_offset);
               err_flag++;
-          } else if (sign < 0)
+            }
+          else if (sign < 0)
             seek_desc.offset = -seek_desc.offset;
 
         }
@@ -3818,7 +3853,8 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   if (!strcasecmp(str_total_bytes, "all"))
     {
       total_bytes = 0;
-    } else
+    }
+  else
     {
       rc = ato64(str_total_bytes, &total_bytes);
 
@@ -3896,12 +3932,14 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
           fsal_size_t index;
           for (index = 0; index < once_nb_read; index++)
             fprintf(output, "%c.", p_read_buff[index]);
-      } else if (flag_X)
+        }
+      else if (flag_X)
         {
           fsal_size_t index;
           for (index = 0; index < once_nb_read; index++)
             fprintf(output, "%.2X ", p_read_buff[index]);
-        } else
+        }
+      else
         fprintf(output, ".");
 
       /* update stats */
@@ -4047,7 +4085,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "write: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -4055,7 +4093,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "write: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -4063,7 +4101,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           if (flag_N)
             fprintf(output,
                     "write: warning: option 'N' has been specified more than once.\n");
-            else
+          else
             {
               flag_N++;
               str_times = Optarg;
@@ -4074,7 +4112,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           if (flag_s)
             fprintf(output,
                     "write: warning: option 's' has been specified more than once.\n");
-            else
+          else
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
@@ -4090,7 +4128,8 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
             {
               fprintf(output, "write: option 'A' conflicts with option 'X'.\n");
               err_flag++;
-            } else
+            }
+          else
             {
               flag_A++;
               str_ascii = Optarg;
@@ -4105,7 +4144,8 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
             {
               fprintf(output, "write: option 'X' conflicts with option 'A'.\n");
               err_flag++;
-            } else
+            }
+          else
             {
               flag_X++;
               str_hexa = Optarg;
@@ -4130,7 +4170,8 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -4207,7 +4248,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
         seek_desc.whence = FSAL_SEEK_SET;
       else if (!strncmp(str_seek_type, "END", 256))
         seek_desc.whence = FSAL_SEEK_END;
-        else
+      else
         {
           fprintf(output,
                   "write: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
@@ -4236,7 +4277,8 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
         {
           fprintf(output, "write: error: invalid offset \"%s\".\n", str_seek_offset);
           return EINVAL;
-      } else if (sign < 0)
+        }
+      else if (sign < 0)
         seek_desc.offset = -seek_desc.offset;
 
     }
@@ -4417,7 +4459,8 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
     {
       fprintf(output, help_su);
       return -1;
-    } else
+    }
+  else
     {
       str_uid = argv[1];
     }
@@ -4430,7 +4473,8 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
           return -1;
         }
       pw_struct = getpwuid(uid);
-    } else
+    }
+  else
     {
       pw_struct = getpwnam(str_uid);
     }
@@ -4453,7 +4497,7 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
         {
           if (i == 1)
             fprintf(output, "%d", groups_tab[i]);
-            else
+          else
             fprintf(output, ", %d", groups_tab[i]);
         }
       fprintf(output, "\n");
@@ -4593,7 +4637,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -4601,7 +4645,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -4624,7 +4668,8 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }

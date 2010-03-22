@@ -108,7 +108,8 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
       DisplayLogLevel(NIV_CRIT,
                       "CRITICAL ERROR: Worker could not connect to database !!!");
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_InitClientContext);
-    } else
+    }
+  else
     {
       DisplayLog("Worker successfuly connected to database");
     }

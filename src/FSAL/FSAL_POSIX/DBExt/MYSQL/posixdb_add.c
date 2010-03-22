@@ -139,7 +139,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
 
       fsal_posixdb_UpdateInodeCache(p_object_handle);
 
-    } else                      /* no handle found */
+    }
+  else                          /* no handle found */
     {
       mysql_free_result(res);
 
@@ -171,10 +172,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    ************************************************/
   snprintf(query, 4096, "SELECT handleid, handlets "
            "FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-           p_parent_directory_handle ? p_parent_directory_handle->id : p_object_handle->
-           id,
-           p_parent_directory_handle ? p_parent_directory_handle->ts : p_object_handle->
-           ts, p_filename ? p_filename->name : "");
+           p_parent_directory_handle ? p_parent_directory_handle->
+           id : p_object_handle->id,
+           p_parent_directory_handle ? p_parent_directory_handle->
+           ts : p_object_handle->ts, p_filename ? p_filename->name : "");
 
   st = db_exec_sql(p_conn, query, &res);
   if (FSAL_POSIXDB_IS_ERROR(st))
@@ -252,7 +253,8 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
                                              p_filename ? p_filename->name : "", nlink);
               if (FSAL_POSIXDB_IS_ERROR(st))
                 goto rollback;
-            } else
+            }
+          else
             {
               /* the Handle line has been deleted */
               mysql_free_result(res);   /* clear old res before a new query */
@@ -261,12 +263,14 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
           /* the bad entry has been deleted. Now we had a new Parent entry */
           add_parent_entry = TRUE;
 
-        } else
+        }
+      else
         {
           /* a Parent entry exists with our handle, nothing to do */
           mysql_free_result(res);
         }
-    } else                      /* no parent entry found */
+    }
+  else                          /* no parent entry found */
     {
       mysql_free_result(res);
       add_parent_entry = TRUE;

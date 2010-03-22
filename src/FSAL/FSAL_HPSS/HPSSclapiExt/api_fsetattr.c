@@ -115,7 +115,7 @@ int HPSSFSAL_FileSetAttrHandle(ns_ObjHandle_t * ObjHandle,      /* IN  - parent 
 
   if (Ucred == (TYPE_CRED_HPSS *) NULL)
     ucred_ptr = &threadcontext->UserCred;
-    else
+  else
     ucred_ptr = Ucred;
 
   /*
@@ -374,7 +374,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
     {
       API_DEBUG_FPRINTF(DebugFile, &RequestID,
                         "%s: Could get attributes, error=%d\n", function_name, error);
-    } else
+    }
+  else
     {
       /*
        * Check the flags in the returned handle to determine
@@ -584,7 +585,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
               API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                 "%s: API_dmg_SetAttrs() failed,"
                                 " error=%d.\n", function_name, error);
-            } else
+            }
+          else
             {
               hpss_AttrBits_t attr_flags;
 
@@ -675,7 +677,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "%s: Could not get location, error=%d\n",
                                     function_name, error);
-                } else
+                }
+              else
                 {
                   /*
                    * Get the user's current session account code.
@@ -691,7 +694,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                                         "%s: couldn't determine"
                                         " account code, error= %d\n",
                                         function_name, error);
-                    } else
+                    }
+                  else
                     {
                       /*
                        * Ask Account Validation for the account code
@@ -738,7 +742,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                   SelFlagsIn = orbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT);
                 }
 
-          } else if (chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT))
+            }
+          else if (chkbit64m(SelFlagsIn, CORE_ATTR_ACCOUNT))
             {
               /*
                * User is setting account id, but not uid. 
@@ -756,7 +761,8 @@ static int HPSSFSAL_Common_FileSetAttributes(apithrdstate_t * ThreadContext,    
                   API_DEBUG_FPRINTF(DebugFile, &RequestID,
                                     "%s: Could not get location, error=%d\n",
                                     function_name, error);
-                } else
+                }
+              else
                 {
                   /* 
                    * Validate that the account code can be changed.

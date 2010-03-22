@@ -138,7 +138,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
             }
         }
 
-    } else                      /* this is a real lookup(parent, name)  */
+    }
+  else                          /* this is a real lookup(parent, name)  */
     {
       char parent_path[FSAL_MAX_PATH_LEN];
       char child_path[FSAL_MAX_PATH_LEN];
@@ -168,7 +169,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
           printf("lookup on '.'\n");
 #endif
           strcpy(child_path, parent_path);
-      } else if (!strcmp(p_filename->name, ".."))
+        }
+      else if (!strcmp(p_filename->name, ".."))
         {
 #ifdef _DEBUG_FSAL
           printf("lookup on '..'\n");
@@ -177,7 +179,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
           if (!strcmp(parent_path, "/"))
             {
               strcpy(child_path, parent_path);
-            } else
+            }
+          else
             {
               char *p_char;
 
@@ -190,7 +193,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
               else if (p_char)
                 *p_char = '\0';
             }
-        } else
+        }
+      else
         {
 #ifdef _DEBUG_FSAL
           printf("lookup on '%s/%s'\n", parent_path, p_filename->name);
@@ -224,7 +228,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
                                     "CRITICAL: Segfault avoided !!!!! %p %p %p",
                                     parent_directory_handle, p_filename,
                                     p_filename ? p_filename->name : NULL);
-                } else
+                }
+              else
                 {
                   /* create a fake handle for child = hash of its parent and its name */
                   stbuff.st_ino =
@@ -243,7 +248,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
                        parent_directory_handle->validator,
                        p_filename->name,
                        stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
-        } else
+        }
+      else
         {
           rc = NamespaceGetGen(stbuff.st_ino, stbuff.st_dev, &object_handle->validator);
           DisplayLogJdLevel(fsal_log, NIV_EVENT,

@@ -162,7 +162,8 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       nfs_clientid.last_renew = time(NULL);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
-    } else
+    }
+  else
     {
       /* Unknown client id */
       res_RENEW4.status = NFS4ERR_STALE_CLIENTID;

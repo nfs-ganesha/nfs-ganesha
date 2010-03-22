@@ -11,7 +11,8 @@ int main(int argc, char **argv)
   if ((argc > 1) && (argv[1]))
     {
       fichier = argv[1];
-    } else
+    }
+  else
     {
       fprintf(stderr, "Usage %s <config_file>\n", argv[0]);
       exit(EINVAL);
@@ -51,7 +52,8 @@ int main(int argc, char **argv)
         if ((val_a = config_GetKeyValueByName(block, "b")))
           {
             printf("%s.b est defini et vaut %s\n", config_GetBlockName(block), val_a);
-          } else
+          }
+        else
           {
             printf("%s.b n'est pas defini\n", config_GetBlockName(block));
           }
@@ -66,7 +68,8 @@ int main(int argc, char **argv)
               {
                 config_GetKeyValue(item, &nom, &val);
                 printf("\t%s = %s\n", nom, val);
-              } else
+              }
+            else
               printf("\tsub-block = %s\n", config_GetBlockName(item));
           }
         printf("\n");

@@ -168,7 +168,8 @@ void Svc_unregister(u_long prog, u_long vers)
   if (prev == NULL_SVC)
     {
       svc_head = s->sc_next;
-    } else
+    }
+  else
     {
       prev->sc_next = s->sc_next;
     }
@@ -279,7 +280,7 @@ void Svc_getreqset(fd_set * readfds)
                    */
                   if (prog_found)
                     svcerr_progvers(xprt, low_vers, high_vers);
-                    else
+                  else
                     svcerr_noprog(xprt);
                   /* Fall through to ... */
                 }

@@ -182,9 +182,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
           res_CREATE_SESSION4.csr_status = NFS4_OK;
           return res_CREATE_SESSION4.csr_status;
-      }
-        else if (arg_CREATE_SESSION4.csa_sequence !=
-                   pnfs_clientid->create_session_sequence)
+        }
+      else if (arg_CREATE_SESSION4.csa_sequence != pnfs_clientid->create_session_sequence)
         {
           res_CREATE_SESSION4.csr_status = NFS4ERR_SEQ_MISORDERED;
           return res_CREATE_SESSION4.csr_status;

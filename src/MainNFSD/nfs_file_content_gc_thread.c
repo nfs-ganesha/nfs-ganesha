@@ -236,12 +236,10 @@ void *file_content_gc_thread(void *IndexArg)
                        0);
 
               if ((cache_content_status = cache_content_check_threshold(cache_sub_dir,
-                                                                        nfs_param.
-                                                                        cache_layers_param.
-                                                                        dcgcpol.lwmark_df,
-                                                                        nfs_param.
-                                                                        cache_layers_param.
-                                                                        dcgcpol.hwmark_df,
+                                                                        nfs_param.cache_layers_param.dcgcpol.
+                                                                        lwmark_df,
+                                                                        nfs_param.cache_layers_param.dcgcpol.
+                                                                        hwmark_df,
                                                                         &is_hw_reached,
                                                                         &nb_blocks_to_manage))
                   == CACHE_CONTENT_SUCCESS)
@@ -253,7 +251,8 @@ void *file_content_gc_thread(void *IndexArg)
                                       nb_blocks_to_manage);
                       some_flush_to_do = TRUE;
                       break;
-                    } else
+                    }
+                  else
                     DisplayLogLevel(NIV_EVENT,
                                     "NFS FILE CONTENT GARBAGE COLLECTION : High Water Mark is not reached");
 
@@ -270,19 +269,19 @@ void *file_content_gc_thread(void *IndexArg)
       if (debuglevelstr)
         snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N %s -L %s",
                  ganesha_exec_path, config_path, debuglevelstr, fcc_log_path);
-        else
+      else
         snprintf(command, 2 * MAXPATHLEN, "%s -f %s -N NIV_MAJ -L %s",
                  ganesha_exec_path, config_path, fcc_log_path);
 
       if (some_flush_to_do)
         strncat(command, " -P 3", 2 * MAXPATHLEN);      /* Sync and erase */
-        else
+      else
         strncat(command, " -S 3", 2 * MAXPATHLEN);      /* Sync Only */
 
       if ((command_stream = popen(command, "r")) == NULL)
         DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : /!\\ Cannot lauch command %s",
                    command);
-        else
+      else
         DisplayLog("NFS FILE CONTENT GARBAGE COLLECTION : I launched command %s",
                    command);
 

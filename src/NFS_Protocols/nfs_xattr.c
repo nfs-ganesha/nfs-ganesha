@@ -285,7 +285,7 @@ int nfs_SetPostOpXAttrDir(fsal_op_context_t * pcontext,
   if (nfs3_FSALattr_To_XattrDir
       (pexport, pfsal_attr, &(presult->post_op_attr_u.attributes)) == 0)
     presult->attributes_follow = FALSE;
-    else
+  else
     presult->attributes_follow = TRUE;
 
   return 0;
@@ -317,7 +317,7 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
   if (nfs3_FSALattr_To_Fattr(pexport, pfsal_attr, &(presult->post_op_attr_u.attributes))
       == 0)
     presult->attributes_follow = FALSE;
-    else
+  else
     presult->attributes_follow = TRUE;
 
   return 0;
@@ -393,7 +393,8 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
       /* should not occur */
       pres->res_access3.status = NFS3ERR_INVAL;
       return NFS_REQ_OK;
-  } else if (pfile_handle->xattr_pos == 1)
+    }
+  else if (pfile_handle->xattr_pos == 1)
     {
 
       pres->res_access3.ACCESS3res_u.resok.access =
@@ -404,7 +405,8 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                             &attr,
                             &(pres->res_access3.ACCESS3res_u.resok.obj_attributes));
 
-    } else                      /* named attribute */
+    }
+  else                          /* named attribute */
     {
       fsal_status_t fsal_status;
       fsal_attrib_list_t xattrs;
@@ -443,20 +445,22 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
               if (!FSAL_IS_ERROR(FSAL_test_access(pcontext, FSAL_W_OK, &xattrs)))
                 pres->res_access3.ACCESS3res_u.resok.access |=
                     ACCESS3_MODIFY | ACCESS3_EXTEND;
-            } else
+            }
+          else
             {
               /* this is an error */
               nfs_SetPostOpXAttrFile(pcontext, pexport,
                                      &xattrs,
-                                     &(pres->res_access3.ACCESS3res_u.resfail.
-                                       obj_attributes));
+                                     &(pres->res_access3.ACCESS3res_u.
+                                       resfail.obj_attributes));
 
               pres->res_access3.status =
                   nfs3_Errno(cache_inode_error_convert(fsal_status));
               return NFS_REQ_OK;
             }
 
-        } else                  /* access granted */
+        }
+      else                      /* access granted */
         {
           pres->res_access3.ACCESS3res_u.resok.access = parg->arg_access3.access;
         }
@@ -554,8 +558,8 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
       pres->res_lookup3.status =
           nfs3_fh_to_xattrfh((nfs_fh3 *) &
                              (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
-                             (nfs_fh3 *) & (pres->res_lookup3.LOOKUP3res_u.resok.object.
-                                            data));
+                             (nfs_fh3 *) & (pres->res_lookup3.LOOKUP3res_u.resok.
+                                            object.data));
 
       /* Retrieve xattr attributes */
       xattr_attrs.asked_attributes = pclient->attrmask;
@@ -739,7 +743,8 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
     {
       asked_num_entries = estimated_num_entries;
       xattr_cookie = begin_cookie - 2;
-    } else
+    }
+  else
     {
       asked_num_entries = ((estimated_num_entries > 2) ? estimated_num_entries - 2 : 0);        /* Keep space for '.' and '..' */
       xattr_cookie = 0;
@@ -768,7 +773,8 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 
           memcpy(pres->res_readdir3.READDIR3res_u.resok.cookieverf,
                  cookie_verifier, sizeof(cookieverf3));
-        } else
+        }
+      else
         {
 #ifdef _DEBUG_MEMLEAKS
           /* For debugging memory leaks */
@@ -854,7 +860,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                   if (num_entries > delta + 1)  /* not 0 ??? */
                     RES_READDIR_REPLY.entries[delta].nextentry =
                         &(RES_READDIR_REPLY.entries[delta + 1]);
-                    else
+                  else
                     RES_READDIR_REPLY.entries[delta].nextentry = NULL;
 
                   delta += 1;
@@ -907,7 +913,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 
       if (eod_met)
         RES_READDIR_REPLY.eof = TRUE;
-        else
+      else
         RES_READDIR_REPLY.eof = FALSE;
 
       nfs_SetPostOpXAttrDir(pcontext,
@@ -1473,7 +1479,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
     {
       asked_num_entries = estimated_num_entries;
       xattr_cookie = begin_cookie - 2;
-    } else
+    }
+  else
     {
       asked_num_entries = ((estimated_num_entries > 2) ? estimated_num_entries - 2 : 0);        /* Keep space for '.' and '..' */
       xattr_cookie = 0;
@@ -1499,12 +1506,13 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
           nfs_SetPostOpXAttrDir(pcontext,
                                 pexport,
                                 NULL,
-                                &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                                  dir_attributes));
+                                &(pres->res_readdirplus3.READDIRPLUS3res_u.
+                                  resok.dir_attributes));
 
           memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
                  cookie_verifier, sizeof(cookieverf3));
-        } else
+        }
+      else
         {
 #ifdef _DEBUG_MEMLEAKS
           /* For debugging memory leaks */
@@ -1568,19 +1576,20 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
                   RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
 
-                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
-                      data_val = (char *)fh3_array[0];
+                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.
+                      data.data_val = (char *)fh3_array[0];
 
-                  memcpy((char *)RES_READDIRPLUS_REPLY.entries[0].name_handle.
-                         post_op_fh3_u.handle.data.data_val,
+                  memcpy((char *)RES_READDIRPLUS_REPLY.entries[0].
+                         name_handle.post_op_fh3_u.handle.data.data_val,
                          (char *)parg->arg_readdirplus3.dir.data.data_val,
                          parg->arg_readdirplus3.dir.data.data_len);
 
-                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
-                      data_len = sizeof(file_handle_v3_t);
+                  RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.
+                      data.data_len = sizeof(file_handle_v3_t);
                   pfile_handle =
-                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[0].name_handle.
-                                            post_op_fh3_u.handle.data.data_val);
+                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[0].
+                                            name_handle.post_op_fh3_u.handle.data.
+                                            data_val);
                   pfile_handle->xattr_pos = 1;
                   RES_READDIRPLUS_REPLY.entries[0].name_handle.handle_follows = TRUE;
 
@@ -1588,8 +1597,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   nfs_SetPostOpXAttrDir(pcontext,
                                         pexport,
                                         &dir_attr,
-                                        &(RES_READDIRPLUS_REPLY.entries[0].
-                                          name_attributes));
+                                        &(RES_READDIRPLUS_REPLY.
+                                          entries[0].name_attributes));
                   delta += 1;
                 }
 
@@ -1606,20 +1615,20 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
                   RES_READDIRPLUS_REPLY.entries[delta].cookie = 2;
 
-                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.
-                      data.data_val = (char *)fh3_array[delta];
+                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.
+                      handle.data.data_val = (char *)fh3_array[delta];
 
-                  memcpy((char *)RES_READDIRPLUS_REPLY.entries[delta].name_handle.
-                         post_op_fh3_u.handle.data.data_val,
+                  memcpy((char *)RES_READDIRPLUS_REPLY.entries[delta].
+                         name_handle.post_op_fh3_u.handle.data.data_val,
                          (char *)parg->arg_readdirplus3.dir.data.data_val,
                          parg->arg_readdirplus3.dir.data.data_len);
 
-                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.
-                      data.data_len = sizeof(file_handle_v3_t);
+                  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.
+                      handle.data.data_len = sizeof(file_handle_v3_t);
                   pfile_handle =
-                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[delta].
-                                            name_handle.post_op_fh3_u.handle.data.
-                                            data_val);
+                      (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.
+                                            entries[delta].name_handle.post_op_fh3_u.
+                                            handle.data.data_val);
                   pfile_handle->xattr_pos = 0;
                   RES_READDIRPLUS_REPLY.entries[delta].name_handle.handle_follows = TRUE;
 
@@ -1629,8 +1638,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   nfs_SetPostOpXAttrDir(pcontext,
                                         pexport,
                                         &dir_attr,
-                                        &(RES_READDIRPLUS_REPLY.entries[delta].
-                                          name_attributes));
+                                        &(RES_READDIRPLUS_REPLY.
+                                          entries[delta].name_attributes));
 
                   RES_READDIRPLUS_REPLY.entries[0].nextentry =
                       &(RES_READDIRPLUS_REPLY.entries[delta]);
@@ -1638,7 +1647,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   if (num_entries > delta + 1)  /* not 0 ??? */
                     RES_READDIRPLUS_REPLY.entries[delta].nextentry =
                         &(RES_READDIRPLUS_REPLY.entries[delta + 1]);
-                    else
+                  else
                     RES_READDIRPLUS_REPLY.entries[delta].nextentry = NULL;
 
                   delta += 1;
@@ -1663,8 +1672,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                        */
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
-                      Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                               entries);
+                      Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
+                               reply.entries);
                       pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
 
                       pres->res_readdirplus3.status = NFS3ERR_TOOSMALL;
@@ -1686,20 +1695,20 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               RES_READDIRPLUS_REPLY.entries[i].name_attributes.attributes_follow = FALSE;
               RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = FALSE;
 
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.
-                  data_val = (char *)fh3_array[i];
+              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.
+                  data.data_val = (char *)fh3_array[i];
 
               /* Set PostPoFh3 structure */
 
-              memcpy((char *)RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.
-                     handle.data.data_val,
+              memcpy((char *)RES_READDIRPLUS_REPLY.entries[i].name_handle.
+                     post_op_fh3_u.handle.data.data_val,
                      (char *)parg->arg_readdirplus3.dir.data.data_val,
                      parg->arg_readdirplus3.dir.data.data_len);
-              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.
-                  data_len = sizeof(file_handle_v3_t);
+              RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.
+                  data.data_len = sizeof(file_handle_v3_t);
               pfile_handle =
-                  (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[i].name_handle.
-                                        post_op_fh3_u.handle.data.data_val);
+                  (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[i].
+                                        name_handle.post_op_fh3_u.handle.data.data_val);
               pfile_handle->xattr_pos = xattrs_tab[i - delta].xattr_id + 2;
 
               RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = TRUE;
@@ -1719,14 +1728,14 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
       if (eod_met)
         RES_READDIRPLUS_REPLY.eof = TRUE;
-        else
+      else
         RES_READDIRPLUS_REPLY.eof = FALSE;
 
       nfs_SetPostOpXAttrDir(pcontext,
                             pexport,
                             &dir_attr,
-                            &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
-                              dir_attributes));
+                            &(pres->res_readdirplus3.READDIRPLUS3res_u.
+                              resok.dir_attributes));
       memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf, cookie_verifier,
              sizeof(cookieverf3));
 
@@ -1817,10 +1826,11 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
       /* should not have been called */
       pres->res_getattr3.status = NFS3ERR_INVAL;
       return NFS_REQ_OK;
-  } else if (pfile_handle->xattr_pos == 1)
+    }
+  else if (pfile_handle->xattr_pos == 1)
     nfs3_FSALattr_To_XattrDir(pexport, &attr,
                               &pres->res_getattr3.GETATTR3res_u.resok.obj_attributes);
-    else
+  else
     {
       fsal_status_t fsal_status;
       fsal_attrib_list_t xattrs;

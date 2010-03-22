@@ -216,7 +216,7 @@ int nfs_Read(nfs_arg_t * parg,
         case NFS_V3:
           if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
             pres->res_read3.status = NFS3ERR_ISDIR;
-            else
+          else
             pres->res_read3.status = NFS3ERR_INVAL;
           break;
         }
@@ -328,7 +328,8 @@ int nfs_Read(nfs_arg_t * parg,
       cache_status = CACHE_INODE_SUCCESS;
       read_size = 0;
       data = NULL;
-    } else
+    }
+  else
     {
       data = Mem_Alloc(size);
 

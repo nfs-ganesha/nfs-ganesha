@@ -323,8 +323,11 @@
 	- A patch from Sean Dague (japh@us.ibm.com) fixes a memleak in FSAL_POSIX
 	- A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements
           the NLMv4 protocol (NFS lock managemment for NFSv3)
-	- Two small patches from Frank Fitz were applied 
+	- Two small patches from Frank Filz were applied 
 	- A "indent" target has been add to the src/Makefile.am . The code was fully
           re-indented with this target (that uses the "indent" utility).
 	- C-format style template for emacs provided by Sean Dague (japh@us.ibm.com) 
+	- Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE
+	- Option "-nce" added to 'make indent'
+	- Bug fix : It was impossible to mount an exported entry's sub directory
 

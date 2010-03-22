@@ -228,7 +228,8 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
   if (dir_name == NULL || strlen(dir_name) == 0)
     {
       cache_status = CACHE_INODE_INVALID_ARGUMENT;      /* for lack of better... */
-    } else
+    }
+  else
     {
       if ((cache_status = cache_inode_error_convert(FSAL_str2name(dir_name,
                                                                   FSAL_MAX_NAME_LEN,

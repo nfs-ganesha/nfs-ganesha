@@ -304,7 +304,8 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
 
       status = IP_NAME_SUCCESS;
-    } else
+    }
+  else
     {
       status = IP_NAME_NOT_FOUND;
     }
@@ -336,7 +337,8 @@ int nfs_ip_name_remove(int ipaddr)
     {
       pnfs_ip_name = (nfs_ip_name_t *) old_value.pdata;
       Mem_Free((void *)pnfs_ip_name);
-    } else
+    }
+  else
     {
       status = IP_NAME_NOT_FOUND;
     }
@@ -399,7 +401,8 @@ int nfs_ip_name_populate(char *path)
     {
       DisplayLog("Can't get label %s in file %s", CONF_LABEL_IP_NAME_HOSTS, path);
       return IP_NAME_NOT_FOUND;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
       return IP_NAME_NOT_FOUND;

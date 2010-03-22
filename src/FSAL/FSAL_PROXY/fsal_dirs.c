@@ -206,8 +206,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       tabentry4[i].attrs.attrmask.bitmap4_val = tabentry4bitmap[i];
       tabentry4[i].attrs.attrmask.bitmap4_len = 2;
     }
-  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-      READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
+  resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+      opreaddir.READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
 
   /* >> Call your filesystem lookup function here << */
   if (fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
@@ -233,8 +233,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
 
   /* Set the reply structure */
-  if (resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-      READDIR4res_u.resok4.reply.eof == TRUE)
+  if (resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+      opreaddir.READDIR4res_u.resok4.reply.eof == TRUE)
     {
       *end_of_dir = TRUE;
     }
@@ -249,8 +249,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
 
   /* Don't forget setting output vars : end_position, nb_entries, end_of_dir  */
   for (piter_entry =
-       resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-       READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
+       resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.
+       opreaddir.READDIR4res_u.resok4.reply.entries; piter_entry != NULL;
        piter_entry = piter_entry->nextentry)
     {
       if (proxy_Fattr_To_FSAL_attr(&pdirent[cpt].attributes,

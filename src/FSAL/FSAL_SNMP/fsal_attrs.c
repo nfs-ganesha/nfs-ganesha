@@ -90,13 +90,14 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
       /* retrieve the associated MIB node (can be null) */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);
 
-    } /* endif not root  */
+    }                           /* endif not root  */
   else if (filehandle->object_type_reminder != FSAL_NODETYPE_ROOT
-             && filehandle->oid_len != 0)
+           && filehandle->oid_len != 0)
     {
       /* retrieve the associated MIB node (can be null) */
       mib_node = GetMIBNode(p_context, filehandle, TRUE);
-    } else                      /* root  */
+    }
+  else                          /* root  */
     mib_node = NULL;
 
   /* @todo check no such object, etc... */

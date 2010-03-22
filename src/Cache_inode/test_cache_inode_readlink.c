@@ -209,7 +209,8 @@ main(int argc, char *argv[])
     {
       DisplayErrorLog(ERR_SYS, ERR_GETHOSTNAME, errno);
       exit(1);
-    } else
+    }
+  else
     SetNameHost(localmachine);
 
   InitDebug(NIV_FULL_DEBUG);
@@ -230,8 +231,8 @@ main(int argc, char *argv[])
 
   if (FSAL_IS_ERROR(status = FSAL_str2path(configfile,
                                            strlen(configfile) + 1,
-                                           &(init_param.fs_specific_info.
-                                             definition_file))))
+                                           &(init_param.
+                                             fs_specific_info.definition_file))))
     {
       DisplayErrorJd(log_desc_fsal, ERR_FSAL, status.major, status.minor);
     }
@@ -318,7 +319,8 @@ main(int argc, char *argv[])
   if ((ht = cache_inode_init(cache_param, &cache_status)) == NULL)
     {
       DisplayLogJd(log_desc_cache, "Error %d while init hash ", cache_status);
-    } else
+    }
+  else
     DisplayLogJd(log_desc_cache, "Hash Table address = %p", ht);
 
   /* We need a cache_client to acces the cache */

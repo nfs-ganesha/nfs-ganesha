@@ -183,7 +183,8 @@ int uid2name(char *name, uid_t * puid)
   if (unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
-    } else
+    }
+  else
     {
       if (!nfsidmap_set_conf())
         return 0;
@@ -211,7 +212,8 @@ int uid2name(char *name, uid_t * puid)
   if (unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
-    } else
+    }
+  else
     {
 #ifdef _SOLARIS
       if (getpwuid_r(*puid, &p, buff, MAXPATHLEN) != 0)
@@ -264,7 +266,8 @@ int name2uid(char *name, uid_t * puid)
   if (uidmap_get(name, (unsigned long *)&uid) == ID_MAPPER_SUCCESS)
     {
       *puid = uid;
-    } else
+    }
+  else
     {
 #ifdef _USE_NFSIDMAP
       if (!nfsidmap_set_conf())
@@ -300,7 +303,8 @@ int name2uid(char *name, uid_t * puid)
         {
           *puid = -1;
           return 0;
-        } else
+        }
+      else
         {
           *puid = passwd.pw_uid;
 #ifdef _USE_GSSRPC
@@ -339,7 +343,8 @@ int gid2name(char *name, gid_t * pgid)
   if (gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
-    } else
+    }
+  else
     {
       if (!nfsidmap_set_conf())
         return 0;
@@ -357,7 +362,8 @@ int gid2name(char *name, gid_t * pgid)
   if (gnamemap_get(*pgid, name) == ID_MAPPER_SUCCESS)
     {
       return 1;
-    } else
+    }
+  else
     {
 #ifdef _SOLARIS
       if (getgrgid_r(*pgid, &g, buff, MAXPATHLEN) != 0)
@@ -398,7 +404,8 @@ int name2gid(char *name, gid_t * pgid)
   if (gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
     {
       *pgid = gid;
-    } else
+    }
+  else
     {
 #ifdef _USE_NFSIDMAP
       if (!nfsidmap_set_conf())
@@ -420,7 +427,8 @@ int name2gid(char *name, gid_t * pgid)
         {
           *pgid = -1;
           return 0;
-        } else
+        }
+      else
         {
           *pgid = g.gr_gid;
 
@@ -518,7 +526,7 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
 
   if ((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
     return -1;
-    else
+  else
     utf8str->utf8string_len = len;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -561,7 +569,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
 
   if ((utf8str->utf8string_val = (char *)Mem_Alloc(len)) == NULL)
     return -1;
-    else
+  else
     utf8str->utf8string_len = len;
 
 #ifdef _DEBUG_MEMLEAKS

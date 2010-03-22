@@ -110,7 +110,8 @@ fsal_status_t FSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
       rc = p_fs_ops->rmdir(child_path);
       ReleaseTokenFSCall();
 
-    } else
+    }
+  else
     {
       /* proceed unlink call */
 

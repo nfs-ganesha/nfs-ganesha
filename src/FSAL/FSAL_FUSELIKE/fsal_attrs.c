@@ -81,7 +81,8 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * filehandle, /* IN */
 
       if (rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_getattrs);
-    } else
+    }
+  else
     {
       /* return void attributes...
        * Actually, should never occur since getattr
@@ -364,7 +365,8 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * filehandle, /* IN */
 #endif
           if (rc)
             Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_setattrs);
-      } else if (p_fs_ops->utime)
+        }
+      else if (p_fs_ops->utime)
         {
           /* utime is provided */
           struct utimbuf utb;

@@ -232,7 +232,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       if (cache_status == CACHE_INODE_NOT_FOUND)
         res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
-        else
+      else
         res_LOCKU4.status = nfs4_Errno(cache_status);
 
       return res_LOCKU4.status;

@@ -103,7 +103,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
             }
         }
 
-    } else                      /* this is a real lookup(parent, name)  */
+    }
+  else                          /* this is a real lookup(parent, name)  */
     {
 
       /* the filename should not be null */

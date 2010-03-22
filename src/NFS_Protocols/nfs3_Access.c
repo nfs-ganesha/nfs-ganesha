@@ -178,7 +178,8 @@ int nfs3_Access(nfs_arg_t * parg,
       if (nfs_RetryableError(cache_status))
         {
           return NFS_REQ_DROP;
-        } else
+        }
+      else
         {
           pres->res_access3.status = nfs3_Errno(cache_status);
           return NFS_REQ_OK;
@@ -200,7 +201,8 @@ int nfs3_Access(nfs_arg_t * parg,
     {
       if (parg->arg_access3.access & ACCESS3_EXECUTE)
         access_mode |= FSAL_X_OK;
-  } else if (parg->arg_access3.access & ACCESS3_LOOKUP)
+    }
+  else if (parg->arg_access3.access & ACCESS3_LOOKUP)
     access_mode |= X_OK;
 
   /* Perform the 'access' call */
@@ -212,7 +214,7 @@ int nfs3_Access(nfs_arg_t * parg,
 
       if (filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
         pres->res_access3.ACCESS3res_u.resok.access = parg->arg_access3.access;
-        else
+      else
         pres->res_access3.ACCESS3res_u.resok.access =
             (parg->arg_access3.access & ~ACCESS3_DELETE);
 
@@ -250,7 +252,8 @@ int nfs3_Access(nfs_arg_t * parg,
                                  ht,
                                  pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
-        } else
+        }
+      else
         {
           if (cache_inode_access(pentry,
                                  FSAL_X_OK,

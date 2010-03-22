@@ -97,7 +97,8 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
       /* TODO : remove entry from namespace if entry is stale */
       if (rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_access);
-  } else if (p_fs_ops->getattr)
+    }
+  else if (p_fs_ops->getattr)
     {
       /* we emulate 'access' call using getattr + fsal_test_access
        * from attributes value (mode, owner, group, ...)
@@ -227,7 +228,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-        else
+      else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
@@ -253,7 +254,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
       if (missing_access == 0)
         Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-        else
+      else
         Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
     }
@@ -273,7 +274,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   if (missing_access == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
-    else
+  else
     Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_test_access);
 
 }

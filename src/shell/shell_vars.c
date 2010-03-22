@@ -177,7 +177,7 @@ void print_varlist(FILE * output, int is_dlen)
     {
       if (is_dlen)
         fprintf(output, "\t%s (%d Bytes)\n", current->var_name, current->datalen - 1);
-        else
+      else
         fprintf(output, "\t%s\n", current->var_name);
       current = current->next;
     }
@@ -247,7 +247,8 @@ static void del_var(shell_variable_t * var)
   if (var->prev)
     {
       var->prev->next = var->next;
-    } else
+    }
+  else
     {
       SetVarTable(var->next);
     }
@@ -308,7 +309,8 @@ char *get_var_value(char *varname)
   if (var = find_var(varname))
     {
       return var->var_value;
-    } else
+    }
+  else
     {
       return NULL;
     }

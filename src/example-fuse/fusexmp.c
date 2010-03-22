@@ -98,9 +98,10 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
       res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
       if (res >= 0)
         res = close(res);
-  } else if (S_ISFIFO(mode))
+    }
+  else if (S_ISFIFO(mode))
     res = mkfifo(path, mode);
-    else
+  else
     res = mknod(path, mode, rdev);
   if (res == -1)
     return -errno;

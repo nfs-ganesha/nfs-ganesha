@@ -239,9 +239,9 @@ static int cmp_peers(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
       || (p_peer1->parent.dev > p_peer2->parent.dev))
     return 1;
   else if ((p_peer1->parent.inum < p_peer2->parent.inum)
-             || (p_peer1->parent.dev < p_peer2->parent.dev))
+           || (p_peer1->parent.dev < p_peer2->parent.dev))
     return -1;
-    else                        /* same parent */
+  else                          /* same parent */
     return strncmp(p_peer1->name, p_peer2->name, FSAL_MAX_NAME_LEN);
 
 }
@@ -275,7 +275,7 @@ static int cmp_inodes(hash_buffer_t * p_key1, hash_buffer_t * p_key2)
     return 1;
   else if ((p_ino1->inum < p_ino2->inum) || (p_ino1->dev < p_ino2->dev))
     return -1;
-    else
+  else
     return 0;
 }
 
@@ -310,7 +310,7 @@ static int print_fsnode(hash_buffer_t * p_val, char *outbuff)
                    (unsigned long int)p_node->parent_list->parent.dev,
                    (unsigned long int)p_node->parent_list->parent.inum,
                    p_node->parent_list->name);
-    else
+  else
     return sprintf(outbuff,
                    "device:%lX inode:%lu (gen:%u), linkcount:%u, children:%u (no parent)",
                    (unsigned long int)p_node->inode.dev,
@@ -351,7 +351,7 @@ lookup_peer_t *h_insert_new_lookup(ino_t parent_inode,
 
   if (overwrite)
     flag = HASHTABLE_SET_HOW_SET_OVERWRITE;
-    else
+  else
     flag = HASHTABLE_SET_HOW_SET_NO_OVERWRITE;
 
   if (HashTable_Test_And_Set(lookup_hash, &buffkey, &buffval, flag) != HASHTABLE_SUCCESS)
@@ -393,7 +393,7 @@ fsnode_t *h_get_lookup(ino_t parent_inode, dev_t parent_dev, char *name, int *p_
 
   if (rc == HASHTABLE_SUCCESS)
     return (fsnode_t *) (buffval.pdata);
-    else
+  else
     return NULL;
 }                               /* h_get_lookup */
 
@@ -457,7 +457,7 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
 
               if (p_lpeer_last)
                 p_lpeer_last->p_next = p_lpeer->p_next;
-                else
+              else
                 p_node->parent_list = p_lpeer->p_next;
 
               /* free it */
@@ -474,7 +474,8 @@ fsnode_t *h_del_lookup(ino_t parent_inode, dev_t parent_dev, unsigned int parent
 
       /* return the pointer node */
       return p_node;
-    } else
+    }
+  else
     return NULL;
 
 }                               /* h_del_lookup */
@@ -511,7 +512,7 @@ fsnode_t *h_insert_new_node(ino_t inode, dev_t device, unsigned int gen, int ove
 
   if (overwrite)
     flag = HASHTABLE_SET_HOW_SET_OVERWRITE;
-    else
+  else
     flag = HASHTABLE_SET_HOW_SET_NO_OVERWRITE;
 
   if (HashTable_Test_And_Set(nodes_hash, &buffkey, &buffval, flag) != HASHTABLE_SUCCESS)
@@ -548,7 +549,7 @@ fsnode_t *h_get_node(ino_t inode, dev_t device, int *p_rc)
 
   if (rc == HASHTABLE_SUCCESS)
     return (fsnode_t *) (buffval.pdata);
-    else
+  else
     return NULL;
 }                               /* h_get_node */
 
@@ -673,7 +674,8 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
             /* increment parent's refcount */
             p_parent->n_children++;
 
-        } else if (rc == HASHTABLE_SUCCESS)
+          }
+        else if (rc == HASHTABLE_SUCCESS)
           {
 
             if ((p_node_exist->inode.inum == entry_ino)
@@ -682,7 +684,8 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
                 /* entry already exist: nothing to do, return last generation */
                 *p_new_gen = p_node_exist->inode.generation;
                 return 0;
-              } else
+              }
+            else
               {
                 /* an incompatible entry was found ! */
 
@@ -694,7 +697,8 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
                      p_node_exist->inode.inum, parent_dev, parent_ino, name, entry_ino);
                 return EEXIST;
               }
-          } else                /* other error */
+          }
+        else                    /* other error */
           {
             return EFAULT;
           }
@@ -770,7 +774,8 @@ static int NamespaceRemove_nl(ino_t parent_ino, dev_t parent_dev, unsigned int p
     {
       /* consider its OK */
       return 0;
-  } else if (!p_node)
+    }
+  else if (!p_node)
     {
       return EFAULT;
     }
@@ -959,9 +964,11 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
                      (unsigned long)entry);
 #endif
               return ENOENT;
-            } else
+            }
+          else
             return EFAULT;
-      } else if (p_node->inode.generation != curr_inode.generation)
+        }
+      else if (p_node->inode.generation != curr_inode.generation)
         {
           V_r(&ns_lock);
           return ESTALE;
@@ -976,12 +983,14 @@ int NamespacePath(ino_t entry, dev_t dev, unsigned int gen, char *path)
 
           snprintf(path, FSAL_MAX_PATH_LEN, "/%s", tmp_path);
           break;
-      } else if (path[0] == '\0')
+        }
+      else if (path[0] == '\0')
         {
           /* nothing in path for the moment, just copy entry name in it */
           strncpy(path, p_node->parent_list->name, FSAL_MAX_NAME_LEN);
           curr_inode = p_node->parent_list->parent;
-        } else
+        }
+      else
         {
           /* this is a parent dir, path is now <dirname>/<subpath> */
           snprintf(path, FSAL_MAX_PATH_LEN, "%s/%s", p_node->parent_list->name, tmp_path);

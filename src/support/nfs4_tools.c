@@ -176,6 +176,6 @@ int nfs4_is_lease_expired(cache_entry_t * pentry)
   /* Check is lease is still valid */
   if (time(NULL) - nfs_clientid.last_renew > (int)nfs_param.nfsv4_param.lease_lifetime)
     return 1;
-    else
+  else
     return 0;
 }                               /* nfs4_is_lease_expired */

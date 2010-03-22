@@ -179,7 +179,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
         bythread_stat->func_stats.nb_success[function_index]++;
       else if (fsal_is_retryable(status))
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
-        else
+      else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
     }
 
@@ -349,7 +349,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                         "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
                         fsal_info->max_fs_calls);
 
-    } else
+    }
+  else
     {
       DisplayLogJdLevel(fsal_log, NIV_DEBUG,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");

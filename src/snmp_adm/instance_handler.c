@@ -85,7 +85,7 @@ int instance_string_handler(netsnmp_mib_handler * handler,
       len = strlen((char *)requests->requestvb->val.string);
       if (len > SNMP_ADM_MAX_STR)
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
-        else
+      else
         {
           strncpy(handler->myvoid, (char *)(requests->requestvb->val.string), len);
           ((char *)(handler->myvoid))[len] = '\0';      /* just to be sure */
@@ -154,7 +154,7 @@ int instance_real_handler(netsnmp_mib_handler * handler,
       if (!err)
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                  (u_char *) str, strlen(str));
-        else
+      else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
       break;
 
@@ -170,7 +170,7 @@ int instance_real_handler(netsnmp_mib_handler * handler,
       err = str2real(&tmp_it, (char *)(requests->requestvb->val.string));
       if (!err)
         *it = tmp_it;
-        else
+      else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
 
       break;
@@ -199,7 +199,7 @@ int instance_bigint_handler(netsnmp_mib_handler * handler,
       if (!err)
         snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                  (u_char *) str, strlen(str));
-        else
+      else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
       break;
 
@@ -215,7 +215,7 @@ int instance_bigint_handler(netsnmp_mib_handler * handler,
       err = str2big(&tmp_it, (char *)(requests->requestvb->val.string));
       if (!err)
         *it = tmp_it;
-        else
+      else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
 
       break;
@@ -360,7 +360,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           if (!err)
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                      (u_char *) str, strlen(str));
-            else
+          else
             netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
           break;
         case SNMP_ADM_BIGINT:
@@ -368,7 +368,7 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
           if (!err)
             snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
                                      (u_char *) str, strlen(str));
-            else
+          else
             netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
           break;
         case SNMP_ADM_TIMETICKS:
@@ -416,7 +416,8 @@ int instance_get_set_handler(netsnmp_mib_handler * handler,
 
           if (err_fct)
             netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
-        } else
+        }
+      else
         netsnmp_request_set_error(requests, SNMP_ERR_BADVALUE);
       break;
     }
@@ -436,7 +437,7 @@ static void *launch_proc(void *arg)
 
   if (err)
     pinfo->trigger = SNMP_ADM_ERROR;
-    else
+  else
     pinfo->trigger = SNMP_ADM_DONE;
 
   return NULL;

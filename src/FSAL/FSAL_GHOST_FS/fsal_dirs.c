@@ -162,7 +162,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
           (*end_of_dir) = TRUE;
           end_position->cookie = last_cookie;
           Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
-      } else if (rc != 0)
+        }
+      else if (rc != 0)
         {
           Return(ghost2fsal_error(rc), rc, INDEX_FSAL_readdir);
         }

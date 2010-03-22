@@ -141,7 +141,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
       DisplayLog("BUDDY LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_BUDDY);
       return BUDDY_ERR_ENOENT;
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("BUDDY LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_BUDDY);
@@ -181,7 +182,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->memory_area_size = page_size;
 
-      } else if (!STRCMP(key_name, "Enable_OnDemand_Alloc"))
+        }
+      else if (!STRCMP(key_name, "Enable_OnDemand_Alloc"))
         {
           int bool;
 
@@ -197,7 +199,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->on_demand_alloc = bool;
 
-      } else if (!STRCMP(key_name, "Enable_Extra_Alloc"))
+        }
+      else if (!STRCMP(key_name, "Enable_Extra_Alloc"))
         {
           int bool;
 
@@ -213,7 +216,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->extra_alloc = bool;
 
-      } else if (!STRCMP(key_name, "Enable_GC"))
+        }
+      else if (!STRCMP(key_name, "Enable_GC"))
         {
           int bool;
 
@@ -229,7 +233,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->free_areas = bool;
 
-      } else if (!STRCMP(key_name, "GC_Keep_Factor"))
+        }
+      else if (!STRCMP(key_name, "GC_Keep_Factor"))
         {
 
           int keep_factor = s_read_int(key_value);
@@ -244,7 +249,8 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->keep_factor = keep_factor;
 
-      } else if (!STRCMP(key_name, "GC_Keep_Min"))
+        }
+      else if (!STRCMP(key_name, "GC_Keep_Min"))
         {
 
           int keep_min = s_read_int(key_value);
@@ -259,12 +265,14 @@ int Buddy_load_parameter_from_conf(config_file_t in_config,
 
           out_parameter->keep_minimum = keep_min;
 
-      } else if (!STRCMP(key_name, "LogFile"))
+        }
+      else if (!STRCMP(key_name, "LogFile"))
         {
 
           strncpy(out_parameter->buddy_error_file, key_value, 256);
 
-        } else
+        }
+      else
         {
           DisplayLog
               ("BUDDY LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",

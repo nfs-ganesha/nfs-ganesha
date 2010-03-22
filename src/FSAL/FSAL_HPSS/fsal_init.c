@@ -164,7 +164,8 @@ static int HPSSFSAL_Init(fs_specific_initinfo_t * hpss_init_info)
     {
       FSAL_auth_mech = hpss_init_info->hpss_config.AuthnMech;
       hpss_config.AuthnMech = hpss_init_info->hpss_config.AuthnMech;
-    } else
+    }
+  else
     {
       FSAL_auth_mech = hpss_config.AuthnMech;
     }
@@ -361,8 +362,8 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
     {
     case FSAL_INIT_FORCE_VALUE:
       /* force the value in any case */
-      fsal_internal_SetReturnInconsistentDirent(init_info->fs_specific_info.
-                                                ReturnInconsistentDirent);
+      fsal_internal_SetReturnInconsistentDirent(init_info->
+                                                fs_specific_info.ReturnInconsistentDirent);
       break;
       /* In the other cases, we keep the default value. */
     }

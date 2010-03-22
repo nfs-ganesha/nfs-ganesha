@@ -221,7 +221,8 @@ u_long vers;
   if (prev == NULL)
     {
       svc_head = s->sc_next;
-    } else
+    }
+  else
     {
       prev->sc_next = s->sc_next;
     }

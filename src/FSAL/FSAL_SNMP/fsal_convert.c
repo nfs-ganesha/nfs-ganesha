@@ -185,7 +185,7 @@ int snmp_object2name(netsnmp_variable_list * p_in_var, struct tree *p_in_node,
   else if (p_handle && p_handle->oid_len > 0)
     snprintf(tmp_name, FSAL_MAX_NAME_LEN, "%lu",
              p_handle->oid_tab[p_handle->oid_len - 1]);
-    else
+  else
     return ERR_FSAL_SERVERFAULT;
 
   st = FSAL_str2name(tmp_name, FSAL_MAX_NAME_LEN, p_out_name);
@@ -237,7 +237,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
     case ASN_UINTEGER:
       if (p_in_var->val.integer)
         written = snprintf(p_out_string, *in_out_len, "%ld\n", *p_in_var->val.integer);
-        else
+      else
         written = snprintf(p_out_string, *in_out_len, "(null int pointer)\n");
       break;
 
@@ -245,7 +245,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if (p_in_var->val.string)
         written = snprintf(p_out_string, *in_out_len, "%.*s\n",
                            p_in_var->val_len, p_in_var->val.string);
-        else
+      else
         written = snprintf(p_out_string, *in_out_len, "(null string pointer)\n");
       break;
 
@@ -253,7 +253,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if (p_in_var->val.objid)
         snprint_objid(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.objid,
                       p_in_var->val_len / sizeof(oid));
-        else
+      else
         strcpy(tmp_buf, "(null oid pointer)");
 
       written = snprintf(p_out_string, *in_out_len, "%s\n", tmp_buf);
@@ -265,7 +265,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
         written = snprintf(p_out_string, *in_out_len, "%d.%d.%d.%d\n",
                            (p_in_var->val.string)[0], (p_in_var->val.string)[1],
                            (p_in_var->val.string)[2], (p_in_var->val.string)[3]);
-        else
+      else
         written = snprintf(p_out_string, *in_out_len, "(null IP address pointer)\n");
       break;
 
@@ -273,7 +273,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if (p_in_var->val.integer)
         /* print the exact field value (then the humain readeable translation)  */
         Timeticks2Str(*p_in_var->val.integer, tmp_buf, FSALSNMP_MAX_FILESIZE);
-        else
+      else
         strcpy(tmp_buf, "(null timeticks pointer)");
 
       written =
@@ -285,7 +285,7 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if (p_in_var->val.string)
         snprintmem(tmp_buf, FSALSNMP_MAX_FILESIZE, p_in_var->val.string,
                    p_in_var->val_len);
-        else
+      else
         strcpy(tmp_buf, "(null opaque pointer)");
 
       written = snprintf(p_out_string, *in_out_len, "%s\n", tmp_buf);
@@ -295,17 +295,19 @@ int snmp_object2str(netsnmp_variable_list * p_in_var, char *p_out_string,
       if (p_in_var->val.counter64)
         {
           int64 =
-              (((unsigned long long)p_in_var->val.counter64->
-                high) << 32) | (unsigned long long)p_in_var->val.counter64->low;
+              (((unsigned long long)p_in_var->val.
+                counter64->high) << 32) | (unsigned long long)p_in_var->val.counter64->
+              low;
           written = snprintf(p_out_string, *in_out_len, "%llu\n", int64);
-        } else
+        }
+      else
         written = snprintf(p_out_string, *in_out_len, "(null counter64 pointer)\n");
       break;
 
     case ASN_OPAQUE_FLOAT:
       if (p_in_var->val.floatVal)
         written = snprintf(p_out_string, *in_out_len, "%f\n", *p_in_var->val.floatVal);
-        else
+      else
         written = snprintf(p_out_string, *in_out_len, "(null opaque float pointer)\n");
       break;
 
@@ -354,7 +356,8 @@ fsal_accessmode_t snmp_object2access_mode(nodetype_t obj_type, struct tree * p_i
     {
       mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
           | FSAL_MODE_XUSR | FSAL_MODE_XGRP | FSAL_MODE_XOTH;
-  } else if (p_in_node)
+    }
+  else if (p_in_node)
     {
       switch (p_in_node->access)
         {
@@ -378,7 +381,8 @@ fsal_accessmode_t snmp_object2access_mode(nodetype_t obj_type, struct tree * p_i
           DisplayLogJdLevel(fsal_log, NIV_MAJOR, "Warning: unsupported access mode %#X",
                             p_in_node->access);
         }
-    } else
+    }
+  else
     {
       /* set a default mode for files */
       mode = FSAL_MODE_RUSR | FSAL_MODE_RGRP | FSAL_MODE_ROTH
@@ -492,7 +496,8 @@ int snmp2fsal_attributes(fsal_handle_t * p_handle, netsnmp_variable_list * p_var
 
           p_fsalattr_out->filesize = buf_sz;
           p_fsalattr_out->spaceused = buf_sz;
-        } else                  /* this is a directory */
+        }
+      else                      /* this is a directory */
         {
           p_fsalattr_out->asked_attributes |= FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
 

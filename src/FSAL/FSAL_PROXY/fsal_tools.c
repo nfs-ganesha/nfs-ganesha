@@ -375,7 +375,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
       else if (rc == 0)
         printf("File id=%llu : HandleMap_GetFH returns HANDLEMAP_SUCCESS\n",
                map_hdl.object_id);
-        else
+      else
         printf("File id=%llu : HandleMap_GetFH returns error %d\n", map_hdl.object_id,
                rc);
 #endif
@@ -579,7 +579,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FSAL);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FSAL);
@@ -616,12 +617,14 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
               ReturnCode(ERR_FSAL_INVAL, -1);
             }
 
-      } else if (!STRCMP(key_name, "LogFile"))
+        }
+      else if (!STRCMP(key_name, "LogFile"))
         {
 
           LogFile = key_value;
 
-      } else if (!STRCMP(key_name, "Max_FS_calls"))
+        }
+      else if (!STRCMP(key_name, "Max_FS_calls"))
         {
 
           int maxcalls = s_read_int(key_value);
@@ -636,7 +639,8 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
 
           out_parameter->fsal_info.max_fs_calls = (unsigned int)maxcalls;
 
-        } else
+        }
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -659,7 +663,7 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
       if (DebugLevel == -1)
         AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
                        V_FILE, log_stream, NIV_CRIT, SUP);
-        else
+      else
         AddLogStreamJd(&(out_parameter->fsal_info.log_outputs),
                        V_FILE, log_stream, DebugLevel, SUP);
 
@@ -688,7 +692,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_COMMON);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_COMMON);
@@ -744,7 +749,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, link_support,
                              FSAL_INIT_MAX_LIMIT, bool);
 
-      } else if (!STRCMP(key_name, "symlink_support"))
+        }
+      else if (!STRCMP(key_name, "symlink_support"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -761,7 +767,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
            */
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, symlink_support,
                              FSAL_INIT_MAX_LIMIT, bool);
-      } else if (!STRCMP(key_name, "cansettime"))
+        }
+      else if (!STRCMP(key_name, "cansettime"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -779,7 +786,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, cansettime,
                              FSAL_INIT_MAX_LIMIT, bool);
 
-      } else if (!STRCMP(key_name, "maxread"))
+        }
+      else if (!STRCMP(key_name, "maxread"))
         {
           fsal_u64_t size;
 
@@ -794,7 +802,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, maxread,
                              FSAL_INIT_FORCE_VALUE, size);
 
-      } else if (!STRCMP(key_name, "maxwrite"))
+        }
+      else if (!STRCMP(key_name, "maxwrite"))
         {
           fsal_u64_t size;
 
@@ -809,7 +818,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, maxwrite,
                              FSAL_INIT_FORCE_VALUE, size);
 
-      } else if (!STRCMP(key_name, "umask"))
+        }
+      else if (!STRCMP(key_name, "umask"))
         {
           int mode = s_read_octal(key_value);
 
@@ -824,7 +834,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, umask,
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
-      } else if (!STRCMP(key_name, "auth_xdev_export"))
+        }
+      else if (!STRCMP(key_name, "auth_xdev_export"))
         {
           int bool = StrToBoolean(key_value);
 
@@ -838,7 +849,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, auth_exportpath_xdev,
                              FSAL_INIT_FORCE_VALUE, bool);
-      } else if (!STRCMP(key_name, "xattr_access_rights"))
+        }
+      else if (!STRCMP(key_name, "xattr_access_rights"))
         {
           int mode = s_read_octal(key_value);
 
@@ -853,7 +865,8 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
           FSAL_SET_INIT_INFO(out_parameter->fs_common_info, xattr_access_rights,
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
-        } else
+        }
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
@@ -887,7 +900,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
       DisplayLog("FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
                  CONF_LABEL_FS_SPECIFIC);
       ReturnCode(ERR_FSAL_NOENT, 0);
-  } else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
+    }
+  else if (config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       DisplayLog("FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
                  CONF_LABEL_FS_SPECIFIC);
@@ -921,7 +935,8 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             {
               /* Address begin with a digit, it is a address in the dotted form, translate it */
               out_parameter->fs_specific_info.srv_addr = inet_addr(key_value);
-            } else
+            }
+          else
             {
               /* This is a serveur name that is to be resolved. Use gethostbyname */
               if ((hp = gethostbyname(key_value)) == NULL)
@@ -932,20 +947,25 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                 }
               memcpy(&out_parameter->fs_specific_info.srv_addr, hp->h_addr, hp->h_length);
             }
-      } else if (!STRCMP(key_name, "NFS_Port"))
+        }
+      else if (!STRCMP(key_name, "NFS_Port"))
         {
           out_parameter->fs_specific_info.srv_port =
               htons((unsigned short)atoi(key_value));
-      } else if (!STRCMP(key_name, "NFS_Service"))
+        }
+      else if (!STRCMP(key_name, "NFS_Service"))
         {
           out_parameter->fs_specific_info.srv_prognum = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "NFS_SendSize"))
+        }
+      else if (!STRCMP(key_name, "NFS_SendSize"))
         {
           out_parameter->fs_specific_info.srv_sendsize = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "NFS_RecvSize"))
+        }
+      else if (!STRCMP(key_name, "NFS_RecvSize"))
         {
           out_parameter->fs_specific_info.srv_recvsize = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "Retry_SleepTime"))
+        }
+      else if (!STRCMP(key_name, "Retry_SleepTime"))
         {
           out_parameter->fs_specific_info.retry_sleeptime = (unsigned int)atoi(key_value);
         }
@@ -966,19 +986,24 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
       else if (!STRCMP(key_name, "Active_krb5"))
         {
           out_parameter->fs_specific_info.active_krb5 = StrToBoolean(key_value);
-      } else if (!STRCMP(key_name, "Local_PrincipalName"))
+        }
+      else if (!STRCMP(key_name, "Local_PrincipalName"))
         {
           strncpy(out_parameter->fs_specific_info.local_principal, key_value, MAXNAMLEN);
-      } else if (!STRCMP(key_name, "Remote_PrincipalName"))
+        }
+      else if (!STRCMP(key_name, "Remote_PrincipalName"))
         {
           strncpy(out_parameter->fs_specific_info.remote_principal, key_value, MAXNAMLEN);
-      } else if (!STRCMP(key_name, "KeytabPath"))
+        }
+      else if (!STRCMP(key_name, "KeytabPath"))
         {
           strncpy(out_parameter->fs_specific_info.keytab, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "Credential_LifeTime"))
+        }
+      else if (!STRCMP(key_name, "Credential_LifeTime"))
         {
           out_parameter->fs_specific_info.cred_lifetime = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "Sec_Type"))
+        }
+      else if (!STRCMP(key_name, "Sec_Type"))
         {
 #ifdef _USE_GSSRPC
           if (!STRCMP(key_value, "krb5"))
@@ -987,14 +1012,15 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
             out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_INTEGRITY;
           else if (!STRCMP(key_value, "krb5p"))
             out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_PRIVACY;
-            else
+          else
             {
               DisplayLog("FSAL LOAD PARAMETER: bad value %s for parameter %s", key_value,
                          key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 #endif
-      } else if (!STRCMP(key_name, "Open_by_FH_Working_Dir"))
+        }
+      else if (!STRCMP(key_name, "Open_by_FH_Working_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.openfh_wd, key_value, MAXPATHLEN);
         }
@@ -1010,30 +1036,38 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                    key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-      } else if (!STRCMP(key_name, "HandleMap_DB_Dir"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_DB_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.hdlmap_dbdir, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "HandleMap_Tmp_Dir"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Tmp_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.hdlmap_tmpdir, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "HandleMap_DB_Count"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_DB_Count"))
         {
           out_parameter->fs_specific_info.hdlmap_dbcount = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_HashTable_Size"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_HashTable_Size"))
         {
           out_parameter->fs_specific_info.hdlmap_hashsize = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
         {
           out_parameter->fs_specific_info.hdlmap_nb_entry_prealloc =
               (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
         {
           out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc =
               (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "Open_by_FH_Working_Dir"))
+        }
+      else if (!STRCMP(key_name, "Open_by_FH_Working_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.openfh_wd, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "Enable_Handle_Mapping"))
+        }
+      else if (!STRCMP(key_name, "Enable_Handle_Mapping"))
         {
           out_parameter->fs_specific_info.enable_handle_mapping = StrToBoolean(key_value);
 
@@ -1044,29 +1078,35 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                    key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-      } else if (!STRCMP(key_name, "HandleMap_DB_Dir"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_DB_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.hdlmap_dbdir, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "HandleMap_Tmp_Dir"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Tmp_Dir"))
         {
           strncpy(out_parameter->fs_specific_info.hdlmap_tmpdir, key_value, MAXPATHLEN);
-      } else if (!STRCMP(key_name, "HandleMap_DB_Count"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_DB_Count"))
         {
           out_parameter->fs_specific_info.hdlmap_dbcount = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_HashTable_Size"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_HashTable_Size"))
         {
           out_parameter->fs_specific_info.hdlmap_hashsize = (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
         {
           out_parameter->fs_specific_info.hdlmap_nb_entry_prealloc =
               (unsigned int)atoi(key_value);
-      } else if (!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
+        }
+      else if (!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
         {
           out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc =
               (unsigned int)atoi(key_value);
         }
 
-        else
+      else
         {
           DisplayLog
               ("FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",

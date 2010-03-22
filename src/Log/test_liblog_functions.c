@@ -242,13 +242,14 @@ int main(int argc, char *argv[])
         }
 
       /* unknown test */
-        else
+      else
         {
           printf("%s\n", usage);
           exit(1);
         }
 
-    } else
+    }
+  else
     {
       printf("%s\n", usage);
       exit(1);

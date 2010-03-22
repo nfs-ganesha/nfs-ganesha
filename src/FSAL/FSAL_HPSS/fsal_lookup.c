@@ -110,7 +110,8 @@ fsal_status_t FSAL_lookup(fsal_handle_t * parent_directory_handle,      /* IN */
             }
         }
 
-    } else
+    }
+  else
     {
 
       /* the filename should not be null */

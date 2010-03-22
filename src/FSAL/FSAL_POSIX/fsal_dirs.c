@@ -190,7 +190,8 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
     {
       rewinddir(p_dir_descriptor->p_dir);
       rc = errno;
-    } else
+    }
+  else
     {
       seekdir(p_dir_descriptor->p_dir, start_position.cookie);
       rc = errno;
@@ -266,14 +267,16 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
         {
           memcpy(&(p_pdirent[*p_nb_entries].handle), &(p_dir_descriptor->handle),
                  sizeof(fsal_handle_t));
-      } else if (!strcmp(dp->d_name, ".."))
+        }
+      else if (!strcmp(dp->d_name, ".."))
         {
           stdb = fsal_posixdb_getParentDirHandle(p_dir_descriptor->context.p_conn,
                                                  &(p_dir_descriptor->handle),
                                                  &(p_pdirent[*p_nb_entries].handle));
           if (FSAL_POSIXDB_IS_ERROR(stdb) && FSAL_IS_ERROR(st = posixdb2fsal_error(stdb)))
             goto readdir_error;
-        } else
+        }
+      else
         {
 #ifdef _USE_POSIXDB_READDIR_BLOCK
           if (p_dir_descriptor->dbentries_count > -1)
@@ -283,11 +286,11 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                                                          &(p_pdirent[*p_nb_entries].name),
                                                          &infofs,
                                                          p_dir_descriptor->p_dbentries,
-                                                         p_dir_descriptor->
-                                                         dbentries_count,
-                                                         &(p_pdirent[*p_nb_entries].
-                                                           handle));
-            } else
+                                                         p_dir_descriptor->dbentries_count,
+                                                         &(p_pdirent
+                                                           [*p_nb_entries].handle));
+            }
+          else
 #endif
             {                   /* get handle for the entry */
               st = fsal_internal_getInfoFromName(&(p_dir_descriptor->context),

@@ -169,7 +169,8 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
           cache_inode_get_attributes(pentry, &attr);
 
           fsal_status = FSAL_test_access(pcontext, used_access_type, &attr);
-        } else
+        }
+      else
         {
           if ((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
             {
@@ -208,7 +209,8 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
 
               return *pstatus;
             }
-        } else
+        }
+      else
         *pstatus = CACHE_INODE_SUCCESS;
 
     }
@@ -224,7 +226,7 @@ cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
   if ((cache_status =
        cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
     pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_ACCESS] += 1;
-    else
+  else
     pclient->stat.func_stats.nb_success[CACHE_INODE_ACCESS] += 1;
 
   if (use_mutex)

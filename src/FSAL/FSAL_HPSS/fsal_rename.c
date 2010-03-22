@@ -145,7 +145,8 @@ fsal_status_t FSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
 
           (*tgt_dir_attributes) = (*src_dir_attributes);
 
-        } else
+        }
+      else
         {
 
           /* get attributes */

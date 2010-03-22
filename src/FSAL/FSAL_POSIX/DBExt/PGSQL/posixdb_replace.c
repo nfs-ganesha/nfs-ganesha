@@ -154,13 +154,15 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
           /* there was 1 update */
           st.major = ERR_FSAL_POSIXDB_NOERR;
           st.minor = 0;
-        } else
+        }
+      else
         {
           /* no row updated */
           st.major = ERR_FSAL_POSIXDB_NOENT;
           st.minor = 0;
         }
-    } else
+    }
+  else
     {
       /* error */
       const char *paramValuesL[3];
@@ -169,7 +171,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
       if (resultError)
         sqlstate = atoi(resultError);
-        else
+      else
         sqlstate = -1;
 
       PQclear(p_res);
@@ -227,7 +229,7 @@ fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
 
   if (FSAL_POSIXDB_IS_ERROR(st))
     RollbackTransaction(p_conn, p_res);
-    else
+  else
     EndTransaction(p_conn, p_res);
 
   return st;

@@ -231,7 +231,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
                   nfs_clientid.client_r_addr;
 #endif
               return res_SETCLIENTID4.status;
-            } else
+            }
+          else
             DisplayLogLevel(NIV_DEBUG,
                             "SETCLIENTID ClientId %llx is set again by same principal",
                             clientid);
@@ -285,7 +286,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
                   return res_SETCLIENTID4.status;
                 }
 
-            } else
+            }
+          else
             {
               DisplayLogLevel(NIV_DEBUG,
                               "SETCLIENTID Confirmed ClientId %llx already in use for client '%s', verifier matches. Now check callback",
@@ -313,7 +315,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
                       return res_SETCLIENTID4.status;
                     }
 
-                } else
+                }
+              else
                 {
                   DisplayLogLevel(NIV_DEBUG,
                                   "SETCLIENTID Confirmed ClientId %llx already in use for client '%s', verifier matches. Different callback program 0x%x != 0x%x",
@@ -322,11 +325,13 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
                                   arg_SETCLIENTID4.callback.cb_program);
                 }
             }
-        } else
+        }
+      else
         DisplayLogLevel(NIV_DEBUG,
                         "SETCLIENTID ClientId %llx already in use for client '%s', but unconfirmed",
                         clientid, nfs_clientid.client_name);
-    } else
+    }
+  else
     {
       /* Build the client record */
       strncpy(nfs_clientid.client_name, arg_SETCLIENTID4.client.id.id_val,

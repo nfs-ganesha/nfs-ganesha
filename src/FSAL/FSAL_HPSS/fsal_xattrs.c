@@ -173,13 +173,13 @@ int get_file_slevel(fsal_handle_t * p_objecthandle,     /* IN */
       else if (hpss_xattr.SCAttrib[index].Flags & BFS_BFATTRS_LEVEL_IS_TAPE)
         snprintf(tmpstr, 1024, "Level %u (tape): %llu bytes\n", index,
                  hpss2fsal_64(hpss_xattr.SCAttrib[index].BytesAtLevel));
-        else
+      else
         snprintf(tmpstr, 1024, "Level %u: %llu bytes\n", index,
                  hpss2fsal_64(hpss_xattr.SCAttrib[index].BytesAtLevel));
 
       if (strlen(tmpstr) + strlen(outbuff) < buffer_size)
         strcat(outbuff, tmpstr);
-        else
+      else
         break;
 
     }
@@ -217,7 +217,8 @@ int get_ns_handle(fsal_handle_t * p_objecthandle,       /* IN */
     {
       memcpy(buffer_addr, (caddr_t) & p_objecthandle->ns_handle, sizeof(ns_ObjHandle_t));
       *p_output_size = sizeof(ns_ObjHandle_t);
-    } else
+    }
+  else
     {
       memcpy(buffer_addr, (caddr_t) & p_objecthandle->ns_handle, buffer_size);
       *p_output_size = buffer_size;
@@ -504,7 +505,8 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
       && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
-  } else if (xattr_id >= XATTR_COUNT)
+    }
+  else if (xattr_id >= XATTR_COUNT)
     {
       /* This is UDA */
       DisplayLogJdLevel(fsal_log, NIV_FULL_DEBUG, "Getting attributes for UDA #%u",
@@ -734,7 +736,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
         /* not end of list if there is more UDAs */
         if (i < attr_list.len)
           *end_of_list = FALSE;
-          else
+        else
           *end_of_list = TRUE;
       }
   }
@@ -777,7 +779,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       && !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->obj_type))
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
-  } else if (xattr_id >= XATTR_COUNT)
+    }
+  else if (xattr_id >= XATTR_COUNT)
     {
 #if HPSS_LEVEL >= 730
       /* This is a UDA */
@@ -807,7 +810,7 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
           && (attr_list.Pair[xattr_id - XATTR_COUNT].Value[0] != '\0'))
         snprintf((char *)buffer_addr, buffer_size, "%s\n",
                  attr_list.Pair[xattr_id - XATTR_COUNT].Value);
-        else
+      else
         strcpy((char *)buffer_addr, "");
 
       *p_output_size = strlen((char *)buffer_addr) + 1;
@@ -827,7 +830,8 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context,
                                          buffer_addr, buffer_size, p_output_size);
-    } else
+    }
+  else
     {
       rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                          p_context, buff, MAXNAMLEN, p_output_size);
@@ -924,7 +928,8 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
     {
       *pxattr_id = index;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    } else
+    }
+  else
     Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 
@@ -1005,7 +1010,8 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
               free(noxml);
               strncpy((char *)buffer_addr, attrval, buffer_size);
               *p_output_size = strlen(attrval) + 1;
-            } else
+            }
+          else
             {
               strcpy((char *)buffer_addr, "");
               *p_output_size = 1;
@@ -1013,7 +1019,8 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
 
           free(attr.Pair);
           Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-        } else
+        }
+      else
         {
           free(attr.Pair);
           Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);

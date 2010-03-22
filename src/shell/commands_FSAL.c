@@ -494,7 +494,8 @@ void fsal_layer_SetLogLevel(int log_lvl)
       log_level = log_lvl;
       voie.fd = fileno(stderr);
       AddLogStreamJd(&log_desc, V_FD, voie, log_level, SUP);
-    } else
+    }
+  else
     {
       log_level = log_lvl;
       /* changing log level */
@@ -560,7 +561,8 @@ int fsal_init(char *filename, int flag_v, FILE * output)
       if (st.major == ERR_FSAL_NOENT)
         {
           fprintf(output, "Missing FSAL stanza in config file\n");
-        } else
+        }
+      else
         {
           fprintf(output, "Error executing FSAL_load_FSAL_parameter_from_conf:");
           print_fsal_status(output, st);
@@ -576,7 +578,8 @@ int fsal_init(char *filename, int flag_v, FILE * output)
       if (st.major == ERR_FSAL_NOENT)
         {
           fprintf(output, "Missing FS common stanza in config file\n");
-        } else
+        }
+      else
         {
           fprintf(output, "Error executing FSAL_load_FS_common_parameter_from_conf:");
           print_fsal_status(output, st);
@@ -592,7 +595,8 @@ int fsal_init(char *filename, int flag_v, FILE * output)
       if (st.major == ERR_FSAL_NOENT)
         {
           fprintf(output, "Missing FS specific stanza in config file\n");
-        } else
+        }
+      else
         {
           fprintf(output, "Error executing FSAL_load_FS_specific_parameter_from_conf:");
           print_fsal_status(output, st);
@@ -671,14 +675,14 @@ int fn_fsal_init_fs(int argc,   /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "init_fs: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "init_fs: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -700,7 +704,8 @@ int fn_fsal_init_fs(int argc,   /* IN : number of args in argv */
     {
       /* too much or not enough arguments */
       err_flag++;
-    } else
+    }
+  else
     {
       filename = argv[Optind];
     }
@@ -805,7 +810,8 @@ int solvepath(char *io_global_path, int size_global_path,       /* [IN-OUT] glob
 
       return 0;
 
-  } else if (str_path[0] == '/')
+    }
+  else if (str_path[0] == '/')
     /* absolute path, proceed a lookupPath */
     {
       fsal_path_t path;
@@ -836,7 +842,8 @@ int solvepath(char *io_global_path, int size_global_path,       /* [IN-OUT] glob
 
       return 0;
 
-    } else
+    }
+  else
     /* relative path, proceed a step by step lookup */
     {
       fsal_name_t name;
@@ -1073,14 +1080,14 @@ int fn_fsal_stat(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "stat: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "stat: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -1100,7 +1107,8 @@ int fn_fsal_stat(int argc,      /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -1213,14 +1221,14 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "lsxattrs: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "lsxattrs: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -1240,7 +1248,8 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
     }
@@ -1288,7 +1297,7 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
             /* print all attribute's info */
             fprintf(output, "%u: %s\n", xattr_array[index].xattr_id,
                     xattr_array[index].xattr_name.name);
-            else
+          else
             /* print only attribute's name */
             fprintf(output, "%s\n", xattr_array[index].xattr_name.name);
 
@@ -1367,35 +1376,35 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "getxattr: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'a':
           if (flag_a)
             fprintf(output,
                     "getxattr: warning: option 'a' has been specified more than once.\n");
-            else
+          else
             flag_a++;
           break;
         case 'x':
           if (flag_x)
             fprintf(output,
                     "getxattr: warning: option 'x' has been specified more than once.\n");
-            else
+          else
             flag_x++;
           break;
         case 'n':
           if (flag_n)
             fprintf(output,
                     "getxattr: warning: option 'n' has been specified more than once.\n");
-            else
+          else
             flag_n++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "getxattr: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -1422,7 +1431,8 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
       attrname = argv[Optind + 1];
@@ -1497,7 +1507,7 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
         {
           if (returned == 1 || returned == 2 || returned == 4 || returned == 8)
             flag_n = 1;
-            else
+          else
             flag_x = 1;
         }
     }
@@ -1506,9 +1516,10 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
     {
       if (strlen(buffer) > 0 && buffer[strlen(buffer) - 1] != '\n')
         fprintf(output, "%s\n", buffer);
-        else
+      else
         fprintf(output, "%s", buffer);
-  } else if (flag_n)
+    }
+  else if (flag_n)
     {
       if (returned == 1)
         fprintf(output, "%hhu\n", buffer[0]);
@@ -1518,21 +1529,22 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
         fprintf(output, "%u\n", *((unsigned int *)buffer));
       else if (returned == 8)
         fprintf(output, "%llu\n", *((unsigned long long *)buffer));
-        else
+      else
         {
           for (index = 0; index < returned; index += 8)
             {
               unsigned long long *p64 = (unsigned long long *)(buffer + index);
               if (index == 0)
                 fprintf(output, "%llu", *p64);
-                else
+              else
                 fprintf(output, ".%llu", *p64);
             }
           fprintf(output, "\n");
 
         }
 
-  } else if (flag_x)            /* hexa */
+    }
+  else if (flag_x)              /* hexa */
     {
       fprintf(output, "0X");
       for (index = 0; index < returned; index++)
@@ -1602,35 +1614,35 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ls: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "ls: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case 'd':
           if (flag_d)
             fprintf(output,
                     "ls: warning: option 'd' has been specified more than once.\n");
-            else
+          else
             flag_d++;
           break;
         case 'l':
           if (flag_l)
             fprintf(output,
                     "ls: warning: option 'l' has been specified more than once.\n");
-            else
+          else
             flag_l++;
           break;
         case 'S':
           if (flag_S)
             fprintf(output,
                     "ls: warning: option 'S' has been specified more than once.\n");
-            else
+          else
             flag_S++;
           break;
         case '?':
@@ -1699,7 +1711,8 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
                     str_name, context->current_dir, &obj_hdl, output))
         return rc;
 
-    } else
+    }
+  else
     {
       str_name = ".";
       obj_hdl = context->current_dir;
@@ -1762,7 +1775,8 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
           fprintf(output, "%s (@%s):\n", str_name, tracebuff);
           print_fsal_attributes(attrs, output);
 
-        } else                  /* only prints the name */
+        }
+      else                      /* only prints the name */
         fprintf(output, "%s\n", str_name);
 
       return 0;
@@ -1813,7 +1827,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
                 strncpy(item_path, curr->name.name, FSAL_MAX_PATH_LEN);
               else if (str_name[len - 1] == '/')
                 snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name, curr->name.name);
-                else
+              else
                 snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
                          curr->name.name);
 
@@ -1846,7 +1860,8 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
                   fprintf(output, "%s (@%s):\n", item_path, tracebuff);
                   print_fsal_attributes(curr->attributes, output);
 
-                } else          /* only prints the name */
+                }
+              else              /* only prints the name */
                 fprintf(output, "%s\n", item_path);
 
             }
@@ -1953,7 +1968,8 @@ int fn_fsal_su(int argc,        /* IN : number of args in argv */
     {
       fprintf(output, help_stats);
       return -1;
-    } else
+    }
+  else
     {
       str_uid = argv[1];
     }
@@ -1966,7 +1982,8 @@ int fn_fsal_su(int argc,        /* IN : number of args in argv */
           return -1;
         }
       pw_struct = getpwuid(uid);
-    } else
+    }
+  else
     {
       pw_struct = getpwnam(str_uid);
     }
@@ -1989,7 +2006,7 @@ int fn_fsal_su(int argc,        /* IN : number of args in argv */
         {
           if (i == 1)
             fprintf(output, "%d", groups_tab[i]);
-            else
+          else
             fprintf(output, ", %d", groups_tab[i]);
         }
       fprintf(output, "\n");
@@ -2068,14 +2085,14 @@ int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "unlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "unlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2095,7 +2112,8 @@ int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
   if (Optind != (argc - 1))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &file);
@@ -2203,14 +2221,14 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "mkdir: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "mkdir: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2230,7 +2248,8 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
 
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
@@ -2242,7 +2261,7 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
       mode = atomode(strmode);
       if (mode < 0)
         err_flag++;
-        else
+      else
         {
 
           fsalmode = 0;
@@ -2385,14 +2404,14 @@ int fn_fsal_rename(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "rename: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "rename: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2412,7 +2431,8 @@ int fn_fsal_rename(int argc,    /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
 
       strncpy(tmp_path1, argv[Optind], FSAL_MAX_PATH_LEN);
@@ -2563,14 +2583,14 @@ int fn_fsal_ln(int argc,        /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "ln: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "ln: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2596,7 +2616,8 @@ int fn_fsal_ln(int argc,        /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind + 1], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &name);
 
-    } else
+    }
+  else
     {
       err_flag++;
     }
@@ -2732,14 +2753,14 @@ int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "hardlink: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "hardlink: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2765,7 +2786,8 @@ int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
       strncpy(tmp_path, argv[Optind + 1], FSAL_MAX_PATH_LEN);
       split_path(tmp_path, &path, &name);
 
-    } else
+    }
+  else
     {
       err_flag++;
     }
@@ -2891,14 +2913,14 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "create: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "create: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -2918,7 +2940,8 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
 
       strncpy(tmp_path, argv[Optind], FSAL_MAX_PATH_LEN);
@@ -2930,7 +2953,7 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
       mode = atomode(strmode);
       if (mode < 0)
         err_flag++;
-        else
+      else
         {
 
           fsalmode = 0;
@@ -3083,7 +3106,7 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "setattr: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3091,7 +3114,7 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "setattr: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3142,7 +3165,8 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
       attr_list = argv[Optind + 1];
@@ -3294,7 +3318,7 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "access: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -3302,7 +3326,7 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "access: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -3310,7 +3334,7 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
           if (flag_A)
             fprintf(output,
                     "access: warning: option 'A' has been specified more than once.\n");
-            else
+          else
             flag_A++;
           break;
 
@@ -3335,7 +3359,8 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       str_perms = argv[Optind];
       file = argv[Optind + 1];
@@ -3440,7 +3465,8 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
           fprintf(output, "\n");
           return st.major;
 
-        } else
+        }
+      else
         {
 
           fprintf(output, "access: Access granted.\n");
@@ -3448,7 +3474,8 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
 
         }
 
-    } else
+    }
+  else
     {
       /* 2nd method: simply calling access */
 
@@ -3465,7 +3492,8 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
           fprintf(output, "\n");
           return st.major;
 
-        } else
+        }
+      else
         {
 
           fprintf(output, "access: Access granted.\n");
@@ -3532,14 +3560,14 @@ int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "truncate: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "truncate: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3559,7 +3587,8 @@ int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
   if (Optind != (argc - 2))
     {
       err_flag++;
-    } else
+    }
+  else
     {
       file = argv[Optind];
       str_size = argv[Optind + 1];
@@ -3685,14 +3714,14 @@ int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "open: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "open: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3711,7 +3740,7 @@ int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
   /* one or two args expected */
   if (Optind > (argc - 1))
     err_flag++;
-    else
+  else
     {
       file = argv[Optind];
 
@@ -3891,14 +3920,14 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "open: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "open: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -3917,7 +3946,7 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
   /* one or two args expected */
   if (Optind > (argc - 1))
     err_flag++;
-    else
+  else
     {
       file = argv[Optind];
 
@@ -4098,14 +4127,14 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "open: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "open: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -4124,7 +4153,7 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
   /* two or three args expected */
   if (Optind > (argc - 2))
     err_flag++;
-    else
+  else
     {
       file = argv[Optind];
       strfileid = argv[Optind + 1];
@@ -4339,7 +4368,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "read: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -4347,7 +4376,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "read: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -4359,7 +4388,8 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             {
               fprintf(output, "read: option 'A' conflicts with option 'X'.\n");
               err_flag++;
-            } else
+            }
+          else
             flag_A++;
           break;
 
@@ -4371,7 +4401,8 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             {
               fprintf(output, "read: option 'X' conflicts with option 'A'.\n");
               err_flag++;
-            } else
+            }
+          else
             flag_X++;
           break;
 
@@ -4379,7 +4410,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
           if (flag_B)
             fprintf(output,
                     "read: warning: option 'B' has been specified more than once.\n");
-            else
+          else
             {
               flag_B++;
               str_block_size = Optarg;
@@ -4390,7 +4421,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
           if (flag_s)
             fprintf(output,
                     "read: warning: option 's' has been specified more than once.\n");
-            else
+          else
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
@@ -4415,7 +4446,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
 
   if (Optind != (argc - 1))
     err_flag++;
-    else
+  else
     str_total_bytes = argv[Optind];
 
   if (err_flag)
@@ -4469,7 +4500,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             seek_desc.whence = FSAL_SEEK_SET;
           else if (!strncmp(str_seek_type, "END", 256))
             seek_desc.whence = FSAL_SEEK_END;
-            else
+          else
             {
               fprintf(output,
                       "read: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
@@ -4498,14 +4529,16 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             {
               fprintf(output, "read: error: invalid offset \"%s\".\n", str_seek_offset);
               err_flag++;
-          } else if (sign < 0)
+            }
+          else if (sign < 0)
             seek_desc.offset = -seek_desc.offset;
 
         }
 
       p_seek_desc = &seek_desc;
 
-    } else
+    }
+  else
     {
       p_seek_desc = NULL;       /* default seeking */
     }
@@ -4513,7 +4546,8 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
   if (!strcasecmp(str_total_bytes, "all"))
     {
       total_bytes = 0;
-    } else
+    }
+  else
     {
       rc = ato64(str_total_bytes, &total_bytes);
 
@@ -4578,7 +4612,8 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             {
               sleep(1);
               continue;
-            } else
+            }
+          else
             {
               Mem_Free(p_read_buff);
               return st.major;
@@ -4591,12 +4626,14 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
           fsal_size_t index;
           for (index = 0; index < once_nb_read; index++)
             fprintf(output, "%c.", p_read_buff[index]);
-      } else if (flag_X)
+        }
+      else if (flag_X)
         {
           fsal_size_t index;
           for (index = 0; index < once_nb_read; index++)
             fprintf(output, "%.2X ", p_read_buff[index]);
-        } else
+        }
+      else
         fprintf(output, ".");
 
       /* update stats */
@@ -4787,7 +4824,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           if (flag_v)
             fprintf(output,
                     "write: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
 
@@ -4795,7 +4832,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           if (flag_h)
             fprintf(output,
                     "write: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
 
@@ -4803,7 +4840,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           if (flag_N)
             fprintf(output,
                     "write: warning: option 'N' has been specified more than once.\n");
-            else
+          else
             {
               flag_N++;
               str_times = Optarg;
@@ -4814,7 +4851,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           if (flag_s)
             fprintf(output,
                     "write: warning: option 's' has been specified more than once.\n");
-            else
+          else
             {
               flag_s++;
               strncpy(str_seek_buff, Optarg, 256);
@@ -4830,7 +4867,8 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
             {
               fprintf(output, "write: option 'A' conflicts with option 'X'.\n");
               err_flag++;
-            } else
+            }
+          else
             {
               flag_A++;
               str_ascii = Optarg;
@@ -4845,7 +4883,8 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
             {
               fprintf(output, "write: option 'X' conflicts with option 'A'.\n");
               err_flag++;
-            } else
+            }
+          else
             {
               flag_X++;
               str_hexa = Optarg;
@@ -4925,7 +4964,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
         seek_desc.whence = FSAL_SEEK_SET;
       else if (!strncmp(str_seek_type, "END", 256))
         seek_desc.whence = FSAL_SEEK_END;
-        else
+      else
         {
           fprintf(output,
                   "write: error: invalid seek type \"%s\". CUR, SET or END expected.\n",
@@ -4954,12 +4993,14 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
         {
           fprintf(output, "write: error: invalid offset \"%s\".\n", str_seek_offset);
           return EINVAL;
-      } else if (sign < 0)
+        }
+      else if (sign < 0)
         seek_desc.offset = -seek_desc.offset;
 
       p_seek_desc = &seek_desc;
 
-    } else
+    }
+  else
     {
       p_seek_desc = NULL;       /* default seeking */
     }
@@ -5053,7 +5094,8 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
             {
               sleep(1);
               continue;
-            } else
+            }
+          else
             {
               if (flag_X)
                 Mem_Free(databuff);
@@ -5312,14 +5354,14 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
           if (flag_f)
             fprintf(output,
                     "cat: warning: option 'f' has been specified more than once.\n");
-            else
+          else
             flag_f++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "cat: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case '?':
@@ -5338,7 +5380,7 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
   /* one arg expected */
   if (Optind != (argc - 1))
     err_flag++;
-    else
+  else
     file = argv[Optind];
 
   if (err_flag)
@@ -5389,7 +5431,8 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
             {
               sleep(1);
               continue;
-            } else
+            }
+          else
             return st.major;
         }
 
@@ -5484,10 +5527,11 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
             {
               fprintf(output, "rcp: error: option 'r' conflicts with option 'w'.\n");
               err_flag++;
-          } else if (flag_r)
+            }
+          else if (flag_r)
             fprintf(output,
                     "rcp: warning: option 'r' has been specified more than once.\n");
-            else
+          else
             flag_r++;
           break;
         case 'w':
@@ -5495,24 +5539,25 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
             {
               fprintf(output, "rcp: error: option 'w' conflicts with option 'r'.\n");
               err_flag++;
-          } else if (flag_w)
+            }
+          else if (flag_w)
             fprintf(output,
                     "rcp: warning: option 'w' has been specified more than once.\n");
-            else
+          else
             flag_w++;
           break;
         case 'h':
           if (flag_h)
             fprintf(output,
                     "rcp: warning: option 'h' has been specified more than once.\n");
-            else
+          else
             flag_h++;
           break;
         case 'v':
           if (flag_v)
             fprintf(output,
                     "rcp: warning: option 'v' has been specified more than once.\n");
-            else
+          else
             flag_v++;
           break;
         case '?':
@@ -5531,7 +5576,7 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
   /* two args expected */
   if (Optind != (argc - 2))
     err_flag++;
-    else
+  else
     {
       fsal_file = argv[Optind];
       local_file = argv[Optind + 1];
@@ -5571,7 +5616,7 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
 
   if (flag_r)
     rcp_opt = FSAL_RCP_FS_TO_LOCAL | FSAL_RCP_LOCAL_CREAT;
-    else
+  else
     rcp_opt = FSAL_RCP_LOCAL_TO_FS;
 
   if (flag_v)
@@ -5610,7 +5655,7 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
       if (flag_r)
         fprintf(output, "rcp operation successfully completed : %s -> %s\n", glob_path,
                 local_file);
-        else
+      else
         fprintf(output, "rcp operation successfully completed : %s -> %s\n", local_file,
                 glob_path);
     }
@@ -5785,7 +5830,8 @@ int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
     {
       fprintf(output, "Handles are identical.\n");
       return rc;
-    } else
+    }
+  else
     {
       fprintf(output, "Handles are different.\n");
       return rc;

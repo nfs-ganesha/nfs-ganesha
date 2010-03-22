@@ -1100,7 +1100,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  mode = 0%o\n", p_sattr2->mode);
 #endif
-          } else if (!strcasecmp(attrib_str, "uid"))
+            }
+          else if (!strcasecmp(attrib_str, "uid"))
             {
               userid = my_atoi(value_str);
               if (userid < 0)
@@ -1109,7 +1110,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  uid = %u\n", p_sattr2->uid);
 #endif
-          } else if (!strcasecmp(attrib_str, "gid"))
+            }
+          else if (!strcasecmp(attrib_str, "gid"))
             {
               groupid = my_atoi(value_str);
               if (groupid < 0)
@@ -1118,7 +1120,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  gid = %u\n", p_sattr2->gid);
 #endif
-          } else if (!strcasecmp(attrib_str, "size"))
+            }
+          else if (!strcasecmp(attrib_str, "size"))
             {
               rc = ato64(value_str, &size);
               if (rc)
@@ -1129,7 +1132,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  size = %u\n", p_sattr2->size);
 #endif
-          } else if (!strcasecmp(attrib_str, "atime"))
+            }
+          else if (!strcasecmp(attrib_str, "atime"))
             {
               time_str = strtok_r(value_str, ".", &usec_str);
 
@@ -1140,7 +1144,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               if (usec_str == NULL)
                 {
                   a_usec = 0;
-                } else
+                }
+              else
                 {
                   a_usec = my_atoi(usec_str);
                   /* 1 million is authorized and is interpreted by server as a "set to server time" */
@@ -1154,7 +1159,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               printf("  atime = %u.%.6u\n", p_sattr2->atime.seconds,
                      p_sattr->atime.useconds);
 #endif
-          } else if (!strcasecmp(attrib_str, "mtime"))
+            }
+          else if (!strcasecmp(attrib_str, "mtime"))
             {
               time_str = strtok_r(value_str, ".", &usec_str);
 
@@ -1165,7 +1171,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               if (usec_str == NULL)
                 {
                   m_usec = 0;
-                } else
+                }
+              else
                 {
                   m_usec = my_atoi(usec_str);
                   /* 1 million is authorized and is interpreted by server as a "set to server time" */
@@ -1179,7 +1186,8 @@ int cmdnfs_sattr2(cmdnfs_encodetype_t encodeflag,
               printf("  mtime = %u.%.6u\n", p_sattr2->mtime.seconds,
                      p_sattr->mtime.useconds);
 #endif
-            } else
+            }
+          else
             {
 #ifdef _DEBUG_NFS_SHELL
               printf
@@ -1392,7 +1400,7 @@ static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
 
       if (p_READDIR2resok->eof)
         fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
-        else
+      else
         fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
 
       return TRUE;
@@ -1699,7 +1707,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  mode = 0%o\n", p_sattr->mode.set_mode3_u.mode);
 #endif
-          } else if (!strcasecmp(attrib_str, "uid"))
+            }
+          else if (!strcasecmp(attrib_str, "uid"))
             {
               userid = my_atoi(value_str);
               if (userid < 0)
@@ -1709,7 +1718,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  uid = %u\n", p_sattr->uid.set_uid3_u.uid);
 #endif
-          } else if (!strcasecmp(attrib_str, "gid"))
+            }
+          else if (!strcasecmp(attrib_str, "gid"))
             {
               groupid = my_atoi(value_str);
               if (groupid < 0)
@@ -1719,7 +1729,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  gid = %u\n", p_sattr->gid.set_gid3_u.gid);
 #endif
-          } else if (!strcasecmp(attrib_str, "size"))
+            }
+          else if (!strcasecmp(attrib_str, "size"))
             {
               rc = ato64(value_str, &size);
               if (rc)
@@ -1729,7 +1740,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
 #ifdef _DEBUG_NFS_SHELL
               printf("  size = %llu\n", p_sattr->size.set_size3_u.size);
 #endif
-          } else if (!strcasecmp(attrib_str, "atime"))
+            }
+          else if (!strcasecmp(attrib_str, "atime"))
             {
               time_str = strtok_r(value_str, ".", &nsec_str);
 
@@ -1740,7 +1752,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               if (nsec_str == NULL)
                 {
                   a_nsec = 0;
-                } else
+                }
+              else
                 {
                   a_nsec = my_atoi(nsec_str);
                   if ((a_nsec < 0) || (a_nsec > 999999999))
@@ -1755,7 +1768,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               printf("  atime = %u.%.9u\n", p_sattr->atime.set_atime_u.atime.seconds,
                      p_sattr->atime.set_atime_u.atime.nseconds);
 #endif
-          } else if (!strcasecmp(attrib_str, "mtime"))
+            }
+          else if (!strcasecmp(attrib_str, "mtime"))
             {
               time_str = strtok_r(value_str, ".", &nsec_str);
 
@@ -1766,7 +1780,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               if (nsec_str == NULL)
                 {
                   m_nsec = 0;
-                } else
+                }
+              else
                 {
                   m_nsec = my_atoi(nsec_str);
                   if ((m_nsec < 0) || (m_nsec > 999999999))
@@ -1780,7 +1795,8 @@ int cmdnfs_sattr3(cmdnfs_encodetype_t encodeflag,
               printf("  mtime = %u.%.9u\n", p_sattr->mtime.set_mtime_u.mtime.seconds,
                      p_sattr->mtime.set_mtime_u.mtime.nseconds);
 #endif
-            } else
+            }
+          else
             {
 #ifdef _DEBUG_NFS_SHELL
               printf
@@ -1927,7 +1943,8 @@ int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
         {
           return cmdnfs_fattr3(CMDNFS_DECODE, 0, NULL, indent, out_stream,
                                (caddr_t) & (p_opattr->post_op_attr_u.attributes));
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
           return TRUE;
@@ -1962,7 +1979,8 @@ int cmdnfs_postopfh3(cmdnfs_encodetype_t encodeflag,
         {
           return cmdnfs_fhandle3(CMDNFS_DECODE, 0, NULL, indent, out_stream,
                                  (caddr_t) & (p_opfh3->post_op_fh3_u.handle));
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
           return TRUE;
@@ -2031,7 +2049,8 @@ int cmdnfs_LOOKUP3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2162,7 +2181,7 @@ static int cmdnfs_dirlist3(cmdnfs_encodetype_t encodeflag,
 
       if (p_dirlist3->eof)
         fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
-        else
+      else
         fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
 
       return TRUE;
@@ -2312,7 +2331,8 @@ int cmdnfs_READDIR3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2499,7 +2519,7 @@ static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
 
       if (p_dirlistplus3->eof)
         fprintf(out_stream, "%*seof = TRUE\n", indent, " ");
-        else
+      else
         fprintf(out_stream, "%*seof = FALSE\n", indent, " ");
 
       return TRUE;
@@ -2563,7 +2583,8 @@ int cmdnfs_READDIRPLUS3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (directory):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2631,7 +2652,8 @@ int cmdnfs_READLINK3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "%*sdata = \"%s\"\n", indent + 2, " ",
                   READLINK3_OK_DATA(p_readlnk3res));
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (symlink):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2711,7 +2733,8 @@ int cmdnfs_FSSTAT3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sinvar_sec = %u\n", indent + 2, " ",
                   FSSTAT3_OK(p_fsstat3res).invarsec);
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2783,7 +2806,7 @@ int cmdnfs_ACCESS3args(cmdnfs_encodetype_t encodeflag,
             p_access3args->access |= ACCESS3_DELETE;
           else if ((str_access[0] == 'x') || (str_access[0] == 'X'))
             p_access3args->access |= ACCESS3_EXECUTE;
-            else
+          else
             {
 #ifdef _DEBUG_NFS_SHELL
               fprintf(stderr, "access flag error: unknown flag \"%c\".\n", str_access[0]);
@@ -2861,7 +2884,8 @@ int cmdnfs_ACCESS3res(cmdnfs_encodetype_t encodeflag,
             fprintf(out_stream, " EXECUTE");
           fprintf(out_stream, " (%#.4x)\n", ACCESS3_OK_ACCESS(p_access3res));
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -2924,7 +2948,7 @@ int cmdnfs_CREATE3args(cmdnfs_encodetype_t encodeflag,
         p_CREATE3args->how.mode = GUARDED;
       else if (!strcasecmp(str_mode, "EXCLUSIVE"))
         p_CREATE3args->how.mode = EXCLUSIVE;
-        else
+      else
         return FALSE;
 
       /* CREATE 4th arg: sattr3 list or a create verifier */
@@ -3022,7 +3046,8 @@ int cmdnfs_preopattr(cmdnfs_encodetype_t encodeflag,
                   p_wccattr->ctime.seconds, p_wccattr->ctime.nseconds, tmp_buff);
 
           fprintf(out_stream, "%*s}\n", indent, " ");
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sN/A\n", indent, " ");
           return TRUE;
@@ -3127,7 +3152,8 @@ int cmdnfs_CREATE3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3192,7 +3218,8 @@ int cmdnfs_MKDIR3args(cmdnfs_encodetype_t encodeflag,
             {
               return FALSE;
             }
-        } else
+        }
+      else
         {
           /* the sattr3 strucure is empty */
           if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
@@ -3270,7 +3297,8 @@ int cmdnfs_MKDIR3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3338,7 +3366,8 @@ int cmdnfs_REMOVE3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3404,7 +3433,8 @@ int cmdnfs_RMDIR3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (parent dir):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3475,7 +3505,8 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
       if (nsec_str == NULL)
         {
           c_nsec = 0;
-        } else
+        }
+      else
         {
           c_nsec = my_atoi(nsec_str);
           if ((c_nsec < 0) || (c_nsec > 999999999))
@@ -3600,7 +3631,8 @@ int cmdnfs_SETATTR3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (object):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3720,7 +3752,8 @@ int cmdnfs_RENAME3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (source directory):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3849,7 +3882,8 @@ int cmdnfs_LINK3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (file):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -3927,7 +3961,8 @@ int cmdnfs_SYMLINK3args(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           /* empty attr set */
           if (cmdnfs_sattr3(CMDNFS_ENCODE, 0, NULL, 0, NULL,
@@ -4014,7 +4049,8 @@ int cmdnfs_SYMLINK3res(cmdnfs_encodetype_t encodeflag,
               return FALSE;
             }
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sWcc_data (directory):\n", indent + 2, " ");
           if (cmdnfs_wccdata(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -4117,7 +4153,8 @@ int cmdnfs_FSINFO3res(cmdnfs_encodetype_t encodeflag,
 
           fprintf(out_stream, "\n");
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (root):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -4198,7 +4235,8 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*scase_preserving = %u\n", indent + 2, " ",
                   PATHCONF3_OK_INFO(p_PATHCONF3res).case_preserving);
 
-        } else
+        }
+      else
         {
           fprintf(out_stream, "%*sPost-op attributes (object):\n", indent + 2, " ");
           if (cmdnfs_postopattr(CMDNFS_DECODE, 0, NULL, indent + 4, out_stream,
@@ -4291,13 +4329,14 @@ void print_nfsitem_line(FILE * out, fattr3 * attrib, char *name, char *target)
     {
       if (attrib->mode & S_IXUSR)
         fprintf(out, "s");
-        else
+      else
         fprintf(out, "S");
-    } else
+    }
+  else
     {
       if (attrib->mode & S_IXUSR)
         fprintf(out, "x");
-        else
+      else
         fprintf(out, "-");
     }
 
@@ -4308,13 +4347,14 @@ void print_nfsitem_line(FILE * out, fattr3 * attrib, char *name, char *target)
     {
       if (attrib->mode & S_IXGRP)
         fprintf(out, "s");
-        else
+      else
         fprintf(out, "l");
-    } else
+    }
+  else
     {
       if (attrib->mode & S_IXGRP)
         fprintf(out, "x");
-        else
+      else
         fprintf(out, "-");
     }
   print_mask(out, attrib->mode, S_IROTH, "r");

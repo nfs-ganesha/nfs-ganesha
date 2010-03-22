@@ -130,7 +130,8 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
           ReleaseTokenFSCall();
         }
 
-  } else if (p_fs_ops->mknod)
+    }
+  else if (p_fs_ops->mknod)
     {
       /* prepare mode including IFREG mask */
       mode |= S_IFREG;
@@ -142,7 +143,8 @@ fsal_status_t FSAL_create(fsal_handle_t * parent_directory_handle,      /* IN */
       if (rc)
         Return(fuse2fsal_error(rc, TRUE), rc, INDEX_FSAL_create);
 
-    } else
+    }
+  else
     {
       /* operation not supported */
       Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_create);

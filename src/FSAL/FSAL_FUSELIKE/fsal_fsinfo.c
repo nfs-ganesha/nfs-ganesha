@@ -123,7 +123,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
       dynamicinfo->total_files = stbuff.f_files;
       dynamicinfo->free_files = stbuff.f_ffree;
       dynamicinfo->avail_files = stbuff.f_favail;
-    } else
+    }
+  else
     {
       /* return dummy values for beeing compliant with any client behavior */
 
@@ -144,7 +145,8 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
     {
       dynamicinfo->time_delta.seconds = 0;
       dynamicinfo->time_delta.nseconds = 1;
-    } else
+    }
+  else
     {
       dynamicinfo->time_delta.seconds = 1;
       dynamicinfo->time_delta.nseconds = 0;
