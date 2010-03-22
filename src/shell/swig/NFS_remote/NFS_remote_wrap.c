@@ -338,8 +338,7 @@ extern "C" {
           ++f2;
         if (*f1 != *f2)
           return (*f1 > *f2) ? 1 : -1;
-      }
-    return (l1 - f1) - (l2 - f2);
+      } return (l1 - f1) - (l2 - f2);
   }
 
 /*
@@ -2243,7 +2242,8 @@ extern "C" {
 
         if ((items < 2) || (items > 2)) {
           SWIG_croak("Usage: shell_fh3_t_data_len_set(self,data_len);");
-        } res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_shell_fh3__, 0 | 0);
+        }
+      res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_shell_fh3__, 0 | 0);
       if (!SWIG_IsOK(res1))
         {
           SWIG_exception_fail(SWIG_ArgError(res1),
