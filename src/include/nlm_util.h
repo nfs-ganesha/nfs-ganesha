@@ -33,7 +33,7 @@
  * knowledge of the CeCILL license and that you accept its terms.
  *
  */
-#include "list.h"
+#include "nlm_list.h"
 
 struct nlm_lock {
   char *caller_name;
