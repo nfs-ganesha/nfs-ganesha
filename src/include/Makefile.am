@@ -57,7 +57,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  solaris_port.h
 
 if USE_NLM
-noinst_HEADERS += nlm4.h nlm_util.h list.h 
+noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h 
 endif
 
 if USE_FSAL_FUSE
