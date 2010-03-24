@@ -121,7 +121,8 @@
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
-typedef union nfs_arg__ {
+typedef union nfs_arg__
+{
   fhandle2 arg_getattr2;
   SETATTR2args arg_setattr2;
   diropargs2 arg_lookup2;
@@ -170,7 +171,8 @@ typedef union nfs_arg__ {
   nlm4_unlockargs arg_nlm4_unlock;
 } nfs_arg_t;
 
-typedef union nfs_res__ {
+typedef union nfs_res__
+{
   ATTR2res res_attr2;
   DIROP2res res_dirop2;
   READLINK2res res_readlink2;
@@ -231,7 +233,8 @@ typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *, nfs_res_t *
 
 typedef void (*nfs_protocol_free_t) (nfs_res_t *);
 
-typedef struct nfs_function_desc__ {
+typedef struct nfs_function_desc__
+{
   nfs_protocol_function_t service_function;
   nfs_protocol_free_t free_function;
   xdrproc_t xdr_decode_func;
@@ -758,6 +761,18 @@ int nfs41_op_locku(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                    compound_data_t * data,      /* [IN] current data for the compound request */
                    struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
 
+int nfs41_op_layoutget(struct nfs_argop4 *op,   /* [IN] NFS4 OP arguments */
+                       compound_data_t * data,  /* [IN] current data for the compound request */
+                       struct nfs_resop4 *resp);        /* [OUT] NFS4 OP results */
+
+int nfs41_op_layoutcommit(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
+                          compound_data_t * data,       /* [IN] current data for the compound request */
+                          struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+
+int nfs41_op_layoutreturn(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
+                          compound_data_t * data,       /* [IN] current data for the compound request */
+                          struct nfs_resop4 *resp);     /* [OUT] NFS4 OP results */
+
 int nfs41_op_sequence(struct nfs_argop4 *op,    /* [IN] NFS4 OP arguments */
                       compound_data_t * data,   /* [IN] current data for the compound request */
                       struct nfs_resop4 *resp); /* [OUT] NFS4 OP results */
@@ -846,7 +861,8 @@ int nfs4_cb_illegal(struct nfs_cb_argop4 *op,
 #define FATTR4_ATTR_WRITE      0x00010
 #define FATTR4_ATTR_READ_WRITE 0x00011
 
-typedef struct fattr4_dent {
+typedef struct fattr4_dent
+{
   char *name;                   /* The name of the operation              */
   unsigned int val;             /* The rank for the operation             */
   unsigned int supported;       /* Is this action supported ?             */
@@ -1292,8 +1308,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
-                                                                                                                                                                                              /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                              /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                   /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                       /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

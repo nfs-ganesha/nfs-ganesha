@@ -136,7 +136,8 @@ static cache_inode_gc_policy_t gcpol;
 cache_inode_client_parameter_t cache_client_param;
 cache_content_client_parameter_t datacache_client_param;
 
-typedef struct cmdCacheInode_thr_info__ {
+typedef struct cmdCacheInode_thr_info__
+{
 
   int is_thread_init;
 
@@ -3307,8 +3308,8 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
   if (cache_content_crash_recover(EXPORT_ID,
                                   0,
                                   1,
-                                  (cache_content_client_t *) context->client.
-                                  pcontent_client, &context->client, ht,
+                                  (cache_content_client_t *) context->
+                                  client.pcontent_client, &context->client, ht,
                                   &context->context,
                                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
     {

@@ -1,0 +1,160 @@
+
+= What is pNFS ? =
+
+pNFS is a new NFS feature provided in NFSv4.1, also known as Parallel NFS. 
+Parallel NFS (pNFS) extends Network File Sharing version 4 (NFSv4) to allow clients to directly access file data on the storage used by the
+NFSv4 server.  This ability to bypass the server for data access can increase both performance and parallelism, but requires additional
+client functionality for data access, some of which is dependent on .the class of storage used.  
+
+Parallel NFS comes with various ways of accessing the data directly. For the moment, three such "layouts" have been provided.
+* the LAYOUT4_FILE that stripes accross multiple NFS Server
+* the LAYOUT4_BLOCK_VOLUME that allow the client to access data as stored in a block device
+* LAYOUT4_OSD2_OBJECTS that is based on the OSD2 protocol.
+
+NFSv4.1 and pNFS are described by the following RFCs:
+* RFC5661 : Network File System (NFS) Version 4 Minor Version 1 Protocol
+* RFC5662 : Network File System (NFS) Version 4 Minor Version 1, External Data Representation Standard (XDR) Description
+* RFC5663 : Parallel NFS (pNFS) Block/Volume Layout
+* RFC5664 : Object-Based Parallel NFS (pNFS) Operations
+
+= Content of this document =
+
+This document describes how 3 machines were set up to build a basic pNFS/LAYOUT4_FILE test configuration.
+The machines I used are:
+* itchy, IP addr = XX.YY.ZZ.30, used as Metadata Server
+* pootchy, IP addr = XX.YY.ZZ.32, used a Data Server
+* scratchy, IP addr = XX.YY.ZZ.31, used as client
+
+= Let's go configuring now... =
+
+== Kernel and nfs-utils compilation ==
+
+The first things to be done are recompiling a kernel and a nfs-utils distribution that are compatible. I used those from Benny Halevy's git repository:
+
+  # Get kernel repository
+  git clone git://git.linux-nfs.org/projects/bhalevy/linux-pnfs.git
+  
+  # Get nfs-utils repository
+  git://linux-nfs.org/~bhalevy/pnfs-nfs-utils.git.
+
+The kernel compilation goes ok. Just make sure that you have the right options  configured in .config
+
+        CONFIG_NETWORK_FILESYSTEMS=y
+        CONFIG_NFS_FS=m
+        CONFIG_NFS_V4=y
+        CONFIG_NFS_V4_1=y
+        CONFIG_PNFS=y
+        CONFIG_NFSD=m
+        CONFIG_PNFSD=y
+        # CONFIG_PNFSD_LOCAL_EXPORT is not set
+        CONFIG_SPNFS=y
+        CONFIG_SPNFS_LAYOUTSEGMENTS=y
+
+Compiling pnfs-nfs-utils will be done as this
+
+  # ./configure --prefix=/usr && make && make install
+
+but you have to make sure that you have the following products installed (all nodes were installed with a Fedora 12):
+* libtirpc + libtirpc-dev
+* tcp_wrappers + tcp_wrapper-libs + tcp_wrappers-devel
+* libblkid + libblkid-devel
+* libevent + libevent-devel
+* libnfsidmap
+
+You'll find all of them as rpm packages, but the libnfsidmap. For this one, you'll have to get the lastest version, compile and install it (do not forget to specify "./configure --prefix=/usr").
+
+== Configuring the test bed to used pNFS over LAYOUT4_FILES==
+
+In this configuration, the client (scratchy) will mount the MDS (itchy). The client has inserted a specific kernel module, known as the layoutdriver to connect to the DS. All of the metadata traffic will go through the MDS, but data traffic will be done in-between the DS and the client.
+
+The MDS should be able to mount the DS and have root access on it. It runs a user space daemon, the ''spnfsd'' (which is part of nfs-utils) that uses this mount point to get information from the DS.
+
+===Configuring the pNFS Data Server===
+
+The Data Server is just a regular NFSv4.1 server. It is important that the Metadata Data Server had root access on it, to prevent from wierd behaviour due to EPERM errors. 
+
+The Data Server's /etc/exports will look like this on pootchy:
+
+  /export/spnfs  *(rw,sync,fsid=0,insecure,no_subtree_check,pnfs,no_root_squash)
+
+===Configuring the pNFS Metadata Server=== 
+
+The MDS is a client to the DS, and runs the spnfsd. It is as well a NFSv4.1 server with pNFS enabled.
+
+The spnfsd configuration is done in two steps:
+* configuring the MDS as client to the DS
+* Writing the /etc/spnfsd.conf file
+
+On the MDS, the /etc/fstab should contain this line:
+
+  pootchy:/       /spnfs/XX.YY.ZZ.32   nfs4    minorversion=1,proto=tcp        0 0
+
+It is mandatory to have the mount point done over NFSv4 and with minorversion set to 1.
+
+Its /etc/spnfsd will look like this (this is a single DS configuration)
+  
+  [General]
+  Verbosity = 1
+  Stripe-size = 8192
+  Dense-striping = 0
+  Pipefs-Directory = /var/lib/nfs/rpc_pipefs
+  DS-Mount-Directory = /spnfs
+  
+  [DataServers]
+  NumDS = 1
+  DS1_IP = XX.YY.ZZ.32
+  DS1_PORT = 2049
+  DS1_ROOT = /
+  DS1_ID = 1
+
+Finally the /etc/exports will be like this
+
+  /export  *(rw,sync,pnfs,fsid=0,insecure,no_subtree_check,no_root_squash)
+
+Notice the ''pnfs'' token within the export's options
+
+===Configuring the client===
+
+The client is to be used as a regular NFSv4.1 client. The only thing to do is making sure that kernel module nfslayoutdriver is inserted
+
+  # modprobe nfslayoutdriver
+
+Then you can mount the MDS on the client:
+
+  # mount -t nfs4 -o minorversion=1 itchy:/ /mnt
+{{warning|Before making any read/write operations, make sure that the NFSv4 grace delay is passed. Usually it take 90s after the nfs service starts..}}
+
+
+=== Basic test===
+
+The first test is pretty simple:
+On the client, I write 50 bytes to a file:
+
+  # echo "jljlkjljjhkjhkhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhk" > ./myfile
+  # ls -i ./myfile
+  330246 myfile
+
+On the DS, I should see a new file 
+whose name contains the fileif of ''myfile'' and located in the root of what it exports to the MDS.
+  
+  # ls -l /export/spnfs/330246*
+  -rwxrwxrwx 1 root root 50 Mar 24 10:49 /export/spnfs/330246.2343187478
+  # cat /export/spnfs/330246.2343187478
+  jljlkjljjhkjhkhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhk
+
+As you can see, this file, located on the DS contain the data written by the client. 
+
+On the MDS, the file has the right size, but no blocks allocated if watched outside NFS. It contains no data.
+
+  # cd /export
+  # stat myfile
+  File: `myfile'
+  Size: 50              Blocks: 0            IO Block: 4096   regular file
+  Device: fd00h/64768d    Inode: 330246      Links: 1
+  Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+  Access: 2010-03-24 12:56:02.331151053 +0100
+  Modify: 2010-03-24 10:49:08.997150735 +0100
+  Change: 2010-03-24 10:49:08.997150735 +0100
+  
+  # cat myfile
+  (no output, the file is empty)

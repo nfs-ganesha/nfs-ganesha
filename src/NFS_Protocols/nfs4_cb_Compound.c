@@ -123,7 +123,8 @@
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 
-typedef struct nfs4_cb_desc__ {
+typedef struct nfs4_cb_desc__
+{
   char *name;
   unsigned int val;
   int (*funct) (struct nfs_cb_argop4 *, compound_data_t *, struct nfs_cb_resop4 *);

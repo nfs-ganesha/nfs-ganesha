@@ -112,15 +112,18 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 
-typedef enum cache_inode_async_health__ { CACHE_INODE_ASYNC_STAYING_ALIVE = 1,
+typedef enum cache_inode_async_health__
+{ CACHE_INODE_ASYNC_STAYING_ALIVE = 1,
   CACHE_INODE_ASYNC_ZOMBIE = 2,
   CACHE_INODE_ASYNC_DEAD = 3
 } cache_inode_async_health_t;
-typedef enum cache_inode_async_addr_type__ { CACHE_INODE_ASYNC_ADDR_DIRECT = 1,
+typedef enum cache_inode_async_addr_type__
+{ CACHE_INODE_ASYNC_ADDR_DIRECT = 1,
   CACHE_INODE_ASYNC_ADDR_INDIRECT = 2
 } cache_inode_async_addr_type_t;
 
-typedef struct cache_inode_synclet_data__ {
+typedef struct cache_inode_synclet_data__
+{
   unsigned int my_index;
   pthread_cond_t op_condvar;
   pthread_mutex_t mutex_op_condvar;
@@ -128,7 +131,8 @@ typedef struct cache_inode_synclet_data__ {
   LRU_list_t *op_lru;
 } cache_inode_synclet_data_t;
 
-typedef enum cache_inode_async_op_type__ {
+typedef enum cache_inode_async_op_type__
+{
   CACHE_INODE_ASYNC_OP_CREATE = 0,
   CACHE_INODE_ASYNC_OP_LINK = 1,
   CACHE_INODE_ASYNC_OP_REMOVE = 2,
@@ -138,7 +142,8 @@ typedef enum cache_inode_async_op_type__ {
   CACHE_INODE_ASYNC_OP_TRUNCATE = 6
 } cache_inode_async_op_type_t;
 
-typedef struct cache_inode_async_op_create_args__ {
+typedef struct cache_inode_async_op_create_args__
+{
   fsal_handle_t *pfsal_handle_dir_pre;
   fsal_handle_t *pfsal_handle_obj_pre;
   fsal_u64_t fileid;
@@ -148,60 +153,72 @@ typedef struct cache_inode_async_op_create_args__ {
   fsal_accessmode_t mode;
 } cache_inode_async_op_create_args_t;
 
-typedef struct cache_inode_async_op_create_res__ {
+typedef struct cache_inode_async_op_create_res__
+{
   fsal_attrib_list_t attr;
 } cache_inode_async_op_create_res_t;
 
-typedef struct cache_inode_async_op_link_args__ {
+typedef struct cache_inode_async_op_link_args__
+{
   fsal_handle_t *pfsal_handle_src;
   fsal_handle_t *pfsal_handle_dirdest;
   fsal_name_t name_link;
 } cache_inode_async_op_link_args_t;
 
-typedef struct cache_inode_async_op_link_res__ {
+typedef struct cache_inode_async_op_link_res__
+{
   fsal_attrib_list_t attr;
 } cache_inode_async_op_link_res_t;
 
-typedef struct cache_inode_async_op_remove_args__ {
+typedef struct cache_inode_async_op_remove_args__
+{
   fsal_handle_t *pfsal_handle;
   fsal_name_t name;
 } cache_inode_async_op_remove_args_t;
 
-typedef struct cache_inode_async_op_remove_res__ {
+typedef struct cache_inode_async_op_remove_res__
+{
   fsal_attrib_list_t attr;
 } cache_inode_async_op_remove_res_t;
 
-typedef struct cache_inode_async_op_rename_args__ {
+typedef struct cache_inode_async_op_rename_args__
+{
   fsal_handle_t *pfsal_handle_dirsrc;
   fsal_name_t name_src;
   fsal_handle_t *pfsal_handle_dirdest;
   fsal_name_t name_dest;
 } cache_inode_async_op_rename_args_t;
 
-typedef struct cache_inode_async_op_rename_res__ {
+typedef struct cache_inode_async_op_rename_res__
+{
   fsal_attrib_list_t attrsrc;
   fsal_attrib_list_t attrdest;
 } cache_inode_async_op_rename_res_t;
 
-typedef struct cache_inode_async_op_setattr_args__ {
+typedef struct cache_inode_async_op_setattr_args__
+{
   fsal_handle_t *pfsal_handle;
   fsal_attrib_list_t attr;
 } cache_inode_async_op_setattr_args_t;
 
-typedef struct cache_inode_async_op_setattr_res__ {
+typedef struct cache_inode_async_op_setattr_res__
+{
   fsal_attrib_list_t attr;
 } cache_inode_async_op_setattr_res_t;
 
-typedef struct cache_inode_async_op_truncate_args__ {
+typedef struct cache_inode_async_op_truncate_args__
+{
   fsal_handle_t *pfsal_handle;
   fsal_size_t size;
 } cache_inode_async_op_truncate_args_t;
 
-typedef struct cache_inode_async_op_truncate_res__ {
+typedef struct cache_inode_async_op_truncate_res__
+{
   fsal_attrib_list_t attr;
 } cache_inode_async_op_truncate_res_t;
 
-typedef union cache_inode_async_op_args__ {
+typedef union cache_inode_async_op_args__
+{
   cache_inode_async_op_create_args_t create;
   cache_inode_async_op_link_args_t link;
   cache_inode_async_op_remove_args_t remove;
@@ -210,7 +227,8 @@ typedef union cache_inode_async_op_args__ {
   cache_inode_async_op_truncate_args_t truncate;
 } cache_inode_async_op_args_t;
 
-typedef union cache_inode_async_op_res__ {
+typedef union cache_inode_async_op_res__
+{
   cache_inode_async_op_create_res_t create;
   cache_inode_async_op_link_res_t link;
   cache_inode_async_op_remove_res_t remove;
@@ -219,7 +237,8 @@ typedef union cache_inode_async_op_res__ {
   cache_inode_async_op_truncate_res_t truncate;
 } cache_inode_async_op_res_t;
 
-typedef struct cache_inode_async_op_desc__ {
+typedef struct cache_inode_async_op_desc__
+{
   struct timeval op_time;
   cache_inode_async_op_type_t op_type;
   cache_inode_async_op_args_t op_args;
@@ -235,7 +254,8 @@ typedef struct cache_inode_async_op_desc__ {
   struct cache_inode_async_op_desc__ *next_alloc;
 } cache_inode_async_op_desc_t;
 
-typedef struct cache_inode_async_op_queue_param__ {
+typedef struct cache_inode_async_op_queue_param__
+{
   LRU_parameter_t lru_param;
 } cache_inode_async_op_queue_parameter_t;
 

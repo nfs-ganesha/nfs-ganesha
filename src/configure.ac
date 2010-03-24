@@ -6,7 +6,7 @@ AC_INIT( [nfs-ganesha], [0.99.63], [philippe.deniel@cea.fr,thomas.leibovici@cea.
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5 (prod). Locks(rc). TI-RPC (prod), IPv6 (alpha), MFSL_ASYNC(beta), NFS Commit/Write (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL:  POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE(all prod) .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod), MFSL_ASYNC(beta) Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -187,6 +187,16 @@ if test "$enable_nlm" == "yes"; then
 	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
 fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
+
+
+# PNFS (requires NFSv4.1)
+GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory)],[USE_PNFS])
+
+if test "$enable_pnfs" == "yes"; then
+	AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+fi
+AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
+
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])

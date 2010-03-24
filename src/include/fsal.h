@@ -640,7 +640,8 @@ fsal_status_t FSAL_getlock(fsal_file_t * obj_handle,    /* IN */
 #define XATTRS_READLIST_FROM_BEGINNING  (0)
 
 /** An extented attribute entry */
-typedef struct fsal_xattrent__ {
+typedef struct fsal_xattrent__
+{
   unsigned int xattr_id;                 /**< xattr index */
   fsal_name_t xattr_name;                /**< attribute name  */
   unsigned int xattr_cookie;             /**< cookie for getting xattrs list from the next entry */

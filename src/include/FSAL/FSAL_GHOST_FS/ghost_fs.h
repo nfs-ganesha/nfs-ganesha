@@ -113,13 +113,15 @@ typedef int GHOSTFS_group_t;
 typedef caddr_t GHOSTFS_inode_t;
 
 /* handle type */
-typedef struct GHOSTFS_handle__ {
+typedef struct GHOSTFS_handle__
+{
   GHOSTFS_inode_t inode;
   unsigned int magic;
 } GHOSTFS_handle_t;
 
 /** Values for the type of filesystem objects */
-typedef enum GHOSTFS_typeitem_t {
+typedef enum GHOSTFS_typeitem_t
+{
   GHOSTFS_DIR,
   GHOSTFS_FILE,
   GHOSTFS_LNK
@@ -139,7 +141,8 @@ typedef int GHOSTFS_perm_t;
 
 /* parameter for ghostFS initialization */
 
-typedef struct GHOSTFS_parameter__ {
+typedef struct GHOSTFS_parameter__
+{
   GHOSTFS_perm_t root_mode;
   GHOSTFS_user_t root_owner;
   GHOSTFS_group_t root_group;
@@ -151,7 +154,8 @@ typedef struct GHOSTFS_parameter__ {
 /* ********* INTERNAL DATA TYPES ************** */
 
 /** List of the entries of a directory */
-typedef struct GHOSTFS_dirlist__ {
+typedef struct GHOSTFS_dirlist__
+{
 
   GHOSTFS_handle_t handle;
   char name[GHOSTFS_MAX_FILENAME];
@@ -160,7 +164,8 @@ typedef struct GHOSTFS_dirlist__ {
 } GHOSTFS_dirlist_t;
 
 /** Directory metadatas */
-typedef struct GHOSTFS_dir__ {
+typedef struct GHOSTFS_dir__
+{
   /* directory content */
   GHOSTFS_dirlist_t *direntries;
 
@@ -170,17 +175,20 @@ typedef struct GHOSTFS_dir__ {
 } GHOSTFS_dir_t;
 
 /** File metadatas */
-typedef struct GHOSTFS_file__ {
+typedef struct GHOSTFS_file__
+{
   int unused;
 } GHOSTFS_file_t;
 
 /** Symlink metadatas */
-typedef struct GHOSTFS_symlink__ {
+typedef struct GHOSTFS_symlink__
+{
   char linkdata[GHOSTFS_MAX_PATH];
 } GHOSTFS_symlink_t;
 
 /* object common attributes */
-typedef struct GHOSTFS_metadata__ {
+typedef struct GHOSTFS_metadata__
+{
   GHOSTFS_user_t uid;
   GHOSTFS_group_t gid;
   GHOSTFS_perm_t mode;
@@ -195,7 +203,8 @@ typedef struct GHOSTFS_metadata__ {
  * Represents an item in the filesystem,
  * identified by a handle 'inode+magic'.
  */
-typedef struct GHOSTFS_item__ {
+typedef struct GHOSTFS_item__
+{
 
   rw_lock_t entry_lock;         /* RW lock on the element */
 
@@ -211,7 +220,8 @@ typedef struct GHOSTFS_item__ {
 
   GHOSTFS_metadata_t attributes;        /* attributes of this element */
 
-  union {
+  union
+  {
 
     /* directory */
     GHOSTFS_dir_t dir;
@@ -227,7 +237,8 @@ typedef struct GHOSTFS_item__ {
 /**
  *  Filesystem stats
  */
-typedef struct GHOSTFS_stats__ {
+typedef struct GHOSTFS_stats__
+{
   GHOSTFS_count_t nb_dir;
   GHOSTFS_count_t nb_file;
   GHOSTFS_count_t nb_lnk;
@@ -244,7 +255,8 @@ typedef struct GHOSTFS_stats__ {
 typedef GHOSTFS_dirlist_t *GHOSTFS_cookie_t;
 
 /** Entry in a directory */
-typedef struct GHOSTFS_dirent__ {
+typedef struct GHOSTFS_dirent__
+{
 
   GHOSTFS_handle_t handle;
   char name[GHOSTFS_MAX_FILENAME];
@@ -253,7 +265,8 @@ typedef struct GHOSTFS_dirent__ {
 } GHOSTFS_dirent_t;
 
 /** Common Attributes */
-typedef struct GHOSTFS_Attrs__ {
+typedef struct GHOSTFS_Attrs__
+{
 
   GHOSTFS_inode_t inode;
   GHOSTFS_count_t linkcount;
@@ -281,7 +294,8 @@ typedef unsigned char GHOSTFS_setattr_mask_t;
 #define SETATTR_SIZE    0x40
 
 /* directory stream descriptor */
-typedef struct dir_descriptor__ {
+typedef struct dir_descriptor__
+{
 
   GHOSTFS_handle_t handle;
   GHOSTFS_dir_t *master_record;

@@ -810,10 +810,35 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
                   var_index, CONF_LABEL_PNFS);
           return -1;
         }
-
-      if (!strcasecmp(key_name, "Use_pNFS"))
+      else if (!strcasecmp(key_name, "Stripe_Size"))
         {
-          pparam->use_pnfs = StrToBoolean(key_value);
+          pparam->stripe_size = StrToBoolean(key_value);
+        }
+      else if (!strcasecmp(key_name, "Stripe_Width"))
+        {
+          pparam->stripe_width = StrToBoolean(key_value);
+        }
+      else if (!strcasecmp(key_name, "DS_Ip_Name"))
+        {
+          strncpy(pparam->ds_param[0].ipname, key_value, MAXNAMLEN);
+        }
+      else if (!strcasecmp(key_name, "DS_Ip_Port"))
+        {
+          pparam->ds_param[0].ipport = (unsigned short)atoi(key_value);
+        }
+      else if (!strcasecmp(key_name, "DS_Root_Path"))
+        {
+          strncpy(pparam->ds_param[0].rootpath, key_value, MAXPATHLEN);
+        }
+      else if (!strcasecmp(key_name, "DS_Id"))
+        {
+          pparam->ds_param[0].id = atoi(key_value);
+        }
+      else
+        {
+          fprintf(stderr,
+                  "Unknown or unsettable key: %s (item %s)\n", key_name, CONF_LABEL_PNFS);
+          return -1;
         }
 
     }

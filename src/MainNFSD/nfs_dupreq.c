@@ -162,12 +162,14 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
    * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
    * the structures are defined here */
 
-  struct udp_private2__ {       /* kept in xprt->xp_p2 */
+  struct udp_private2__
+  {                             /* kept in xprt->xp_p2 */
     int up_unused;
     u_long up_xid;
   };
 
-  struct tcp_conn2__ {          /* kept in xprt->xp_p1 */
+  struct tcp_conn2__
+  {                             /* kept in xprt->xp_p1 */
     enum xprt_stat strm_stat;
     u_long x_id;
     XDR xdrs;

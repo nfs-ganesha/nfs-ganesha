@@ -117,14 +117,16 @@
 #define FSAL_MAX_PHRASE_LEN   USM_AUTH_KU_LEN
   /* object name */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
   /* object path */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -135,7 +137,8 @@ typedef struct fsal_path__ {
 static fsal_name_t FSAL_DOT = { ".", 1 };
 static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
-typedef enum {
+typedef enum
+{
   FSAL_NODETYPE_ROOT = 1,
   FSAL_NODETYPE_NODE = 2,
   FSAL_NODETYPE_LEAF = 3
@@ -143,14 +146,16 @@ typedef enum {
 
   /* The handle consists in an oid table.  */
 
-typedef struct fsal_handle__ {
+typedef struct fsal_handle__
+{
   oid oid_tab[MAX_OID_LEN];
   size_t oid_len;
   nodetype_t object_type_reminder;
 
 } fsal_handle_t;
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   fsal_uid_t user;
   fsal_gid_t group;
   /*
@@ -159,7 +164,8 @@ typedef struct fsal_cred__ {
    */
 } fsal_cred_t;
 
-typedef struct fsal_export_context__ {
+typedef struct fsal_export_context__
+{
   fsal_handle_t root_handle;
   struct tree *root_mib_tree;
   fsal_path_t root_path;
@@ -168,7 +174,8 @@ typedef struct fsal_export_context__ {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__ {
+typedef struct fsal_op_context__
+{
   /* user authentication info */
   fsal_cred_t user_credential;
 
@@ -186,16 +193,19 @@ typedef struct fsal_op_context__ {
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   fsal_handle_t node_handle;
   fsal_op_context_t *p_context;
 } fsal_dir_t;
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   fsal_handle_t file_handle;
   fsal_op_context_t *p_context;
 
-  enum {
+  enum
+  {
     FSAL_MODE_READ = 1,
     FSAL_MODE_WRITE = 2
   } rw_mode;
@@ -204,7 +214,8 @@ typedef struct fsal_file__ {
 
 # define FSAL_FILENO(_f) (0)
 
-typedef struct fsal_cookie__ {
+typedef struct fsal_cookie__
+{
   /* in SNMP the cookie is the last listed entry */
   oid oid_tab[MAX_OID_LEN];
   unsigned int oid_len;
@@ -212,7 +223,8 @@ typedef struct fsal_cookie__ {
 
 static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   long snmp_version;
   char snmp_server[HOST_NAME_MAX];
   char community[COMMUNITY_MAX_LEN];

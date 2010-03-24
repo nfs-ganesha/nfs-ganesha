@@ -30,7 +30,8 @@ extern log_t fsal_log;
 
 #endif
 
-typedef struct fsal_proxy_internal_fattr__ {
+typedef struct fsal_proxy_internal_fattr__
+{
   fattr4_type type;
   fattr4_change change_time;
   fattr4_size size;
@@ -51,7 +52,8 @@ typedef struct fsal_proxy_internal_fattr__ {
   char padfh[NFS4_FHSIZE];
 } fsal_proxy_internal_fattr_t;
 
-typedef struct fsal_proxy_internal_fattr_readdir__ {
+typedef struct fsal_proxy_internal_fattr_readdir__
+{
   fattr4_type type;
   fattr4_change change_time;
   fattr4_size size;

@@ -113,7 +113,8 @@ static log_t log_desc = LOG_INITIALIZER;
 
 static int is_loaded = FALSE;   /* filsystem initialization status */
 
-typedef struct cmdmfsl_thr_info__ {
+typedef struct cmdmfsl_thr_info__
+{
   int is_thread_ok;             /* per thread initialization status */
   mfsl_object_t current_dir;    /* current directory handle */
   char current_path[FSAL_MAX_PATH_LEN]; /* current path */

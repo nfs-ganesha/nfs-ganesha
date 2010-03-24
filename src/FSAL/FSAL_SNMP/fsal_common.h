@@ -9,19 +9,22 @@
 #include "fsal.h"
 
 /* GETBULK request options */
-typedef struct getbulk_info__ {
+typedef struct getbulk_info__
+{
   long non_repeaters;
   long max_repetitions;
 } getbulk_info_t;
 
 /* SET request options */
-typedef struct set_info__ {
+typedef struct set_info__
+{
   char *value;
   char type;
 } set_info_t;
 
 /* SNMP request descriptor  */
-typedef struct fsal_request_desc__ {
+typedef struct fsal_request_desc__
+{
   int request_type;             /* the request type */
 
   union                         /* options depending on the request type */

@@ -125,7 +125,8 @@ static int niveau_debug = 2;
  * Variables specifiques aux threads.
  */
 
-typedef struct ThreadLogContext_t {
+typedef struct ThreadLogContext_t
+{
 
   char nom_fonction[STR_LEN];
 

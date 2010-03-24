@@ -286,14 +286,16 @@ SWIGINTERNINLINE int SWIG_CheckState(int r)
 #include <string.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
   typedef void *(*swig_converter_func) (void *);
   typedef struct swig_type_info *(*swig_dycast_func) (void **);
 
 /* Structure to store inforomation on one type */
-  typedef struct swig_type_info {
+  typedef struct swig_type_info
+  {
     const char *name;           /* mangled name of this type */
     const char *str;            /* human readable name of this type */
     swig_dycast_func dcast;     /* dynamic cast function down a hierarchy */
@@ -303,7 +305,8 @@ extern "C" {
   } swig_type_info;
 
 /* Structure to store a type and conversion function used for casting */
-  typedef struct swig_cast_info {
+  typedef struct swig_cast_info
+  {
     swig_type_info *type;       /* pointer to type that is equivalent to this type */
     swig_converter_func converter;      /* function to cast the void pointers */
     struct swig_cast_info *next;        /* pointer to next cast in linked list */
@@ -313,7 +316,8 @@ extern "C" {
 /* Structure used to store module information
  * Each module generates one structure like this, and the runtime collects
  * all of these structures and stores them in a circularly linked list.*/
-  typedef struct swig_module_info {
+  typedef struct swig_module_info
+  {
     swig_type_info **types;     /* Array of pointers to swig_type_info structures that are in this module */
     size_t size;                /* Number of types in this module */
     struct swig_module_info *next;      /* Pointer to next element in circularly linked list */
@@ -330,23 +334,26 @@ extern "C" {
   strncmp, but skipping ' '.
 */
   SWIGRUNTIME int
-   SWIG_TypeNameComp(const char *f1, const char *l1, const char *f2, const char *l2) {
-      for (; (f1 != l1) && (f2 != l2); ++f1, ++f2) {
+      SWIG_TypeNameComp(const char *f1, const char *l1, const char *f2, const char *l2)
+  {
+    for (; (f1 != l1) && (f2 != l2); ++f1, ++f2)
+      {
         while ((*f1 == ' ') && (f1 != l1))
           ++f1;
         while ((*f2 == ' ') && (f2 != l2))
           ++f2;
         if (*f1 != *f2)
           return (*f1 > *f2) ? 1 : -1;
-      } return (l1 - f1) - (l2 - f2);
+      }
+    return (l1 - f1) - (l2 - f2);
   }
 
 /*
   Check type equivalence in a name list like <name1>|<name2>|...
   Return 0 if not equal, 1 if equal
 */
-  SWIGRUNTIME int
-   SWIG_TypeEquiv(const char *nb, const char *tb) {
+  SWIGRUNTIME int SWIG_TypeEquiv(const char *nb, const char *tb)
+  {
     int equiv = 0;
     const char *te = tb + strlen(tb);
     const char *ne = nb;
@@ -368,8 +375,8 @@ extern "C" {
   Check type equivalence in a name list like <name1>|<name2>|...
   Return 0 if equal, -1 if nb < tb, 1 if nb > tb
 */
-  SWIGRUNTIME int
-   SWIG_TypeCompare(const char *nb, const char *tb) {
+  SWIGRUNTIME int SWIG_TypeCompare(const char *nb, const char *tb)
+  {
     int equiv = 0;
     const char *te = tb + strlen(tb);
     const char *ne = nb;
@@ -412,27 +419,31 @@ extern "C" {
 /*
   Check the typename
 */
-  SWIGRUNTIME swig_cast_info *SWIG_TypeCheck(const char *c, swig_type_info * ty) {
+  SWIGRUNTIME swig_cast_info *SWIG_TypeCheck(const char *c, swig_type_info * ty)
+  {
     SWIG_TypeCheck_Template(strcmp(iter->type->name, c) == 0, ty);
   }
 
 /* Same as previous function, except strcmp is replaced with a pointer comparison */
   SWIGRUNTIME swig_cast_info *SWIG_TypeCheckStruct(swig_type_info * from,
-                                                   swig_type_info * into) {
+                                                   swig_type_info * into)
+  {
     SWIG_TypeCheck_Template(iter->type == from, into);
   }
 
 /*
   Cast a pointer up an inheritance hierarchy
 */
-  SWIGRUNTIMEINLINE void *SWIG_TypeCast(swig_cast_info * ty, void *ptr) {
+  SWIGRUNTIMEINLINE void *SWIG_TypeCast(swig_cast_info * ty, void *ptr)
+  {
     return ((!ty) || (!ty->converter)) ? ptr : (*ty->converter) (ptr);
   }
 
 /* 
    Dynamic pointer casting. Down an inheritance hierarchy
 */
-  SWIGRUNTIME swig_type_info *SWIG_TypeDynamicCast(swig_type_info * ty, void **ptr) {
+  SWIGRUNTIME swig_type_info *SWIG_TypeDynamicCast(swig_type_info * ty, void **ptr)
+  {
     swig_type_info *lastty = ty;
     if (!ty || !ty->dcast)
       return ty;
@@ -448,7 +459,8 @@ extern "C" {
 /*
   Return the name associated with this type
 */
-  SWIGRUNTIMEINLINE const char *SWIG_TypeName(const swig_type_info * ty) {
+  SWIGRUNTIMEINLINE const char *SWIG_TypeName(const swig_type_info * ty)
+  {
     return ty->name;
   }
 
@@ -456,7 +468,8 @@ extern "C" {
   Return the pretty name associated with this type,
   that is an unmangled type name in a form presentable to the user.
 */
-  SWIGRUNTIME const char *SWIG_TypePrettyName(const swig_type_info * type) {
+  SWIGRUNTIME const char *SWIG_TypePrettyName(const swig_type_info * type)
+  {
     /* The "str" field contains the equivalent pretty names of the
        type, separated by vertical-bar characters.  We choose
        to print the last name, as it is often (?) the most
@@ -479,8 +492,8 @@ extern "C" {
 /* 
    Set the clientdata field for a type
 */
-  SWIGRUNTIME void
-   SWIG_TypeClientData(swig_type_info * ti, void *clientdata) {
+  SWIGRUNTIME void SWIG_TypeClientData(swig_type_info * ti, void *clientdata)
+  {
     swig_cast_info *cast = ti->cast;
     /* if (ti->clientdata == clientdata) return; */
     ti->clientdata = clientdata;
@@ -498,8 +511,8 @@ extern "C" {
         cast = cast->next;
       }
   }
-  SWIGRUNTIME void
-   SWIG_TypeNewClientData(swig_type_info * ti, void *clientdata) {
+  SWIGRUNTIME void SWIG_TypeNewClientData(swig_type_info * ti, void *clientdata)
+  {
     SWIG_TypeClientData(ti, clientdata);
     ti->owndata = 1;
   }
@@ -514,7 +527,8 @@ extern "C" {
 */
   SWIGRUNTIME swig_type_info *SWIG_MangledTypeQueryModule(swig_module_info * start,
                                                           swig_module_info * end,
-                                                          const char *name) {
+                                                          const char *name)
+  {
     swig_module_info *iter = start;
     do
       {
@@ -574,7 +588,8 @@ extern "C" {
 */
   SWIGRUNTIME swig_type_info *SWIG_TypeQueryModule(swig_module_info * start,
                                                    swig_module_info * end,
-                                                   const char *name) {
+                                                   const char *name)
+  {
     /* STEP 1: Search the name field using binary search */
     swig_type_info *ret = SWIG_MangledTypeQueryModule(start, end, name);
     if (ret)
@@ -606,7 +621,8 @@ extern "C" {
 /* 
    Pack binary data into a string
 */
-  SWIGRUNTIME char *SWIG_PackData(char *c, void *ptr, size_t sz) {
+  SWIGRUNTIME char *SWIG_PackData(char *c, void *ptr, size_t sz)
+  {
     static const char hex[17] = "0123456789abcdef";
     register const unsigned char *u = (unsigned char *)ptr;
     register const unsigned char *eu = u + sz;
@@ -622,7 +638,8 @@ extern "C" {
 /* 
    Unpack binary data from a string
 */
-  SWIGRUNTIME const char *SWIG_UnpackData(const char *c, void *ptr, size_t sz) {
+  SWIGRUNTIME const char *SWIG_UnpackData(const char *c, void *ptr, size_t sz)
+  {
     register unsigned char *u = (unsigned char *)ptr;
     register const unsigned char *eu = u + sz;
     for (; u != eu; ++u)
@@ -650,7 +667,8 @@ extern "C" {
 /* 
    Pack 'void *' into a string buffer.
 */
-  SWIGRUNTIME char *SWIG_PackVoidPtr(char *buff, void *ptr, const char *name, size_t bsz) {
+  SWIGRUNTIME char *SWIG_PackVoidPtr(char *buff, void *ptr, const char *name, size_t bsz)
+  {
     char *r = buff;
     if ((2 * sizeof(void *) + 2) > bsz)
       return 0;
@@ -662,7 +680,8 @@ extern "C" {
     return buff;
   }
 
-  SWIGRUNTIME const char *SWIG_UnpackVoidPtr(const char *c, void **ptr, const char *name) {
+  SWIGRUNTIME const char *SWIG_UnpackVoidPtr(const char *c, void **ptr, const char *name)
+  {
     if (*c != '_')
       {
         if (strcmp(c, "NULL") == 0)
@@ -679,7 +698,8 @@ extern "C" {
   }
 
   SWIGRUNTIME char *SWIG_PackDataName(char *buff, void *ptr, size_t sz, const char *name,
-                                      size_t bsz) {
+                                      size_t bsz)
+  {
     char *r = buff;
     size_t lname = (name ? strlen(name) : 0);
     if ((2 * sz + 2 + lname) > bsz)
@@ -698,7 +718,8 @@ extern "C" {
   }
 
   SWIGRUNTIME const char *SWIG_UnpackDataName(const char *c, void *ptr, size_t sz,
-                                              const char *name) {
+                                              const char *name)
+  {
     if (*c != '_')
       {
         if (strcmp(c, "NULL") == 0)
@@ -737,7 +758,8 @@ extern "C" {
 /* Needed on some windows machines---since MS plays funny games with the header files under C++ */
 #include <math.h>
 #include <stdlib.h>
-extern "C" {
+extern "C"
+{
 #endif
 #include "EXTERN.h"
 #include "perl.h"
@@ -946,7 +968,8 @@ SWIG_Perl_ErrorType(int code)
 #define SWIG_POINTER_EXCEPTION  0
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #define SWIG_OWNER   SWIG_POINTER_OWN
@@ -974,7 +997,8 @@ extern "C" {
   typedef int (CPerlObj::*SwigMagicFunc) (SV *, MAGIC *);
 
 #ifdef __cplusplus
-  extern "C" {
+  extern "C"
+  {
 #endif
     typedef int (CPerlObj::*SwigMagicFuncHack) (SV *, MAGIC *);
 #ifdef __cplusplus
@@ -990,7 +1014,8 @@ extern "C" {
   typedef int (*SwigMagicFunc) (SV *, MAGIC *);
 
 #ifdef __cplusplus
-  extern "C" {
+  extern "C"
+  {
 #endif
     typedef int (*SwigMagicFuncHack) (SV *, MAGIC *);
 #ifdef __cplusplus
@@ -1000,7 +1025,8 @@ extern "C" {
 #define SWIG_MAGIC(a,b) (struct interpreter *interp, SV *a, MAGIC *b)
   typedef int (*SwigMagicFunc) (struct interpreter *, SV *, MAGIC *);
 #ifdef __cplusplus
-  extern "C" {
+  extern "C"
+  {
 #endif
     typedef int (*SwigMagicFuncHack) (struct interpreter *, SV *, MAGIC *);
 #ifdef __cplusplus
@@ -1030,18 +1056,22 @@ extern "C" {
 #  define SWIG_croak_null() croak(Nullch)
 #endif
 #include <stdlib.h>
-  SWIGRUNTIME const char *SWIG_Perl_TypeProxyName(const swig_type_info * type) {
+  SWIGRUNTIME const char *SWIG_Perl_TypeProxyName(const swig_type_info * type)
+  {
     if (!type)
       return NULL;
-      if (type->clientdata != NULL) {
+    if (type->clientdata != NULL)
+      {
         return (const char *)type->clientdata;
       }
-      else {
+    else
+      {
         return type->name;
       }
   }
 
-  SWIGRUNTIME swig_cast_info *SWIG_TypeProxyCheck(const char *c, swig_type_info * ty) {
+  SWIGRUNTIME swig_cast_info *SWIG_TypeProxyCheck(const char *c, swig_type_info * ty)
+  {
     SWIG_TypeCheck_Template(((!iter->type->clientdata
                               && (strcmp((char *)iter->type->name, c) == 0))
                              || (iter->type->clientdata
@@ -1052,8 +1082,9 @@ extern "C" {
 /* Function for getting a pointer value */
 
   SWIGRUNTIME int
-   SWIG_Perl_ConvertPtr(SWIG_MAYBE_PERL_OBJECT SV * sv, void **ptr, swig_type_info * _t,
-                        int flags) {
+      SWIG_Perl_ConvertPtr(SWIG_MAYBE_PERL_OBJECT SV * sv, void **ptr,
+                           swig_type_info * _t, int flags)
+  {
     swig_cast_info *tc;
     void *voidptr = (void *)0;
     SV *tsv = 0;
@@ -1158,8 +1189,9 @@ extern "C" {
   }
 
   SWIGRUNTIME void
-   SWIG_Perl_MakePtr(SWIG_MAYBE_PERL_OBJECT SV * sv, void *ptr, swig_type_info * t,
-                     int flags) {
+      SWIG_Perl_MakePtr(SWIG_MAYBE_PERL_OBJECT SV * sv, void *ptr, swig_type_info * t,
+                        int flags)
+  {
     if (ptr && (flags & SWIG_SHADOW))
       {
         SV *self;
@@ -1191,15 +1223,17 @@ extern "C" {
   }
 
   SWIGRUNTIMEINLINE SV *SWIG_Perl_NewPointerObj(SWIG_MAYBE_PERL_OBJECT void *ptr,
-                                                swig_type_info * t, int flags) {
+                                                swig_type_info * t, int flags)
+  {
     SV *result = sv_newmortal();
     SWIG_MakePtr(result, ptr, t, flags);
     return result;
   }
 
   SWIGRUNTIME void
-   SWIG_Perl_MakePackedObj(SWIG_MAYBE_PERL_OBJECT SV * sv, void *ptr, int sz,
-                           swig_type_info * type) {
+      SWIG_Perl_MakePackedObj(SWIG_MAYBE_PERL_OBJECT SV * sv, void *ptr, int sz,
+                              swig_type_info * type)
+  {
     char result[1024];
     char *r = result;
     if ((2 * sz + 1 + strlen(SWIG_Perl_TypeProxyName(type))) > 1000)
@@ -1211,7 +1245,8 @@ extern "C" {
   }
 
   SWIGRUNTIME SV *SWIG_Perl_NewPackedObj(SWIG_MAYBE_PERL_OBJECT void *ptr, int sz,
-                                         swig_type_info * type) {
+                                         swig_type_info * type)
+  {
     SV *result = sv_newmortal();
     SWIG_Perl_MakePackedObj(result, ptr, sz, type);
     return result;
@@ -1219,8 +1254,9 @@ extern "C" {
 
 /* Convert a packed value value */
   SWIGRUNTIME int
-   SWIG_Perl_ConvertPacked(SWIG_MAYBE_PERL_OBJECT SV * obj, void *ptr, int sz,
-                           swig_type_info * ty) {
+      SWIG_Perl_ConvertPacked(SWIG_MAYBE_PERL_OBJECT SV * obj, void *ptr, int sz,
+                              swig_type_info * ty)
+  {
     swig_cast_info *tc;
     const char *c = 0;
 
@@ -1248,7 +1284,8 @@ extern "C" {
   typedef SwigPerlWrapper *SwigPerlWrapperPtr;
 
 /* Structure for command table */
-  typedef struct {
+  typedef struct
+  {
     const char *name;
     SwigPerlWrapperPtr wrapper;
   } swig_command_info;
@@ -1262,7 +1299,8 @@ extern "C" {
 #define SWIG_BINARY  5
 
 /* Constant information structure */
-  typedef struct swig_constant_info {
+  typedef struct swig_constant_info
+  {
     int type;
     const char *name;
     long lvalue;
@@ -1272,7 +1310,8 @@ extern "C" {
   } swig_constant_info;
 
 /* Structure for variable table */
-  typedef struct {
+  typedef struct
+  {
     const char *name;
     SwigMagicFunc set;
     SwigMagicFunc get;
@@ -1308,7 +1347,8 @@ extern "C" {
     mg->mg_virtual->svt_free = 0;
   }
 
-  SWIGRUNTIME swig_module_info *SWIG_Perl_GetModule(void) {
+  SWIGRUNTIME swig_module_info *SWIG_Perl_GetModule(void)
+  {
     static void *type_pointer = (void *)0;
     SV *pointer;
 
@@ -1327,8 +1367,8 @@ extern "C" {
     return (swig_module_info *) type_pointer;
   }
 
-  SWIGRUNTIME void
-   SWIG_Perl_SetModule(swig_module_info * module) {
+  SWIGRUNTIME void SWIG_Perl_SetModule(swig_module_info * module)
+  {
     SV *pointer;
 
     /* create a new pointer */
@@ -1576,7 +1616,8 @@ void EndTime(struct Temps *start_time, struct Temps *end_time)
 
 #ifdef PERL_OBJECT
 #define MAGIC_CLASS _wrap_MesureTemps_var::
-class _wrap_MesureTemps_var:public CPerlObj {
+class _wrap_MesureTemps_var:public CPerlObj
+{
  public:
 #else
 #define MAGIC_CLASS
@@ -1593,9 +1634,11 @@ SWIGCLASS_STATIC int swig_magic_readonly(pTHX_ SV * SWIGUNUSEDPARM(sv),
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-  XS(_wrap_Temps_secondes_set) {
+  XS(_wrap_Temps_secondes_set)
+  {
     {
       struct Temps *arg1 = (struct Temps *)0;
       ulong arg2;
@@ -1606,7 +1649,8 @@ extern "C" {
       int argvi = 0;
        dXSARGS;
 
-        if ((items < 2) || (items > 2)) {
+      if ((items < 2) || (items > 2))
+        {
           SWIG_croak("Usage: Temps_secondes_set(self,secondes);");
         }
       res1 = SWIG_ConvertPtr(ST(0), &argp1, SWIGTYPE_p_Temps, 0 | 0);
@@ -2140,7 +2184,8 @@ static swig_command_info swig_commands[] = {
  * ----------------------------------------------------------------------------- */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #if 0
 }                               /* c-mode */
 #endif

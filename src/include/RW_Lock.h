@@ -42,7 +42,8 @@
 #endif
 
 /* Type representing the lock itself */
-typedef struct _RW_LOCK {
+typedef struct _RW_LOCK
+{
   unsigned int nbr_active;
   unsigned int nbr_waiting;
   unsigned int nbw_active;

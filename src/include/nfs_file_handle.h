@@ -105,7 +105,8 @@
  */
 
 /* This must be exactly 32 bytes long, and aligned on 32 bits */
-typedef struct file_handle_v2__ {
+typedef struct file_handle_v2__
+{
   unsigned int checksum;        /* FH checksum, for encryption support      len = 4 bytes  */
   unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes  */
   char fsopaque[25];            /* persistent part of FSAL handle, opaque   len = 25 bytes */
@@ -113,7 +114,8 @@ typedef struct file_handle_v2__ {
 } file_handle_v2_t;
 
 /* This is up to 64 bytes long, aligned on 32 bits */
-typedef struct file_handle_v3__ {
+typedef struct file_handle_v3__
+{
   char checksum[16];            /* FH checksum, for encryption support      len = 16 bytes  */
   unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
   char fsopaque[25];            /* persistent part of FSAL handle, opaque   len = 25 bytes  */
@@ -122,7 +124,8 @@ typedef struct file_handle_v3__ {
 } file_handle_v3_t;
 
 /* This must be up to 64 bytes, aligned on 32 bits */
-typedef struct file_handle_v4__ {
+typedef struct file_handle_v4__
+{
   char checksum[16];            /* FH checksum, for encryption support      len = 16 bytes  */
   unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
   unsigned short pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */

@@ -30,7 +30,8 @@
 #define MNT_RPC_GSS_INTEGRITY 390004
 #define MNT_RPC_GSS_PRIVACY   390005
 
-enum mountstat3 {
+enum mountstat3
+{
   MNT3_OK = 0,
   MNT3ERR_PERM = 1,
   MNT3ERR_NOENT = 2,
@@ -44,7 +45,8 @@ enum mountstat3 {
 };
 typedef enum mountstat3 mountstat3;
 
-typedef struct {
+typedef struct
+{
   u_int fhandle3_len;
   char *fhandle3_val;
 } fhandle3;
@@ -55,7 +57,8 @@ typedef char *name;
 
 typedef struct groupnode *groups;
 
-struct groupnode {
+struct groupnode
+{
   name gr_name;
   groups gr_next;
 };
@@ -63,7 +66,8 @@ typedef struct groupnode groupnode;
 
 typedef struct exportnode *exports;
 
-struct exportnode {
+struct exportnode
+{
   dirpath ex_dir;
   groups ex_groups;
   exports ex_next;
@@ -72,25 +76,30 @@ typedef struct exportnode exportnode;
 
 typedef struct mountbody *mountlist;
 
-struct mountbody {
+struct mountbody
+{
   name ml_hostname;
   dirpath ml_directory;
   mountlist ml_next;
 };
 typedef struct mountbody mountbody;
 
-struct mountres3_ok {
+struct mountres3_ok
+{
   fhandle3 fhandle;
-  struct {
+  struct
+  {
     u_int auth_flavors_len;
     int *auth_flavors_val;
   } auth_flavors;
 };
 typedef struct mountres3_ok mountres3_ok;
 
-struct mountres3 {
+struct mountres3
+{
   mountstat3 fhs_status;
-  union {
+  union
+  {
     mountres3_ok mountinfo;
   } mountres3_u;
 };

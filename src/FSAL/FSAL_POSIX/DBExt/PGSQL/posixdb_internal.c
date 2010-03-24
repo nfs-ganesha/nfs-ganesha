@@ -9,7 +9,8 @@
 
 /* cyclic cache of paths */
 
-typedef struct cache_path_entry__ {
+typedef struct cache_path_entry__
+{
   int is_set;
   int path_is_set;
   int info_is_set;

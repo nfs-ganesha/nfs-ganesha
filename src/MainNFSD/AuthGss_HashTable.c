@@ -52,12 +52,14 @@ extern const gss_OID_desc *const gss_mech_spkm3;
  * from mit-krb5-1.2.1 mechglue/mglueP.h:
  * Array of context IDs typed by mechanism OID
  */
-typedef struct gss_union_ctx_id_t {
+typedef struct gss_union_ctx_id_t
+{
   gss_OID mech_type;
   gss_ctx_id_t internal_ctx_id;
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
 
-struct svc_rpc_gss_data {
+struct svc_rpc_gss_data
+{
   bool_t established;           /* context established */
   gss_ctx_id_t ctx;             /* context id */
   struct rpc_gss_sec sec;       /* security triple */
@@ -72,7 +74,8 @@ struct svc_rpc_gss_data {
 #define GSS_CNAMELEN  1024
 #define GSS_CKSUM_LEN 1024
 
-struct svc_rpc_gss_data_stored {
+struct svc_rpc_gss_data_stored
+{
   bool_t established;
   gss_buffer_desc ctx_exported;
   struct rpc_gss_sec sec;

@@ -76,7 +76,8 @@ extern rw_lock_t Svc_fd_lock;
  * The dispatch routine takes request structs and runs the
  * apropriate procedure.
  */
-static struct svc_callout {
+static struct svc_callout
+{
   struct svc_callout *sc_next;
   rpcprog_t sc_prog;
   rpcvers_t sc_vers;

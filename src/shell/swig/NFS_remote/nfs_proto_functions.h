@@ -217,7 +217,8 @@ do                                                                              
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
-typedef union nfs_arg__ {
+typedef union nfs_arg__
+{
   fhandle2 arg_getattr2;
   SETATTR2args arg_setattr2;
   diropargs2 arg_lookup2;
@@ -261,7 +262,8 @@ typedef union nfs_arg__ {
 
 } nfs_arg_t;
 
-typedef union nfs_res__ {
+typedef union nfs_res__
+{
   ATTR2res res_attr2;
   DIROP2res res_dirop2;
   READLINK2res res_readlink2;
@@ -317,7 +319,8 @@ typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *, nfs_res_t *
 
 typedef void (*nfs_protocol_free_t) (nfs_res_t *);
 
-typedef struct nfs_function_desc__ {
+typedef struct nfs_function_desc__
+{
   nfs_protocol_function_t service_function;
   nfs_protocol_free_t free_function;
   xdrproc_t xdr_decode_func;
@@ -791,7 +794,8 @@ int dummy_op(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
  * Definition of an array for the characteristics of each GETATTR sub-operations
  */
 
-typedef struct fattr4_dent {
+typedef struct fattr4_dent
+{
   char *name;                   /* The name of the operation  */
   unsigned int val;             /* The rank for the operation */
   unsigned int supported;       /* Is this action supported ? */
@@ -1024,8 +1028,8 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
-                                                                                                                                                                                              /* time_how4          * mtime_set, *//* Out: How to set mtime */
-                                                                                                                                                                                                              /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
+                                                                                                                                                                                                                                   /* time_how4          * mtime_set, *//* Out: How to set mtime */
+                                                                                                                                                                                                                                                       /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);

@@ -39,7 +39,8 @@ typedef int (*xattr_setfunc_t) (fsal_handle_t *,        /* object handle */
                                 size_t, /* input size */
                                 int);   /* creation flag */
 
-typedef struct fsal_xattr_def__ {
+typedef struct fsal_xattr_def__
+{
   char xattr_name[FSAL_MAX_NAME_LEN];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;

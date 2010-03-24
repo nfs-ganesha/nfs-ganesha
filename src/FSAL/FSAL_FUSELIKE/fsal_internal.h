@@ -31,7 +31,8 @@ extern void *fs_private_data;
 
 #endif
 
-struct ganefuse {
+struct ganefuse
+{
   /* unused for now */
   void *reserved;
 };

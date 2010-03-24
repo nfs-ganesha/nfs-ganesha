@@ -139,7 +139,8 @@
 #define FSAL_READDIR_SIZE 4096
 
 /** object POSIX infos */
-typedef struct {
+typedef struct
+{
   dev_t devid;
   ino_t inode;
   int nlink;
@@ -149,14 +150,16 @@ typedef struct {
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -172,7 +175,8 @@ static fsal_name_t __attribute__ ((__unused__)) FSAL_DOT_DOT =
 {
 "..", 2};
 
-typedef struct {
+typedef struct
+{
   fsal_u64_t id;
   int ts;                       /* timestamp */
   fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
@@ -180,7 +184,8 @@ typedef struct {
 
 /** Authentification context.    */
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   uid_t user;
   gid_t group;
   fsal_count_t nbgroups;
@@ -194,7 +199,8 @@ typedef void *fsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)
 
-typedef struct {
+typedef struct
+{
   fsal_cred_t credential;
   fsal_export_context_t *export_context;
   fsal_posixdb_conn *p_conn;
@@ -203,12 +209,14 @@ typedef struct {
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   fsal_posixdb_conn_params_t dbparams;
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct fsal_cookie__ {
+typedef struct fsal_cookie__
+{
   off_t cookie;
 } fsal_cookie_t;
 
@@ -216,13 +224,15 @@ static fsal_cookie_t __attribute__ ((__unused__)) FSAL_READDIR_FROM_BEGINNING =
 {
 0};
 
-typedef struct fsal_lockdesc__ {
+typedef struct fsal_lockdesc__
+{
   struct flock flock;
 } fsal_lockdesc_t;
 
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   DIR *p_dir;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
@@ -234,7 +244,8 @@ typedef struct fsal_dir__ {
 } fsal_dir_t;
 
 #ifdef _FSAL_POSIX_USE_STREAM
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   FILE *p_file;
   int ro;                       /* read only file ? */
 } fsal_file_t;
@@ -242,7 +253,8 @@ typedef struct fsal_file__ {
 #define FSAL_FILENO( p_fsal_file )  ( fileno( (p_fsal_file)->p_file ) )
 
 #else
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   int filefd;
   int ro;                       /* read only file ? */
 } fsal_file_t;

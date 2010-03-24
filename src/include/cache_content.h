@@ -105,7 +105,8 @@
 
 typedef int cache_content_status_t;
 
-typedef struct cache_content_gc_policy__ {
+typedef struct cache_content_gc_policy__
+{
   time_t lifetime;
   time_t inactivity_before_flush;
   time_t emergency_grace_delay;
@@ -133,29 +134,35 @@ typedef struct cache_content_gc_policy__ {
 #define CACHE_CONTENT_FLAGS_WRITE      0x0000002
 #define CACHE_CONTENT_FLAGS_READ_WRITE 0x0000003
 
-typedef struct cache_content_opened_file__ {
+typedef struct cache_content_opened_file__
+{
   int local_fd;
   time_t last_op;
 } cache_content_opened_file_t;
 
-typedef enum cache_content_sync_state__ { JUST_CREATED = 1,
+typedef enum cache_content_sync_state__
+{ JUST_CREATED = 1,
   SYNC_OK = 2,
   FLUSH_NEEDED = 3,
   REFRESH_NEEDED = 4
 } cache_content_sync_state_t;
 
-typedef enum cache_content_entry_valid_state__ { STATE_OK = 1,
+typedef enum cache_content_entry_valid_state__
+{ STATE_OK = 1,
   TO_BE_GARBAGGED = 2
 } cache_content_entry_valid_state_t;
 
-typedef enum cache_content_io_direction__ { CACHE_CONTENT_READ = 1,
+typedef enum cache_content_io_direction__
+{ CACHE_CONTENT_READ = 1,
   CACHE_CONTENT_WRITE = 2
 } cache_content_io_direction_t;
 
-typedef enum cache_content_flush_behaviour__ { CACHE_CONTENT_FLUSH_AND_DELETE = 1,
+typedef enum cache_content_flush_behaviour__
+{ CACHE_CONTENT_FLUSH_AND_DELETE = 1,
   CACHE_CONTENT_FLUSH_SYNC_ONLY = 2
 } cache_content_flush_behaviour_t;
-typedef struct cache_content_client_parameter__ {
+typedef struct cache_content_client_parameter__
+{
   unsigned int nb_prealloc_entry;             /**< number of preallocated pentries */
   log_t log_outputs;                          /**< Log descriptor                     */
   char cache_dir[MAXPATHLEN];                 /**< Path to the directory where data are cached */
@@ -169,7 +176,8 @@ typedef struct cache_content_client_parameter__ {
 #define CACHE_CONTENT_SPEC_DATA_SIZE 400
 typedef char cache_content_spec_data_t[CACHE_CONTENT_SPEC_DATA_SIZE];
 
-typedef struct cache_content_internal_md__ {
+typedef struct cache_content_internal_md__
+{
   time_t read_time;                                       /**< Epoch time of the last read operation on the entry   */
   time_t mod_time;                                        /**< Epoch time of the last change operation on the entry */
   time_t refresh_time;                                    /**< Epoch time of the last update operation on the entry */
@@ -181,25 +189,29 @@ typedef struct cache_content_internal_md__ {
 
 } cache_content_internal_md_t;
 
-typedef struct cache_content_local_entry__ {
+typedef struct cache_content_local_entry__
+{
   char cache_path_data[MAXPATHLEN];                                /**< Path of the cached content                  */
   char cache_path_index[MAXPATHLEN];                               /**< Path to the index file (for crash recovery) */
   cache_content_opened_file_t opened_file;                         /**< Opened file descriptor related to the entry */
   cache_content_sync_state_t sync_state;                           /**< Is this entry synchronized ?                */
 } cache_content_local_entry_t;
 
-typedef struct cache_content_entry__ {
+typedef struct cache_content_entry__
+{
   cache_content_internal_md_t internal_md;              /**< Metadata for this data cache entry                   */
   cache_content_local_entry_t local_fs_entry;           /**< Handle to the data cached in local fs                */
   cache_entry_t *pentry_inode;                          /**< The related cache inode entry                        */
   struct cache_content_entry__ *next_alloc;             /**< Required for STUFF ALLOCATOR                         */
 } cache_content_entry_t;
 
-typedef struct cache_content_stat__ {
+typedef struct cache_content_stat__
+{
   unsigned int nb_gc_lru_active;  /**< Number of active entries in Garbagge collecting list */
   unsigned int nb_gc_lru_total;   /**< Total mumber of entries in Garbagge collecting list  */
 
-  struct func_inode_stats {
+  struct func_inode_stats
+  {
     unsigned int nb_call[CACHE_CONTENT_NB_COMMAND];             /**< total number of calls per functions     */
     unsigned int nb_success[CACHE_CONTENT_NB_COMMAND];          /**< succesfull calls per function           */
     unsigned int nb_err_retryable[CACHE_CONTENT_NB_COMMAND];    /**< failed/retryable calls per function     */
@@ -209,7 +221,8 @@ typedef struct cache_content_stat__ {
   unsigned int nb_call_total;                                   /**< Total number of calls */
 } cache_content_stat_t;
 
-typedef struct cache_content_client__ {
+typedef struct cache_content_client__
+{
   cache_content_entry_t *pool_entry;                /**< Worker's preallocad cache entries pool                   */
   unsigned int nb_prealloc;                         /**< Size of the preallocated pool                            */
   cache_content_stat_t stat;                        /**< File content statistics for this client                  */
@@ -222,12 +235,14 @@ typedef struct cache_content_client__ {
   int fd_gc_needed;                                 /**< Should we perform fd gc ?                                */
 } cache_content_client_t;
 
-typedef enum cache_content_op__ { CACHE_CONTENT_OP_GET = 1,
+typedef enum cache_content_op__
+{ CACHE_CONTENT_OP_GET = 1,
   CACHE_CONTENT_OP_SET = 2,
   CACHE_CONTENT_OP_FLUSH = 3
 } cache_content_op_t;
 
-typedef struct cache_content_dirinfo__ {
+typedef struct cache_content_dirinfo__
+{
   DIR *level0_dir;
   DIR *level1_dir;
   DIR *level2_dir;
@@ -265,23 +280,27 @@ typedef struct cache_content_dirinfo__ {
 #define CACHE_CONTENT_LOCAL_CACHE_NOT_FOUND 10
 #define CACHE_CONTENT_TOO_LARGE_FOR_CACHE   11
 
-typedef enum cache_content_nametype__ { CACHE_CONTENT_UNASSIGNED = 1,
+typedef enum cache_content_nametype__
+{ CACHE_CONTENT_UNASSIGNED = 1,
   CACHE_CONTENT_DATA_FILE = 2,
   CACHE_CONTENT_INDEX_FILE = 3,
   CACHE_CONTENT_DIR = 4
 } cache_content_nametype_t;
 
-typedef enum cache_content_create_behaviour__ { ADD_ENTRY = 1,
+typedef enum cache_content_create_behaviour__
+{ ADD_ENTRY = 1,
   RECOVER_ENTRY = 2,
   RENEW_ENTRY
 } cache_content_add_behaviour_t;
 
-typedef enum cache_content_refresh_how__ { KEEP_LOCAL = 1,
+typedef enum cache_content_refresh_how__
+{ KEEP_LOCAL = 1,
   FORCE_FROM_FSAL = 2,
   DEFAULT_REFRESH
 } cache_content_refresh_how_t;
 
-typedef struct cache_content_flush_thread_data__ {
+typedef struct cache_content_flush_thread_data__
+{
   unsigned int thread_pos;
   unsigned int thread_number;
 } cache_content_flush_thread_data_t;

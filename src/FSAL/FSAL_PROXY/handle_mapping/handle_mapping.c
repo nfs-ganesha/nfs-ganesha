@@ -115,12 +115,14 @@ static hash_table_t *handle_map_hash = NULL;
 
 /* memory pool definitions */
 
-typedef struct digest_pool_entry__ {
+typedef struct digest_pool_entry__
+{
   nfs23_map_handle_t nfs23_digest;
   struct digest_pool_entry__ *p_next;
 } digest_pool_entry_t;
 
-typedef struct handle_pool_entry__ {
+typedef struct handle_pool_entry__
+{
   fsal_handle_t handle;
   struct handle_pool_entry__ *p_next;
 } handle_pool_entry_t;
@@ -188,8 +190,8 @@ static unsigned long hash_digest_idx(hash_parameter_t * p_conf, hash_buffer_t * 
 
   hash =
       (p_conf->alphabet_length +
-       ((unsigned long)p_digest->nfs23_digest.object_id ^ (unsigned int)p_digest->
-        nfs23_digest.handle_hash));
+       ((unsigned long)p_digest->nfs23_digest.
+        object_id ^ (unsigned int)p_digest->nfs23_digest.handle_hash));
   hash = (743 * hash + 1999) % p_conf->index_size;
 
   return hash;

@@ -17,26 +17,30 @@
 /** Read write value */
 #define SNMP_ADM_ACCESS_RW   HANDLER_CAN_RWRITE
 
-enum {
+enum
+{
   NAME_OID,
   DESC_OID,
   VAR_OID
 };
 
 /** A var is made of this two */
-enum {
+enum
+{
   TYPE_OID,       /**< contain a string with the type */
   VAL_OID         /**< contain the value */
 };
 
-enum {
+enum
+{
   STAT_OID,
   CONF_OID,
   PROC_OID
 };
 
 /** Enum of available type number */
-enum type_number {
+enum type_number
+{
   SNMP_ADM_INTEGER,       /**< 32 bits integer */
   SNMP_ADM_STRING,        /**< null terminated */
   SNMP_ADM_IP,            /**< Ip address (4 octets in network byte-order) */
@@ -63,7 +67,8 @@ enum type_number {
  * The different states of the trigger branch of a procedure.
  * ROOT.prodid.PROC_OID.numproc.TRIGGER_OID.
  */
-enum trigger_state {
+enum trigger_state
+{
   SNMP_ADM_READY,              /**< A set (whatever the value) will call the procedure. */
   SNMP_ADM_PROGRESS,           /**< Procedure not terminated. Cannot set trigger or inputs */
   SNMP_ADM_DONE,               /**< Procedure terminated with success, user can read values.
@@ -80,7 +85,8 @@ enum trigger_state {
 /**
  * The type of variables handle by the library.
  */
-typedef union type_union_e {
+typedef union type_union_e
+{
   int integer;                          /**< SNMP_ADM_INTEGER */
   char string[SNMP_ADM_MAX_STR];        /**< SNMP_ADM_STRING */
   in_addr_t ip;                         /**< SNMP_ADM_IP */
@@ -92,7 +98,8 @@ typedef union type_union_e {
 /**
  * Scalar information.
  */
-typedef struct register_scal_s {
+typedef struct register_scal_s
+{
   char *label;                         /**< The variable's name */
   char *desc;                          /**< A useful description */
   unsigned char type;                  /**< The value's type @see type_number */
@@ -121,7 +128,8 @@ typedef int (*fct_set) (const snmp_adm_type_union * param, void *opt_arg);
 /**
  * get/set information.
  */
-typedef struct register_get_set_s {
+typedef struct register_get_set_s
+{
   char *label;                    /**< The variable's name */
   char *desc;                     /**< A useful description */
   unsigned char type;             /**< The value's type @see type_number */
@@ -145,7 +153,8 @@ typedef int (*proc) (const snmp_adm_type_union ** tab_in, snmp_adm_type_union **
 /**
  * Procedure information.
  */
-typedef struct register_proc_s {
+typedef struct register_proc_s
+{
   char *label;                    /**< The variable's name */
   char *desc;                     /**< A useful description */
   int nb_in;                      /**< Number of inputs values */

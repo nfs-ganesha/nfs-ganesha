@@ -119,7 +119,8 @@
 #include "stuff_alloc.h"
 
 /* variable struct */
-typedef struct shell_variable__ {
+typedef struct shell_variable__
+{
   char var_name[MAX_VAR_LEN];
   char *var_value;              /* mallocated */
   int datalen;

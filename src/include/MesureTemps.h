@@ -79,7 +79,8 @@
 #ifndef MesureTemps_h
 #define MesureTemps_h
 
-struct Temps {
+struct Temps
+{
   unsigned long secondes;
   unsigned long micro_secondes;
 };

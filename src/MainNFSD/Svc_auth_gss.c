@@ -87,7 +87,8 @@ extern SVCAUTH Svc_auth_none;
  * from mit-krb5-1.2.1 mechglue/mglueP.h:
  * Array of context IDs typed by mechanism OID
  */
-typedef struct gss_union_ctx_id_t {
+typedef struct gss_union_ctx_id_t
+{
   gss_OID mech_type;
   gss_ctx_id_t internal_ctx_id;
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
@@ -114,7 +115,8 @@ struct svc_auth_ops Svc_auth_gss_ops = {
   Svcauth_gss_destroy
 };
 
-struct svc_rpc_gss_data {
+struct svc_rpc_gss_data
+{
   bool_t established;           /* context established */
   gss_ctx_id_t ctx;             /* context id */
   struct rpc_gss_sec sec;       /* security triple */

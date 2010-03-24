@@ -75,7 +75,8 @@ static void hello_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
     }
 }
 
-struct dirbuf {
+struct dirbuf
+{
   char *p;
   size_t size;
 };

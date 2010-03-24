@@ -516,7 +516,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
             {
               DisplayLog("NFS DISPATCHER: NLM proc number %d unknown", ptr_req->rq_proc);
               printf("Unhandled NLM request: Program %d, Version %d, Function %d\n",
-                     ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc);
+                     (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
 
               svcerr_decode(ptr_svc);
               return;

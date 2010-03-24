@@ -220,11 +220,13 @@ static char *cache_inode_function_names[] = {
 
 #define CACHE_INODE_NB_COMMAND      33
 
-typedef struct cache_inode_stat__ {
+typedef struct cache_inode_stat__
+{
   unsigned int nb_gc_lru_active;        /**< Number of active entries in Garbagge collecting list */
   unsigned int nb_gc_lru_total;         /**< Total mumber of entries in Garbagge collecting list  */
 
-  struct func_inode_stats__ {
+  struct func_inode_stats__
+  {
     unsigned int nb_call[CACHE_INODE_NB_COMMAND];                         /**< total number of calls per functions     */
     unsigned int nb_success[CACHE_INODE_NB_COMMAND];                      /**< succesfull calls per function           */
     unsigned int nb_err_retryable[CACHE_INODE_NB_COMMAND];                /**< failed/retryable calls per function     */
@@ -235,11 +237,13 @@ typedef struct cache_inode_stat__ {
 
 typedef int cache_inode_status_t;
 
-typedef struct cache_inode_parameter__ {
+typedef struct cache_inode_parameter__
+{
   hash_parameter_t hparam;                      /**< Parameter used for hashtable initialization */
 } cache_inode_parameter_t;
 
-typedef struct cache_inode_client_parameter__ {
+typedef struct cache_inode_client_parameter__
+{
   LRU_parameter_t lru_param;                           /**< LRU list handle (used for gc)                    */
   log_t log_outputs;                                   /**< Log descriptor                                   */
   fsal_attrib_mask_t attrmask;                         /**< FSAL attributes to be used in FSAL               */
@@ -259,14 +263,16 @@ typedef struct cache_inode_client_parameter__ {
 
 } cache_inode_client_parameter_t;
 
-typedef struct cache_inode_opened_file__ {
+typedef struct cache_inode_opened_file__
+{
   fsal_file_t fd;
   unsigned int fileno;
   fsal_openflags_t openflags;
   time_t last_op;
 } cache_inode_opened_file_t;
 
-typedef enum cache_inode_file_type__ { UNASSIGNED = 1,
+typedef enum cache_inode_file_type__
+{ UNASSIGNED = 1,
   REGULAR_FILE = 2,
   CHARACTER_FILE = 3,
   BLOCK_FILE = 4,
@@ -279,34 +285,41 @@ typedef enum cache_inode_file_type__ { UNASSIGNED = 1,
   RECYCLED = 11
 } cache_inode_file_type_t;
 
-typedef enum cache_inode_endofdir__ { TO_BE_CONTINUED = 1,
+typedef enum cache_inode_endofdir__
+{ TO_BE_CONTINUED = 1,
   END_OF_DIR = 2,
   UNASSIGNED_EOD = 3
 } cache_inode_endofdir_t;
 
-typedef enum cache_inode_entry_valid_state__ { VALID = 1,
+typedef enum cache_inode_entry_valid_state__
+{ VALID = 1,
   INVALID = 2
 } cache_inode_entry_valid_state_t;
 
-typedef enum cache_inode_op__ { CACHE_INODE_OP_GET = 1,
+typedef enum cache_inode_op__
+{ CACHE_INODE_OP_GET = 1,
   CACHE_INODE_OP_SET = 2
 } cache_inode_op_t;
 
-typedef enum cache_inode_io_direction__ { CACHE_INODE_READ = 1,
+typedef enum cache_inode_io_direction__
+{ CACHE_INODE_READ = 1,
   CACHE_INODE_WRITE = 2
 } cache_inode_io_direction_t;
 
-typedef enum cache_inode_flag__ { CACHE_INODE_YES = 1,
+typedef enum cache_inode_flag__
+{ CACHE_INODE_YES = 1,
   CACHE_INODE_NO = 2,
   CACHE_INODE_RENEW_NEEDED = 3
 } cache_inode_flag_t;
 
-typedef enum cache_inode_dirent_op__ { CACHE_INODE_DIRENT_OP_LOOKUP = 1,
+typedef enum cache_inode_dirent_op__
+{ CACHE_INODE_DIRENT_OP_LOOKUP = 1,
   CACHE_INODE_DIRENT_OP_REMOVE = 2,
   CACHE_INODE_DIRENT_OP_RENAME = 3
 } cache_inode_dirent_op_t;
 
-typedef struct cache_inode_internal_md__ {
+typedef struct cache_inode_internal_md__
+{
   cache_inode_file_type_t type;                            /**< The type of the entry                                */
   cache_inode_entry_valid_state_t valid_state;             /**< Is this entry valid or invalid ?                     */
   time_t read_time;                                        /**< Epoch time of the last read operation on the entry   */
@@ -322,39 +335,47 @@ typedef unsigned int cache_inode_state_type_t;
 #define CACHE_INODE_STATE_DELEG   2
 #define CACHE_INODE_STATE_LOCK    4
 
-struct cache_inode_symlink__ {
+struct cache_inode_symlink__
+{
   fsal_handle_t handle;                                   /**< The FSAL Handle     */
   fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
   fsal_path_t content;                                    /**< Content of the link */
 };
 
-typedef struct cache_inode_share__ {
+typedef struct cache_inode_share__
+{
   char oexcl_verifier[8];                                                /**< Verifier to use when opening a file as EXCLUSIVE4    */
   unsigned int share_access;                                             /**< The NFSv4 Share Access state                         */
   unsigned int share_deny;                                               /**< The NFSv4 Share Deny state                           */
   unsigned int lockheld;                                                 /**< How many locks did I open ?                          */
 } cache_inode_share_t;
 
-typedef struct cache_inode_lock__ {
+typedef struct cache_inode_lock__
+{
   uint64_t offset;                                  /**< The offset for the beginning of the lock             */
   uint64_t length;                                  /**< The length of the range for this lock                */
   nfs_lock_type4 lock_type;                         /**< The kind of lock to be used                          */
   void *popenstate;                                 /**< The related open-stateid                             */
 } cache_inode_lock_t;
 
-typedef struct cache_inode_deleg__ {
+typedef struct cache_inode_deleg__
+{
   unsigned int nothing;
 } cache_inode_deleg_t;
 
-typedef struct cache_inode_unstable_data__ {
+typedef struct cache_inode_unstable_data__
+{
   caddr_t buffer;
   uint64_t offset;
   uint32_t length;
 } cache_inode_unstable_data_t;
 
-typedef struct cache_entry__ {
-  union cache_inode_fsobj__ {
-    struct cache_inode_file__ {
+typedef struct cache_entry__
+{
+  union cache_inode_fsobj__
+  {
+    struct cache_inode_file__
+    {
       fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
@@ -370,7 +391,8 @@ typedef struct cache_entry__ {
 
     struct cache_inode_symlink__ symlink;     /**< symlink related field  */
 
-    struct cache_inode_dir_begin__ {
+    struct cache_inode_dir_begin__
+    {
       fsal_handle_t handle;                     /**< The FSAL Handle                                         */
       fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
       cache_inode_endofdir_t end_of_dir;        /**< A flag to know if this entry is the end of dir          */
@@ -381,8 +403,10 @@ typedef struct cache_entry__ {
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
       char *referral;                           /**< NULL is not a referral, is not this a 'referral string' */
 
-      struct cache_inode_dir_data__ {
-        struct cache_inode_dir_entry__ {
+      struct cache_inode_dir_data__
+      {
+        struct cache_inode_dir_entry__
+        {
           cache_inode_entry_valid_state_t active;       /**< A flag to get the validity state for the direntry   */
           struct cache_entry__ *pentry;                 /**< Pointer to the cached entry (if direntry is active) */
           fsal_name_t name;                             /**< Name of the entry                                   */
@@ -392,7 +416,8 @@ typedef struct cache_entry__ {
 
     } dir_begin;                                /**< DIR_BEGINNING related field                               */
 
-    struct cache_inode_dir_cont__ {
+    struct cache_inode_dir_cont__
+    {
       struct cache_entry__ *pdir_begin;              /**< Pointer to the related DIR_BEGINNING              */
       struct cache_entry__ *pdir_cont;               /**< Pointer to the next DIR_CONTINUE (if needed)      */
       struct cache_entry__ *pdir_prev;               /**< Pointer to the next DIR_BEGINNING or DIR_CONTINUE */
@@ -402,7 +427,8 @@ typedef struct cache_entry__ {
       struct cache_inode_dir_data__ *pdir_data;      /**< Dirent data                                       */
     } dir_cont;                                 /**< DIR_CONTINUE related field                                */
 
-    struct cache_inode_special_object__ {
+    struct cache_inode_special_object__
+    {
       fsal_handle_t handle;                     /**< The FSAL Handle                                         */
       fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
       /* Note that special data is in the rawdev field of FSAL attributes */
@@ -416,7 +442,8 @@ typedef struct cache_entry__ {
   LRU_list_t *gc_lru;                         /**< related LRU list for GC                            */
   struct cache_entry__ *next_alloc;           /**< Required for STUFF ALLOCATOR                       */
 
-  struct cache_inode_parent_entry__ {
+  struct cache_inode_parent_entry__
+  {
     unsigned int subdirpos;                           /**< Position of the entry in the dirent array          */
     struct cache_entry__ *parent;                     /**< Parent entry (a dir_begin or a dir_count)          */
     struct cache_inode_parent_entry__ *next_parent;   /**< Next parent (for gc, in case of a hard link)       */
@@ -427,14 +454,16 @@ typedef struct cache_entry__ {
 #endif
 } cache_entry_t;
 
-typedef struct cache_inode_open_owner_name__ {
+typedef struct cache_inode_open_owner_name__
+{
   clientid4 clientid;
   unsigned int owner_len;
   char owner_val[MAXNAMLEN];
   struct cache_inode_open_owner_name__ *next;
 } cache_inode_open_owner_name_t;
 
-typedef struct cache_inode_open_owner__ {
+typedef struct cache_inode_open_owner__
+{
   clientid4 clientid;
   unsigned int owner_len;
   char owner_val[MAXNAMLEN];
@@ -446,9 +475,11 @@ typedef struct cache_inode_open_owner__ {
   struct cache_inode_open_owner__ *next;
 } cache_inode_open_owner_t;
 
-typedef struct cache_inode_state__ {
+typedef struct cache_inode_state__
+{
   cache_inode_state_type_t state_type;
-  union cache_inode_state_data__ {
+  union cache_inode_state_data__
+  {
     cache_inode_share_t share;
     cache_inode_lock_t lock;
     cache_inode_deleg_t deleg;
@@ -471,13 +502,15 @@ typedef struct cache_inode_dir_data__ cache_inode_dir_data_t;
 typedef struct cache_inode_parent_entry__ cache_inode_parent_entry_t;
 typedef union cache_inode_state_data__ cache_inode_state_data_t;
 
-typedef struct cache_inode_fsal_data__ {
+typedef struct cache_inode_fsal_data__
+{
   fsal_handle_t handle;                         /**< FSAL handle           */
   unsigned int cookie;                          /**< Cache inode cookie    */
   struct cache_inode_fsal_data__ *next_alloc;   /**< For STUFF_ALLOC macro */
 } cache_inode_fsal_data_t;
 
-typedef struct cache_inode_client__ {
+typedef struct cache_inode_client__
+{
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
   cache_entry_t *pool_entry;                                       /**< Worker's preallocad cache entries pool                   */
   cache_inode_dir_data_t *pool_dir_data;                           /**< Worker's preallocad cache directory data pool            */
@@ -515,7 +548,8 @@ typedef struct cache_inode_client__ {
 #endif
 } cache_inode_client_t;
 
-typedef struct cache_inode_gc_policy__ {
+typedef struct cache_inode_gc_policy__
+{
   signed int file_expiration_delay;           /**< maximum lifetime for a non directory entry             */
   signed int directory_expiration_delay;      /**< maximum lifetime for a directory entry                 */
   unsigned int hwmark_nb_entries;             /**< high water mark for cache_inode gc (number of entries) */
@@ -524,13 +558,15 @@ typedef struct cache_inode_gc_policy__ {
   unsigned int nb_call_before_gc;             /**< Number of call to be made before thinking about gc run */
 } cache_inode_gc_policy_t;
 
-typedef struct cache_inode_param_gc__ {
+typedef struct cache_inode_param_gc__
+{
   cache_inode_client_t *pclient;
   hash_table_t *ht;
   unsigned int nb_to_be_purged;
 } cache_inode_param_gc_t;
 
-typedef union cache_inode_create_arg__ {
+typedef union cache_inode_create_arg__
+{
   fsal_path_t link_content;
   fsal_dev_t dev_spec;
 } cache_inode_create_arg_t;

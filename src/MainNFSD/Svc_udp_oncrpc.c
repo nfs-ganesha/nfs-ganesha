@@ -71,7 +71,8 @@ static struct xp_ops Svcudp_op = {
 /*
  * kept in xprt->xp_p2
  */
-struct Svcudp_data {
+struct Svcudp_data
+{
   u_int su_iosz;                /* byte size of send.recv buffer */
   u_long su_xid;                /* transaction id */
   XDR su_xdrs;                  /* XDR handle */

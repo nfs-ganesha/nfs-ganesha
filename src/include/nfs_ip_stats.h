@@ -36,14 +36,16 @@
 #define IP_NAME_PREALLOC_SIZE      200
 
 /* NFS IPaddr cache entry structure */
-typedef struct nfs_ip_name__ {
+typedef struct nfs_ip_name__
+{
   unsigned int ipaddr;
   time_t timestamp;
   struct nfs_ip_name__ *next_alloc;
   char hostname[MAXHOSTNAMELEN];
 } nfs_ip_name_t;
 
-typedef struct nfs_ip_stats__ {
+typedef struct nfs_ip_stats__
+{
   unsigned int nb_call;
   unsigned int nb_req_nfs2;
   unsigned int nb_req_nfs3;

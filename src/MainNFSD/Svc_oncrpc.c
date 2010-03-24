@@ -44,7 +44,8 @@ SVCXPRT **Xports;
  * The dispatch routine takes request structs and runs the
  * apropriate procedure.
  */
-static struct svc_callout {
+static struct svc_callout
+{
   struct svc_callout *sc_next;
   u_long sc_prog;
   u_long sc_vers;

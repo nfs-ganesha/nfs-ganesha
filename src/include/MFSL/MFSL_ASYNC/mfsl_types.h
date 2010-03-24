@@ -110,24 +110,28 @@
 #include "err_fsal.h"
 #include "err_mfsl.h"
 
-typedef enum mfsl_async_health__ { MFSL_ASYNC_SYNCHRONOUS = 0,
+typedef enum mfsl_async_health__
+{ MFSL_ASYNC_SYNCHRONOUS = 0,
   MFSL_ASYNC_ASYNCHRONOUS = 1,
   MFSL_ASYNC_NEVER_SYNCED = 2
 } mfsl_async_health_t;
 
-typedef struct mfsl_object_specific_data__ {
+typedef struct mfsl_object_specific_data__
+{
   fsal_attrib_list_t async_attr;
   unsigned int deleted;
   struct mfsl_object_specific_data__ *next_alloc;
 } mfsl_object_specific_data_t;
 
-typedef struct mfsl_object__ {
+typedef struct mfsl_object__
+{
   fsal_handle_t handle;
   pthread_mutex_t lock;
   mfsl_async_health_t health;
 } mfsl_object_t;
 
-typedef struct mfsl_precreated_object__ {
+typedef struct mfsl_precreated_object__
+{
   mfsl_object_t mobject;
   fsal_name_t name;
   fsal_attrib_list_t attr;
@@ -135,15 +139,18 @@ typedef struct mfsl_precreated_object__ {
   struct mfsl_precreated_object__ *next_alloc;
 } mfsl_precreated_object_t;
 
-typedef struct mfsl_synclet_context__ {
+typedef struct mfsl_synclet_context__
+{
   pthread_mutex_t lock;
 } mfsl_synclet_context_t;
 
-typedef enum mfsl_async_addr_type__ { MFSL_ASYNC_ADDR_DIRECT = 1,
+typedef enum mfsl_async_addr_type__
+{ MFSL_ASYNC_ADDR_DIRECT = 1,
   MFSL_ASYNC_ADDR_INDIRECT = 2
 } mfsl_async_addr_type_t;
 
-typedef struct mfsl_synclet_data__ {
+typedef struct mfsl_synclet_data__
+{
   unsigned int my_index;
   pthread_cond_t op_condvar;
   pthread_mutex_t mutex_op_condvar;
@@ -154,7 +161,8 @@ typedef struct mfsl_synclet_data__ {
   LRU_list_t *op_lru;
 } mfsl_synclet_data_t;
 
-typedef enum mfsl_async_op_type__ {
+typedef enum mfsl_async_op_type__
+{
   MFSL_ASYNC_OP_CREATE = 0,
   MFSL_ASYNC_OP_MKDIR = 1,
   MFSL_ASYNC_OP_LINK = 2,
@@ -175,7 +183,8 @@ static const char *mfsl_async_op_name[] = { "MFSL_ASYNC_OP_CREATE",
   "MFSL_ASYNC_OP_SYMLINK"
 };
 
-typedef struct mfsl_async_op_create_args__ {
+typedef struct mfsl_async_op_create_args__
+{
   fsal_name_t precreate_name;
   mfsl_object_t *pmfsl_obj_dirdest;
   fsal_name_t filename;
@@ -184,11 +193,13 @@ typedef struct mfsl_async_op_create_args__ {
   fsal_gid_t group;
 } mfsl_async_op_create_args_t;
 
-typedef struct mfsl_async_op_create_res__ {
+typedef struct mfsl_async_op_create_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_create_res_t;
 
-typedef struct mfsl_async_op_mkdir_args__ {
+typedef struct mfsl_async_op_mkdir_args__
+{
   fsal_name_t precreate_name;
   mfsl_object_t *pmfsl_obj_dirdest;
   fsal_name_t dirname;
@@ -197,70 +208,84 @@ typedef struct mfsl_async_op_mkdir_args__ {
   fsal_gid_t group;
 } mfsl_async_op_mkdir_args_t;
 
-typedef struct mfsl_async_op_mkdir_res__ {
+typedef struct mfsl_async_op_mkdir_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_mkdir_res_t;
 
-typedef struct mfsl_async_op_link_args__ {
+typedef struct mfsl_async_op_link_args__
+{
   mfsl_object_t *pmobject_src;
   mfsl_object_t *pmobject_dirdest;
   fsal_name_t name_link;
 } mfsl_async_op_link_args_t;
 
-typedef struct mfsl_async_op_link_res__ {
+typedef struct mfsl_async_op_link_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_link_res_t;
 
-typedef struct mfsl_async_op_remove_args__ {
+typedef struct mfsl_async_op_remove_args__
+{
   mfsl_object_t *pmobject;
   fsal_name_t name;
 } mfsl_async_op_remove_args_t;
 
-typedef struct mfsl_async_op_remove_res__ {
+typedef struct mfsl_async_op_remove_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_remove_res_t;
 
-typedef struct mfsl_async_op_rename_args__ {
+typedef struct mfsl_async_op_rename_args__
+{
   mfsl_object_t *pmobject_src;
   fsal_name_t name_src;
   mfsl_object_t *pmobject_dirdest;
   fsal_name_t name_dest;
 } mfsl_async_op_rename_args_t;
 
-typedef struct mfsl_async_op_rename_res__ {
+typedef struct mfsl_async_op_rename_res__
+{
   fsal_attrib_list_t attrsrc;
   fsal_attrib_list_t attrdest;
 } mfsl_async_op_rename_res_t;
 
-typedef struct mfsl_async_op_setattr_args__ {
+typedef struct mfsl_async_op_setattr_args__
+{
   mfsl_object_t *pmobject;
   fsal_attrib_list_t attr;
 } mfsl_async_op_setattr_args_t;
 
-typedef struct mfsl_async_op_setattr_res__ {
+typedef struct mfsl_async_op_setattr_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_setattr_res_t;
 
-typedef struct mfsl_async_op_truncate_args__ {
+typedef struct mfsl_async_op_truncate_args__
+{
   mfsl_object_t *pmobject;
   fsal_size_t size;
 } mfsl_async_op_truncate_args_t;
 
-typedef struct mfsl_async_op_truncate_res__ {
+typedef struct mfsl_async_op_truncate_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_truncate_res_t;
 
-typedef struct mfsl_async_op_symlink_args__ {
+typedef struct mfsl_async_op_symlink_args__
+{
   fsal_name_t precreate_name;
   fsal_name_t linkname;
   mfsl_object_t *pmobject_dirdest;
 } mfsl_async_op_symlink_args_t;
 
-typedef struct mfsl_async_op_symlink_res__ {
+typedef struct mfsl_async_op_symlink_res__
+{
   fsal_attrib_list_t attr;
 } mfsl_async_op_symlink_res_t;
 
-typedef union mfsl_async_op_args__ {
+typedef union mfsl_async_op_args__
+{
   mfsl_async_op_create_args_t create;
   mfsl_async_op_mkdir_args_t mkdir;
   mfsl_async_op_link_args_t link;
@@ -271,7 +296,8 @@ typedef union mfsl_async_op_args__ {
   mfsl_async_op_symlink_args_t symlink;
 } mfsl_async_op_args_t;
 
-typedef union mfsl_async_op_res__ {
+typedef union mfsl_async_op_res__
+{
   mfsl_async_op_create_res_t create;
   mfsl_async_op_mkdir_res_t mkdir;
   mfsl_async_op_link_res_t link;
@@ -282,7 +308,8 @@ typedef union mfsl_async_op_res__ {
   mfsl_async_op_symlink_res_t symlink;
 } mfsl_async_op_res_t;
 
-typedef struct mfsl_async_op_desc__ {
+typedef struct mfsl_async_op_desc__
+{
   struct timeval op_time;
   mfsl_async_op_type_t op_type;
   mfsl_async_op_args_t op_args;
@@ -308,7 +335,8 @@ fsal_status_t mfsl_async_setattr(mfsl_async_op_desc_t * popasyncdesc);
 fsal_status_t mfsl_async_truncate(mfsl_async_op_desc_t * popasyncdesc);
 fsal_status_t mfsl_async_symlink(mfsl_async_op_desc_t * popasyncdesc);
 
-typedef struct mfsl_parameter__ {
+typedef struct mfsl_parameter__
+{
   unsigned int nb_pre_async_op_desc;             /**< Number of preallocated Aync Op descriptors       */
   unsigned int nb_synclet;                       /**< Number of synclet to be used                     */
   unsigned int async_window_sec;                 /**< Asynchronos Task Dispatcher Window (seconds)     */
@@ -322,7 +350,8 @@ typedef struct mfsl_parameter__ {
   LRU_parameter_t lru_param;                           /**< Parameter to LRU for async op              */
 } mfsl_parameter_t;
 
-typedef struct mfsl_context__ {
+typedef struct mfsl_context__
+{
   mfsl_object_specific_data_t *pool_spec_data;
   mfsl_async_op_desc_t *pool_async_op;
   pthread_mutex_t lock;

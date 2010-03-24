@@ -113,7 +113,8 @@ fsal_status_t FSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
 
 }
 
-typedef struct __fsal_dirbuff {
+typedef struct __fsal_dirbuff
+{
   fsal_attrib_mask_t getattr_mask;
   fsal_count_t nb_entries;
   fsal_count_t max_entries;

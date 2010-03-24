@@ -1,7 +1,8 @@
 #ifndef _CONFIG_PARSING_H
 #define _CONFIG_PARSING_H
 
-enum test_number {
+enum test_number
+{
   ONE = 1,
   TWO,
   THREE,
@@ -13,7 +14,8 @@ enum test_number {
   NINE
 };
 
-struct btest {
+struct btest
+{
   enum test_number num;
   enum test_number num2;
 
@@ -34,7 +36,8 @@ struct btest {
   struct btest *nextbtest;
 };
 
-struct testparam {
+struct testparam
+{
   char *dirtest;
   char *logfile;
   struct btest *btest;

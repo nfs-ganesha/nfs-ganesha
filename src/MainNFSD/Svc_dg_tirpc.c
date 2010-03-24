@@ -358,7 +358,8 @@ SVCXPRT *xprt;
  * An entry in the cache
  */
 typedef struct cache_node *cache_ptr;
-struct cache_node {
+struct cache_node
+{
   /*
    * Index into cache is xid, proc, vers, prog and address
    */
@@ -381,7 +382,8 @@ struct cache_node {
 /*
  * The entire cache
  */
-struct cl_cache {
+struct cl_cache
+{
   u_int uc_size;                /* size of cache */
   cache_ptr *uc_entries;        /* hash table of entries in cache */
   cache_ptr *uc_fifo;           /* fifo list of entries in cache */

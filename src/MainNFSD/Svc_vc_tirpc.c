@@ -103,13 +103,15 @@ static void Svc_vc_ops(SVCXPRT *);
 static bool_t Svc_vc_control(SVCXPRT * xprt, const u_int rq, void *in);
 static bool_t Svc_vc_rendezvous_control(SVCXPRT * xprt, const u_int rq, void *in);
 
-struct cf_rendezvous {          /* kept in xprt->xp_p1 for rendezvouser */
+struct cf_rendezvous
+{                               /* kept in xprt->xp_p1 for rendezvouser */
   u_int sendsize;
   u_int recvsize;
   int maxrec;
 };
 
-struct cf_conn {                /* kept in xprt->xp_p1 for actual connection */
+struct cf_conn
+{                               /* kept in xprt->xp_p1 for actual connection */
   enum xprt_stat strm_stat;
   u_int32_t x_id;
   XDR xdrs;

@@ -203,13 +203,15 @@ typedef uid_t fsal_uid_t;                     /**< Owner               */
 typedef gid_t fsal_gid_t;                     /**< Group               */
 typedef mode_t fsal_accessmode_t;              /**< Access mode (32 bits) */
 
-typedef struct fsal_time__ {
+typedef struct fsal_time__
+{
   fsal_uint_t seconds;
   fsal_uint_t nseconds;
 } fsal_time_t;       /**< time */
 
 /** Behavior for init values */
-typedef enum fsal_initflag_t {
+typedef enum fsal_initflag_t
+{
   FSAL_INIT_FS_DEFAULT = 0,     /**< keep FS default value */
   FSAL_INIT_FORCE_VALUE,        /**< force a value */
   FSAL_INIT_MAX_LIMIT,          /**< force a value if default is greater */
@@ -218,7 +220,8 @@ typedef enum fsal_initflag_t {
 } fsal_initflag_t;
 
 /** FS object types */
-typedef enum fsal_nodetype__ {
+typedef enum fsal_nodetype__
+{
   FSAL_TYPE_FIFO = 0x1,  /**< Fifo              */
   FSAL_TYPE_CHR = 0x2,   /**< character special */
   FSAL_TYPE_DIR = 0x4,   /**< directory         */
@@ -277,14 +280,16 @@ typedef enum fsal_nodetype__ {
 
 /** filesystem identifier */
 
-typedef struct fsal_fsid__ {
+typedef struct fsal_fsid__
+{
   fsal_u64_t major;
   fsal_u64_t minor;
 } fsal_fsid_t;
 
 /** raw device spec */
 
-typedef struct fsal_dev__ {
+typedef struct fsal_dev__
+{
   fsal_uint_t major;
   fsal_uint_t minor;
 } fsal_dev_t;
@@ -301,7 +306,8 @@ typedef fsal_ushort_t fsal_aclsupp_t;
 
 /** ACL types */
 
-typedef enum fsal_acltype__ {
+typedef enum fsal_acltype__
+{
   FSAL_ACL_EMPTY,               /* empty ACL slot */
   FSAL_ACL_ALLOW,
   FSAL_ACL_DENY
@@ -309,7 +315,8 @@ typedef enum fsal_acltype__ {
 
 /** ACL flag */
 
-typedef enum fsal_aclflag__ {
+typedef enum fsal_aclflag__
+{
   FSAL_ACL_USER,
   FSAL_ACL_GROUP
 } fsal_aclflag_t;
@@ -338,13 +345,15 @@ typedef fsal_uint_t fsal_aclperm_t;
 
 /** ACL entry */
 
-typedef struct fsal_acl__ {
+typedef struct fsal_acl__
+{
 
   fsal_acltype_t type;
   fsal_aclperm_t perm;
 
   fsal_aclflag_t flag;
-  union {
+  union
+  {
     fsal_uid_t uid;
     fsal_gid_t gid;
   } who;
@@ -445,7 +454,8 @@ typedef fsal_u64_t fsal_attrib_mask_t;
 
 /** A list of FS object's attributes. */
 
-typedef struct fsal_attrib_list__ {
+typedef struct fsal_attrib_list__
+{
 
   fsal_attrib_mask_t asked_attributes;      /**< Indicates the attributes
                                              *   to be got or set,
@@ -485,7 +495,8 @@ typedef fsal_ushort_t fsal_accessflags_t;
 
 /** directory entry */
 
-typedef struct fsal_dirent__ {
+typedef struct fsal_dirent__
+{
 
   fsal_handle_t handle;             /**< directory entry handle. */
   fsal_name_t name;                 /**< directory entry name.   */
@@ -517,20 +528,23 @@ typedef fsal_ushort_t fsal_openflags_t;
  * FSAL_SEEK_END
  * Set position to EOF plus offset.
  */
-typedef enum fsal_seektype__ {
+typedef enum fsal_seektype__
+{
   FSAL_SEEK_SET,
   FSAL_SEEK_CUR,
   FSAL_SEEK_END
 } fsal_seektype_t;
 
-typedef struct fsal_seek__ {
+typedef struct fsal_seek__
+{
   fsal_seektype_t whence;
   fsal_off_t offset;
 } fsal_seek_t;
 
 /** File locking info */
 
-typedef enum fsal_locktype_t {
+typedef enum fsal_locktype_t
+{
   FSAL_TEST_SHARED,             /* test if a lock would conflict with this shared lock */
   FSAL_TEST_EXCLUSIVE,          /* test if a lock would conflict with this exclusive lock */
 
@@ -542,7 +556,8 @@ typedef enum fsal_locktype_t {
 
 } fsal_locktype_t;
 
-typedef struct fsal_lockparam_t {
+typedef struct fsal_lockparam_t
+{
 
   fsal_locktype_t lock_type;
 
@@ -581,7 +596,8 @@ typedef fsal_ushort_t fsal_fhexptype_t;
 
 /** File system static info. */
 
-typedef struct fsal_staticfsinfo__ {
+typedef struct fsal_staticfsinfo__
+{
 
   fsal_size_t maxfilesize;          /**< maximum allowed filesize     */
   fsal_count_t maxlink;             /**< maximum hard links on a file */
@@ -627,7 +643,8 @@ typedef struct fsal_staticfsinfo__ {
 
 /** File system dynamic info. */
 
-typedef struct fsal_dynamicfsinfo__ {
+typedef struct fsal_dynamicfsinfo__
+{
 
   fsal_size_t total_bytes;
   fsal_size_t free_bytes;
@@ -657,10 +674,12 @@ typedef fsal_ushort_t fsal_rcpflag_t;
 
 /** Configuration info for every type of filesystem. */
 
-typedef struct fs_common_initinfo__ {
+typedef struct fs_common_initinfo__
+{
 
   /* specifies the behavior for each init value. */
-  struct _behavior_ {
+  struct _behavior_
+  {
     fsal_initflag_t
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
@@ -677,14 +696,16 @@ typedef struct fs_common_initinfo__ {
 
 /** Configuration info for the fsal */
 
-typedef struct fsal_init_info__ {
+typedef struct fsal_init_info__
+{
   log_t log_outputs;          /**< outputs for logging. */
   unsigned int max_fs_calls;  /**< max number of FS calls. 0 = infinite */
 } fsal_init_info_t;
 
 /** FSAL_Init parameter. */
 
-typedef struct fsal_parameter__ {
+typedef struct fsal_parameter__
+{
 
   fsal_init_info_t fsal_info;               /**< fsal configuration info  */
   fs_common_initinfo_t fs_common_info;      /**< filesystem common info   */
@@ -694,8 +715,10 @@ typedef struct fsal_parameter__ {
 
 /** Statistics about the use of the Filesystem abstraction layer. */
 
-typedef struct fsal_statistics__ {
-  struct func_fsak_stats__ {
+typedef struct fsal_statistics__
+{
+  struct func_fsak_stats__
+  {
     unsigned int nb_call[FSAL_NB_FUNC];            /**< Total number of calls to fsal              */
     unsigned int nb_success[FSAL_NB_FUNC];         /**< Total number of successfull calls          */
     unsigned int nb_err_retryable[FSAL_NB_FUNC];   /**< Total number of failed/retryable calls     */
@@ -706,7 +729,8 @@ typedef struct fsal_statistics__ {
 
 /** Status of FSAL operations */
 
-typedef struct fsal_status__ {
+typedef struct fsal_status__
+{
   int major;    /**< major error code */
   int minor;    /**< minor error code */
 } fsal_status_t;
@@ -718,7 +742,8 @@ ERR_FSAL_NO_ERROR, 0};
 
 /** Buffer descriptor similar to utf8 strings. */
 
-typedef struct fsal_buffdesc__ {
+typedef struct fsal_buffdesc__
+{
   unsigned int len;
   char *pointer;
 } fsal_buffdesc_t;
@@ -741,7 +766,8 @@ typedef struct fsal_buffdesc__ {
 
 /* digest types  */
 
-typedef enum fsal_digesttype_t {
+typedef enum fsal_digesttype_t
+{
 
   /* NFS handles */
   FSAL_DIGEST_NFSV2,

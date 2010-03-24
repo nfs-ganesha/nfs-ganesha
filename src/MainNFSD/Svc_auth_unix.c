@@ -63,7 +63,8 @@ Gssrpc__svcauth_unix(register struct svc_req *rqst,
   XDR xdrs;
   register struct authunix_parms *aup;
   register rpc_inline_t *buf;
-  struct area {
+  struct area
+  {
     struct authunix_parms area_aup;
     char area_machname[MAX_MACHINE_NAME + 1];
     int area_gids[NGRPS];

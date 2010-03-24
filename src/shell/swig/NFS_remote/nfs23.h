@@ -34,14 +34,16 @@ typedef char *filename2;
 
 typedef char fhandle2[NFS2_FHSIZE];
 
-typedef struct {
+typedef struct
+{
   u_int nfsdata2_len;
   char *nfsdata2_val;
 } nfsdata2;
 
 typedef char nfscookie2[NFS2_COOKIESIZE];
 
-enum nfsstat2 {
+enum nfsstat2
+{
   NFS_OK = 0,
   NFSERR_PERM = 1,
   NFSERR_NOENT = 2,
@@ -63,7 +65,8 @@ enum nfsstat2 {
 };
 typedef enum nfsstat2 nfsstat2;
 
-enum ftype2 {
+enum ftype2
+{
   NFNON = 0,
   NFREG = 1,
   NFDIR = 2,
@@ -76,13 +79,15 @@ enum ftype2 {
 };
 typedef enum ftype2 ftype2;
 
-struct nfstime2 {
+struct nfstime2
+{
   u_int seconds;
   u_int useconds;
 };
 typedef struct nfstime2 nfstime2;
 
-struct fattr2 {
+struct fattr2
+{
   ftype2 type;
   u_int mode;
   u_int nlink;
@@ -100,43 +105,52 @@ struct fattr2 {
 };
 typedef struct fattr2 fattr2;
 
-struct fhstatus2 {
+struct fhstatus2
+{
   u_int status;
-  union {
+  union
+  {
     fhandle2 directory;
   } fhstatus2_u;
 };
 typedef struct fhstatus2 fhstatus2;
 
-struct diropargs2 {
+struct diropargs2
+{
   fhandle2 dir;
   filename2 name;
 };
 typedef struct diropargs2 diropargs2;
 
-struct DIROP2resok {
+struct DIROP2resok
+{
   fhandle2 file;
   fattr2 attributes;
 };
 typedef struct DIROP2resok DIROP2resok;
 
-struct DIROP2res {
+struct DIROP2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     DIROP2resok diropok;
   } DIROP2res_u;
 };
 typedef struct DIROP2res DIROP2res;
 
-struct ATTR2res {
+struct ATTR2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     fattr2 attributes;
   } ATTR2res_u;
 };
 typedef struct ATTR2res ATTR2res;
 
-struct sattr2 {
+struct sattr2
+{
   u_int mode;
   u_int uid;
   u_int gid;
@@ -146,7 +160,8 @@ struct sattr2 {
 };
 typedef struct sattr2 sattr2;
 
-struct statinfo2 {
+struct statinfo2
+{
   u_int tsize;
   u_int bsize;
   u_int blocks;
@@ -155,22 +170,26 @@ struct statinfo2 {
 };
 typedef struct statinfo2 statinfo2;
 
-struct STATFS2res {
+struct STATFS2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     statinfo2 info;
   } STATFS2res_u;
 };
 typedef struct STATFS2res STATFS2res;
 
-struct READDIR2args {
+struct READDIR2args
+{
   fhandle2 dir;
   nfscookie2 cookie;
   u_int count;
 };
 typedef struct READDIR2args READDIR2args;
 
-struct entry2 {
+struct entry2
+{
   u_int fileid;
   filename2 name;
   nfscookie2 cookie;
@@ -178,46 +197,54 @@ struct entry2 {
 };
 typedef struct entry2 entry2;
 
-struct READDIR2resok {
+struct READDIR2resok
+{
   entry2 *entries;
   bool_t eof;
 };
 typedef struct READDIR2resok READDIR2resok;
 
-struct READDIR2res {
+struct READDIR2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     READDIR2resok readdirok;
   } READDIR2res_u;
 };
 typedef struct READDIR2res READDIR2res;
 
-struct SYMLINK2args {
+struct SYMLINK2args
+{
   diropargs2 from;
   nfspath2 to;
   sattr2 attributes;
 };
 typedef struct SYMLINK2args SYMLINK2args;
 
-struct LINK2args {
+struct LINK2args
+{
   fhandle2 from;
   diropargs2 to;
 };
 typedef struct LINK2args LINK2args;
 
-struct RENAME2args {
+struct RENAME2args
+{
   diropargs2 from;
   diropargs2 to;
 };
 typedef struct RENAME2args RENAME2args;
 
-struct CREATE2args {
+struct CREATE2args
+{
   diropargs2 where;
   sattr2 attributes;
 };
 typedef struct CREATE2args CREATE2args;
 
-struct WRITE2args {
+struct WRITE2args
+{
   fhandle2 file;
   u_int beginoffset;
   u_int offset;
@@ -226,21 +253,25 @@ struct WRITE2args {
 };
 typedef struct WRITE2args WRITE2args;
 
-struct READ2resok {
+struct READ2resok
+{
   fattr2 attributes;
   nfsdata2 data;
 };
 typedef struct READ2resok READ2resok;
 
-struct READ2res {
+struct READ2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     READ2resok readok;
   } READ2res_u;
 };
 typedef struct READ2res READ2res;
 
-struct READ2args {
+struct READ2args
+{
   fhandle2 file;
   u_int offset;
   u_int count;
@@ -248,15 +279,18 @@ struct READ2args {
 };
 typedef struct READ2args READ2args;
 
-struct READLINK2res {
+struct READLINK2res
+{
   nfsstat2 status;
-  union {
+  union
+  {
     nfspath2 data;
   } READLINK2res_u;
 };
 typedef struct READLINK2res READLINK2res;
 
-struct SETATTR2args {
+struct SETATTR2args
+{
   fhandle2 file;
   sattr2 attributes;
 };
@@ -296,7 +330,8 @@ typedef nfs3_uint32 mode3;
 
 typedef nfs3_uint32 count3;
 
-enum nfsstat3 {
+enum nfsstat3
+{
   NFS3_OK = 0,
   NFS3ERR_PERM = 1,
   NFS3ERR_NOENT = 2,
@@ -329,7 +364,8 @@ enum nfsstat3 {
 };
 typedef enum nfsstat3 nfsstat3;
 
-enum ftype3 {
+enum ftype3
+{
   NF3REG = 1,
   NF3DIR = 2,
   NF3BLK = 3,
@@ -340,27 +376,32 @@ enum ftype3 {
 };
 typedef enum ftype3 ftype3;
 
-struct specdata3 {
+struct specdata3
+{
   nfs3_uint32 specdata1;
   nfs3_uint32 specdata2;
 };
 typedef struct specdata3 specdata3;
 
-struct nfs_fh3 {
-  struct {
+struct nfs_fh3
+{
+  struct
+  {
     u_int data_len;
     char *data_val;
   } data;
 };
 typedef struct nfs_fh3 nfs_fh3;
 
-struct nfstime3 {
+struct nfstime3
+{
   nfs3_uint32 seconds;
   nfs3_uint32 nseconds;
 };
 typedef struct nfstime3 nfstime3;
 
-struct fattr3 {
+struct fattr3
+{
   ftype3 type;
   mode3 mode;
   nfs3_uint32 nlink;
@@ -377,99 +418,121 @@ struct fattr3 {
 };
 typedef struct fattr3 fattr3;
 
-struct post_op_attr {
+struct post_op_attr
+{
   bool_t attributes_follow;
-  union {
+  union
+  {
     fattr3 attributes;
   } post_op_attr_u;
 };
 typedef struct post_op_attr post_op_attr;
 
-struct wcc_attr {
+struct wcc_attr
+{
   size3 size;
   nfstime3 mtime;
   nfstime3 ctime;
 };
 typedef struct wcc_attr wcc_attr;
 
-struct pre_op_attr {
+struct pre_op_attr
+{
   bool_t attributes_follow;
-  union {
+  union
+  {
     wcc_attr attributes;
   } pre_op_attr_u;
 };
 typedef struct pre_op_attr pre_op_attr;
 
-struct wcc_data {
+struct wcc_data
+{
   pre_op_attr before;
   post_op_attr after;
 };
 typedef struct wcc_data wcc_data;
 
-struct post_op_fh3 {
+struct post_op_fh3
+{
   bool_t handle_follows;
-  union {
+  union
+  {
     nfs_fh3 handle;
   } post_op_fh3_u;
 };
 typedef struct post_op_fh3 post_op_fh3;
 
-enum time_how {
+enum time_how
+{
   DONT_CHANGE = 0,
   SET_TO_SERVER_TIME = 1,
   SET_TO_CLIENT_TIME = 2
 };
 typedef enum time_how time_how;
 
-struct set_mode3 {
+struct set_mode3
+{
   bool_t set_it;
-  union {
+  union
+  {
     mode3 mode;
   } set_mode3_u;
 };
 typedef struct set_mode3 set_mode3;
 
-struct set_uid3 {
+struct set_uid3
+{
   bool_t set_it;
-  union {
+  union
+  {
     uid3 uid;
   } set_uid3_u;
 };
 typedef struct set_uid3 set_uid3;
 
-struct set_gid3 {
+struct set_gid3
+{
   bool_t set_it;
-  union {
+  union
+  {
     gid3 gid;
   } set_gid3_u;
 };
 typedef struct set_gid3 set_gid3;
 
-struct set_size3 {
+struct set_size3
+{
   bool_t set_it;
-  union {
+  union
+  {
     size3 size;
   } set_size3_u;
 };
 typedef struct set_size3 set_size3;
 
-struct set_atime {
+struct set_atime
+{
   time_how set_it;
-  union {
+  union
+  {
     nfstime3 atime;
   } set_atime_u;
 };
 typedef struct set_atime set_atime;
 
-struct set_mtime {
+struct set_mtime
+{
   time_how set_it;
-  union {
+  union
+  {
     nfstime3 mtime;
   } set_mtime_u;
 };
 typedef struct set_mtime set_mtime;
 
-struct sattr3 {
+struct sattr3
+{
   set_mode3 mode;
   set_uid3 uid;
   set_gid3 gid;
@@ -479,84 +542,101 @@ struct sattr3 {
 };
 typedef struct sattr3 sattr3;
 
-struct diropargs3 {
+struct diropargs3
+{
   nfs_fh3 dir;
   filename3 name;
 };
 typedef struct diropargs3 diropargs3;
 
-struct GETATTR3args {
+struct GETATTR3args
+{
   nfs_fh3 object;
 };
 typedef struct GETATTR3args GETATTR3args;
 
-struct GETATTR3resok {
+struct GETATTR3resok
+{
   fattr3 obj_attributes;
 };
 typedef struct GETATTR3resok GETATTR3resok;
 
-struct GETATTR3res {
+struct GETATTR3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     GETATTR3resok resok;
   } GETATTR3res_u;
 };
 typedef struct GETATTR3res GETATTR3res;
 
-struct sattrguard3 {
+struct sattrguard3
+{
   bool_t check;
-  union {
+  union
+  {
     nfstime3 obj_ctime;
   } sattrguard3_u;
 };
 typedef struct sattrguard3 sattrguard3;
 
-struct SETATTR3args {
+struct SETATTR3args
+{
   nfs_fh3 object;
   sattr3 new_attributes;
   sattrguard3 guard;
 };
 typedef struct SETATTR3args SETATTR3args;
 
-struct SETATTR3resok {
+struct SETATTR3resok
+{
   wcc_data obj_wcc;
 };
 typedef struct SETATTR3resok SETATTR3resok;
 
-struct SETATTR3resfail {
+struct SETATTR3resfail
+{
   wcc_data obj_wcc;
 };
 typedef struct SETATTR3resfail SETATTR3resfail;
 
-struct SETATTR3res {
+struct SETATTR3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     SETATTR3resok resok;
     SETATTR3resfail resfail;
   } SETATTR3res_u;
 };
 typedef struct SETATTR3res SETATTR3res;
 
-struct LOOKUP3args {
+struct LOOKUP3args
+{
   diropargs3 what;
 };
 typedef struct LOOKUP3args LOOKUP3args;
 
-struct LOOKUP3resok {
+struct LOOKUP3resok
+{
   nfs_fh3 object;
   post_op_attr obj_attributes;
   post_op_attr dir_attributes;
 };
 typedef struct LOOKUP3resok LOOKUP3resok;
 
-struct LOOKUP3resfail {
+struct LOOKUP3resfail
+{
   post_op_attr dir_attributes;
 };
 typedef struct LOOKUP3resfail LOOKUP3resfail;
 
-struct LOOKUP3res {
+struct LOOKUP3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     LOOKUP3resok resok;
     LOOKUP3resfail resfail;
   } LOOKUP3res_u;
@@ -569,109 +649,129 @@ typedef struct LOOKUP3res LOOKUP3res;
 #define	ACCESS3_DELETE 0x0010
 #define	ACCESS3_EXECUTE 0x0020
 
-struct ACCESS3args {
+struct ACCESS3args
+{
   nfs_fh3 object;
   nfs3_uint32 access;
 };
 typedef struct ACCESS3args ACCESS3args;
 
-struct ACCESS3resok {
+struct ACCESS3resok
+{
   post_op_attr obj_attributes;
   nfs3_uint32 access;
 };
 typedef struct ACCESS3resok ACCESS3resok;
 
-struct ACCESS3resfail {
+struct ACCESS3resfail
+{
   post_op_attr obj_attributes;
 };
 typedef struct ACCESS3resfail ACCESS3resfail;
 
-struct ACCESS3res {
+struct ACCESS3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     ACCESS3resok resok;
     ACCESS3resfail resfail;
   } ACCESS3res_u;
 };
 typedef struct ACCESS3res ACCESS3res;
 
-struct READLINK3args {
+struct READLINK3args
+{
   nfs_fh3 symlink;
 };
 typedef struct READLINK3args READLINK3args;
 
-struct READLINK3resok {
+struct READLINK3resok
+{
   post_op_attr symlink_attributes;
   nfspath3 data;
 };
 typedef struct READLINK3resok READLINK3resok;
 
-struct READLINK3resfail {
+struct READLINK3resfail
+{
   post_op_attr symlink_attributes;
 };
 typedef struct READLINK3resfail READLINK3resfail;
 
-struct READLINK3res {
+struct READLINK3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     READLINK3resok resok;
     READLINK3resfail resfail;
   } READLINK3res_u;
 };
 typedef struct READLINK3res READLINK3res;
 
-struct READ3args {
+struct READ3args
+{
   nfs_fh3 file;
   offset3 offset;
   count3 count;
 };
 typedef struct READ3args READ3args;
 
-struct READ3resok {
+struct READ3resok
+{
   post_op_attr file_attributes;
   count3 count;
   bool_t eof;
-  struct {
+  struct
+  {
     u_int data_len;
     char *data_val;
   } data;
 };
 typedef struct READ3resok READ3resok;
 
-struct READ3resfail {
+struct READ3resfail
+{
   post_op_attr file_attributes;
 };
 typedef struct READ3resfail READ3resfail;
 
-struct READ3res {
+struct READ3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     READ3resok resok;
     READ3resfail resfail;
   } READ3res_u;
 };
 typedef struct READ3res READ3res;
 
-enum stable_how {
+enum stable_how
+{
   UNSTABLE = 0,
   DATA_SYNC = 1,
   FILE_SYNC = 2
 };
 typedef enum stable_how stable_how;
 
-struct WRITE3args {
+struct WRITE3args
+{
   nfs_fh3 file;
   offset3 offset;
   count3 count;
   stable_how stable;
-  struct {
+  struct
+  {
     u_int data_len;
     char *data_val;
   } data;
 };
 typedef struct WRITE3args WRITE3args;
 
-struct WRITE3resok {
+struct WRITE3resok
+{
   wcc_data file_wcc;
   count3 count;
   stable_how committed;
@@ -679,268 +779,319 @@ struct WRITE3resok {
 };
 typedef struct WRITE3resok WRITE3resok;
 
-struct WRITE3resfail {
+struct WRITE3resfail
+{
   wcc_data file_wcc;
 };
 typedef struct WRITE3resfail WRITE3resfail;
 
-struct WRITE3res {
+struct WRITE3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     WRITE3resok resok;
     WRITE3resfail resfail;
   } WRITE3res_u;
 };
 typedef struct WRITE3res WRITE3res;
 
-enum createmode3 {
+enum createmode3
+{
   UNCHECKED = 0,
   GUARDED = 1,
   EXCLUSIVE = 2
 };
 typedef enum createmode3 createmode3;
 
-struct createhow3 {
+struct createhow3
+{
   createmode3 mode;
-  union {
+  union
+  {
     sattr3 obj_attributes;
     createverf3 verf;
   } createhow3_u;
 };
 typedef struct createhow3 createhow3;
 
-struct CREATE3args {
+struct CREATE3args
+{
   diropargs3 where;
   createhow3 how;
 };
 typedef struct CREATE3args CREATE3args;
 
-struct CREATE3resok {
+struct CREATE3resok
+{
   post_op_fh3 obj;
   post_op_attr obj_attributes;
   wcc_data dir_wcc;
 };
 typedef struct CREATE3resok CREATE3resok;
 
-struct CREATE3resfail {
+struct CREATE3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct CREATE3resfail CREATE3resfail;
 
-struct CREATE3res {
+struct CREATE3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     CREATE3resok resok;
     CREATE3resfail resfail;
   } CREATE3res_u;
 };
 typedef struct CREATE3res CREATE3res;
 
-struct MKDIR3args {
+struct MKDIR3args
+{
   diropargs3 where;
   sattr3 attributes;
 };
 typedef struct MKDIR3args MKDIR3args;
 
-struct MKDIR3resok {
+struct MKDIR3resok
+{
   post_op_fh3 obj;
   post_op_attr obj_attributes;
   wcc_data dir_wcc;
 };
 typedef struct MKDIR3resok MKDIR3resok;
 
-struct MKDIR3resfail {
+struct MKDIR3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct MKDIR3resfail MKDIR3resfail;
 
-struct MKDIR3res {
+struct MKDIR3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     MKDIR3resok resok;
     MKDIR3resfail resfail;
   } MKDIR3res_u;
 };
 typedef struct MKDIR3res MKDIR3res;
 
-struct symlinkdata3 {
+struct symlinkdata3
+{
   sattr3 symlink_attributes;
   nfspath3 symlink_data;
 };
 typedef struct symlinkdata3 symlinkdata3;
 
-struct SYMLINK3args {
+struct SYMLINK3args
+{
   diropargs3 where;
   symlinkdata3 symlink;
 };
 typedef struct SYMLINK3args SYMLINK3args;
 
-struct SYMLINK3resok {
+struct SYMLINK3resok
+{
   post_op_fh3 obj;
   post_op_attr obj_attributes;
   wcc_data dir_wcc;
 };
 typedef struct SYMLINK3resok SYMLINK3resok;
 
-struct SYMLINK3resfail {
+struct SYMLINK3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct SYMLINK3resfail SYMLINK3resfail;
 
-struct SYMLINK3res {
+struct SYMLINK3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     SYMLINK3resok resok;
     SYMLINK3resfail resfail;
   } SYMLINK3res_u;
 };
 typedef struct SYMLINK3res SYMLINK3res;
 
-struct devicedata3 {
+struct devicedata3
+{
   sattr3 dev_attributes;
   specdata3 spec;
 };
 typedef struct devicedata3 devicedata3;
 
-struct mknoddata3 {
+struct mknoddata3
+{
   ftype3 type;
-  union {
+  union
+  {
     devicedata3 device;
     sattr3 pipe_attributes;
   } mknoddata3_u;
 };
 typedef struct mknoddata3 mknoddata3;
 
-struct MKNOD3args {
+struct MKNOD3args
+{
   diropargs3 where;
   mknoddata3 what;
 };
 typedef struct MKNOD3args MKNOD3args;
 
-struct MKNOD3resok {
+struct MKNOD3resok
+{
   post_op_fh3 obj;
   post_op_attr obj_attributes;
   wcc_data dir_wcc;
 };
 typedef struct MKNOD3resok MKNOD3resok;
 
-struct MKNOD3resfail {
+struct MKNOD3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct MKNOD3resfail MKNOD3resfail;
 
-struct MKNOD3res {
+struct MKNOD3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     MKNOD3resok resok;
     MKNOD3resfail resfail;
   } MKNOD3res_u;
 };
 typedef struct MKNOD3res MKNOD3res;
 
-struct REMOVE3args {
+struct REMOVE3args
+{
   diropargs3 object;
 };
 typedef struct REMOVE3args REMOVE3args;
 
-struct REMOVE3resok {
+struct REMOVE3resok
+{
   wcc_data dir_wcc;
 };
 typedef struct REMOVE3resok REMOVE3resok;
 
-struct REMOVE3resfail {
+struct REMOVE3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct REMOVE3resfail REMOVE3resfail;
 
-struct REMOVE3res {
+struct REMOVE3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     REMOVE3resok resok;
     REMOVE3resfail resfail;
   } REMOVE3res_u;
 };
 typedef struct REMOVE3res REMOVE3res;
 
-struct RMDIR3args {
+struct RMDIR3args
+{
   diropargs3 object;
 };
 typedef struct RMDIR3args RMDIR3args;
 
-struct RMDIR3resok {
+struct RMDIR3resok
+{
   wcc_data dir_wcc;
 };
 typedef struct RMDIR3resok RMDIR3resok;
 
-struct RMDIR3resfail {
+struct RMDIR3resfail
+{
   wcc_data dir_wcc;
 };
 typedef struct RMDIR3resfail RMDIR3resfail;
 
-struct RMDIR3res {
+struct RMDIR3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     RMDIR3resok resok;
     RMDIR3resfail resfail;
   } RMDIR3res_u;
 };
 typedef struct RMDIR3res RMDIR3res;
 
-struct RENAME3args {
+struct RENAME3args
+{
   diropargs3 from;
   diropargs3 to;
 };
 typedef struct RENAME3args RENAME3args;
 
-struct RENAME3resok {
+struct RENAME3resok
+{
   wcc_data fromdir_wcc;
   wcc_data todir_wcc;
 };
 typedef struct RENAME3resok RENAME3resok;
 
-struct RENAME3resfail {
+struct RENAME3resfail
+{
   wcc_data fromdir_wcc;
   wcc_data todir_wcc;
 };
 typedef struct RENAME3resfail RENAME3resfail;
 
-struct RENAME3res {
+struct RENAME3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     RENAME3resok resok;
     RENAME3resfail resfail;
   } RENAME3res_u;
 };
 typedef struct RENAME3res RENAME3res;
 
-struct LINK3args {
+struct LINK3args
+{
   nfs_fh3 file;
   diropargs3 link;
 };
 typedef struct LINK3args LINK3args;
 
-struct LINK3resok {
+struct LINK3resok
+{
   post_op_attr file_attributes;
   wcc_data linkdir_wcc;
 };
 typedef struct LINK3resok LINK3resok;
 
-struct LINK3resfail {
+struct LINK3resfail
+{
   post_op_attr file_attributes;
   wcc_data linkdir_wcc;
 };
 typedef struct LINK3resfail LINK3resfail;
 
-struct LINK3res {
+struct LINK3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     LINK3resok resok;
     LINK3resfail resfail;
   } LINK3res_u;
 };
 typedef struct LINK3res LINK3res;
 
-struct READDIR3args {
+struct READDIR3args
+{
   nfs_fh3 dir;
   cookie3 cookie;
   cookieverf3 cookieverf;
@@ -948,7 +1099,8 @@ struct READDIR3args {
 };
 typedef struct READDIR3args READDIR3args;
 
-struct entry3 {
+struct entry3
+{
   fileid3 fileid;
   filename3 name;
   cookie3 cookie;
@@ -956,34 +1108,40 @@ struct entry3 {
 };
 typedef struct entry3 entry3;
 
-struct dirlist3 {
+struct dirlist3
+{
   entry3 *entries;
   bool_t eof;
 };
 typedef struct dirlist3 dirlist3;
 
-struct READDIR3resok {
+struct READDIR3resok
+{
   post_op_attr dir_attributes;
   cookieverf3 cookieverf;
   dirlist3 reply;
 };
 typedef struct READDIR3resok READDIR3resok;
 
-struct READDIR3resfail {
+struct READDIR3resfail
+{
   post_op_attr dir_attributes;
 };
 typedef struct READDIR3resfail READDIR3resfail;
 
-struct READDIR3res {
+struct READDIR3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     READDIR3resok resok;
     READDIR3resfail resfail;
   } READDIR3res_u;
 };
 typedef struct READDIR3res READDIR3res;
 
-struct READDIRPLUS3args {
+struct READDIRPLUS3args
+{
   nfs_fh3 dir;
   cookie3 cookie;
   cookieverf3 cookieverf;
@@ -992,7 +1150,8 @@ struct READDIRPLUS3args {
 };
 typedef struct READDIRPLUS3args READDIRPLUS3args;
 
-struct entryplus3 {
+struct entryplus3
+{
   fileid3 fileid;
   filename3 name;
   cookie3 cookie;
@@ -1002,39 +1161,46 @@ struct entryplus3 {
 };
 typedef struct entryplus3 entryplus3;
 
-struct dirlistplus3 {
+struct dirlistplus3
+{
   entryplus3 *entries;
   bool_t eof;
 };
 typedef struct dirlistplus3 dirlistplus3;
 
-struct READDIRPLUS3resok {
+struct READDIRPLUS3resok
+{
   post_op_attr dir_attributes;
   cookieverf3 cookieverf;
   dirlistplus3 reply;
 };
 typedef struct READDIRPLUS3resok READDIRPLUS3resok;
 
-struct READDIRPLUS3resfail {
+struct READDIRPLUS3resfail
+{
   post_op_attr dir_attributes;
 };
 typedef struct READDIRPLUS3resfail READDIRPLUS3resfail;
 
-struct READDIRPLUS3res {
+struct READDIRPLUS3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     READDIRPLUS3resok resok;
     READDIRPLUS3resfail resfail;
   } READDIRPLUS3res_u;
 };
 typedef struct READDIRPLUS3res READDIRPLUS3res;
 
-struct FSSTAT3args {
+struct FSSTAT3args
+{
   nfs_fh3 fsroot;
 };
 typedef struct FSSTAT3args FSSTAT3args;
 
-struct FSSTAT3resok {
+struct FSSTAT3resok
+{
   post_op_attr obj_attributes;
   size3 tbytes;
   size3 fbytes;
@@ -1046,14 +1212,17 @@ struct FSSTAT3resok {
 };
 typedef struct FSSTAT3resok FSSTAT3resok;
 
-struct FSSTAT3resfail {
+struct FSSTAT3resfail
+{
   post_op_attr obj_attributes;
 };
 typedef struct FSSTAT3resfail FSSTAT3resfail;
 
-struct FSSTAT3res {
+struct FSSTAT3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     FSSTAT3resok resok;
     FSSTAT3resfail resfail;
   } FSSTAT3res_u;
@@ -1064,12 +1233,14 @@ typedef struct FSSTAT3res FSSTAT3res;
 #define	FSF3_HOMOGENEOUS 0x0008
 #define	FSF3_CANSETTIME 0x0010
 
-struct FSINFO3args {
+struct FSINFO3args
+{
   nfs_fh3 fsroot;
 };
 typedef struct FSINFO3args FSINFO3args;
 
-struct FSINFO3resok {
+struct FSINFO3resok
+{
   post_op_attr obj_attributes;
   nfs3_uint32 rtmax;
   nfs3_uint32 rtpref;
@@ -1084,26 +1255,31 @@ struct FSINFO3resok {
 };
 typedef struct FSINFO3resok FSINFO3resok;
 
-struct FSINFO3resfail {
+struct FSINFO3resfail
+{
   post_op_attr obj_attributes;
 };
 typedef struct FSINFO3resfail FSINFO3resfail;
 
-struct FSINFO3res {
+struct FSINFO3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     FSINFO3resok resok;
     FSINFO3resfail resfail;
   } FSINFO3res_u;
 };
 typedef struct FSINFO3res FSINFO3res;
 
-struct PATHCONF3args {
+struct PATHCONF3args
+{
   nfs_fh3 object;
 };
 typedef struct PATHCONF3args PATHCONF3args;
 
-struct PATHCONF3resok {
+struct PATHCONF3resok
+{
   post_op_attr obj_attributes;
   nfs3_uint32 linkmax;
   nfs3_uint32 name_max;
@@ -1114,41 +1290,49 @@ struct PATHCONF3resok {
 };
 typedef struct PATHCONF3resok PATHCONF3resok;
 
-struct PATHCONF3resfail {
+struct PATHCONF3resfail
+{
   post_op_attr obj_attributes;
 };
 typedef struct PATHCONF3resfail PATHCONF3resfail;
 
-struct PATHCONF3res {
+struct PATHCONF3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     PATHCONF3resok resok;
     PATHCONF3resfail resfail;
   } PATHCONF3res_u;
 };
 typedef struct PATHCONF3res PATHCONF3res;
 
-struct COMMIT3args {
+struct COMMIT3args
+{
   nfs_fh3 file;
   offset3 offset;
   count3 count;
 };
 typedef struct COMMIT3args COMMIT3args;
 
-struct COMMIT3resok {
+struct COMMIT3resok
+{
   wcc_data file_wcc;
   writeverf3 verf;
 };
 typedef struct COMMIT3resok COMMIT3resok;
 
-struct COMMIT3resfail {
+struct COMMIT3resfail
+{
   wcc_data file_wcc;
 };
 typedef struct COMMIT3resfail COMMIT3resfail;
 
-struct COMMIT3res {
+struct COMMIT3res
+{
   nfsstat3 status;
-  union {
+  union
+  {
     COMMIT3resok resok;
     COMMIT3resfail resfail;
   } COMMIT3res_u;

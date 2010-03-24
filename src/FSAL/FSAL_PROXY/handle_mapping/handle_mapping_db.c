@@ -63,20 +63,24 @@
                               } while (0)
 
 /* Type of DB operations */
-typedef enum {
+typedef enum
+{
   LOAD = 1,
   INSERT,
   DELETE
 } db_op_type;
 
 /* DB operation arguments */
-typedef struct db_op_item__ {
+typedef struct db_op_item__
+{
   db_op_type op_type;
 
   /* operation info */
 
-  union {
-    struct {
+  union
+  {
+    struct
+    {
       nfs23_map_handle_t nfs23_digest;
       fsal_handle_t fsal_handle;
     } fh_info;
@@ -90,7 +94,8 @@ typedef struct db_op_item__ {
 } db_op_item_t;
 
 /* the queue for each DB flusher thread */
-typedef struct flusher_queue__ {
+typedef struct flusher_queue__
+{
   /* the queue for high priority operations */
   db_op_item_t *highprio_first;
   db_op_item_t *highprio_last;
@@ -108,7 +113,8 @@ typedef struct flusher_queue__ {
   pthread_cond_t work_done_condition;
 
   /* status (used for work_done_condition) */
-  enum { NOT_READY, IDLE, WORKING, FINISHED } status;
+  enum
+  { NOT_READY, IDLE, WORKING, FINISHED } status;
 
 } flusher_queue_t;
 
@@ -119,7 +125,8 @@ typedef struct flusher_queue__ {
 #define STATEMENT_COUNT     3
 
 /* thread info */
-typedef struct db_thread_info__ {
+typedef struct db_thread_info__
+{
   pthread_t thr_id;
   unsigned int thr_index;
 

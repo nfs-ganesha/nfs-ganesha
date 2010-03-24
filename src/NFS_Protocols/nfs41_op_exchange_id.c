@@ -258,8 +258,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               strncpy(nfs_clientid.client_name,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
                       arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
-                                       co_ownerid_len] = '\0';
+              nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
+                                       co_ownerid.co_ownerid_len] = '\0';
 
               strncpy(nfs_clientid.incoming_verifier,
                       arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -299,8 +299,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       strncpy(nfs_clientid.client_name,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_val,
               arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.co_ownerid_len);
-      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.co_ownerid.
-                               co_ownerid_len] = '\0';
+      nfs_clientid.client_name[arg_EXCHANGE_ID4.eia_clientowner.
+                               co_ownerid.co_ownerid_len] = '\0';
 
       strncpy(nfs_clientid.incoming_verifier,
               arg_EXCHANGE_ID4.eia_clientowner.co_verifier, NFS4_VERIFIER_SIZE);
@@ -332,40 +332,38 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid = clientid;
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid =
       nfs_clientid.create_session_sequence;
-  /* No pNFS for the moment (this will come later), but referrals are supported */
-  if (nfs_param.pnfs_param.use_pnfs == TRUE)
-    {
-      res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
-          EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
-          EXCHGID4_FLAG_SUPP_MOVED_REFER;
-    }
-  else
-    {
-      res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
-          EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
-    }
+#ifdef _USE_PNFS
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
+      EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
+      EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#else
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
+      EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#endif                          /* USE_PNFS */
+
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE;
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-      so_major_id_len = strlen(nfs_clientid.server_owner);
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-      so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-         so_major_id_val, nfs_clientid.server_owner, strlen(nfs_clientid.server_owner));
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+      so_major_id.so_major_id_len = strlen(nfs_clientid.server_owner);
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+      so_major_id.so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+         so_major_id.so_major_id_val, nfs_clientid.server_owner,
+         strlen(nfs_clientid.server_owner));
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_minor_id = 0;
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_len =
       strlen(nfs_clientid.server_scope);
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val =
       Mem_Alloc(strlen(nfs_clientid.server_scope));
-  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
-         eir_server_scope_val, nfs_clientid.server_owner,
+  memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+         eir_server_scope.eir_server_scope_val, nfs_clientid.server_owner,
          strlen(nfs_clientid.server_owner));
 
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
-      eir_server_impl_id_len = 0;
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
-      eir_server_impl_id_val = NULL;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_impl_id.eir_server_impl_id_len = 0;
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.
+      eir_server_impl_id.eir_server_impl_id_val = NULL;
 
   DisplayLogLevel(NIV_DEBUG, "EXCHANGE_ID reply :ClientId=%llx",
                   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid);
@@ -387,7 +385,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {
   Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
-  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-           so_major_id_val);
+  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
+           so_major_id.so_major_id_val);
   return;
 }                               /* nfs41_op_exchange_id_Free */

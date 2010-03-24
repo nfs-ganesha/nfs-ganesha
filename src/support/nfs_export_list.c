@@ -180,7 +180,8 @@
 #define SVCAUTH_PRIVATE(auth) \
         (*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
 
-struct svc_rpc_gss_data {
+struct svc_rpc_gss_data
+{
   bool_t established;           /* context established */
   gss_ctx_id_t ctx;             /* context id */
   struct rpc_gss_sec sec;       /* security triple */

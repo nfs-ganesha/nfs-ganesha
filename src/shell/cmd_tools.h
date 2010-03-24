@@ -201,7 +201,8 @@ void print_item_line(FILE * out, fsal_attrib_list_t * attrib, char *name, char *
  */
 
 /** Type of attributes */
-typedef enum shell_attr_type__ {
+typedef enum shell_attr_type__
+{
 
   ATTR_NONE = 0,                /* this special value is used
                                    to indicate the end of the attribute list */
@@ -213,7 +214,8 @@ typedef enum shell_attr_type__ {
 } shell_attr_type_t;
 
 /** Attribute definition structure. */
-typedef struct shell_attribute__ {
+typedef struct shell_attribute__
+{
 
   char *attr_name;              /* name of the attribute. */
   shell_attr_type_t attr_type;  /* type of the attribute. */

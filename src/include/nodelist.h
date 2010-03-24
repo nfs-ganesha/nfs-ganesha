@@ -15,7 +15,8 @@ if(a!=NULL){ \
  * \ingroup NODELIST_RANGE
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_range {
+typedef struct nodelist_range
+{
   long int from;                /*!<
                                  * start point of the range (included in the range)
                                  */
@@ -136,7 +137,8 @@ nodelist_range_union(nodelist_range_t * r1, nodelist_range_t * r2,
  * \ingroup NODELIST_RANGES_ARRAY
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_rangelist {
+typedef struct nodelist_rangelist
+{
 
   long int ranges_nb;           /*!<
                                  * quantity of ranges currently stored in array
@@ -238,7 +240,8 @@ int nodelist_rangelist_sort(nodelist_rangelist_t * array);
  * \ingroup NODELIST_IDS_LIST
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_idlist {
+typedef struct nodelist_idlist
+{
 
   long int id_nb;
 
@@ -322,7 +325,8 @@ int nodelist_idlist_get_compacted_string(nodelist_idlist_t * idlist, char **p_st
  *
  * can be use for basic node or enumartion node (prefixXXXsuffix pattern)
  */
-typedef struct nodelist_nodepattern {
+typedef struct nodelist_nodepattern
+{
   int padding;                  /*!< padding length */
   char *prefix;                 /*!< nodename prefix */
   char *suffix;                 /*!< nodename suffix */
@@ -434,7 +438,8 @@ nodelist_nodepattern_equals(nodelist_nodepattern_t * np1, nodelist_nodepattern_t
  * \ingroup NODELIST_NODELIST
  * \brief structure that represent a range of long int value
  */
-typedef struct nodelist_nodelist {
+typedef struct nodelist_nodelist
+{
   nodelist_nodepattern_t pattern;       /*!<
                                          * ranges array of this list
                                          */

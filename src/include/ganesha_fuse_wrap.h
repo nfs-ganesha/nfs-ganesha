@@ -25,7 +25,8 @@ struct ganefuse_cmd;
 typedef int (*ganefuse_fill_dir_t) (void *buf, const char *name,
                                     const struct stat * stbuf, off_t off);
 
-struct ganefuse_file_info {
+struct ganefuse_file_info
+{
   int flags;
   unsigned long fh_old;
   int writepage;
@@ -37,7 +38,8 @@ struct ganefuse_file_info {
   uint64_t lock_owner;
 };
 
-struct ganefuse_conn_info {
+struct ganefuse_conn_info
+{
   unsigned proto_major;
   unsigned proto_minor;
   unsigned async_read;
@@ -52,7 +54,8 @@ typedef struct ganefuse_dirhandle *ganefuse_dirh_t;
 typedef int (*ganefuse_dirfil_t) (ganefuse_dirh_t h, const char *name, int type,
                                   ino_t ino);
 
-struct ganefuse_operations {
+struct ganefuse_operations
+{
   int (*getattr) (const char *, struct stat *);
   int (*readlink) (const char *, char *, size_t);
 
@@ -105,7 +108,8 @@ struct ganefuse_operations {
   int (*bmap) (const char *, size_t blocksize, uint64_t * idx);
 };
 
-struct ganefuse_context {
+struct ganefuse_context
+{
   struct ganefuse *ganefuse;
   uid_t uid;
   gid_t gid;
@@ -116,7 +120,8 @@ struct ganefuse_context {
 struct ganefuse_context *ganefuse_get_context(void);
 
 #ifdef  __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
   int ganefuse_main(int argc, char *argv[],

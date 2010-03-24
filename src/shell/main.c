@@ -120,7 +120,8 @@
 
 time_t ServerBootTime = 0;
 
-typedef struct shell_info__ {
+typedef struct shell_info__
+{
 
   int shell_id;
 

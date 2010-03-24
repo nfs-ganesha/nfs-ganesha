@@ -134,7 +134,8 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-struct tcp_conn {               /* kept in xprt->xp_p1 */
+struct tcp_conn
+{                               /* kept in xprt->xp_p1 */
   enum xprt_stat strm_stat;
   u_long x_id;
   XDR xdrs;

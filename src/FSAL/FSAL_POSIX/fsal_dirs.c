@@ -286,10 +286,9 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
                                                          &(p_pdirent[*p_nb_entries].name),
                                                          &infofs,
                                                          p_dir_descriptor->p_dbentries,
-                                                         p_dir_descriptor->
-                                                         dbentries_count,
-                                                         &(p_pdirent[*p_nb_entries].
-                                                           handle));
+                                                         p_dir_descriptor->dbentries_count,
+                                                         &(p_pdirent
+                                                           [*p_nb_entries].handle));
             }
           else
 #endif

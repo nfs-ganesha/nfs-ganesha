@@ -225,7 +225,8 @@
 #define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
 #define XATTR_BUFFERSIZE 4096
 
-typedef enum nfs_clientid_confirm_state__ { CONFIRMED_CLIENT_ID = 1,
+typedef enum nfs_clientid_confirm_state__
+{ CONFIRMED_CLIENT_ID = 1,
   UNCONFIRMED_CLIENT_ID = 2,
   REBOOTED_CLIENT_ID = 3,
   CB_RECONFIGURED_CLIENT_ID = 4
@@ -255,7 +256,8 @@ void Xprt_unregister(SVCXPRT * xprt);
                                  FSAL_ATTR_MTIME      | FSAL_ATTR_CTIME    | FSAL_ATTR_SPACEUSED | \
                                  FSAL_ATTR_RAWDEV )
 
-typedef struct nfs_svc_data__ {
+typedef struct nfs_svc_data__
+{
   int socket_nfs_udp;
   int socket_nfs_tcp;
   int socket_mnt_udp;
@@ -270,7 +272,8 @@ typedef struct nfs_svc_data__ {
   SVCXPRT *xprt_nlm_tcp;
 } nfs_svc_data_t;
 
-typedef struct nfs_worker_param__ {
+typedef struct nfs_worker_param__
+{
   LRU_parameter_t lru_param;
   LRU_parameter_t lru_dupreq;
   unsigned int nb_pending_prealloc;
@@ -282,11 +285,13 @@ typedef struct nfs_worker_param__ {
   nfs_svc_data_t nfs_svc_data;
 } nfs_worker_parameter_t;
 
-typedef struct nfs_rpc_dupreq_param__ {
+typedef struct nfs_rpc_dupreq_param__
+{
   hash_parameter_t hash_param;
 } nfs_rpc_dupreq_parameter_t;
 
-typedef struct nfs_cache_layer_parameter__ {
+typedef struct nfs_cache_layer_parameter__
+{
   cache_inode_parameter_t cache_param;
   cache_inode_client_parameter_t cache_inode_client_param;
   cache_content_client_parameter_t cache_content_client_param;
@@ -294,7 +299,8 @@ typedef struct nfs_cache_layer_parameter__ {
   cache_content_gc_policy_t dcgcpol;
 } nfs_cache_layers_parameter_t;
 
-typedef struct nfs_core_param__ {
+typedef struct nfs_core_param__
+{
   unsigned short nfs_port;
   unsigned short mnt_port;
   unsigned short nlm_port;
@@ -315,41 +321,49 @@ typedef struct nfs_core_param__ {
   char stats_per_client_directory[MAXPATHLEN];
 } nfs_core_parameter_t;
 
-typedef struct nfs_ip_name_param__ {
+typedef struct nfs_ip_name_param__
+{
   hash_parameter_t hash_param;
   unsigned int expiration_time;
   char mapfile[MAXPATHLEN];
 } nfs_ip_name_parameter_t;
 
-typedef struct nfs_ip_stats_param__ {
+typedef struct nfs_ip_stats_param__
+{
   hash_parameter_t hash_param;
 } nfs_ip_stats_parameter_t;
 
-typedef struct nfs_client_id_param__ {
+typedef struct nfs_client_id_param__
+{
   hash_parameter_t hash_param;
   hash_parameter_t hash_param_reverse;
 } nfs_client_id_parameter_t;
 
-typedef struct nfs_idmap_cache_param__ {
+typedef struct nfs_idmap_cache_param__
+{
   hash_parameter_t hash_param;
   char mapfile[MAXPATHLEN];
 } nfs_idmap_cache_parameter_t;
 
-typedef struct nfs_state_id_param__ {
+typedef struct nfs_state_id_param__
+{
   hash_parameter_t hash_param;
 } nfs_state_id_parameter_t;
 
 #ifdef _USE_NFS4_1
-typedef struct nfs_session_id_param__ {
+typedef struct nfs_session_id_param__
+{
   hash_parameter_t hash_param;
 } nfs_session_id_parameter_t;
 #endif
 
-typedef struct nfs_open_owner_param__ {
+typedef struct nfs_open_owner_param__
+{
   hash_parameter_t hash_param;
 } nfs_open_owner_parameter_t;
 
-typedef struct nfs_krb5_param__ {
+typedef struct nfs_krb5_param__
+{
   char principal[MAXNAMLEN];
   char keytab[MAXPATHLEN];
   bool_t active_krb5;
@@ -358,7 +372,8 @@ typedef struct nfs_krb5_param__ {
 
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
-typedef struct nfs_version4_parameter__ {
+typedef struct nfs_version4_parameter__
+{
   unsigned int lease_lifetime;
   unsigned int fh_expire;
   unsigned int returns_err_fh_expired;
@@ -367,7 +382,8 @@ typedef struct nfs_version4_parameter__ {
   char idmapconf[MAXPATHLEN];
 } nfs_version4_parameter_t;
 
-typedef struct nfs_param__ {
+typedef struct nfs_param__
+{
   nfs_core_parameter_t core_param;
   nfs_worker_parameter_t worker_param;
   nfs_rpc_dupreq_parameter_t dupreq_param;
@@ -404,7 +420,8 @@ typedef struct nfs_param__ {
 
 } nfs_parameter_t;
 
-typedef struct nfs_worker_stat__ {
+typedef struct nfs_worker_stat__
+{
   unsigned int nb_total_req;
   unsigned int nb_udp_req;
   unsigned int nb_tcp_req;
@@ -419,11 +436,13 @@ typedef struct nfs_worker_stat__ {
 
 } nfs_worker_stat_t;
 
-typedef struct nfs_dupreq_stat__ {
+typedef struct nfs_dupreq_stat__
+{
   hash_stat_t htstat;
 } nfs_dupreq_stat_t;
 
-typedef struct nfs_request_data__ {
+typedef struct nfs_request_data__
+{
   int ipproto;
   SVCXPRT *tcp_xprt;
   SVCXPRT *nfs_udp_xprt;
@@ -438,7 +457,8 @@ typedef struct nfs_request_data__ {
   struct nfs_request_data__ *next_alloc;
 } nfs_request_data_t;
 
-typedef struct nfs_client_id__ {
+typedef struct nfs_client_id__
+{
   char client_name[MAXNAMLEN];
   clientid4 clientid;
   uint32_t cb_program;
@@ -459,11 +479,13 @@ typedef struct nfs_client_id__ {
   struct nfs_client_id__ *next_alloc;
 } nfs_client_id_t;
 
-typedef enum idmap_type__ { UIDMAP_TYPE = 1,
+typedef enum idmap_type__
+{ UIDMAP_TYPE = 1,
   GIDMAP_TYPE = 2
 } idmap_type_t;
 
-typedef struct nfs_worker_data__ {
+typedef struct nfs_worker_data__
+{
   int index;
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
@@ -488,7 +510,8 @@ typedef struct nfs_worker_data__ {
 } nfs_worker_data_t;
 
 /* flush thread data */
-typedef struct nfs_flush_thread_data__ {
+typedef struct nfs_flush_thread_data__
+{
   unsigned int thread_index;
 
   /* stats */

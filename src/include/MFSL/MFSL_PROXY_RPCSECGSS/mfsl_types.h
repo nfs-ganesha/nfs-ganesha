@@ -101,17 +101,20 @@
 #include "err_fsal.h"
 #include "err_mfsl.h"
 
-typedef struct mfsl_parameter__ {
+typedef struct mfsl_parameter__
+{
 
   int i;
 } mfsl_parameter_t;
 
-typedef struct mfsl_context__ {
+typedef struct mfsl_context__
+{
 
   int i;
 } mfsl_context_t;
 
-typedef struct mfsl_object__ {
+typedef struct mfsl_object__
+{
   int nothing;
 } mfsl_object_specific_data_t;
 

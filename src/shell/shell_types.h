@@ -24,7 +24,8 @@
 
 /** command definition */
 
-typedef struct command_def__ {
+typedef struct command_def__
+{
 
   /* name of a command */
   char *command_name;
@@ -39,7 +40,8 @@ typedef struct command_def__ {
 
 /** layer definition */
 
-typedef struct layer_def__ {
+typedef struct layer_def__
+{
 
   char *layer_name;
   command_def_t *command_list;
@@ -50,7 +52,8 @@ typedef struct layer_def__ {
 
 /* shell state structure */
 
-typedef struct shell_state__ {
+typedef struct shell_state__
+{
   FILE *input_stream;
   int interactive;
   layer_def_t *layer;

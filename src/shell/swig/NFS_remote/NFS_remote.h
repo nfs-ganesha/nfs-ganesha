@@ -7,7 +7,8 @@
 #include "nfs23.h"
 #include "nfs_proto_functions.h"
 
-typedef struct shell_fh3__ {
+typedef struct shell_fh3__
+{
   u_int data_len;
   char data_val[NFS3_FHSIZE];
 } shell_fh3_t;

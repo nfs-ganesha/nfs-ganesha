@@ -123,14 +123,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -143,7 +145,8 @@ static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
 /* Filesystem handle */
 
-typedef struct fsal_handle__ {
+typedef struct fsal_handle__
+{
 
   /* The object type */
   fsal_nodetype_t obj_type;
@@ -157,7 +160,8 @@ typedef struct fsal_handle__ {
 
 #if HPSS_MAJOR_VERSION == 5
 
-typedef struct {
+typedef struct
+{
 
   time_t last_update;
   hsec_UserCred_t hpss_usercred;
@@ -166,7 +170,8 @@ typedef struct {
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
-typedef struct {
+typedef struct
+{
 
   time_t last_update;
   sec_cred_t hpss_usercred;
@@ -175,7 +180,8 @@ typedef struct {
 
 #endif
 
-typedef struct {
+typedef struct
+{
 
   ns_ObjHandle_t fileset_root_handle;
   unsigned int default_cos;
@@ -184,7 +190,8 @@ typedef struct {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->default_cos)
 
-typedef struct {
+typedef struct
+{
 
   fsal_cred_t credential;
   fsal_export_context_t *export_context;
@@ -200,7 +207,8 @@ typedef struct {
 #endif
 
 /** directory stream descriptor */
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   fsal_handle_t dir_handle;     /* directory handle */
   fsal_op_context_t context;    /* credential for readdir operations */
   int reserved;                 /* not used */
@@ -210,21 +218,24 @@ typedef struct fsal_dir__ {
 
 #if (HPSS_MAJOR_VERSION == 5)
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   int filedes;                  /* file descriptor. */
   gss_token_t fileauthz;        /* data access credential. */
 } fsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 6)
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   int filedes;                  /* file descriptor. */
   hpss_authz_token_t fileauthz; /* data access credential. */
 } fsal_file_t;
 
 #elif (HPSS_MAJOR_VERSION == 7)
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   int filedes;                  /* file descriptor. */
 } fsal_file_t;
 
@@ -236,10 +247,12 @@ typedef struct fsal_file__ {
 
 #if (HPSS_MAJOR_VERSION == 5)
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
 
   /* specifies the behavior for each init value : */
-  struct behaviors {
+  struct behaviors
+  {
     fsal_initflag_t
         /* client API configuration */
     PrincipalName, KeytabPath,
@@ -259,10 +272,12 @@ typedef struct fs_specific_initinfo__ {
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
 
   /* specifies the behavior for each init value : */
-  struct behaviors {
+  struct behaviors
+  {
     fsal_initflag_t
         /* client API configuration */
     AuthnMech, NumRetries, BusyDelay, BusyRetries, MaxConnections, DebugPath,

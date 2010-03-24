@@ -1,7 +1,8 @@
 #ifndef _EXTERNAL_TOOLS_H
 #define _EXTERNAL_TOOLS_H
 
-typedef struct snmp_adm_parameter__ {
+typedef struct snmp_adm_parameter__
+{
   char snmp_agentx_socket[MAXPATHLEN];
   int product_id;
   char snmp_log_file[MAXPATHLEN];
@@ -16,7 +17,8 @@ typedef struct snmp_adm_parameter__ {
   int export_fsal_calls_detail;
 } snmp_adm_parameter_t;
 
-typedef struct external_tools_parameter__ {
+typedef struct external_tools_parameter__
+{
   snmp_adm_parameter_t snmp_adm;
 } external_tools_parameter_t;
 
