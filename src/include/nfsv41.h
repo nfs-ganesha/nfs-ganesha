@@ -23,7 +23,8 @@
 #endif                          /* _SOLARIS */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifndef _AUTH_SYS_DEFINE_FOR_NFSv41
@@ -52,7 +53,8 @@ extern "C" {
 #define NFS4_MAXFILELEN 0xffffffffffffffff
 #define NFS4_MAXFILEOFF 0xfffffffffffffffe
 
-  enum nfs_ftype4 {
+  enum nfs_ftype4
+  {
     NF4REG = 1,
     NF4DIR = 2,
     NF4BLK = 3,
@@ -65,7 +67,8 @@ extern "C" {
   };
   typedef enum nfs_ftype4 nfs_ftype4;
 
-  enum nfsstat4 {
+  enum nfsstat4
+  {
     NFS4_OK = 0,
     NFS4ERR_PERM = 1,
     NFS4ERR_NOENT = 2,
@@ -173,12 +176,14 @@ extern "C" {
   };
   typedef enum nfsstat4 nfsstat4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int attrlist4_len;
     char *attrlist4_val;
   } attrlist4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int bitmap4_len;
     uint32_t *bitmap4_val;
   } bitmap4;
@@ -195,7 +200,8 @@ extern "C" {
 
   typedef uint64_t nfs_cookie4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int nfs_fh4_len;
     char *nfs_fh4_val;
   } nfs_fh4;
@@ -204,7 +210,8 @@ extern "C" {
 
   typedef uint32_t qop4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int sec_oid4_len;
     char *sec_oid4_val;
   } sec_oid4;
@@ -217,7 +224,8 @@ extern "C" {
 
   typedef uint32_t slotid4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int utf8string_len;
     char *utf8string_val;
   } utf8string;
@@ -232,28 +240,33 @@ extern "C" {
 
   typedef utf8str_cs linktext4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int pathname4_len;
     component4 *pathname4_val;
   } pathname4;
 
   typedef char verifier4[NFS4_VERIFIER_SIZE];
 
-  struct nfstime4 {
+  struct nfstime4
+  {
     int64_t seconds;
     uint32_t nseconds;
   };
   typedef struct nfstime4 nfstime4;
 
-  enum time_how4 {
+  enum time_how4
+  {
     SET_TO_SERVER_TIME4 = 0,
     SET_TO_CLIENT_TIME4 = 1,
   };
   typedef enum time_how4 time_how4;
 
-  struct settime4 {
+  struct settime4
+  {
     time_how4 set_it;
-    union {
+    union
+    {
       nfstime4 time;
     } settime4_u;
   };
@@ -261,20 +274,24 @@ extern "C" {
 
   typedef uint32_t nfs_lease4;
 
-  struct fsid4 {
+  struct fsid4
+  {
     uint64_t major;
     uint64_t minor;
   };
   typedef struct fsid4 fsid4;
 
-  struct change_policy4 {
+  struct change_policy4
+  {
     uint64_t cp_major;
     uint64_t cp_minor;
   };
   typedef struct change_policy4 change_policy4;
 
-  struct fs_location4 {
-    struct {
+  struct fs_location4
+  {
+    struct
+    {
       u_int server_len;
       utf8str_cis *server_val;
     } server;
@@ -282,9 +299,11 @@ extern "C" {
   };
   typedef struct fs_location4 fs_location4;
 
-  struct fs_locations4 {
+  struct fs_locations4
+  {
     pathname4 fs_root;
-    struct {
+    struct
+    {
       u_int locations_len;
       fs_location4 *locations_val;
     } locations;
@@ -335,7 +354,8 @@ extern "C" {
 #define ACE4_GENERIC_WRITE 0x00160106
 #define ACE4_GENERIC_EXECUTE 0x001200A0
 
-  struct nfsace4 {
+  struct nfsace4
+  {
     acetype4 type;
     aceflag4 flag;
     acemask4 access_mask;
@@ -348,9 +368,11 @@ extern "C" {
 #define ACL4_PROTECTED 0x00000002
 #define ACL4_DEFAULTED 0x00000004
 
-  struct nfsacl41 {
+  struct nfsacl41
+  {
     aclflag4 na41_flag;
-    struct {
+    struct
+    {
       u_int na41_aces_len;
       nfsace4 *na41_aces_val;
     } na41_aces;
@@ -369,13 +391,15 @@ extern "C" {
 #define MODE4_WOTH 0x002
 #define MODE4_XOTH 0x001
 
-  struct mode_masked4 {
+  struct mode_masked4
+  {
     mode4 mm_value_to_set;
     mode4 mm_mask_bits;
   };
   typedef struct mode_masked4 mode_masked4;
 
-  struct specdata4 {
+  struct specdata4
+  {
     uint32_t specdata1;
     uint32_t specdata2;
   };
@@ -386,35 +410,41 @@ extern "C" {
 #define FH4_VOL_MIGRATION 0x00000004
 #define FH4_VOL_RENAME 0x00000008
 
-  struct netaddr4 {
+  struct netaddr4
+  {
     char *na_r_netid;
     char *na_r_addr;
   };
   typedef struct netaddr4 netaddr4;
 
-  struct nfs_impl_id4 {
+  struct nfs_impl_id4
+  {
     utf8str_cis nii_domain;
     utf8str_cs nii_name;
     nfstime4 nii_date;
   };
   typedef struct nfs_impl_id4 nfs_impl_id4;
 
-  struct stateid4 {
+  struct stateid4
+  {
     uint32_t seqid;
     char other[12];
   };
   typedef struct stateid4 stateid4;
 
-  enum layouttype4 {
+  enum layouttype4
+  {
     LAYOUT4_NFSV4_1_FILES = 0x1,
     LAYOUT4_OSD2_OBJECTS = 0x2,
     LAYOUT4_BLOCK_VOLUME = 0x3,
   };
   typedef enum layouttype4 layouttype4;
 
-  struct layout_content4 {
+  struct layout_content4
+  {
     layouttype4 loc_type;
-    struct {
+    struct
+    {
       u_int loc_body_len;
       char *loc_body_val;
     } loc_body;
@@ -430,23 +460,27 @@ extern "C" {
  * is in a separate .x file
  */
 
-  struct layouthint4 {
+  struct layouthint4
+  {
     layouttype4 loh_type;
-    struct {
+    struct
+    {
       u_int loh_body_len;
       char *loh_body_val;
     } loh_body;
   };
   typedef struct layouthint4 layouthint4;
 
-  enum layoutiomode4 {
+  enum layoutiomode4
+  {
     LAYOUTIOMODE4_READ = 1,
     LAYOUTIOMODE4_RW = 2,
     LAYOUTIOMODE4_ANY = 3,
   };
   typedef enum layoutiomode4 layoutiomode4;
 
-  struct layout4 {
+  struct layout4
+  {
     offset4 lo_offset;
     length4 lo_length;
     layoutiomode4 lo_iomode;
@@ -457,18 +491,22 @@ extern "C" {
 
   typedef char deviceid4[NFS4_DEVICEID4_SIZE];
 
-  struct device_addr4 {
+  struct device_addr4
+  {
     layouttype4 da_layout_type;
-    struct {
+    struct
+    {
       u_int da_addr_body_len;
       char *da_addr_body_val;
     } da_addr_body;
   };
   typedef struct device_addr4 device_addr4;
 
-  struct layoutupdate4 {
+  struct layoutupdate4
+  {
     layouttype4 lou_type;
-    struct {
+    struct
+    {
       u_int lou_body_len;
       char *lou_body_val;
     } lou_body;
@@ -479,7 +517,8 @@ extern "C" {
 #define LAYOUT4_RET_REC_FSID 2
 #define LAYOUT4_RET_REC_ALL 3
 
-  enum layoutreturn_type4 {
+  enum layoutreturn_type4
+  {
     LAYOUTRETURN4_FILE = LAYOUT4_RET_REC_FILE,
     LAYOUTRETURN4_FSID = LAYOUT4_RET_REC_FSID,
     LAYOUTRETURN4_ALL = LAYOUT4_RET_REC_ALL,
@@ -487,26 +526,31 @@ extern "C" {
   typedef enum layoutreturn_type4 layoutreturn_type4;
   /* layouttype4 specific data */
 
-  struct layoutreturn_file4 {
+  struct layoutreturn_file4
+  {
     offset4 lrf_offset;
     length4 lrf_length;
     stateid4 lrf_stateid;
-    struct {
+    struct
+    {
       u_int lrf_body_len;
       char *lrf_body_val;
     } lrf_body;
   };
   typedef struct layoutreturn_file4 layoutreturn_file4;
 
-  struct layoutreturn4 {
+  struct layoutreturn4
+  {
     layoutreturn_type4 lr_returntype;
-    union {
+    union
+    {
       layoutreturn_file4 lr_layout;
     } layoutreturn4_u;
   };
   typedef struct layoutreturn4 layoutreturn4;
 
-  enum fs4_status_type {
+  enum fs4_status_type
+  {
     STATUS4_FIXED = 1,
     STATUS4_UPDATED = 2,
     STATUS4_VERSIONED = 3,
@@ -515,7 +559,8 @@ extern "C" {
   };
   typedef enum fs4_status_type fs4_status_type;
 
-  struct fs4_status {
+  struct fs4_status
+  {
     bool_t fss_absent;
     fs4_status_type fss_type;
     utf8str_cs fss_source;
@@ -537,18 +582,22 @@ extern "C" {
 
   typedef length4 threshold4_write_iosize;
 
-  struct threshold_item4 {
+  struct threshold_item4
+  {
     layouttype4 thi_layout_type;
     bitmap4 thi_hintset;
-    struct {
+    struct
+    {
       u_int thi_hintlist_len;
       char *thi_hintlist_val;
     } thi_hintlist;
   };
   typedef struct threshold_item4 threshold_item4;
 
-  struct mdsthreshold4 {
-    struct {
+  struct mdsthreshold4
+  {
+    struct
+    {
       u_int mth_hints_len;
       threshold_item4 *mth_hints_val;
     } mth_hints;
@@ -556,18 +605,22 @@ extern "C" {
   typedef struct mdsthreshold4 mdsthreshold4;
 #define RET4_DURATION_INFINITE 0xffffffffffffffff
 
-  struct retention_get4 {
+  struct retention_get4
+  {
     uint64_t rg_duration;
-    struct {
+    struct
+    {
       u_int rg_begin_time_len;
       nfstime4 *rg_begin_time_val;
     } rg_begin_time;
   };
   typedef struct retention_get4 retention_get4;
 
-  struct retention_set4 {
+  struct retention_set4
+  {
     bool_t rs_enable;
-    struct {
+    struct
+    {
       u_int rs_duration_len;
       uint64_t *rs_duration_val;
     } rs_duration;
@@ -604,7 +657,8 @@ extern "C" {
 
   typedef nfsstat4 fattr4_rdattr_error;
 
-  typedef struct {
+  typedef struct
+  {
     u_int fattr4_acl_len;
     nfsace4 *fattr4_acl_val;
   } fattr4_acl;
@@ -703,7 +757,8 @@ extern "C" {
 
   typedef bool_t fattr4_absent;
 
-  typedef struct {
+  typedef struct
+  {
     u_int fattr4_fs_layout_types_len;
     layouttype4 *fattr4_fs_layout_types_val;
   } fattr4_fs_layout_types;
@@ -718,7 +773,8 @@ extern "C" {
 
   typedef layouthint4 fattr4_layout_hint;
 
-  typedef struct {
+  typedef struct
+  {
     u_int fattr4_layout_types_len;
     layouttype4 *fattr4_layout_types_val;
   } fattr4_layout_types;
@@ -816,13 +872,15 @@ extern "C" {
 #define FATTR4_MODE_SET_MASKED 74
 #define FATTR4_FS_CHARSET_CAP 76
 
-  struct fattr4 {
+  struct fattr4
+  {
     bitmap4 attrmask;
     attrlist4 attr_vals;
   };
   typedef struct fattr4 fattr4;
 
-  struct change_info4 {
+  struct change_info4
+  {
     bool_t atomic;
     changeid4 before;
     changeid4 after;
@@ -831,42 +889,51 @@ extern "C" {
 
   typedef netaddr4 clientaddr4;
 
-  struct cb_client4 {
+  struct cb_client4
+  {
     uint32_t cb_program;
     netaddr4 cb_location;
   };
   typedef struct cb_client4 cb_client4;
 
-  struct nfs_client_id4 {
+  struct nfs_client_id4
+  {
     verifier4 verifier;
-    struct {
+    struct
+    {
       u_int id_len;
       char *id_val;
     } id;
   };
   typedef struct nfs_client_id4 nfs_client_id4;
 
-  struct client_owner4 {
+  struct client_owner4
+  {
     verifier4 co_verifier;
-    struct {
+    struct
+    {
       u_int co_ownerid_len;
       char *co_ownerid_val;
     } co_ownerid;
   };
   typedef struct client_owner4 client_owner4;
 
-  struct server_owner4 {
+  struct server_owner4
+  {
     uint64_t so_minor_id;
-    struct {
+    struct
+    {
       u_int so_major_id_len;
       char *so_major_id_val;
     } so_major_id;
   };
   typedef struct server_owner4 server_owner4;
 
-  struct state_owner4 {
+  struct state_owner4
+  {
     clientid4 clientid;
-    struct {
+    struct
+    {
       u_int owner_len;
       char *owner_val;
     } owner;
@@ -877,7 +944,8 @@ extern "C" {
 
   typedef state_owner4 lock_owner4;
 
-  enum nfs_lock_type4 {
+  enum nfs_lock_type4
+  {
     READ_LT = 1,
     WRITE_LT = 2,
     READW_LT = 3,
@@ -887,7 +955,8 @@ extern "C" {
 
 /* Input for computing subkeys */
 
-  enum ssv_subkey4 {
+  enum ssv_subkey4
+  {
     SSV4_SUBKEY_MIC_I2T = 1,
     SSV4_SUBKEY_MIC_T2I = 2,
     SSV4_SUBKEY_SEAL_I2T = 3,
@@ -897,9 +966,11 @@ extern "C" {
 
 /* Input for computing smt_hmac */
 
-  struct ssv_mic_plain_tkn4 {
+  struct ssv_mic_plain_tkn4
+  {
     uint32_t smpt_ssv_seq;
-    struct {
+    struct
+    {
       u_int smpt_orig_plain_len;
       char *smpt_orig_plain_val;
     } smpt_orig_plain;
@@ -908,9 +979,11 @@ extern "C" {
 
 /* SSV GSS PerMsgToken token */
 
-  struct ssv_mic_tkn4 {
+  struct ssv_mic_tkn4
+  {
     uint32_t smt_ssv_seq;
-    struct {
+    struct
+    {
       u_int smt_hmac_len;
       char *smt_hmac_val;
     } smt_hmac;
@@ -919,17 +992,21 @@ extern "C" {
 
 /* Input for computing ssct_encr_data and ssct_hmac */
 
-  struct ssv_seal_plain_tkn4 {
-    struct {
+  struct ssv_seal_plain_tkn4
+  {
+    struct
+    {
       u_int sspt_confounder_len;
       char *sspt_confounder_val;
     } sspt_confounder;
     uint32_t sspt_ssv_seq;
-    struct {
+    struct
+    {
       u_int sspt_orig_plain_len;
       char *sspt_orig_plain_val;
     } sspt_orig_plain;
-    struct {
+    struct
+    {
       u_int sspt_pad_len;
       char *sspt_pad_val;
     } sspt_pad;
@@ -938,26 +1015,32 @@ extern "C" {
 
 /* SSV GSS SealedMessage token */
 
-  struct ssv_seal_cipher_tkn4 {
+  struct ssv_seal_cipher_tkn4
+  {
     uint32_t ssct_ssv_seq;
-    struct {
+    struct
+    {
       u_int ssct_iv_len;
       char *ssct_iv_val;
     } ssct_iv;
-    struct {
+    struct
+    {
       u_int ssct_encr_data_len;
       char *ssct_encr_data_val;
     } ssct_encr_data;
-    struct {
+    struct
+    {
       u_int ssct_hmac_len;
       char *ssct_hmac_val;
     } ssct_hmac;
   };
   typedef struct ssv_seal_cipher_tkn4 ssv_seal_cipher_tkn4;
 
-  struct fs_locations_server4 {
+  struct fs_locations_server4
+  {
     int32_t fls_currency;
-    struct {
+    struct
+    {
       u_int fls_info_len;
       char *fls_info_val;
     } fls_info;
@@ -983,8 +1066,10 @@ extern "C" {
 #define FSLI4GF_SPLIT 0x10
 #define FSLI4TF_RDMA 0x01
 
-  struct fs_locations_item4 {
-    struct {
+  struct fs_locations_item4
+  {
+    struct
+    {
       u_int fli_entries_len;
       fs_locations_server4 *fli_entries_val;
     } fli_entries;
@@ -992,11 +1077,13 @@ extern "C" {
   };
   typedef struct fs_locations_item4 fs_locations_item4;
 
-  struct fs_locations_info4 {
+  struct fs_locations_info4
+  {
     uint32_t fli_flags;
     int32_t fli_valid_for;
     pathname4 fli_fs_root;
-    struct {
+    struct
+    {
       u_int fli_items_len;
       fs_locations_item4 *fli_items_val;
     } fli_items;
@@ -1012,7 +1099,8 @@ extern "C" {
 
   typedef uint32_t nfl_util4;
 
-  enum filelayout_hint_care4 {
+  enum filelayout_hint_care4
+  {
     NFLH4_CARE_DENSE = NFL4_UFLG_DENSE,
     NFLH4_CARE_COMMIT_THRU_MDS = NFL4_UFLG_COMMIT_THRU_MDS,
     NFLH4_CARE_STRIPE_UNIT_SIZE = 0x00000040,
@@ -1022,26 +1110,31 @@ extern "C" {
 
 /* Encoded in the loh_body field of type layouthint4: */
 
-  struct nfsv4_1_file_layouthint4 {
+  struct nfsv4_1_file_layouthint4
+  {
     uint32_t nflh_care;
     nfl_util4 nflh_util;
     count4 nflh_stripe_count;
   };
   typedef struct nfsv4_1_file_layouthint4 nfsv4_1_file_layouthint4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int multipath_list4_len;
     netaddr4 *multipath_list4_val;
   } multipath_list4;
 
 /* Encoded in the da_addr_body field of type device_addr4: */
 
-  struct nfsv4_1_file_layout_ds_addr4 {
-    struct {
+  struct nfsv4_1_file_layout_ds_addr4
+  {
+    struct
+    {
       u_int nflda_stripe_indices_len;
       uint32_t *nflda_stripe_indices_val;
     } nflda_stripe_indices;
-    struct {
+    struct
+    {
       u_int nflda_multipath_ds_list_len;
       multipath_list4 *nflda_multipath_ds_list_val;
     } nflda_multipath_ds_list;
@@ -1050,12 +1143,14 @@ extern "C" {
 
 /* Encoded in the loc_body field of type layout_content4: */
 
-  struct nfsv4_1_file_layout4 {
+  struct nfsv4_1_file_layout4
+  {
     deviceid4 nfl_deviceid;
     nfl_util4 nfl_util;
     uint32_t nfl_first_stripe_index;
     offset4 nfl_pattern_offset;
-    struct {
+    struct
+    {
       u_int nfl_fh_list_len;
       nfs_fh4 *nfl_fh_list_val;
     } nfl_fh_list;
@@ -1074,158 +1169,191 @@ extern "C" {
 #define ACCESS4_DELETE 0x00000010
 #define ACCESS4_EXECUTE 0x00000020
 
-  struct ACCESS4args {
+  struct ACCESS4args
+  {
     uint32_t access;
   };
   typedef struct ACCESS4args ACCESS4args;
 
-  struct ACCESS4resok {
+  struct ACCESS4resok
+  {
     uint32_t supported;
     uint32_t access;
   };
   typedef struct ACCESS4resok ACCESS4resok;
 
-  struct ACCESS4res {
+  struct ACCESS4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       ACCESS4resok resok4;
     } ACCESS4res_u;
   };
   typedef struct ACCESS4res ACCESS4res;
 
-  struct CLOSE4args {
+  struct CLOSE4args
+  {
     seqid4 seqid;
     stateid4 open_stateid;
   };
   typedef struct CLOSE4args CLOSE4args;
 
-  struct CLOSE4res {
+  struct CLOSE4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       stateid4 open_stateid;
     } CLOSE4res_u;
   };
   typedef struct CLOSE4res CLOSE4res;
 
-  struct COMMIT4args {
+  struct COMMIT4args
+  {
     offset4 offset;
     count4 count;
   };
   typedef struct COMMIT4args COMMIT4args;
 
-  struct COMMIT4resok {
+  struct COMMIT4resok
+  {
     verifier4 writeverf;
   };
   typedef struct COMMIT4resok COMMIT4resok;
 
-  struct COMMIT4res {
+  struct COMMIT4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       COMMIT4resok resok4;
     } COMMIT4res_u;
   };
   typedef struct COMMIT4res COMMIT4res;
 
-  struct createtype4 {
+  struct createtype4
+  {
     nfs_ftype4 type;
-    union {
+    union
+    {
       linktext4 linkdata;
       specdata4 devdata;
     } createtype4_u;
   };
   typedef struct createtype4 createtype4;
 
-  struct CREATE4args {
+  struct CREATE4args
+  {
     createtype4 objtype;
     component4 objname;
     fattr4 createattrs;
   };
   typedef struct CREATE4args CREATE4args;
 
-  struct CREATE4resok {
+  struct CREATE4resok
+  {
     change_info4 cinfo;
     bitmap4 attrset;
   };
   typedef struct CREATE4resok CREATE4resok;
 
-  struct CREATE4res {
+  struct CREATE4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       CREATE4resok resok4;
     } CREATE4res_u;
   };
   typedef struct CREATE4res CREATE4res;
 
-  struct DELEGPURGE4args {
+  struct DELEGPURGE4args
+  {
     clientid4 clientid;
   };
   typedef struct DELEGPURGE4args DELEGPURGE4args;
 
-  struct DELEGPURGE4res {
+  struct DELEGPURGE4res
+  {
     nfsstat4 status;
   };
   typedef struct DELEGPURGE4res DELEGPURGE4res;
 
-  struct DELEGRETURN4args {
+  struct DELEGRETURN4args
+  {
     stateid4 deleg_stateid;
   };
   typedef struct DELEGRETURN4args DELEGRETURN4args;
 
-  struct DELEGRETURN4res {
+  struct DELEGRETURN4res
+  {
     nfsstat4 status;
   };
   typedef struct DELEGRETURN4res DELEGRETURN4res;
 
-  struct GETATTR4args {
+  struct GETATTR4args
+  {
     bitmap4 attr_request;
   };
   typedef struct GETATTR4args GETATTR4args;
 
-  struct GETATTR4resok {
+  struct GETATTR4resok
+  {
     fattr4 obj_attributes;
   };
   typedef struct GETATTR4resok GETATTR4resok;
 
-  struct GETATTR4res {
+  struct GETATTR4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       GETATTR4resok resok4;
     } GETATTR4res_u;
   };
   typedef struct GETATTR4res GETATTR4res;
 
-  struct GETFH4resok {
+  struct GETFH4resok
+  {
     nfs_fh4 object;
   };
   typedef struct GETFH4resok GETFH4resok;
 
-  struct GETFH4res {
+  struct GETFH4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       GETFH4resok resok4;
     } GETFH4res_u;
   };
   typedef struct GETFH4res GETFH4res;
 
-  struct LINK4args {
+  struct LINK4args
+  {
     component4 newname;
   };
   typedef struct LINK4args LINK4args;
 
-  struct LINK4resok {
+  struct LINK4resok
+  {
     change_info4 cinfo;
   };
   typedef struct LINK4resok LINK4resok;
 
-  struct LINK4res {
+  struct LINK4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       LINK4resok resok4;
     } LINK4res_u;
   };
   typedef struct LINK4res LINK4res;
 
-  struct open_to_lock_owner4 {
+  struct open_to_lock_owner4
+  {
     seqid4 open_seqid;
     stateid4 open_stateid;
     seqid4 lock_seqid;
@@ -1233,22 +1361,26 @@ extern "C" {
   };
   typedef struct open_to_lock_owner4 open_to_lock_owner4;
 
-  struct exist_lock_owner4 {
+  struct exist_lock_owner4
+  {
     stateid4 lock_stateid;
     seqid4 lock_seqid;
   };
   typedef struct exist_lock_owner4 exist_lock_owner4;
 
-  struct locker4 {
+  struct locker4
+  {
     bool_t new_lock_owner;
-    union {
+    union
+    {
       open_to_lock_owner4 open_owner;
       exist_lock_owner4 lock_owner;
     } locker4_u;
   };
   typedef struct locker4 locker4;
 
-  struct LOCK4args {
+  struct LOCK4args
+  {
     nfs_lock_type4 locktype;
     bool_t reclaim;
     offset4 offset;
@@ -1257,7 +1389,8 @@ extern "C" {
   };
   typedef struct LOCK4args LOCK4args;
 
-  struct LOCK4denied {
+  struct LOCK4denied
+  {
     offset4 offset;
     length4 length;
     nfs_lock_type4 locktype;
@@ -1265,21 +1398,25 @@ extern "C" {
   };
   typedef struct LOCK4denied LOCK4denied;
 
-  struct LOCK4resok {
+  struct LOCK4resok
+  {
     stateid4 lock_stateid;
   };
   typedef struct LOCK4resok LOCK4resok;
 
-  struct LOCK4res {
+  struct LOCK4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       LOCK4resok resok4;
       LOCK4denied denied;
     } LOCK4res_u;
   };
   typedef struct LOCK4res LOCK4res;
 
-  struct LOCKT4args {
+  struct LOCKT4args
+  {
     nfs_lock_type4 locktype;
     offset4 offset;
     length4 length;
@@ -1287,15 +1424,18 @@ extern "C" {
   };
   typedef struct LOCKT4args LOCKT4args;
 
-  struct LOCKT4res {
+  struct LOCKT4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       LOCK4denied denied;
     } LOCKT4res_u;
   };
   typedef struct LOCKT4res LOCKT4res;
 
-  struct LOCKU4args {
+  struct LOCKU4args
+  {
     nfs_lock_type4 locktype;
     seqid4 seqid;
     stateid4 lock_stateid;
@@ -1304,40 +1444,48 @@ extern "C" {
   };
   typedef struct LOCKU4args LOCKU4args;
 
-  struct LOCKU4res {
+  struct LOCKU4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       stateid4 lock_stateid;
     } LOCKU4res_u;
   };
   typedef struct LOCKU4res LOCKU4res;
 
-  struct LOOKUP4args {
+  struct LOOKUP4args
+  {
     component4 objname;
   };
   typedef struct LOOKUP4args LOOKUP4args;
 
-  struct LOOKUP4res {
+  struct LOOKUP4res
+  {
     nfsstat4 status;
   };
   typedef struct LOOKUP4res LOOKUP4res;
 
-  struct LOOKUPP4res {
+  struct LOOKUPP4res
+  {
     nfsstat4 status;
   };
   typedef struct LOOKUPP4res LOOKUPP4res;
 
-  struct NVERIFY4args {
+  struct NVERIFY4args
+  {
     fattr4 obj_attributes;
   };
   typedef struct NVERIFY4args NVERIFY4args;
 
-  struct NVERIFY4res {
+  struct NVERIFY4res
+  {
     nfsstat4 status;
   };
   typedef struct NVERIFY4res NVERIFY4res;
 
-  enum createmode4 {
+  enum createmode4
+  {
     UNCHECKED4 = 0,
     GUARDED4 = 1,
     EXCLUSIVE4 = 2,
@@ -1345,15 +1493,18 @@ extern "C" {
   };
   typedef enum createmode4 createmode4;
 
-  struct creatverfattr {
+  struct creatverfattr
+  {
     verifier4 cva_verf;
     fattr4 cva_attrs;
   };
   typedef struct creatverfattr creatverfattr;
 
-  struct createhow4 {
+  struct createhow4
+  {
     createmode4 mode;
-    union {
+    union
+    {
       fattr4 createattrs;
       verifier4 createverf;
       creatverfattr ch_createboth;
@@ -1361,35 +1512,42 @@ extern "C" {
   };
   typedef struct createhow4 createhow4;
 
-  enum opentype4 {
+  enum opentype4
+  {
     OPEN4_NOCREATE = 0,
     OPEN4_CREATE = 1,
   };
   typedef enum opentype4 opentype4;
 
-  struct openflag4 {
+  struct openflag4
+  {
     opentype4 opentype;
-    union {
+    union
+    {
       createhow4 how;
     } openflag4_u;
   };
   typedef struct openflag4 openflag4;
 
-  enum limit_by4 {
+  enum limit_by4
+  {
     NFS_LIMIT_SIZE = 1,
     NFS_LIMIT_BLOCKS = 2,
   };
   typedef enum limit_by4 limit_by4;
 
-  struct nfs_modified_limit4 {
+  struct nfs_modified_limit4
+  {
     uint32_t num_blocks;
     uint32_t bytes_per_block;
   };
   typedef struct nfs_modified_limit4 nfs_modified_limit4;
 
-  struct nfs_space_limit4 {
+  struct nfs_space_limit4
+  {
     limit_by4 limitby;
-    union {
+    union
+    {
       uint64_t filesize;
       nfs_modified_limit4 mod_blocks;
     } nfs_space_limit4_u;
@@ -1412,7 +1570,8 @@ extern "C" {
 #define OPEN4_SHARE_ACCESS_WANT_SIGNAL_DELEG_WHEN_RESRC_AVAIL 0x10000
 #define OPEN4_SHARE_ACCESS_WANT_PUSH_DELEG_WHEN_UNCONTENDED 0x20000
 
-  enum open_delegation_type4 {
+  enum open_delegation_type4
+  {
     OPEN_DELEGATE_NONE = 0,
     OPEN_DELEGATE_READ = 1,
     OPEN_DELEGATE_WRITE = 2,
@@ -1420,7 +1579,8 @@ extern "C" {
   };
   typedef enum open_delegation_type4 open_delegation_type4;
 
-  enum open_claim_type4 {
+  enum open_claim_type4
+  {
     CLAIM_NULL = 0,
     CLAIM_PREVIOUS = 1,
     CLAIM_DELEGATE_CUR = 2,
@@ -1431,15 +1591,18 @@ extern "C" {
   };
   typedef enum open_claim_type4 open_claim_type4;
 
-  struct open_claim_delegate_cur4 {
+  struct open_claim_delegate_cur4
+  {
     stateid4 delegate_stateid;
     component4 file;
   };
   typedef struct open_claim_delegate_cur4 open_claim_delegate_cur4;
 
-  struct open_claim4 {
+  struct open_claim4
+  {
     open_claim_type4 claim;
-    union {
+    union
+    {
       component4 file;
       open_delegation_type4 delegate_type;
       open_claim_delegate_cur4 delegate_cur_info;
@@ -1449,7 +1612,8 @@ extern "C" {
   };
   typedef struct open_claim4 open_claim4;
 
-  struct OPEN4args {
+  struct OPEN4args
+  {
     seqid4 seqid;
     uint32_t share_access;
     uint32_t share_deny;
@@ -1459,14 +1623,16 @@ extern "C" {
   };
   typedef struct OPEN4args OPEN4args;
 
-  struct open_read_delegation4 {
+  struct open_read_delegation4
+  {
     stateid4 stateid;
     bool_t recall;
     nfsace4 permissions;
   };
   typedef struct open_read_delegation4 open_read_delegation4;
 
-  struct open_write_delegation4 {
+  struct open_write_delegation4
+  {
     stateid4 stateid;
     bool_t recall;
     nfs_space_limit4 space_limit;
@@ -1474,7 +1640,8 @@ extern "C" {
   };
   typedef struct open_write_delegation4 open_write_delegation4;
 
-  enum why_no_delegation4 {
+  enum why_no_delegation4
+  {
     WND4_NOT_WANTED = 0,
     WND4_CONTENTION = 1,
     WND4_RESOURCE = 2,
@@ -1487,18 +1654,22 @@ extern "C" {
   };
   typedef enum why_no_delegation4 why_no_delegation4;
 
-  struct open_none_delegation4 {
+  struct open_none_delegation4
+  {
     why_no_delegation4 ond_why;
-    union {
+    union
+    {
       bool_t ond_server_will_push_deleg;
       bool_t ond_server_will_signal_avail;
     } open_none_delegation4_u;
   };
   typedef struct open_none_delegation4 open_none_delegation4;
 
-  struct open_delegation4 {
+  struct open_delegation4
+  {
     open_delegation_type4 delegation_type;
-    union {
+    union
+    {
       open_read_delegation4 read;
       open_write_delegation4 write;
       open_none_delegation4 od_whynone;
@@ -1510,7 +1681,8 @@ extern "C" {
 #define OPEN4_RESULT_PRESERVE_UNLINKED 0x00000008
 #define OPEN4_RESULT_MAY_NOTIFY_LOCK 0x00000020
 
-  struct OPEN4resok {
+  struct OPEN4resok
+  {
     stateid4 stateid;
     change_info4 cinfo;
     uint32_t rflags;
@@ -1519,44 +1691,53 @@ extern "C" {
   };
   typedef struct OPEN4resok OPEN4resok;
 
-  struct OPEN4res {
+  struct OPEN4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       OPEN4resok resok4;
     } OPEN4res_u;
   };
   typedef struct OPEN4res OPEN4res;
 
-  struct OPENATTR4args {
+  struct OPENATTR4args
+  {
     bool_t createdir;
   };
   typedef struct OPENATTR4args OPENATTR4args;
 
-  struct OPENATTR4res {
+  struct OPENATTR4res
+  {
     nfsstat4 status;
   };
   typedef struct OPENATTR4res OPENATTR4res;
 
-  struct OPEN_CONFIRM4args {
+  struct OPEN_CONFIRM4args
+  {
     stateid4 open_stateid;
     seqid4 seqid;
   };
   typedef struct OPEN_CONFIRM4args OPEN_CONFIRM4args;
 
-  struct OPEN_CONFIRM4resok {
+  struct OPEN_CONFIRM4resok
+  {
     stateid4 open_stateid;
   };
   typedef struct OPEN_CONFIRM4resok OPEN_CONFIRM4resok;
 
-  struct OPEN_CONFIRM4res {
+  struct OPEN_CONFIRM4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       OPEN_CONFIRM4resok resok4;
     } OPEN_CONFIRM4res_u;
   };
   typedef struct OPEN_CONFIRM4res OPEN_CONFIRM4res;
 
-  struct OPEN_DOWNGRADE4args {
+  struct OPEN_DOWNGRADE4args
+  {
     stateid4 open_stateid;
     seqid4 seqid;
     uint32_t share_access;
@@ -1564,64 +1745,77 @@ extern "C" {
   };
   typedef struct OPEN_DOWNGRADE4args OPEN_DOWNGRADE4args;
 
-  struct OPEN_DOWNGRADE4resok {
+  struct OPEN_DOWNGRADE4resok
+  {
     stateid4 open_stateid;
   };
   typedef struct OPEN_DOWNGRADE4resok OPEN_DOWNGRADE4resok;
 
-  struct OPEN_DOWNGRADE4res {
+  struct OPEN_DOWNGRADE4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       OPEN_DOWNGRADE4resok resok4;
     } OPEN_DOWNGRADE4res_u;
   };
   typedef struct OPEN_DOWNGRADE4res OPEN_DOWNGRADE4res;
 
-  struct PUTFH4args {
+  struct PUTFH4args
+  {
     nfs_fh4 object;
   };
   typedef struct PUTFH4args PUTFH4args;
 
-  struct PUTFH4res {
+  struct PUTFH4res
+  {
     nfsstat4 status;
   };
   typedef struct PUTFH4res PUTFH4res;
 
-  struct PUTPUBFH4res {
+  struct PUTPUBFH4res
+  {
     nfsstat4 status;
   };
   typedef struct PUTPUBFH4res PUTPUBFH4res;
 
-  struct PUTROOTFH4res {
+  struct PUTROOTFH4res
+  {
     nfsstat4 status;
   };
   typedef struct PUTROOTFH4res PUTROOTFH4res;
 
-  struct READ4args {
+  struct READ4args
+  {
     stateid4 stateid;
     offset4 offset;
     count4 count;
   };
   typedef struct READ4args READ4args;
 
-  struct READ4resok {
+  struct READ4resok
+  {
     bool_t eof;
-    struct {
+    struct
+    {
       u_int data_len;
       char *data_val;
     } data;
   };
   typedef struct READ4resok READ4resok;
 
-  struct READ4res {
+  struct READ4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       READ4resok resok4;
     } READ4res_u;
   };
   typedef struct READ4res READ4res;
 
-  struct READDIR4args {
+  struct READDIR4args
+  {
     nfs_cookie4 cookie;
     verifier4 cookieverf;
     count4 dircount;
@@ -1630,7 +1824,8 @@ extern "C" {
   };
   typedef struct READDIR4args READDIR4args;
 
-  struct entry4 {
+  struct entry4
+  {
     nfs_cookie4 cookie;
     component4 name;
     fattr4 attrs;
@@ -1638,104 +1833,125 @@ extern "C" {
   };
   typedef struct entry4 entry4;
 
-  struct dirlist4 {
+  struct dirlist4
+  {
     entry4 *entries;
     bool_t eof;
   };
   typedef struct dirlist4 dirlist4;
 
-  struct READDIR4resok {
+  struct READDIR4resok
+  {
     verifier4 cookieverf;
     dirlist4 reply;
   };
   typedef struct READDIR4resok READDIR4resok;
 
-  struct READDIR4res {
+  struct READDIR4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       READDIR4resok resok4;
     } READDIR4res_u;
   };
   typedef struct READDIR4res READDIR4res;
 
-  struct READLINK4resok {
+  struct READLINK4resok
+  {
     linktext4 link;
   };
   typedef struct READLINK4resok READLINK4resok;
 
-  struct READLINK4res {
+  struct READLINK4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       READLINK4resok resok4;
     } READLINK4res_u;
   };
   typedef struct READLINK4res READLINK4res;
 
-  struct REMOVE4args {
+  struct REMOVE4args
+  {
     component4 target;
   };
   typedef struct REMOVE4args REMOVE4args;
 
-  struct REMOVE4resok {
+  struct REMOVE4resok
+  {
     change_info4 cinfo;
   };
   typedef struct REMOVE4resok REMOVE4resok;
 
-  struct REMOVE4res {
+  struct REMOVE4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       REMOVE4resok resok4;
     } REMOVE4res_u;
   };
   typedef struct REMOVE4res REMOVE4res;
 
-  struct RENAME4args {
+  struct RENAME4args
+  {
     component4 oldname;
     component4 newname;
   };
   typedef struct RENAME4args RENAME4args;
 
-  struct RENAME4resok {
+  struct RENAME4resok
+  {
     change_info4 source_cinfo;
     change_info4 target_cinfo;
   };
   typedef struct RENAME4resok RENAME4resok;
 
-  struct RENAME4res {
+  struct RENAME4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       RENAME4resok resok4;
     } RENAME4res_u;
   };
   typedef struct RENAME4res RENAME4res;
 
-  struct RENEW4args {
+  struct RENEW4args
+  {
     clientid4 clientid;
   };
   typedef struct RENEW4args RENEW4args;
 
-  struct RENEW4res {
+  struct RENEW4res
+  {
     nfsstat4 status;
   };
   typedef struct RENEW4res RENEW4res;
 
-  struct RESTOREFH4res {
+  struct RESTOREFH4res
+  {
     nfsstat4 status;
   };
   typedef struct RESTOREFH4res RESTOREFH4res;
 
-  struct SAVEFH4res {
+  struct SAVEFH4res
+  {
     nfsstat4 status;
   };
   typedef struct SAVEFH4res SAVEFH4res;
 
-  struct SECINFO4args {
+  struct SECINFO4args
+  {
     component4 name;
   };
   typedef struct SECINFO4args SECINFO4args;
 
 #ifndef GSSRPC_AUTH_GSS_H
-  enum rpc_gss_svc_t {
+  enum rpc_gss_svc_t
+  {
     RPC_GSS_SVC_NONE = 1,
     RPC_GSS_SVC_INTEGRITY = 2,
     RPC_GSS_SVC_PRIVACY = 3,
@@ -1743,152 +1959,181 @@ extern "C" {
   typedef enum rpc_gss_svc_t rpc_gss_svc_t;
 #endif
 
-  struct rpcsec_gss_info {
+  struct rpcsec_gss_info
+  {
     sec_oid4 oid;
     qop4 qop;
     rpc_gss_svc_t service;
   };
   typedef struct rpcsec_gss_info rpcsec_gss_info;
 
-  struct secinfo4 {
+  struct secinfo4
+  {
     uint32_t flavor;
-    union {
+    union
+    {
       rpcsec_gss_info flavor_info;
     } secinfo4_u;
   };
   typedef struct secinfo4 secinfo4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int SECINFO4resok_len;
     secinfo4 *SECINFO4resok_val;
   } SECINFO4resok;
 
-  struct SECINFO4res {
+  struct SECINFO4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       SECINFO4resok resok4;
     } SECINFO4res_u;
   };
   typedef struct SECINFO4res SECINFO4res;
 
-  struct SETATTR4args {
+  struct SETATTR4args
+  {
     stateid4 stateid;
     fattr4 obj_attributes;
   };
   typedef struct SETATTR4args SETATTR4args;
 
-  struct SETATTR4res {
+  struct SETATTR4res
+  {
     nfsstat4 status;
     bitmap4 attrsset;
   };
   typedef struct SETATTR4res SETATTR4res;
 
-  struct SETCLIENTID4args {
+  struct SETCLIENTID4args
+  {
     nfs_client_id4 client;
     cb_client4 callback;
     uint32_t callback_ident;
   };
   typedef struct SETCLIENTID4args SETCLIENTID4args;
 
-  struct SETCLIENTID4resok {
+  struct SETCLIENTID4resok
+  {
     clientid4 clientid;
     verifier4 setclientid_confirm;
   };
   typedef struct SETCLIENTID4resok SETCLIENTID4resok;
 
-  struct SETCLIENTID4res {
+  struct SETCLIENTID4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       SETCLIENTID4resok resok4;
       clientaddr4 client_using;
     } SETCLIENTID4res_u;
   };
   typedef struct SETCLIENTID4res SETCLIENTID4res;
 
-  struct SETCLIENTID_CONFIRM4args {
+  struct SETCLIENTID_CONFIRM4args
+  {
     clientid4 clientid;
     verifier4 setclientid_confirm;
   };
   typedef struct SETCLIENTID_CONFIRM4args SETCLIENTID_CONFIRM4args;
 
-  struct SETCLIENTID_CONFIRM4res {
+  struct SETCLIENTID_CONFIRM4res
+  {
     nfsstat4 status;
   };
   typedef struct SETCLIENTID_CONFIRM4res SETCLIENTID_CONFIRM4res;
 
-  struct VERIFY4args {
+  struct VERIFY4args
+  {
     fattr4 obj_attributes;
   };
   typedef struct VERIFY4args VERIFY4args;
 
-  struct VERIFY4res {
+  struct VERIFY4res
+  {
     nfsstat4 status;
   };
   typedef struct VERIFY4res VERIFY4res;
 
-  enum stable_how4 {
+  enum stable_how4
+  {
     UNSTABLE4 = 0,
     DATA_SYNC4 = 1,
     FILE_SYNC4 = 2,
   };
   typedef enum stable_how4 stable_how4;
 
-  struct WRITE4args {
+  struct WRITE4args
+  {
     stateid4 stateid;
     offset4 offset;
     stable_how4 stable;
-    struct {
+    struct
+    {
       u_int data_len;
       char *data_val;
     } data;
   };
   typedef struct WRITE4args WRITE4args;
 
-  struct WRITE4resok {
+  struct WRITE4resok
+  {
     count4 count;
     stable_how4 committed;
     verifier4 writeverf;
   };
   typedef struct WRITE4resok WRITE4resok;
 
-  struct WRITE4res {
+  struct WRITE4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       WRITE4resok resok4;
     } WRITE4res_u;
   };
   typedef struct WRITE4res WRITE4res;
 
-  struct RELEASE_LOCKOWNER4args {
+  struct RELEASE_LOCKOWNER4args
+  {
     lock_owner4 lock_owner;
   };
   typedef struct RELEASE_LOCKOWNER4args RELEASE_LOCKOWNER4args;
 
-  struct RELEASE_LOCKOWNER4res {
+  struct RELEASE_LOCKOWNER4res
+  {
     nfsstat4 status;
   };
   typedef struct RELEASE_LOCKOWNER4res RELEASE_LOCKOWNER4res;
 
-  struct ILLEGAL4res {
+  struct ILLEGAL4res
+  {
     nfsstat4 status;
   };
   typedef struct ILLEGAL4res ILLEGAL4res;
 
-  typedef struct {
+  typedef struct
+  {
     u_int gsshandle4_t_len;
     char *gsshandle4_t_val;
   } gsshandle4_t;
 
-  struct gss_cb_handles4 {
+  struct gss_cb_handles4
+  {
     rpc_gss_svc_t gcbp_service;
     gsshandle4_t gcbp_handle_from_server;
     gsshandle4_t gcbp_handle_from_client;
   };
   typedef struct gss_cb_handles4 gss_cb_handles4;
 
-  struct callback_sec_parms4 {
+  struct callback_sec_parms4
+  {
     uint32_t cb_secflavor;
-    union {
+    union
+    {
       //authsys_parms cbsp_sys_cred;
       struct authunix_parms cbsp_sys_cred;
       gss_cb_handles4 cbsp_gss_handles;
@@ -1896,21 +2141,25 @@ extern "C" {
   };
   typedef struct callback_sec_parms4 callback_sec_parms4;
 
-  struct BACKCHANNEL_CTL4args {
+  struct BACKCHANNEL_CTL4args
+  {
     uint32_t bca_cb_program;
-    struct {
+    struct
+    {
       u_int bca_sec_parms_len;
       callback_sec_parms4 *bca_sec_parms_val;
     } bca_sec_parms;
   };
   typedef struct BACKCHANNEL_CTL4args BACKCHANNEL_CTL4args;
 
-  struct BACKCHANNEL_CTL4res {
+  struct BACKCHANNEL_CTL4res
+  {
     nfsstat4 bcr_status;
   };
   typedef struct BACKCHANNEL_CTL4res BACKCHANNEL_CTL4res;
 
-  enum channel_dir_from_client4 {
+  enum channel_dir_from_client4
+  {
     CDFC4_FORE = 0x1,
     CDFC4_BACK = 0x2,
     CDFC4_FORE_OR_BOTH = 0x3,
@@ -1918,30 +2167,35 @@ extern "C" {
   };
   typedef enum channel_dir_from_client4 channel_dir_from_client4;
 
-  struct BIND_CONN_TO_SESSION4args {
+  struct BIND_CONN_TO_SESSION4args
+  {
     sessionid4 bctsa_sessid;
     channel_dir_from_client4 bctsa_dir;
     bool_t bctsa_use_conn_in_rdma_mode;
   };
   typedef struct BIND_CONN_TO_SESSION4args BIND_CONN_TO_SESSION4args;
 
-  enum channel_dir_from_server4 {
+  enum channel_dir_from_server4
+  {
     CDFS4_FORE = 0x1,
     CDFS4_BACK = 0x2,
     CDFS4_BOTH = 0x3,
   };
   typedef enum channel_dir_from_server4 channel_dir_from_server4;
 
-  struct BIND_CONN_TO_SESSION4resok {
+  struct BIND_CONN_TO_SESSION4resok
+  {
     sessionid4 bctsr_sessid;
     channel_dir_from_server4 bctsr_dir;
     bool_t bctsr_use_conn_in_rdma_mode;
   };
   typedef struct BIND_CONN_TO_SESSION4resok BIND_CONN_TO_SESSION4resok;
 
-  struct BIND_CONN_TO_SESSION4res {
+  struct BIND_CONN_TO_SESSION4res
+  {
     nfsstat4 bctsr_status;
-    union {
+    union
+    {
       BIND_CONN_TO_SESSION4resok bctsr_resok4;
     } BIND_CONN_TO_SESSION4res_u;
   };
@@ -1956,19 +2210,23 @@ extern "C" {
 #define EXCHGID4_FLAG_UPD_CONFIRMED_REC_A 0x40000000
 #define EXCHGID4_FLAG_CONFIRMED_R 0x80000000
 
-  struct state_protect_ops4 {
+  struct state_protect_ops4
+  {
     bitmap4 spo_must_enforce;
     bitmap4 spo_must_allow;
   };
   typedef struct state_protect_ops4 state_protect_ops4;
 
-  struct ssv_sp_parms4 {
+  struct ssv_sp_parms4
+  {
     state_protect_ops4 ssp_ops;
-    struct {
+    struct
+    {
       u_int ssp_hash_algs_len;
       sec_oid4 *ssp_hash_algs_val;
     } ssp_hash_algs;
-    struct {
+    struct
+    {
       u_int ssp_encr_algs_len;
       sec_oid4 *ssp_encr_algs_val;
     } ssp_encr_algs;
@@ -1977,88 +2235,104 @@ extern "C" {
   };
   typedef struct ssv_sp_parms4 ssv_sp_parms4;
 
-  enum state_protect_how4 {
+  enum state_protect_how4
+  {
     SP4_NONE = 0,
     SP4_MACH_CRED = 1,
     SP4_SSV = 2,
   };
   typedef enum state_protect_how4 state_protect_how4;
 
-  struct state_protect4_a {
+  struct state_protect4_a
+  {
     state_protect_how4 spa_how;
-    union {
+    union
+    {
       state_protect_ops4 spa_mach_ops;
       ssv_sp_parms4 spa_ssv_parms;
     } state_protect4_a_u;
   };
   typedef struct state_protect4_a state_protect4_a;
 
-  struct EXCHANGE_ID4args {
+  struct EXCHANGE_ID4args
+  {
     client_owner4 eia_clientowner;
     uint32_t eia_flags;
     state_protect4_a eia_state_protect;
-    struct {
+    struct
+    {
       u_int eia_client_impl_id_len;
       nfs_impl_id4 *eia_client_impl_id_val;
     } eia_client_impl_id;
   };
   typedef struct EXCHANGE_ID4args EXCHANGE_ID4args;
 
-  struct ssv_prot_info4 {
+  struct ssv_prot_info4
+  {
     state_protect_ops4 spi_ops;
     uint32_t spi_hash_alg;
     uint32_t spi_encr_alg;
     uint32_t spi_ssv_len;
     uint32_t spi_window;
-    struct {
+    struct
+    {
       u_int spi_handles_len;
       gsshandle4_t *spi_handles_val;
     } spi_handles;
   };
   typedef struct ssv_prot_info4 ssv_prot_info4;
 
-  struct state_protect4_r {
+  struct state_protect4_r
+  {
     state_protect_how4 spr_how;
-    union {
+    union
+    {
       state_protect_ops4 spr_mach_ops;
       ssv_prot_info4 spr_ssv_info;
     } state_protect4_r_u;
   };
   typedef struct state_protect4_r state_protect4_r;
 
-  struct EXCHANGE_ID4resok {
+  struct EXCHANGE_ID4resok
+  {
     clientid4 eir_clientid;
     sequenceid4 eir_sequenceid;
     uint32_t eir_flags;
     state_protect4_r eir_state_protect;
     server_owner4 eir_server_owner;
-    struct {
+    struct
+    {
       u_int eir_server_scope_len;
       char *eir_server_scope_val;
     } eir_server_scope;
-    struct {
+    struct
+    {
       u_int eir_server_impl_id_len;
       nfs_impl_id4 *eir_server_impl_id_val;
     } eir_server_impl_id;
   };
   typedef struct EXCHANGE_ID4resok EXCHANGE_ID4resok;
 
-  struct EXCHANGE_ID4res {
+  struct EXCHANGE_ID4res
+  {
     nfsstat4 eir_status;
-    union {
+    union
+    {
       EXCHANGE_ID4resok eir_resok4;
     } EXCHANGE_ID4res_u;
   };
   typedef struct EXCHANGE_ID4res EXCHANGE_ID4res;
 
-  struct channel_attrs4 {
+  struct channel_attrs4
+  {
     count4 ca_headerpadsize;
     count4 ca_maxrequestsize;
     count4 ca_maxresponsesize;
     count4 ca_maxresponsesize_cached;
     count4 ca_maxoperations;
     count4 ca_maxrequests;
-    struct {
+    struct
+    {
       u_int ca_rdma_ird_len;
       uint32_t *ca_rdma_ird_val;
     } ca_rdma_ird;
@@ -2068,21 +2342,24 @@ extern "C" {
 #define CREATE_SESSION4_FLAG_CONN_BACK_CHAN 0x00000002
 #define CREATE_SESSION4_FLAG_CONN_RDMA 0x00000004
 
-  struct CREATE_SESSION4args {
+  struct CREATE_SESSION4args
+  {
     clientid4 csa_clientid;
     sequenceid4 csa_sequence;
     uint32_t csa_flags;
     channel_attrs4 csa_fore_chan_attrs;
     channel_attrs4 csa_back_chan_attrs;
     uint32_t csa_cb_program;
-    struct {
+    struct
+    {
       u_int csa_sec_parms_len;
       callback_sec_parms4 *csa_sec_parms_val;
     } csa_sec_parms;
   };
   typedef struct CREATE_SESSION4args CREATE_SESSION4args;
 
-  struct CREATE_SESSION4resok {
+  struct CREATE_SESSION4resok
+  {
     sessionid4 csr_sessionid;
     sequenceid4 csr_sequence;
     uint32_t csr_flags;
@@ -2091,37 +2368,44 @@ extern "C" {
   };
   typedef struct CREATE_SESSION4resok CREATE_SESSION4resok;
 
-  struct CREATE_SESSION4res {
+  struct CREATE_SESSION4res
+  {
     nfsstat4 csr_status;
-    union {
+    union
+    {
       CREATE_SESSION4resok csr_resok4;
     } CREATE_SESSION4res_u;
   };
   typedef struct CREATE_SESSION4res CREATE_SESSION4res;
 
-  struct DESTROY_SESSION4args {
+  struct DESTROY_SESSION4args
+  {
     sessionid4 dsa_sessionid;
   };
   typedef struct DESTROY_SESSION4args DESTROY_SESSION4args;
 
-  struct DESTROY_SESSION4res {
+  struct DESTROY_SESSION4res
+  {
     nfsstat4 dsr_status;
   };
   typedef struct DESTROY_SESSION4res DESTROY_SESSION4res;
 
-  struct FREE_STATEID4args {
+  struct FREE_STATEID4args
+  {
     stateid4 fsa_stateid;
   };
   typedef struct FREE_STATEID4args FREE_STATEID4args;
 
-  struct FREE_STATEID4res {
+  struct FREE_STATEID4res
+  {
     nfsstat4 fsr_status;
   };
   typedef struct FREE_STATEID4res FREE_STATEID4res;
 
   typedef nfstime4 attr_notice4;
 
-  struct GET_DIR_DELEGATION4args {
+  struct GET_DIR_DELEGATION4args
+  {
     bool_t gdda_signal_deleg_avail;
     bitmap4 gdda_notification_types;
     attr_notice4 gdda_child_attr_delay;
@@ -2131,7 +2415,8 @@ extern "C" {
   };
   typedef struct GET_DIR_DELEGATION4args GET_DIR_DELEGATION4args;
 
-  struct GET_DIR_DELEGATION4resok {
+  struct GET_DIR_DELEGATION4resok
+  {
     verifier4 gddr_cookieverf;
     stateid4 gddr_stateid;
     bitmap4 gddr_notification;
@@ -2140,30 +2425,36 @@ extern "C" {
   };
   typedef struct GET_DIR_DELEGATION4resok GET_DIR_DELEGATION4resok;
 
-  enum gddrnf4_status {
+  enum gddrnf4_status
+  {
     GDD4_OK = 0,
     GDD4_UNAVAIL = 1,
   };
   typedef enum gddrnf4_status gddrnf4_status;
 
-  struct GET_DIR_DELEGATION4res_non_fatal {
+  struct GET_DIR_DELEGATION4res_non_fatal
+  {
     gddrnf4_status gddrnf_status;
-    union {
+    union
+    {
       GET_DIR_DELEGATION4resok gddrnf_resok4;
       bool_t gddrnf_will_signal_deleg_avail;
     } GET_DIR_DELEGATION4res_non_fatal_u;
   };
   typedef struct GET_DIR_DELEGATION4res_non_fatal GET_DIR_DELEGATION4res_non_fatal;
 
-  struct GET_DIR_DELEGATION4res {
+  struct GET_DIR_DELEGATION4res
+  {
     nfsstat4 gddr_status;
-    union {
+    union
+    {
       GET_DIR_DELEGATION4res_non_fatal gddr_res_non_fatal4;
     } GET_DIR_DELEGATION4res_u;
   };
   typedef struct GET_DIR_DELEGATION4res GET_DIR_DELEGATION4res;
 
-  struct GETDEVICEINFO4args {
+  struct GETDEVICEINFO4args
+  {
     deviceid4 gdia_device_id;
     layouttype4 gdia_layout_type;
     count4 gdia_maxcount;
@@ -2171,22 +2462,26 @@ extern "C" {
   };
   typedef struct GETDEVICEINFO4args GETDEVICEINFO4args;
 
-  struct GETDEVICEINFO4resok {
+  struct GETDEVICEINFO4resok
+  {
     device_addr4 gdir_device_addr;
     bitmap4 gdir_notification;
   };
   typedef struct GETDEVICEINFO4resok GETDEVICEINFO4resok;
 
-  struct GETDEVICEINFO4res {
+  struct GETDEVICEINFO4res
+  {
     nfsstat4 gdir_status;
-    union {
+    union
+    {
       GETDEVICEINFO4resok gdir_resok4;
       count4 gdir_mincount;
     } GETDEVICEINFO4res_u;
   };
   typedef struct GETDEVICEINFO4res GETDEVICEINFO4res;
 
-  struct GETDEVICELIST4args {
+  struct GETDEVICELIST4args
+  {
     layouttype4 gdla_layout_type;
     count4 gdla_maxdevices;
     nfs_cookie4 gdla_cookie;
@@ -2194,10 +2489,12 @@ extern "C" {
   };
   typedef struct GETDEVICELIST4args GETDEVICELIST4args;
 
-  struct GETDEVICELIST4resok {
+  struct GETDEVICELIST4resok
+  {
     nfs_cookie4 gdlr_cookie;
     verifier4 gdlr_cookieverf;
-    struct {
+    struct
+    {
       u_int gdlr_deviceid_list_len;
       deviceid4 *gdlr_deviceid_list_val;
     } gdlr_deviceid_list;
@@ -2205,31 +2502,38 @@ extern "C" {
   };
   typedef struct GETDEVICELIST4resok GETDEVICELIST4resok;
 
-  struct GETDEVICELIST4res {
+  struct GETDEVICELIST4res
+  {
     nfsstat4 gdlr_status;
-    union {
+    union
+    {
       GETDEVICELIST4resok gdlr_resok4;
     } GETDEVICELIST4res_u;
   };
   typedef struct GETDEVICELIST4res GETDEVICELIST4res;
 
-  struct newtime4 {
+  struct newtime4
+  {
     bool_t nt_timechanged;
-    union {
+    union
+    {
       nfstime4 nt_time;
     } newtime4_u;
   };
   typedef struct newtime4 newtime4;
 
-  struct newoffset4 {
+  struct newoffset4
+  {
     bool_t no_newoffset;
-    union {
+    union
+    {
       offset4 no_offset;
     } newoffset4_u;
   };
   typedef struct newoffset4 newoffset4;
 
-  struct LAYOUTCOMMIT4args {
+  struct LAYOUTCOMMIT4args
+  {
     offset4 loca_offset;
     length4 loca_length;
     bool_t loca_reclaim;
@@ -2240,28 +2544,34 @@ extern "C" {
   };
   typedef struct LAYOUTCOMMIT4args LAYOUTCOMMIT4args;
 
-  struct newsize4 {
+  struct newsize4
+  {
     bool_t ns_sizechanged;
-    union {
+    union
+    {
       length4 ns_size;
     } newsize4_u;
   };
   typedef struct newsize4 newsize4;
 
-  struct LAYOUTCOMMIT4resok {
+  struct LAYOUTCOMMIT4resok
+  {
     newsize4 locr_newsize;
   };
   typedef struct LAYOUTCOMMIT4resok LAYOUTCOMMIT4resok;
 
-  struct LAYOUTCOMMIT4res {
+  struct LAYOUTCOMMIT4res
+  {
     nfsstat4 locr_status;
-    union {
+    union
+    {
       LAYOUTCOMMIT4resok locr_resok4;
     } LAYOUTCOMMIT4res_u;
   };
   typedef struct LAYOUTCOMMIT4res LAYOUTCOMMIT4res;
 
-  struct LAYOUTGET4args {
+  struct LAYOUTGET4args
+  {
     bool_t loga_signal_layout_avail;
     layouttype4 loga_layout_type;
     layoutiomode4 loga_iomode;
@@ -2273,26 +2583,31 @@ extern "C" {
   };
   typedef struct LAYOUTGET4args LAYOUTGET4args;
 
-  struct LAYOUTGET4resok {
+  struct LAYOUTGET4resok
+  {
     bool_t logr_return_on_close;
     stateid4 logr_stateid;
-    struct {
+    struct
+    {
       u_int logr_layout_len;
       layout4 *logr_layout_val;
     } logr_layout;
   };
   typedef struct LAYOUTGET4resok LAYOUTGET4resok;
 
-  struct LAYOUTGET4res {
+  struct LAYOUTGET4res
+  {
     nfsstat4 logr_status;
-    union {
+    union
+    {
       LAYOUTGET4resok logr_resok4;
       bool_t logr_will_signal_layout_avail;
     } LAYOUTGET4res_u;
   };
   typedef struct LAYOUTGET4res LAYOUTGET4res;
 
-  struct LAYOUTRETURN4args {
+  struct LAYOUTRETURN4args
+  {
     bool_t lora_reclaim;
     layouttype4 lora_layout_type;
     layoutiomode4 lora_iomode;
@@ -2300,23 +2615,28 @@ extern "C" {
   };
   typedef struct LAYOUTRETURN4args LAYOUTRETURN4args;
 
-  struct layoutreturn_stateid {
+  struct layoutreturn_stateid
+  {
     bool_t lrs_present;
-    union {
+    union
+    {
       stateid4 lrs_stateid;
     } layoutreturn_stateid_u;
   };
   typedef struct layoutreturn_stateid layoutreturn_stateid;
 
-  struct LAYOUTRETURN4res {
+  struct LAYOUTRETURN4res
+  {
     nfsstat4 lorr_status;
-    union {
+    union
+    {
       layoutreturn_stateid lorr_stateid;
     } LAYOUTRETURN4res_u;
   };
   typedef struct LAYOUTRETURN4res LAYOUTRETURN4res;
 
-  enum secinfo_style4 {
+  enum secinfo_style4
+  {
     SECINFO_STYLE4_CURRENT_FH = 0,
     SECINFO_STYLE4_PARENT = 1,
   };
@@ -2326,7 +2646,8 @@ extern "C" {
 
   typedef SECINFO4res SECINFO_NO_NAME4res;
 
-  struct SEQUENCE4args {
+  struct SEQUENCE4args
+  {
     sessionid4 sa_sessionid;
     sequenceid4 sa_sequenceid;
     slotid4 sa_slotid;
@@ -2348,7 +2669,8 @@ extern "C" {
 #define SEQ4_STATUS_DEVID_CHANGED 0x00000800
 #define SEQ4_STATUS_DEVID_DELETED 0x00001000
 
-  struct SEQUENCE4resok {
+  struct SEQUENCE4resok
+  {
     sessionid4 sr_sessionid;
     sequenceid4 sr_sequenceid;
     slotid4 sr_slotid;
@@ -2358,121 +2680,148 @@ extern "C" {
   };
   typedef struct SEQUENCE4resok SEQUENCE4resok;
 
-  struct SEQUENCE4res {
+  struct SEQUENCE4res
+  {
     nfsstat4 sr_status;
-    union {
+    union
+    {
       SEQUENCE4resok sr_resok4;
     } SEQUENCE4res_u;
   };
   typedef struct SEQUENCE4res SEQUENCE4res;
 
-  struct ssa_digest_input4 {
+  struct ssa_digest_input4
+  {
     SEQUENCE4args sdi_seqargs;
   };
   typedef struct ssa_digest_input4 ssa_digest_input4;
 
-  struct SET_SSV4args {
-    struct {
+  struct SET_SSV4args
+  {
+    struct
+    {
       u_int ssa_ssv_len;
       char *ssa_ssv_val;
     } ssa_ssv;
-    struct {
+    struct
+    {
       u_int ssa_digest_len;
       char *ssa_digest_val;
     } ssa_digest;
   };
   typedef struct SET_SSV4args SET_SSV4args;
 
-  struct ssr_digest_input4 {
+  struct ssr_digest_input4
+  {
     SEQUENCE4res sdi_seqres;
   };
   typedef struct ssr_digest_input4 ssr_digest_input4;
 
-  struct SET_SSV4resok {
-    struct {
+  struct SET_SSV4resok
+  {
+    struct
+    {
       u_int ssr_digest_len;
       char *ssr_digest_val;
     } ssr_digest;
   };
   typedef struct SET_SSV4resok SET_SSV4resok;
 
-  struct SET_SSV4res {
+  struct SET_SSV4res
+  {
     nfsstat4 ssr_status;
-    union {
+    union
+    {
       SET_SSV4resok ssr_resok4;
     } SET_SSV4res_u;
   };
   typedef struct SET_SSV4res SET_SSV4res;
 
-  struct TEST_STATEID4args {
-    struct {
+  struct TEST_STATEID4args
+  {
+    struct
+    {
       u_int ts_stateids_len;
       stateid4 *ts_stateids_val;
     } ts_stateids;
   };
   typedef struct TEST_STATEID4args TEST_STATEID4args;
 
-  struct TEST_STATEID4resok {
-    struct {
+  struct TEST_STATEID4resok
+  {
+    struct
+    {
       u_int tsr_status_codes_len;
       nfsstat4 *tsr_status_codes_val;
     } tsr_status_codes;
   };
   typedef struct TEST_STATEID4resok TEST_STATEID4resok;
 
-  struct TEST_STATEID4res {
+  struct TEST_STATEID4res
+  {
     nfsstat4 tsr_status;
-    union {
+    union
+    {
       TEST_STATEID4resok tsr_resok4;
     } TEST_STATEID4res_u;
   };
   typedef struct TEST_STATEID4res TEST_STATEID4res;
 
-  struct deleg_claim4 {
+  struct deleg_claim4
+  {
     open_claim_type4 dc_claim;
-    union {
+    union
+    {
       open_delegation_type4 dc_delegate_type;
     } deleg_claim4_u;
   };
   typedef struct deleg_claim4 deleg_claim4;
 
-  struct WANT_DELEGATION4args {
+  struct WANT_DELEGATION4args
+  {
     uint32_t wda_want;
     deleg_claim4 wda_claim;
   };
   typedef struct WANT_DELEGATION4args WANT_DELEGATION4args;
 
-  struct WANT_DELEGATION4res {
+  struct WANT_DELEGATION4res
+  {
     nfsstat4 wdr_status;
-    union {
+    union
+    {
       open_delegation4 wdr_resok4;
     } WANT_DELEGATION4res_u;
   };
   typedef struct WANT_DELEGATION4res WANT_DELEGATION4res;
 
-  struct DESTROY_CLIENTID4args {
+  struct DESTROY_CLIENTID4args
+  {
     clientid4 dca_clientid;
   };
   typedef struct DESTROY_CLIENTID4args DESTROY_CLIENTID4args;
 
-  struct DESTROY_CLIENTID4res {
+  struct DESTROY_CLIENTID4res
+  {
     nfsstat4 dcr_status;
   };
   typedef struct DESTROY_CLIENTID4res DESTROY_CLIENTID4res;
 
-  struct RECLAIM_COMPLETE4args {
+  struct RECLAIM_COMPLETE4args
+  {
     bool_t rca_one_fs;
   };
   typedef struct RECLAIM_COMPLETE4args RECLAIM_COMPLETE4args;
 
-  struct RECLAIM_COMPLETE4res {
+  struct RECLAIM_COMPLETE4res
+  {
     nfsstat4 rcr_status;
   };
   typedef struct RECLAIM_COMPLETE4res RECLAIM_COMPLETE4res;
 
 /* new operations for NFSv4.1 */
 
-  enum nfs_opnum4 {
+  enum nfs_opnum4
+  {
     NFS4_OP_ACCESS = 3,
     NFS4_OP_CLOSE = 4,
     NFS4_OP_COMMIT = 5,
@@ -2533,9 +2882,11 @@ extern "C" {
   };
   typedef enum nfs_opnum4 nfs_opnum4;
 
-  struct nfs_argop4 {
+  struct nfs_argop4
+  {
     nfs_opnum4 argop;
-    union {
+    union
+    {
       ACCESS4args opaccess;
       CLOSE4args opclose;
       COMMIT4args opcommit;
@@ -2589,9 +2940,11 @@ extern "C" {
   };
   typedef struct nfs_argop4 nfs_argop4;
 
-  struct nfs_resop4 {
+  struct nfs_resop4
+  {
     nfs_opnum4 resop;
-    union {
+    union
+    {
       ACCESS4res opaccess;
       CLOSE4res opclose;
       COMMIT4res opcommit;
@@ -2653,70 +3006,83 @@ extern "C" {
   };
   typedef struct nfs_resop4 nfs_resop4;
 
-  struct COMPOUND4args {
+  struct COMPOUND4args
+  {
     utf8str_cs tag;
     uint32_t minorversion;
-    struct {
+    struct
+    {
       u_int argarray_len;
       nfs_argop4 *argarray_val;
     } argarray;
   };
   typedef struct COMPOUND4args COMPOUND4args;
 
-  struct COMPOUND4res {
+  struct COMPOUND4res
+  {
     nfsstat4 status;
     utf8str_cs tag;
-    struct {
+    struct
+    {
       u_int resarray_len;
       nfs_resop4 *resarray_val;
     } resarray;
   };
   typedef struct COMPOUND4res COMPOUND4res;
 
-  struct CB_GETATTR4args {
+  struct CB_GETATTR4args
+  {
     nfs_fh4 fh;
     bitmap4 attr_request;
   };
   typedef struct CB_GETATTR4args CB_GETATTR4args;
 
-  struct CB_GETATTR4resok {
+  struct CB_GETATTR4resok
+  {
     fattr4 obj_attributes;
   };
   typedef struct CB_GETATTR4resok CB_GETATTR4resok;
 
-  struct CB_GETATTR4res {
+  struct CB_GETATTR4res
+  {
     nfsstat4 status;
-    union {
+    union
+    {
       CB_GETATTR4resok resok4;
     } CB_GETATTR4res_u;
   };
   typedef struct CB_GETATTR4res CB_GETATTR4res;
 
-  struct CB_RECALL4args {
+  struct CB_RECALL4args
+  {
     stateid4 stateid;
     bool_t truncate;
     nfs_fh4 fh;
   };
   typedef struct CB_RECALL4args CB_RECALL4args;
 
-  struct CB_RECALL4res {
+  struct CB_RECALL4res
+  {
     nfsstat4 status;
   };
   typedef struct CB_RECALL4res CB_RECALL4res;
 
-  struct CB_ILLEGAL4res {
+  struct CB_ILLEGAL4res
+  {
     nfsstat4 status;
   };
   typedef struct CB_ILLEGAL4res CB_ILLEGAL4res;
 
-  enum layoutrecall_type4 {
+  enum layoutrecall_type4
+  {
     LAYOUTRECALL4_FILE = LAYOUT4_RET_REC_FILE,
     LAYOUTRECALL4_FSID = LAYOUT4_RET_REC_FSID,
     LAYOUTRECALL4_ALL = LAYOUT4_RET_REC_ALL,
   };
   typedef enum layoutrecall_type4 layoutrecall_type4;
 
-  struct layoutrecall_file4 {
+  struct layoutrecall_file4
+  {
     nfs_fh4 lor_fh;
     offset4 lor_offset;
     length4 lor_length;
@@ -2724,16 +3090,19 @@ extern "C" {
   };
   typedef struct layoutrecall_file4 layoutrecall_file4;
 
-  struct layoutrecall4 {
+  struct layoutrecall4
+  {
     layoutrecall_type4 lor_recalltype;
-    union {
+    union
+    {
       layoutrecall_file4 lor_layout;
       fsid4 lor_fsid;
     } layoutrecall4_u;
   };
   typedef struct layoutrecall4 layoutrecall4;
 
-  struct CB_LAYOUTRECALL4args {
+  struct CB_LAYOUTRECALL4args
+  {
     layouttype4 clora_type;
     layoutiomode4 clora_iomode;
     bool_t clora_changed;
@@ -2741,12 +3110,14 @@ extern "C" {
   };
   typedef struct CB_LAYOUTRECALL4args CB_LAYOUTRECALL4args;
 
-  struct CB_LAYOUTRECALL4res {
+  struct CB_LAYOUTRECALL4res
+  {
     nfsstat4 clorr_status;
   };
   typedef struct CB_LAYOUTRECALL4res CB_LAYOUTRECALL4res;
 
-  enum notify_type4 {
+  enum notify_type4
+  {
     NOTIFY4_CHANGE_CHILD_ATTRS = 0,
     NOTIFY4_CHANGE_DIR_ATTRS = 1,
     NOTIFY4_REMOVE_ENTRY = 2,
@@ -2756,35 +3127,42 @@ extern "C" {
   };
   typedef enum notify_type4 notify_type4;
 
-  struct notify_entry4 {
+  struct notify_entry4
+  {
     component4 ne_file;
     fattr4 ne_attrs;
   };
   typedef struct notify_entry4 notify_entry4;
 
-  struct prev_entry4 {
+  struct prev_entry4
+  {
     notify_entry4 pe_prev_entry;
     nfs_cookie4 pe_prev_entry_cookie;
   };
   typedef struct prev_entry4 prev_entry4;
 
-  struct notify_remove4 {
+  struct notify_remove4
+  {
     notify_entry4 nrm_old_entry;
     nfs_cookie4 nrm_old_entry_cookie;
   };
   typedef struct notify_remove4 notify_remove4;
 
-  struct notify_add4 {
-    struct {
+  struct notify_add4
+  {
+    struct
+    {
       u_int nad_old_entry_len;
       notify_remove4 *nad_old_entry_val;
     } nad_old_entry;
     notify_entry4 nad_new_entry;
-    struct {
+    struct
+    {
       u_int nad_new_entry_cookie_len;
       nfs_cookie4 *nad_new_entry_cookie_val;
     } nad_new_entry_cookie;
-    struct {
+    struct
+    {
       u_int nad_prev_entry_len;
       prev_entry4 *nad_prev_entry_val;
     } nad_prev_entry;
@@ -2792,56 +3170,66 @@ extern "C" {
   };
   typedef struct notify_add4 notify_add4;
 
-  struct notify_attr4 {
+  struct notify_attr4
+  {
     notify_entry4 na_changed_entry;
   };
   typedef struct notify_attr4 notify_attr4;
 
-  struct notify_rename4 {
+  struct notify_rename4
+  {
     notify_remove4 nrn_old_entry;
     notify_add4 nrn_new_entry;
   };
   typedef struct notify_rename4 notify_rename4;
 
-  struct notify_verifier4 {
+  struct notify_verifier4
+  {
     verifier4 nv_old_cookieverf;
     verifier4 nv_new_cookieverf;
   };
   typedef struct notify_verifier4 notify_verifier4;
 
-  typedef struct {
+  typedef struct
+  {
     u_int notifylist4_len;
     char *notifylist4_val;
   } notifylist4;
 
-  struct notify4 {
+  struct notify4
+  {
     bitmap4 notify_mask;
     notifylist4 notify_vals;
   };
   typedef struct notify4 notify4;
 
-  struct CB_NOTIFY4args {
+  struct CB_NOTIFY4args
+  {
     stateid4 cna_stateid;
     nfs_fh4 cna_fh;
-    struct {
+    struct
+    {
       u_int cna_changes_len;
       notify4 *cna_changes_val;
     } cna_changes;
   };
   typedef struct CB_NOTIFY4args CB_NOTIFY4args;
 
-  struct CB_NOTIFY4res {
+  struct CB_NOTIFY4res
+  {
     nfsstat4 cnr_status;
   };
   typedef struct CB_NOTIFY4res CB_NOTIFY4res;
 
-  struct CB_PUSH_DELEG4args {
+  struct CB_PUSH_DELEG4args
+  {
     nfs_fh4 cpda_fh;
     open_delegation4 cpda_delegation;
   };
   typedef struct CB_PUSH_DELEG4args CB_PUSH_DELEG4args;
 
-  struct CB_PUSH_DELEG4res {
+  struct CB_PUSH_DELEG4res
+  {
     nfsstat4 cpdr_status;
   };
   typedef struct CB_PUSH_DELEG4res CB_PUSH_DELEG4res;
@@ -2855,63 +3243,74 @@ extern "C" {
 #define RCA4_TYPE_MASK_OTHER_LAYOUT_MIN 12
 #define RCA4_TYPE_MASK_OTHER_LAYOUT_MAX 15
 
-  struct CB_RECALL_ANY4args {
+  struct CB_RECALL_ANY4args
+  {
     uint32_t craa_objects_to_keep;
     bitmap4 craa_type_mask;
   };
   typedef struct CB_RECALL_ANY4args CB_RECALL_ANY4args;
 
-  struct CB_RECALL_ANY4res {
+  struct CB_RECALL_ANY4res
+  {
     nfsstat4 crar_status;
   };
   typedef struct CB_RECALL_ANY4res CB_RECALL_ANY4res;
 
   typedef CB_RECALL_ANY4args CB_RECALLABLE_OBJ_AVAIL4args;
 
-  struct CB_RECALLABLE_OBJ_AVAIL4res {
+  struct CB_RECALLABLE_OBJ_AVAIL4res
+  {
     nfsstat4 croa_status;
   };
   typedef struct CB_RECALLABLE_OBJ_AVAIL4res CB_RECALLABLE_OBJ_AVAIL4res;
 
-  struct CB_RECALL_SLOT4args {
+  struct CB_RECALL_SLOT4args
+  {
     slotid4 rsa_target_highest_slotid;
   };
   typedef struct CB_RECALL_SLOT4args CB_RECALL_SLOT4args;
 
-  struct CB_RECALL_SLOT4res {
+  struct CB_RECALL_SLOT4res
+  {
     nfsstat4 rsr_status;
   };
   typedef struct CB_RECALL_SLOT4res CB_RECALL_SLOT4res;
 
-  struct referring_call4 {
+  struct referring_call4
+  {
     sequenceid4 rc_sequenceid;
     slotid4 rc_slotid;
   };
   typedef struct referring_call4 referring_call4;
 
-  struct referring_call_list4 {
+  struct referring_call_list4
+  {
     sessionid4 rcl_sessionid;
-    struct {
+    struct
+    {
       u_int rcl_referring_calls_len;
       referring_call4 *rcl_referring_calls_val;
     } rcl_referring_calls;
   };
   typedef struct referring_call_list4 referring_call_list4;
 
-  struct CB_SEQUENCE4args {
+  struct CB_SEQUENCE4args
+  {
     sessionid4 csa_sessionid;
     sequenceid4 csa_sequenceid;
     slotid4 csa_slotid;
     slotid4 csa_highest_slotid;
     bool_t csa_cachethis;
-    struct {
+    struct
+    {
       u_int csa_referring_call_lists_len;
       referring_call_list4 *csa_referring_call_lists_val;
     } csa_referring_call_lists;
   };
   typedef struct CB_SEQUENCE4args CB_SEQUENCE4args;
 
-  struct CB_SEQUENCE4resok {
+  struct CB_SEQUENCE4resok
+  {
     sessionid4 csr_sessionid;
     sequenceid4 csr_sequenceid;
     slotid4 csr_slotid;
@@ -2920,71 +3319,84 @@ extern "C" {
   };
   typedef struct CB_SEQUENCE4resok CB_SEQUENCE4resok;
 
-  struct CB_SEQUENCE4res {
+  struct CB_SEQUENCE4res
+  {
     nfsstat4 csr_status;
-    union {
+    union
+    {
       CB_SEQUENCE4resok csr_resok4;
     } CB_SEQUENCE4res_u;
   };
   typedef struct CB_SEQUENCE4res CB_SEQUENCE4res;
 
-  struct CB_WANTS_CANCELLED4args {
+  struct CB_WANTS_CANCELLED4args
+  {
     bool_t cwca_contended_wants_cancelled;
     bool_t cwca_resourced_wants_cancelled;
   };
   typedef struct CB_WANTS_CANCELLED4args CB_WANTS_CANCELLED4args;
 
-  struct CB_WANTS_CANCELLED4res {
+  struct CB_WANTS_CANCELLED4res
+  {
     nfsstat4 cwcr_status;
   };
   typedef struct CB_WANTS_CANCELLED4res CB_WANTS_CANCELLED4res;
 
-  struct CB_NOTIFY_LOCK4args {
+  struct CB_NOTIFY_LOCK4args
+  {
     nfs_fh4 cnla_fh;
     lock_owner4 cnla_lock_owner;
   };
   typedef struct CB_NOTIFY_LOCK4args CB_NOTIFY_LOCK4args;
 
-  struct CB_NOTIFY_LOCK4res {
+  struct CB_NOTIFY_LOCK4res
+  {
     nfsstat4 cnlr_status;
   };
   typedef struct CB_NOTIFY_LOCK4res CB_NOTIFY_LOCK4res;
 
-  enum notify_deviceid_type4 {
+  enum notify_deviceid_type4
+  {
     NOTIFY_DEVICEID4_CHANGE = 1,
     NOTIFY_DEVICEID4_DELETE = 2,
   };
   typedef enum notify_deviceid_type4 notify_deviceid_type4;
 
-  struct notify_deviceid_delete4 {
+  struct notify_deviceid_delete4
+  {
     layouttype4 ndd_layouttype;
     deviceid4 ndd_deviceid;
   };
   typedef struct notify_deviceid_delete4 notify_deviceid_delete4;
 
-  struct notify_deviceid_change4 {
+  struct notify_deviceid_change4
+  {
     layouttype4 ndc_layouttype;
     deviceid4 ndc_deviceid;
     bool_t ndc_immediate;
   };
   typedef struct notify_deviceid_change4 notify_deviceid_change4;
 
-  struct CB_NOTIFY_DEVICEID4args {
-    struct {
+  struct CB_NOTIFY_DEVICEID4args
+  {
+    struct
+    {
       u_int cnda_changes_len;
       notify4 *cnda_changes_val;
     } cnda_changes;
   };
   typedef struct CB_NOTIFY_DEVICEID4args CB_NOTIFY_DEVICEID4args;
 
-  struct CB_NOTIFY_DEVICEID4res {
+  struct CB_NOTIFY_DEVICEID4res
+  {
     nfsstat4 cndr_status;
   };
   typedef struct CB_NOTIFY_DEVICEID4res CB_NOTIFY_DEVICEID4res;
 
 /* Callback operations new to NFSv4.1 */
 
-  enum nfs_cb_opnum4 {
+  enum nfs_cb_opnum4
+  {
     NFS4_OP_CB_GETATTR = 3,
     NFS4_OP_CB_RECALL = 4,
     NFS4_OP_CB_LAYOUTRECALL = 5,
@@ -3001,9 +3413,11 @@ extern "C" {
   };
   typedef enum nfs_cb_opnum4 nfs_cb_opnum4;
 
-  struct nfs_cb_argop4 {
+  struct nfs_cb_argop4
+  {
     u_int argop;
-    union {
+    union
+    {
       CB_GETATTR4args opcbgetattr;
       CB_RECALL4args opcbrecall;
       CB_LAYOUTRECALL4args opcblayoutrecall;
@@ -3020,9 +3434,11 @@ extern "C" {
   };
   typedef struct nfs_cb_argop4 nfs_cb_argop4;
 
-  struct nfs_cb_resop4 {
+  struct nfs_cb_resop4
+  {
     u_int resop;
-    union {
+    union
+    {
       CB_GETATTR4res opcbgetattr;
       CB_RECALL4res opcbrecall;
       CB_LAYOUTRECALL4res opcblayoutrecall;
@@ -3040,21 +3456,25 @@ extern "C" {
   };
   typedef struct nfs_cb_resop4 nfs_cb_resop4;
 
-  struct CB_COMPOUND4args {
+  struct CB_COMPOUND4args
+  {
     utf8str_cs tag;
     uint32_t minorversion;
     uint32_t callback_ident;
-    struct {
+    struct
+    {
       u_int argarray_len;
       nfs_cb_argop4 *argarray_val;
     } argarray;
   };
   typedef struct CB_COMPOUND4args CB_COMPOUND4args;
 
-  struct CB_COMPOUND4res {
+  struct CB_COMPOUND4res
+  {
     nfsstat4 status;
     utf8str_cs tag;
-    struct {
+    struct
+    {
       u_int resarray_len;
       nfs_cb_resop4 *resarray_val;
     } resarray;

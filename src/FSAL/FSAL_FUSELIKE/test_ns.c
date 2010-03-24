@@ -5,7 +5,8 @@
 #include "namespace.h"
 #include "BuddyMalloc.h"
 
-typedef struct ns_testset__ {
+typedef struct ns_testset__
+{
   ino_t parent_inode;
   ino_t entry_inode;
   char *name;

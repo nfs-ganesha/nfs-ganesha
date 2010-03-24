@@ -93,31 +93,36 @@
 #include <sys/param.h>
 #include <pthread.h>
 
-typedef enum LRU_List_state__ { LRU_ENTRY_BLANK = 0,
+typedef enum LRU_List_state__
+{ LRU_ENTRY_BLANK = 0,
   LRU_ENTRY_VALID = 1,
   LRU_ENTRY_INVALID = 2
 } LRU_List_state_t;
 
-typedef struct LRU_data__ {
+typedef struct LRU_data__
+{
   caddr_t pdata;
   size_t len;
 } LRU_data_t;
 
-typedef struct lru_entry__ {
+typedef struct lru_entry__
+{
   struct lru_entry__ *next;
   struct lru_entry__ *prev;
   LRU_List_state_t valid_state;
   LRU_data_t buffdata;
 } LRU_entry_t;
 
-typedef struct lru_param__ {
+typedef struct lru_param__
+{
   unsigned int nb_entry_prealloc;                  /**< Number of node to allocated when new nodes are necessary. */
   unsigned int nb_call_gc_invalid;                 /**< How many call before garbagging invalid entries           */
   int (*entry_to_str) (LRU_data_t, char *);        /**< Function used to convert an entry to a string. */
   int (*clean_entry) (LRU_entry_t *, void *);      /**< Function used for cleaning an entry while released */
 } LRU_parameter_t;
 
-typedef struct lru_list__ {
+typedef struct lru_list__
+{
   LRU_entry_t *LRU;
   LRU_entry_t *MRU;
   unsigned int nb_entry;

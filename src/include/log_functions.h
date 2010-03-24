@@ -103,7 +103,8 @@
  *
  */
 
-typedef struct loglev {
+typedef struct loglev
+{
   int value;
   char *str;
 } log_level_t;
@@ -142,14 +143,16 @@ static log_level_t __attribute__ ((__unused__)) tabLogLevel[] =
 #define LOG_MAX_STRLEN 2048
 #define LOG_LABEL_LEN 50
 #define LOG_MSG_LEN   255
-typedef struct {
+typedef struct
+{
   int numero;
   char label[LOG_LABEL_LEN];
   char msg[LOG_MSG_LEN];
 } family_error_t;
 
 /* Le type family d'erreurs */
-typedef struct {
+typedef struct
+{
   int num_family;
   char name_family[STR_LEN];
   family_error_t *tab_err;
@@ -158,7 +161,8 @@ typedef struct {
 typedef family_error_t status_t;
 typedef family_error_t errctx_t;
 
-typedef struct {
+typedef struct
+{
   int err_family;
   int ctx_family;
   errctx_t contexte;
@@ -549,22 +553,26 @@ int ReturnLevelAscii(char *LevelEnAscii);
 char *ReturnLevelInt(int level);
 
 /* A present les types et les fonctions pour les descripteurs de journaux */
-typedef enum type_voie { V_STREAM = 1, V_BUFFER, V_FILE, V_FD } type_log_stream_t;
+typedef enum type_voie
+{ V_STREAM = 1, V_BUFFER, V_FILE, V_FD } type_log_stream_t;
 
-typedef enum niveau { LOG_RIEN = 0, LOG_MAJOR = 1, LOG_CRITICAL = 2, LOG_EVENT =
-      3, LOG_DEBUG = 4
+typedef enum niveau
+{ LOG_RIEN = 0, LOG_MAJOR = 1, LOG_CRITICAL = 2, LOG_EVENT = 3, LOG_DEBUG = 4
 } niveau_t;
 
-typedef enum aiguillage { SUP = 1, EXACT = 0, INF = -1 } aiguillage_t;
+typedef enum aiguillage
+{ SUP = 1, EXACT = 0, INF = -1 } aiguillage_t;
 
-typedef union desc_voie {
+typedef union desc_voie
+{
   FILE *flux;
   char *buffer;
   char path[LOCALMAXPATHLEN];
   int fd;
 } desc_log_stream_t;
 
-typedef struct voie {
+typedef struct voie
+{
   desc_log_stream_t desc;
   type_log_stream_t type;
   niveau_t niveau;
@@ -572,7 +580,8 @@ typedef struct voie {
   struct voie *suivante;
 } log_stream_t;
 
-typedef struct journal {
+typedef struct journal
+{
   int nb_voies;
   log_stream_t *liste_voies;
   log_stream_t *fin_liste_voies;

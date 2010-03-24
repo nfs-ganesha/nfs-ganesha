@@ -1436,13 +1436,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
   argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].argop =
       NFS4_OP_OPEN_CONFIRM;
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
-  memcpy((char *)argnfs4.argarray.
-         argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-         opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
-  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_argop4_u.
-      opopen_confirm.seqid = pfd->stateid.seqid + 1;
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.open_stateid.seqid = pfd->stateid.seqid;
+  memcpy((char *)argnfs4.
+         argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_argop4_u.opopen_confirm.open_stateid.other, (char *)pfd->stateid.other, 12);
+  argnfs4.argarray.argarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+      nfs_argop4_u.opopen_confirm.seqid = pfd->stateid.seqid + 1;
   argnfs4.argarray.argarray_len = 2;
 
   TakeTokenFSCall();
@@ -1469,12 +1469,13 @@ fsal_status_t FSAL_proxy_open_confirm(fsal_file_t * pfd)
     }
   /* Update the file descriptor with the new stateid */
   pfd->stateid.seqid =
-      resnfs4.resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
-      nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
+      resnfs4.resarray.
+      resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
+      opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid;
   memcpy((char *)pfd->stateid.other,
-         (char *)resnfs4.resarray.
-         resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].nfs_resop4_u.
-         opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
+         (char *)resnfs4.
+         resarray.resarray_val[FSAL_PROXY_OPEN_CONFIRM_IDX_OP_OPEN_CONFIRM].
+         nfs_resop4_u.opopen_confirm.OPEN_CONFIRM4res_u.resok4.open_stateid.other, 12);
 
   fsal_status.major = ERR_FSAL_NO_ERROR;
   fsal_status.minor = NFS4_OK;
@@ -1505,14 +1506,14 @@ void *FSAL_proxy_change_user(fsal_op_context_t * p_thr_context)
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
       p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-                                                           p_thr_context->user_credential.
-                                                           user,
-                                                           p_thr_context->user_credential.
-                                                           group,
-                                                           p_thr_context->user_credential.
-                                                           nbgroups,
-                                                           p_thr_context->user_credential.
-                                                           alt_groups);
+                                                           p_thr_context->
+                                                           user_credential.user,
+                                                           p_thr_context->
+                                                           user_credential.group,
+                                                           p_thr_context->
+                                                           user_credential.nbgroups,
+                                                           p_thr_context->
+                                                           user_credential.alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:

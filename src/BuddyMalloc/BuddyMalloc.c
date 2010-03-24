@@ -128,12 +128,14 @@ buddy_parameter_t default_buddy_parameter = {
  * ------------------------------------------*/
 
 /** Buddy block status */
-typedef enum BuddyBlockStatus_t {
+typedef enum BuddyBlockStatus_t
+{
   FREE_BLOCK,
   RESERVED_BLOCK
 } BuddyBlockStatus_t;
 
-typedef struct StdBlockInfo_t {
+typedef struct StdBlockInfo_t
+{
 
   /* k size of "mother" area. */
   unsigned int Base_kSize;
@@ -152,7 +154,8 @@ typedef struct StdBlockInfo_t {
 typedef struct BuddyBlock_t *BuddyBlockPtr_t;
 
 /** Buddy header */
-typedef struct BuddyHeader_t {
+typedef struct BuddyHeader_t
+{
 
   /* Pointer to the base address of "mother" area.
    * >> NULL when it is an extra block (largest
@@ -183,7 +186,8 @@ typedef struct BuddyHeader_t {
 
 #endif
 
-  union {
+  union
+  {
     StdBlockInfo_t StdInfo;
     size_t ExtraInfo;
   } BlockInfo;
@@ -198,7 +202,8 @@ typedef struct BuddyHeader_t {
 #define ExtraInfo BlockInfo.ExtraInfo
 
 /** Content of a free buddy block (without header)  */
-typedef struct BuddyFreeBlockInfo_t {
+typedef struct BuddyFreeBlockInfo_t
+{
 
   BuddyBlockPtr_t NextBlock;
   BuddyBlockPtr_t PrevBlock;
@@ -210,10 +215,12 @@ typedef struct BuddyFreeBlockInfo_t {
  * This definition is actually mapped
  * over a memory area of a bigger size.
  */
-typedef struct BuddyBlock_t {
+typedef struct BuddyBlock_t
+{
 
   BuddyHeader_t Header;
-  union {
+  union
+  {
     BuddyFreeBlockInfo_t FreeBlockInfo;
     char UserSpace[1];
 #ifndef _MONOTHREAD_MEMALLOC
@@ -228,7 +235,8 @@ typedef struct BuddyBlock_t {
 /* allowed buddyMalloc sizes are from 2^0 to 2^63 */
 
 /** Thread context */
-typedef struct BuddyThreadContext_t {
+typedef struct BuddyThreadContext_t
+{
 
   /* Indicates if buddy has been initialized. */
   int initialized;
@@ -2165,7 +2173,8 @@ int BuddyCountDebugLabel(char *label)
 }                               /* BuddyCountDebugLabel */
 
 /* used for counting labels of each type */
-typedef struct _label_info_list_ {
+typedef struct _label_info_list_
+{
   const char *user_label;
   const char *file;
   const char *func;

@@ -114,15 +114,18 @@
 #include "err_HashTable.h"
 #include "err_rpc.h"
 
-typedef enum CredType__ { CRED_NONE = 1, CRED_UNIX = 2, CRED_GSS = 3 } CredType_t;
+typedef enum CredType__
+{ CRED_NONE = 1, CRED_UNIX = 2, CRED_GSS = 3 } CredType_t;
 
-typedef struct CredUnix__ {
+typedef struct CredUnix__
+{
   u_int uid;
   u_int gid;
   /* May be we could had list of groups management */
 } CredUnix_t;
 
-typedef struct CredGss__ {
+typedef struct CredGss__
+{
 #if(  defined( HAVE_KRB5 ) && defined ( _USE_GSSRPC ) )
   gss_qop_t qop;
   gss_OID mech;
@@ -133,7 +136,8 @@ typedef struct CredGss__ {
 #endif
 } CredGss_t;
 
-typedef union CredData__ {
+typedef union CredData__
+{
 #ifdef HAVE_KRB5
   CredUnix_t unix_cred;
   CredGss_t gss_cred;
@@ -142,7 +146,8 @@ typedef union CredData__ {
 #endif
 } CredData_t;
 
-typedef struct RPCSEC_GSS_cred__ {
+typedef struct RPCSEC_GSS_cred__
+{
   CredType_t type;
   CredData_t data;
 } RPCSEC_GSS_cred_t;

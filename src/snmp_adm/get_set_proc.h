@@ -14,7 +14,8 @@
  * Information about get/set function.
  * Used for registration.
  */
-typedef struct get_set_info_s {
+typedef struct get_set_info_s
+{
   fct_get getter;                 /**< @see fct_get */
   fct_set setter;                 /**< @see fct_set */
   int branch;                     /**< conf or stat */
@@ -27,7 +28,8 @@ typedef struct get_set_info_s {
  * Information about procedure.
  * Used for registration.
  */
-typedef struct proc_info_s {
+typedef struct proc_info_s
+{
   int num;                              /**< numproc */
   int nb_in;                            /**< number of inputs */
   int nb_out;                           /**< number of outputs */
@@ -43,7 +45,8 @@ typedef struct proc_info_s {
  * It is usefull for unregistration and to call functions on request.
  * We make a linked list of all recorded objects.
  */
-typedef struct register_info_s {
+typedef struct register_info_s
+{
         /** label, it is the research key for unregistration */
   char *label;
         /** we save the description in our own memory */
@@ -52,7 +55,8 @@ typedef struct register_info_s {
 	    to call them on request.
 	    Pointer are NULL if scalar.
 	*/
-  union function_info_u {
+  union function_info_u
+  {
     proc_info *proc;
     get_set_info *get_set;
   } function_info;
@@ -60,7 +64,8 @@ typedef struct register_info_s {
         /** number in the nested union (type_e) */
   int type;
         /** union of type */
-  enum type_e {
+  enum type_e
+  {
     SCAL,
     GET_SET,
     PROC
@@ -77,7 +82,8 @@ typedef struct register_info_s {
 /**
  * Used by polling thread.
  */
-typedef struct polling_arg_s {
+typedef struct polling_arg_s
+{
   unsigned int second;               /**< polling period*/
   trap_test test_fct;                /**< test function */
   unsigned char type;                /**< variable type */

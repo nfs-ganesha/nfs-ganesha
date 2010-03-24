@@ -45,7 +45,8 @@ typedef int (*xattr_printfunc_t) (caddr_t,      /* Input buffer */
                                   caddr_t,      /* Output (ASCII) buffer */
                                   size_t *);    /* Output size */
 
-typedef struct fsal_xattr_def__ {
+typedef struct fsal_xattr_def__
+{
   char xattr_name[FSAL_MAX_NAME_LEN];
   xattr_getfunc_t get_func;
   xattr_setfunc_t set_func;

@@ -68,7 +68,8 @@ enum auth_stat Gssrpc__svcauth_gss(register struct svc_req *rqst,
 
 #define Gssrpc__svcauth_short Gssrpc__svcauth_unix
 
-static struct svcauthsw_type {
+static struct svcauthsw_type
+{
   u_int flavor;
   enum auth_stat (*authenticator) (struct svc_req *, struct rpc_msg *, bool_t *);
 } svcauthsw[] =

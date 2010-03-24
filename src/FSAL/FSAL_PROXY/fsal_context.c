@@ -42,7 +42,8 @@ extern fs_specific_initinfo_t global_fsal_proxy_specific_info;
 /** usefull subopt definitions */
 
 /* define your specific NFS export options here : */
-enum {
+enum
+{
   YOUR_OPTION_1 = 0,
   YOUR_OPTION_2 = 1,
   YOUR_OPTION_3 = 2,

@@ -152,7 +152,8 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
 #define MAX_CHAR_VAL  ((1<<8)-1)        /* 2^8-1 */
 #define MAX_SHORT_VAL ((1<<16)-1)       /* 2^16-1 */
 
-typedef struct fsal_digest__ {
+typedef struct fsal_digest__
+{
   unsigned int type_flag:2;
   unsigned int relative_oid_len:5;
   unsigned int nb_short_oids:5;

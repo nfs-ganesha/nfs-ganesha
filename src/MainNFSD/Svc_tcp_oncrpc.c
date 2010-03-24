@@ -92,12 +92,14 @@ static struct xp_ops Svctcp_rendezvous_op = {
 int Readtcp(), Writetcp();
 static SVCXPRT *Makefd_xprt();
 
-struct tcp_rendezvous {         /* kept in xprt->xp_p1 */
+struct tcp_rendezvous
+{                               /* kept in xprt->xp_p1 */
   u_int sendsize;
   u_int recvsize;
 };
 
-struct tcp_conn {               /* kept in xprt->xp_p1 */
+struct tcp_conn
+{                               /* kept in xprt->xp_p1 */
   enum xprt_stat strm_stat;
   u_long x_id;
   XDR xdrs;
@@ -233,7 +235,8 @@ void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
 {
   register struct tcp_conn *cd;
 
-  typedef struct rec_strm_local {
+  typedef struct rec_strm_local
+  {
     caddr_t tcp_handle;
     caddr_t the_buffer;
     /*

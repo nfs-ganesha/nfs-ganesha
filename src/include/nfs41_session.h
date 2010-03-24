@@ -120,14 +120,16 @@
 #define NFS41_NB_SLOTS           3
 #define NFS41_DRC_SIZE          32768
 
-typedef struct nfs41_session_slot__ {
+typedef struct nfs41_session_slot__
+{
   sequenceid4 sequence;
   pthread_mutex_t lock;
   char cached_result[NFS41_DRC_SIZE];
   unsigned int cache_used;
 } nfs41_session_slot_t;
 
-typedef struct nfs41_session__ {
+typedef struct nfs41_session__
+{
   clientid4 clientid;
   uint32_t sequence;
   uint32_t session_flags;

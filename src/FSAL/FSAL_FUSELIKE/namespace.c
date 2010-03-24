@@ -32,7 +32,8 @@
  * Path:   inode->fsnode with list of (parent,name)
  */
 
-typedef struct __inode__ {
+typedef struct __inode__
+{
   ino_t inum;
   dev_t dev;
   unsigned int generation;
@@ -41,7 +42,8 @@ typedef struct __inode__ {
 /* - key for lookup hash table
  * - it is also used to keep a list of parent/name of an entry
  */
-typedef struct __lookup_peer__ {
+typedef struct __lookup_peer__
+{
   inode_t parent;
   char name[FSAL_MAX_NAME_LEN];
 
@@ -55,7 +57,8 @@ typedef struct __lookup_peer__ {
  * - data for path hash table is a fsnode.
  */
 
-typedef struct __fsnode__ {
+typedef struct __fsnode__
+{
   inode_t inode;
   unsigned int n_lookup;       /**< number of times the entry is involved
                                     in a lookup operation as a child:

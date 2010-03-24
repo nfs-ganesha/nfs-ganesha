@@ -332,7 +332,8 @@ static PyMethodDef GssapiMethods[] = {
 /*                                                                    */
 /**********************************************************************/
 
-static struct {
+static struct
+{
   char *name;
   unsigned long int value;
 } major_codes[] =

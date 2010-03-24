@@ -309,7 +309,8 @@ static int is_loaded = FALSE;   /* filsystem initialization status */
 
 /* thread specific configuration variables */
 
-typedef struct cmdfsal_thr_info__ {
+typedef struct cmdfsal_thr_info__
+{
   int is_thread_ok;             /* per thread initialization status */
   fsal_handle_t current_dir;    /* current directory handle */
   char current_path[FSAL_MAX_PATH_LEN]; /* current path */

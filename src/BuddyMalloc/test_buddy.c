@@ -126,7 +126,8 @@ buddy_parameter_t parameter_realloc_small = {
   "/dev/tty"
 };
 
-typedef struct string_info {
+typedef struct string_info
+{
 
   char *str;
   int len;

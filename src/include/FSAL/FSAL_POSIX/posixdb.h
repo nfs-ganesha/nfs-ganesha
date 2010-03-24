@@ -29,7 +29,8 @@
 
 #define NB_PREPARED_REQ       1
 
-typedef struct fsal_posixdb_conn__ {
+typedef struct fsal_posixdb_conn__
+{
   MYSQL db_conn;
 
   /* array of prepared requests */
@@ -72,7 +73,8 @@ typedef struct fsal_posixdb_conn__ {
 
 #define NB_PREPARED_REQ       20
 
-typedef struct fsal_posixdb_conn__ {
+typedef struct fsal_posixdb_conn__
+{
   sqlite3 *db_conn;
 
   /* array of prepared requests */
@@ -109,7 +111,8 @@ typedef struct fsal_posixdb_conn__ {
 
 #ifndef _USE_SQLITE3
 
-typedef struct {
+typedef struct
+{
   char host[FSAL_MAX_DBHOST_NAME_LEN];
   char port[FSAL_MAX_DBPORT_STR_LEN];
   char dbname[FSAL_MAX_DB_NAME_LEN];
@@ -119,14 +122,16 @@ typedef struct {
 
 #else
 
-typedef struct {
+typedef struct
+{
   char dbfile[FSAL_MAX_PATH_LEN];
   char tempdir[FSAL_MAX_PATH_LEN];
 } fsal_posixdb_conn_params_t;
 
 #endif
 
-typedef struct {
+typedef struct
+{
   fsal_handle_t handle;
   fsal_name_t name;
 } fsal_posixdb_child;
@@ -135,7 +140,8 @@ typedef struct {
  * POSIXDB structures (for status and results)
  */
 
-typedef enum fsal_posixdb_errorcode {
+typedef enum fsal_posixdb_errorcode
+{
   ERR_FSAL_POSIXDB_NOERR = 0,   /* no error */
   ERR_FSAL_POSIXDB_BADCONN,     /* not connected to the database */
   ERR_FSAL_POSIXDB_NOENT,       /* no such object in the database */
@@ -148,7 +154,8 @@ typedef enum fsal_posixdb_errorcode {
   ERR_FSAL_POSIXDB_NO_MEM       /* allocation error */
 } fsal_posixdb_errorcode;
 
-typedef struct fsal_posixdb_status_t {
+typedef struct fsal_posixdb_status_t
+{
   int major;
   int minor;
 } fsal_posixdb_status_t;

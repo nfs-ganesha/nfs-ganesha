@@ -88,7 +88,8 @@
 #include "fsal.h"
 
 /* parameters for Handle Map module */
-typedef struct handle_map_param__ {
+typedef struct handle_map_param__
+{
   /* path where database files are located */
   char databases_directory[MAXPATHLEN];
 
@@ -114,7 +115,8 @@ typedef struct handle_map_param__ {
 
 /* this describes a handle digest for nfsv2 and nfsv3 */
 
-typedef struct nfs23_map_handle__ {
+typedef struct nfs23_map_handle__
+{
   /* object id */
   uint64_t object_id;
 

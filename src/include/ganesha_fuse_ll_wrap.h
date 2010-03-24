@@ -19,7 +19,8 @@ typedef struct ganefuse_req *ganefuse_req_t;
 struct ganefuse_session;
 struct ganefuse_chan;
 
-struct ganefuse_entry_param {
+struct ganefuse_entry_param
+{
   ganefuse_ino_t ino;
   unsigned long generation;
   struct stat attr;
@@ -28,7 +29,8 @@ struct ganefuse_entry_param {
 
 };
 
-struct ganefuse_ctx {
+struct ganefuse_ctx
+{
   uid_t uid;
   gid_t gid;
   pid_t pid;
@@ -43,7 +45,8 @@ struct ganefuse_ctx {
 #define GANEFUSE_SET_ATTR_ATIME     (1 << 4)
 #define GANEFUSE_SET_ATTR_MTIME     (1 << 5)
 
-struct ganefuse_file_info {
+struct ganefuse_file_info
+{
   int flags;
   unsigned long fh_old;
   int writepage;
@@ -56,7 +59,8 @@ struct ganefuse_file_info {
 
 };
 
-struct ganefuse_conn_info {
+struct ganefuse_conn_info
+{
   unsigned proto_major;
   unsigned proto_minor;
   unsigned async_read;
@@ -66,7 +70,8 @@ struct ganefuse_conn_info {
 
 };
 
-struct ganefuse_lowlevel_ops {
+struct ganefuse_lowlevel_ops
+{
   void (*init) (void *userdata, struct ganefuse_conn_info * conn);
   void (*destroy) (void *userdata);
   void (*lookup) (ganefuse_req_t req, ganefuse_ino_t parent, const char *name);
@@ -124,7 +129,8 @@ struct ganefuse_lowlevel_ops {
   void (*bmap) (ganefuse_req_t req, ganefuse_ino_t ino, size_t blocksize, uint64_t idx);
 };
 
-struct ganefuse_lowlevel_ops25 {
+struct ganefuse_lowlevel_ops25
+{
   void (*init) (void *userdata, struct ganefuse_conn_info * conn);
   void (*destroy) (void *userdata);
   void (*lookup) (ganefuse_req_t req, ganefuse_ino_t parent, const char *name);
@@ -177,13 +183,15 @@ struct ganefuse_lowlevel_ops25 {
                   mode_t mode, struct ganefuse_file_info * fi);
 };
 
-struct ganefuse_args {
+struct ganefuse_args
+{
   int argc;
   char **argv;
   int allocated;
 };
 
-struct ganefuse_opt {
+struct ganefuse_opt
+{
   const char *templ;
   unsigned long offset;
   int value;
@@ -247,7 +255,8 @@ struct ganefuse_session *ganefuse_lowlevel_new25(struct ganefuse_args *args,
 
 /* session type and calls */
 
-struct ganefuse_session_ops {
+struct ganefuse_session_ops
+{
   void (*process) (void *data, const char *buf, size_t len, struct ganefuse_chan * ch);
   void (*exit) (void *data, int val);
   int (*exited) (void *data);
@@ -271,7 +280,8 @@ int ganefuse_session_loop_mt(struct ganefuse_session *se);
 
 /* chan type and calls */
 
-struct ganefuse_chan_ops {
+struct ganefuse_chan_ops
+{
   int (*receive) (struct ganefuse_chan ** chp, char *buf, size_t size);
   int (*send) (struct ganefuse_chan * ch, const struct iovec iov[], size_t count);
   void (*destroy) (struct ganefuse_chan * ch);

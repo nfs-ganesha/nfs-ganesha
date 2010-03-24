@@ -114,7 +114,8 @@ typedef unsigned long u_long;
 #include "fsal.h"
 #include "nfs_tools.h"
 
-typedef struct dupreq_entry__ {
+typedef struct dupreq_entry__
+{
   long xid;
   nfs_res_t res_nfs;
   u_long rq_prog;               /* service program number        */

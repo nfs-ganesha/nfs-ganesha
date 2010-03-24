@@ -78,7 +78,8 @@ rpcprog_t prognum;              /* Program number */
 rpcvers_t versnum;              /* Version number */
 const char *nettype;            /* Networktype token */
 {
-  struct xlist {
+  struct xlist
+  {
     SVCXPRT *xprt;              /* Server handle */
     struct xlist *next;         /* Next item */
   } *l;

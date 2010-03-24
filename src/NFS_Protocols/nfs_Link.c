@@ -305,8 +305,8 @@ int nfs_Link(nfs_arg_t * parg,
                           nfs_SetPostOpAttr(pcontext, pexport,
                                             target_pentry,
                                             &attr,
-                                            &(pres->res_link3.LINK3res_u.resok.
-                                              file_attributes));
+                                            &(pres->res_link3.LINK3res_u.
+                                              resok.file_attributes));
 
                           /*
                            * Build Weak Cache Coherency

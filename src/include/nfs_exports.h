@@ -126,30 +126,36 @@
 #define EXPORT_LINESIZE 1024
 #define INPUT_SIZE      1024
 
-typedef struct exportlist_client_hostif__ {
+typedef struct exportlist_client_hostif__
+{
   unsigned int clientaddr;
   struct in6_addr clientaddr6;
 } exportlist_client_hostif_t;
 
-typedef struct exportlist_client_net__ {
+typedef struct exportlist_client_net__
+{
   unsigned int netaddr;
   unsigned int netmask;
 } exportlist_client_net_t;
 
-typedef struct exportlist_client_netgrp__ {
+typedef struct exportlist_client_netgrp__
+{
   char netgroupname[MAXHOSTNAMELEN];
 } exportlist_client_netgrp_t;
 
-typedef struct exportlist_client_wildcard_host__ {
+typedef struct exportlist_client_wildcard_host__
+{
   char wildcard[MAXHOSTNAMELEN];
 } exportlist_client_wildcard_host_t;
 
 #define GSS_DEFINE_LEN_TEMP 255
-typedef struct exportlist_client_gss__ {
+typedef struct exportlist_client_gss__
+{
   char princname[GSS_DEFINE_LEN_TEMP];
 } exportlist_client_gss_t;
 
-typedef enum exportlist_access_type__ {
+typedef enum exportlist_access_type__
+{
   ACCESSTYPE_RW = 1,            /* All operations are allowed                */
   ACCESSTYPE_RO = 2,            /* Filesystem is readonly (nfs_read allowed) */
   ACCESSTYPE_MDONLY = 3,        /* Data operations are forbidden             */
@@ -157,7 +163,8 @@ typedef enum exportlist_access_type__ {
                                    and the filesystem is read-only.          */
 } exportlist_access_type_t;
 
-typedef enum exportlist_client_type__ { HOSTIF_CLIENT = 1,
+typedef enum exportlist_client_type__
+{ HOSTIF_CLIENT = 1,
   NETWORK_CLIENT = 2,
   NETGROUP_CLIENT = 3,
   WILDCARDHOST_CLIENT = 4,
@@ -165,11 +172,13 @@ typedef enum exportlist_client_type__ { HOSTIF_CLIENT = 1,
   HOSTIF_CLIENT_V6 = 6
 } exportlist_client_type_t;
 
-typedef enum exportlist_status__ { EXPORTLIST_OK = 1,
+typedef enum exportlist_status__
+{ EXPORTLIST_OK = 1,
   EXPORTLIST_UNAVAILABLE = 2
 } exportlist_status_t;
 
-typedef union exportlist_client_union__ {
+typedef union exportlist_client_union__
+{
   exportlist_client_hostif_t hostif;
   exportlist_client_net_t network;
   exportlist_client_netgrp_t netgroup;
@@ -177,7 +186,8 @@ typedef union exportlist_client_union__ {
   exportlist_client_gss_t gssprinc;
 } exportlist_client_union_t;
 
-typedef struct exportlist_client_entry__ {
+typedef struct exportlist_client_entry__
+{
   exportlist_client_type_t type;
   exportlist_client_union_t client;
   unsigned int options;         /* avail. mnt options */
@@ -185,12 +195,14 @@ typedef struct exportlist_client_entry__ {
 
 #define EXPORTS_NB_MAX_CLIENTS 128
 
-typedef struct exportlist_client__ {
+typedef struct exportlist_client__
+{
   unsigned int num_clients;     /* num clients        */
   exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];        /* allowed clients    */
 } exportlist_client_t;
 
-typedef struct exportlist__ {
+typedef struct exportlist__
+{
   unsigned short id;            /* entry identifier   */
   exportlist_status_t status;   /* entry's status     */
   char dirname[MAXNAMLEN];      /* path relative to fs root */
@@ -272,7 +284,8 @@ typedef struct exportlist__ {
 /*
  * PseudoFs Tree
  */
-typedef struct pseudofs_entry {
+typedef struct pseudofs_entry
+{
   char name[MAXNAMLEN];                         /**< The entry name          */
   char fullname[MAXPATHLEN];                    /**< The full path in the pseudo fs */
   unsigned int pseudo_id;                       /**< ID within the pseudoFS  */
@@ -284,14 +297,16 @@ typedef struct pseudofs_entry {
 } pseudofs_entry_t;
 
 #define MAX_PSEUDO_ENTRY 100
-typedef struct pseudofs {
+typedef struct pseudofs
+{
   pseudofs_entry_t root;
   unsigned int last_pseudo_id;
   pseudofs_entry_t *reverse_tab[MAX_PSEUDO_ENTRY];
 } pseudofs_t;
 
 #define NFS_CLIENT_NAME_LEN 256
-typedef struct nfs_client_cred_gss__ {
+typedef struct nfs_client_cred_gss__
+{
   unsigned int svc;
   unsigned int qop;
   unsigned char cname[NFS_CLIENT_NAME_LEN];
@@ -301,10 +316,12 @@ typedef struct nfs_client_cred_gss__ {
 #endif
 } nfs_client_cred_gss_t;
 
-typedef struct nfs_client_cred__ {
+typedef struct nfs_client_cred__
+{
   unsigned int flavor;
   unsigned int length;
-  union {
+  union
+  {
     struct authunix_parms auth_unix;
     nfs_client_cred_gss_t auth_gss;
   } auth_union;
@@ -314,7 +331,8 @@ typedef struct nfs_client_cred__ {
  * NFS v4 Compound Data 
  */
 /* this structure contains the necessary stuff for keeping the state of a V4 compound request */
-typedef struct compoud_data {
+typedef struct compoud_data
+{
   nfs_fh4 currentFH;                                  /**< Current filehandle                                            */
   nfs_fh4 rootFH;                                     /**< Root filehandle                                               */
   nfs_fh4 savedFH;                                    /**< Saved filehandle                                              */

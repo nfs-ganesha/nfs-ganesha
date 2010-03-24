@@ -494,7 +494,8 @@ static GHOSTFS_parameter_t config_ghostfs = {
 int main(int argc, char **argv)
 {
 
-  typedef enum action_t {
+  typedef enum action_t
+  {
     ACTION_NULL,
     ACTION_LS,
     ACTION_ACCES,

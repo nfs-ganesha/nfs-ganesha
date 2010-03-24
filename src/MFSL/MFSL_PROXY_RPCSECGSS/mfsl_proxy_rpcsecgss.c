@@ -416,7 +416,8 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored); */
                            mfsl_object_t * link_handle, /* OUT */
                            fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
-    ) {
+    )
+{
   return FSAL_symlink(&parent_directory_handle->handle,
                       p_linkname,
                       p_linkcontent,

@@ -74,7 +74,8 @@
 /* case unsensitivity */
 #define STRNCMP   strncasecmp
 
-typedef struct config_struct_t {
+typedef struct config_struct_t
+{
 
   /* Syntax tree */
 

@@ -134,7 +134,8 @@ int *p_BuddyErrno();
 
 /** Configuration for Buddy. */
 
-typedef struct buddy_paremeter__ {
+typedef struct buddy_paremeter__
+{
 
   /* Size of memory areas to manage.
    * This must be large enough compared
@@ -243,7 +244,8 @@ void BuddyDumpMem(FILE * output);
 /**
  * Stats structure for a thread.
  */
-typedef struct buddy_stats__ {
+typedef struct buddy_stats__
+{
 
   /* Total space allocated BuddyMallocExit */
 

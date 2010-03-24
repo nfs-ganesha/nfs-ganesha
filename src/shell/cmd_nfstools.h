@@ -90,7 +90,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_remote_functions.h"
 
-typedef enum cmdnfs_encodetype__ {
+typedef enum cmdnfs_encodetype__
+{
   CMDNFS_ENCODE = 1,
   CMDNFS_DECODE = 2,
   CMDNFS_FREE = 3
@@ -106,7 +107,8 @@ typedef int (*cmdnfs_encoding_func_t) (cmdnfs_encodetype_t,     /* encoding or d
 
 /* defining generic command type */
 
-typedef struct cmdnfs_funcdesc__ {
+typedef struct cmdnfs_funcdesc__
+{
 
   /* nfs function name */
   char *func_name;
@@ -128,7 +130,8 @@ typedef struct cmdnfs_funcdesc__ {
 
 } cmdnfs_funcdesc_t;
 
-typedef struct cmdnfsremote_funcdesc__ {
+typedef struct cmdnfsremote_funcdesc__
+{
 
   /* nfs function name */
   char *func_name;

@@ -72,7 +72,8 @@
 typedef caddr_t config_file_t;
 typedef caddr_t config_item_t;
 
-typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
+typedef enum
+{ CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
 
 /* config_ParseFile:
  * Reads the content of a configuration file and

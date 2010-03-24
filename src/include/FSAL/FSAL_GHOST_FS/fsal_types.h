@@ -109,14 +109,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -131,14 +133,16 @@ typedef GHOSTFS_handle_t fsal_handle_t;    /**< FS object handle.            */
 
 /** Authentification context.    */
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   GHOSTFS_user_t user;
   GHOSTFS_group_t group;
 } fsal_cred_t;
 
 /** fs specific init info */
 
-typedef struct ghostfs_dir_def__ {
+typedef struct ghostfs_dir_def__
+{
   char path[FSAL_MAX_PATH_LEN];
   fsal_accessmode_t dir_mode;
   fsal_uid_t dir_owner;
@@ -148,7 +152,8 @@ typedef struct ghostfs_dir_def__ {
 
 } ghostfs_dir_def_t;
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   fsal_accessmode_t root_mode;  /* the mode of fs root */
   fsal_uid_t root_owner;        /* the owner of fs root */
   fsal_gid_t root_group;        /* the group of fs root */
@@ -161,7 +166,8 @@ typedef struct fs_specific_initinfo__ {
 
 /**< directory cookie */
 
-typedef struct fsal_cookie__ {
+typedef struct fsal_cookie__
+{
   GHOSTFS_cookie_t cookie;
 } fsal_cookie_t;
 
@@ -170,7 +176,8 @@ static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { (GHOSTFS_cookie_t) NULL };
 typedef void *fsal_lockdesc_t;   /**< not implemented in ghostfs */
 typedef void *fsal_export_context_t;
 
-typedef struct {
+typedef struct
+{
 
   fsal_cred_t credential;
   fsal_export_context_t *export_context;
@@ -183,7 +190,8 @@ typedef struct {
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   dir_descriptor_t dir_descriptor;      /* GHOSTFS dirdescriptor */
   fsal_op_context_t context;    /* credential for readdir operations */
 } fsal_dir_t;

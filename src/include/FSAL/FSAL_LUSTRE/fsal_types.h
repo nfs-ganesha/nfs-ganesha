@@ -122,14 +122,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -140,7 +142,8 @@ typedef struct fsal_path__ {
 static const fsal_name_t FSAL_DOT = { ".", 1 };
 static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
-typedef struct {
+typedef struct
+{
   lustre_fid fid;
   /* used for FSAL_DIGEST_FILEID */
   unsigned long long inode;
@@ -148,14 +151,16 @@ typedef struct {
 
 /** Authentification context.    */
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   uid_t user;
   gid_t group;
   fsal_count_t nbgroups;
   gid_t alt_groups[FSAL_NGROUPS_MAX];
 } fsal_cred_t;
 
-typedef struct fsal_export_context_t {
+typedef struct fsal_export_context_t
+{
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */
   dev_t dev_id;
@@ -163,7 +168,8 @@ typedef struct fsal_export_context_t {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
-typedef struct {
+typedef struct
+{
   fsal_cred_t credential;
   fsal_export_context_t *export_context;
 } fsal_op_context_t;
@@ -171,12 +177,14 @@ typedef struct {
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   int dummy;
 } fs_specific_initinfo_t;
 
 /**< directory cookie */
-typedef struct fsal_cookie__ {
+typedef struct fsal_cookie__
+{
   off_t cookie;
 } fsal_cookie_t;
 
@@ -186,14 +194,16 @@ typedef void *fsal_lockdesc_t;   /**< not implemented for now */
 
 /* Directory stream descriptor. */
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   DIR *p_dir;
   fsal_op_context_t context;    /* credential for accessing the directory */
   fsal_path_t path;
   fsal_handle_t handle;
 } fsal_dir_t;
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   int fd;
   int ro;                       /* read only file ? */
 } fsal_file_t;

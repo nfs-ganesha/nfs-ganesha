@@ -37,7 +37,8 @@
 #include <stdio.h>
 #include "list.h"
 
-struct myteststruct {
+struct myteststruct
+{
   int value;
   struct glist_head glist;
 };

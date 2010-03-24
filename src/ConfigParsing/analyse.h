@@ -77,29 +77,34 @@
 /* forward declaration of generic item */
 struct _generic_item_;
 
-typedef enum {
+typedef enum
+{
   TYPE_BLOCK,
   TYPE_AFFECT
 } type_item;
 
-typedef struct _type_affect_ {
+typedef struct _type_affect_
+{
 
   char varname[MAXSTRLEN];
   char varvalue[MAXSTRLEN];
 
 } type_affect;
 
-typedef struct _type_block_ {
+typedef struct _type_block_
+{
 
   char block_name[MAXSTRLEN];
   struct _generic_item_ *block_content;
 
 } type_block;
 
-typedef struct _generic_item_ {
+typedef struct _generic_item_
+{
 
   type_item type;
-  union {
+  union
+  {
     type_block block;
     type_affect affect;
   } item;

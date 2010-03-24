@@ -133,14 +133,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -163,7 +165,8 @@ static fsal_name_t __attribute__ ((__unused__)) FSAL_DOT_DOT =
 "..", 2};
 
   /* some void types for this template... */
-typedef struct fsal_handle__ {
+typedef struct fsal_handle__
+{
   fsal_nodetype_t object_type_reminder;
   uint64_t fileid4;
   unsigned int timestamp;
@@ -171,20 +174,23 @@ typedef struct fsal_handle__ {
   char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN];
 } fsal_handle_t;
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   fsal_uid_t user;
   fsal_gid_t group;
   fsal_count_t nbgroups;
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
 } fsal_cred_t;
 
-typedef struct fsal_export_context__ {
+typedef struct fsal_export_context__
+{
   fsal_handle_t root_handle;
 } fsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->root_handle.fileid4)
 
-typedef struct fsal_op_context__ {
+typedef struct fsal_op_context__
+{
   fsal_cred_t user_credential;
   fsal_export_context_t *export_context;
 
@@ -206,13 +212,15 @@ typedef struct fsal_op_context__ {
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   fsal_handle_t fhandle;
   verifier4 verifier;
   fsal_op_context_t *pcontext;
 } fsal_dir_t;
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   fsal_handle_t fhandle;
   unsigned int openflags;
   u_int32_t ownerid;
@@ -227,7 +235,8 @@ typedef nfs_cookie4 fsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   unsigned int retry_sleeptime;
   unsigned int srv_addr;
   unsigned int srv_prognum;

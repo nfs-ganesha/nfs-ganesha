@@ -153,7 +153,8 @@ void print_nfs_res(nfs_res_t * p_res)
 /* used for keeping handle value after
  * freeing nfs res.
  */
-typedef struct shell_fh3__ {
+typedef struct shell_fh3__
+{
   u_int data_len;
   char data_val[NFS3_FHSIZE];
 } shell_fh3_t;
@@ -176,7 +177,8 @@ static void set_nfs_fh3(nfs_fh3 * p_nfshdl, shell_fh3_t * p_int_fh3)
 
 static struct timeval timeout = { 5, 0 };
 
-typedef struct prog_vers_def__ {
+typedef struct prog_vers_def__
+{
   char *name;
   u_long prog;
   u_long vers;
@@ -192,7 +194,8 @@ static prog_vers_def_t progvers_rpcs[] = {
   {NULL, 0, 0}
 };
 
-typedef struct prog_vers_client_def__ {
+typedef struct prog_vers_client_def__
+{
   char *name;
   CLIENT *clnt;
   char *hostname;

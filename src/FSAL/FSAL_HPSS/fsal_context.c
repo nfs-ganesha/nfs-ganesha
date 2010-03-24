@@ -24,7 +24,8 @@
 #include <string.h>
 
 /** usefull subopt definitions */
-enum {
+enum
+{
   FILESET_OPTION = 0,
   COS_OPTION = 1
 };

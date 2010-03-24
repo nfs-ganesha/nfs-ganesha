@@ -212,8 +212,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
 
       if (parg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.mode.set_it)
         mode =
-            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.device.dev_attributes.
-            mode.set_mode3_u.mode;
+            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.device.
+            dev_attributes.mode.set_mode3_u.mode;
       else
         mode = (fsal_accessmode_t) 0;
 
@@ -229,8 +229,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
 
       if (parg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.set_it)
         mode =
-            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.pipe_attributes.mode.
-            set_mode3_u.mode;
+            (fsal_accessmode_t) parg->arg_mknod3.what.mknoddata3_u.pipe_attributes.
+            mode.set_mode3_u.mode;
       else
         mode = (fsal_accessmode_t) 0;
 
@@ -315,8 +315,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
 #endif
 
                   /* Build file handle */
-                  if ((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                       data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                  if ((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.
+                       data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
                     {
                       pres->res_mknod3.status = NFS3ERR_IO;
                       return NFS_REQ_OK;
@@ -330,8 +330,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
                       (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
                        pfsal_handle, pexport) == 0)
                     {
-                      Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.obj.
-                               post_op_fh3_u.handle.data.data_val);
+                      Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.
+                               obj.post_op_fh3_u.handle.data.data_val);
                       pres->res_mknod3.status = NFS3ERR_INVAL;
                       return NFS_REQ_OK;
                     }
@@ -339,8 +339,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
                     {
                       /* Set Post Op Fh3 structure */
                       pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows = TRUE;
-                      pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                          data_len = sizeof(file_handle_v3_t);
+                      pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.
+                          data.data_len = sizeof(file_handle_v3_t);
 
                       /*
                        * Build entry
@@ -349,8 +349,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
                       nfs_SetPostOpAttr(pcontext, pexport,
                                         node_pentry,
                                         &attr,
-                                        &(pres->res_mknod3.MKNOD3res_u.resok.
-                                          obj_attributes));
+                                        &(pres->res_mknod3.MKNOD3res_u.
+                                          resok.obj_attributes));
 
                       /* Get the attributes of the parent after the operation */
                       cache_inode_get_attributes(parent_pentry, &attr_parent_after);

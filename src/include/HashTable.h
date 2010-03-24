@@ -102,7 +102,8 @@
 
 typedef struct hashparameter__ *p_hash_parameter_t;
 
-typedef struct hashparameter__ {
+typedef struct hashparameter__
+{
   unsigned int index_size;                                    /**< Number of rbtree managed, this MUST be a prime number. */
   unsigned int alphabet_length;                               /**< Number of characters used to write the buffer (polynomial approach). */
   unsigned int nb_node_prealloc;                              /**< Number of node to allocated when new nodes are necessary. */
@@ -118,32 +119,37 @@ typedef long (*hash_buff_comparator_t) (hash_buffer_t *, hash_buffer_t *);
 typedef long (*hash_key_display_convert_func_t) (hash_buffer_t *, char *);
 typedef long (*hash_val_display_convert_func_t) (hash_buffer_t *, char *);
 
-typedef struct hashstat_op__ {
+typedef struct hashstat_op__
+{
   unsigned int nb_set;   /**< Number of 'set' operations,  */
   unsigned int nb_test;  /**< Number of 'test' operations, */
   unsigned int nb_get;   /**< Number of 'get' operations,  */
   unsigned int nb_del;   /**< Number of 'del' operations,  */
 } hash_stat_op_t;
 
-typedef struct hashstat_dynamic__ {
+typedef struct hashstat_dynamic__
+{
   unsigned int nb_entries;   /**< Number of entries managed in the HashTable. */
   hash_stat_op_t ok;         /**< Statistics of the operation that completed successfully. */
   hash_stat_op_t err;        /**< Statistics of the operation that failed. */
   hash_stat_op_t notfound;   /**< Statistics of the operation that returned HASHTABLE_ERROR_NO_SUCH_KEY */
 } hash_stat_dynamic_t;
 
-typedef struct hashstat_computed__ {
+typedef struct hashstat_computed__
+{
   unsigned int min_rbt_num_node;      /**< Minimum size (in number of node) of the rbt used. */
   unsigned int max_rbt_num_node;      /**< Maximum size (in number of node) of the rbt used. */
   unsigned int average_rbt_num_node;  /**< Average size (in number of node) of the rbt used. */
 } hash_stat_computed_t;
 
-typedef struct hashstat__ {
+typedef struct hashstat__
+{
   hash_stat_dynamic_t dynamic;    /**< Dynamic statistics (computed on the fly). */
   hash_stat_computed_t computed;  /**< Statistics computed when HashTable_GetStats is called. */
 } hash_stat_t;
 
-typedef struct hashtable__ {
+typedef struct hashtable__
+{
   hash_parameter_t parameter;           /**< Definition parameter for the HashTable */
   hash_stat_dynamic_t *stat_dynamic;    /**< Dynamic statistics for the HashTable. */
   struct rbt_head *array_rbt;           /**< Array of reb-black tree (of size parameter.index_size) */
@@ -152,7 +158,8 @@ typedef struct hashtable__ {
   hash_data_t **pdata_prealloc;         /**< Pre-allocated pdata buffers  ready to use for new entries */
 } hash_table_t;
 
-typedef enum hashtable_set_how__ { HASHTABLE_SET_HOW_TEST_ONLY = 1,
+typedef enum hashtable_set_how__
+{ HASHTABLE_SET_HOW_TEST_ONLY = 1,
   HASHTABLE_SET_HOW_SET_OVERWRITE = 2,
   HASHTABLE_SET_HOW_SET_NO_OVERWRITE = 3
 } hashtable_set_how_t;

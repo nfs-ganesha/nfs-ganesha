@@ -35,7 +35,8 @@
  */
 #include "nlm_list.h"
 
-struct nlm_lock {
+struct nlm_lock
+{
   char *caller_name;
   netobj fh;
   netobj oh;
@@ -53,6 +54,7 @@ extern fsal_lockdesc_t *nlm_lock_to_fsal_lockdesc(struct nlm4_lock *nlm_lock,
                                                   bool_t exclusive);
 extern nlm_lock_t *nlm_add_to_locklist(struct nlm4_lock *nlm_lock, int exclusive);
 extern void nlm_remove_from_locklist(nlm_lock_t * nlmb);
+extern void nlm_delete_lock_entry(nlm_lock_t * nlmb, struct nlm4_lock *nlm_lock);
 extern void nlm_init_locklist(void);
 extern nlm_lock_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
                                        int exclusive, int state);

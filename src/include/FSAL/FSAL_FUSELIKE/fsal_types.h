@@ -105,14 +105,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -123,7 +125,8 @@ typedef struct fsal_path__ {
 static fsal_name_t FSAL_DOT = { ".", 1 };
 static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
-typedef struct fsal_handle__ {
+typedef struct fsal_handle__
+{
   ino_t inode;
   dev_t device;
   unsigned int validator;       /* because fuse filesystem
@@ -131,12 +134,14 @@ typedef struct fsal_handle__ {
                                    which is not NFS compliant. */
 } fsal_handle_t;
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   uid_t user;
   gid_t group;
 } fsal_cred_t;
 
-typedef struct fsal_export_context__ {
+typedef struct fsal_export_context__
+{
   fsal_handle_t root_handle;
   fsal_path_t root_full_path;   /* not expected to change when filesystem is mounted ! */
   struct ganefuse *ganefuse;
@@ -144,7 +149,8 @@ typedef struct fsal_export_context__ {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__ {
+typedef struct fsal_op_context__
+{
   fsal_cred_t credential;
   fsal_export_context_t *export_context;
   struct ganefuse_context ganefuse_context;
@@ -153,13 +159,15 @@ typedef struct fsal_op_context__ {
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__ {
+typedef struct fsal_dir__
+{
   fsal_handle_t dir_handle;
   fsal_op_context_t context;
   struct ganefuse_file_info dir_info;
 } fsal_dir_t;
 
-typedef struct fsal_file__ {
+typedef struct fsal_file__
+{
   fsal_handle_t file_handle;
   fsal_op_context_t context;
   struct ganefuse_file_info file_info;
@@ -172,13 +180,15 @@ typedef off_t fsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING ((fsal_cookie_t)0)
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   struct ganefuse_operations *fs_ops;
   void *user_data;
 
 } fs_specific_initinfo_t;
 
-typedef struct fsal_lockdesc__ {
+typedef struct fsal_lockdesc__
+{
   struct ganefuse_file_info file_info;
   struct flock file_lock;
 } fsal_lockdesc_t;

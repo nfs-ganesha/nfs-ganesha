@@ -108,14 +108,16 @@
 
 /** object name.  */
 
-typedef struct fsal_name__ {
+typedef struct fsal_name__
+{
   char name[FSAL_MAX_NAME_LEN];
   unsigned int len;
 } fsal_name_t;
 
 /** object path.  */
 
-typedef struct fsal_path__ {
+typedef struct fsal_path__
+{
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
@@ -128,13 +130,15 @@ static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
   /* some void types for this template... */
 
-typedef struct fsal_handle__ {
+typedef struct fsal_handle__
+{
   int object_identifier;
   fsal_nodetype_t object_type_reminder;
 
 } fsal_handle_t;
 
-typedef struct fsal_cred__ {
+typedef struct fsal_cred__
+{
   int user;
   int group;
   int ticket_handle;
@@ -142,7 +146,8 @@ typedef struct fsal_cred__ {
 
 } fsal_cred_t;
 
-typedef struct fsal_export_context__ {
+typedef struct fsal_export_context__
+{
   int filesystem_id;
   fsal_handle_t root_handle;
   char server_name[256];
@@ -152,7 +157,8 @@ typedef struct fsal_export_context__ {
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__ {
+typedef struct fsal_op_context__
+{
   fsal_cred_t user_credential;
   int thread_connect_array[32];
   fsal_export_context_t *export_context;
@@ -171,7 +177,8 @@ typedef int fsal_cookie_t;
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__ {
+typedef struct fs_specific_initinfo__
+{
   int parameter1;
   char parameter2[256];
   int parameter3;

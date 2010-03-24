@@ -143,20 +143,23 @@ static char *mnt_function_names[] = {
 
 #define NFS_V4_NB_OPERATION 39
 
-typedef enum nfs_stat_type__ { GANESHA_STAT_SUCCESS = 0,
+typedef enum nfs_stat_type__
+{ GANESHA_STAT_SUCCESS = 0,
   GANESHA_STAT_DROP = 1
 } nfs_stat_type_t;
 
 /* we support only upto NLMPROC4_UNLOCK */
 #define NLM_V4_NB_OPERATION 5
 
-typedef struct nfs_request_stat_item__ {
+typedef struct nfs_request_stat_item__
+{
   unsigned int total;
   unsigned int success;
   unsigned int dropped;
 } nfs_request_stat_item_t;
 
-typedef struct nfs_request_stat__ {
+typedef struct nfs_request_stat__
+{
   unsigned int nb_mnt1_req;
   unsigned int nb_mnt3_req;
   unsigned int nb_nfs2_req;

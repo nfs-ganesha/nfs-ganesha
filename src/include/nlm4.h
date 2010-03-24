@@ -9,7 +9,8 @@
 #include <rpc/rpc.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #define LM_MAXSTRLEN 1024
@@ -24,7 +25,8 @@ extern "C" {
 
   typedef u_quad_t uint64_t;
 
-  enum nlm4_stats {
+  enum nlm4_stats
+  {
     NLM4_GRANTED = 0,
     NLM4_DENIED = 1,
     NLM4_DENIED_NOLOCKS = 2,
@@ -38,18 +40,21 @@ extern "C" {
   };
   typedef enum nlm4_stats nlm4_stats;
 
-  struct nlm4_stat {
+  struct nlm4_stat
+  {
     nlm4_stats stat;
   };
   typedef struct nlm4_stat nlm4_stat;
 
-  struct nlm4_res {
+  struct nlm4_res
+  {
     netobj cookie;
     nlm4_stat stat;
   };
   typedef struct nlm4_res nlm4_res;
 
-  struct nlm4_holder {
+  struct nlm4_holder
+  {
     bool_t exclusive;
     int32_t svid;
     netobj oh;
@@ -58,21 +63,25 @@ extern "C" {
   };
   typedef struct nlm4_holder nlm4_holder;
 
-  struct nlm4_testrply {
+  struct nlm4_testrply
+  {
     nlm4_stats stat;
-    union {
+    union
+    {
       struct nlm4_holder holder;
     } nlm4_testrply_u;
   };
   typedef struct nlm4_testrply nlm4_testrply;
 
-  struct nlm4_testres {
+  struct nlm4_testres
+  {
     netobj cookie;
     nlm4_testrply test_stat;
   };
   typedef struct nlm4_testres nlm4_testres;
 
-  struct nlm4_lock {
+  struct nlm4_lock
+  {
     char *caller_name;
     netobj fh;
     netobj oh;
@@ -82,7 +91,8 @@ extern "C" {
   };
   typedef struct nlm4_lock nlm4_lock;
 
-  struct nlm4_lockargs {
+  struct nlm4_lockargs
+  {
     netobj cookie;
     bool_t block;
     bool_t exclusive;
@@ -92,7 +102,8 @@ extern "C" {
   };
   typedef struct nlm4_lockargs nlm4_lockargs;
 
-  struct nlm4_cancargs {
+  struct nlm4_cancargs
+  {
     netobj cookie;
     bool_t block;
     bool_t exclusive;
@@ -100,20 +111,23 @@ extern "C" {
   };
   typedef struct nlm4_cancargs nlm4_cancargs;
 
-  struct nlm4_testargs {
+  struct nlm4_testargs
+  {
     netobj cookie;
     bool_t exclusive;
     struct nlm4_lock alock;
   };
   typedef struct nlm4_testargs nlm4_testargs;
 
-  struct nlm4_unlockargs {
+  struct nlm4_unlockargs
+  {
     netobj cookie;
     struct nlm4_lock alock;
   };
   typedef struct nlm4_unlockargs nlm4_unlockargs;
 
-  enum fsh4_mode {
+  enum fsh4_mode
+  {
     fsm_DN = 0,
     fsm_DR = 1,
     fsm_DW = 2,
@@ -121,7 +135,8 @@ extern "C" {
   };
   typedef enum fsh4_mode fsh4_mode;
 
-  enum fsh4_access {
+  enum fsh4_access
+  {
     fsa_NONE = 0,
     fsa_R = 1,
     fsa_W = 2,
@@ -129,7 +144,8 @@ extern "C" {
   };
   typedef enum fsh4_access fsh4_access;
 
-  struct nlm4_share {
+  struct nlm4_share
+  {
     char *caller_name;
     netobj fh;
     netobj oh;
@@ -138,21 +154,24 @@ extern "C" {
   };
   typedef struct nlm4_share nlm4_share;
 
-  struct nlm4_shareargs {
+  struct nlm4_shareargs
+  {
     netobj cookie;
     nlm4_share share;
     bool_t reclaim;
   };
   typedef struct nlm4_shareargs nlm4_shareargs;
 
-  struct nlm4_shareres {
+  struct nlm4_shareres
+  {
     netobj cookie;
     nlm4_stats stat;
     int32_t sequence;
   };
   typedef struct nlm4_shareres nlm4_shareres;
 
-  struct nlm4_notify {
+  struct nlm4_notify
+  {
     char *name;
     int64_t state;
   };

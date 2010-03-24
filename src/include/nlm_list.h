@@ -36,7 +36,8 @@
 
 #include <stddef.h>
 
-struct glist_head {
+struct glist_head
+{
   struct glist_head *next;
   struct glist_head *prev;
 };
