@@ -21,9 +21,9 @@ NFSv4.1 and pNFS are described by the following RFCs:
 
 This document describes how 3 machines were set up to build a basic pNFS/LAYOUT4_FILE test configuration.
 The machines I used are:
-* itchy, IP addr = XX.YY.ZZ.30, used as Metadata Server
-* pootchy, IP addr = XX.YY.ZZ.32, used a Data Server
-* scratchy, IP addr = XX.YY.ZZ.31, used as client
+* nfsmds, IP addr = XX.YY.ZZ.A, used as Metadata Server
+* nfsds, IP addr = XX.YY.ZZ.B, used a Data Server
+* nfsclient, IP addr = XX.YY.ZZ.C, used as client
 
 = Let's go configuring now... =
 
@@ -65,7 +65,7 @@ You'll find all of them as rpm packages, but the libnfsidmap. For this one, you'
 
 == Configuring the test bed to used pNFS over LAYOUT4_FILES==
 
-In this configuration, the client (scratchy) will mount the MDS (itchy). The client has inserted a specific kernel module, known as the layoutdriver to connect to the DS. All of the metadata traffic will go through the MDS, but data traffic will be done in-between the DS and the client.
+In this configuration, the client (nfsclient) will mount the MDS (nfsmds). The client has inserted a specific kernel module, known as the layoutdriver to connect to the DS. All of the metadata traffic will go through the MDS, but data traffic will be done in-between the DS and the client.
 
 The MDS should be able to mount the DS and have root access on it. It runs a user space daemon, the ''spnfsd'' (which is part of nfs-utils) that uses this mount point to get information from the DS.
 
@@ -73,7 +73,7 @@ The MDS should be able to mount the DS and have root access on it. It runs a use
 
 The Data Server is just a regular NFSv4.1 server. It is important that the Metadata Data Server had root access on it, to prevent from weird behaviour due to EPERM errors. 
 
-The Data Server's /etc/exports will look like this on pootchy:
+The Data Server's /etc/exports will look like this on nfsds:
 
   /export/spnfs  *(rw,sync,fsid=0,insecure,no_subtree_check,pnfs,no_root_squash)
 
@@ -87,7 +87,7 @@ The spnfsd configuration is done in two steps:
 
 On the MDS, the /etc/fstab should contain this line:
 
-  pootchy:/       /spnfs/XX.YY.ZZ.32   nfs4    minorversion=1,proto=tcp        0 0
+  nfsds:/       /spnfs/XX.YY.ZZ.B   nfs4    minorversion=1,proto=tcp        0 0
 
 It is mandatory to have the mount point done over NFSv4 and with minorversion set to 1.
 
@@ -102,7 +102,7 @@ Its /etc/spnfsd will look like this (this is a single DS configuration)
   
   [DataServers]
   NumDS = 1
-  DS1_IP = XX.YY.ZZ.32
+  DS1_IP = XX.YY.ZZ.B
   DS1_PORT = 2049
   DS1_ROOT = /
   DS1_ID = 1
@@ -121,7 +121,7 @@ The client is to be used as a regular NFSv4.1 client. The only thing to do is ma
 
 Then you can mount the MDS on the client:
 
-  # mount -t nfs4 -o minorversion=1 itchy:/ /mnt
+  # mount -t nfs4 -o minorversion=1 nfsmds:/ /mnt
 {{warning|Before making any read/write operations, make sure that the NFSv4 grace delay is passed. Usually it take 90s after the nfs service starts..}}
 
 
