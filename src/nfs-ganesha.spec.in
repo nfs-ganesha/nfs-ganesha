@@ -271,6 +271,13 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Mar 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.63-1
+- A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol
+- A "indent" target has been add to the src/Makefile.am . 
+- C-format style template for emacs provided by Sean Dague (japh@us.ibm.com)
+- Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE
+- Bug fix : It was impossible to mount an exported entry's sub directory
+
 * Fri Mar  5  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.62-1
 - Security fix : badly managed caller_gid in nfs_exports.c
 - Fixed a typo in nfs-ganesha.spec.in
