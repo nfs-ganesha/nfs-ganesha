@@ -185,23 +185,15 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   retval = FSAL_getlock(fd, lock_desc);
   if (!FSAL_IS_ERROR(retval))
     {
-      if (lock_desc->flock.l_type = F_UNLCK)
-        {
-          /* we can place the lock */
-          pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
-          goto complete;
-        }
-      else
-        {
-          pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
-          fsal_lockdesc_to_nlm_holder(lock_desc,
-                                      &pres->res_nlm4test.test_stat.
-                                      nlm4_testrply_u.holder);
-          goto complete;
-        }
+      lock_desc->flock.l_type = F_UNLCK ;
+        
+      /* we can place the lock */
+      pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
+      Mem_Free(lock_desc);
+      return NFS_REQ_OK;
     }
+
   pres->res_nlm4test.test_stat.stat = NLM4_DENIED_NOLOCKS;
- complete:
   Mem_Free(lock_desc);
   return NFS_REQ_OK;
 }

@@ -583,6 +583,8 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 NFS_Protocols/Makefile
+		 NFS_Protocols/PNFS/Makefile
+		 NFS_Protocols/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile

@@ -4,7 +4,7 @@
 pNFS is a new NFS feature provided in NFSv4.1, also known as Parallel NFS. 
 Parallel NFS (pNFS) extends Network File Sharing version 4 (NFSv4) to allow clients to directly access file data on the storage used by the
 NFSv4 server.  This ability to bypass the server for data access can increase both performance and parallelism, but requires additional
-client functionality for data access, some of which is dependent on .the class of storage used.  
+client functionality for data access, some of which is dependent on the class of storage used.  
 
 Parallel NFS comes with various ways of accessing the data directly. For the moment, three such "layouts" have been provided.
 * the LAYOUT4_FILE that stripes accross multiple NFS Server
@@ -71,7 +71,7 @@ The MDS should be able to mount the DS and have root access on it. It runs a use
 
 ===Configuring the pNFS Data Server===
 
-The Data Server is just a regular NFSv4.1 server. It is important that the Metadata Data Server had root access on it, to prevent from wierd behaviour due to EPERM errors. 
+The Data Server is just a regular NFSv4.1 server. It is important that the Metadata Data Server had root access on it, to prevent from weird behaviour due to EPERM errors. 
 
 The Data Server's /etc/exports will look like this on pootchy:
 
@@ -135,14 +135,14 @@ On the client, I write 50 bytes to a file:
   330246 myfile
 
 On the DS, I should see a new file 
-whose name contains the fileif of ''myfile'' and located in the root of what it exports to the MDS.
+whose name contains the fileid of ''myfile'' and located in the root of what it exports to the MDS.
   
   # ls -l /export/spnfs/330246*
   -rwxrwxrwx 1 root root 50 Mar 24 10:49 /export/spnfs/330246.2343187478
   # cat /export/spnfs/330246.2343187478
   jljlkjljjhkjhkhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhk
 
-As you can see, this file, located on the DS contain the data written by the client. 
+As you can see, this file, located on the DS contains the data written by the client. 
 
 On the MDS, the file has the right size, but no blocks allocated if watched outside NFS. It contains no data.
 
