@@ -22,24 +22,15 @@
  * FSAL_lock:
  * Lock an entry in the filesystem.
  *
- * \param objecthandle (input):
- *        Handle of the object to be locked.
- * \param p_context    (input):
- *        Authentication context for the operation (user, export...).
- * \param typelock    (input):
- *        Type of lock to be taken
- * \param lock_descriptor (output):
- *        The returned lock descriptor
  */
-fsal_status_t FSAL_lock(fsal_handle_t * objecthandle,   /* IN */
-                        fsal_op_context_t * p_context,  /* IN */
-                        fsal_lockparam_t * lock_info,   /* IN */
-                        fsal_lockdesc_t * lock_descriptor       /* OUT */
+fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
+                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
+                        fsal_boolean_t callback /* IN */
     )
 {
 
   /* sanity checks. */
-  if (!objecthandle || !p_context || !lock_descriptor)
+  if (!obj_handle || !ldesc)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
@@ -66,12 +57,13 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t FSAL_unlock(fsal_lockdesc_t * lock_descriptor     /* IN/OUT */
+fsal_status_t FSAL_unlock(fsal_file_t * obj_handle,     /* IN */
+                          fsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
 
   /* sanity checks. */
-  if (!lock_descriptor)
+  if (!ldesc || !obj_handle)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
