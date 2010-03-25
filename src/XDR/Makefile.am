@@ -23,3 +23,5 @@ if USE_NFS4_0
 libnfs_mnt_xdr_la_SOURCES +=  xdr_nfs4.c            \
                               ../include/nfs4.h     
 endif
+
+new: clean all

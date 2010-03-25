@@ -5,6 +5,17 @@
 <p>
 <ul>
 	<li>
+        <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.63">NFS-GANESHA v 0.99.63</a><br>
+	<ul>
+	<li>A patch from Sean Dague (japh@us.ibm.com) fixes a memleak in FSAL_POSIX</li>
+        <li>A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol (NFS lock managemment for NFSv3)</li>
+        <li>A "indent" target has been add to the src/Makefile.am . The code was fully re-indented with this target (that uses the "indent" utility)</li>
+        <li>C-format style template for emacs provided by Sean Dague (japh@us.ibm.com)</li>
+        <li>Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE</li>
+        <li>Bug fix : It was impossible to mount an exported entry's sub directory</li>
+	</ul>
+	</li>
+	<li>
         <a class="bodylinks" href="http://sourceforge.net/projects/nfs-ganesha/files/nfs-ganesha/0.99.62">NFS-GANESHA v 0.99.62</a><br>
 	<ul>
 	<li>Security fix : badly managed caller_gid in nfs_exports.c</li>

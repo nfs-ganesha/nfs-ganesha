@@ -1548,7 +1548,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
 #ifdef _USE_NFS4_1
-        case FATTR4_FS_LAYOUT_TYPE:
+        case FATTR4_FS_LAYOUT_TYPES:
           layout_types.fattr4_fs_layout_types_len = htonl(1);
           memcpy((char *)(attrvalsBuffer + LastOffset),
                  &layout_types.fattr4_fs_layout_types_len, sizeof(u_int));
