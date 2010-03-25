@@ -531,6 +531,13 @@ case $NFS4_MINOR in
 		AC_MSG_ERROR([This NFSv4 minor version is not supported])
 esac
 
+# Sanity check : np pnfs if NFS4_MINOR is not NFSv4.1
+if [[  $enable_pnfs == "yes" ]] ; then
+  if [[ $NFS4_MINOR == "0" ]] ; then
+     AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
+  fi
+fi
+
 # MFSL_ASYNC should not be used with HPSS
 if [[ $FSAL == "HPSS" ]] ; then
   if [[ $MFSL == "ASYNC" ]] ; then 
@@ -566,6 +573,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
+                 include/PNFS/Makefile
+		 include/PNFS/LAYOUT4_NFSV4_1_FILES/Makefile
                  BuddyMalloc/Makefile
                  StuffAlloc/Makefile
                  Common/Makefile

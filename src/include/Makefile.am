@@ -65,4 +65,4 @@ include_HEADERS = ganesha_fuse_wrap.h
 endif
 
 
-SUBDIRS = FSAL MFSL
+SUBDIRS = FSAL MFSL PNFS
