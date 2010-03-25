@@ -1,3 +1,13 @@
+nfs-ganesha (0.99.63-1) stable; urgency=low
+
+ * A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol
+  * A "indent" target has been add to the src/Makefile.am .
+  * C-format style template for emacs provided by Sean Dague (japh@us.ibm.com)
+  * Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE
+  * Bug fix : It was impossible to mount an exported entry's sub directory
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri,  5 Jan 2010 13:14:00 -0600
+
 nfs-ganesha (0.99.62-1) stable; urgency=low
 
   * Security fix : badly managed caller_gid in nfs_exports.c
