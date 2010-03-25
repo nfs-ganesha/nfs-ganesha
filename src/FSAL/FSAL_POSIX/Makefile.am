@@ -2,8 +2,6 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 SUBDIRS	= DBExt
 
-
-
 noinst_LTLIBRARIES          = libfsalposix.la
 
 libfsalposix_la_SOURCES = fsal_access.c      \
