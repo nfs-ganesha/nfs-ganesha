@@ -462,8 +462,26 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->session_id_param.hash_param.key_to_str = display_session_id_key;
   p_nfs_param->session_id_param.hash_param.val_to_str = display_session_id_val;
 
+#ifdef _USE_PNFS
   /* pNFS parameters */
-#endif
+  p_nfs_param->pnfs_param.layoutfile.stripe_width = 1 ;
+  p_nfs_param->pnfs_param.layoutfile.stripe_size = 8192 ;
+
+  p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipaddr = htonl(0x7F000001) ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[0].ipport = htons(2049) ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[0].prognum = 100003 ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[0].id = 1 ;
+  strncpy(  p_nfs_param->pnfs_param.layoutfile.ds_param[0].rootpath, "/", MAXPATHLEN ) ;
+
+  p_nfs_param->pnfs_param.layoutfile.ds_param[1].ipaddr = htonl(0x7F000001) ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[1].ipport = htons(2049) ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[1].prognum = 100003 ;
+  p_nfs_param->pnfs_param.layoutfile.ds_param[1].id = 2 ;
+  strncpy(  p_nfs_param->pnfs_param.layoutfile.ds_param[1].rootpath, "/", MAXPATHLEN ) ;
+
+#endif /* _USE_PNFS */
+
+#endif /* _USE_NFS4_1 */
 
   /* NFSv4 Open Owner hash */
   p_nfs_param->open_owner_param.hash_param.index_size = PRIME_STATE_ID;
