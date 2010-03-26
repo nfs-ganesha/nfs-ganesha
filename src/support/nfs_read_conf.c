@@ -133,6 +133,11 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <ctype.h>
 #ifdef _USE_GSSRPC
 #include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
@@ -776,6 +781,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   char *key_name;
   char *key_value;
   config_item_t block;
+  struct hostent * hp = NULL ;
 
   /* Is the config tree initialized ? */
   if (in_config == NULL || pparam == NULL)
@@ -812,27 +818,46 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
         }
       else if (!strcasecmp(key_name, "Stripe_Size"))
         {
-          pparam->stripe_size = StrToBoolean(key_value);
+          pparam->layoutfile.stripe_size = StrToBoolean(key_value);
         }
       else if (!strcasecmp(key_name, "Stripe_Width"))
         {
-          pparam->stripe_width = StrToBoolean(key_value);
+          pparam->layoutfile.stripe_width = StrToBoolean(key_value);
         }
-      else if (!strcasecmp(key_name, "DS_Ip_Name"))
+      else if (!strcasecmp(key_name, "DS_Addr"))
         {
-          strncpy(pparam->ds_param[0].ipname, key_value, MAXNAMLEN);
+          if (isdigit(key_value[0]))
+            {
+              /* Address begin with a digit, it is a address in the dotted form, translate it */
+              pparam->layoutfile.ds_param[0].ipaddr = inet_addr(key_value);
+            }
+          else
+            {
+              /* This is a serveur name that is to be resolved. Use gethostbyname */
+              if ((hp = gethostbyname(key_value)) == NULL)
+                {
+                  DisplayLog("PNFS LOAD PARAMETER: ERROR: Unexpected value for %s",
+                              key_name);
+                  return -1 ;
+                }
+              memcpy(&pparam->layoutfile.ds_param[0].ipaddr, hp->h_addr, hp->h_length);
+            }
         }
       else if (!strcasecmp(key_name, "DS_Ip_Port"))
         {
-          pparam->ds_param[0].ipport = (unsigned short)atoi(key_value);
+          pparam->layoutfile.ds_param[0].ipport = htons((unsigned short)atoi(key_value));
+        }
+      else if( !strcasecmp( key_name, "DS_ProgNum"))
+        {
+          pparam->layoutfile.ds_param[0].prognum = atoi(key_value);
         }
       else if (!strcasecmp(key_name, "DS_Root_Path"))
         {
-          strncpy(pparam->ds_param[0].rootpath, key_value, MAXPATHLEN);
+          strncpy(pparam->layoutfile.ds_param[0].rootpath, key_value, MAXPATHLEN);
         }
       else if (!strcasecmp(key_name, "DS_Id"))
         {
-          pparam->ds_param[0].id = atoi(key_value);
+          pparam->layoutfile.ds_param[0].id = atoi(key_value);
         }
       else
         {

@@ -115,21 +115,13 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-#define NB_MAX_PNFS_DS 2
+#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
-typedef struct pnfs_ds_parameter__
+typedef union pnfs_parameter__
 {
-  char ipname[MAXNAMLEN];
-  unsigned short ipport;
-  char rootpath[MAXPATHLEN];
-  unsigned int id;
-} pnfs_ds_parameter_t;
-
-typedef struct pnfs_parameter__
-{
-  unsigned int stripe_size;
-  unsigned int stripe_width;
-  pnfs_ds_parameter_t ds_param[NB_MAX_PNFS_DS];
+  pnfs_layoutfile_parameter_t layoutfile ;
 } pnfs_parameter_t;
+
+
 
 #endif                          /* _PNFS_H */

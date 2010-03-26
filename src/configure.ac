@@ -192,8 +192,10 @@ AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 # PNFS (requires NFSv4.1)
 GA_ENABLE_AM_CONDITION([pnfs],[enable pNFS support (NFSv4.1 support is mandatory)],[USE_PNFS])
 
+PNFS_LIB=""
 if test "$enable_pnfs" == "yes"; then
 	AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+	PNFS_LIB="\$(top_builddir)/NFS_Protocols/PNFS/LAYOUT4_NFSV4_1_FILES/libpnfslayoutfile.la"
 fi
 AM_CONDITIONAL(USE_PNFS, test "$enable_pnfs" = "yes")
 
@@ -549,6 +551,7 @@ AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(MFSL_LIB)
+AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
