@@ -28,18 +28,18 @@
 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
-int pnfs_init( pnfs_ds_parameter_t * pds_param, pnfs_client_t * pnfsclient )
+int pnfs_init( pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param )
 {
   int sock ;
   struct sockaddr_in addr_rpc;
 
-  if( !pnfsclient || !pds_param ) 
+  if( !pnfsclient || !pnfs_layout_param ) 
     return -1 ;
 
   memset(&addr_rpc, 0, sizeof(addr_rpc));
-  addr_rpc.sin_port = pds_param->ipport ;
+  addr_rpc.sin_port = pnfs_layout_param->ds_param[0].ipport ;
   addr_rpc.sin_family = AF_INET;
-  addr_rpc.sin_addr.s_addr = pds_param->ipaddr ;
+  addr_rpc.sin_addr.s_addr = pnfs_layout_param->ds_param[0].ipaddr ;
 
   if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
@@ -50,27 +50,27 @@ int pnfs_init( pnfs_ds_parameter_t * pds_param, pnfs_client_t * pnfsclient )
   if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
         {
           DisplayLog( "pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-                       (ntohl(pds_param->ipaddr) & 0xFF000000) >> 24,
-                       (ntohl(pds_param->ipaddr) & 0x00FF0000) >> 16,
-                       (ntohl(pds_param->ipaddr) & 0x0000FF00) >> 8,
-                       (ntohl(pds_param->ipaddr) & 0x000000FF),
-                       ntohs(pds_param->ipport));
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
+                       ntohs(pnfs_layout_param->ds_param[0].ipport));
            return -1 ;
         }
 
   if ((pnfsclient->rpc_client = clnttcp_create(&addr_rpc,
-                                               pds_param->prognum,
+                                               pnfs_layout_param->ds_param[0].prognum,
                                                PNFS_NFS4,
                                                &sock,
                                                PNFS_SENDSIZE,
                                                PNFS_RECVSIZE ) ) == NULL )
         {
           DisplayLog( "PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-                       (ntohl(pds_param->ipaddr) & 0xFF000000) >> 24,
-                       (ntohl(pds_param->ipaddr) & 0x00FF0000) >> 16,
-                       (ntohl(pds_param->ipaddr) & 0x0000FF00) >> 8,
-                       (ntohl(pds_param->ipaddr) & 0x000000FF),
-                       ntohs(pds_param->ipport), pds_param->prognum);
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
+                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
+                       ntohs(pnfs_layout_param->ds_param[0].ipport), pnfs_layout_param->ds_param[0].prognum);
 
 	  return -1 ;
         }

@@ -874,6 +874,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
                         "NFS STARTUP: session id configuration read from config file");
     }
 
+#ifdef _USE_PNFS
   /* Worker paramters: pNFS specific config */
   if ((rc = nfs_read_pnfs_conf(config_struct, &p_nfs_param->pnfs_param)) < 0)
     {
@@ -891,8 +892,10 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         DisplayLogLevel(NIV_DEBUG,
                         "NFS STARTUP: pNFS configuration read from config file");
     }
+#endif /* _USE_PNFS */
 
-#endif
+
+#endif /* _USE_NFS4_1 */
 
   /* NFS kerberos5 configuration */
   if ((rc = nfs_read_krb5_conf(config_struct, &p_nfs_param->krb5_param)) < 0)
