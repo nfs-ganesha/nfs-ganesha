@@ -773,6 +773,7 @@ int nfs_read_session_id_conf(config_file_t in_config, nfs_session_id_parameter_t
   return 0;
 }                               /* nfs_session_id_conf */
 
+#ifdef _USE_PNFS
 int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 {
   int var_max;
@@ -870,6 +871,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
   return 0;
 }                               /* nfs_read_pnfs_conf */
+#endif /* _USE_PNFS */
+
 
 #endif
 

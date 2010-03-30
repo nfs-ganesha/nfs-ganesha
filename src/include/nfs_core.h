@@ -128,7 +128,9 @@
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
+#ifdef _USE_PNFS
 #include "pnfs.h"
+#endif /* _USE_PNFS */
 #endif
 
 /* Maximum thread count */
@@ -400,8 +402,10 @@ typedef struct nfs_param__
   nfs_state_id_parameter_t state_id_param;
 #ifdef _USE_NFS4_1
   nfs_session_id_parameter_t session_id_param;
+#ifdef _USE_PNFS
   pnfs_parameter_t pnfs_param;
-#endif
+#endif /* _USE_PNFS */
+#endif /* _USE_NFS4_1 */
   nfs_open_owner_parameter_t open_owner_param;
   nfs_cache_layers_parameter_t cache_layers_param;
   fsal_parameter_t fsal_param;
@@ -507,6 +511,9 @@ typedef struct nfs_worker_data__
   unsigned int gc_in_progress;
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
+#ifdef _USE_PNFS
+  pnfs_client_t  pnfs_client ;
+#endif /* _USE_PNFS */
 } nfs_worker_data_t;
 
 /* flush thread data */
@@ -554,8 +561,10 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
 #ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config,
                              nfs_session_id_parameter_t * pparam);
+#ifdef _USE_PNFS
 int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
-#endif
+#endif /* _USE_PNFS */
+#endif /* _USE_NFS4_1 */
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
 
