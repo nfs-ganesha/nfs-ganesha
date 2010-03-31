@@ -251,8 +251,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
             case CACHE_INODE_STATE_SHARE:
               if (pstate_found != pstate_iterate)
                 {
-                  if (pstate_iterate->state_data.
-                      share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                  if (pstate_iterate->state_data.share.
+                      share_deny & OPEN4_SHARE_DENY_WRITE)
                     {
                       /* Writing to this file if prohibited, file is write-denied */
                       res_WRITE4.status = NFS4ERR_LOCKED;
@@ -331,8 +331,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if ((data->pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
       (cache_content_cache_behaviour(entry,
                                      &datapol,
-                                     (cache_content_client_t *) (data->
-                                                                 pclient->pcontent_client),
+                                     (cache_content_client_t *) (data->pclient->
+                                                                 pcontent_client),
                                      &content_status) == CACHE_CONTENT_FULLY_CACHED)
       && (entry->object.file.pentry_content == NULL))
     {

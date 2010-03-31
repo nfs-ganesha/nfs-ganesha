@@ -38,7 +38,7 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
 {
 
   /* sanity checks. */
-  if (!obj_handle || !ldesc  )
+  if (!obj_handle || !ldesc)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);

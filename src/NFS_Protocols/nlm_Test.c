@@ -185,8 +185,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   retval = FSAL_getlock(fd, lock_desc);
   if (!FSAL_IS_ERROR(retval))
     {
-      lock_desc->flock.l_type = F_UNLCK ;
-        
+      lock_desc->flock.l_type = F_UNLCK;
+
       /* we can place the lock */
       pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
       Mem_Free(lock_desc);

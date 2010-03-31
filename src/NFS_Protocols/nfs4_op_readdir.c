@@ -474,8 +474,8 @@ void nfs4_op_readdir_Free(READDIR4res * resp)
 
       if (resp->READDIR4res_u.resok4.reply.entries != NULL)
         {
-          Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries[0].
-                   name.utf8string_val);
+          Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries[0].name.
+                   utf8string_val);
           Mem_Free((char *)resp->READDIR4res_u.resok4.reply.entries);
         }
     }
