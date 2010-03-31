@@ -38,9 +38,13 @@ int pnfs_do_mount( pnfs_client_t * pnfsclient,  pnfs_ds_parameter_t * pds_param 
 {
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
-  char clientowner_name[MAXNAMLEN] ;  
   client_owner4 client_owner ;
   struct timeval timeout = { 25, 0 };
+
+  char clientowner_name[MAXNAMLEN] ;  
+  char server_owner_pad[PNFS_LAYOUTFILE_PADDING_LEN] ;
+  uint32_t bitmap1[2] ;
+  uint32_t bitmap2[2] ;
 
   nfs_argop4 argoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID];
   nfs_resop4 resoparray_exchangeid[PNFS_LAYOUTFILE_NB_OP_EXCHANGEID];
@@ -62,6 +66,10 @@ int pnfs_do_mount( pnfs_client_t * pnfsclient,  pnfs_ds_parameter_t * pds_param 
   argnfs4.tag.utf8string_val = NULL;
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
+
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_enforce.bitmap4_val = bitmap1 ;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.state_protect4_r_u.spr_mach_ops.spo_must_allow.bitmap4_val = bitmap2 ;
+  resoparray_exchangeid[0].nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.so_major_id_val = server_owner_pad ;
 
   snprintf(clientowner_name, MAXNAMLEN, "GANESHA PNFS MDS Thread=(%u,%llu)", getpid(), (unsigned long long)pthread_self() );
   client_owner.co_ownerid.co_ownerid_len = strnlen( clientowner_name, MAXNAMLEN);
@@ -92,6 +100,14 @@ int pnfs_do_mount( pnfs_client_t * pnfsclient,  pnfs_ds_parameter_t * pds_param 
    {
       return NFS4ERR_IO ; /* @todo: For wanting of something more appropriate */
    }
+
+  /* Keep the session for later use */
+  memcpy( &pnfsclient->session, 
+          &resoparray_createsession[0].nfs_resop4_u.opcreate_session.CREATE_SESSION4res_u.csr_resok4.csr_sessionid, 
+          NFS4_SESSIONID_SIZE ) ;
+
+  /* Keep the sequence as well */
+  pnfsclient->sequence = resoparray_createsession[0].nfs_resop4_u.opcreate_session.CREATE_SESSION4res_u.csr_resok4.csr_sequence ;
 
   /* Check for compound status */
   if( resnfs4.status != NFS4_OK )
