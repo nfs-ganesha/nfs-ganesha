@@ -29,6 +29,19 @@
 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
+/**
+ *
+ * pnfs_init: Inits a pnfs client structure.
+ *
+ * Inits a pnfs client structure to a DS.
+ *
+ * @param pnfsclient        [INOUT] pointer to the pnfsclient structure (client to the ds).
+ * @param pnfs_layout_param [IN]    pointer to pnfs layoutfile configuration
+ *
+ * @return 0 if successful
+ * @return -1 if one of its argument is NULL, exists if failed
+ *
+ */
 int pnfs_init( pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param )
 {
   if( !pnfsclient || !pnfs_layout_param ) 

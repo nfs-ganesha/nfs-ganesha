@@ -28,6 +28,19 @@
 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
+/**
+ *
+ * pnfs_connect: create a TCP connection to a pnfs data server.
+ *
+ * Create a TCP connection to a pnfs data server.
+ *
+ * @param pnfsclient        [INOUT] pointer to the pnfsclient structure (client to the ds).
+ * @param pnfs_layout_param [IN]    pointer to pnfs layoutfile configuration
+ *
+ * @return 0 if successful
+ * @return -1 if failed
+ *
+ */
 int pnfs_connect( pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param )
 {
   int sock ;
