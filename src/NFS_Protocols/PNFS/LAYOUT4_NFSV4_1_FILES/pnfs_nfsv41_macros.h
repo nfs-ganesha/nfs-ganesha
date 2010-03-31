@@ -28,7 +28,7 @@
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
 
 
-#define PRINT_HANDLE( tag, handle )                         \
+#define PNFS_PRINT_HANDLE( tag, handle )                         \
 do {                                                        \
  char outstr[1024] ;                                        \
  snprintHandle(outstr, 1024, handle) ;                      \
@@ -131,10 +131,11 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                    \
 } while( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_PUTFH( argcompound, nfs4fh )                                                    \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_PUTFH ;                \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opputfh.object = nfs4fh ; \
+#define COMPOUNDV41_ARG_ADD_OP_PUTFH( argcompound, __nfs4fh )                                                                           \
+do {                                                                                                                                    \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_PUTFH ;                                          \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opputfh.object.nfs_fh4_len = __nfs4fh.nfs_fh4_len ; \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opputfh.object.nfs_fh4_val = __nfs4fh.nfs_fh4_val ; \
   argcompound.argarray.argarray_len += 1 ;                                                                    \
 } while( 0 )
 

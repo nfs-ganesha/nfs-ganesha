@@ -1119,19 +1119,6 @@ void *worker_thread(void *IndexArg)
     }
   DisplayLogLevel(NIV_DEBUG,
                   "NFS WORKER #%d: pNFS engine successfully initialized", index);
-
-  if( pnfs_do_mount( &pmydata->pnfs_client,
-                     &nfs_param.pnfs_param.layoutfile.ds_param[0] ) ) 
-  {
-      /* Failed init */
-      DisplayLog
-          ("NFS WORKER #%d: pNFS engine could not initialized session, exiting...",
-           index);
-      exit(1);
-    }
-  DisplayLogLevel(NIV_DEBUG,
-                  "NFS WORKER #%d: pNFS session successfully initialized", index);
-
 #endif /* _USE_PNFS */
 
   /* The worker thread is not garbagging anything at the time it starts */

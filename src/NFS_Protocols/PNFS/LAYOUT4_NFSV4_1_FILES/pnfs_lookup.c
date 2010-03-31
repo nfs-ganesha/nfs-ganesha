@@ -51,7 +51,6 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
   COMPOUND4res resnfs4;
   struct timeval timeout = { 25, 0 };
 
-
 #define  PNFS_LAYOUTFILE_NB_OP_ALLOC 3
   nfs_argop4 argoparray[PNFS_LAYOUTFILE_NB_OP_ALLOC];
   nfs_resop4 resoparray[PNFS_LAYOUTFILE_NB_OP_ALLOC];
@@ -77,14 +76,6 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
 
   if (!parent_directory_handle)
     {
-
-      /* check that p_filename is NULL,
-       * else, parent_directory_handle should not
-       * be NULL.
-       */
-      if (p_filename != NULL)
-        return NFS4ERR_INVAL ;
-
       /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup Root" ; */
       argnfs4.tag.utf8string_val = NULL;
       argnfs4.tag.utf8string_len = 0;
@@ -103,16 +94,15 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
     }
   else                          /* this is a real lookup(parent, name)  */
     {
-#ifdef _DEBUG_FSAL
-      PRINT_HANDLE("FSAL_lookup parent", parent_directory_handle);
-#endif
-
       /* the filename should not be null */
       if (p_filename == NULL)
         return NFS4ERR_INVAL ; 
 
       if( str2utf8( p_filename, &name ) == -1 )
         return NFS4ERR_SERVERFAULT ;
+
+      nfs4fh.nfs_fh4_len = parent_directory_handle->nfs_fh4_len ;
+      nfs4fh.nfs_fh4_val = parent_directory_handle->nfs_fh4_val ;
 
       /* argnfs4.tag.utf8string_val = "GANESHA NFSv4 Proxy: Lookup name" ; */
       argnfs4.tag.utf8string_val = NULL;
@@ -141,19 +131,23 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
       return NFS4ERR_IO ; /* @todo: For wanting of something more appropriate */
    }
 
+  if( resnfs4.status != NFS4_OK ) 
+   {
+      return resnfs4.status ;
+   } 
+
   object_handle->nfs_fh4_len = resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len ;
   memcpy( (char *)object_handle->nfs_fh4_val, 
           (char *)resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val,
           resnfs4.resarray.resarray_val[index_getfh].nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len ) ;
-  
+ 
   /* lookup complete ! */
   return NFS4_OK ;
 }
 
 int  pnfs_lookupPath( pnfs_client_t * pnfsclient, 
-                     nfs_fh4 * parent_directory_handle,      /* IN */
-                     char * p_path,     /* IN */
-		     nfs_fh4 * object_handle ) 
+                      char * p_path,
+		      nfs_fh4 * object_handle ) 
 {
   char *ptr_str;
   nfs_fh4 out_hdl;
@@ -236,7 +230,7 @@ int  pnfs_lookupPath( pnfs_client_t * pnfsclient,
       /* is the next name empty ? */
       if (ptr_str[0] == '\0')
         b_is_last = TRUE;
-
+      
       /*call to FSAL_lookup */
       if( ( status = pnfs_lookup( pnfsclient,
                                   &in_hdl,
