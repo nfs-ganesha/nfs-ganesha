@@ -34,6 +34,19 @@
 
 extern time_t ServerBootTime ;
 
+/**
+ *
+ * pnfs_do_mount: establishes a NFSv4.1 session between a thread and a DS
+ *
+ * Establishes a NFSv4.1 session between a thread and a DS
+ *
+ * @param pnfsclient        [INOUT] pointer to the pnfsclient structure (client to the ds).
+ * @param pnfs_ds_param     [IN]    pointer to pnfs data server configuration
+ *
+ * @return NFS4_OK if successful
+ * @return a NFSv4 error (positive value) if failed.
+ *
+ */
 int pnfs_do_mount( pnfs_client_t * pnfsclient,  pnfs_ds_parameter_t * pds_param ) 
 {
   COMPOUND4args argnfs4;

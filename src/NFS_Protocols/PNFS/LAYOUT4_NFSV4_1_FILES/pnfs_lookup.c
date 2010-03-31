@@ -35,9 +35,24 @@
  *
  */
 
+/**
+ *
+ * pnfs_lookup: looks up for a path's component.
+ *
+ * Looks up for a path's component.
+ *
+ * @param pnfsclient              [IN]  pointer to the pnfsclient structure (client to the ds).
+ * @param parent_directory_handle [IN]  the NFSv4 file handle for the parent directory
+ * @param filename                [IN]  the path's component to be looked up
+ * @param object_handle           [OUT] the resulting NFSv4 file handle
+ *
+ * @return NFS4_OK if successful
+ * @return a NFSv4 error (positive value) if failed.
+ *
+ */
 int  pnfs_lookup( pnfs_client_t * pnfsclient, 
                   nfs_fh4 * parent_directory_handle,      /* IN */
-                  char * p_filename,     /* IN */
+                  char * filename,     /* IN */
 		  nfs_fh4 * object_handle ) 
 {
 
@@ -62,7 +77,7 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
    * note : object_attributes is optionnal
    *        parent_directory_handle may be null for getting FS root.
    */
-  if (!object_handle || !p_filename || !object_handle )
+  if (!object_handle || !filename || !object_handle )
     return NFS4ERR_INVAL ; 
 
   /* Setup results structures */
@@ -95,10 +110,10 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
   else                          /* this is a real lookup(parent, name)  */
     {
       /* the filename should not be null */
-      if (p_filename == NULL)
+      if (filename == NULL)
         return NFS4ERR_INVAL ; 
 
-      if( str2utf8( p_filename, &name ) == -1 )
+      if( str2utf8( filename, &name ) == -1 )
         return NFS4ERR_SERVERFAULT ;
 
       nfs4fh.nfs_fh4_len = parent_directory_handle->nfs_fh4_len ;
@@ -145,32 +160,47 @@ int  pnfs_lookup( pnfs_client_t * pnfsclient,
   return NFS4_OK ;
 }
 
+/**
+ *
+ * pnfs_lookupPath: looks up for a full path
+ *
+ * Looks up for a full path.
+ *
+ * @param pnfsclient        [IN]  pointer to the pnfsclient structure (client to the ds).
+ * @param path              [IN]  the path to be looked up
+ * @param object_handle     [OUT] the resulting NFSv4 file handle
+ *
+ * @return NFS4_OK if successful
+ * @return a NFSv4 error (positive value) if failed.
+ *
+ */
 int  pnfs_lookupPath( pnfs_client_t * pnfsclient, 
-                      char * p_path,
+                      char * path,
 		      nfs_fh4 * object_handle ) 
 {
   char *ptr_str;
   nfs_fh4 out_hdl;
   unsigned int status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
+
   char padfilehandle[PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN];
 
 
-  if (!object_handle || !pnfsclient || !p_path )
+  if (!object_handle || !pnfsclient || !path )
     return NFS4ERR_INVAL ;
 
   out_hdl.nfs_fh4_len = 0 ;
   out_hdl.nfs_fh4_val = padfilehandle ;
 
   /* test whether the path begins with a slash */
-  if (p_path[0] != '/')
+  if (path[0] != '/')
     return NFS4ERR_INVAL ;
 
   /* the pointer now points on the next name in the path,
    * skipping slashes.
    */
 
-  ptr_str = p_path + 1;
+  ptr_str = path + 1;
   while (ptr_str[0] == '/')
     ptr_str++;
 
