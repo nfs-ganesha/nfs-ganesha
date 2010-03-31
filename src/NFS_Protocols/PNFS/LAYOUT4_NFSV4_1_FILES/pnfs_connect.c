@@ -19,7 +19,6 @@
 #include <string.h>
 #include <signal.h>
 
-
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
 #else
@@ -41,53 +40,54 @@
  * @return -1 if failed
  *
  */
-int pnfs_connect( pnfs_client_t * pnfsclient, pnfs_layoutfile_parameter_t * pnfs_layout_param )
+int pnfs_connect(pnfs_client_t * pnfsclient,
+                 pnfs_layoutfile_parameter_t * pnfs_layout_param)
 {
-  int sock ;
+  int sock;
   struct sockaddr_in addr_rpc;
 
-  if( !pnfsclient || !pnfs_layout_param ) 
-    return -1 ;
+  if (!pnfsclient || !pnfs_layout_param)
+    return -1;
 
   memset(&addr_rpc, 0, sizeof(addr_rpc));
-  addr_rpc.sin_port = pnfs_layout_param->ds_param[0].ipport ;
+  addr_rpc.sin_port = pnfs_layout_param->ds_param[0].ipport;
   addr_rpc.sin_family = AF_INET;
-  addr_rpc.sin_addr.s_addr = pnfs_layout_param->ds_param[0].ipaddr ;
+  addr_rpc.sin_addr.s_addr = pnfs_layout_param->ds_param[0].ipaddr;
 
   if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     {
-          DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
-	  return -1 ;
+      DisplayLog("PNFS_LAYOUT INIT: cannot create a tcp socket");
+      return -1;
     }
 
   if (connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
-        {
-          DisplayLog( "pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
-                       ntohs(pnfs_layout_param->ds_param[0].ipport));
-           return -1 ;
-        }
+    {
+      DisplayLog("pNFS_LAYOUT INIT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
+                 (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
+                 (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
+                 (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
+                 (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
+                 ntohs(pnfs_layout_param->ds_param[0].ipport));
+      return -1;
+    }
 
   if ((pnfsclient->rpc_client = clnttcp_create(&addr_rpc,
                                                pnfs_layout_param->ds_param[0].prognum,
                                                PNFS_NFS4,
                                                &sock,
-                                               PNFS_SENDSIZE,
-                                               PNFS_RECVSIZE ) ) == NULL )
-        {
-          DisplayLog( "PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
-                       (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
-                       ntohs(pnfs_layout_param->ds_param[0].ipport), pnfs_layout_param->ds_param[0].prognum);
+                                               PNFS_SENDSIZE, PNFS_RECVSIZE)) == NULL)
+    {
+      DisplayLog
+          ("PNFS_LAYOUT INIT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
+           (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0xFF000000) >> 24,
+           (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x00FF0000) >> 16,
+           (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x0000FF00) >> 8,
+           (ntohl(pnfs_layout_param->ds_param[0].ipaddr) & 0x000000FF),
+           ntohs(pnfs_layout_param->ds_param[0].ipport),
+           pnfs_layout_param->ds_param[0].prognum);
 
-	  return -1 ;
-        }
+      return -1;
+    }
 
-   return 0 ;
-} /* pnfs_connect */
-
+  return 0;
+}                               /* pnfs_connect */

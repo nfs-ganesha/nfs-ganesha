@@ -172,10 +172,10 @@ fsal_posixdb_status_t fsal_posixdb_add(fsal_posixdb_conn * p_conn,      /* IN */
    ************************************************/
   snprintf(query, 4096, "SELECT handleid, handlets "
            "FROM Parent WHERE handleidparent=%llu AND handletsparent=%u AND name='%s'",
-           p_parent_directory_handle ? p_parent_directory_handle->
-           id : p_object_handle->id,
-           p_parent_directory_handle ? p_parent_directory_handle->
-           ts : p_object_handle->ts, p_filename ? p_filename->name : "");
+           p_parent_directory_handle ? p_parent_directory_handle->id : p_object_handle->
+           id,
+           p_parent_directory_handle ? p_parent_directory_handle->ts : p_object_handle->
+           ts, p_filename ? p_filename->name : "");
 
   st = db_exec_sql(p_conn, query, &res);
   if (FSAL_POSIXDB_IS_ERROR(st))

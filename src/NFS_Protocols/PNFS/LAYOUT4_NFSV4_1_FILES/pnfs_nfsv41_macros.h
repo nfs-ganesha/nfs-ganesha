@@ -18,7 +18,6 @@
 #include <string.h>
 #include <signal.h>
 
-
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
 #else
@@ -26,7 +25,6 @@
 #endif
 
 #include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
-
 
 #define PNFS_PRINT_HANDLE( tag, handle )                         \
 do {                                                        \
@@ -76,7 +74,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_len = 0 ;                     \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_val = 0 ;                     \
   argcompound.argarray.argarray_len += 1 ;                                                                                                                     \
-} while( 0 ) ////Poursuivre 
+} while( 0 )                    ////Poursuivre
 
 /* OP specific macros */
 #define COMPOUNDV41_ARG_ADD_OP_PUTROOTFH( argcompound )                                             \
@@ -84,7 +82,6 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_PUTROOTFH ; \
   argcompound.argarray.argarray_len += 1 ;                                                         \
 } while( 0 )
-
 
 #define COMPOUNDV41_ARG_ADD_OP_OPEN_NOCREATE( argcompound, __seqid, inclientid, inaccess, inname, __owner_val, __owner_len )             \
 do {                                                                                                                                    \
@@ -151,7 +148,6 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_LOOKUPP ; \
   argcompound.argarray.argarray_len += 1 ;                                                       \
 } while ( 0 )
-
 
 #define COMPOUNDV41_ARG_ADD_OP_ACCESS( argcompound, inaccessflag )                                                    \
 do {                                                                                                                 \

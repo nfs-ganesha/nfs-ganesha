@@ -782,7 +782,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   char *key_name;
   char *key_value;
   config_item_t block;
-  struct hostent * hp = NULL ;
+  struct hostent *hp = NULL;
 
   /* Is the config tree initialized ? */
   if (in_config == NULL || pparam == NULL)
@@ -838,8 +838,8 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
               if ((hp = gethostbyname(key_value)) == NULL)
                 {
                   DisplayLog("PNFS LOAD PARAMETER: ERROR: Unexpected value for %s",
-                              key_name);
-                  return -1 ;
+                             key_name);
+                  return -1;
                 }
               memcpy(&pparam->layoutfile.ds_param[0].ipaddr, hp->h_addr, hp->h_length);
             }
@@ -848,7 +848,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
         {
           pparam->layoutfile.ds_param[0].ipport = htons((unsigned short)atoi(key_value));
         }
-      else if( !strcasecmp( key_name, "DS_ProgNum"))
+      else if (!strcasecmp(key_name, "DS_ProgNum"))
         {
           pparam->layoutfile.ds_param[0].prognum = atoi(key_value);
         }
@@ -871,8 +871,7 @@ int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam)
 
   return 0;
 }                               /* nfs_read_pnfs_conf */
-#endif /* _USE_PNFS */
-
+#endif                          /* _USE_PNFS */
 
 #endif
 

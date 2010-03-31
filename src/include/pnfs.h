@@ -119,9 +119,7 @@
 
 typedef union pnfs_parameter__
 {
-  pnfs_layoutfile_parameter_t layoutfile ;
+  pnfs_layoutfile_parameter_t layoutfile;
 } pnfs_parameter_t;
-
-
 
 #endif                          /* _PNFS_H */

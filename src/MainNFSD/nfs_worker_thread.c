@@ -1108,18 +1108,16 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_PNFS
   /* Init the pNFS engine for each worker */
-  if( pnfs_init( &pmydata->pnfs_client,
-                 &nfs_param.pnfs_param.layoutfile ) )
-   {
+  if (pnfs_init(&pmydata->pnfs_client, &nfs_param.pnfs_param.layoutfile))
+    {
       /* Failed init */
       DisplayLog
-          ("NFS WORKER #%d: pNFS engine could not be initialized, exiting...",
-           index);
+          ("NFS WORKER #%d: pNFS engine could not be initialized, exiting...", index);
       exit(1);
     }
   DisplayLogLevel(NIV_DEBUG,
                   "NFS WORKER #%d: pNFS engine successfully initialized", index);
-#endif /* _USE_PNFS */
+#endif                          /* _USE_PNFS */
 
   /* The worker thread is not garbagging anything at the time it starts */
   pmydata->gc_in_progress = FALSE;
