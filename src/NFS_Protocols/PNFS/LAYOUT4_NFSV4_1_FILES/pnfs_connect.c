@@ -89,5 +89,10 @@ int pnfs_connect(pnfs_client_t * pnfsclient,
       return -1;
     }
 
+  if ((pnfsclient->rpc_client ->cl_auth = authunix_create_default()) == NULL)
+    {
+      return -1;
+    }
+
   return 0;
 }                               /* pnfs_connect */

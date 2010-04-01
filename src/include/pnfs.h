@@ -122,4 +122,9 @@ typedef union pnfs_parameter__
   pnfs_layoutfile_parameter_t layoutfile;
 } pnfs_parameter_t;
 
+typedef union pnfs_file__
+{
+  pnfs_ds_file_t ds_file ;
+} pnfs_file_t ;
+
 #endif                          /* _PNFS_H */

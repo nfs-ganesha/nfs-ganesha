@@ -74,7 +74,7 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_len = 0 ;                     \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate_session.csa_sec_parms.csa_sec_parms_val = 0 ;                     \
   argcompound.argarray.argarray_len += 1 ;                                                                                                                     \
-} while( 0 )                    ////Poursuivre
+} while( 0 )                 
 
 /* OP specific macros */
 #define COMPOUNDV41_ARG_ADD_OP_PUTROOTFH( argcompound )                                             \
@@ -98,28 +98,13 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                                              \
 } while( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_CLOSE( argcompound, __stateid )                                                                                    \
+#define COMPOUNDV41_ARG_ADD_OP_CLOSE( argcompound, __stateid )                                                                                   \
 do {                                                                                                                                             \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CLOSE ;                                                   \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.seqid = __stateid.seqid +1 ;                         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.seqid = 0 ;                                          \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.open_stateid.seqid = __stateid.seqid ;               \
   memcpy( argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opclose.open_stateid.other, __stateid.other, 12 ) ;  \
   argcompound.argarray.argarray_len += 1 ;                                                                                                       \
-} while( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_GETATTR( argcompound, bitmap )                                                          \
-do {                                                                                                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_GETATTR ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opgetattr.attr_request = bitmap ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                            \
-} while( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_SETATTR( argcompound, inattr )                                                             \
-do {                                                                                                                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SETATTR ;                         \
-  /* argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.stateid */ ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsetattr.obj_attributes = inattr ;  \
-  argcompound.argarray.argarray_len += 1 ;                                                                               \
 } while( 0 )
 
 #define COMPOUNDV41_ARG_ADD_OP_GETFH( argcompound )                                                            \
@@ -127,6 +112,17 @@ do {                                                                            
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_GETFH ;                \
   argcompound.argarray.argarray_len += 1 ;                                                                    \
 } while( 0 )
+
+#define COMPOUNDV41_ARG_ADD_OP_SEQUENCE( argcompound, __sessionid, __sequenceid )                                             \
+do {                                                                                                                          \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_SEQUENCE ;                             \
+  memcpy( (char *)argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_sessionid, (char*) __sessionid, NFS4_SESSIONID_SIZE ) ;  \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_sequenceid = __sequenceid ; \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_slotid = 1 ;                \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_highest_slotid = 1 ;        \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opsequence.sa_cachethis = FALSE ;         \
+  argcompound.argarray.argarray_len += 1 ;                                                                                    \
+} while( 0 ) 
 
 #define COMPOUNDV41_ARG_ADD_OP_PUTFH( argcompound, __nfs4fh )                                                                           \
 do {                                                                                                                                    \
@@ -149,68 +145,23 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                       \
 } while ( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_ACCESS( argcompound, inaccessflag )                                                    \
-do {                                                                                                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_ACCESS ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opaccess.access = inaccessflag ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                           \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_READDIR( argcompound, incookie, innbentry, inverifier, inbitmap  )                                                     \
-do {                                                                                                                                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_READDIR ;                                                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.cookie       = incookie ;                              \
-  memcpy( argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.cookieverf, inverifier, NFS4_VERIFIER_SIZE ) ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.dircount     = innbentry*sizeof( entry4 ) ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.dircount     = 2048 ;                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.maxcount     = innbentry*sizeof( entry4 ) ;            \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.maxcount     = 4096 ;                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opreaddir.attr_request = inbitmap ;                              \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                           \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_OPEN_CREATE( argcompound, inname, inattrs, inclientid, __owner_val, __owner_len )                                         \
-do {                                                                                                                                                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_OPEN ;                                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.seqid = 0 ;                                                  \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH ;                     \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE ;                         \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.clientid = inclientid ;                                \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_len =  __owner_len ;                       \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_val =  __owner_val ;                       \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.opentype = OPEN4_CREATE ;                            \
+#define COMPOUNDV41_ARG_ADD_OP_OPEN_CREATE( argcompound, __inname, __inattrs, __owner_val, __owner_len )                                                  \
+do {                                                                                                                                                      \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_OPEN ;                                                             \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.seqid = 0 ;                                                    \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_access = OPEN4_SHARE_ACCESS_BOTH ;                       \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.share_deny = OPEN4_SHARE_DENY_NONE ;                           \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.clientid = 0LL ;                                         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_len =  __owner_len ;                         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.owner.owner.owner_val =  __owner_val ;                         \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.opentype = OPEN4_CREATE ;                              \
   argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.openflag4_u.how.mode = GUARDED4 ;                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.openflag4_u.how.createhow4_u.createattrs = inattrs ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.claim = CLAIM_NULL ;                                   \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.open_claim4_u.file = inname ;                          \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                              \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.openhow.openflag4_u.how.createhow4_u.createattrs = __inattrs ; \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.claim = CLAIM_NULL ;                                     \
+  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opopen.claim.open_claim4_u.file = __inname ;                          \
+  argcompound.argarray.argarray_len += 1 ;                                                                                                                \
 } while ( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_MKDIR( argcompound, inname, inattrs )                                                  \
-do {                                                                                                                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CREATE ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.type = NF4DIR ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objname = inname ;      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.createattrs = inattrs ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                           \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_SYMLINK( argcompound, inname, incontent, inattrs )                                                          \
-do {                                                                                                                                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_CREATE ;                                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.type = NF4LNK ;                      \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objtype.createtype4_u.linkdata = incontent ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.objname = inname ;                           \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.opcreate.createattrs = inattrs ;                      \
-  argcompound.argarray.argarray_len += 1 ;                                                                                                \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_LINK( argcompound, inname )                                                     \
-do {                                                                                                          \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_LINK ;                 \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oplink.newname = inname ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                    \
-} while ( 0 )
 
 #define COMPOUNDV41_ARG_ADD_OP_REMOVE( argcompound, inname )                                                    \
 do {                                                                                                           \
@@ -219,19 +170,6 @@ do {                                                                            
   argcompound.argarray.argarray_len += 1 ;                                                                     \
 } while ( 0 )
 
-#define COMPOUNDV41_ARG_ADD_OP_RENAME( argcompound, inoldname, innewname )                                          \
-do {                                                                                                               \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_RENAME ;                    \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oprename.oldname = inoldname ; \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].nfs_argop4_u.oprename.newname = innewname ; \
-  argcompound.argarray.argarray_len += 1 ;                                                                         \
-} while ( 0 )
-
-#define COMPOUNDV41_ARG_ADD_OP_READLINK( argcompound )                                             \
-do {                                                                                              \
-  argcompound.argarray.argarray_val[argcompound.argarray.argarray_len].argop = NFS4_OP_READLINK ; \
-  argcompound.argarray.argarray_len += 1 ;                                                        \
-} while ( 0 )
 
 #define COMPOUNDV41_ARG_ADD_OP_SAVEFH( argcompound )                                             \
 do {                                                                                            \
