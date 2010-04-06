@@ -339,6 +339,7 @@ typedef unsigned int cache_inode_state_type_t;
 #define CACHE_INODE_STATE_SHARE   1
 #define CACHE_INODE_STATE_DELEG   2
 #define CACHE_INODE_STATE_LOCK    4
+#define CACHE_INODE_STATE_LAYOUT  5
 
 struct cache_inode_symlink__
 {
@@ -367,6 +368,21 @@ typedef struct cache_inode_deleg__
 {
   unsigned int nothing;
 } cache_inode_deleg_t;
+
+
+typedef struct cache_inode_layout__
+{
+#ifdef _USE_PNFS
+  layouttype4 layout_type;
+  layoutiomode4 iomode;
+  offset4 offset;
+  length4 length;
+  length4 minlength;
+#else
+  int nothing ;
+#endif
+} cache_inode_layout_t ;
+
 
 typedef struct cache_inode_unstable_data__
 {
@@ -491,6 +507,7 @@ typedef struct cache_inode_state__
     cache_inode_share_t share;
     cache_inode_lock_t lock;
     cache_inode_deleg_t deleg;
+    cache_inode_layout_t layout;
   } state_data;
   u_int32_t seqid;                                       /**< The NFSv4 Sequence id                      */
   char stateid_other[12];                                /**< "Other" part of state id, used as hash key */

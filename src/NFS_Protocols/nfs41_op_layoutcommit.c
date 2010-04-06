@@ -149,9 +149,57 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_LAYOUTCOMMIT;
+
+#ifndef _USE_PNFS
+  res_LAYOUTCOMMIT4.locr_status = NFS4ERR_NOTSUPP;
+  return res_LAYOUTCOMMIT4.locr_status;
+#else
+
+  /* If there is no FH */
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+    {
+      res_LAYOUTCOMMIT4.locr_status = NFS4ERR_NOFILEHANDLE;
+      return res_LAYOUTCOMMIT4.locr_status;
+    }
+
+  /* If the filehandle is invalid */
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+    {
+      res_LAYOUTCOMMIT4.locr_status = NFS4ERR_BADHANDLE;
+      return res_LAYOUTCOMMIT4.locr_status;
+    }
+
+  /* Tests if the Filehandle is expired (for volatile filehandle) */
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+    {
+      res_LAYOUTCOMMIT4.locr_status = NFS4ERR_FHEXPIRED;
+      return res_LAYOUTCOMMIT4.locr_status;
+    }
+
+  /* Commit is done only on a file */
+  if (data->current_filetype != REGULAR_FILE)
+    {
+      /* Type of the entry is not correct */
+      switch (data->current_filetype)
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_LAYOUTCOMMIT4.locr_status = NFS4ERR_ISDIR;
+          break;
+        default:
+          res_LAYOUTCOMMIT4.locr_status = NFS4ERR_INVAL;
+          break;
+        }
+
+       return res_LAYOUTCOMMIT4.locr_status ;
+    }
+
 
   res_LAYOUTCOMMIT4.locr_status = NFS4_OK;
   return res_LAYOUTCOMMIT4.locr_status;
+#endif /* _USE_PNFS */
 }                               /* nfs41_op_layoutcommit */
 
 /**
