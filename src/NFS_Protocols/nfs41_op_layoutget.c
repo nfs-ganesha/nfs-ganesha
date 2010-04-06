@@ -147,11 +147,117 @@
 
 int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
-{
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
+{  
+  cache_inode_state_data_t candidate_data;
+  cache_inode_state_type_t candidate_type;
+  cache_inode_state_t *file_state = NULL;
+  cache_inode_status_t cache_status;
+  int rc ;
 
+  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
+  
+
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_LAYOUTGET;
+
+#ifndef _USE_PNFS
+  res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
+  return res_LAYOUTGET4.logr_status;
+#else
+
+  /* If there is no FH */
+  if (nfs4_Is_Fh_Empty(&(data->currentFH)))
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_NOFILEHANDLE;
+      return res_LAYOUTGET4.logr_status;
+    }
+
+  /* If the filehandle is invalid */
+  if (nfs4_Is_Fh_Invalid(&(data->currentFH)))
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_BADHANDLE;
+      return res_LAYOUTGET4.logr_status;
+    }
+
+  /* Tests if the Filehandle is expired (for volatile filehandle) */
+  if (nfs4_Is_Fh_Expired(&(data->currentFH)))
+    {
+      res_LAYOUTGET4.logr_status = NFS4ERR_FHEXPIRED;
+      return res_LAYOUTGET4.logr_status;
+    }
+
+  /* Commit is done only on a file */
+  if (data->current_filetype != REGULAR_FILE)
+    {
+      /* Type of the entry is not correct */
+      switch (data->current_filetype)
+        {
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+          res_LAYOUTGET4.logr_status = NFS4ERR_ISDIR;
+          break;
+        default:
+          res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
+          break;
+        }
+
+       return res_LAYOUTGET4.logr_status ;
+    }
+
+  /* Parameters's consistency */
+  if( arg_LAYOUTGET4.loga_length < arg_LAYOUTGET4.loga_minlength )
+   {
+     res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
+     return res_LAYOUTGET4.logr_status ;
+   }
+
+  /* Check stateid correctness */
+  if ((rc = nfs4_Check_Stateid(&arg_LAYOUTGET4.loga_stateid,
+                               data->current_entry,
+                               data->psession->clientid)) != NFS4_OK)
+   {
+     res_LAYOUTGET4.logr_status = rc;
+     return res_LAYOUTGET4.logr_status ;
+    }
+
+  /* For the moment, only LAYOUT4_FILE is supported */
+  switch( arg_LAYOUTGET4.loga_layout_type )
+   {
+     case LAYOUT4_NFSV4_1_FILES:
+        /* Continue on proceeding the request */
+	break ;
+
+     default: 
+        res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
+        return res_LAYOUTGET4.logr_status;
+	break ;
+   } /* switch( arg_LAYOUTGET4.loga_layout_type ) */
+
+   /* Add a pstate */ 
+   candidate_type = CACHE_INODE_STATE_LAYOUT;
+   candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type ;
+   candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode ;
+   candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset ;
+   candidate_data.layout.length = arg_LAYOUTGET4.loga_length ;
+   candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength ;
+
+   /* Add the lock state to the lock table */
+   if (cache_inode_add_state(data->current_entry,
+                              candidate_type,
+                              &candidate_data,
+                              NULL,
+                              data->pclient,
+                              data->pcontext,
+                              &file_state, &cache_status) != CACHE_INODE_SUCCESS)
+      {
+        res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
+        return res_LAYOUTGET4.logr_status;
+      }
+ 
+ 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;
+#endif /* _USE_PNFS */
 }                               /* nfs41_op_layoutget */
 
 /**
