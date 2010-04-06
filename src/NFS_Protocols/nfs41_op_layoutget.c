@@ -152,6 +152,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   cache_inode_state_type_t candidate_type;
   cache_inode_state_t *file_state = NULL;
   cache_inode_status_t cache_status;
+  cache_inode_state_t *pstate_exists = NULL;
   int rc ;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
@@ -233,6 +234,22 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 	break ;
    } /* switch( arg_LAYOUTGET4.loga_layout_type ) */
 
+  /* Get the related powner (from a previously made call to OPEN) */
+  if (cache_inode_get_state(arg_LAYOUTGET4.loga_stateid.other,
+                             &pstate_exists,
+                             data->pclient,
+                             &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          if (cache_status == CACHE_INODE_NOT_FOUND)
+              res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
+          else
+              res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
+
+          return res_LAYOUTGET4.logr_status;
+        }
+
+
+
    /* Add a pstate */ 
    candidate_type = CACHE_INODE_STATE_LAYOUT;
    candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type ;
@@ -245,7 +262,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
    if (cache_inode_add_state(data->current_entry,
                               candidate_type,
                               &candidate_data,
-                              NULL,
+                              pstate_exists->powner,
                               data->pclient,
                               data->pcontext,
                               &file_state, &cache_status) != CACHE_INODE_SUCCESS)
