@@ -165,6 +165,9 @@ install -m 644 config_samples/proxy.ganesha.nfsd.conf          $RPM_BUILD_ROOT%{
 install -m 755 nfs-ganesha.snmp.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.snmp
 install -m 644 config_samples/snmp.ganesha.nfsd.conf           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+install -m 755 nfs-ganesha.hpss.init                           $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha.hpss
+%endif
 install -m 644 config_samples/hosts.ganesha                    $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 config_samples/uidgid_mapfile.ganesha           $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 755 tools/ganestat.pl                               $RPM_BUILD_ROOT%{_bindir}
@@ -256,19 +259,35 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/hpss.ganesha.*
 %{_bindir}/hpss.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha.hpss
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
-%if %{?_with_fuse:1}%{!?_with_fuse:0}
-%post fuselike -p /sbin/ldconfig
-
-%postun fuselike -p /sbin/ldconfig
-%else
-%post 
-
-%postun
-
+%if %{?_with_proxy:1}%{!?_with_proxy:0}
+%post proxy
+chkconfig --add nfs-ganesha.proxy
 %endif
+
+%if %{?_with_posix:1}%{!?_with_posix:0}
+%post posix
+chkconfig --add nfs-ganesha.posix
+%endif
+
+%if %{?_with_snmp:1}%{!?_with_snmp:0}
+%post snmp
+chkconfig --add nfs-ganesha.snmp
+%endif
+
+%if %{?_with_hpss:1}%{!?_with_hpss:0}
+%post
+%endif
+
+%if %{?_with_fuse:1}%{!?_with_fuse:0}
+%post
+%endif
+
+%postun 
+
 
 %changelog
 * Thu Mar 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.63-1

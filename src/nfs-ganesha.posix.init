@@ -7,6 +7,18 @@
 # processname: /usr/bin/posix.ganesha.nfsd
 # config: /etc/ganesha/posix.ganesha.nfsd.conf
 # pidfile: /var/run/snmpd
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.posix
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/POSIX daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
 
 # source function library
 . /etc/init.d/functions

@@ -32,7 +32,8 @@
  *        The returned lock descriptor
  */
 fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
-                        fsal_lockdesc_t * ldesc)        /*IN/OUT */
+                        fsal_lockdesc_t * ldesc,
+			fsal_boolean_t callback )        /*IN/OUT */
 {
 
   /* sanity checks. */
