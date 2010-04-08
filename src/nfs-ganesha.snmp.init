@@ -7,6 +7,18 @@
 # processname: /usr/bin/snmp.ganesha.nfsd
 # config: /etc/ganesha/snmp.ganesha.nfsd.conf
 # pidfile: /var/run/snmpd
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.snmp
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop:
+# Short-Description: start and stop nfs-ganesha/SNMP daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
 
 # source function library
 . /etc/init.d/functions
