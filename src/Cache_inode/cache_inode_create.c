@@ -151,6 +151,7 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
   fsal_attrib_list_t object_attributes;
   fsal_handle_t dir_handle;
   cache_inode_fsal_data_t fsal_data;
+  cache_inode_status_t status;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -171,6 +172,24 @@ cache_entry_t *cache_inode_create(cache_entry_t * pentry_parent,
 
       return NULL;
     }
+
+  /* Check if caller is allowed to perform the operation */
+  if( ( status = cache_inode_access( pentry_parent,
+				     FSAL_W_OK,
+		                     ht,
+				     pclient,
+				     pcontext, 
+                                     &status ) ) != CACHE_INODE_SUCCESS )
+    {
+      *pstatus = status;
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_CREATE] += 1;
+
+      /* pentry is a directory */
+      return NULL;
+     }
+
 
   /* Check if an entry of the same name exists */
   if ((pentry = cache_inode_lookup(pentry_parent,

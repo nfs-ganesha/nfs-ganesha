@@ -168,6 +168,25 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       return *pstatus;
     }
 
+  /* Check if caller is allowed to perform the operation */
+  if( ( status = cache_inode_access( pentry_dir_dest,
+				     FSAL_W_OK,
+		                     ht,
+				     pclient,
+				     pcontext, 
+                                     &status ) ) != CACHE_INODE_SUCCESS )
+    {
+      *pstatus = status;
+
+      /* stats */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
+
+      /* pentry is a directory */
+      return *pstatus;
+     }
+
+
+
   /* Check if an entry of the same name doesn't exist in the destination directory */
   if ((pentry_lookup = cache_inode_lookup(pentry_dir_dest,
                                           plink_name,

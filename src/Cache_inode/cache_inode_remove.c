@@ -272,6 +272,24 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   if (use_mutex)
     P_w(&pentry->lock);
 
+  /* Check if caller is allowed to perform the operation */
+  if( ( status = cache_inode_access_sw( pentry,
+				       FSAL_W_OK,
+		                        ht,
+				        pclient,
+				        pcontext, 
+                                        &status, 
+                                        FALSE ) ) != CACHE_INODE_SUCCESS )
+    {
+      *pstatus = status;
+
+      /* pentry is a directory */
+      if (use_mutex)
+        V_w(&pentry->lock);
+
+      return *pstatus;
+     }
+
   /* Looks up for the entry to remove */
   if ((to_remove_entry = cache_inode_lookup_sw(pentry,
                                                pnode_name,
