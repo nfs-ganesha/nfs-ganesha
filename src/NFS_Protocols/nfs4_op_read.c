@@ -202,6 +202,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if (nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
 
+  /* Manage access type MDONLY */
+  if( data->pexport->access_type == ACCESSTYPE_MDONLY )
+    {
+      res_READ4.status = NFS4ERR_DQUOT;
+      return res_READ4.status;
+    }
+
   /* Check for special stateid */
   if (!memcmp((char *)all_zero, arg_READ4.stateid.other, 12) &&
       arg_READ4.stateid.seqid == 0)
