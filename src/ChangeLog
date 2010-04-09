@@ -336,4 +336,7 @@
         - Function to initiates connection/NFsv4.1 sessions with the DS are done
         - RPM Packaging : add chkconfig --add in %post
         - Export Access Type "MDONLY" was not managed when using NFSv4
+	- Add safety check to cache_inode_remove/cache_inode_create and cache_inode_link 
+          to prevent from non allowed access.
+
 
