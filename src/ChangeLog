@@ -334,4 +334,6 @@
 0.99.64 -
 	- pNFS implementation for LAYOUT4_FILE starts with this version
         - Function to initiates connection/NFsv4.1 sessions with the DS are done
+        - RPM Packaging : add chkconfig --add in %post
+        - Export Access Type "MDONLY" was not managed when using NFSv4
 

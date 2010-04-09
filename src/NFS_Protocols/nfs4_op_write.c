@@ -203,6 +203,13 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if (nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_write_xattr(op, data, resp);
 
+  /* Manage access type MDONLY */
+  if( data->pexport->access_type == ACCESSTYPE_MDONLY )
+    {
+      res_WRITE4.status = NFS4ERR_DQUOT;
+      return res_WRITE4.status;
+    }
+
   /* vnode to manage is the current one */
   entry = data->current_entry;
 
