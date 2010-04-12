@@ -153,6 +153,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   cache_inode_state_t *file_state = NULL;
   cache_inode_status_t cache_status;
   cache_inode_state_t *pstate_exists = NULL;
+  nfsv4_1_file_layout4 * pfile_layout = NULL ;
+  nfs_fh4 * pnfsfh4 = NULL ;
   int rc ;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
@@ -271,7 +273,34 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
         return res_LAYOUTGET4.logr_status;
       }
  
- 
+  /* set the returned status */
+  
+  /* No return on close for the moment */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_return_on_close = FALSE ;
+
+  /* Manages the stateid */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1 ;
+  memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other, file_state->stateid_other, 12);
+
+  /* Now the layout specific information */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1 ; /** @todo manages more than one segment */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val = (layout4 *)Mem_Alloc( sizeof(  layout4 ) ) ;
+
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset = arg_LAYOUTGET4.loga_offset ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFLL ; /* Whole file */
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode = arg_LAYOUTGET4.loga_iomode ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_type = LAYOUT4_NFSV4_1_FILES ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_len = sizeof( nfsv4_1_file_layout4 ) ; 
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val = Mem_Alloc( sizeof( nfsv4_1_file_layout4 ) ) ; 
+  pfile_layout = (nfsv4_1_file_layout4 *)res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val ; 
+  memset( pfile_layout->nfl_deviceid, 0, NFS4_DEVICEID4_SIZE ) ;
+  pfile_layout->nfl_deviceid[0] = 1 ;
+  pfile_layout->nfl_util = 0x2000 ; /** @TODO do not know why I should set this value */ 
+  pfile_layout->nfl_first_stripe_index = 0 ;
+  pfile_layout->nfl_pattern_offset = 0 ;
+  pfile_layout->nfl_fh_list.nfl_fh_list_len = 1 ;
+  pfile_layout->nfl_fh_list.nfl_fh_list_val = &(data->current_entry->object.file.pnfs_file.ds_file.handle );
+
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;
 #endif /* _USE_PNFS */
@@ -287,8 +316,13 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
  * @return nothing (void function )
  * 
  */
-void nfs41_op_layoutget_Free(LOCK4res * resp)
+void nfs41_op_layoutget_Free( LAYOUTGET4res * resp)
 {
-  /* Nothing to Mem_Free */
+  if( resp->logr_status == NFS4_OK )
+   {
+     Mem_Free( (char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val ) ;
+     Mem_Free( (char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.loc_body.loc_body_val ) ;
+   }
+
   return;
 }                               /* nfs41_op_layoutget_Free */
