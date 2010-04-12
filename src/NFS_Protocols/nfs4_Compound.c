@@ -548,7 +548,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 #endif
 
-#ifndef _DEBUG_NFS_V4
+#ifdef _DEBUG_NFS_V4
   DisplayLogJdLevel(pclient->log_outputs, NIV_DEBUG,
                     "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d  last status = %d",
                     status, pres->res_compound4.status, i,
